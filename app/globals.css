@@ -1,26 +1,199 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Elegant Wedding Color Palette - Inspired by sophisticated wedding designs */
+  /* Primary: Warm Blush/Rose Gold */
+  --primary: #d4a574;
+  --primary-foreground: #ffffff;
+
+  /* Secondary: Sage Green */
+  --secondary: #9ba082;
+  --secondary-foreground: #ffffff;
+
+  /* Accent: Soft Coral */
+  --accent: #e6b5a3;
+  --accent-foreground: #2c2c2c;
+
+  /* Neutrals: Cream, Warm White, Charcoal */
+  --background: #fefdfb;
+  --foreground: #2c2c2c;
+  --card: #ffffff;
+  --card-foreground: #2c2c2c;
+  --popover: #ffffff;
+  --popover-foreground: #2c2c2c;
+  --muted: #f8f6f2;
+  --muted-foreground: #6b6b6b;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #e9e5e0;
+  --input: #ffffff;
+  --ring: #d4a574;
+
+  /* Chart colors using elegant palette */
+  --chart-1: #d4a574;
+  --chart-2: #e6b5a3;
+  --chart-3: #9ba082;
+  --chart-4: #f2efeb;
+  --chart-5: #e2d8ce;
+
+  --radius: 0.75rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #2c2c2c;
+  --sidebar-primary: #d4a574;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e6b5a3;
+  --sidebar-accent-foreground: #2c2c2c;
+  --sidebar-border: #e9e5e0;
+  --sidebar-ring: #d4a574;
+}
+
+.dark {
+  --primary: #e8c4a0;
+  --primary-foreground: #1a1a1a;
+  --secondary: #b5c4a3;
+  --secondary-foreground: #1a1a1a;
+  --accent: #f0c7b8;
+  --accent-foreground: #1a1a1a;
+  --background: #1a1715;
+  --foreground: #f5f4f2;
+  --card: #2a2825;
+  --card-foreground: #f5f4f2;
+  --popover: #2a2825;
+  --popover-foreground: #f5f4f2;
+  --muted: #3a3835;
+  --muted-foreground: #b0aca5;
+  --destructive: #ef4444;
+  --destructive-foreground: #1a1a1a;
+  --border: #3a3835;
+  --input: #2a2825;
+  --ring: #e8c4a0;
+  --chart-1: #e8c4a0;
+  --chart-2: #f0c7b8;
+  --chart-3: #b5c4a3;
+  --chart-4: #3a3835;
+  --chart-5: #4a453f;
+  --sidebar: #2a2825;
+  --sidebar-foreground: #f5f4f2;
+  --sidebar-primary: #e8c4a0;
+  --sidebar-primary-foreground: #1a1a1a;
+  --sidebar-accent: #f0c7b8;
+  --sidebar-accent-foreground: #1a1a1a;
+  --sidebar-border: #3a3835;
+  --sidebar-ring: #e8c4a0;
 }
 
 @theme inline {
+  --font-sans: "Geist", "Geist Fallback";
+  --font-mono: "Geist Mono", "Geist Mono Fallback";
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Elegant Typography Styles */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+  
+  h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 300;
+  }
+  
+  h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 300;
+  }
+  
+  h3 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 400;
+  }
+  
+  /* Elegant paragraphs */
+  p {
+    line-height: 1.7;
+    color: var(--muted-foreground);
+  }
+  
+  /* Elegant quotes */
+  blockquote {
+    font-style: italic;
+    font-size: 1.125rem;
+    line-height: 1.8;
+    padding-left: 1.5rem;
+    border-left: 2px solid var(--primary);
+    color: var(--muted-foreground);
+  }
+  
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--muted);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--primary)/80;
+  }
 }
