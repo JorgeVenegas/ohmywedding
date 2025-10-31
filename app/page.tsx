@@ -54,15 +54,37 @@ export default function LandingPage() {
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
-                <Link href="#features">
+                <Link href="/variant-demo">
                   <Button
                     size="lg"
                     variant="outline"
                     className="border-2 border-primary/20 hover:bg-primary/5 w-full sm:w-auto h-14 px-8 text-lg"
                   >
-                    View Examples
+                    🎨 Try Demo
                   </Button>
                 </Link>
+              </div>
+              
+              {/* Demo Links */}
+              <div className="flex flex-col sm:flex-row gap-2 text-sm justify-center lg:justify-start mt-4">
+                <Link href="/variant-demo" className="text-primary hover:text-primary/80 font-medium">
+                  🎨 Interactive Variant Demo
+                </Link>
+                <span className="hidden sm:inline text-muted-foreground">•</span>
+                <Link href="/showcase" className="text-primary hover:text-primary/80 font-medium">
+                  📋 Design Showcase
+                </Link>
+              </div>
+              
+              {/* Demo Instructions */}
+              <div className="mt-6 p-4 bg-primary/5 rounded-lg border border-primary/10">
+                <h4 className="font-semibold text-sm text-primary mb-2">🎯 Try Variant Switching:</h4>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Add <code className="bg-background/50 px-1 rounded">?demo=true</code> to any wedding URL to see variant toggles!
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Or visit our dedicated demo pages above to explore all design options.
+                </p>
               </div>
               <div className="flex items-center gap-8 pt-6 justify-center lg:justify-start">
                 <div className="text-center">

@@ -1,0 +1,6 @@
+export { HeroBackgroundVariant } from './hero-background-variant'
+export { HeroSideBySideVariant } from './hero-side-by-side-variant'
+export { HeroFramedVariant } from './hero-framed-variant'
+export { HeroMinimalVariant } from './hero-minimal-variant'
+export { HeroTextContent } from './hero-text-content'
+export type { BaseHeroProps, HeroContentProps } from './types'
