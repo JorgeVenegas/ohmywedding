@@ -80,8 +80,28 @@ export const classicWeddingConfig: WeddingPageConfig = {
         showHowWeMet: true,
         showProposal: true,
         showPhotos: true,
-        howWeMetText: 'We met at a coffee shop on a rainy Tuesday morning...',
-        proposalText: 'Under the stars at our favorite hiking spot...'
+        howWeMetText: 'We met at an elegant charity gala, where Sarah was volunteering and James was attending with friends. A shared laugh over the silent auction items sparked a conversation that lasted until the last dance.',
+        proposalText: 'On a crisp autumn evening in Central Park, James recreated their first date with a carriage ride. As they stopped by the lake where they had their first kiss, he got down on one knee with his grandmother\'s vintage ring.',
+        timeline: [
+          {
+            date: 'October 2019',
+            title: 'First Meeting',
+            description: 'An elegant charity gala brought us together...',
+            photo: 'https://picsum.photos/400/300?random=29'
+          },
+          {
+            date: 'November 2019',
+            title: 'First Date',
+            description: 'A carriage ride through Central Park...',
+            photo: 'https://picsum.photos/400/300?random=30'
+          },
+          {
+            date: 'September 2023',
+            title: 'The Proposal',
+            description: 'Under the autumn leaves where we first kissed...',
+            photo: 'https://picsum.photos/400/300?random=31'
+          }
+        ]
       },
       alignment: { text: 'left', content: 'center', image: 'center' }
     },
@@ -246,8 +266,28 @@ export const modernWeddingConfig: WeddingPageConfig = {
         showHowWeMet: true,
         showProposal: true,
         showPhotos: true,
-        howWeMetText: 'We met at a coffee shop on a rainy Tuesday morning...',
-        proposalText: 'Under the stars at our favorite hiking spot...'
+        howWeMetText: 'We met at a coffee shop on a rainy Tuesday morning. What started as a chance encounter over spilled coffee became the beginning of our greatest adventure.',
+        proposalText: 'Under the stars at our favorite hiking spot, with the city lights twinkling below, the moment felt perfect. Simple, intimate, and exactly us.',
+        timeline: [
+          {
+            date: 'March 2020',
+            title: 'First Meeting',
+            description: 'A chance encounter at our favorite coffee shop...',
+            photo: 'https://picsum.photos/400/300?random=26'
+          },
+          {
+            date: 'August 2021',
+            title: 'First Date',
+            description: 'Dinner and a long walk through the city...',
+            photo: 'https://picsum.photos/400/300?random=27'
+          },
+          {
+            date: 'December 2023',
+            title: 'The Proposal',
+            description: 'Under the stars at our favorite lookout point...',
+            photo: 'https://picsum.photos/400/300?random=28'
+          }
+        ]
       },
       alignment: { text: 'center', content: 'center', image: 'center' }
     },
@@ -341,14 +381,16 @@ export const rusticWeddingConfig: WeddingPageConfig = {
       }
     },
     {
-      id: 'our-story-timeline',
+      id: 'our-story-rustic',
       type: 'our-story',
       enabled: true,
       order: 1,
       props: {
-        showHowWeMet: false,
-        showProposal: false,
-        showPhotos: false,
+        showHowWeMet: true,
+        showProposal: true,
+        showPhotos: true,
+        howWeMetText: 'Our love story began in my grandmother\'s garden. Maria was helping with the spring planting when David arrived to repair the old greenhouse. Between the roses and the morning glories, something magical happened.',
+        proposalText: 'Under the ancient oak tree where we shared our first picnic, surrounded by fall foliage and golden light, David got down on one knee. It was as natural and beautiful as our love itself.',
         timeline: [
           {
             date: 'Spring 2019',
@@ -369,7 +411,8 @@ export const rusticWeddingConfig: WeddingPageConfig = {
             photo: 'https://picsum.photos/400/300?random=22'
           }
         ]
-      }
+      },
+      alignment: { text: 'left', content: 'center', image: 'center' }
     },
     {
       id: 'countdown-rustic',
