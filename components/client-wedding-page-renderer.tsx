@@ -14,7 +14,11 @@ import {
 } from './wedding-sections'
 import { VariantProvider } from './contexts/variant-context'
 import { SiteConfigProvider, useSiteConfigSafe } from './contexts/site-config-context'
-import { SiteControlPanel } from './ui/site-control-panel'
+import { EditingModeProvider, useEditingModeSafe } from './contexts/editing-mode-context'
+import { CustomizeProvider, useCustomizeSafe } from './contexts/customize-context'
+import { SectionCustomizer } from './ui/section-customizer'
+import { EditingTopBar } from './ui/editing-top-bar'
+import { AddSectionButton } from './ui/add-section-button'
 import { createConfigFromWedding } from '@/lib/wedding-configs'
 
 interface ClientWeddingPageRendererProps {
@@ -33,6 +37,18 @@ function ClientWeddingPageRendererContent({
   showVariantSwitchers = false
 }: ClientWeddingPageRendererProps) {
   const siteConfigContext = useSiteConfigSafe()
+  const editingContext = useEditingModeSafe()
+  const customizeContext = useCustomizeSafe()
+  
+  // Use editing context if available, otherwise fall back to prop
+  const isEditingMode = editingContext?.isEditingMode ?? showVariantSwitchers
+
+  // Handler for adding new sections
+  const handleAddSection = (position: number, sectionType: string) => {
+    if (siteConfigContext) {
+      siteConfigContext.addComponent(sectionType, position, filteredComponents)
+    }
+  }
   // Sort components by order
   const sortedComponents = config.components
     .filter(component => component.enabled)
@@ -60,7 +76,6 @@ function ClientWeddingPageRendererContent({
             imageSize={component.props.imageSize || 'medium'}
             backgroundColor={component.props.backgroundColor}
             showDecorations={component.props.showDecorations !== false}
-            showVariantSwitcher={showVariantSwitchers}
           />
         )
 
@@ -73,7 +88,6 @@ function ClientWeddingPageRendererContent({
             // Pre-populate with wedding story if available
             howWeMetText={component.props.howWeMetText || wedding.story || ""}
             variant={component.props.variant || 'cards'}
-            showVariantSwitcher={showVariantSwitchers}
           />
         )
 
@@ -98,7 +112,6 @@ function ClientWeddingPageRendererContent({
             {...commonProps}
             {...component.props}
             variant={component.props.variant || 'cta'}
-            showVariantSwitcher={showVariantSwitchers}
           />
         )
 
@@ -191,32 +204,58 @@ function ClientWeddingPageRendererContent({
     
     const { config: siteConfig } = siteConfigContext
     
-    return componentsToFilter
+    // Get existing enabled components
+    const existingComponents = componentsToFilter
       .map(component => ({
         ...component,
         enabled: siteConfig.enabledComponents.includes(component.type)
       }))
       .filter(component => component.enabled)
-      .sort((a, b) => a.order - b.order) // Ensure proper ordering
-  }, [appliedConfig, sortedComponents, siteConfigContext?.config.enabledComponents])
+
+    // Create dynamic components from the context
+    const dynamicComponents = siteConfig.dynamicComponents
+      .filter(dynComp => dynComp.enabled)
+      .map(dynComp => ({
+        id: dynComp.id,
+        type: dynComp.type as ComponentConfig['type'],
+        enabled: true,
+        order: dynComp.order,
+        props: {}, // Default empty props
+        alignment: { 
+          text: 'center' as const, 
+          content: 'center' as const, 
+          image: 'center' as const 
+        }
+      }))
+
+    // Combine and sort all components
+    const allComponents = [...existingComponents, ...dynamicComponents]
+    return allComponents.sort((a, b) => a.order - b.order)
+  }, [appliedConfig, sortedComponents, siteConfigContext?.config])
 
   const content = (
     <div className="min-h-screen">
-      {/* Site Control Panel */}
-      {showVariantSwitchers && siteConfigContext && (
-        <SiteControlPanel
-          currentStyle={siteConfigContext.config.style}
-          currentColors={siteConfigContext.config.colors}
-          enabledComponents={siteConfigContext.config.enabledComponents}
-          onStyleChange={siteConfigContext.updateStyle}
-          onColorsChange={siteConfigContext.updateColors}
-          onComponentToggle={siteConfigContext.toggleComponent}
-          onCustomColorChange={siteConfigContext.updateCustomColor}
-        />
-      )}
+      {/* Editing Top Bar */}
+      <EditingTopBar />
       
-      {/* Render filtered components */}
-      {filteredComponents.map(component => renderComponent(component, appliedConfig))}
+      {/* Section Customizer */}
+      <SectionCustomizer />
+      
+      {/* Render components with add buttons after each */}
+      <div>
+        {filteredComponents.map((component, index) => (
+          <React.Fragment key={component.id}>
+            {renderComponent(component, appliedConfig)}
+            
+            {/* Add button after each section */}
+            <AddSectionButton 
+              position={index + 1} 
+              onAddSection={handleAddSection}
+              enabledComponents={siteConfigContext?.config.enabledComponents || []}
+            />
+          </React.Fragment>
+        ))}
+      </div>
     </div>
   )
 
@@ -226,9 +265,13 @@ function ClientWeddingPageRendererContent({
 export function ClientWeddingPageRenderer(props: ClientWeddingPageRendererProps) {
   return (
     <SiteConfigProvider>
-      <VariantProvider>
-        <ClientWeddingPageRendererContent {...props} />
-      </VariantProvider>
+      <EditingModeProvider initialEditingMode={props.showVariantSwitchers}>
+        <CustomizeProvider>
+          <VariantProvider>
+            <ClientWeddingPageRendererContent {...props} />
+          </VariantProvider>
+        </CustomizeProvider>
+      </EditingModeProvider>
     </SiteConfigProvider>
   )
 }

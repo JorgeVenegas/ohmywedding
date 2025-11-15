@@ -1,5 +1,5 @@
 "use client"
-import { Header } from "@/components/header"
+import { WeddingFooter } from "@/components/wedding-footer"
 
 interface GalleryPageProps {
   params: Promise<{ dateId: string; weddingNameId: string }>
@@ -23,8 +23,6 @@ function GalleryPageClient({ dateId, weddingNameId }: { dateId: string; weddingN
 
   return (
     <main className="min-h-screen bg-background">
-      <Header showBackButton backHref={`/${dateId}/${weddingNameId}`} title="Gallery" />
-
       {/* Gallery */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-12">
@@ -45,6 +43,7 @@ function GalleryPageClient({ dateId, weddingNameId }: { dateId: string; weddingN
           ))}
         </div>
       </div>
+      <WeddingFooter />
     </main>
   )
 }

@@ -18,6 +18,7 @@ export interface Wedding {
   ceremony_venue_address: string | null
   reception_venue_name: string | null
   reception_venue_address: string | null
+  page_config: Record<string, any>
   created_at: string
   updated_at: string
 }

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { CheckCircle2 } from "lucide-react"
-import { Header } from "@/components/header"
+import { WeddingFooter } from "@/components/wedding-footer"
 
 interface RSVPPageProps {
   params: Promise<{ dateId: string; weddingNameId: string }>
@@ -67,7 +67,6 @@ function RSVPPageClient({ dateId, weddingNameId }: { dateId: string; weddingName
 
   return (
     <main className="min-h-screen bg-background">
-      <Header showBackButton backHref={`/${dateId}/${weddingNameId}`} title="RSVP" />
 
       {/* Form */}
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -171,6 +170,7 @@ function RSVPPageClient({ dateId, weddingNameId }: { dateId: string; weddingName
           </Card>
         )}
       </div>
+      <WeddingFooter />
     </main>
   )
 }

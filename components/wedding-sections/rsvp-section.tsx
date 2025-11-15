@@ -8,8 +8,10 @@ import {
   BaseRSVPProps,
   CustomQuestion
 } from './rsvp-variants'
-import { VariantSwitcher } from '@/components/ui/variant-switcher'
 import { useComponentVariant } from '@/components/contexts/variant-context'
+import { useCustomizeSafe } from '@/components/contexts/customize-context'
+import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
+import { useEditingModeSafe } from '@/components/contexts/editing-mode-context'
 
 interface RSVPSectionProps extends BaseRSVPProps {
   variant?: 'cta' | 'form'
@@ -30,11 +32,19 @@ export function RSVPSection({
 }: RSVPSectionProps) {
   // Always use the context hook (now safe to call without provider)
   const { currentVariant, setVariant } = useComponentVariant('rsvp')
+  const editingContext = useEditingModeSafe()
+  const customizeContext = useCustomizeSafe()
+  
+  // Get customized configuration if available
+  const customConfig = customizeContext?.getSectionConfig('rsvp') || {}
+  
+  // Use editing context if available, otherwise fall back to prop
+  const shouldShowVariantSwitcher = editingContext?.isEditingMode ?? showVariantSwitcher
   
   // Determine which variant to use
-  let actualVariant: string = embedForm ? 'form' : (variant || 'cta')
+  let actualVariant: string = customConfig.variant || (embedForm ? 'form' : (variant || 'cta'))
   
-  if (showVariantSwitcher && currentVariant) {
+  if (shouldShowVariantSwitcher && currentVariant) {
     actualVariant = currentVariant
   }
 
@@ -56,10 +66,10 @@ export function RSVPSection({
     weddingNameId,
     theme,
     alignment,
-    showMealPreferences,
-    showCustomQuestions,
-    customQuestions,
-    embedForm
+    showMealPreferences: customConfig.showMealPreferences ?? showMealPreferences,
+    showCustomQuestions: customConfig.showCustomQuestions ?? showCustomQuestions,
+    customQuestions: customConfig.customQuestions || customQuestions,
+    embedForm: customConfig.embedForm ?? embedForm
   }
 
   const renderRSVPContent = () => {
@@ -72,17 +82,26 @@ export function RSVPSection({
     }
   }
 
+  const handleEditClick = (sectionId: string, sectionType: string) => {
+    if (customizeContext) {
+      const currentConfig = {
+        variant: actualVariant,
+        showMealPreferences: customConfig.showMealPreferences ?? showMealPreferences,
+        showCustomQuestions: customConfig.showCustomQuestions ?? showCustomQuestions,
+        customQuestions: customConfig.customQuestions || customQuestions,
+        embedForm: customConfig.embedForm ?? embedForm
+      }
+      customizeContext.openCustomizer(sectionId, sectionType, currentConfig)
+    }
+  }
+
   return (
-    <div>
-      {showVariantSwitcher && (
-        <VariantSwitcher
-          componentType="📝 RSVP"
-          currentVariant={actualVariant}
-          variants={rsvpVariants}
-          onVariantChange={setVariant}
-        />
-      )}
+    <EditableSectionWrapper
+      sectionId="rsvp"
+      sectionType="rsvp"
+      onEditClick={handleEditClick}
+    >
       {renderRSVPContent()}
-    </div>
+    </EditableSectionWrapper>
   )
 }

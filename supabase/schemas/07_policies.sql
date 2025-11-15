@@ -13,21 +13,22 @@ alter table "gift_registries" enable row level security;
 alter table "gift_items" enable row level security;
 
 -- Policies for weddings table
-create policy "Wedding owners can view their weddings" on weddings
-  for select using (auth.uid() = owner_id);
 
-create policy "Wedding owners can update their weddings" on weddings
-  for update using (auth.uid() = owner_id);
+-- Public read policy (guests should be able to view all wedding content)
+create policy "Anyone can view wedding content" on weddings
+  for select using (true);
 
-create policy "Wedding owners can delete their weddings" on weddings
-  for delete using (auth.uid() = owner_id);
-
+-- Create policy - anyone can create weddings
 create policy "Anyone can create weddings" on weddings
   for insert with check (true);
 
--- Public read policies for wedding content (guests should be able to view)
-create policy "Anyone can view wedding content" on weddings
-  for select using (true);
+-- Update policies - owners can update their weddings, anyone can update unowned weddings
+create policy "Anyone can update weddings" on weddings
+  for update using (true);
+
+-- Delete policy - only owners can delete their weddings
+create policy "Wedding owners can delete their weddings" on weddings
+  for delete using (auth.uid() = owner_id);
 
 create policy "Anyone can view wedding schedule" on wedding_schedule
   for select using (true);

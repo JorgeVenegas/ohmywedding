@@ -7,8 +7,10 @@ import {
   CountdownCircularVariant,
   BaseCountdownProps
 } from './countdown-variants'
-import { VariantSwitcher } from '@/components/ui/variant-switcher'
 import { useComponentVariant } from '@/components/contexts/variant-context'
+import { useCustomizeSafe } from '@/components/contexts/customize-context'
+import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
+import { useEditingModeSafe } from '@/components/contexts/editing-mode-context'
 
 interface CountdownSectionProps extends BaseCountdownProps {
   variant?: 'classic' | 'minimal' | 'circular'
@@ -28,10 +30,18 @@ export function CountdownSection({
   showVariantSwitcher = true
 }: CountdownSectionProps) {
   const { currentVariant, setVariant } = useComponentVariant('countdown')
+  const editingContext = useEditingModeSafe()
+  const customizeContext = useCustomizeSafe()
   
-  let activeVariant: string = variant || 'classic'
+  // Get customized configuration if available
+  const customConfig = customizeContext?.getSectionConfig('countdown') || {}
   
-  if (showVariantSwitcher && currentVariant) {
+  // Use editing context if available, otherwise fall back to prop
+  const shouldShowVariantSwitcher = editingContext?.isEditingMode ?? showVariantSwitcher
+  
+  let activeVariant: string = customConfig.variant || variant || 'classic'
+  
+  if (shouldShowVariantSwitcher && currentVariant) {
     activeVariant = currentVariant
   }
 
@@ -57,11 +67,11 @@ export function CountdownSection({
     weddingDate,
     theme,
     alignment,
-    showDays,
-    showHours,
-    showMinutes,
-    showSeconds,
-    message
+    showDays: customConfig.showDays ?? showDays,
+    showHours: customConfig.showHours ?? showHours,
+    showMinutes: customConfig.showMinutes ?? showMinutes,
+    showSeconds: customConfig.showSeconds ?? showSeconds,
+    message: customConfig.message || message
   }
 
   const renderCountdownContent = () => {
@@ -76,17 +86,27 @@ export function CountdownSection({
     }
   }
 
+  const handleEditClick = (sectionId: string, sectionType: string) => {
+    if (customizeContext) {
+      const currentConfig = {
+        variant: activeVariant,
+        showDays: customConfig.showDays ?? showDays,
+        showHours: customConfig.showHours ?? showHours,
+        showMinutes: customConfig.showMinutes ?? showMinutes,
+        showSeconds: customConfig.showSeconds ?? showSeconds,
+        message: customConfig.message || message
+      }
+      customizeContext.openCustomizer(sectionId, sectionType, currentConfig)
+    }
+  }
+
   return (
-    <div>
-      {showVariantSwitcher && (
-        <VariantSwitcher
-          componentType="⏰ Countdown"
-          currentVariant={activeVariant}
-          variants={countdownVariants}
-          onVariantChange={setVariant}
-        />
-      )}
+    <EditableSectionWrapper
+      sectionId="countdown"
+      sectionType="countdown"
+      onEditClick={handleEditClick}
+    >
       {renderCountdownContent()}
-    </div>
+    </EditableSectionWrapper>
   )
 }

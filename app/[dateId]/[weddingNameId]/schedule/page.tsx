@@ -1,7 +1,7 @@
 "use client"
 import { Card } from "@/components/ui/card"
 import { Clock, MapPin } from "lucide-react"
-import { Header } from "@/components/header"
+import { WeddingFooter } from "@/components/wedding-footer"
 
 interface SchedulePageProps {
   params: Promise<{ dateId: string; weddingNameId: string }>
@@ -24,7 +24,6 @@ function SchedulePageClient({ dateId, weddingNameId }: { dateId: string; wedding
 
   return (
     <main className="min-h-screen bg-background">
-      <Header showBackButton backHref={`/${dateId}/${weddingNameId}`} title="Schedule" />
 
       {/* Timeline */}
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -58,6 +57,7 @@ function SchedulePageClient({ dateId, weddingNameId }: { dateId: string; wedding
           ))}
         </div>
       </div>
+      <WeddingFooter />
     </main>
   )
 }

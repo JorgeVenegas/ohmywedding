@@ -17,6 +17,7 @@ create table "weddings" (
   "ceremony_venue_address" text,
   "reception_venue_name" text,
   "reception_venue_address" text,
+  "page_config" jsonb default '{}'::jsonb,
   "owner_id" uuid, -- No foreign key constraint to allow guest weddings
   "created_at" timestamp with time zone default now(),
   "updated_at" timestamp with time zone default now(),

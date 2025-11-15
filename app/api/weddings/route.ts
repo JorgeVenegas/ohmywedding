@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { generateWeddingIds } from "@/lib/wedding-id-generator"
+import { createDefaultPageConfig } from "@/lib/page-config"
 import { NextResponse } from "next/server"
 
 export async function POST(request: Request) {
@@ -28,6 +29,15 @@ export async function POST(request: Request) {
       body.weddingDate, // Pass the date string directly to avoid timezone issues
     )
 
+    // Create page configuration from user selections
+    const defaultPageConfig = createDefaultPageConfig()
+    
+    // Use components from the form if provided, otherwise use defaults
+    const pageConfig = {
+      ...defaultPageConfig,
+      components: body.components || defaultPageConfig.components
+    }
+
     // Create wedding record
     const weddingData = {
       date_id: dateId,
@@ -46,6 +56,7 @@ export async function POST(request: Request) {
       ceremony_venue_address: body.venue1Address,
       reception_venue_name: body.venue2Name,
       reception_venue_address: body.venue2Address,
+      page_config: pageConfig,
       owner_id: user?.id || null, // Explicitly set to null if no user
     }
 

@@ -1,7 +1,8 @@
 
   create table "public"."gallery_albums" (
     "id" uuid not null default gen_random_uuid(),
-    "wedding_id" text,
+    "date_id" text not null,
+    "wedding_name_id" text not null,
     "name" text not null,
     "description" text,
     "cover_photo_url" text,
@@ -17,7 +18,8 @@ alter table "public"."gallery_albums" enable row level security;
   create table "public"."gallery_photos" (
     "id" uuid not null default gen_random_uuid(),
     "album_id" uuid,
-    "wedding_id" text,
+    "date_id" text not null,
+    "wedding_name_id" text not null,
     "title" text,
     "description" text,
     "photo_url" text not null,
@@ -34,7 +36,8 @@ alter table "public"."gallery_photos" enable row level security;
   create table "public"."gift_items" (
     "id" uuid not null default gen_random_uuid(),
     "registry_id" uuid,
-    "wedding_id" text,
+    "date_id" text not null,
+    "wedding_name_id" text not null,
     "item_name" text not null,
     "description" text,
     "price" numeric(10,2),
@@ -52,7 +55,8 @@ alter table "public"."gift_items" enable row level security;
 
   create table "public"."gift_registries" (
     "id" uuid not null default gen_random_uuid(),
-    "wedding_id" text,
+    "date_id" text not null,
+    "wedding_name_id" text not null,
     "registry_name" text not null,
     "store_name" text,
     "registry_url" text,
@@ -67,7 +71,8 @@ alter table "public"."gift_registries" enable row level security;
 
   create table "public"."guests" (
     "id" uuid not null default gen_random_uuid(),
-    "wedding_id" text,
+    "date_id" text not null,
+    "wedding_name_id" text not null,
     "name" text not null,
     "email" text not null,
     "attending" text default 'pending'::text,
@@ -84,7 +89,8 @@ alter table "public"."guests" enable row level security;
 
   create table "public"."rsvps" (
     "id" uuid not null default gen_random_uuid(),
-    "wedding_id" text,
+    "date_id" text not null,
+    "wedding_name_id" text not null,
     "guest_name" text not null,
     "guest_email" text not null,
     "attending" text not null,
@@ -100,7 +106,8 @@ alter table "public"."rsvps" enable row level security;
 
   create table "public"."wedding_faqs" (
     "id" uuid not null default gen_random_uuid(),
-    "wedding_id" text,
+    "date_id" text not null,
+    "wedding_name_id" text not null,
     "question" text not null,
     "answer" text not null,
     "display_order" integer default 0,
@@ -114,7 +121,8 @@ alter table "public"."wedding_faqs" enable row level security;
 
   create table "public"."wedding_pages" (
     "id" uuid not null default gen_random_uuid(),
-    "wedding_id" text,
+    "date_id" text not null,
+    "wedding_name_id" text not null,
     "page_type" text not null,
     "title" text not null,
     "content" text,
@@ -130,7 +138,8 @@ alter table "public"."wedding_pages" enable row level security;
 
   create table "public"."wedding_schedule" (
     "id" uuid not null default gen_random_uuid(),
-    "wedding_id" text,
+    "date_id" text not null,
+    "wedding_name_id" text not null,
     "event_name" text not null,
     "event_time" time without time zone not null,
     "event_description" text,
@@ -144,7 +153,8 @@ alter table "public"."wedding_schedule" enable row level security;
 
   create table "public"."weddings" (
     "id" uuid not null default gen_random_uuid(),
-    "wedding_id" text not null,
+    "date_id" text not null,
+    "wedding_name_id" text not null,
     "partner1_first_name" text not null,
     "partner1_last_name" text not null,
     "partner2_first_name" text not null,
@@ -177,37 +187,41 @@ CREATE UNIQUE INDEX gift_registries_pkey ON public.gift_registries USING btree (
 
 CREATE UNIQUE INDEX guests_pkey ON public.guests USING btree (id);
 
-CREATE INDEX idx_gallery_albums_wedding_id ON public.gallery_albums USING btree (wedding_id);
+CREATE INDEX idx_gallery_albums_compound_key ON public.gallery_albums USING btree (date_id, wedding_name_id);
 
 CREATE INDEX idx_gallery_photos_album_id ON public.gallery_photos USING btree (album_id);
 
-CREATE INDEX idx_gallery_photos_wedding_id ON public.gallery_photos USING btree (wedding_id);
+CREATE INDEX idx_gallery_photos_compound_key ON public.gallery_photos USING btree (date_id, wedding_name_id);
+
+CREATE INDEX idx_gift_items_compound_key ON public.gift_items USING btree (date_id, wedding_name_id);
 
 CREATE INDEX idx_gift_items_registry_id ON public.gift_items USING btree (registry_id);
 
-CREATE INDEX idx_gift_items_wedding_id ON public.gift_items USING btree (wedding_id);
+CREATE INDEX idx_gift_registries_compound_key ON public.gift_registries USING btree (date_id, wedding_name_id);
 
-CREATE INDEX idx_gift_registries_wedding_id ON public.gift_registries USING btree (wedding_id);
+CREATE INDEX idx_guests_compound_key ON public.guests USING btree (date_id, wedding_name_id);
 
 CREATE INDEX idx_guests_email ON public.guests USING btree (email);
 
-CREATE INDEX idx_guests_wedding_id ON public.guests USING btree (wedding_id);
+CREATE INDEX idx_rsvps_compound_key ON public.rsvps USING btree (date_id, wedding_name_id);
 
 CREATE INDEX idx_rsvps_email ON public.rsvps USING btree (guest_email);
 
-CREATE INDEX idx_rsvps_wedding_id ON public.rsvps USING btree (wedding_id);
+CREATE INDEX idx_wedding_faqs_compound_key ON public.wedding_faqs USING btree (date_id, wedding_name_id);
 
-CREATE INDEX idx_wedding_faqs_wedding_id ON public.wedding_faqs USING btree (wedding_id);
+CREATE INDEX idx_wedding_pages_compound_key ON public.wedding_pages USING btree (date_id, wedding_name_id);
 
-CREATE INDEX idx_wedding_pages_wedding_id ON public.wedding_pages USING btree (wedding_id);
+CREATE INDEX idx_wedding_schedule_compound_key ON public.wedding_schedule USING btree (date_id, wedding_name_id);
 
-CREATE INDEX idx_wedding_schedule_wedding_id ON public.wedding_schedule USING btree (wedding_id);
+CREATE INDEX idx_weddings_compound_key ON public.weddings USING btree (date_id, wedding_name_id);
+
+CREATE INDEX idx_weddings_date_id ON public.weddings USING btree (date_id);
 
 CREATE INDEX idx_weddings_owner_id ON public.weddings USING btree (owner_id);
 
 CREATE INDEX idx_weddings_wedding_date ON public.weddings USING btree (wedding_date);
 
-CREATE INDEX idx_weddings_wedding_id ON public.weddings USING btree (wedding_id);
+CREATE INDEX idx_weddings_wedding_name_id ON public.weddings USING btree (wedding_name_id);
 
 CREATE UNIQUE INDEX rsvps_pkey ON public.rsvps USING btree (id);
 
@@ -217,9 +231,9 @@ CREATE UNIQUE INDEX wedding_pages_pkey ON public.wedding_pages USING btree (id);
 
 CREATE UNIQUE INDEX wedding_schedule_pkey ON public.wedding_schedule USING btree (id);
 
-CREATE UNIQUE INDEX weddings_pkey ON public.weddings USING btree (id);
+CREATE UNIQUE INDEX weddings_date_id_wedding_name_id_key ON public.weddings USING btree (date_id, wedding_name_id);
 
-CREATE UNIQUE INDEX weddings_wedding_id_key ON public.weddings USING btree (wedding_id);
+CREATE UNIQUE INDEX weddings_pkey ON public.weddings USING btree (id);
 
 alter table "public"."gallery_albums" add constraint "gallery_albums_pkey" PRIMARY KEY using index "gallery_albums_pkey";
 
@@ -241,55 +255,51 @@ alter table "public"."wedding_schedule" add constraint "wedding_schedule_pkey" P
 
 alter table "public"."weddings" add constraint "weddings_pkey" PRIMARY KEY using index "weddings_pkey";
 
-alter table "public"."gallery_albums" add constraint "gallery_albums_wedding_id_fkey" FOREIGN KEY (wedding_id) REFERENCES public.weddings(wedding_id) ON DELETE CASCADE not valid;
+alter table "public"."gallery_albums" add constraint "gallery_albums_date_id_wedding_name_id_fkey" FOREIGN KEY (date_id, wedding_name_id) REFERENCES public.weddings(date_id, wedding_name_id) ON DELETE CASCADE not valid;
 
-alter table "public"."gallery_albums" validate constraint "gallery_albums_wedding_id_fkey";
+alter table "public"."gallery_albums" validate constraint "gallery_albums_date_id_wedding_name_id_fkey";
 
 alter table "public"."gallery_photos" add constraint "gallery_photos_album_id_fkey" FOREIGN KEY (album_id) REFERENCES public.gallery_albums(id) ON DELETE CASCADE not valid;
 
 alter table "public"."gallery_photos" validate constraint "gallery_photos_album_id_fkey";
 
-alter table "public"."gallery_photos" add constraint "gallery_photos_wedding_id_fkey" FOREIGN KEY (wedding_id) REFERENCES public.weddings(wedding_id) ON DELETE CASCADE not valid;
+alter table "public"."gallery_photos" add constraint "gallery_photos_date_id_wedding_name_id_fkey" FOREIGN KEY (date_id, wedding_name_id) REFERENCES public.weddings(date_id, wedding_name_id) ON DELETE CASCADE not valid;
 
-alter table "public"."gallery_photos" validate constraint "gallery_photos_wedding_id_fkey";
+alter table "public"."gallery_photos" validate constraint "gallery_photos_date_id_wedding_name_id_fkey";
+
+alter table "public"."gift_items" add constraint "gift_items_date_id_wedding_name_id_fkey" FOREIGN KEY (date_id, wedding_name_id) REFERENCES public.weddings(date_id, wedding_name_id) ON DELETE CASCADE not valid;
+
+alter table "public"."gift_items" validate constraint "gift_items_date_id_wedding_name_id_fkey";
 
 alter table "public"."gift_items" add constraint "gift_items_registry_id_fkey" FOREIGN KEY (registry_id) REFERENCES public.gift_registries(id) ON DELETE CASCADE not valid;
 
 alter table "public"."gift_items" validate constraint "gift_items_registry_id_fkey";
 
-alter table "public"."gift_items" add constraint "gift_items_wedding_id_fkey" FOREIGN KEY (wedding_id) REFERENCES public.weddings(wedding_id) ON DELETE CASCADE not valid;
+alter table "public"."gift_registries" add constraint "gift_registries_date_id_wedding_name_id_fkey" FOREIGN KEY (date_id, wedding_name_id) REFERENCES public.weddings(date_id, wedding_name_id) ON DELETE CASCADE not valid;
 
-alter table "public"."gift_items" validate constraint "gift_items_wedding_id_fkey";
+alter table "public"."gift_registries" validate constraint "gift_registries_date_id_wedding_name_id_fkey";
 
-alter table "public"."gift_registries" add constraint "gift_registries_wedding_id_fkey" FOREIGN KEY (wedding_id) REFERENCES public.weddings(wedding_id) ON DELETE CASCADE not valid;
+alter table "public"."guests" add constraint "guests_date_id_wedding_name_id_fkey" FOREIGN KEY (date_id, wedding_name_id) REFERENCES public.weddings(date_id, wedding_name_id) ON DELETE CASCADE not valid;
 
-alter table "public"."gift_registries" validate constraint "gift_registries_wedding_id_fkey";
+alter table "public"."guests" validate constraint "guests_date_id_wedding_name_id_fkey";
 
-alter table "public"."guests" add constraint "guests_wedding_id_fkey" FOREIGN KEY (wedding_id) REFERENCES public.weddings(wedding_id) ON DELETE CASCADE not valid;
+alter table "public"."rsvps" add constraint "rsvps_date_id_wedding_name_id_fkey" FOREIGN KEY (date_id, wedding_name_id) REFERENCES public.weddings(date_id, wedding_name_id) ON DELETE CASCADE not valid;
 
-alter table "public"."guests" validate constraint "guests_wedding_id_fkey";
+alter table "public"."rsvps" validate constraint "rsvps_date_id_wedding_name_id_fkey";
 
-alter table "public"."rsvps" add constraint "rsvps_wedding_id_fkey" FOREIGN KEY (wedding_id) REFERENCES public.weddings(wedding_id) ON DELETE CASCADE not valid;
+alter table "public"."wedding_faqs" add constraint "wedding_faqs_date_id_wedding_name_id_fkey" FOREIGN KEY (date_id, wedding_name_id) REFERENCES public.weddings(date_id, wedding_name_id) ON DELETE CASCADE not valid;
 
-alter table "public"."rsvps" validate constraint "rsvps_wedding_id_fkey";
+alter table "public"."wedding_faqs" validate constraint "wedding_faqs_date_id_wedding_name_id_fkey";
 
-alter table "public"."wedding_faqs" add constraint "wedding_faqs_wedding_id_fkey" FOREIGN KEY (wedding_id) REFERENCES public.weddings(wedding_id) ON DELETE CASCADE not valid;
+alter table "public"."wedding_pages" add constraint "wedding_pages_date_id_wedding_name_id_fkey" FOREIGN KEY (date_id, wedding_name_id) REFERENCES public.weddings(date_id, wedding_name_id) ON DELETE CASCADE not valid;
 
-alter table "public"."wedding_faqs" validate constraint "wedding_faqs_wedding_id_fkey";
+alter table "public"."wedding_pages" validate constraint "wedding_pages_date_id_wedding_name_id_fkey";
 
-alter table "public"."wedding_pages" add constraint "wedding_pages_wedding_id_fkey" FOREIGN KEY (wedding_id) REFERENCES public.weddings(wedding_id) ON DELETE CASCADE not valid;
+alter table "public"."wedding_schedule" add constraint "wedding_schedule_date_id_wedding_name_id_fkey" FOREIGN KEY (date_id, wedding_name_id) REFERENCES public.weddings(date_id, wedding_name_id) ON DELETE CASCADE not valid;
 
-alter table "public"."wedding_pages" validate constraint "wedding_pages_wedding_id_fkey";
+alter table "public"."wedding_schedule" validate constraint "wedding_schedule_date_id_wedding_name_id_fkey";
 
-alter table "public"."wedding_schedule" add constraint "wedding_schedule_wedding_id_fkey" FOREIGN KEY (wedding_id) REFERENCES public.weddings(wedding_id) ON DELETE CASCADE not valid;
-
-alter table "public"."wedding_schedule" validate constraint "wedding_schedule_wedding_id_fkey";
-
--- Foreign key constraint removed to allow NULL owner_id for guest weddings
--- alter table "public"."weddings" add constraint "weddings_owner_id_fkey" FOREIGN KEY (owner_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
--- alter table "public"."weddings" validate constraint "weddings_owner_id_fkey";
-
-alter table "public"."weddings" add constraint "weddings_wedding_id_key" UNIQUE using index "weddings_wedding_id_key";
+alter table "public"."weddings" add constraint "weddings_date_id_wedding_name_id_key" UNIQUE using index "weddings_date_id_wedding_name_id_key";
 
 grant delete on table "public"."gallery_albums" to "anon";
 
@@ -726,7 +736,8 @@ using ((is_public = true));
   as permissive
   for all
   to public
-using ((wedding_id IN ( SELECT weddings.wedding_id
+using (((date_id, wedding_name_id) IN ( SELECT weddings.date_id,
+    weddings.wedding_name_id
    FROM public.weddings
   WHERE (weddings.owner_id = auth.uid()))));
 
@@ -746,7 +757,8 @@ using (true);
   as permissive
   for all
   to public
-using ((wedding_id IN ( SELECT weddings.wedding_id
+using (((date_id, wedding_name_id) IN ( SELECT weddings.date_id,
+    weddings.wedding_name_id
    FROM public.weddings
   WHERE (weddings.owner_id = auth.uid()))));
 
@@ -766,7 +778,8 @@ using (true);
   as permissive
   for all
   to public
-using ((wedding_id IN ( SELECT weddings.wedding_id
+using (((date_id, wedding_name_id) IN ( SELECT weddings.date_id,
+    weddings.wedding_name_id
    FROM public.weddings
   WHERE (weddings.owner_id = auth.uid()))));
 
@@ -786,7 +799,8 @@ using (true);
   as permissive
   for all
   to public
-using ((wedding_id IN ( SELECT weddings.wedding_id
+using (((date_id, wedding_name_id) IN ( SELECT weddings.date_id,
+    weddings.wedding_name_id
    FROM public.weddings
   WHERE (weddings.owner_id = auth.uid()))));
 
@@ -824,7 +838,8 @@ using ((is_visible = true));
   as permissive
   for all
   to public
-using ((wedding_id IN ( SELECT weddings.wedding_id
+using (((date_id, wedding_name_id) IN ( SELECT weddings.date_id,
+    weddings.wedding_name_id
    FROM public.weddings
   WHERE (weddings.owner_id = auth.uid()))));
 
@@ -844,7 +859,8 @@ using ((is_enabled = true));
   as permissive
   for all
   to public
-using ((wedding_id IN ( SELECT weddings.wedding_id
+using (((date_id, wedding_name_id) IN ( SELECT weddings.date_id,
+    weddings.wedding_name_id
    FROM public.weddings
   WHERE (weddings.owner_id = auth.uid()))));
 
@@ -864,7 +880,8 @@ using (true);
   as permissive
   for all
   to public
-using ((wedding_id IN ( SELECT weddings.wedding_id
+using (((date_id, wedding_name_id) IN ( SELECT weddings.date_id,
+    weddings.wedding_name_id
    FROM public.weddings
   WHERE (weddings.owner_id = auth.uid()))));
 
@@ -876,6 +893,15 @@ using ((wedding_id IN ( SELECT weddings.wedding_id
   for insert
   to public
 with check (true);
+
+
+
+  create policy "Anyone can update weddings"
+  on "public"."weddings"
+  as permissive
+  for update
+  to public
+using (true);
 
 
 
@@ -892,24 +918,6 @@ using (true);
   on "public"."weddings"
   as permissive
   for delete
-  to public
-using ((auth.uid() = owner_id));
-
-
-
-  create policy "Wedding owners can update their weddings"
-  on "public"."weddings"
-  as permissive
-  for update
-  to public
-using ((auth.uid() = owner_id));
-
-
-
-  create policy "Wedding owners can view their weddings"
-  on "public"."weddings"
-  as permissive
-  for select
   to public
 using ((auth.uid() = owner_id));
 

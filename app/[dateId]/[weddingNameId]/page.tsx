@@ -2,20 +2,24 @@
 
 import { getWeddingByDateAndNameIdClient } from "@/lib/wedding-data-client"
 import { createConfigFromWedding } from "@/lib/wedding-configs"
-import { WeddingPageRenderer } from "@/components/wedding-page-renderer"
-import { Header } from "@/components/header"
-import { notFound } from "next/navigation"
-import { useEffect, useState, use } from "react"
+import { ConfigBasedWeddingRenderer } from "@/components/config-based-wedding-renderer"
+import { WeddingFooter } from "@/components/wedding-footer"
+import { PageConfigProvider } from "@/components/contexts/page-config-context"
+import { notFound, useParams, useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
 import { Wedding } from "@/lib/wedding-data"
 
-interface WeddingPageProps {
-  params: Promise<{ dateId: string; weddingNameId: string }>
-}
-
-export default function WeddingPage({ params }: WeddingPageProps) {
+export default function WeddingPage() {
   const [wedding, setWedding] = useState<Wedding | null>(null)
   const [loading, setLoading] = useState(true)
-  const { dateId, weddingNameId } = use(params)
+  
+  // Extract params using Next.js hooks
+  const routeParams = useParams()
+  const urlSearchParams = useSearchParams()
+  const { dateId, weddingNameId } = routeParams as { dateId: string; weddingNameId: string }
+  
+  // Check for demo mode in search params
+  const isDemoMode = urlSearchParams.get('demo') === 'true'
 
   useEffect(() => {
     async function loadWedding() {
@@ -51,19 +55,17 @@ export default function WeddingPage({ params }: WeddingPageProps) {
   // You can customize the style here: 'classic', 'modern', or 'rustic'
   const config = createConfigFromWedding(wedding, 'modern')
   
-  // Enable variant switchers by default on wedding pages
-  const showVariantSwitchers = true
+  // Enable variant switchers based on demo mode or default to editing enabled
+  const showVariantSwitchers = isDemoMode || true
 
   return (
-    <>
-      <Header />
-      <WeddingPageRenderer 
+    <PageConfigProvider dateId={dateId} weddingNameId={weddingNameId}>
+      <ConfigBasedWeddingRenderer 
         wedding={wedding}
         dateId={dateId}
         weddingNameId={weddingNameId}
-        config={config}
-        showVariantSwitchers={showVariantSwitchers}
       />
-    </>
+      <WeddingFooter />
+    </PageConfigProvider>
   )
 }

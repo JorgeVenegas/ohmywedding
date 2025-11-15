@@ -1,7 +1,7 @@
 "use client"
 import { Card } from "@/components/ui/card"
 import { MapPin, Phone, ParkingCircle } from "lucide-react"
-import { Header } from "@/components/header"
+import { WeddingFooter } from "@/components/wedding-footer"
 
 interface LocationPageProps {
   params: Promise<{ dateId: string; weddingNameId: string }>
@@ -35,7 +35,6 @@ function LocationPageClient({ dateId, weddingNameId }: { dateId: string; wedding
 
   return (
     <main className="min-h-screen bg-background">
-      <Header showBackButton backHref={`/${dateId}/${weddingNameId}`} title="Location" />
 
       {/* Venues */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -80,6 +79,7 @@ function LocationPageClient({ dateId, weddingNameId }: { dateId: string; wedding
           ))}
         </div>
       </div>
+      <WeddingFooter />
     </main>
   )
 }
