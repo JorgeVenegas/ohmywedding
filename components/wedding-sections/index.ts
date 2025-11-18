@@ -8,5 +8,17 @@ export { GallerySection } from './gallery-section'
 export { FAQSection } from './faq-section'
 export { CountdownSection } from './countdown-section'
 
+// Export base section utilities  
+export { 
+  useSectionVariants, 
+  createVariantConfig
+} from './base-section'
+export type { 
+  BaseSectionProps, 
+  VariantOption, 
+  SectionConfig, 
+  SectionComponentProps 
+} from './base-section'
+
 // Re-export types for convenience
 export type { ThemeConfig, AlignmentConfig, ComponentConfig, ComponentType, WeddingPageConfig } from '@/lib/wedding-config'

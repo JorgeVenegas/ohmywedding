@@ -107,3 +107,22 @@ create policy "Wedding owners can manage gift items" on gift_items
       select date_id, wedding_name_id from weddings where owner_id = auth.uid()
     )
   );
+
+-- Storage policies for wedding-images bucket
+-- Note: RLS is already enabled on storage.objects by default
+
+-- Policy: Allow anyone to view wedding images (public read)
+create policy "Anyone can view wedding images" on storage.objects
+  for select using (bucket_id = 'wedding-images');
+
+-- Policy: Allow anonymous users to upload wedding images
+create policy "Allow public uploads to wedding images" on storage.objects
+  for insert with check (bucket_id = 'wedding-images');
+
+-- Policy: Allow users to update their own uploaded images  
+create policy "Users can update wedding images" on storage.objects
+  for update using (bucket_id = 'wedding-images');
+
+-- Policy: Allow users to delete wedding images
+create policy "Users can delete wedding images" on storage.objects
+  for delete using (bucket_id = 'wedding-images');

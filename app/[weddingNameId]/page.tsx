@@ -1,6 +1,6 @@
 "use client"
 
-import { getWeddingByDateAndNameIdClient } from "@/lib/wedding-data-client"
+import { getWeddingByNameIdClient } from "@/lib/wedding-data-client"
 import { createConfigFromWedding } from "@/lib/wedding-configs"
 import { ConfigBasedWeddingRenderer } from "@/components/config-based-wedding-renderer"
 import { WeddingFooter } from "@/components/wedding-footer"
@@ -16,7 +16,7 @@ export default function WeddingPage() {
   // Extract params using Next.js hooks
   const routeParams = useParams()
   const urlSearchParams = useSearchParams()
-  const { dateId, weddingNameId } = routeParams as { dateId: string; weddingNameId: string }
+  const { weddingNameId } = routeParams as { weddingNameId: string }
   
   // Check for demo mode in search params
   const isDemoMode = urlSearchParams.get('demo') === 'true'
@@ -24,7 +24,7 @@ export default function WeddingPage() {
   useEffect(() => {
     async function loadWedding() {
       try {
-        const weddingData = await getWeddingByDateAndNameIdClient(dateId, weddingNameId)
+        const weddingData = await getWeddingByNameIdClient(weddingNameId)
         setWedding(weddingData)
       } catch (error) {
         console.error('Error loading wedding:', error)
@@ -33,7 +33,7 @@ export default function WeddingPage() {
       }
     }
     loadWedding()
-  }, [dateId, weddingNameId])
+  }, [weddingNameId])
 
   if (loading) {
     return (
@@ -59,10 +59,9 @@ export default function WeddingPage() {
   const showVariantSwitchers = isDemoMode || true
 
   return (
-    <PageConfigProvider dateId={dateId} weddingNameId={weddingNameId}>
+    <PageConfigProvider weddingNameId={weddingNameId}>
       <ConfigBasedWeddingRenderer 
         wedding={wedding}
-        dateId={dateId}
         weddingNameId={weddingNameId}
       />
       <WeddingFooter />

@@ -8,9 +8,8 @@ export interface Wedding {
   partner1_last_name: string
   partner2_first_name: string
   partner2_last_name: string
-  wedding_date: string
-  wedding_time: string
-  story: string | null
+  wedding_date: string | null
+  wedding_time: string | null
   primary_color: string
   secondary_color: string
   accent_color: string

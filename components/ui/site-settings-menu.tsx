@@ -76,10 +76,10 @@ export function SiteSettingsMenu({
       <Button
         onClick={() => setIsOpen(!isOpen)}
         variant="outline"
-        className="flex items-center gap-2"
+        className="flex items-center gap-2 h-9 px-3 py-2"
       >
         <Settings className="w-4 h-4" />
-        Site Settings
+        <span className="text-sm font-medium">Site Settings</span>
         <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </Button>
 

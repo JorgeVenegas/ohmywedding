@@ -46,6 +46,7 @@ export function SectionCustomizer() {
           <HeroConfigForm 
             config={sectionConfig} 
             onChange={updateConfig}
+            hasWeddingDate={!!customizeContext.weddingDate}
           />
         )
       case 'countdown':

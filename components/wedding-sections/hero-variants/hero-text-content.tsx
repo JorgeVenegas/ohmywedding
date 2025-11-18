@@ -7,7 +7,6 @@ import { HeroContentProps } from './types'
 
 export function HeroTextContent({
   wedding,
-  dateId,
   weddingNameId,
   theme,
   alignment,
@@ -119,7 +118,7 @@ export function HeroTextContent({
               borderColor: theme?.colors?.primary || '#a86b8f'
             }}
           >
-            <Link href={`/${dateId}/${weddingNameId}/rsvp`}>
+            <Link href={`/${weddingNameId}/rsvp`}>
               RSVP Now
             </Link>
           </Button>
@@ -135,7 +134,7 @@ export function HeroTextContent({
             color: theme?.colors?.secondary || '#8b9d6f'
           }}
         >
-          <Link href={`/${dateId}/${weddingNameId}/schedule`}>
+          <Link href={`/${weddingNameId}/schedule`}>
             View Schedule
           </Link>
         </Button>

@@ -62,6 +62,7 @@ interface SectionSelectorModalProps {
   onSelectSection: (sectionType: string) => void
   position: number
   enabledComponents?: string[]
+  hasWeddingDate?: boolean
 }
 
 export function SectionSelectorModal({ 
@@ -69,14 +70,24 @@ export function SectionSelectorModal({
   onClose, 
   onSelectSection, 
   position,
-  enabledComponents = []
+  enabledComponents = [],
+  hasWeddingDate = false
 }: SectionSelectorModalProps) {
   if (!isOpen) return null
 
-  // Filter out already enabled sections
-  const availableSections = AVAILABLE_SECTIONS.filter(section => 
-    !enabledComponents.includes(section.id)
-  )
+  // Date-dependent sections that require a wedding date
+  const dateDependentSections = ['countdown']
+
+  // Filter out already enabled sections and date-dependent sections if no date
+  const availableSections = AVAILABLE_SECTIONS.filter(section => {
+    // Skip if already enabled
+    if (enabledComponents.includes(section.id)) return false
+    
+    // Skip date-dependent sections if no wedding date is set
+    if (!hasWeddingDate && dateDependentSections.includes(section.id)) return false
+    
+    return true
+  })
 
   const handleSelectSection = (sectionId: string) => {
     onSelectSection(sectionId)

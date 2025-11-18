@@ -23,7 +23,7 @@ export function EditingTopBar({ className = '' }: EditingTopBarProps) {
   const { isEditingMode, toggleEditingMode } = editingContext
 
   return (
-    <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 ${className}`}>
+    <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 ${className}`}>
       {/* Save Configuration Button - only visible in editing mode */}
       {isEditingMode && pageConfigContext && (
         <SaveConfigButton size="sm" />
@@ -45,7 +45,7 @@ export function EditingTopBar({ className = '' }: EditingTopBarProps) {
         <button
           onClick={toggleEditingMode}
           className={`
-            flex items-center gap-2 px-4 py-2 rounded-lg font-medium shadow-lg
+            flex items-center gap-2 h-9 px-3 py-2 rounded-md font-medium shadow-lg
             transition-all duration-200 hover:shadow-xl hover:scale-105
             ${isEditingMode 
               ? 'bg-blue-600 hover:bg-blue-700 text-white' 
@@ -57,12 +57,12 @@ export function EditingTopBar({ className = '' }: EditingTopBarProps) {
           {isEditingMode ? (
             <>
               <Eye className="w-4 h-4" />
-              <span className="text-sm">Preview</span>
+              <span className="text-sm font-medium">Preview</span>
             </>
           ) : (
             <>
               <Edit3 className="w-4 h-4" />
-              <span className="text-sm">Edit</span>
+              <span className="text-sm font-medium">Edit</span>
             </>
           )}
         </button>

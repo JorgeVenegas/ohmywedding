@@ -25,13 +25,11 @@ import { useEditingModeSafe } from './contexts/editing-mode-context'
 
 interface ConfigBasedWeddingRendererProps {
   wedding: Wedding
-  dateId: string
   weddingNameId: string
 }
 
 function ConfigBasedWeddingRendererContent({
   wedding,
-  dateId,
   weddingNameId
 }: ConfigBasedWeddingRendererProps) {
   const { config, isLoading, updateDynamicComponents, updateComponents } = usePageConfig()
@@ -96,7 +94,6 @@ function ConfigBasedWeddingRendererContent({
   const renderComponent = (component: any, index: number) => {
     const commonProps = {
       wedding,
-      dateId,
       weddingNameId,
       theme: config.siteSettings.theme,
       alignment: { text: 'center' }
@@ -120,7 +117,7 @@ function ConfigBasedWeddingRendererContent({
             key={component.id}
             {...commonProps}
             {...component.props}
-            howWeMetText={wedding.story || ""}
+            howWeMetText={component.props.howWeMetText || ""}
           />
         )
         break
@@ -175,7 +172,6 @@ function ConfigBasedWeddingRendererContent({
 
     return (
       <React.Fragment key={component.id}>
-        <AddSectionButton position={index} onAddSection={handleAddSection} />
         <div className="relative group">
           <DeleteSectionButton 
             componentId={component.id}
@@ -184,6 +180,12 @@ function ConfigBasedWeddingRendererContent({
           />
           {renderedComponent}
         </div>
+        <AddSectionButton 
+          position={index + 1} 
+          onAddSection={handleAddSection}
+          enabledComponents={allComponents.map(c => c.type)}
+          hasWeddingDate={!!wedding.wedding_date}
+        />
       </React.Fragment>
     )
   }
@@ -197,13 +199,17 @@ function ConfigBasedWeddingRendererContent({
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">No Components Configured</h2>
             <p className="text-gray-600 mb-4">This wedding page has no components enabled.</p>
-            <AddSectionButton position={0} onAddSection={handleAddSection} />
+            <AddSectionButton 
+              position={0} 
+              onAddSection={handleAddSection}
+              enabledComponents={[]}
+              hasWeddingDate={!!wedding.wedding_date}
+            />
           </div>
         </div>
       ) : (
         <>
           {allComponents.map((component, index) => renderComponent(component, index))}
-          <AddSectionButton position={allComponents.length} onAddSection={handleAddSection} />
         </>
       )}
 
@@ -217,7 +223,7 @@ export function ConfigBasedWeddingRenderer(props: ConfigBasedWeddingRendererProp
     <VariantProvider>
       <EditingModeProvider>
         <SiteConfigProvider>
-          <CustomizeProvider>
+          <CustomizeProvider weddingDate={props.wedding.wedding_date}>
             <ConfigBasedWeddingRendererContent {...props} />
           </CustomizeProvider>
         </SiteConfigProvider>

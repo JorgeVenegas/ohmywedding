@@ -36,8 +36,8 @@ export function SaveConfigButton({ className, variant = 'default', size = 'defau
     if (isSaving) {
       return (
         <>
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          Saving...
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="text-sm font-medium ml-2">Saving...</span>
         </>
       )
     }
@@ -45,8 +45,8 @@ export function SaveConfigButton({ className, variant = 'default', size = 'defau
     if (saveStatus === 'success') {
       return (
         <>
-          <Check className="w-4 h-4 mr-2" />
-          Saved!
+          <Check className="w-4 h-4" />
+          <span className="text-sm font-medium ml-2">Saved!</span>
         </>
       )
     }
@@ -54,16 +54,16 @@ export function SaveConfigButton({ className, variant = 'default', size = 'defau
     if (saveStatus === 'error') {
       return (
         <>
-          <AlertCircle className="w-4 h-4 mr-2" />
-          Error
+          <AlertCircle className="w-4 h-4" />
+          <span className="text-sm font-medium ml-2">Error</span>
         </>
       )
     }
 
     return (
       <>
-        <Save className="w-4 h-4 mr-2" />
-        {hasUnsavedChanges ? 'Save Changes' : 'Save Configuration'}
+        <Save className="w-4 h-4" />
+        <span className="text-sm font-medium ml-2">{hasUnsavedChanges ? 'Save Changes' : 'Save'}</span>
       </>
     )
   }
@@ -81,7 +81,7 @@ export function SaveConfigButton({ className, variant = 'default', size = 'defau
       disabled={isSaving}
       variant={getButtonVariant()}
       size={size}
-      className={className}
+      className={`h-9 px-3 py-2 gap-2 ${className || ''}`}
     >
       {getButtonContent()}
     </Button>

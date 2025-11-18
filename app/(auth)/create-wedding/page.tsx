@@ -1,12 +1,14 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
+import { ImageUpload } from "@/components/ui/image-upload"
+import { WeddingPreview } from "@/components/wedding-preview"
 import { Header } from "@/components/header"
 import { Heart, ChevronDown, ChevronRight, Settings, Calendar, Users, Camera, MessageSquare, HelpCircle, MapPin } from "lucide-react"
 
@@ -29,7 +31,7 @@ export default function CreateWeddingPage() {
     partner2LastName: "",
     weddingDate: "",
     weddingTime: "",
-    hasExistingWedding: false,
+    hasExistingWedding: true,
     primaryColor: "#a86b8f",
     secondaryColor: "#8b9d6f",
     accentColor: "#e8a76a",
@@ -141,6 +143,8 @@ export default function CreateWeddingPage() {
     }
   ])
 
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false)
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type, checked } = e.target as HTMLInputElement
     setFormData((prev) => ({ 
@@ -191,6 +195,16 @@ export default function CreateWeddingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
+  // Memoized component sections for preview to ensure updates are detected
+  const previewComponentSections = useMemo(() => {
+    return componentSections.map(section => ({
+      id: section.id,
+      name: section.name,
+      enabled: section.enabled,
+      props: { ...section.props }
+    }))
+  }, [componentSections])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -229,7 +243,7 @@ export default function CreateWeddingPage() {
       const result = await response.json()
       
       // Redirect to the newly created wedding page
-      window.location.href = `/${result.dateId}/${result.weddingNameId}`
+      window.location.href = `/${result.weddingNameId}`
     } catch (error) {
       console.error('Error creating wedding:', error)
       setSubmitError(error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.')
@@ -241,10 +255,7 @@ export default function CreateWeddingPage() {
   const validateBasicInfo = (): boolean => {
     return !!(
       formData.partner1FirstName.trim() &&
-      formData.partner1LastName.trim() &&
-      formData.partner2FirstName.trim() &&
-      formData.partner2LastName.trim() &&
-      formData.weddingDate
+      formData.partner2FirstName.trim()
     )
   }
 
@@ -284,66 +295,73 @@ export default function CreateWeddingPage() {
             </div>
             
             <div className="space-y-8">
-              {/* Partner 1 */}
+              {/* Partners Side by Side */}
               <div>
-                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
                   <Heart className="w-5 h-5 text-primary" />
-                  Partner 1
+                  Partners
                 </h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">First Name</label>
-                    <Input
-                      name="partner1FirstName"
-                      value={formData.partner1FirstName}
-                      onChange={handleInputChange}
-                      placeholder="e.g., Jorge"
-                      className="border-border"
-                      required
-                    />
+                <div className="grid md:grid-cols-2 gap-8">
+                  {/* His */}
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <h4 className="text-md font-medium text-foreground mb-4 flex items-center justify-center gap-2">
+                        <Heart className="w-4 h-4 text-primary" />
+                        His
+                      </h4>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">First Name</label>
+                      <Input
+                        name="partner1FirstName"
+                        value={formData.partner1FirstName}
+                        onChange={handleInputChange}
+                        placeholder="e.g., Jorge"
+                        className="border-border"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">Last Name</label>
+                      <Input
+                        name="partner1LastName"
+                        value={formData.partner1LastName}
+                        onChange={handleInputChange}
+                        placeholder="e.g., Venegas"
+                        className="border-border"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Last Name</label>
-                    <Input
-                      name="partner1LastName"
-                      value={formData.partner1LastName}
-                      onChange={handleInputChange}
-                      placeholder="e.g., Venegas"
-                      className="border-border"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
 
-              {/* Partner 2 */}
-              <div className="border-t border-border pt-8">
-                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <Heart className="w-5 h-5 text-secondary" />
-                  Partner 2
-                </h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">First Name</label>
-                    <Input
-                      name="partner2FirstName"
-                      value={formData.partner2FirstName}
-                      onChange={handleInputChange}
-                      placeholder="e.g., Yuliana"
-                      className="border-border"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Last Name</label>
-                    <Input
-                      name="partner2LastName"
-                      value={formData.partner2LastName}
-                      onChange={handleInputChange}
-                      placeholder="e.g., Chavez"
-                      className="border-border"
-                      required
-                    />
+                  {/* Hers */}
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <h4 className="text-md font-medium text-foreground mb-4 flex items-center justify-center gap-2">
+                        <Heart className="w-4 h-4 text-secondary" />
+                        Hers
+                      </h4>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">First Name</label>
+                      <Input
+                        name="partner2FirstName"
+                        value={formData.partner2FirstName}
+                        onChange={handleInputChange}
+                        placeholder="e.g., Yuliana"
+                        className="border-border"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">Last Name</label>
+                      <Input
+                        name="partner2LastName"
+                        value={formData.partner2LastName}
+                        onChange={handleInputChange}
+                        placeholder="e.g., Chavez"
+                        className="border-border"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -356,19 +374,19 @@ export default function CreateWeddingPage() {
                 </h3>
                 
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3 mb-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <label htmlFor="hasExistingWedding" className="text-sm font-medium text-foreground">
+                      I already have a wedding date planned
+                    </label>
                     <Switch
                       id="hasExistingWedding"
                       checked={formData.hasExistingWedding}
                       onCheckedChange={(checked) => setFormData(prev => ({ ...prev, hasExistingWedding: checked }))}
                     />
-                    <label htmlFor="hasExistingWedding" className="text-sm font-medium text-foreground">
-                      I already have a wedding date planned
-                    </label>
                   </div>
                   
                   {formData.hasExistingWedding && (
-                    <div className="grid md:grid-cols-2 gap-4 ml-7">
+                    <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">Wedding Date</label>
                         <Input
@@ -455,16 +473,47 @@ export default function CreateWeddingPage() {
             </div>
           </Card>
 
-          {/* Component Sections */}
-          <Card className="p-8 border border-border shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold text-foreground mb-2">Page Components</h2>
-              <p className="text-muted-foreground">Choose which sections to include in your wedding website</p>
+          {/* Advanced Settings Toggle */}
+          <Card className="p-6 border border-border shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  <Settings className="w-5 h-5 text-muted-foreground" />
+                  Advanced Settings
+                </h3>
+                <p className="text-sm text-muted-foreground">Customize page components and layout</p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+                className="transition-transform duration-200 hover:bg-muted/50"
+              >
+                <ChevronDown 
+                  className={`w-4 h-4 transition-transform duration-300 ease-in-out ${
+                    showAdvancedSettings ? 'rotate-180' : 'rotate-0'
+                  }`} 
+                />
+              </Button>
             </div>
+          </Card>
+
+          {/* Component Sections - Hidden by default */}
+          {showAdvancedSettings && (
+            <Card className="p-8 border border-border shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
+              <div className="mb-8">
+                <h2 className="text-3xl font-bold text-foreground mb-2">Page Components</h2>
+                <p className="text-muted-foreground">Choose which sections to include in your wedding website</p>
+              </div>
 
             <div className="space-y-4">
               {componentSections.map((section, index) => {
                 const IconComponent = section.icon
+                const isCountdown = section.id === 'countdown'
+                const isDateRequired = isCountdown
+                const canEnable = !isDateRequired || (formData.hasExistingWedding && formData.weddingDate)
+                
                 return (
                   <div 
                     key={section.id} 
@@ -478,8 +527,9 @@ export default function CreateWeddingPage() {
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-3 flex-1">
                           <Switch
-                            checked={section.enabled}
-                            onCheckedChange={() => toggleComponent(section.id)}
+                            checked={!!(section.enabled && canEnable)}
+                            onCheckedChange={() => canEnable && toggleComponent(section.id)}
+                            disabled={!canEnable}
                           />
                           <IconComponent className={`w-5 h-5 transition-colors duration-200 ${
                             section.enabled ? 'text-primary' : 'text-muted-foreground'
@@ -488,7 +538,14 @@ export default function CreateWeddingPage() {
                             section.enabled ? 'transform scale-105' : ''
                           }`}>
                             <h3 className="font-semibold text-foreground">{section.name}</h3>
-                            <p className="text-sm text-muted-foreground">{section.description}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {section.description}
+                              {isDateRequired && !canEnable && (
+                                <span className="text-amber-600 font-medium ml-1">
+                                  (Requires wedding date)
+                                </span>
+                              )}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -532,12 +589,11 @@ export default function CreateWeddingPage() {
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-foreground mb-2">Hero Image URL (Optional)</label>
-                              <Input
-                                value={section.props.heroImageUrl || ""}
-                                onChange={(e) => updateComponentProp(section.id, 'heroImageUrl', e.target.value)}
-                                placeholder="https://example.com/image.jpg"
-                                className="border-border"
+                              <label className="block text-sm font-medium text-foreground mb-2">Hero Image (Optional)</label>
+                              <ImageUpload
+                                onUpload={(url) => updateComponentProp(section.id, 'heroImageUrl', url)}
+                                currentImageUrl={section.props.heroImageUrl || ""}
+                                placeholder="Upload a beautiful hero image for your wedding website"
                               />
                             </div>
                             <div className="flex flex-wrap gap-6">
@@ -565,19 +621,39 @@ export default function CreateWeddingPage() {
                               <label className="block text-sm font-medium text-foreground mb-2">How We Met</label>
                               <Textarea
                                 value={section.props.howWeMetText || ""}
-                                onChange={(e) => updateComponentProp(section.id, 'howWeMetText', e.target.value)}
+                                onChange={(e) => {
+                                  updateComponentProp(section.id, 'howWeMetText', e.target.value)
+                                  // Auto-enable the section if user starts typing
+                                  if (e.target.value.trim() && !section.enabled) {
+                                    toggleComponent(section.id)
+                                  }
+                                }}
                                 placeholder="Tell your love story... How did you meet?"
                                 className="border-border min-h-24 resize-none"
                               />
+                              <p className="text-xs text-muted-foreground mt-2">
+                                This will appear in the "Our Story" section.
+                                {!section.enabled && <span className="text-amber-600 font-medium"> Enable this section to see it in the preview.</span>}
+                              </p>
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-foreground mb-2">Proposal Story</label>
                               <Textarea
                                 value={section.props.proposalText || ""}
-                                onChange={(e) => updateComponentProp(section.id, 'proposalText', e.target.value)}
+                                onChange={(e) => {
+                                  updateComponentProp(section.id, 'proposalText', e.target.value)
+                                  // Auto-enable the section if user starts typing
+                                  if (e.target.value.trim() && !section.enabled) {
+                                    toggleComponent(section.id)
+                                  }
+                                }}
                                 placeholder="Tell about the proposal... How did it happen?"
                                 className="border-border min-h-24 resize-none"
                               />
+                              <p className="text-xs text-muted-foreground mt-2">
+                                This will appear in the "Our Story" section. 
+                                {!section.enabled && <span className="text-amber-600 font-medium"> Enable this section above to see it in the preview.</span>}
+                              </p>
                             </div>
                           </div>
                         )}
@@ -757,6 +833,7 @@ export default function CreateWeddingPage() {
               })}
             </div>
           </Card>
+          )}
 
           {/* Summary & Submit */}
           <Card className="p-6 border border-primary/20 bg-primary/5 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
@@ -798,6 +875,16 @@ export default function CreateWeddingPage() {
             </Button>
           </Card>
         </form>
+
+        {/* Live Preview */}
+        {(formData.partner1FirstName || formData.partner2FirstName) && (
+          <Card className="p-6 border border-border shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <WeddingPreview 
+              formData={formData}
+              componentSections={previewComponentSections}
+            />
+          </Card>
+        )}
       </div>
     </main>
   )

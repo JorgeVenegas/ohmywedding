@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 
-// GET /api/weddings/[dateId]/[weddingNameId]/config
+// GET /api/weddings/[weddingNameId]/config
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ dateId: string; weddingNameId: string }> }
+  { params }: { params: Promise<{ weddingNameId: string }> }
 ) {
   try {
     const supabase = await createServerSupabaseClient()
-    const { dateId, weddingNameId } = await params
+    const { weddingNameId } = await params
 
-    console.log('GET /api/weddings/config - dateId:', dateId, 'weddingNameId:', weddingNameId)
+    console.log('GET /api/weddings/config - weddingNameId:', weddingNameId)
 
     const { data: wedding, error } = await supabase
       .from('weddings')
       .select('page_config')
-      .eq('date_id', dateId)
       .eq('wedding_name_id', weddingNameId)
       .single()
 
@@ -34,16 +33,16 @@ export async function GET(
   }
 }
 
-// PUT /api/weddings/[dateId]/[weddingNameId]/config
+// PUT /api/weddings/[weddingNameId]/config
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ dateId: string; weddingNameId: string }> }
+  { params }: { params: Promise<{ weddingNameId: string }> }
 ) {
   try {
     const supabase = await createServerSupabaseClient()
-    const { dateId, weddingNameId } = await params
+    const { weddingNameId } = await params
     
-    console.log('PUT /api/weddings/config - dateId:', dateId, 'weddingNameId:', weddingNameId)
+    console.log('PUT /api/weddings/config - weddingNameId:', weddingNameId)
     
     // Debug: Show all weddings
     const { data: allWeddings } = await supabase
@@ -56,7 +55,6 @@ export async function PUT(
     const { data: existingWedding, error: findError } = await supabase
       .from('weddings')
       .select('id, date_id, wedding_name_id, owner_id')
-      .eq('date_id', dateId)
       .eq('wedding_name_id', weddingNameId)
       .single()
     
@@ -80,7 +78,6 @@ export async function PUT(
         page_config: config,
         updated_at: new Date().toISOString()
       })
-      .eq('date_id', dateId)
       .eq('wedding_name_id', weddingNameId)
       .select('id, page_config')
 

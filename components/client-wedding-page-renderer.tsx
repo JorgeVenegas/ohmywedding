@@ -66,7 +66,6 @@ function ClientWeddingPageRendererContent({
           <HeroSection
             key={component.id}
             wedding={wedding}
-            dateId={dateId}
             weddingNameId={weddingNameId}
             {...commonProps}
             {...component.props}
@@ -85,8 +84,7 @@ function ClientWeddingPageRendererContent({
             key={component.id}
             {...commonProps}
             {...component.props}
-            // Pre-populate with wedding story if available
-            howWeMetText={component.props.howWeMetText || wedding.story || ""}
+            howWeMetText={component.props.howWeMetText || ""}
             variant={component.props.variant || 'cards'}
           />
         )
@@ -139,7 +137,7 @@ function ClientWeddingPageRendererContent({
         return (
           <CountdownSection
             key={component.id}
-            weddingDate={wedding.wedding_date}
+            weddingDate={wedding.wedding_date || ''}
             {...commonProps}
             {...component.props}
           />
@@ -252,6 +250,7 @@ function ClientWeddingPageRendererContent({
               position={index + 1} 
               onAddSection={handleAddSection}
               enabledComponents={siteConfigContext?.config.enabledComponents || []}
+              hasWeddingDate={!!wedding.wedding_date}
             />
           </React.Fragment>
         ))}
@@ -266,7 +265,7 @@ export function ClientWeddingPageRenderer(props: ClientWeddingPageRendererProps)
   return (
     <SiteConfigProvider>
       <EditingModeProvider initialEditingMode={props.showVariantSwitchers}>
-        <CustomizeProvider>
+        <CustomizeProvider weddingDate={props.wedding.wedding_date}>
           <VariantProvider>
             <ClientWeddingPageRendererContent {...props} />
           </VariantProvider>

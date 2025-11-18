@@ -1,17 +1,18 @@
 "use client"
 
 import React from 'react'
-import { ThemeConfig, AlignmentConfig } from '@/lib/wedding-config'
 import {
   RSVPCallToActionVariant,
   RSVPFormVariant,
   BaseRSVPProps,
   CustomQuestion
 } from './rsvp-variants'
-import { useComponentVariant } from '@/components/contexts/variant-context'
-import { useCustomizeSafe } from '@/components/contexts/customize-context'
+import { 
+  useSectionVariants, 
+  createVariantConfig, 
+  VariantOption
+} from './base-section'
 import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
-import { useEditingModeSafe } from '@/components/contexts/editing-mode-context'
 
 interface RSVPSectionProps extends BaseRSVPProps {
   variant?: 'cta' | 'form'
@@ -30,25 +31,17 @@ export function RSVPSection({
   variant = 'cta',
   showVariantSwitcher = true
 }: RSVPSectionProps) {
-  // Always use the context hook (now safe to call without provider)
-  const { currentVariant, setVariant } = useComponentVariant('rsvp')
-  const editingContext = useEditingModeSafe()
-  const customizeContext = useCustomizeSafe()
-  
-  // Get customized configuration if available
-  const customConfig = customizeContext?.getSectionConfig('rsvp') || {}
-  
-  // Use editing context if available, otherwise fall back to prop
-  const shouldShowVariantSwitcher = editingContext?.isEditingMode ?? showVariantSwitcher
-  
-  // Determine which variant to use
-  let actualVariant: string = customConfig.variant || (embedForm ? 'form' : (variant || 'cta'))
-  
-  if (shouldShowVariantSwitcher && currentVariant) {
-    actualVariant = currentVariant
-  }
+  // Use standardized section behavior
+  const {
+    activeVariant: actualVariant,
+    customConfig,
+    shouldShowVariantSwitcher,
+    setVariant,
+    handleEditClick
+  } = useSectionVariants('rsvp', 'rsvp', embedForm ? 'form' : 'cta', variant, showVariantSwitcher)
 
-  const rsvpVariants = [
+  // Define variants
+  const rsvpVariants: VariantOption[] = [
     {
       value: 'cta',
       label: 'Call to Action',
@@ -61,19 +54,27 @@ export function RSVPSection({
     }
   ]
 
+  // Create config using standardized helper
+  const config = createVariantConfig(customConfig, {
+    showMealPreferences,
+    showCustomQuestions,
+    customQuestions,
+    embedForm
+  })
+
   const commonProps = {
     dateId,
     weddingNameId,
     theme,
     alignment,
-    showMealPreferences: customConfig.showMealPreferences ?? showMealPreferences,
-    showCustomQuestions: customConfig.showCustomQuestions ?? showCustomQuestions,
-    customQuestions: customConfig.customQuestions || customQuestions,
-    embedForm: customConfig.embedForm ?? embedForm
+    showMealPreferences: config.showMealPreferences ?? true,
+    showCustomQuestions: config.showCustomQuestions ?? false,
+    customQuestions: config.customQuestions || customQuestions,
+    embedForm: config.embedForm ?? embedForm
   }
 
-  const renderRSVPContent = () => {
-    switch (actualVariant) {
+  const renderRSVPContent = (activeVariant: string) => {
+    switch (activeVariant) {
       case 'form':
         return <RSVPFormVariant {...commonProps} />
       case 'cta':
@@ -82,26 +83,22 @@ export function RSVPSection({
     }
   }
 
-  const handleEditClick = (sectionId: string, sectionType: string) => {
-    if (customizeContext) {
-      const currentConfig = {
-        variant: actualVariant,
-        showMealPreferences: customConfig.showMealPreferences ?? showMealPreferences,
-        showCustomQuestions: customConfig.showCustomQuestions ?? showCustomQuestions,
-        customQuestions: customConfig.customQuestions || customQuestions,
-        embedForm: customConfig.embedForm ?? embedForm
-      }
-      customizeContext.openCustomizer(sectionId, sectionType, currentConfig)
-    }
+  const onEditClick = (sectionId: string, sectionType: string) => {
+    handleEditClick(sectionType, {
+      showMealPreferences: config.showMealPreferences ?? showMealPreferences,
+      showCustomQuestions: config.showCustomQuestions ?? showCustomQuestions,
+      customQuestions: config.customQuestions || customQuestions,
+      embedForm: config.embedForm ?? embedForm
+    })
   }
 
   return (
     <EditableSectionWrapper
       sectionId="rsvp"
       sectionType="rsvp"
-      onEditClick={handleEditClick}
+      onEditClick={onEditClick}
     >
-      {renderRSVPContent()}
+      {renderRSVPContent(actualVariant)}
     </EditableSectionWrapper>
   )
 }

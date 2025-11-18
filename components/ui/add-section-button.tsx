@@ -9,9 +9,10 @@ interface AddSectionButtonProps {
   position: number // Position where the section should be inserted
   onAddSection: (position: number, sectionType: string) => void
   enabledComponents?: string[]
+  hasWeddingDate?: boolean
 }
 
-export function AddSectionButton({ position, onAddSection, enabledComponents = [] }: AddSectionButtonProps) {
+export function AddSectionButton({ position, onAddSection, enabledComponents = [], hasWeddingDate = false }: AddSectionButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const editingContext = useEditingModeSafe()
   const isEditingMode = editingContext?.isEditingMode ?? false
@@ -28,7 +29,7 @@ export function AddSectionButton({ position, onAddSection, enabledComponents = [
       <div className="flex justify-center py-6 group">
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-lg transition-all duration-200 opacity-60 group-hover:opacity-100 hover:scale-105"
+          className="flex items-center gap-2 h-9 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-lg transition-all duration-200 opacity-60 group-hover:opacity-100 hover:scale-105"
           title="Add a new section here"
         >
           <Plus className="w-4 h-4" />
@@ -42,6 +43,7 @@ export function AddSectionButton({ position, onAddSection, enabledComponents = [
         onSelectSection={handleSelectSection}
         position={position}
         enabledComponents={enabledComponents}
+        hasWeddingDate={hasWeddingDate}
       />
     </>
   )

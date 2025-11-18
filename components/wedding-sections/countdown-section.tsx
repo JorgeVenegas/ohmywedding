@@ -7,10 +7,12 @@ import {
   CountdownCircularVariant,
   BaseCountdownProps
 } from './countdown-variants'
-import { useComponentVariant } from '@/components/contexts/variant-context'
-import { useCustomizeSafe } from '@/components/contexts/customize-context'
+import { 
+  useSectionVariants, 
+  createVariantConfig, 
+  VariantOption
+} from './base-section'
 import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
-import { useEditingModeSafe } from '@/components/contexts/editing-mode-context'
 
 interface CountdownSectionProps extends BaseCountdownProps {
   variant?: 'classic' | 'minimal' | 'circular'
@@ -29,23 +31,17 @@ export function CountdownSection({
   variant = 'classic',
   showVariantSwitcher = true
 }: CountdownSectionProps) {
-  const { currentVariant, setVariant } = useComponentVariant('countdown')
-  const editingContext = useEditingModeSafe()
-  const customizeContext = useCustomizeSafe()
-  
-  // Get customized configuration if available
-  const customConfig = customizeContext?.getSectionConfig('countdown') || {}
-  
-  // Use editing context if available, otherwise fall back to prop
-  const shouldShowVariantSwitcher = editingContext?.isEditingMode ?? showVariantSwitcher
-  
-  let activeVariant: string = customConfig.variant || variant || 'classic'
-  
-  if (shouldShowVariantSwitcher && currentVariant) {
-    activeVariant = currentVariant
-  }
+  // Use standardized section behavior
+  const {
+    activeVariant,
+    customConfig,
+    shouldShowVariantSwitcher,
+    setVariant,
+    handleEditClick
+  } = useSectionVariants('countdown', 'countdown', 'classic', variant, showVariantSwitcher)
 
-  const countdownVariants = [
+  // Define variants
+  const countdownVariants: VariantOption[] = [
     {
       value: 'classic',
       label: 'Classic Cards',
@@ -63,18 +59,27 @@ export function CountdownSection({
     }
   ]
 
+  // Create config using standardized helper
+  const config = createVariantConfig(customConfig, {
+    showDays,
+    showHours,
+    showMinutes,
+    showSeconds,
+    message
+  })
+
   const commonProps = {
     weddingDate,
     theme,
     alignment,
-    showDays: customConfig.showDays ?? showDays,
-    showHours: customConfig.showHours ?? showHours,
-    showMinutes: customConfig.showMinutes ?? showMinutes,
-    showSeconds: customConfig.showSeconds ?? showSeconds,
-    message: customConfig.message || message
+    showDays: config.showDays ?? true,
+    showHours: config.showHours ?? true,
+    showMinutes: config.showMinutes ?? true,
+    showSeconds: config.showSeconds ?? false,
+    message: config.message || message
   }
 
-  const renderCountdownContent = () => {
+  const renderCountdownContent = (activeVariant: string) => {
     switch (activeVariant) {
       case 'minimal':
         return <CountdownMinimalVariant {...commonProps} />
@@ -86,27 +91,23 @@ export function CountdownSection({
     }
   }
 
-  const handleEditClick = (sectionId: string, sectionType: string) => {
-    if (customizeContext) {
-      const currentConfig = {
-        variant: activeVariant,
-        showDays: customConfig.showDays ?? showDays,
-        showHours: customConfig.showHours ?? showHours,
-        showMinutes: customConfig.showMinutes ?? showMinutes,
-        showSeconds: customConfig.showSeconds ?? showSeconds,
-        message: customConfig.message || message
-      }
-      customizeContext.openCustomizer(sectionId, sectionType, currentConfig)
-    }
+  const onEditClick = (sectionId: string, sectionType: string) => {
+    handleEditClick(sectionType, {
+      showDays: config.showDays ?? showDays,
+      showHours: config.showHours ?? showHours,
+      showMinutes: config.showMinutes ?? showMinutes,
+      showSeconds: config.showSeconds ?? showSeconds,
+      message: config.message || message
+    })
   }
 
   return (
     <EditableSectionWrapper
       sectionId="countdown"
       sectionType="countdown"
-      onEditClick={handleEditClick}
+      onEditClick={onEditClick}
     >
-      {renderCountdownContent()}
+      {renderCountdownContent(activeVariant)}
     </EditableSectionWrapper>
   )
 }

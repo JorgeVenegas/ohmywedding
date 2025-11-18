@@ -44,7 +44,6 @@ export function WeddingPageRenderer({
           <HeroSection
             key={component.id}
             wedding={wedding}
-            dateId={dateId}
             weddingNameId={weddingNameId}
             {...commonProps}
             {...component.props}
@@ -64,8 +63,8 @@ export function WeddingPageRenderer({
             key={component.id}
             {...commonProps}
             {...component.props}
-            // Pre-populate with wedding story if available
-            howWeMetText={component.props.howWeMetText || wedding.story || ""}
+            howWeMetText={component.props.howWeMetText || ""}
+            proposalText={component.props.proposalText || ""}
             variant={component.props.variant || 'cards'}
             showVariantSwitcher={showVariantSwitchers}
           />
@@ -120,7 +119,7 @@ export function WeddingPageRenderer({
         return (
           <CountdownSection
             key={component.id}
-            weddingDate={wedding.wedding_date}
+            weddingDate={wedding.wedding_date || ''}
             {...commonProps}
             {...component.props}
           />

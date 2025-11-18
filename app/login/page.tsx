@@ -17,7 +17,6 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     // TODO: Implement login logic
-    console.log("Login attempt:", { email, password })
     setIsLoading(false)
   }
 

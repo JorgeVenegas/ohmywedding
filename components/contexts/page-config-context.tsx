@@ -26,11 +26,10 @@ const PageConfigContext = createContext<PageConfigContextType | undefined>(undef
 
 interface PageConfigProviderProps {
   children: ReactNode
-  dateId: string
   weddingNameId: string
 }
 
-export function PageConfigProvider({ children, dateId, weddingNameId }: PageConfigProviderProps) {
+export function PageConfigProvider({ children, weddingNameId }: PageConfigProviderProps) {
   const [config, setConfig] = useState<PageConfiguration>(createDefaultPageConfig())
   const [originalConfig, setOriginalConfig] = useState<PageConfiguration>(createDefaultPageConfig())
   const [isLoading, setIsLoading] = useState(true)
@@ -42,12 +41,12 @@ export function PageConfigProvider({ children, dateId, weddingNameId }: PageConf
   // Load configuration on mount
   useEffect(() => {
     loadConfigurationData()
-  }, [dateId, weddingNameId])
+  }, [weddingNameId])
 
   const loadConfigurationData = async () => {
     setIsLoading(true)
     try {
-      const loadedConfig = await loadPageConfiguration(dateId, weddingNameId)
+      const loadedConfig = await loadPageConfiguration(weddingNameId)
       setConfig(loadedConfig)
       setOriginalConfig(JSON.parse(JSON.stringify(loadedConfig))) // Deep copy
     } catch (error) {
@@ -110,7 +109,7 @@ export function PageConfigProvider({ children, dateId, weddingNameId }: PageConf
   const saveConfiguration = async (): Promise<{ success: boolean; message?: string }> => {
     setIsSaving(true)
     try {
-      const result = await savePageConfiguration(dateId, weddingNameId, config)
+      const result = await savePageConfiguration(weddingNameId, config)
       if (result.success) {
         setOriginalConfig(JSON.parse(JSON.stringify(config))) // Update original config
       }

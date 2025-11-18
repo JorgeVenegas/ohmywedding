@@ -1,6 +1,25 @@
 import { createClient } from "@/lib/supabase-client"
 import { Wedding } from "./wedding-data"
 
+export async function getWeddingByNameIdClient(weddingNameId: string): Promise<Wedding | null> {
+  const supabase = createClient()
+  
+  // Decode the wedding name ID in case it's URL encoded
+  const decodedWeddingNameId = decodeURIComponent(weddingNameId)
+  
+  const { data, error } = await supabase
+    .from('weddings')
+    .select('*')
+    .eq('wedding_name_id', decodedWeddingNameId)
+    .single()
+
+  if (error || !data) {
+    return null
+  }
+
+  return data as Wedding
+}
+
 export async function getWeddingByDateAndNameIdClient(dateId: string, weddingNameId: string): Promise<Wedding | null> {
   const supabase = createClient()
   

@@ -6,12 +6,13 @@ import {
   OurStoryCardsVariant,
   OurStoryMinimalVariant,
   BaseOurStoryProps,
-  TimelineEvent
 } from './our-story-variants'
-import { useComponentVariant } from '@/components/contexts/variant-context'
-import { useCustomizeSafe } from '@/components/contexts/customize-context'
+import { 
+  useSectionVariants, 
+  createVariantConfig, 
+  VariantOption
+} from './base-section'
 import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
-import { useEditingModeSafe } from '@/components/contexts/editing-mode-context'
 
 interface OurStorySectionProps extends BaseOurStoryProps {
   variant?: 'timeline' | 'cards' | 'minimal'
@@ -31,32 +32,17 @@ export function OurStorySection({
   variant = 'cards',
   showVariantSwitcher = true
 }: OurStorySectionProps) {
-  // Always use the context hook (now safe to call without provider)
-  const { currentVariant, setVariant } = useComponentVariant('ourStory')
-  const editingContext = useEditingModeSafe()
-  const customizeContext = useCustomizeSafe()
-  
-  // Get customized configuration if available
-  const customConfig = customizeContext?.getSectionConfig('ourStory') || {}
-  
-  const hasContent = (customConfig.showHowWeMet ?? showHowWeMet) || 
-                    (customConfig.showProposal ?? showProposal) || 
-                    ((customConfig.showPhotos ?? showPhotos) && (customConfig.photos || photos).length > 0) || 
-                    timeline.length > 0
+  // Use standardized section behavior
+  const {
+    activeVariant,
+    customConfig,
+    shouldShowVariantSwitcher,
+    setVariant,
+    handleEditClick
+  } = useSectionVariants('ourStory', 'our-story', 'cards', variant, showVariantSwitcher)
 
-  if (!hasContent) return null
-
-  // Use editing context if available, otherwise fall back to prop
-  const shouldShowVariantSwitcher = editingContext?.isEditingMode ?? showVariantSwitcher
-  
-  // Determine which variant to use
-  let activeVariant: string = customConfig.variant || variant || 'cards'
-  
-  if (shouldShowVariantSwitcher && currentVariant) {
-    activeVariant = currentVariant
-  }
-
-  const storyVariants = [
+  // Define variants
+  const storyVariants: VariantOption[] = [
     {
       value: 'cards',
       label: 'Cards Layout',
@@ -74,19 +60,29 @@ export function OurStorySection({
     }
   ]
 
+  // Create config using standardized helper
+  const config = createVariantConfig(customConfig, {
+    showHowWeMet,
+    showProposal,
+    showPhotos,
+    howWeMetText,
+    proposalText,
+    photos
+  })
+
   const commonProps = {
     theme,
     alignment,
-    showHowWeMet: customConfig.showHowWeMet ?? showHowWeMet,
-    showProposal: customConfig.showProposal ?? showProposal,
-    showPhotos: customConfig.showPhotos ?? showPhotos,
-    howWeMetText: customConfig.howWeMetText || howWeMetText,
-    proposalText: customConfig.proposalText || proposalText,
-    photos: customConfig.photos || photos,
+    showHowWeMet: config.showHowWeMet ?? true,
+    showProposal: config.showProposal ?? true,
+    showPhotos: config.showPhotos ?? true,
+    howWeMetText: config.howWeMetText || howWeMetText,
+    proposalText: config.proposalText || proposalText,
+    photos: config.photos || photos,
     timeline
   }
 
-  const renderStoryContent = () => {
+  const renderStoryContent = (activeVariant: string) => {
     switch (activeVariant) {
       case 'timeline':
         return <OurStoryTimelineVariant {...commonProps} />
@@ -98,28 +94,24 @@ export function OurStorySection({
     }
   }
 
-  const handleEditClick = (sectionId: string, sectionType: string) => {
-    if (customizeContext) {
-      const currentConfig = {
-        variant: activeVariant,
-        showHowWeMet: customConfig.showHowWeMet ?? showHowWeMet,
-        showProposal: customConfig.showProposal ?? showProposal,
-        showPhotos: customConfig.showPhotos ?? showPhotos,
-        howWeMetText: customConfig.howWeMetText || howWeMetText,
-        proposalText: customConfig.proposalText || proposalText,
-        photos: customConfig.photos || photos
-      }
-      customizeContext.openCustomizer(sectionId, sectionType, currentConfig)
-    }
+  const onEditClick = (sectionId: string, sectionType: string) => {
+    handleEditClick(sectionType, {
+      showHowWeMet: config.showHowWeMet ?? showHowWeMet,
+      showProposal: config.showProposal ?? showProposal,
+      showPhotos: config.showPhotos ?? showPhotos,
+      howWeMetText: config.howWeMetText || howWeMetText,
+      proposalText: config.proposalText || proposalText,
+      photos: config.photos || photos
+    })
   }
 
   return (
     <EditableSectionWrapper
       sectionId="our-story"
       sectionType="our-story"
-      onEditClick={handleEditClick}
+      onEditClick={onEditClick}
     >
-      {renderStoryContent()}
+      {renderStoryContent(activeVariant)}
     </EditableSectionWrapper>
   )
 }

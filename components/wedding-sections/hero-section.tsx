@@ -1,7 +1,6 @@
 "use client"
 
 import React from 'react'
-import { ThemeConfig, AlignmentConfig } from '@/lib/wedding-config'
 import { type Wedding } from '@/lib/wedding-data'
 import { 
   HeroBackgroundVariant,
@@ -10,9 +9,12 @@ import {
   HeroMinimalVariant,
   BaseHeroProps
 } from './hero-variants'
-import { useComponentVariant } from '@/components/contexts/variant-context'
-import { useEditingModeSafe } from '@/components/contexts/editing-mode-context'
-import { useCustomizeSafe } from '@/components/contexts/customize-context'
+import { 
+  useSectionVariants, 
+  createVariantConfig, 
+  SectionComponentProps,
+  VariantOption
+} from './base-section'
 import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
 
 interface HeroSectionProps extends BaseHeroProps {
@@ -28,7 +30,6 @@ interface HeroSectionProps extends BaseHeroProps {
 
 export function HeroSection({
   wedding,
-  dateId,
   weddingNameId,
   theme,
   alignment,
@@ -46,45 +47,17 @@ export function HeroSection({
   textAlignment = 'center',
   showVariantSwitcher = true
 }: HeroSectionProps) {
-  // Always use the context hook (now safe to call without provider)
-  const { currentVariant, setVariant } = useComponentVariant('hero')
-  const editingContext = useEditingModeSafe()
-  const customizeContext = useCustomizeSafe()
-  
-  // Get customized configuration if available
-  const customConfig = customizeContext?.getSectionConfig('hero') || {}
-  
-  // Use editing context if available, otherwise fall back to prop
-  const shouldShowVariantSwitcher = editingContext?.isEditingMode ?? showVariantSwitcher
-  
-  // Create modified alignment object with custom text alignment
-  const effectiveAlignment = {
-    ...alignment,
-    text: customConfig.textAlignment || textAlignment || alignment?.text || 'center'
-  }
-  
-  // Determine which variant to use - prioritize custom config over variant context
-  let heroVariant: string
-  
-  if (customConfig.variant) {
-    // Use customize context variant (highest priority)
-    heroVariant = customConfig.variant
-  } else if (shouldShowVariantSwitcher && currentVariant) {
-    // Use variant context if no customize config and editing mode
-    heroVariant = currentVariant
-  } else if (variant) {
-    // Use prop variant
-    heroVariant = variant
-  } else {
-    // Fallback variant selection based on alignment
-    heroVariant = alignment?.imagePosition === 'split-left' || alignment?.imagePosition === 'split-right' 
-      ? 'side-by-side' 
-      : alignment?.imagePosition === 'fullscreen' || alignment?.imagePosition === 'overlay' 
-      ? 'background'
-      : 'background'
-  }
+  // Use standardized section behavior
+  const {
+    activeVariant: heroVariant,
+    customConfig,
+    shouldShowVariantSwitcher,
+    setVariant,
+    handleEditClick
+  } = useSectionVariants('hero', 'hero', 'background', variant, showVariantSwitcher)
 
-  const heroVariants = [
+  // Define variants
+  const heroVariants: VariantOption[] = [
     {
       value: 'background',
       label: 'Background Hero',
@@ -107,84 +80,93 @@ export function HeroSection({
     }
   ]
 
+  // Create modified alignment object with custom text alignment
+  const effectiveAlignment = {
+    ...alignment,
+    text: customConfig.textAlignment || textAlignment || alignment?.text || 'center'
+  }
+
+  // Create config using standardized helper
+  const config = createVariantConfig(customConfig, {
+    showTagline,
+    tagline,
+    showCountdown,
+    showRSVPButton,
+    heroImageUrl,
+    imagePosition,
+    frameStyle,
+    imageSize,
+    backgroundColor,
+    showDecorations,
+    textAlignment
+  })
+
   const commonProps = {
     wedding,
-    dateId,
     weddingNameId,
     theme,
     alignment: effectiveAlignment,
-    showTagline: customConfig.showTagline ?? showTagline ?? true,
-    tagline: customConfig.tagline || tagline || "Join us as we tie the knot!",
-    showCountdown: customConfig.showCountdown ?? showCountdown ?? true,
-    showRSVPButton: customConfig.showRSVPButton ?? showRSVPButton ?? true,
-    heroImageUrl: customConfig.heroImageUrl || heroImageUrl || 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2387&q=80'
+    showTagline: config.showTagline ?? true,
+    tagline: config.tagline || "Join us as we tie the knot!",
+    showCountdown: config.showCountdown ?? true,
+    showRSVPButton: config.showRSVPButton ?? true,
+    heroImageUrl: config.heroImageUrl || 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2387&q=80'
   }
 
-  const renderHeroContent = () => {
-    switch (heroVariant) {
+  const renderHeroContent = (activeVariant: string) => {
+    switch (activeVariant) {
       case 'side-by-side':
         return (
           <HeroSideBySideVariant
             {...commonProps}
-            imagePosition={customConfig.imagePosition || (alignment?.imagePosition === 'split-right' ? 'right' : imagePosition)}
+            imagePosition={config.imagePosition || (alignment?.imagePosition === 'split-right' ? 'right' : 'left')}
           />
         )
-
       case 'framed':
         return (
           <HeroFramedVariant
             {...commonProps}
-            frameStyle={customConfig.frameStyle || frameStyle}
-            imageSize={customConfig.imageSize || imageSize}
+            frameStyle={config.frameStyle || 'circular'}
+            imageSize={config.imageSize || 'medium'}
           />
         )
-
       case 'minimal':
         return (
           <HeroMinimalVariant
             {...commonProps}
-            backgroundColor={customConfig.backgroundColor || backgroundColor}
-            showDecorations={customConfig.showDecorations ?? showDecorations}
+            backgroundColor={config.backgroundColor}
+            showDecorations={config.showDecorations ?? true}
           />
         )
-
       case 'background':
       default:
-        return (
-          <HeroBackgroundVariant
-            {...commonProps}
-          />
-        )
+        return <HeroBackgroundVariant {...commonProps} />
     }
   }
 
-  const handleEditClick = (sectionId: string, sectionType: string) => {
-    if (customizeContext) {
-      const currentConfig = {
-        variant: heroVariant,
-        imagePosition: customConfig.imagePosition || (alignment?.imagePosition === 'split-right' ? 'right' : imagePosition),
-        frameStyle: customConfig.frameStyle || frameStyle,
-        imageSize: customConfig.imageSize || imageSize,
-        backgroundColor: customConfig.backgroundColor || backgroundColor,
-        showDecorations: customConfig.showDecorations ?? showDecorations,
-        textAlignment: customConfig.textAlignment || textAlignment,
-        showTagline: customConfig.showTagline ?? showTagline,
-        tagline: customConfig.tagline || tagline,
-        showCountdown: customConfig.showCountdown ?? showCountdown,
-        showRSVPButton: customConfig.showRSVPButton ?? showRSVPButton,
-        heroImageUrl: customConfig.heroImageUrl || heroImageUrl
-      }
-      customizeContext.openCustomizer(sectionId, sectionType, currentConfig)
-    }
+  const onEditClick = (sectionId: string, sectionType: string) => {
+    handleEditClick(sectionType, {
+      imagePosition: config.imagePosition || (alignment?.imagePosition === 'split-right' ? 'right' : imagePosition),
+      frameStyle: config.frameStyle || frameStyle,
+      imageSize: config.imageSize || imageSize,
+      backgroundColor: config.backgroundColor || backgroundColor,
+      showDecorations: config.showDecorations ?? showDecorations,
+      textAlignment: config.textAlignment || textAlignment,
+      showTagline: config.showTagline ?? showTagline,
+      tagline: config.tagline || tagline,
+      showCountdown: config.showCountdown ?? showCountdown,
+      showRSVPButton: config.showRSVPButton ?? showRSVPButton,
+      heroImageUrl: config.heroImageUrl || heroImageUrl
+    })
   }
 
   return (
     <EditableSectionWrapper
       sectionId="hero"
       sectionType="hero"
-      onEditClick={handleEditClick}
+      onEditClick={onEditClick}
     >
-      {renderHeroContent()}
+      {renderHeroContent(heroVariant)}
     </EditableSectionWrapper>
   )
 }

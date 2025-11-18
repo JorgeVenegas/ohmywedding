@@ -122,9 +122,9 @@ export const mergeWithDefaultConfig = (savedConfig: Partial<PageConfiguration>):
 }
 
 // API functions for configuration management
-export const loadPageConfiguration = async (dateId: string, weddingNameId: string): Promise<PageConfiguration> => {
+export const loadPageConfiguration = async (weddingNameId: string): Promise<PageConfiguration> => {
   try {
-    const response = await fetch(`/api/weddings/${dateId}/${weddingNameId}/config`)
+    const response = await fetch(`/api/weddings/${weddingNameId}/config`)
     
     if (!response.ok) {
       throw new Error('Failed to load configuration')
@@ -139,7 +139,6 @@ export const loadPageConfiguration = async (dateId: string, weddingNameId: strin
 }
 
 export const savePageConfiguration = async (
-  dateId: string, 
   weddingNameId: string, 
   config: PageConfiguration
 ): Promise<{ success: boolean; message?: string }> => {
@@ -149,7 +148,7 @@ export const savePageConfiguration = async (
       lastModified: new Date().toISOString()
     }
     
-    const response = await fetch(`/api/weddings/${dateId}/${weddingNameId}/config`, {
+    const response = await fetch(`/api/weddings/${weddingNameId}/config`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'

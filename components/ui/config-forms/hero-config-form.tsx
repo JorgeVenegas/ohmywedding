@@ -21,9 +21,10 @@ interface HeroConfigFormProps {
     heroImageUrl?: string
   }
   onChange: (key: string, value: any) => void
+  hasWeddingDate?: boolean
 }
 
-export function HeroConfigForm({ config, onChange }: HeroConfigFormProps) {
+export function HeroConfigForm({ config, onChange, hasWeddingDate = true }: HeroConfigFormProps) {
   const variants = [
     { value: 'background', label: 'Background Hero', description: 'Fullscreen background with overlay text' },
     { value: 'side-by-side', label: 'Side by Side', description: 'Split layout with image and content' },
@@ -235,12 +236,20 @@ export function HeroConfigForm({ config, onChange }: HeroConfigFormProps) {
         )}
 
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-gray-700">
-            Show Countdown
-          </label>
+          <div className="flex-1">
+            <label className="text-sm font-medium text-gray-700">
+              Show Countdown
+            </label>
+            {!hasWeddingDate && (
+              <p className="text-xs text-gray-500 mt-0.5">
+                Requires a wedding date to be set
+              </p>
+            )}
+          </div>
           <Switch
-            checked={config.showCountdown ?? true}
+            checked={hasWeddingDate && (config.showCountdown ?? true)}
             onCheckedChange={(checked) => onChange('showCountdown', checked)}
+            disabled={!hasWeddingDate}
           />
         </div>
 
