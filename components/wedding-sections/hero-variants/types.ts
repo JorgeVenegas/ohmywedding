@@ -3,6 +3,7 @@ import { type Wedding } from '@/lib/wedding-data'
 
 export interface BaseHeroProps {
   wedding: Wedding
+  dateId: string
   weddingNameId: string
   theme?: Partial<ThemeConfig>
   alignment?: Partial<AlignmentConfig>
@@ -17,6 +18,7 @@ export interface BaseHeroProps {
 
 export interface HeroContentProps {
   wedding: Wedding
+  dateId: string
   weddingNameId: string
   theme?: Partial<ThemeConfig>
   alignment?: Partial<AlignmentConfig>

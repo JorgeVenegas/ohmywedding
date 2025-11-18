@@ -3,6 +3,9 @@ import { generateWeddingIds } from "@/lib/wedding-id-generator"
 import { createDefaultPageConfig } from "@/lib/page-config"
 import { NextResponse } from "next/server"
 
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function POST(request: Request) {
   try {
     const supabase = await createServerSupabaseClient()

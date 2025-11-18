@@ -94,6 +94,7 @@ function ConfigBasedWeddingRendererContent({
   const renderComponent = (component: any, index: number) => {
     const commonProps = {
       wedding,
+      dateId: wedding.date_id,
       weddingNameId,
       theme: config.siteSettings.theme,
       alignment: { text: 'center' }

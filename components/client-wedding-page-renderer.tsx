@@ -56,6 +56,7 @@ function ClientWeddingPageRendererContent({
 
   const renderComponent = (component: ComponentConfig, configToUse = config) => {
     const commonProps = {
+      dateId,
       theme: { ...configToUse.theme, ...component.theme },
       alignment: component.alignment
     }
@@ -94,7 +95,6 @@ function ClientWeddingPageRendererContent({
           <EventDetailsSection
             key={component.id}
             wedding={wedding}
-            dateId={dateId}
             weddingNameId={weddingNameId}
             {...commonProps}
             {...component.props}
@@ -105,7 +105,6 @@ function ClientWeddingPageRendererContent({
         return (
           <RSVPSection
             key={component.id}
-            dateId={dateId}
             weddingNameId={weddingNameId}
             {...commonProps}
             {...component.props}
@@ -117,7 +116,6 @@ function ClientWeddingPageRendererContent({
         return (
           <GallerySection
             key={component.id}
-            dateId={dateId}
             weddingNameId={weddingNameId}
             {...commonProps}
             {...component.props}

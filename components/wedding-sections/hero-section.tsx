@@ -31,6 +31,7 @@ interface HeroSectionProps extends BaseHeroProps {
 export function HeroSection({
   wedding,
   weddingNameId,
+  dateId,
   theme,
   alignment,
   showTagline = true,
@@ -104,6 +105,7 @@ export function HeroSection({
   const commonProps = {
     wedding,
     weddingNameId,
+    dateId,
     theme,
     alignment: effectiveAlignment,
     showTagline: config.showTagline ?? true,
