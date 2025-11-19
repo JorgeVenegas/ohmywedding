@@ -30,19 +30,11 @@ export interface PageConfiguration {
     }
   }
   
-  // Component ordering and visibility
+  // All components - single source of truth for ordering, visibility, and configuration
   components: Array<{
     id: string
     type: string
     enabled: boolean
-    order: number
-    props?: Record<string, any>
-  }>
-  
-  // Dynamic components added by user
-  dynamicComponents: Array<{
-    id: string
-    type: string
     order: number
     props?: Record<string, any>
   }>
@@ -77,14 +69,27 @@ export const createDefaultPageConfig = (): PageConfiguration => ({
   },
   components: [
     { id: 'hero', type: 'hero', enabled: true, order: 0 },
-    { id: 'our-story', type: 'our-story', enabled: true, order: 1 },
+    { 
+      id: 'our-story', 
+      type: 'our-story', 
+      enabled: false, 
+      order: 1,
+      props: {
+        variant: 'cards',
+        howWeMetText: 'Our love story began in the most unexpected way. From the moment we met, we knew there was something special between us. What started as a chance encounter blossomed into a beautiful friendship, and eventually, a love that we knew would last forever.',
+        proposalText: 'The proposal was a magical moment we\'ll cherish forever. Surrounded by the beauty of nature and the warmth of our love, the question was asked and answered with tears of joy. It was the perfect beginning to our next chapter together.',
+        showHowWeMet: true,
+        showProposal: true,
+        showPhotos: false,
+        photos: []
+      }
+    },
     { id: 'event-details', type: 'event-details', enabled: true, order: 2 },
     { id: 'countdown', type: 'countdown', enabled: true, order: 3 },
     { id: 'gallery', type: 'gallery', enabled: true, order: 4 },
     { id: 'rsvp', type: 'rsvp', enabled: true, order: 5 },
     { id: 'faq', type: 'faq', enabled: false, order: 6 }
   ],
-  dynamicComponents: [],
   version: '1.0.0',
   lastModified: new Date().toISOString()
 })
@@ -116,8 +121,7 @@ export const mergeWithDefaultConfig = (savedConfig: Partial<PageConfiguration>):
         }
       }
     },
-    components: savedConfig.components || defaultConfig.components,
-    dynamicComponents: savedConfig.dynamicComponents || defaultConfig.dynamicComponents
+    components: savedConfig.components || defaultConfig.components
   }
 }
 

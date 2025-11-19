@@ -32,7 +32,7 @@ function ConfigBasedWeddingRendererContent({
   wedding,
   weddingNameId
 }: ConfigBasedWeddingRendererProps) {
-  const { config, isLoading, updateDynamicComponents, updateComponents } = usePageConfig()
+  const { config, isLoading, updateComponents } = usePageConfig()
   const siteConfigContext = useSiteConfigSafe()
   const editingContext = useEditingModeSafe()
 
@@ -48,47 +48,120 @@ function ConfigBasedWeddingRendererContent({
   }
 
   // Only render enabled components from the page configuration
-  const enabledComponents = config.components
+  const allComponents = config.components
     .filter(component => component.enabled)
-    .sort((a, b) => a.order - b.order)
-
-  // Merge with dynamic components
-  const dynamicComponents = config.dynamicComponents || []
-  const allComponents = [...enabledComponents, ...dynamicComponents]
     .sort((a, b) => a.order - b.order)
 
   // Handler for adding new sections
   const handleAddSection = (position: number, sectionType: string) => {
-    const newComponent = {
-      id: `${sectionType}-${Date.now()}`,
-      type: sectionType,
-      order: position + 0.5, // Insert between positions
-      props: {}
+    console.log('Adding section:', sectionType, 'at position:', position)
+    
+    // Check if the component already exists in the array
+    const existingComponent = config.components.find(comp => comp.type === sectionType)
+    
+    // Build the new list of enabled components in the correct order
+    const newEnabledComponents = [...allComponents]
+    
+    if (existingComponent && !existingComponent.enabled) {
+      // Component exists but is disabled, enable it and insert at position
+      newEnabledComponents.splice(position, 0, { ...existingComponent, enabled: true })
+    } else if (!existingComponent) {
+      // Component doesn't exist, create a new one and insert at position
+      const newComponent = {
+        id: `${sectionType}-${Date.now()}`,
+        type: sectionType,
+        enabled: true,
+        order: 0, // Will be set below
+        props: getDefaultPropsForSection(sectionType)
+      }
+      newEnabledComponents.splice(position, 0, newComponent)
+    } else {
+      // Component already exists and is enabled, do nothing
+      console.log('Component already enabled')
+      return
     }
     
-    const updatedDynamicComponents = [...dynamicComponents, newComponent]
-    updateDynamicComponents(updatedDynamicComponents)
+    // Reassign orders sequentially based on position in array
+    const reorderedEnabled = newEnabledComponents.map((comp, idx) => ({
+      ...comp,
+      enabled: true,
+      order: idx
+    }))
+    
+    // Merge with disabled components (keep them but don't change their order)
+    const disabledComponents = config.components.filter(comp => 
+      !comp.enabled && comp.type !== sectionType
+    )
+    
+    const updatedComponents = [...reorderedEnabled, ...disabledComponents]
+    
+    console.log('Updated components:', updatedComponents)
+    updateComponents(updatedComponents)
+  }
+  
+  // Helper function to get default props for a section type
+  const getDefaultPropsForSection = (sectionType: string): Record<string, any> => {
+    switch (sectionType) {
+      case 'hero':
+        return {
+          showCoverImage: false,
+          showTagline: true,
+          tagline: 'Join us as we tie the knot!',
+          showCountdown: true,
+          showRSVPButton: true
+        }
+      case 'our-story':
+        return {
+          variant: 'cards',
+          howWeMetText: 'Our love story began in the most unexpected way...',
+          proposalText: 'The proposal was a magical moment...',
+          showHowWeMet: true,
+          showProposal: true,
+          showPhotos: false
+        }
+      case 'countdown':
+        return {
+          showDays: true,
+          showHours: true,
+          showMinutes: true,
+          showSeconds: true
+        }
+      case 'event-details':
+        return {
+          showCeremony: true,
+          showReception: true,
+          showDressCode: true,
+          showMapLinks: true
+        }
+      case 'gallery':
+        return {
+          showEngagementPhotos: true,
+          showVideoSupport: false,
+          showDemoPhotos: true
+        }
+      case 'rsvp':
+        return {
+          variant: 'cta',
+          showMealPreferences: true
+        }
+      case 'faq':
+        return {
+          questions: []
+        }
+      default:
+        return {}
+    }
   }
 
   // Handler for deleting sections
   const handleDeleteSection = (componentId: string) => {
-    // Check if it's a dynamic component
-    const isDynamic = dynamicComponents.some(comp => comp.id === componentId)
-    
-    if (isDynamic) {
-      // Remove from dynamic components
-      const updatedDynamicComponents = dynamicComponents.filter(comp => comp.id !== componentId)
-      updateDynamicComponents(updatedDynamicComponents)
-    } else {
-      // Disable from main components
-      const updatedComponents = config.components.map(comp => 
-        comp.id === componentId 
-          ? { ...comp, enabled: false }
-          : comp
-      )
-      // Update the main components configuration
-      updateComponents(updatedComponents)
-    }
+    // Disable from main components
+    const updatedComponents = config.components.map(comp => 
+      comp.id === componentId 
+        ? { ...comp, enabled: false }
+        : comp
+    )
+    updateComponents(updatedComponents)
   }
 
   const renderComponent = (component: any, index: number) => {

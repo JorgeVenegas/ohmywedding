@@ -10,12 +10,6 @@ export interface SiteConfig {
     accent: string
   }
   enabledComponents: string[]
-  dynamicComponents: Array<{
-    id: string
-    type: string
-    order: number
-    enabled: boolean
-  }>
 }
 
 interface SiteConfigContextType {
@@ -44,8 +38,7 @@ const DEFAULT_CONFIG: SiteConfig = {
     secondary: '#B8C5A6', 
     accent: '#8B9A7A'
   },
-  enabledComponents: ['hero'], // Start with just the hero section enabled
-  dynamicComponents: []
+  enabledComponents: ['hero'] // Start with just the hero section enabled
 }
 
 interface SiteConfigProviderProps {
@@ -89,42 +82,13 @@ export function SiteConfigProvider({ children }: SiteConfigProviderProps) {
   const addComponent = (componentId: string, position: number, currentComponents: any[] = []) => {
     setConfig(prev => {
       // Check if component is already enabled
-      if (prev.enabledComponents.includes(componentId) || 
-          prev.dynamicComponents.some(comp => comp.type === componentId)) {
+      if (prev.enabledComponents.includes(componentId)) {
         return prev // Don't add duplicates
-      }
-
-      // Calculate the order value based on position
-      let newOrder: number
-      
-      if (position === 0) {
-        // Adding at the beginning
-        const firstOrder = currentComponents.length > 0 ? currentComponents[0].order : 0
-        newOrder = Math.max(0, firstOrder - 1)
-      } else if (position >= currentComponents.length) {
-        // Adding at the end
-        const lastOrder = currentComponents.length > 0 ? 
-          currentComponents[currentComponents.length - 1].order : 0
-        newOrder = lastOrder + 1
-      } else {
-        // Adding in between
-        const prevOrder = currentComponents[position - 1].order
-        const nextOrder = currentComponents[position].order
-        newOrder = prevOrder + (nextOrder - prevOrder) / 2
-      }
-
-      // Add to both enabled components and dynamic components
-      const newDynamicComponent = {
-        id: `${componentId}-dynamic-${Date.now()}`,
-        type: componentId,
-        order: newOrder,
-        enabled: true
       }
 
       return {
         ...prev,
-        enabledComponents: [...prev.enabledComponents, componentId],
-        dynamicComponents: [...prev.dynamicComponents, newDynamicComponent]
+        enabledComponents: [...prev.enabledComponents, componentId]
       }
     })
   }

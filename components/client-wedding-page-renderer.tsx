@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react'
 import { Wedding } from '@/lib/wedding-data'
-import { WeddingPageConfig, ComponentConfig } from '@/lib/wedding-config'
+import { WeddingPageConfig, ComponentConfig, ComponentType, defaultComponentConfigs } from '@/lib/wedding-config'
 import {
   HeroSection,
   OurStorySection,
@@ -200,32 +200,38 @@ function ClientWeddingPageRendererContent({
     
     const { config: siteConfig } = siteConfigContext
     
-    // Get existing enabled components
-    const existingComponents = componentsToFilter
-      .map(component => ({
-        ...component,
-        enabled: siteConfig.enabledComponents.includes(component.type)
-      }))
-      .filter(component => component.enabled)
-
-    // Create dynamic components from the context
-    const dynamicComponents = siteConfig.dynamicComponents
-      .filter(dynComp => dynComp.enabled)
-      .map(dynComp => ({
-        id: dynComp.id,
-        type: dynComp.type as ComponentConfig['type'],
-        enabled: true,
-        order: dynComp.order,
-        props: {}, // Default empty props
-        alignment: { 
-          text: 'center' as const, 
-          content: 'center' as const, 
-          image: 'center' as const 
+    // Create a map of existing components by type
+    const existingComponentsByType = new Map<string, ComponentConfig>()
+    componentsToFilter.forEach(comp => {
+      existingComponentsByType.set(comp.type, comp)
+    })
+    
+    // Build the final component list
+    const allComponents: ComponentConfig[] = []
+    
+    siteConfig.enabledComponents.forEach((componentType, index) => {
+      // Check if component already exists in the config
+      if (existingComponentsByType.has(componentType)) {
+        const existing = existingComponentsByType.get(componentType)!
+        allComponents.push({
+          ...existing,
+          enabled: true,
+          order: index // Use the order from enabledComponents array
+        })
+      } else {
+        // Create a new component from defaults if it doesn't exist
+        const defaultConfig = defaultComponentConfigs[componentType as ComponentType]
+        if (defaultConfig) {
+          allComponents.push({
+            id: `${componentType}-${Date.now()}`,
+            ...defaultConfig,
+            enabled: true,
+            order: index
+          })
         }
-      }))
-
-    // Combine and sort all components
-    const allComponents = [...existingComponents, ...dynamicComponents]
+      }
+    })
+    
     return allComponents.sort((a, b) => a.order - b.order)
   }, [appliedConfig, sortedComponents, siteConfigContext?.config])
 

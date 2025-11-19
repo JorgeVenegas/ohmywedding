@@ -14,7 +14,6 @@ interface PageConfigContextType {
   getSectionConfig: (sectionId: string) => Record<string, any>
   updateSiteSettings: (settings: Partial<PageConfiguration['siteSettings']>) => void
   updateComponents: (components: PageConfiguration['components']) => void
-  updateDynamicComponents: (components: PageConfiguration['dynamicComponents']) => void
   
   // Save functionality
   saveConfiguration: () => Promise<{ success: boolean; message?: string }>
@@ -99,13 +98,6 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
     }))
   }
 
-  const updateDynamicComponents = (dynamicComponents: PageConfiguration['dynamicComponents']) => {
-    setConfig(prev => ({
-      ...prev,
-      dynamicComponents
-    }))
-  }
-
   const saveConfiguration = async (): Promise<{ success: boolean; message?: string }> => {
     setIsSaving(true)
     try {
@@ -138,7 +130,6 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
       getSectionConfig,
       updateSiteSettings,
       updateComponents,
-      updateDynamicComponents,
       saveConfiguration,
       loadConfiguration,
       resetToDefaults
