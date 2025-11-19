@@ -8,8 +8,8 @@ export function OurStoryTimelineVariant({
   alignment,
   showHowWeMet = true,
   showProposal = true,
-  howWeMetText = "We met at...",
-  proposalText = "The proposal was...",
+  howWeMetText = "Our love story began in the most unexpected way. From the moment we met, we knew there was something special between us. What started as a chance encounter blossomed into a beautiful friendship, and eventually, a love that we knew would last forever.",
+  proposalText = "The proposal was a magical moment we'll cherish forever. Surrounded by the beauty of nature and the warmth of our love, the question was asked and answered with tears of joy. It was the perfect beginning to our next chapter together.",
   timeline = []
 }: BaseOurStoryProps) {
   const allEvents = [
@@ -32,7 +32,7 @@ export function OurStoryTimelineVariant({
     <SectionWrapper theme={theme} alignment={alignment} background="default" id="our-story">
       <div className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16" 
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16"
               style={{ color: theme?.colors?.foreground }}>
             Our Love Story
           </h2>

@@ -43,10 +43,18 @@ const DEFAULT_CONFIG: SiteConfig = {
 
 interface SiteConfigProviderProps {
   children: ReactNode
+  initialColors?: {
+    primary: string
+    secondary: string
+    accent: string
+  }
 }
 
-export function SiteConfigProvider({ children }: SiteConfigProviderProps) {
-  const [config, setConfig] = useState<SiteConfig>(DEFAULT_CONFIG)
+export function SiteConfigProvider({ children, initialColors }: SiteConfigProviderProps) {
+  const [config, setConfig] = useState<SiteConfig>({
+    ...DEFAULT_CONFIG,
+    colors: initialColors || DEFAULT_CONFIG.colors
+  })
 
   const updateStyle = (style: string) => {
     setConfig(prev => ({ 

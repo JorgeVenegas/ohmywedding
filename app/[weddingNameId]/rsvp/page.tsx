@@ -164,7 +164,7 @@ function RSVPPageClient({ dateId, weddingNameId }: { dateId: string; weddingName
             </div>
             <h2 className="text-3xl font-bold text-foreground mb-2">Thank You!</h2>
             <p className="text-muted-foreground mb-8">We've received your RSVP. We can't wait to celebrate with you!</p>
-            <Link href={`/${dateId}/${weddingNameId}`}>
+            <Link href={`/${weddingNameId}`}>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Back to Wedding</Button>
             </Link>
           </Card>

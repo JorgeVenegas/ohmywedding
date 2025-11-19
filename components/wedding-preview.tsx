@@ -51,13 +51,27 @@ export function WeddingPreview({ formData, componentSections }: WeddingPreviewPr
     },
     components: componentSections
       .filter(section => section.enabled)
-      .map((section, index) => ({
-        id: section.id,
-        type: section.id as any,
-        enabled: true,
-        order: index,
-        props: section.props
-      }))
+      .map((section, index) => {
+        const props = { ...section.props }
+        
+        // For our-story section, don't pass empty strings - let component use defaults
+        if (section.id === 'our-story') {
+          if (!props.howWeMetText || props.howWeMetText.trim() === '') {
+            delete props.howWeMetText
+          }
+          if (!props.proposalText || props.proposalText.trim() === '') {
+            delete props.proposalText
+          }
+        }
+        
+        return {
+          id: section.id,
+          type: section.id as any,
+          enabled: true,
+          order: index,
+          props
+        }
+      })
   }), [formData, componentSections])
 
   // Create a mock wedding object for the preview

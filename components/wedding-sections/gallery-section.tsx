@@ -231,7 +231,7 @@ export function GallerySection({
                   color: theme?.colors?.primary || '#a86b8f'
                 }}
               >
-                <Link href={`/${dateId}/${weddingNameId}/gallery`}>
+                <Link href={`/${weddingNameId}/gallery`}>
                   <Camera className="w-5 h-5 mr-2" />
                   View Full Gallery
                 </Link>

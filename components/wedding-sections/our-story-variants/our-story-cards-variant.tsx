@@ -8,8 +8,8 @@ export function OurStoryCardsVariant({
   alignment,
   showHowWeMet = true,
   showProposal = true,
-  howWeMetText = "We met at...",
-  proposalText = "The proposal was...",
+  howWeMetText = "Our love story began in the most unexpected way. From the moment we met, we knew there was something special between us. What started as a chance encounter blossomed into a beautiful friendship, and eventually, a love that we knew would last forever.",
+  proposalText = "The proposal was a magical moment we'll cherish forever. Surrounded by the beauty of nature and the warmth of our love, the question was asked and answered with tears of joy. It was the perfect beginning to our next chapter together.",
   photos = []
 }: BaseOurStoryProps) {
   const stories = []
@@ -34,14 +34,15 @@ export function OurStoryCardsVariant({
     <SectionWrapper theme={theme} alignment={alignment} background="muted" id="our-story">
       <div className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16" 
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16"
               style={{ color: theme?.colors?.foreground }}>
             Our Love Story
           </h2>
           
           <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
             {stories.map((story, index) => (
-              <div key={index} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+              <div key={index} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+                   style={{ borderTop: `4px solid ${theme?.colors?.primary || '#000'}` }}>
                 {story.image && (
                   <div className="relative h-64">
                     <Image
@@ -53,10 +54,12 @@ export function OurStoryCardsVariant({
                   </div>
                 )}
                 <div className="p-8">
-                  <h3 className="text-2xl font-bold mb-4" style={{ color: theme?.colors?.foreground }}>
+                  <h3 className="text-2xl font-bold mb-4" 
+                      style={{ color: theme?.colors?.primary || '#000' }}>
                     {story.title}
                   </h3>
-                  <p className="text-gray-600 leading-relaxed text-lg">
+                  <p className="leading-relaxed text-lg"
+                     style={{ color: theme?.colors?.foreground || '#4B5563' }}>
                     {story.text}
                   </p>
                 </div>
@@ -67,7 +70,7 @@ export function OurStoryCardsVariant({
           {/* Photo gallery if provided */}
           {photos.length > 2 && (
             <div className="mt-16">
-              <h3 className="text-2xl font-bold text-center mb-8" 
+              <h3 className="text-2xl font-bold text-center mb-8"
                   style={{ color: theme?.colors?.foreground }}>
                 Our Journey
               </h3>

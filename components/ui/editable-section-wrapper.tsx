@@ -28,7 +28,7 @@ export function EditableSectionWrapper({
       {isEditingMode && (
         <button
           onClick={() => onEditClick(sectionId, sectionType)}
-          className="absolute top-4 right-[110px] z-10 flex items-center gap-2 h-9 bg-blue-700 hover:bg-blue-800 text-white px-3 py-2 rounded-md shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100"
+          className="absolute top-4 right-[110px] z-10 flex items-center gap-2 h-9 bg-blue-700 hover:bg-blue-800 text-white px-3 py-2 rounded-full shadow-lg transition-all duration-300 hover:scale-105 opacity-0 group-hover:opacity-100"
           title={`Customize ${sectionType} section`}
         >
           <Pencil className="w-4 h-4" />

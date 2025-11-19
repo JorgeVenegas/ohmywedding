@@ -85,7 +85,7 @@ function ClientWeddingPageRendererContent({
             key={component.id}
             {...commonProps}
             {...component.props}
-            howWeMetText={component.props.howWeMetText || ""}
+            howWeMetText={component.props.howWeMetText || undefined}
             variant={component.props.variant || 'cards'}
           />
         )

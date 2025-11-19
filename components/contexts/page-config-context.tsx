@@ -19,6 +19,7 @@ interface PageConfigContextType {
   saveConfiguration: () => Promise<{ success: boolean; message?: string }>
   loadConfiguration: () => Promise<void>
   resetToDefaults: () => void
+  discardChanges: () => void
 }
 
 const PageConfigContext = createContext<PageConfigContextType | undefined>(undefined)
@@ -66,7 +67,9 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
   }
 
   const getSectionConfig = (sectionId: string): Record<string, any> => {
-    return config.sectionConfigs[sectionId] || {}
+    const sectionConfig = config.sectionConfigs[sectionId] || {}
+    console.log(`Getting config for section ${sectionId}:`, sectionConfig)
+    return sectionConfig
   }
 
   const updateSiteSettings = (settings: Partial<PageConfiguration['siteSettings']>) => {
@@ -120,6 +123,15 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
     setConfig(defaultConfig)
   }
 
+  const discardChanges = () => {
+    const restoredConfig = JSON.parse(JSON.stringify(originalConfig)) // Restore from original
+    console.log('Discarding changes, restoring config:', restoredConfig)
+    console.log('Original config was:', originalConfig)
+    console.log('Section configs being restored:', restoredConfig.sectionConfigs)
+    console.log('Components being restored:', restoredConfig.components.map((c: any) => ({ id: c.id, type: c.type, enabled: c.enabled })))
+    setConfig(restoredConfig)
+  }
+
   return (
     <PageConfigContext.Provider value={{
       config,
@@ -132,7 +144,8 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
       updateComponents,
       saveConfiguration,
       loadConfiguration,
-      resetToDefaults
+      resetToDefaults,
+      discardChanges
     }}>
       {children}
     </PageConfigContext.Provider>

@@ -52,29 +52,6 @@ export function OurStoryConfigForm({ config, onChange }: OurStoryConfigFormProps
         </div>
       </div>
 
-      {/* Text Alignment */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Text Alignment
-        </label>
-        <div className="flex gap-2">
-          {[
-            { value: 'left', label: 'Left' },
-            { value: 'center', label: 'Center' },
-            { value: 'right', label: 'Right' }
-          ].map((alignment) => (
-            <Button
-              key={alignment.value}
-              variant={config.textAlignment === alignment.value ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onChange('textAlignment', alignment.value)}
-            >
-              {alignment.label}
-            </Button>
-          ))}
-        </div>
-      </div>
-
       {/* Content Toggles */}
       <div className="space-y-4">
         <h4 className="font-medium text-gray-900">Content Sections</h4>

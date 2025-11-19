@@ -49,7 +49,7 @@ export function RSVPCallToActionVariant({
               borderColor: theme?.colors?.primary
             }}
           >
-            <Link href={`/${dateId}/${weddingNameId}/rsvp`}>
+            <Link href={`/${weddingNameId}/rsvp`}>
               RSVP Now
             </Link>
           </Button>

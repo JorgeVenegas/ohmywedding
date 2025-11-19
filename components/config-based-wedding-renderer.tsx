@@ -32,9 +32,81 @@ function ConfigBasedWeddingRendererContent({
   wedding,
   weddingNameId
 }: ConfigBasedWeddingRendererProps) {
-  const { config, isLoading, updateComponents } = usePageConfig()
+  const { config, isLoading, updateComponents, updateSiteSettings } = usePageConfig()
   const siteConfigContext = useSiteConfigSafe()
   const editingContext = useEditingModeSafe()
+  
+  // Only render enabled components from the page configuration
+  const allComponents = config.components
+    .filter(component => component.enabled)
+    .sort((a, b) => a.order - b.order)
+  
+  // Debug log when config changes
+  React.useEffect(() => {
+    console.log('Config changed in renderer - total components:', config.components.length)
+    console.log('Components detail:', JSON.stringify(config.components.map(c => ({ id: c.id, type: c.type, enabled: c.enabled, order: c.order })), null, 2))
+  }, [config])
+  
+  // Debug log for allComponents
+  React.useEffect(() => {
+    console.log('All components to render:', allComponents.length)
+    console.log('Rendering these components:', JSON.stringify(allComponents.map(c => ({ id: c.id, type: c.type, enabled: c.enabled, order: c.order })), null, 2))
+  }, [allComponents.length, config.components])
+  
+  // Sync page config colors back to site config (for discarding changes)
+  React.useEffect(() => {
+    if (siteConfigContext && config.siteSettings.theme?.colors) {
+      const pageColors = config.siteSettings.theme.colors
+      const siteColors = siteConfigContext.config.colors
+      
+      // Update site config if page config colors changed (e.g., from discarding)
+      if (
+        pageColors.primary && pageColors.secondary && pageColors.accent &&
+        (pageColors.primary !== siteColors.primary ||
+        pageColors.secondary !== siteColors.secondary ||
+        pageColors.accent !== siteColors.accent)
+      ) {
+        siteConfigContext.updateColors({
+          primary: pageColors.primary,
+          secondary: pageColors.secondary,
+          accent: pageColors.accent
+        })
+      }
+    }
+  }, [
+    config.siteSettings.theme?.colors?.primary,
+    config.siteSettings.theme?.colors?.secondary,
+    config.siteSettings.theme?.colors?.accent
+  ])
+  
+  // Apply site config color changes to page config
+  React.useEffect(() => {
+    if (siteConfigContext && updateSiteSettings) {
+      const currentColors = config.siteSettings.theme?.colors
+      const newColors = siteConfigContext.config.colors
+      
+      // Only update if colors actually changed to avoid infinite loop
+      if (
+        currentColors?.primary !== newColors.primary ||
+        currentColors?.secondary !== newColors.secondary ||
+        currentColors?.accent !== newColors.accent
+      ) {
+        updateSiteSettings({
+          theme: {
+            colors: {
+              primary: newColors.primary,
+              secondary: newColors.secondary,
+              accent: newColors.accent
+            }
+          }
+        })
+      }
+    }
+  }, [
+    siteConfigContext?.config.colors.primary,
+    siteConfigContext?.config.colors.secondary,
+    siteConfigContext?.config.colors.accent
+  ])
 
   if (isLoading) {
     return (
@@ -46,11 +118,6 @@ function ConfigBasedWeddingRendererContent({
       </div>
     )
   }
-
-  // Only render enabled components from the page configuration
-  const allComponents = config.components
-    .filter(component => component.enabled)
-    .sort((a, b) => a.order - b.order)
 
   // Handler for adding new sections
   const handleAddSection = (position: number, sectionType: string) => {
@@ -113,8 +180,8 @@ function ConfigBasedWeddingRendererContent({
       case 'our-story':
         return {
           variant: 'cards',
-          howWeMetText: 'Our love story began in the most unexpected way...',
-          proposalText: 'The proposal was a magical moment...',
+          howWeMetText: 'Our love story began in the most unexpected way. From the moment we met, we knew there was something special between us. What started as a chance encounter blossomed into a beautiful friendship, and eventually, a love that we knew would last forever.',
+          proposalText: 'The proposal was a magical moment we\'ll cherish forever. Surrounded by the beauty of nature and the warmth of our love, the question was asked and answered with tears of joy. It was the perfect beginning to our next chapter together.',
           showHowWeMet: true,
           showProposal: true,
           showPhotos: false
@@ -191,7 +258,7 @@ function ConfigBasedWeddingRendererContent({
             key={component.id}
             {...commonProps}
             {...component.props}
-            howWeMetText={component.props.howWeMetText || ""}
+            howWeMetText={component.props?.howWeMetText || undefined}
           />
         )
         break
@@ -293,15 +360,31 @@ function ConfigBasedWeddingRendererContent({
 }
 
 export function ConfigBasedWeddingRenderer(props: ConfigBasedWeddingRendererProps) {
+  // We need to wrap this in PageConfigProvider first to get initial colors
   return (
     <VariantProvider>
       <EditingModeProvider>
-        <SiteConfigProvider>
-          <CustomizeProvider weddingDate={props.wedding.wedding_date}>
-            <ConfigBasedWeddingRendererContent {...props} />
-          </CustomizeProvider>
-        </SiteConfigProvider>
+        <ConfigBasedWeddingRendererWithConfig {...props} />
       </EditingModeProvider>
     </VariantProvider>
+  )
+}
+
+function ConfigBasedWeddingRendererWithConfig(props: ConfigBasedWeddingRendererProps) {
+  const { config } = usePageConfig()
+  
+  // Get initial colors from page config
+  const initialColors = {
+    primary: config.siteSettings.theme?.colors?.primary || '#d4a574',
+    secondary: config.siteSettings.theme?.colors?.secondary || '#9ba082',
+    accent: config.siteSettings.theme?.colors?.accent || '#e6b5a3'
+  }
+  
+  return (
+    <SiteConfigProvider initialColors={initialColors}>
+      <CustomizeProvider weddingDate={props.wedding.wedding_date}>
+        <ConfigBasedWeddingRendererContent {...props} />
+      </CustomizeProvider>
+    </SiteConfigProvider>
   )
 }

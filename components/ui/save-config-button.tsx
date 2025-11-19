@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Save, Check, AlertCircle, Loader2 } from 'lucide-react'
+import { Save, Check, AlertCircle, Loader2, X } from 'lucide-react'
 import { usePageConfig } from '@/components/contexts/page-config-context'
 
 interface SaveConfigButtonProps {
@@ -12,8 +12,9 @@ interface SaveConfigButtonProps {
 }
 
 export function SaveConfigButton({ className, variant = 'default', size = 'default' }: SaveConfigButtonProps) {
-  const { saveConfiguration, isSaving, hasUnsavedChanges } = usePageConfig()
+  const { saveConfiguration, discardChanges, isSaving, hasUnsavedChanges } = usePageConfig()
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [showConfirm, setShowConfirm] = useState(false)
 
   const handleSave = async () => {
     try {
@@ -63,7 +64,7 @@ export function SaveConfigButton({ className, variant = 'default', size = 'defau
     return (
       <>
         <Save className="w-4 h-4" />
-        <span className="text-sm font-medium ml-2">{hasUnsavedChanges ? 'Save Changes' : 'Save'}</span>
+        <span className="text-sm font-medium ml-2">{'Save'}</span>
       </>
     )
   }
@@ -75,15 +76,39 @@ export function SaveConfigButton({ className, variant = 'default', size = 'defau
     return variant
   }
 
+  const handleDiscard = () => {
+    if (showConfirm) {
+      discardChanges()
+      setShowConfirm(false)
+    } else {
+      setShowConfirm(true)
+      setTimeout(() => setShowConfirm(false), 3000)
+    }
+  }
+
   return (
-    <Button
-      onClick={handleSave}
-      disabled={isSaving}
-      variant={getButtonVariant()}
-      size={size}
-      className={`h-9 px-3 py-2 gap-2 ${className || ''}`}
-    >
-      {getButtonContent()}
-    </Button>
+    <div className="flex items-center gap-2">
+      {hasUnsavedChanges && (
+        <Button
+          onClick={handleDiscard}
+          disabled={isSaving}
+          variant={showConfirm ? 'destructive' : 'outline'}
+          size={size}
+          className={`h-9 px-3 py-2 gap-2`}
+        >
+          <X className="w-4 h-4" />
+          <span className="text-sm font-medium">{showConfirm ? 'Confirm?' : 'Discard'}</span>
+        </Button>
+      )}
+      <Button
+        onClick={handleSave}
+        disabled={isSaving || !hasUnsavedChanges}
+        variant={getButtonVariant()}
+        size={size}
+        className={`h-9 px-3 py-2 gap-2 ${className || ''}`}
+      >
+        {getButtonContent()}
+      </Button>
+    </div>
   )
 }

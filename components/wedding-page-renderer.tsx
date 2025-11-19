@@ -64,8 +64,8 @@ export function WeddingPageRenderer({
             key={component.id}
             {...commonProps}
             {...component.props}
-            howWeMetText={component.props.howWeMetText || ""}
-            proposalText={component.props.proposalText || ""}
+            howWeMetText={component.props.howWeMetText || undefined}
+            proposalText={component.props.proposalText || undefined}
             variant={component.props.variant || 'cards'}
             showVariantSwitcher={showVariantSwitchers}
           />

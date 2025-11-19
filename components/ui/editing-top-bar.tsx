@@ -45,8 +45,8 @@ export function EditingTopBar({ className = '' }: EditingTopBarProps) {
         <button
           onClick={toggleEditingMode}
           className={`
-            flex items-center gap-2 h-9 px-3 py-2 rounded-md font-medium shadow-lg
-            transition-all duration-200 hover:shadow-xl hover:scale-105
+            flex items-center gap-2 h-9 px-3 py-2 rounded-full font-medium shadow-lg
+            transition-all duration-300 hover:shadow-xl hover:scale-105
             ${isEditingMode 
               ? 'bg-blue-600 hover:bg-blue-700 text-white' 
               : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-200'

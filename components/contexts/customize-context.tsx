@@ -43,6 +43,14 @@ export function CustomizeProvider({ children, weddingDate }: CustomizeProviderPr
   // Persistent section configurations
   const [sectionConfigs, setSectionConfigs] = useState<Record<string, Record<string, any>>>({})
   
+  // Sync sectionConfigs with page config when it changes (e.g., after discarding)
+  useEffect(() => {
+    if (pageConfig?.config) {
+      console.log('Syncing customize context with page config:', pageConfig.config.sectionConfigs)
+      setSectionConfigs(pageConfig.config.sectionConfigs || {})
+    }
+  }, [pageConfig?.config])
+  
   // Ref to track pending page config updates
   const pendingPageConfigUpdates = useRef<Array<{ sectionId: string; config: Record<string, any> }>>([])
   
