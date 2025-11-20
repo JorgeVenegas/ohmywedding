@@ -170,11 +170,8 @@ function ClientWeddingPageRendererContent({
     
     const { config: siteConfig } = siteConfigContext
     
-    // Regenerate the full config with the selected style
-    const newConfig = createConfigFromWedding(
-      wedding, 
-      siteConfig.style as 'classic' | 'modern' | 'rustic'
-    )
+    // Regenerate the full config with the default style
+    const newConfig = createConfigFromWedding(wedding, 'classic')
     
     // Apply custom colors on top of the style config
     return {
