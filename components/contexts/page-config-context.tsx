@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react'
 import { PageConfiguration, createDefaultPageConfig, loadPageConfiguration, savePageConfiguration } from '@/lib/page-config'
 
-// Deep equality check helper
+// Deep equality check helper with smart undefined handling
 function deepEqual(obj1: any, obj2: any): boolean {
   if (obj1 === obj2) return true
   
@@ -11,14 +11,37 @@ function deepEqual(obj1: any, obj2: any): boolean {
     return false
   }
   
-  const keys1 = Object.keys(obj1).sort()
-  const keys2 = Object.keys(obj2).sort()
+  // Get all unique keys from both objects
+  const allKeys = new Set([...Object.keys(obj1), ...Object.keys(obj2)])
   
-  if (keys1.length !== keys2.length) return false
-  if (keys1.join(',') !== keys2.join(',')) return false
+  // Known default values for common config fields
+  const defaultValues: Record<string, any> = {
+    showDecorations: true,
+    showTagline: true,
+    showCountdown: true,
+    showRSVPButton: true,
+  }
   
-  for (const key of keys1) {
-    if (!deepEqual(obj1[key], obj2[key])) return false
+  for (const key of allKeys) {
+    let val1 = obj1[key]
+    let val2 = obj2[key]
+    
+    // Apply default values if undefined
+    if (val1 === undefined && key in defaultValues) {
+      val1 = defaultValues[key]
+    }
+    if (val2 === undefined && key in defaultValues) {
+      val2 = defaultValues[key]
+    }
+    
+    // If both are still undefined, consider them equal
+    if (val1 === undefined && val2 === undefined) continue
+    
+    // If one is undefined and the other isn't (after defaults), they're different
+    if (val1 === undefined || val2 === undefined) return false
+    
+    // Recursively check equality
+    if (!deepEqual(val1, val2)) return false
   }
   
   return true

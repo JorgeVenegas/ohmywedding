@@ -4,6 +4,7 @@ import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
+import { VariantDropdown } from '@/components/ui/variant-dropdown'
 
 interface HeroConfigFormProps {
   config: {
@@ -13,6 +14,8 @@ interface HeroConfigFormProps {
     imageSize?: string
     backgroundColor?: string
     showDecorations?: boolean
+    imageHeight?: 'small' | 'medium' | 'large' | 'full'
+    imageWidth?: 'full' | 'centered'
     textAlignment?: string
     showTagline?: boolean
     tagline?: string
@@ -29,7 +32,8 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true }: Hero
     { value: 'background', label: 'Background Hero', description: 'Fullscreen background with overlay text' },
     { value: 'side-by-side', label: 'Side by Side', description: 'Split layout with image and content' },
     { value: 'framed', label: 'Framed Photo', description: 'Decorative frame around photo' },
-    { value: 'minimal', label: 'Minimal', description: 'Text-focused with subtle decorations' }
+    { value: 'minimal', label: 'Minimal', description: 'Text-focused with subtle decorations' },
+    { value: 'stacked', label: 'Stacked', description: 'Content above with image below' }
   ]
 
   const imagePositions = [
@@ -53,27 +57,13 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true }: Hero
   return (
     <div className="space-y-6">
       {/* Variant Selection */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
-          Layout Style
-        </label>
-        <div className="space-y-2">
-          {variants.map((variant) => (
-            <div
-              key={variant.value}
-              className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                config.variant === variant.value
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-              onClick={() => onChange('variant', variant.value)}
-            >
-              <div className="font-medium text-sm">{variant.label}</div>
-              <div className="text-xs text-gray-500">{variant.description}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <VariantDropdown
+        label="Layout Style"
+        value={config.variant || 'background'}
+        options={variants}
+        onChange={(value) => onChange('variant', value)}
+        placeholder="Choose hero layout"
+      />
 
       {/* Image URL */}
       <div>
@@ -170,6 +160,63 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true }: Hero
                 placeholder="#ffffff"
                 className="flex-1"
               />
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-gray-700">
+              Show Decorations
+            </label>
+            <Switch
+              checked={config.showDecorations ?? true}
+              onCheckedChange={(checked) => onChange('showDecorations', checked)}
+            />
+          </div>
+        </>
+      )}
+
+      {/* Stacked specific options */}
+      {config.variant === 'stacked' && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Image Width
+            </label>
+            <div className="flex gap-2">
+              {[
+                { value: 'centered', label: 'Centered' },
+                { value: 'full', label: 'Full Width' }
+              ].map((width) => (
+                <Button
+                  key={width.value}
+                  variant={config.imageWidth === width.value ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => onChange('imageWidth', width.value)}
+                >
+                  {width.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Image Height
+            </label>
+            <div className="flex gap-2">
+              {[
+                { value: 'small', label: 'Small' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'large', label: 'Large' },
+                { value: 'full', label: 'Full Screen' }
+              ].map((height) => (
+                <Button
+                  key={height.value}
+                  variant={config.imageHeight === height.value ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => onChange('imageHeight', height.value)}
+                >
+                  {height.label}
+                </Button>
+              ))}
             </div>
           </div>
           <div className="flex items-center justify-between">

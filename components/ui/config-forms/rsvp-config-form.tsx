@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import { VariantDropdown } from '@/components/ui/variant-dropdown'
 
 interface CustomQuestion {
   id: string
@@ -61,27 +62,13 @@ export function RSVPConfigForm({ config, onChange }: RSVPConfigFormProps) {
   return (
     <div className="space-y-6">
       {/* Variant Selection */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
-          RSVP Style
-        </label>
-        <div className="space-y-2">
-          {variants.map((variant) => (
-            <div
-              key={variant.value}
-              className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                config.variant === variant.value
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-              onClick={() => onChange('variant', variant.value)}
-            >
-              <div className="font-medium text-sm">{variant.label}</div>
-              <div className="text-xs text-gray-500">{variant.description}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <VariantDropdown
+        label="RSVP Style"
+        value={config.variant || 'cta'}
+        options={variants}
+        onChange={(value) => onChange('variant', value)}
+        placeholder="Choose RSVP style"
+      />
 
       {/* Text Alignment */}
       <div>

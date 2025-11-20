@@ -7,6 +7,7 @@ import {
   HeroSideBySideVariant, 
   HeroFramedVariant,
   HeroMinimalVariant,
+  HeroStackedVariant,
   BaseHeroProps
 } from './hero-variants'
 import { 
@@ -18,12 +19,14 @@ import {
 import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
 
 interface HeroSectionProps extends BaseHeroProps {
-  variant?: 'background' | 'side-by-side' | 'framed' | 'minimal'
+  variant?: 'background' | 'side-by-side' | 'framed' | 'minimal' | 'stacked'
   imagePosition?: 'left' | 'right' // for side-by-side variant
   frameStyle?: 'circular' | 'rounded' | 'square' | 'polaroid' // for framed variant
   imageSize?: 'small' | 'medium' | 'large' // for framed variant
+  imageHeight?: 'small' | 'medium' | 'large' | 'full' // for stacked variant
+  imageWidth?: 'full' | 'centered' // for stacked variant
   backgroundColor?: string // for minimal variant
-  showDecorations?: boolean // for minimal variant
+  showDecorations?: boolean // for minimal and stacked variants
   textAlignment?: 'left' | 'center' | 'right' // text alignment
   showVariantSwitcher?: boolean // enable/disable variant switcher
 }
@@ -43,6 +46,8 @@ export function HeroSection({
   imagePosition = 'left',
   frameStyle = 'circular',
   imageSize = 'medium',
+  imageHeight = 'medium',
+  imageWidth = 'centered',
   backgroundColor,
   showDecorations = true,
   textAlignment = 'center',
@@ -78,6 +83,11 @@ export function HeroSection({
       value: 'minimal',
       label: 'Minimal',
       description: 'Text-focused design with subtle decorations - clean and modern'
+    },
+    {
+      value: 'stacked',
+      label: 'Stacked',
+      description: 'Content above with image below - perfect for showcasing landscape photos'
     }
   ]
 
@@ -97,6 +107,8 @@ export function HeroSection({
     imagePosition,
     frameStyle,
     imageSize,
+    imageHeight,
+    imageWidth,
     backgroundColor,
     showDecorations,
     textAlignment
@@ -140,6 +152,15 @@ export function HeroSection({
             showDecorations={config.showDecorations ?? true}
           />
         )
+      case 'stacked':
+        return (
+          <HeroStackedVariant
+            {...commonProps}
+            showDecorations={config.showDecorations ?? true}
+            imageHeight={config.imageHeight || 'medium'}
+            imageWidth={config.imageWidth || 'centered'}
+          />
+        )
       case 'background':
       default:
         return <HeroBackgroundVariant {...commonProps} />
@@ -151,6 +172,8 @@ export function HeroSection({
       imagePosition: config.imagePosition || (alignment?.imagePosition === 'split-right' ? 'right' : imagePosition),
       frameStyle: config.frameStyle || frameStyle,
       imageSize: config.imageSize || imageSize,
+      imageHeight: config.imageHeight || imageHeight,
+      imageWidth: config.imageWidth || imageWidth,
       backgroundColor: config.backgroundColor || backgroundColor,
       showDecorations: config.showDecorations ?? showDecorations,
       textAlignment: config.textAlignment || textAlignment,
