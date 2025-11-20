@@ -79,12 +79,12 @@ export function CountdownMinimalVariant({
           {message}
         </p>
 
-        <div className="flex justify-center items-baseline space-x-2 md:space-x-4">
+        <div className="flex justify-center items-baseline flex-wrap space-x-2 sm:space-x-3 md:space-x-4 gap-2">
           {units.map((unit, index) => (
             <React.Fragment key={unit.label}>
               {index > 0 && (
                 <span 
-                  className="text-2xl md:text-4xl font-thin"
+                  className="text-xl sm:text-2xl md:text-4xl font-thin"
                   style={{ color: theme?.colors?.muted }}
                 >
                   :
@@ -92,7 +92,7 @@ export function CountdownMinimalVariant({
               )}
               <div className="text-center">
                 <span 
-                  className="text-4xl md:text-7xl font-thin tabular-nums"
+                  className="text-3xl sm:text-4xl md:text-7xl font-thin tabular-nums"
                   style={{ 
                     color: theme?.colors?.foreground,
                     fontFamily: 'system-ui, -apple-system, sans-serif'
@@ -101,7 +101,7 @@ export function CountdownMinimalVariant({
                   {unit.value.toString().padStart(2, '0')}
                 </span>
                 <span 
-                  className="text-sm md:text-base font-light ml-1"
+                  className="text-xs sm:text-sm md:text-base font-light ml-1"
                   style={{ color: theme?.colors?.muted }}
                 >
                   {unit.label}

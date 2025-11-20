@@ -23,10 +23,16 @@ export function HeroMinimalVariant({
 }: HeroMinimalVariantProps) {
   return (
     <SectionWrapper 
-      theme={theme} 
+      theme={{
+        ...theme,
+        spacing: {
+          section: 'p-0',
+          container: 'w-full max-w-none h-full'
+        }
+      }} 
       alignment={alignment} 
       background="primary"
-      className="min-h-screen relative"
+      className="h-[100dvh] max-h-[100dvh] relative overflow-hidden"
       id="hero"
     >
       {/* Optional decorative elements */}
@@ -43,7 +49,7 @@ export function HeroMinimalVariant({
       )}
       
       {/* Centered Content */}
-      <div className="relative z-10 w-full max-w-4xl mx-auto px-4 flex items-center justify-center min-h-screen">
+      <div className="relative z-10 w-full max-w-4xl mx-auto px-4 flex items-center justify-center h-full">
         <HeroTextContent
           wedding={wedding}
           dateId={dateId}

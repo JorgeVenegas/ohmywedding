@@ -3,7 +3,6 @@
 import { getWeddingByNameIdClient } from "@/lib/wedding-data-client"
 import { createConfigFromWedding } from "@/lib/wedding-configs"
 import { ConfigBasedWeddingRenderer } from "@/components/config-based-wedding-renderer"
-import { WeddingFooter } from "@/components/wedding-footer"
 import { PageConfigProvider } from "@/components/contexts/page-config-context"
 import { notFound, useParams, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -64,7 +63,6 @@ export default function WeddingPage() {
         wedding={wedding}
         weddingNameId={weddingNameId}
       />
-      <WeddingFooter />
     </PageConfigProvider>
   )
 }

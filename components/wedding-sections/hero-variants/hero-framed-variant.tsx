@@ -25,9 +25,9 @@ export function HeroFramedVariant({
 }: HeroFramedVariantProps) {
   const getSizeClasses = () => {
     switch (imageSize) {
-      case 'small': return 'w-48 h-48 md:w-64 md:h-64'
-      case 'large': return 'w-80 h-80 md:w-96 md:h-96'
-      default: return 'w-64 h-64 md:w-80 md:h-80'
+      case 'small': return 'w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48'
+      case 'large': return 'w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64'
+      default: return 'w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56'
     }
   }
 
@@ -49,15 +49,21 @@ export function HeroFramedVariant({
 
   return (
     <SectionWrapper 
-      theme={theme} 
+      theme={{
+        ...theme,
+        spacing: {
+          section: 'p-0',
+          container: 'w-full max-w-none h-full'
+        }
+      }} 
       alignment={alignment} 
       background="primary"
-      className="min-h-screen relative"
+      className="h-[100dvh] max-h-[100dvh] relative overflow-hidden"
       id="hero"
     >
-      <div className="w-full max-w-6xl mx-auto px-4 flex flex-col items-center justify-center min-h-screen py-16">
+      <div className="w-full h-[100dvh] max-w-6xl mx-auto px-4 flex flex-col items-center justify-center gap-6">
         {/* Framed Image */}
-        <div className={`relative mb-12 ${getFrameClasses()} overflow-hidden`}>
+        <div className={`relative flex-shrink-0 ${getFrameClasses()} overflow-hidden`}>
           {heroImageUrl && (
             <Image
               src={heroImageUrl}
@@ -76,7 +82,7 @@ export function HeroFramedVariant({
         </div>
         
         {/* Text Content */}
-        <div className="w-full max-w-4xl">
+        <div className="w-full max-w-4xl flex-shrink px-4">
           <HeroTextContent
             wedding={wedding}
             dateId={dateId}

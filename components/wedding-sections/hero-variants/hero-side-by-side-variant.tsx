@@ -24,17 +24,17 @@ export function HeroSideBySideVariant({
 
   return (
     <section 
-      className="min-h-screen"
+      className="h-[100dvh] max-h-[100dvh] overflow-hidden"
       style={{ 
         backgroundColor: theme?.colors?.background || '#ffffff'
       }}
     >
-      <div className="min-h-screen flex flex-col lg:flex-row">
+      <div className="h-full flex flex-col lg:flex-row">
         {/* Image Section */}
-        <div className={`w-full lg:w-1/2 relative min-h-[50vh] lg:min-h-screen ${
+        <div className={`w-full lg:w-1/2 relative min-h-[50dvh] lg:h-full ${
           isImageLeft ? 'order-1 lg:order-1' : 'order-1 lg:order-2'
         }`}>
-          <div className="absolute inset-0 bg-gray-100">
+          <div className="absolute inset-0 h-full w-full bg-gray-100">
             {heroImageUrl && (
               <Image
                 src={heroImageUrl}
@@ -53,7 +53,7 @@ export function HeroSideBySideVariant({
         </div>
         
         {/* Content Section */}
-        <div className={`w-full lg:w-1/2 flex items-center justify-center min-h-[50vh] lg:min-h-screen ${
+        <div className={`w-full lg:w-1/2 flex items-center justify-center min-h-[50dvh] lg:h-full ${
           isImageLeft ? 'order-2 lg:order-2' : 'order-2 lg:order-1'
         }`}>
           <div className="w-full max-w-xl mx-auto px-6 sm:px-8 lg:px-12 py-12 lg:py-16">

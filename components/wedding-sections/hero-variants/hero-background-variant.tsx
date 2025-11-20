@@ -18,14 +18,20 @@ export function HeroBackgroundVariant({
 }: BaseHeroProps) {
   return (
     <SectionWrapper 
-      theme={theme} 
+      theme={{
+        ...theme,
+        spacing: {
+          section: 'p-0',
+          container: 'w-full max-w-none h-full'
+        }
+      }} 
       alignment={alignment} 
       background="primary"
-      className="min-h-screen relative"
+      className="h-[100dvh] max-h-[100dvh] relative overflow-hidden"
       id="hero"
     >
       {/* Fullscreen Background */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 h-[100dvh] w-full z-0">
         {heroImageUrl && (
           <Image
             src={heroImageUrl}
@@ -39,7 +45,7 @@ export function HeroBackgroundVariant({
       </div>
       
       {/* Centered Content */}
-      <div className="relative z-10 w-full max-w-4xl mx-auto px-4 flex items-center justify-center min-h-screen">
+      <div className="relative z-10 w-full max-w-4xl mx-auto px-4 flex items-center justify-center h-full">
         <HeroTextContent
           wedding={wedding}
           dateId={dateId}

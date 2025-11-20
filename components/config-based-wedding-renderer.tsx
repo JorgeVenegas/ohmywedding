@@ -15,10 +15,12 @@ import { VariantProvider } from './contexts/variant-context'
 import { SiteConfigProvider } from './contexts/site-config-context'
 import { EditingModeProvider } from './contexts/editing-mode-context'
 import { CustomizeProvider } from './contexts/customize-context'
+import { ViewportProvider } from './contexts/viewport-context'
 import { SectionCustomizer } from './ui/section-customizer'
 import { EditingTopBar } from './ui/editing-top-bar'
 import { AddSectionButton } from './ui/add-section-button'
 import { DeleteSectionButton } from './ui/delete-section-button'
+import { ViewportWrapper } from './ui/viewport-wrapper'
 import { usePageConfig } from './contexts/page-config-context'
 import { useSiteConfigSafe } from './contexts/site-config-context'
 import { useEditingModeSafe } from './contexts/editing-mode-context'
@@ -366,24 +368,56 @@ function ConfigBasedWeddingRendererContent({
     <>
       <EditingTopBar />
       
-      {allComponents.length === 0 ? (
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">No Components Configured</h2>
-            <p className="text-gray-600 mb-4">This wedding page has no components enabled.</p>
-            <AddSectionButton 
-              position={0} 
-              onAddSection={handleAddSection}
-              enabledComponents={[]}
-              hasWeddingDate={!!wedding.wedding_date}
-            />
+      <ViewportWrapper>
+        {allComponents.length === 0 ? (
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-4">No Components Configured</h2>
+              <p className="text-gray-600 mb-4">This wedding page has no components enabled.</p>
+              <AddSectionButton 
+                position={0} 
+                onAddSection={handleAddSection}
+                enabledComponents={[]}
+                hasWeddingDate={!!wedding.wedding_date}
+              />
+            </div>
           </div>
-        </div>
-      ) : (
-        <>
-          {allComponents.map((component, index) => renderComponent(component, index))}
-        </>
-      )}
+        ) : (
+          <>
+            {allComponents.map((component, index) => renderComponent(component, index))}
+          </>
+        )}
+        
+        {/* Footer inside viewport */}
+        <footer className="border-t border-border/30 bg-background/80 backdrop-blur-sm mt-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Created with</span>
+                <a 
+                  href="https://ohmywedding.com" 
+                  className="flex items-center gap-1 hover:text-primary transition-colors font-medium"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span className="text-primary">♥</span>
+                  <span>OhMyWedding</span>
+                </a>
+              </div>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <a 
+                  href="https://ohmywedding.com/create" 
+                  className="hover:text-primary transition-colors"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Create Your Own
+                </a>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </ViewportWrapper>
 
       <SectionCustomizer />
     </>
@@ -394,9 +428,11 @@ export function ConfigBasedWeddingRenderer(props: ConfigBasedWeddingRendererProp
   // We need to wrap this in PageConfigProvider first to get initial colors
   return (
     <VariantProvider>
-      <EditingModeProvider>
-        <ConfigBasedWeddingRendererWithConfig {...props} />
-      </EditingModeProvider>
+      <ViewportProvider>
+        <EditingModeProvider>
+          <ConfigBasedWeddingRendererWithConfig {...props} />
+        </EditingModeProvider>
+      </ViewportProvider>
     </VariantProvider>
   )
 }

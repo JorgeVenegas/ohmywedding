@@ -99,18 +99,18 @@ export function CountdownClassicVariant({
           <Heart className="w-6 h-6 ml-3 fill-current" style={{ color: theme?.colors?.accent }} />
         </div>
 
-        <div className="flex justify-center items-center space-x-8 md:space-x-12">
+        <div className="flex justify-center items-center space-x-4 sm:space-x-6 md:space-x-12 flex-wrap gap-4">
           {units.map((unit, index) => (
             <div key={unit.label} className="text-center">
               <div 
-                className="relative bg-white rounded-lg shadow-lg border-2 p-6 md:p-8 min-w-[80px] md:min-w-[100px]"
+                className="relative bg-white rounded-lg shadow-lg border-2 p-4 sm:p-6 md:p-8 min-w-[70px] sm:min-w-[80px] md:min-w-[100px]"
                 style={{ 
                   borderColor: theme?.colors?.accent,
                   boxShadow: `0 4px 20px ${theme?.colors?.accent}20`
                 }}
               >
                 <div 
-                  className="text-3xl md:text-5xl font-bold mb-2"
+                  className="text-2xl sm:text-3xl md:text-5xl font-bold mb-2"
                   style={{ 
                     color: theme?.colors?.primary,
                     fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'

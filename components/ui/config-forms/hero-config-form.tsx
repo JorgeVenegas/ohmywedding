@@ -205,8 +205,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true }: Hero
               {[
                 { value: 'small', label: 'Small' },
                 { value: 'medium', label: 'Medium' },
-                { value: 'large', label: 'Large' },
-                { value: 'full', label: 'Full Screen' }
+                { value: 'large', label: 'Large' }
               ].map((height) => (
                 <Button
                   key={height.value}
