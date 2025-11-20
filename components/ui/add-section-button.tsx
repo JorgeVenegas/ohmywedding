@@ -26,10 +26,10 @@ export function AddSectionButton({ position, onAddSection, enabledComponents = [
 
   return (
     <>
-      <div className="flex justify-center py-6 group">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 h-9 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-all duration-300 opacity-60 group-hover:opacity-100 hover:scale-105"
+          className="flex items-center gap-2 h-9 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-all duration-300 hover:scale-105"
           title="Add a new section here"
         >
           <Plus className="w-4 h-4" />

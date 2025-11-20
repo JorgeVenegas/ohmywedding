@@ -98,12 +98,12 @@ export function SectionSelectorModal({
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/50 z-50 transition-opacity"
+        className="fixed inset-0 bg-black/50 z-50 transition-opacity animate-in fade-in duration-200"
         onClick={onClose}
       />
       
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-300">
         <div className="bg-white rounded-lg shadow-2xl max-w-md w-full max-h-[70vh] overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
@@ -113,7 +113,7 @@ export function SectionSelectorModal({
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+              className="p-1.5 hover:bg-gray-100 rounded-full transition-all duration-200 hover:scale-110"
             >
               <X className="w-4 h-4 text-gray-500" />
             </button>
@@ -127,18 +127,19 @@ export function SectionSelectorModal({
               </div>
             ) : (
               <div className="space-y-2">
-                {availableSections.map((section) => (
+                {availableSections.map((section, index) => (
                 <button
                   key={section.id}
                   onClick={() => handleSelectSection(section.id)}
-                  className="w-full p-3 border border-gray-200 rounded-md hover:border-blue-300 hover:bg-blue-50 transition-colors text-left group"
+                  className="w-full p-3 border border-gray-200 rounded-md hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 text-left group animate-in fade-in slide-in-from-left-4"
+                  style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'backwards' }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="text-lg flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <div className="text-lg flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
                       {section.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 group-hover:text-blue-700 text-sm">
+                      <h3 className="font-medium text-gray-900 group-hover:text-blue-700 text-sm transition-colors duration-200">
                         {section.name}
                       </h3>
                       <p className="text-xs text-gray-500 mt-0.5 truncate">
@@ -150,7 +151,8 @@ export function SectionSelectorModal({
                 ))}
               </div>
             )}
-          </div>          {/* Footer */}
+          </div>
+          {/* Footer */}
           <div className="flex justify-end gap-2 p-3 border-t border-gray-200">
             <Button
               onClick={onClose}

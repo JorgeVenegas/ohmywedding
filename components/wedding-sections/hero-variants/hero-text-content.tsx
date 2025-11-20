@@ -30,7 +30,7 @@ export function HeroTextContent({
   return (
     <div className={`${textAlign === 'left' ? 'text-left' : textAlign === 'right' ? 'text-right' : 'text-center'}`}>
       {/* Countdown Badge */}
-      {showCountdown && (
+      {showCountdown && wedding.wedding_date && (
         <div className={`inline-flex items-center gap-2 px-6 py-3 rounded-full font-medium mb-6 shadow-lg ${
           isOverlay 
             ? 'bg-white/20 backdrop-blur-sm text-white border border-white/30' 

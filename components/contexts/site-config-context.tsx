@@ -3,7 +3,15 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react'
 
 export interface SiteConfig {
-  style: string
+  fonts: {
+    display: string
+    heading: string
+    body: string
+    displayFamily: string
+    headingFamily: string
+    bodyFamily: string
+    googleFonts: string
+  }
   colors: {
     primary: string
     secondary: string
@@ -14,9 +22,10 @@ export interface SiteConfig {
 
 interface SiteConfigContextType {
   config: SiteConfig
-  updateStyle: (style: string) => void
+  updateFonts: (fonts: { display: string; heading: string; body: string; displayFamily: string; headingFamily: string; bodyFamily: string; googleFonts: string }) => void
   updateColors: (colors: { primary: string; secondary: string; accent: string }) => void
   updateCustomColor: (colorType: 'primary' | 'secondary' | 'accent', color: string) => void
+  updateCustomFont: (fontType: 'display' | 'heading' | 'body', font: string, fontFamily: string) => void
   toggleComponent: (componentId: string, enabled: boolean) => void
   addComponent: (componentId: string, position: number, currentComponents?: any[]) => void
 }
@@ -32,7 +41,15 @@ function getAvailableComponentsForStyle(style: string) {
 }
 
 const DEFAULT_CONFIG: SiteConfig = {
-  style: 'modern',
+  fonts: {
+    display: 'Playfair Display',
+    heading: 'Cormorant Garamond',
+    body: 'Lato',
+    displayFamily: '"Playfair Display", serif',
+    headingFamily: '"Cormorant Garamond", serif',
+    bodyFamily: '"Lato", sans-serif',
+    googleFonts: 'Playfair+Display:wght@400;700&family=Cormorant+Garamond:wght@400;600&family=Lato:wght@300;400;700'
+  },
   colors: {
     primary: '#9CAF88',
     secondary: '#B8C5A6', 
@@ -56,11 +73,21 @@ export function SiteConfigProvider({ children, initialColors }: SiteConfigProvid
     colors: initialColors || DEFAULT_CONFIG.colors
   })
 
-  const updateStyle = (style: string) => {
+  const updateFonts = (fonts: { display: string; heading: string; body: string; displayFamily: string; headingFamily: string; bodyFamily: string; googleFonts: string }) => {
     setConfig(prev => ({ 
       ...prev, 
-      style
-      // Keep current enabled components when switching styles
+      fonts
+    }))
+  }
+
+  const updateCustomFont = (fontType: 'display' | 'heading' | 'body', font: string, fontFamily: string) => {
+    setConfig(prev => ({
+      ...prev,
+      fonts: {
+        ...prev.fonts,
+        [fontType]: font,
+        [`${fontType}Family`]: fontFamily
+      }
     }))
   }
 
@@ -105,9 +132,10 @@ export function SiteConfigProvider({ children, initialColors }: SiteConfigProvid
     <SiteConfigContext.Provider
       value={{
         config,
-        updateStyle,
+        updateFonts,
         updateColors,
         updateCustomColor,
+        updateCustomFont,
         toggleComponent,
         addComponent
       }}

@@ -1,7 +1,28 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react'
 import { PageConfiguration, createDefaultPageConfig, loadPageConfiguration, savePageConfiguration } from '@/lib/page-config'
+
+// Deep equality check helper
+function deepEqual(obj1: any, obj2: any): boolean {
+  if (obj1 === obj2) return true
+  
+  if (typeof obj1 !== 'object' || obj1 === null || typeof obj2 !== 'object' || obj2 === null) {
+    return false
+  }
+  
+  const keys1 = Object.keys(obj1).sort()
+  const keys2 = Object.keys(obj2).sort()
+  
+  if (keys1.length !== keys2.length) return false
+  if (keys1.join(',') !== keys2.join(',')) return false
+  
+  for (const key of keys1) {
+    if (!deepEqual(obj1[key], obj2[key])) return false
+  }
+  
+  return true
+}
 
 interface PageConfigContextType {
   config: PageConfiguration
@@ -35,8 +56,24 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   
-  // Check if there are unsaved changes
-  const hasUnsavedChanges = JSON.stringify(config) !== JSON.stringify(originalConfig)
+  // Check if there are unsaved changes using useMemo to avoid unnecessary recalculations
+  const hasUnsavedChanges = useMemo(() => {
+    // Don't show unsaved changes while loading
+    if (isLoading) return false
+    
+    // Use deep equality check instead of JSON.stringify for more reliable comparison
+    const hasChanges = !deepEqual(config, originalConfig)
+    
+    // Debug logging
+    if (hasChanges) {
+      console.log('Config has unsaved changes detected')
+      // Uncomment to debug what's different:
+      // console.log('Current config:', JSON.stringify(config, null, 2))
+      // console.log('Original config:', JSON.stringify(originalConfig, null, 2))
+    }
+    
+    return hasChanges
+  }, [config, originalConfig, isLoading])
 
   // Load configuration on mount
   useEffect(() => {

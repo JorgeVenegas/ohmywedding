@@ -36,6 +36,37 @@ function ConfigBasedWeddingRendererContent({
   const siteConfigContext = useSiteConfigSafe()
   const editingContext = useEditingModeSafe()
   
+  // Load Google Fonts dynamically when fonts change
+  React.useEffect(() => {
+    if (siteConfigContext?.config.fonts.googleFonts) {
+      console.log('Loading fonts:', siteConfigContext.config.fonts)
+      
+      // Remove existing font link if any
+      const existingLink = document.getElementById('custom-google-fonts')
+      if (existingLink) {
+        existingLink.remove()
+      }
+      
+      // Add new font link
+      const link = document.createElement('link')
+      link.id = 'custom-google-fonts'
+      link.rel = 'stylesheet'
+      link.href = `https://fonts.googleapis.com/css2?family=${siteConfigContext.config.fonts.googleFonts}&display=swap`
+      document.head.appendChild(link)
+      
+      console.log('Setting CSS variables:', {
+        display: siteConfigContext.config.fonts.displayFamily,
+        heading: siteConfigContext.config.fonts.headingFamily,
+        body: siteConfigContext.config.fonts.bodyFamily
+      })
+      
+      // Apply fonts to CSS variables
+      document.documentElement.style.setProperty('--font-display', siteConfigContext.config.fonts.displayFamily)
+      document.documentElement.style.setProperty('--font-heading', siteConfigContext.config.fonts.headingFamily)
+      document.documentElement.style.setProperty('--font-body', siteConfigContext.config.fonts.bodyFamily)
+    }
+  }, [siteConfigContext?.config.fonts])
+  
   // Only render enabled components from the page configuration
   const allComponents = config.components
     .filter(component => component.enabled)
@@ -320,13 +351,13 @@ function ConfigBasedWeddingRendererContent({
             onDelete={handleDeleteSection}
           />
           {renderedComponent}
+          <AddSectionButton 
+            position={index + 1} 
+            onAddSection={handleAddSection}
+            enabledComponents={allComponents.map(c => c.type)}
+            hasWeddingDate={!!wedding.wedding_date}
+          />
         </div>
-        <AddSectionButton 
-          position={index + 1} 
-          onAddSection={handleAddSection}
-          enabledComponents={allComponents.map(c => c.type)}
-          hasWeddingDate={!!wedding.wedding_date}
-        />
       </React.Fragment>
     )
   }

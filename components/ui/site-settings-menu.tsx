@@ -1,16 +1,158 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { Settings, ChevronDown, Palette, Layout } from 'lucide-react'
+import { Settings, ChevronDown, Palette, Type } from 'lucide-react'
 import { Button } from './button'
 
-// Available wedding styles
-const WEDDING_STYLES = [
-  { id: 'classic', name: 'Classic Elegance', description: 'Timeless and sophisticated' },
-  { id: 'modern', name: 'Modern Minimalist', description: 'Clean and contemporary' },
-  { id: 'romantic', name: 'Romantic Garden', description: 'Soft and dreamy' },
-  { id: 'rustic', name: 'Rustic Charm', description: 'Natural and cozy' },
-  { id: 'beach', name: 'Beach Bliss', description: 'Coastal and relaxed' }
+// Font pairings - Curated combinations for wedding sites (Display / Heading / Body)
+const FONT_PAIRINGS = [
+  {
+    id: 'beacon-elegant',
+    name: 'Beacon Elegant',
+    display: 'Beacon Aesthetic',
+    heading: 'Cormorant Garamond',
+    body: 'Crimson Text',
+    displayFamily: '"Beacon Aesthetic", serif',
+    headingFamily: '"Cormorant Garamond", serif',
+    bodyFamily: '"Crimson Text", serif',
+    googleFonts: 'Cormorant+Garamond:wght@400;600&family=Crimson+Text:wght@400;600'
+  },
+  {
+    id: 'macker-modern',
+    name: 'Macker Modern',
+    display: 'Macker',
+    heading: 'Poppins',
+    body: 'Inter',
+    displayFamily: '"Macker", sans-serif',
+    headingFamily: '"Poppins", sans-serif',
+    bodyFamily: '"Inter", sans-serif',
+    googleFonts: 'Poppins:wght@400;600&family=Inter:wght@300;400;600'
+  },
+  {
+    id: 'milven-refined',
+    name: 'Milven Refined',
+    display: 'Milven',
+    heading: 'Crimson Text',
+    body: 'Lora',
+    displayFamily: '"Milven", serif',
+    headingFamily: '"Crimson Text", serif',
+    bodyFamily: '"Lora", serif',
+    googleFonts: 'Crimson+Text:wght@400;600&family=Lora:wght@400;600'
+  },
+  {
+    id: 'stanley-classic',
+    name: 'Stanley Classic',
+    display: 'Stanley',
+    heading: 'Playfair Display',
+    body: 'Source Sans Pro',
+    displayFamily: '"Stanley", serif',
+    headingFamily: '"Playfair Display", serif',
+    bodyFamily: '"Source Sans Pro", sans-serif',
+    googleFonts: 'Playfair+Display:wght@400;700&family=Source+Sans+Pro:wght@300;400;600'
+  },
+  {
+    id: 'sinera-timeless',
+    name: 'Sinera Timeless',
+    display: 'Sinera',
+    heading: 'Lora',
+    body: 'Merriweather',
+    displayFamily: '"Sinera", serif',
+    headingFamily: '"Lora", serif',
+    bodyFamily: '"Merriweather", serif',
+    googleFonts: 'Lora:wght@400;600&family=Merriweather:wght@300;400;700'
+  },
+  {
+    id: 'classic-serif',
+    name: 'Classic Serif',
+    display: 'Playfair Display',
+    heading: 'Cormorant Garamond',
+    body: 'Lato',
+    displayFamily: '"Playfair Display", serif',
+    headingFamily: '"Cormorant Garamond", serif',
+    bodyFamily: '"Lato", sans-serif',
+    googleFonts: 'Playfair+Display:wght@400;700&family=Cormorant+Garamond:wght@400;600&family=Lato:wght@300;400;700'
+  },
+  {
+    id: 'elegant-script',
+    name: 'Elegant Script',
+    display: 'Great Vibes',
+    heading: 'Cormorant Garamond',
+    body: 'Montserrat',
+    displayFamily: '"Great Vibes", cursive',
+    headingFamily: '"Cormorant Garamond", serif',
+    bodyFamily: '"Montserrat", sans-serif',
+    googleFonts: 'Great+Vibes&family=Cormorant+Garamond:wght@400;600&family=Montserrat:wght@300;400;600'
+  },
+  {
+    id: 'modern-sans',
+    name: 'Modern Sans',
+    display: 'Poppins',
+    heading: 'Raleway',
+    body: 'Inter',
+    displayFamily: '"Poppins", sans-serif',
+    headingFamily: '"Raleway", sans-serif',
+    bodyFamily: '"Inter", sans-serif',
+    googleFonts: 'Poppins:wght@400;600;700&family=Raleway:wght@400;600&family=Inter:wght@300;400;600'
+  },
+  {
+    id: 'romantic-serif',
+    name: 'Romantic Serif',
+    display: 'Cormorant Garamond',
+    heading: 'Lora',
+    body: 'Crimson Text',
+    displayFamily: '"Cormorant Garamond", serif',
+    headingFamily: '"Lora", serif',
+    bodyFamily: '"Crimson Text", serif',
+    googleFonts: 'Cormorant+Garamond:wght@400;600;700&family=Lora:wght@400;600&family=Crimson+Text:wght@400;600'
+  },
+  {
+    id: 'rustic-handwritten',
+    name: 'Rustic Handwritten',
+    display: 'Dancing Script',
+    heading: 'Raleway',
+    body: 'Quicksand',
+    displayFamily: '"Dancing Script", cursive',
+    headingFamily: '"Raleway", sans-serif',
+    bodyFamily: '"Quicksand", sans-serif',
+    googleFonts: 'Dancing+Script:wght@400;700&family=Raleway:wght@400;600&family=Quicksand:wght@300;400;600'
+  },
+  {
+    id: 'minimalist',
+    name: 'Minimalist',
+    display: 'Raleway',
+    heading: 'Lato',
+    body: 'Open Sans',
+    displayFamily: '"Raleway", sans-serif',
+    headingFamily: '"Lato", sans-serif',
+    bodyFamily: '"Open Sans", sans-serif',
+    googleFonts: 'Raleway:wght@400;600;700&family=Lato:wght@400;600&family=Open+Sans:wght@300;400;600'
+  }
+]
+
+// Available fonts list for individual selection
+const AVAILABLE_FONTS = [
+  // Custom fonts
+  { name: 'Beacon Aesthetic', family: '"Beacon Aesthetic", serif', category: 'Custom' },
+  { name: 'Macker', family: '"Macker", sans-serif', category: 'Custom' },
+  { name: 'Milven', family: '"Milven", serif', category: 'Custom' },
+  { name: 'Stanley', family: '"Stanley", serif', category: 'Custom' },
+  { name: 'Sinera', family: '"Sinera", serif', category: 'Custom' },
+  // Google fonts
+  { name: 'Playfair Display', family: '"Playfair Display", serif', category: 'Serif' },
+  { name: 'Cormorant Garamond', family: '"Cormorant Garamond", serif', category: 'Serif' },
+  { name: 'Lora', family: '"Lora", serif', category: 'Serif' },
+  { name: 'Crimson Text', family: '"Crimson Text", serif', category: 'Serif' },
+  { name: 'Merriweather', family: '"Merriweather", serif', category: 'Serif' },
+  { name: 'Great Vibes', family: '"Great Vibes", cursive', category: 'Script' },
+  { name: 'Dancing Script', family: '"Dancing Script", cursive', category: 'Script' },
+  { name: 'Poppins', family: '"Poppins", sans-serif', category: 'Sans-Serif' },
+  { name: 'Raleway', family: '"Raleway", sans-serif', category: 'Sans-Serif' },
+  { name: 'Lato', family: '"Lato", sans-serif', category: 'Sans-Serif' },
+  { name: 'Inter', family: '"Inter", sans-serif', category: 'Sans-Serif' },
+  { name: 'Montserrat', family: '"Montserrat", sans-serif', category: 'Sans-Serif' },
+  { name: 'Open Sans', family: '"Open Sans", sans-serif', category: 'Sans-Serif' },
+  { name: 'Source Sans Pro', family: '"Source Sans Pro", sans-serif', category: 'Sans-Serif' },
+  { name: 'Quicksand', family: '"Quicksand", sans-serif', category: 'Sans-Serif' }
 ]
 
 // Color themes - Wedding-optimized color palettes
@@ -78,24 +220,74 @@ const COLOR_THEMES = [
 ]
 
 interface SiteSettingsMenuProps {
-  currentStyle: string
+  currentFonts?: { display?: string; heading?: string; body?: string }
   currentColors: { primary: string; secondary: string; accent: string }
-  onStyleChange: (style: string) => void
+  onFontsChange: (fonts: { display: string; heading: string; body: string; displayFamily: string; headingFamily: string; bodyFamily: string; googleFonts: string }) => void
   onColorsChange: (colors: { primary: string; secondary: string; accent: string }) => void
   onCustomColorChange: (colorType: 'primary' | 'secondary' | 'accent', color: string) => void
+  onCustomFontChange?: (fontType: 'display' | 'heading' | 'body', font: string, fontFamily: string) => void
 }
 
 export function SiteSettingsMenu({
-  currentStyle,
+  currentFonts = { display: 'Playfair Display', heading: 'Cormorant Garamond', body: 'Lato' },
   currentColors,
-  onStyleChange,
+  onFontsChange,
   onColorsChange,
-  onCustomColorChange
+  onCustomColorChange,
+  onCustomFontChange
 }: SiteSettingsMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
+  const [isFontsOpen, setIsFontsOpen] = useState(false)
   const [isPaletteOpen, setIsPaletteOpen] = useState(false)
   const [isCustomColorsOpen, setIsCustomColorsOpen] = useState(false)
+  const [isCustomFontsOpen, setIsCustomFontsOpen] = useState(false)
+  const [isDisplayFontOpen, setIsDisplayFontOpen] = useState(false)
+  const [isHeadingFontOpen, setIsHeadingFontOpen] = useState(false)
+  const [isBodyFontOpen, setIsBodyFontOpen] = useState(false)
+  const [selectedFontPairingId, setSelectedFontPairingId] = useState<string | null>(null)
   const [selectedPaletteId, setSelectedPaletteId] = useState<string | null>(null)
+  const [isCustomFontsAnimating, setIsCustomFontsAnimating] = useState(false)
+  const [isCustomColorsAnimating, setIsCustomColorsAnimating] = useState(false)
+  
+  // Ensure fonts have default values
+  const displayFont = currentFonts.display || 'Playfair Display'
+  const headingFont = currentFonts.heading || 'Cormorant Garamond'
+  const bodyFont = currentFonts.body || 'Lato'
+  
+  // Check if current fonts match any pairing
+  useEffect(() => {
+    const matchingFonts = FONT_PAIRINGS.find(pairing =>
+      pairing.display === displayFont &&
+      pairing.heading === headingFont &&
+      pairing.body === bodyFont
+    )
+    
+    if (matchingFonts) {
+      setSelectedFontPairingId(matchingFonts.id)
+    } else {
+      setSelectedFontPairingId(null)
+    }
+  }, [displayFont, headingFont, bodyFont])
+
+  const handleFontPairingChange = (pairingId: string) => {
+    const pairing = FONT_PAIRINGS.find(p => p.id === pairingId)
+    if (pairing) {
+      onFontsChange({
+        display: pairing.display,
+        heading: pairing.heading,
+        body: pairing.body,
+        displayFamily: pairing.displayFamily,
+        headingFamily: pairing.headingFamily,
+        bodyFamily: pairing.bodyFamily,
+        googleFonts: pairing.googleFonts
+      })
+      setSelectedFontPairingId(pairingId)
+      setIsFontsOpen(false)
+    }
+  }
+  
+  const selectedFontPairing = selectedFontPairingId ? FONT_PAIRINGS.find(p => p.id === selectedFontPairingId) : null
 
   // Check if current colors match any palette and update selectedPaletteId
   useEffect(() => {
@@ -123,10 +315,24 @@ export function SiteSettingsMenu({
 
   const selectedPalette = selectedPaletteId ? COLOR_THEMES.find(t => t.id === selectedPaletteId) : null
 
+  const handleClose = () => {
+    setIsClosing(true)
+    setTimeout(() => {
+      setIsOpen(false)
+      setIsClosing(false)
+    }, 200)
+  }
+
   return (
     <div className="relative">
       <Button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          if (isOpen) {
+            handleClose()
+          } else {
+            setIsOpen(true)
+          }
+        }}
         className="inline-flex items-center gap-2 h-9 px-3 py-2 rounded-full bg-white/20 backdrop-blur-sm text-white border border-white/30 transition-all duration-300 hover:bg-white/30 hover:border-white/50 hover:shadow-lg hover:shadow-white/20 hover:scale-105 supports-[backdrop-filter]:bg-white/20 [@supports_not_(backdrop-filter)]:bg-white/90 [@supports_not_(backdrop-filter)]:text-gray-900 [@supports_not_(backdrop-filter)]:border-gray-300 [@supports_not_(backdrop-filter)]:hover:bg-white [@supports_not_(backdrop-filter)]:hover:shadow-md"
       >
         <Settings className="w-4 h-4 transition-transform duration-300 hover:rotate-90" />
@@ -139,11 +345,15 @@ export function SiteSettingsMenu({
           {/* Backdrop */}
           <div 
             className="fixed inset-0 z-30 animate-in fade-in duration-200" 
-            onClick={() => setIsOpen(false)}
+            onClick={handleClose}
           />
           
           {/* Dropdown Menu */}
-          <div className="absolute top-full left-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-40 p-6 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className={`absolute top-full left-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-40 p-6 transition-all duration-200 ${
+            isClosing 
+              ? 'animate-out fade-out slide-out-to-top-4' 
+              : 'animate-in fade-in slide-in-from-top-4'
+          }`}>
             {/* Header */}
             <div className="flex items-center gap-2 mb-4 pb-4 border-b border-gray-200">
               <Settings className="w-5 h-5 text-blue-600" />
@@ -151,27 +361,260 @@ export function SiteSettingsMenu({
             </div>
 
             <div className="space-y-6">
-              {/* Style Selector */}
+              {/* Font Pairing Selector */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <Layout className="w-4 h-4 text-gray-600" />
-                  <label className="text-sm font-medium text-gray-700">Wedding Style</label>
+                  <Type className="w-4 h-4 text-gray-600" />
+                  <label className="text-sm font-medium text-gray-700">Font Pairing</label>
                 </div>
-                <select
-                  value={currentStyle}
-                  onChange={(e) => onStyleChange(e.target.value)}
-                  className="w-full appearance-none bg-white border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {WEDDING_STYLES.map((style) => (
-                    <option key={style.id} value={style.id}>
-                      {style.name}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  {WEDDING_STYLES.find(s => s.id === currentStyle)?.description}
-                </p>
+                <div className="relative">
+                  {/* Custom Dropdown Button */}
+                  <button
+                    onClick={() => setIsFontsOpen(!isFontsOpen)}
+                    className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150 hover:border-gray-400 hover:shadow-sm"
+                  >
+                    {selectedFontPairing ? (
+                      <div className="flex flex-col gap-2 w-full animate-in fade-in slide-in-from-left-2 duration-200">
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-gray-700 text-left text-xs">{selectedFontPairing.name}</span>
+                          <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-300 flex-shrink-0 ${isFontsOpen ? 'rotate-180' : ''}`} />
+                        </div>
+                        <div className="flex flex-col gap-1 w-full text-left">
+                          <div className="text-xl" style={{ fontFamily: selectedFontPairing.displayFamily }}>
+                            {selectedFontPairing.display}
+                          </div>
+                          <div className="text-sm" style={{ fontFamily: selectedFontPairing.headingFamily }}>
+                            {selectedFontPairing.heading}
+                          </div>
+                          <div className="text-xs text-gray-500" style={{ fontFamily: selectedFontPairing.bodyFamily }}>
+                            {selectedFontPairing.body}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between w-full">
+                        <span className="text-gray-500 text-xs">Choose Font Pairing</span>
+                        <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-300 flex-shrink-0 ${isFontsOpen ? 'rotate-180' : ''}`} />
+                      </div>
+                    )}
+                  </button>
+                  
+                  {/* Dropdown Content */}
+                  {isFontsOpen && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-[52]" 
+                        onClick={() => setIsFontsOpen(false)}
+                      />
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-[53] max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                        {FONT_PAIRINGS.map((pairing) => (
+                          <button
+                            key={pairing.id}
+                            onClick={() => handleFontPairingChange(pairing.id)}
+                            className={`w-full flex flex-col gap-2 p-3 hover:bg-gray-50 transition-all duration-150 border-b border-gray-100 last:border-b-0 ${
+                              selectedFontPairingId === pairing.id ? 'bg-blue-50' : ''
+                            }`}
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <span className="text-sm text-gray-700">{pairing.name}</span>
+                              {selectedFontPairingId === pairing.id && (
+                                <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center animate-in zoom-in duration-200">
+                                  <svg className="w-3 h-3 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path d="M5 13l4 4L19 7"></path>
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex flex-col gap-1 w-full text-left">
+                              <div className="text-lg transition-transform hover:scale-105 duration-200" style={{ fontFamily: pairing.displayFamily }}>
+                                {pairing.display}
+                              </div>
+                              <div className="text-sm" style={{ fontFamily: pairing.headingFamily }}>
+                                {pairing.heading}
+                              </div>
+                              <div className="text-xs text-gray-500" style={{ fontFamily: pairing.bodyFamily }}>
+                                {pairing.body}
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
+
+              {/* Custom Fonts Section */}
+              {onCustomFontChange && (
+                <div>
+                  <button
+                    onClick={() => {
+                      setIsCustomFontsOpen(!isCustomFontsOpen)
+                      setIsCustomFontsAnimating(true)
+                      setTimeout(() => setIsCustomFontsAnimating(false), 300)
+                    }}
+                    className="w-full flex items-center justify-between text-sm font-medium text-gray-700 mb-3 hover:text-gray-900 transition-colors duration-150"
+                  >
+                    <span>Custom Fonts</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isCustomFontsOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  <div 
+                    className={`grid transition-all duration-300 ${
+                      isCustomFontsOpen 
+                        ? 'grid-rows-[1fr] opacity-100' 
+                        : 'grid-rows-[0fr] opacity-0'
+                    }`}
+                  >
+                    <div className={isCustomFontsOpen && !isCustomFontsAnimating ? '' : 'overflow-hidden'}>
+                      <div className="space-y-3 pb-1 relative">
+                        {/* Display Font Selector */}
+                        <div className="flex flex-col gap-2" style={{ animationDelay: '0ms' }}>
+                          <label className="text-xs text-gray-600">Display (Wedding Names, Section Titles)</label>
+                          <div className="relative z-[49]">
+                            <button
+                              onClick={() => {
+                                setIsDisplayFontOpen(!isDisplayFontOpen)
+                                setIsHeadingFontOpen(false)
+                                setIsBodyFontOpen(false)
+                              }}
+                              className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150 hover:border-gray-400"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="truncate" style={{ fontFamily: AVAILABLE_FONTS.find(f => f.name === displayFont)?.family || 'inherit' }}>
+                                  {displayFont}
+                                </span>
+                                <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-300 flex-shrink-0 ml-2 ${isDisplayFontOpen ? 'rotate-180' : ''}`} />
+                              </div>
+                            </button>
+                            {/* Dropdown for Display Font */}
+                            {isDisplayFontOpen && (
+                              <>
+                                <div className="fixed inset-0 z-[50]" onClick={() => setIsDisplayFontOpen(false)} />
+                                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-[51] max-h-60 overflow-y-auto">
+                                  {AVAILABLE_FONTS.map((font) => (
+                                    <button
+                                      key={font.name}
+                                      onClick={() => {
+                                        if (onCustomFontChange) {
+                                          onCustomFontChange('display', font.name, font.family)
+                                        }
+                                        setSelectedFontPairingId(null)
+                                        setIsDisplayFontOpen(false)
+                                      }}
+                                      className={`w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-sm border-b border-gray-100 last:border-b-0 ${
+                                        displayFont === font.name ? 'bg-blue-50' : ''
+                                      }`}
+                                      style={{ fontFamily: font.family }}
+                                    >
+                                      {font.name}
+                                    </button>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Heading Font Selector */}
+                        <div className="flex flex-col gap-2" style={{ animationDelay: '50ms' }}>
+                          <label className="text-xs text-gray-600">Heading (Subsection Headings)</label>
+                          <div className="relative z-[48]">
+                            <button
+                              onClick={() => {
+                                setIsHeadingFontOpen(!isHeadingFontOpen)
+                                setIsDisplayFontOpen(false)
+                                setIsBodyFontOpen(false)
+                              }}
+                              className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150 hover:border-gray-400"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="truncate" style={{ fontFamily: AVAILABLE_FONTS.find(f => f.name === headingFont)?.family || 'inherit' }}>
+                                  {headingFont}
+                                </span>
+                                <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-300 flex-shrink-0 ml-2 ${isHeadingFontOpen ? 'rotate-180' : ''}`} />
+                              </div>
+                            </button>
+                            {/* Dropdown for Heading Font */}
+                            {isHeadingFontOpen && (
+                              <>
+                                <div className="fixed inset-0 z-[50]" onClick={() => setIsHeadingFontOpen(false)} />
+                                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-[51] max-h-60 overflow-y-auto">
+                                  {AVAILABLE_FONTS.map((font) => (
+                                    <button
+                                      key={font.name}
+                                      onClick={() => {
+                                        if (onCustomFontChange) {
+                                          onCustomFontChange('heading', font.name, font.family)
+                                        }
+                                        setSelectedFontPairingId(null)
+                                        setIsHeadingFontOpen(false)
+                                      }}
+                                      className={`w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-sm border-b border-gray-100 last:border-b-0 ${
+                                        headingFont === font.name ? 'bg-blue-50' : ''
+                                      }`}
+                                      style={{ fontFamily: font.family }}
+                                    >
+                                      {font.name}
+                                    </button>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Body Font Selector */}
+                        <div className="flex flex-col gap-2" style={{ animationDelay: '100ms' }}>
+                          <label className="text-xs text-gray-600">Body (Content Text)</label>
+                          <div className="relative z-[47]">
+                            <button
+                              onClick={() => {
+                                setIsBodyFontOpen(!isBodyFontOpen)
+                                setIsDisplayFontOpen(false)
+                                setIsHeadingFontOpen(false)
+                              }}
+                              className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150 hover:border-gray-400"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="truncate" style={{ fontFamily: AVAILABLE_FONTS.find(f => f.name === bodyFont)?.family || 'inherit' }}>
+                                  {bodyFont}
+                                </span>
+                                <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-300 flex-shrink-0 ml-2 ${isBodyFontOpen ? 'rotate-180' : ''}`} />
+                              </div>
+                            </button>
+                            {/* Dropdown for Body Font */}
+                            {isBodyFontOpen && (
+                              <>
+                                <div className="fixed inset-0 z-[50]" onClick={() => setIsBodyFontOpen(false)} />
+                                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-[51] max-h-60 overflow-y-auto">
+                                  {AVAILABLE_FONTS.map((font) => (
+                                    <button
+                                      key={font.name}
+                                      onClick={() => {
+                                        if (onCustomFontChange) {
+                                          onCustomFontChange('body', font.name, font.family)
+                                        }
+                                        setSelectedFontPairingId(null)
+                                        setIsBodyFontOpen(false)
+                                      }}
+                                      className={`w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-sm border-b border-gray-100 last:border-b-0 ${
+                                        bodyFont === font.name ? 'bg-blue-50' : ''
+                                      }`}
+                                      style={{ fontFamily: font.family }}
+                                    >
+                                      {font.name}
+                                    </button>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Color Theme Selector */}
               <div>
@@ -265,7 +708,11 @@ export function SiteSettingsMenu({
               {/* Custom Colors - Collapsible */}
               <div>
                 <button
-                  onClick={() => setIsCustomColorsOpen(!isCustomColorsOpen)}
+                  onClick={() => {
+                    setIsCustomColorsOpen(!isCustomColorsOpen)
+                    setIsCustomColorsAnimating(true)
+                    setTimeout(() => setIsCustomColorsAnimating(false), 300)
+                  }}
                   className="w-full flex items-center justify-between text-sm font-medium text-gray-700 mb-3 hover:text-gray-900 transition-colors duration-150"
                 >
                   <span>Custom Colors</span>
@@ -278,7 +725,7 @@ export function SiteSettingsMenu({
                       : 'grid-rows-[0fr] opacity-0'
                   }`}
                 >
-                  <div className="overflow-hidden">
+                  <div className={isCustomColorsOpen && !isCustomColorsAnimating ? '' : 'overflow-hidden'}>
                     <div className="space-y-3 pb-1">
                       <div className="flex items-center gap-3 animate-in fade-in slide-in-from-left-2 duration-200" style={{ animationDelay: '0ms' }}>
                         <label className="text-xs text-gray-600 w-16">Primary</label>

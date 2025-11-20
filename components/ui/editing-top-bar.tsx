@@ -32,11 +32,16 @@ export function EditingTopBar({ className = '' }: EditingTopBarProps) {
       {/* Site Settings Menu - only visible in editing mode */}
       {isEditingMode && siteConfigContext && (
         <SiteSettingsMenu
-          currentStyle={siteConfigContext.config.style}
+          currentFonts={{ 
+            display: siteConfigContext.config.fonts.display, 
+            heading: siteConfigContext.config.fonts.heading, 
+            body: siteConfigContext.config.fonts.body 
+          }}
           currentColors={siteConfigContext.config.colors}
-          onStyleChange={siteConfigContext.updateStyle}
+          onFontsChange={siteConfigContext.updateFonts}
           onColorsChange={siteConfigContext.updateColors}
           onCustomColorChange={siteConfigContext.updateCustomColor}
+          onCustomFontChange={siteConfigContext.updateCustomFont}
         />
       )}
       
