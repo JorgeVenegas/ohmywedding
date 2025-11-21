@@ -26,9 +26,14 @@ interface HeroSectionProps extends BaseHeroProps {
   imageHeight?: 'small' | 'medium' | 'large' | 'full' // for stacked variant
   imageWidth?: 'full' | 'centered' // for stacked variant
   backgroundColor?: string // for minimal variant
+  backgroundGradient?: boolean // for minimal variant
+  gradientColor1?: string // gradient color 1
+  gradientColor2?: string // gradient color 2
   showDecorations?: boolean // for minimal and stacked variants
   textAlignment?: 'left' | 'center' | 'right' // text alignment
   showVariantSwitcher?: boolean // enable/disable variant switcher
+  overlayOpacity?: number // for background variant
+  imageBrightness?: number // image brightness control
 }
 
 export function HeroSection({
@@ -49,9 +54,14 @@ export function HeroSection({
   imageHeight = 'medium',
   imageWidth = 'centered',
   backgroundColor,
+  backgroundGradient = false,
+  gradientColor1,
+  gradientColor2,
   showDecorations = true,
   textAlignment = 'center',
-  showVariantSwitcher = true
+  showVariantSwitcher = true,
+  overlayOpacity = 40,
+  imageBrightness = 100
 }: HeroSectionProps) {
   // Use standardized section behavior
   const {
@@ -110,8 +120,13 @@ export function HeroSection({
     imageHeight,
     imageWidth,
     backgroundColor,
+    backgroundGradient,
+    gradientColor1,
+    gradientColor2,
     showDecorations,
-    textAlignment
+    textAlignment,
+    overlayOpacity,
+    imageBrightness
   })
 
   const commonProps = {
@@ -134,6 +149,10 @@ export function HeroSection({
           <HeroSideBySideVariant
             {...commonProps}
             imagePosition={config.imagePosition || (alignment?.imagePosition === 'split-right' ? 'right' : 'left')}
+            backgroundGradient={config.backgroundGradient ?? false}
+            gradientColor1={config.gradientColor1}
+            gradientColor2={config.gradientColor2}
+            imageBrightness={config.imageBrightness ?? 100}
           />
         )
       case 'framed':
@@ -149,6 +168,9 @@ export function HeroSection({
           <HeroMinimalVariant
             {...commonProps}
             backgroundColor={config.backgroundColor}
+            backgroundGradient={config.backgroundGradient ?? false}
+            gradientColor1={config.gradientColor1}
+            gradientColor2={config.gradientColor2}
             showDecorations={config.showDecorations ?? true}
           />
         )
@@ -163,7 +185,16 @@ export function HeroSection({
         )
       case 'background':
       default:
-        return <HeroBackgroundVariant {...commonProps} />
+        return (
+          <HeroBackgroundVariant 
+            {...commonProps} 
+            overlayOpacity={config.overlayOpacity ?? 40}
+            backgroundGradient={config.backgroundGradient ?? false}
+            gradientColor1={config.gradientColor1}
+            gradientColor2={config.gradientColor2}
+            imageBrightness={config.imageBrightness ?? 100}
+          />
+        )
     }
   }
 
@@ -175,13 +206,18 @@ export function HeroSection({
       imageHeight: config.imageHeight || imageHeight,
       imageWidth: config.imageWidth || imageWidth,
       backgroundColor: config.backgroundColor || backgroundColor,
+      backgroundGradient: config.backgroundGradient ?? backgroundGradient,
+      gradientColor1: config.gradientColor1 || gradientColor1,
+      gradientColor2: config.gradientColor2 || gradientColor2,
       showDecorations: config.showDecorations ?? showDecorations,
       textAlignment: config.textAlignment || textAlignment,
       showTagline: config.showTagline ?? showTagline,
       tagline: config.tagline || tagline,
       showCountdown: config.showCountdown ?? showCountdown,
       showRSVPButton: config.showRSVPButton ?? showRSVPButton,
-      heroImageUrl: config.heroImageUrl || heroImageUrl
+      heroImageUrl: config.heroImageUrl || heroImageUrl,
+      overlayOpacity: config.overlayOpacity ?? overlayOpacity,
+      imageBrightness: config.imageBrightness ?? imageBrightness
     })
   }
 

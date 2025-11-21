@@ -47,6 +47,7 @@ export function SectionCustomizer() {
             config={sectionConfig} 
             onChange={updateConfig}
             hasWeddingDate={!!customizeContext.weddingDate}
+            weddingNameId={customizeContext.weddingNameId}
           />
         )
       case 'countdown':
@@ -61,6 +62,7 @@ export function SectionCustomizer() {
           <OurStoryConfigForm 
             config={sectionConfig} 
             onChange={updateConfig}
+            weddingNameId={customizeContext.weddingNameId}
           />
         )
       case 'rsvp':

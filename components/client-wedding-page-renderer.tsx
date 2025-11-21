@@ -266,7 +266,7 @@ export function ClientWeddingPageRenderer(props: ClientWeddingPageRendererProps)
   return (
     <SiteConfigProvider>
       <EditingModeProvider initialEditingMode={props.showVariantSwitchers}>
-        <CustomizeProvider weddingDate={props.wedding.wedding_date}>
+        <CustomizeProvider weddingDate={props.wedding.wedding_date} weddingNameId={props.weddingNameId}>
           <VariantProvider>
             <ClientWeddingPageRendererContent {...props} />
           </VariantProvider>

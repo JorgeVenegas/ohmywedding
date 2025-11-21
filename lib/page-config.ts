@@ -20,8 +20,13 @@ export interface PageConfiguration {
         muted?: string
       }
       fonts?: {
-        heading?: 'serif' | 'sans-serif' | 'script'
-        body?: 'serif' | 'sans-serif'
+        display?: string
+        heading?: string
+        body?: string
+        displayFamily?: string
+        headingFamily?: string
+        bodyFamily?: string
+        googleFonts?: string
       }
     }
     layout?: {
@@ -58,8 +63,13 @@ export const createDefaultPageConfig = (): PageConfiguration => ({
         muted: '#6b7280'
       },
       fonts: {
-        heading: 'serif',
-        body: 'sans-serif'
+        display: 'Playfair Display',
+        heading: 'Cormorant Garamond',
+        body: 'Lato',
+        displayFamily: '"Playfair Display", serif',
+        headingFamily: '"Cormorant Garamond", serif',
+        bodyFamily: '"Lato", sans-serif',
+        googleFonts: 'Playfair+Display:wght@400;700&family=Cormorant+Garamond:wght@400;600&family=Lato:wght@300;400;700'
       }
     },
     layout: {

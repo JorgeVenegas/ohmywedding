@@ -31,22 +31,22 @@ export function HeroTextContent({
     <div className={`${textAlign === 'left' ? 'text-left' : textAlign === 'right' ? 'text-right' : 'text-center'}`}>
       {/* Countdown Badge */}
       {showCountdown && wedding.wedding_date && (
-        <div className={`inline-flex items-center gap-2 px-6 py-3 rounded-full font-medium mb-6 shadow-lg ${
+        <div className={`inline-flex items-center gap-2 px-8 py-4 rounded-full text-base md:text-lg font-medium mb-8 shadow-lg ${
           isOverlay 
             ? 'bg-white/20 backdrop-blur-sm text-white border border-white/30' 
             : 'bg-white/80 backdrop-blur-sm text-orange-700'
         }`}>
-          <Heart className="w-4 h-4 fill-current" />
+          <Heart className="w-5 h-5 fill-current" />
           {getCountdownMessage()}
         </div>
       )}
 
       {/* Couple Names */}
       <h1 
-        className={`font-serif mb-6 leading-tight ${
+        className={`font-serif mb-8 leading-tight ${
           isOverlay 
-            ? 'text-5xl md:text-6xl lg:text-7xl text-white drop-shadow-lg' 
-            : 'text-4xl md:text-5xl lg:text-6xl text-slate-800'
+            ? 'text-6xl md:text-7xl lg:text-8xl text-white drop-shadow-lg' 
+            : 'text-5xl md:text-6xl lg:text-7xl text-slate-800'
         }`}
         style={{ 
           fontFamily: theme?.fonts?.heading === 'script' ? 'cursive' : 
@@ -60,10 +60,10 @@ export function HeroTextContent({
       {/* Tagline */}
       {showTagline && tagline && (
         <p 
-          className={`mb-6 font-light ${
+          className={`mb-8 font-light ${
             isOverlay 
-              ? 'text-xl md:text-2xl text-white/90 drop-shadow-md' 
-              : 'text-lg md:text-xl'
+              ? 'text-2xl md:text-3xl text-white/90 drop-shadow-md' 
+              : 'text-xl md:text-2xl'
           }`}
           style={{ 
             color: isOverlay ? 'rgba(255,255,255,0.9)' : (theme?.colors?.muted || '#6b7280'),
@@ -75,12 +75,12 @@ export function HeroTextContent({
       )}
 
       {/* Date & Location */}
-      <div className={`flex flex-col sm:flex-row items-center gap-4 mb-8 text-base md:text-lg ${
-        textAlign === 'center' ? 'justify-center' : 
-        textAlign === 'right' ? 'justify-end' : 'justify-start'
+      <div className={`flex flex-col gap-3 sm:flex-row sm:gap-4 mb-10 text-lg md:text-xl ${
+        textAlign === 'center' ? 'items-center sm:justify-center' : 
+        textAlign === 'right' ? 'items-end sm:justify-end' : 'items-start sm:justify-start'
       }`}>
         <div className="flex items-center gap-2">
-          <Calendar className={`w-5 h-5 ${isOverlay ? 'text-white/80' : ''}`} 
+          <Calendar className={`w-6 h-6 ${isOverlay ? 'text-white/80' : ''}`} 
             style={{ color: isOverlay ? 'rgba(255,255,255,0.8)' : theme?.colors?.accent }} />
           <span className={isOverlay ? 'text-white/90 drop-shadow-sm' : ''} 
             style={{ color: isOverlay ? 'rgba(255,255,255,0.9)' : theme?.colors?.foreground }}>
@@ -88,17 +88,17 @@ export function HeroTextContent({
           </span>
         </div>
         <span className={`hidden sm:inline ${isOverlay ? 'text-white/60' : 'text-gray-400'}`}>•</span>
-        <span className={isOverlay ? 'text-white/90 drop-shadow-sm' : ''} 
+        <div className={isOverlay ? 'text-white/90 drop-shadow-sm' : ''} 
           style={{ color: isOverlay ? 'rgba(255,255,255,0.9)' : theme?.colors?.foreground }}>
           {formattedTime}
-        </span>
+        </div>
         {(wedding.ceremony_venue_name || wedding.reception_venue_name) && (
           <>
             <span className={`hidden sm:inline ${isOverlay ? 'text-white/60' : 'text-gray-400'}`}>•</span>
-            <span className={isOverlay ? 'text-white/90 drop-shadow-sm' : ''} 
+            <div className={isOverlay ? 'text-white/90 drop-shadow-sm' : ''} 
               style={{ color: isOverlay ? 'rgba(255,255,255,0.9)' : theme?.colors?.foreground }}>
               {wedding.ceremony_venue_name || wedding.reception_venue_name}
-            </span>
+            </div>
           </>
         )}
       </div>
@@ -112,7 +112,7 @@ export function HeroTextContent({
           <Button 
             asChild 
             size="lg" 
-            className="px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+            className="px-10 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
             style={{
               backgroundColor: theme?.colors?.primary || '#a86b8f',
               borderColor: theme?.colors?.primary || '#a86b8f'
@@ -123,21 +123,6 @@ export function HeroTextContent({
             </Link>
           </Button>
         )}
-        
-        <Button 
-          asChild 
-          variant="outline"
-          size="lg" 
-          className="px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
-          style={{
-            borderColor: theme?.colors?.secondary || '#8b9d6f',
-            color: theme?.colors?.secondary || '#8b9d6f'
-          }}
-        >
-          <Link href={`/${weddingNameId}/schedule`}>
-            View Schedule
-          </Link>
-        </Button>
       </div>
     </div>
   )

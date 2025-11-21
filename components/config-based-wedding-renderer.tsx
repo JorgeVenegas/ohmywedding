@@ -40,8 +40,9 @@ function ConfigBasedWeddingRendererContent({
   
   // Load Google Fonts dynamically when fonts change
   React.useEffect(() => {
-    if (siteConfigContext?.config.fonts.googleFonts) {
-      console.log('Loading fonts:', siteConfigContext.config.fonts)
+    const fonts = config.siteSettings.theme?.fonts
+    if (fonts?.googleFonts) {
+      console.log('Loading fonts from page config:', fonts)
       
       // Remove existing font link if any
       const existingLink = document.getElementById('custom-google-fonts')
@@ -53,93 +54,37 @@ function ConfigBasedWeddingRendererContent({
       const link = document.createElement('link')
       link.id = 'custom-google-fonts'
       link.rel = 'stylesheet'
-      link.href = `https://fonts.googleapis.com/css2?family=${siteConfigContext.config.fonts.googleFonts}&display=swap`
+      link.href = `https://fonts.googleapis.com/css2?family=${fonts.googleFonts}&display=swap`
       document.head.appendChild(link)
       
       console.log('Setting CSS variables:', {
-        display: siteConfigContext.config.fonts.displayFamily,
-        heading: siteConfigContext.config.fonts.headingFamily,
-        body: siteConfigContext.config.fonts.bodyFamily
+        display: fonts.displayFamily,
+        heading: fonts.headingFamily,
+        body: fonts.bodyFamily
       })
       
       // Apply fonts to CSS variables
-      document.documentElement.style.setProperty('--font-display', siteConfigContext.config.fonts.displayFamily)
-      document.documentElement.style.setProperty('--font-heading', siteConfigContext.config.fonts.headingFamily)
-      document.documentElement.style.setProperty('--font-body', siteConfigContext.config.fonts.bodyFamily)
+      if (fonts.displayFamily) {
+        document.documentElement.style.setProperty('--font-display', fonts.displayFamily)
+      }
+      if (fonts.headingFamily) {
+        document.documentElement.style.setProperty('--font-heading', fonts.headingFamily)
+      }
+      if (fonts.bodyFamily) {
+        document.documentElement.style.setProperty('--font-body', fonts.bodyFamily)
+      }
     }
-  }, [siteConfigContext?.config.fonts])
+  }, [
+    config.siteSettings.theme?.fonts?.googleFonts,
+    config.siteSettings.theme?.fonts?.displayFamily,
+    config.siteSettings.theme?.fonts?.headingFamily,
+    config.siteSettings.theme?.fonts?.bodyFamily
+  ])
   
   // Only render enabled components from the page configuration
   const allComponents = config.components
     .filter(component => component.enabled)
     .sort((a, b) => a.order - b.order)
-  
-  // Debug log when config changes
-  React.useEffect(() => {
-    console.log('Config changed in renderer - total components:', config.components.length)
-    console.log('Components detail:', JSON.stringify(config.components.map(c => ({ id: c.id, type: c.type, enabled: c.enabled, order: c.order })), null, 2))
-  }, [config])
-  
-  // Debug log for allComponents
-  React.useEffect(() => {
-    console.log('All components to render:', allComponents.length)
-    console.log('Rendering these components:', JSON.stringify(allComponents.map(c => ({ id: c.id, type: c.type, enabled: c.enabled, order: c.order })), null, 2))
-  }, [allComponents.length, config.components])
-  
-  // Sync page config colors back to site config (for discarding changes)
-  React.useEffect(() => {
-    if (siteConfigContext && config.siteSettings.theme?.colors) {
-      const pageColors = config.siteSettings.theme.colors
-      const siteColors = siteConfigContext.config.colors
-      
-      // Update site config if page config colors changed (e.g., from discarding)
-      if (
-        pageColors.primary && pageColors.secondary && pageColors.accent &&
-        (pageColors.primary !== siteColors.primary ||
-        pageColors.secondary !== siteColors.secondary ||
-        pageColors.accent !== siteColors.accent)
-      ) {
-        siteConfigContext.updateColors({
-          primary: pageColors.primary,
-          secondary: pageColors.secondary,
-          accent: pageColors.accent
-        })
-      }
-    }
-  }, [
-    config.siteSettings.theme?.colors?.primary,
-    config.siteSettings.theme?.colors?.secondary,
-    config.siteSettings.theme?.colors?.accent
-  ])
-  
-  // Apply site config color changes to page config
-  React.useEffect(() => {
-    if (siteConfigContext && updateSiteSettings) {
-      const currentColors = config.siteSettings.theme?.colors
-      const newColors = siteConfigContext.config.colors
-      
-      // Only update if colors actually changed to avoid infinite loop
-      if (
-        currentColors?.primary !== newColors.primary ||
-        currentColors?.secondary !== newColors.secondary ||
-        currentColors?.accent !== newColors.accent
-      ) {
-        updateSiteSettings({
-          theme: {
-            colors: {
-              primary: newColors.primary,
-              secondary: newColors.secondary,
-              accent: newColors.accent
-            }
-          }
-        })
-      }
-    }
-  }, [
-    siteConfigContext?.config.colors.primary,
-    siteConfigContext?.config.colors.secondary,
-    siteConfigContext?.config.colors.accent
-  ])
 
   if (isLoading) {
     return (
@@ -449,7 +394,7 @@ function ConfigBasedWeddingRendererWithConfig(props: ConfigBasedWeddingRendererP
   
   return (
     <SiteConfigProvider initialColors={initialColors}>
-      <CustomizeProvider weddingDate={props.wedding.wedding_date}>
+      <CustomizeProvider weddingDate={props.wedding.wedding_date} weddingNameId={props.weddingNameId}>
         <ConfigBasedWeddingRendererContent {...props} />
       </CustomizeProvider>
     </SiteConfigProvider>

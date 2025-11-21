@@ -61,50 +61,50 @@ create policy "Anyone can view RSVPs" on rsvps
 -- Owner management policies
 create policy "Wedding owners can manage schedule" on wedding_schedule
   for all using (
-    (date_id, wedding_name_id) in (
-      select date_id, wedding_name_id from weddings where owner_id = auth.uid()
+    wedding_name_id in (
+      select wedding_name_id from weddings where owner_id = auth.uid()
     )
   );
 
 create policy "Wedding owners can manage FAQs" on wedding_faqs
   for all using (
-    (date_id, wedding_name_id) in (
-      select date_id, wedding_name_id from weddings where owner_id = auth.uid()
+    wedding_name_id in (
+      select wedding_name_id from weddings where owner_id = auth.uid()
     )
   );
 
 create policy "Wedding owners can manage pages" on wedding_pages
   for all using (
-    (date_id, wedding_name_id) in (
-      select date_id, wedding_name_id from weddings where owner_id = auth.uid()  
+    wedding_name_id in (
+      select wedding_name_id from weddings where owner_id = auth.uid()
     )
   );
 
 create policy "Wedding owners can manage gallery" on gallery_albums
   for all using (
-    (date_id, wedding_name_id) in (
-      select date_id, wedding_name_id from weddings where owner_id = auth.uid()
+    wedding_name_id in (
+      select wedding_name_id from weddings where owner_id = auth.uid()
     )
   );
 
 create policy "Wedding owners can manage photos" on gallery_photos
   for all using (
-    (date_id, wedding_name_id) in (
-      select date_id, wedding_name_id from weddings where owner_id = auth.uid()
+    wedding_name_id in (
+      select wedding_name_id from weddings where owner_id = auth.uid()
     )
   );
 
 create policy "Wedding owners can manage registries" on gift_registries
   for all using (
-    (date_id, wedding_name_id) in (
-      select date_id, wedding_name_id from weddings where owner_id = auth.uid()
+    wedding_name_id in (
+      select wedding_name_id from weddings where owner_id = auth.uid()
     )
   );
 
 create policy "Wedding owners can manage gift items" on gift_items
   for all using (
-    (date_id, wedding_name_id) in (
-      select date_id, wedding_name_id from weddings where owner_id = auth.uid()
+    wedding_name_id in (
+      select wedding_name_id from weddings where owner_id = auth.uid()
     )
   );
 

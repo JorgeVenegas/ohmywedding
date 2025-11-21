@@ -8,6 +8,7 @@ interface SectionWrapperProps {
   className?: string
   id?: string
   background?: 'default' | 'muted' | 'primary' | 'secondary'
+  style?: React.CSSProperties
 }
 
 export function SectionWrapper({ 
@@ -16,7 +17,8 @@ export function SectionWrapper({
   alignment, 
   className = '', 
   id,
-  background = 'default'
+  background = 'default',
+  style
 }: SectionWrapperProps) {
   const getBackgroundClass = () => {
     switch (background) {
@@ -62,7 +64,7 @@ export function SectionWrapper({
     <section 
       id={id}
       className={`${theme?.spacing?.section || 'py-16 px-4'} ${getBackgroundClass()} ${className}`}
-      style={sectionStyle}
+      style={{ ...sectionStyle, ...style }}
     >
       <div className={`${theme?.spacing?.container || 'max-w-4xl mx-auto'} ${getTextAlignClass()} ${getContentAlignClass()} flex flex-col`}>
         {children}

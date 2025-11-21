@@ -20,8 +20,12 @@ export interface BaseOurStoryProps {
   showHowWeMet?: boolean
   showProposal?: boolean
   showPhotos?: boolean
+  showHowWeMetPhoto?: boolean
+  showProposalPhoto?: boolean
   howWeMetText?: string
+  howWeMetPhoto?: string
   proposalText?: string
+  proposalPhoto?: string
   photos?: Photo[]
   timeline?: TimelineEvent[]
 }

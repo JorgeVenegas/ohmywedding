@@ -58,6 +58,10 @@ interface PageConfigContextType {
   getSectionConfig: (sectionId: string) => Record<string, any>
   updateSiteSettings: (settings: Partial<PageConfiguration['siteSettings']>) => void
   updateComponents: (components: PageConfiguration['components']) => void
+  updateFonts: (fonts: { display: string; heading: string; body: string; displayFamily: string; headingFamily: string; bodyFamily: string; googleFonts: string }) => void
+  updateCustomFont: (fontType: 'display' | 'heading' | 'body', font: string, fontFamily: string) => void
+  updateColors: (colors: { primary: string; secondary: string; accent: string }) => void
+  updateCustomColor: (colorType: 'primary' | 'secondary' | 'accent', color: string) => void
   
   // Save functionality
   saveConfiguration: () => Promise<{ success: boolean; message?: string }>
@@ -161,6 +165,72 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
     }))
   }
 
+  const updateFonts = (fonts: { display: string; heading: string; body: string; displayFamily: string; headingFamily: string; bodyFamily: string; googleFonts: string }) => {
+    setConfig(prev => ({
+      ...prev,
+      siteSettings: {
+        ...prev.siteSettings,
+        theme: {
+          ...prev.siteSettings.theme,
+          fonts: fonts,
+          colors: prev.siteSettings.theme?.colors
+        }
+      }
+    }))
+  }
+
+  const updateCustomFont = (fontType: 'display' | 'heading' | 'body', font: string, fontFamily: string) => {
+    setConfig(prev => ({
+      ...prev,
+      siteSettings: {
+        ...prev.siteSettings,
+        theme: {
+          ...prev.siteSettings.theme,
+          fonts: {
+            ...prev.siteSettings.theme?.fonts,
+            [fontType]: font,
+            [`${fontType}Family`]: fontFamily
+          },
+          colors: prev.siteSettings.theme?.colors
+        }
+      }
+    }))
+  }
+
+  const updateColors = (colors: { primary: string; secondary: string; accent: string }) => {
+    setConfig(prev => ({
+      ...prev,
+      siteSettings: {
+        ...prev.siteSettings,
+        theme: {
+          ...prev.siteSettings.theme,
+          colors: {
+            ...prev.siteSettings.theme?.colors,
+            ...colors
+          },
+          fonts: prev.siteSettings.theme?.fonts
+        }
+      }
+    }))
+  }
+
+  const updateCustomColor = (colorType: 'primary' | 'secondary' | 'accent', color: string) => {
+    setConfig(prev => ({
+      ...prev,
+      siteSettings: {
+        ...prev.siteSettings,
+        theme: {
+          ...prev.siteSettings.theme,
+          colors: {
+            ...prev.siteSettings.theme?.colors,
+            [colorType]: color
+          },
+          fonts: prev.siteSettings.theme?.fonts
+        }
+      }
+    }))
+  }
+
   const saveConfiguration = async (): Promise<{ success: boolean; message?: string }> => {
     setIsSaving(true)
     try {
@@ -202,6 +272,10 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
       getSectionConfig,
       updateSiteSettings,
       updateComponents,
+      updateFonts,
+      updateCustomFont,
+      updateColors,
+      updateCustomColor,
       saveConfiguration,
       loadConfiguration,
       resetToDefaults,

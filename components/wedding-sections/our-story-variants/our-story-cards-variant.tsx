@@ -9,7 +9,9 @@ export function OurStoryCardsVariant({
   showHowWeMet = true,
   showProposal = true,
   howWeMetText = "Our love story began in the most unexpected way. From the moment we met, we knew there was something special between us. What started as a chance encounter blossomed into a beautiful friendship, and eventually, a love that we knew would last forever.",
+  howWeMetPhoto,
   proposalText = "The proposal was a magical moment we'll cherish forever. Surrounded by the beauty of nature and the warmth of our love, the question was asked and answered with tears of joy. It was the perfect beginning to our next chapter together.",
+  proposalPhoto,
   photos = []
 }: BaseOurStoryProps) {
   const stories = []
@@ -18,7 +20,7 @@ export function OurStoryCardsVariant({
     stories.push({
       title: "How We Met",
       text: howWeMetText,
-      image: photos.find(p => p.caption?.includes('meeting') || p.caption?.includes('first'))?.url
+      image: howWeMetPhoto || photos.find(p => p.caption?.includes('meeting') || p.caption?.includes('first'))?.url
     })
   }
   
@@ -26,7 +28,7 @@ export function OurStoryCardsVariant({
     stories.push({
       title: "The Proposal",
       text: proposalText,
-      image: photos.find(p => p.caption?.includes('proposal') || p.caption?.includes('engaged'))?.url
+      image: proposalPhoto || photos.find(p => p.caption?.includes('proposal') || p.caption?.includes('engaged'))?.url
     })
   }
 

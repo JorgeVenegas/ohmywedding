@@ -3,6 +3,15 @@ import Image from 'next/image'
 import { SectionWrapper } from '../section-wrapper'
 import { HeroTextContent } from './hero-text-content'
 import { BaseHeroProps } from './types'
+import { resolveColor } from '@/lib/color-utils'
+
+interface HeroBackgroundVariantProps extends BaseHeroProps {
+  overlayOpacity?: number
+  backgroundGradient?: boolean
+  gradientColor1?: string
+  gradientColor2?: string
+  imageBrightness?: number
+}
 
 export function HeroBackgroundVariant({
   wedding,
@@ -14,8 +23,16 @@ export function HeroBackgroundVariant({
   tagline = "Join us as we tie the knot!",
   showCountdown = true,
   showRSVPButton = true,
-  heroImageUrl
-}: BaseHeroProps) {
+  heroImageUrl,
+  overlayOpacity = 40,
+  backgroundGradient = false,
+  gradientColor1,
+  gradientColor2,
+  imageBrightness = 100
+}: HeroBackgroundVariantProps) {
+  // Resolve palette references to actual colors
+  const resolvedGradientColor1 = resolveColor(gradientColor1, theme)
+  const resolvedGradientColor2 = resolveColor(gradientColor2, theme)
   return (
     <SectionWrapper 
       theme={{
@@ -38,10 +55,24 @@ export function HeroBackgroundVariant({
             alt="Wedding hero"
             fill
             className="object-cover"
+            style={{ filter: `brightness(${imageBrightness}%)` }}
             priority
           />
         )}
-        <div className="absolute inset-0 bg-black/40" />
+        {backgroundGradient && resolvedGradientColor1 && resolvedGradientColor2 ? (
+          <div 
+            className="absolute inset-0 transition-opacity duration-300" 
+            style={{ 
+              background: `linear-gradient(135deg, ${resolvedGradientColor1} 0%, ${resolvedGradientColor2} 100%)`,
+              opacity: overlayOpacity / 100 
+            }}
+          />
+        ) : (
+          <div 
+            className="absolute inset-0 bg-black transition-opacity duration-300" 
+            style={{ opacity: overlayOpacity / 100 }}
+          />
+        )}
       </div>
       
       {/* Centered Content */}

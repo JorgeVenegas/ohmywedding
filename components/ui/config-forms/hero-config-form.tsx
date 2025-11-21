@@ -1,10 +1,14 @@
 "use client"
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
+import { ImageGalleryDialog } from '@/components/ui/image-gallery-dialog'
+import { usePageConfig } from '@/components/contexts/page-config-context'
+import { Image as ImageIcon, X } from 'lucide-react'
+import { useParams } from 'next/navigation'
 
 interface HeroConfigFormProps {
   config: {
@@ -13,6 +17,9 @@ interface HeroConfigFormProps {
     frameStyle?: string
     imageSize?: string
     backgroundColor?: string
+    backgroundGradient?: boolean
+    gradientColor1?: string
+    gradientColor2?: string
     showDecorations?: boolean
     imageHeight?: 'small' | 'medium' | 'large' | 'full'
     imageWidth?: 'full' | 'centered'
@@ -22,12 +29,32 @@ interface HeroConfigFormProps {
     showCountdown?: boolean
     showRSVPButton?: boolean
     heroImageUrl?: string
+    overlayOpacity?: number
+    imageBrightness?: number
   }
   onChange: (key: string, value: any) => void
   hasWeddingDate?: boolean
+  weddingNameId?: string
 }
 
-export function HeroConfigForm({ config, onChange, hasWeddingDate = true }: HeroConfigFormProps) {
+export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddingNameId }: HeroConfigFormProps) {
+  const [showImageDialog, setShowImageDialog] = useState(false)
+  const { config: pageConfig } = usePageConfig()
+  
+  // Palette colors from page config - recalculate whenever colors change
+  const paletteColors = React.useMemo(() => [
+    { value: 'palette:primary', displayColor: pageConfig.siteSettings.theme?.colors?.primary || '#9CAF88', label: 'Primary' },
+    { value: 'palette:secondary', displayColor: pageConfig.siteSettings.theme?.colors?.secondary || '#B8C5A6', label: 'Secondary' },
+    { value: 'palette:accent', displayColor: pageConfig.siteSettings.theme?.colors?.accent || '#8B9A7A', label: 'Accent' },
+    { value: '#ffffff', displayColor: '#ffffff', label: 'White' },
+    { value: '#f9fafb', displayColor: '#f9fafb', label: 'Light Gray' },
+    { value: '#1f2937', displayColor: '#1f2937', label: 'Dark Gray' }
+  ], [
+    pageConfig.siteSettings.theme?.colors?.primary,
+    pageConfig.siteSettings.theme?.colors?.secondary,
+    pageConfig.siteSettings.theme?.colors?.accent
+  ])
+  
   const variants = [
     { value: 'background', label: 'Background Hero', description: 'Fullscreen background with overlay text' },
     { value: 'side-by-side', label: 'Side by Side', description: 'Split layout with image and content' },
@@ -65,38 +92,256 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true }: Hero
         placeholder="Choose hero layout"
       />
 
-      {/* Image URL */}
+      {/* Hero Image Selection */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Hero Image URL
+          Hero Image
         </label>
-        <Input
-          type="url"
-          value={config.heroImageUrl || ''}
-          onChange={(e) => onChange('heroImageUrl', e.target.value)}
-          placeholder="https://example.com/image.jpg"
-        />
+        {config.heroImageUrl ? (
+          <div className="space-y-2">
+            <div className="relative group rounded-lg overflow-hidden border border-gray-300">
+              <img
+                src={config.heroImageUrl}
+                alt="Hero"
+                className="w-full h-40 object-cover"
+              />
+              <button
+                onClick={() => onChange('heroImageUrl', '')}
+                className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowImageDialog(true)}
+              className="w-full"
+            >
+              <ImageIcon className="w-4 h-4 mr-2" />
+              Change Image
+            </Button>
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            onClick={() => setShowImageDialog(true)}
+            className="w-full"
+          >
+            <ImageIcon className="w-4 h-4 mr-2" />
+            Select Image
+          </Button>
+        )}
       </div>
+
+      <ImageGalleryDialog
+        isOpen={showImageDialog}
+        onClose={() => setShowImageDialog(false)}
+        onSelectImage={(url) => onChange('heroImageUrl', url)}
+        weddingNameId={weddingNameId || ''}
+        mode="both"
+      />
+
+      {/* Background specific options */}
+      {config.variant === 'background' && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Overlay Opacity: {config.overlayOpacity ?? 40}%
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={config.overlayOpacity ?? 40}
+              onChange={(e) => onChange('overlayOpacity', parseInt(e.target.value))}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>Transparent</span>
+              <span>Dark</span>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Image Brightness: {config.imageBrightness ?? 100}%
+            </label>
+            <input
+              type="range"
+              min="30"
+              max="100"
+              value={config.imageBrightness ?? 100}
+              onChange={(e) => onChange('imageBrightness', parseInt(e.target.value))}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>Darker</span>
+              <span>Bright</span>
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-gray-700">
+              Use Gradient Overlay
+            </label>
+            <Switch
+              checked={config.backgroundGradient ?? false}
+              onCheckedChange={(checked) => onChange('backgroundGradient', checked)}
+            />
+          </div>
+          {config.backgroundGradient && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Gradient Color 1
+                </label>
+                <div className="grid grid-cols-6 gap-1.5">
+                  {paletteColors.map((color) => (
+                    <button
+                      key={color.value}
+                      onClick={() => onChange('gradientColor1', color.value)}
+                      className={`rounded border-2 transition-all hover:scale-105 ${
+                        config.gradientColor1 === color.value 
+                          ? 'border-blue-500' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      title={color.label}
+                    >
+                      <div 
+                        className="w-full h-8 rounded"
+                        style={{ backgroundColor: color.displayColor }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Gradient Color 2
+                </label>
+                <div className="grid grid-cols-6 gap-1.5">
+                  {paletteColors.map((color) => (
+                    <button
+                      key={color.value}
+                      onClick={() => onChange('gradientColor2', color.value)}
+                      className={`rounded border-2 transition-all hover:scale-105 ${
+                        config.gradientColor2 === color.value 
+                          ? 'border-blue-500' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      title={color.label}
+                    >
+                      <div 
+                        className="w-full h-8 rounded"
+                        style={{ backgroundColor: color.displayColor }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Side-by-Side specific options */}
       {config.variant === 'side-by-side' && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Image Position
-          </label>
-          <div className="flex gap-2">
-            {imagePositions.map((position) => (
-              <Button
-                key={position.value}
-                variant={config.imagePosition === position.value ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => onChange('imagePosition', position.value)}
-              >
-                {position.label}
-              </Button>
-            ))}
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Image Position
+            </label>
+            <div className="flex gap-2">
+              {imagePositions.map((position) => (
+                <Button
+                  key={position.value}
+                  variant={config.imagePosition === position.value ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => onChange('imagePosition', position.value)}
+                >
+                  {position.label}
+                </Button>
+              ))}
+            </div>
           </div>
-        </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Image Brightness: {config.imageBrightness ?? 100}%
+            </label>
+            <input
+              type="range"
+              min="30"
+              max="100"
+              value={config.imageBrightness ?? 100}
+              onChange={(e) => onChange('imageBrightness', parseInt(e.target.value))}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>Darker</span>
+              <span>Bright</span>
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-gray-700">
+              Use Gradient Overlay
+            </label>
+            <Switch
+              checked={config.backgroundGradient ?? false}
+              onCheckedChange={(checked) => onChange('backgroundGradient', checked)}
+            />
+          </div>
+          {config.backgroundGradient && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Gradient Color 1
+                </label>
+                <div className="grid grid-cols-6 gap-1.5">
+                  {paletteColors.map((color) => (
+                    <button
+                      key={color.value}
+                      onClick={() => onChange('gradientColor1', color.value)}
+                      className={`rounded border-2 transition-all hover:scale-105 ${
+                        config.gradientColor1 === color.value 
+                          ? 'border-blue-500' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      title={color.label}
+                    >
+                      <div 
+                        className="w-full h-8 rounded"
+                        style={{ backgroundColor: color.displayColor }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Gradient Color 2
+                </label>
+                <div className="grid grid-cols-6 gap-1.5">
+                  {paletteColors.map((color) => (
+                    <button
+                      key={color.value}
+                      onClick={() => onChange('gradientColor2', color.value)}
+                      className={`rounded border-2 transition-all hover:scale-105 ${
+                        config.gradientColor2 === color.value 
+                          ? 'border-blue-500' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      title={color.label}
+                    >
+                      <div 
+                        className="w-full h-8 rounded"
+                        style={{ backgroundColor: color.displayColor }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Framed specific options */}
@@ -142,26 +387,94 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true }: Hero
       {/* Minimal specific options */}
       {config.variant === 'minimal' && (
         <>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Background Color
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-gray-700">
+              Use Gradient
             </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={config.backgroundColor || '#ffffff'}
-                onChange={(e) => onChange('backgroundColor', e.target.value)}
-                className="w-12 h-10 rounded border border-gray-300 cursor-pointer"
-              />
-              <Input
-                type="text"
-                value={config.backgroundColor || ''}
-                onChange={(e) => onChange('backgroundColor', e.target.value)}
-                placeholder="#ffffff"
-                className="flex-1"
-              />
-            </div>
+            <Switch
+              checked={config.backgroundGradient ?? false}
+              onCheckedChange={(checked) => onChange('backgroundGradient', checked)}
+            />
           </div>
+          
+          {config.backgroundGradient ? (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Gradient Color 1
+                </label>
+                <div className="grid grid-cols-6 gap-1.5">
+                  {paletteColors.map((color) => (
+                    <button
+                      key={color.value}
+                      onClick={() => onChange('gradientColor1', color.value)}
+                      className={`rounded border-2 transition-all hover:scale-105 ${
+                        config.gradientColor1 === color.value 
+                          ? 'border-blue-500' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      title={color.label}
+                    >
+                      <div 
+                        className="w-full h-8 rounded"
+                        style={{ backgroundColor: color.displayColor }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Gradient Color 2
+                </label>
+                <div className="grid grid-cols-6 gap-1.5">
+                  {paletteColors.map((color) => (
+                    <button
+                      key={color.value}
+                      onClick={() => onChange('gradientColor2', color.value)}
+                      className={`rounded border-2 transition-all hover:scale-105 ${
+                        config.gradientColor2 === color.value 
+                          ? 'border-blue-500' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      title={color.label}
+                    >
+                      <div 
+                        className="w-full h-8 rounded"
+                        style={{ backgroundColor: color.displayColor }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Background Color
+              </label>
+              <div className="grid grid-cols-6 gap-1.5">
+                {paletteColors.map((color) => (
+                  <button
+                    key={color.value}
+                    onClick={() => onChange('backgroundColor', color.value)}
+                    className={`rounded border-2 transition-all hover:scale-105 ${
+                      config.backgroundColor === color.value 
+                        ? 'border-blue-500' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    title={color.label}
+                  >
+                    <div 
+                      className="w-full h-8 rounded"
+                      style={{ backgroundColor: color.displayColor }}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-gray-700">
               Show Decorations

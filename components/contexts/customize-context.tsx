@@ -20,6 +20,7 @@ interface CustomizeContextType {
   applySectionConfig: () => void
   getSectionConfig: (sectionId: string) => Record<string, any> | null
   weddingDate?: string | null
+  weddingNameId?: string
 }
 
 const CustomizeContext = createContext<CustomizeContextType | undefined>(undefined)
@@ -27,9 +28,10 @@ const CustomizeContext = createContext<CustomizeContextType | undefined>(undefin
 interface CustomizeProviderProps {
   children: ReactNode
   weddingDate?: string | null
+  weddingNameId?: string
 }
 
-export function CustomizeProvider({ children, weddingDate }: CustomizeProviderProps) {
+export function CustomizeProvider({ children, weddingDate, weddingNameId }: CustomizeProviderProps) {
   const [state, setState] = useState<CustomizeState>({
     isOpen: false,
     sectionId: null,
@@ -166,7 +168,8 @@ export function CustomizeProvider({ children, weddingDate }: CustomizeProviderPr
       resetConfig,
       applySectionConfig,
       getSectionConfig,
-      weddingDate
+      weddingDate,
+      weddingNameId
     }}>
       {children}
     </CustomizeContext.Provider>
