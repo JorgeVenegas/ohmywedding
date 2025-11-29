@@ -1,11 +1,25 @@
 "use client"
 
-import React, { createContext, useContext, useState, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { useWeddingPermissions, type WeddingPermissions } from '@/hooks/use-auth'
 
 interface EditingModeContextType {
   isEditingMode: boolean
   toggleEditingMode: () => void
   setEditingMode: (isEditing: boolean) => void
+  permissions: WeddingPermissions
+  permissionsLoading: boolean
+  canEdit: boolean
+}
+
+const defaultPermissions: WeddingPermissions = {
+  canEdit: false,
+  canDelete: false,
+  canManageCollaborators: false,
+  isOwner: false,
+  isCollaborator: false,
+  role: 'guest',
+  userId: null
 }
 
 const EditingModeContext = createContext<EditingModeContextType | undefined>(undefined)
@@ -13,19 +27,37 @@ const EditingModeContext = createContext<EditingModeContextType | undefined>(und
 interface EditingModeProviderProps {
   children: ReactNode
   initialEditingMode?: boolean
+  weddingNameId?: string | null
 }
 
 export function EditingModeProvider({ 
   children, 
-  initialEditingMode = false 
+  initialEditingMode = false,
+  weddingNameId = null
 }: EditingModeProviderProps) {
   const [isEditingMode, setIsEditingMode] = useState<boolean>(initialEditingMode)
+  const { 
+    permissions, 
+    loading: permissionsLoading 
+  } = useWeddingPermissions(weddingNameId)
+
+  // If user can't edit, force editing mode off
+  useEffect(() => {
+    if (!permissionsLoading && !permissions.canEdit && isEditingMode) {
+      setIsEditingMode(false)
+    }
+  }, [permissions.canEdit, permissionsLoading, isEditingMode])
 
   const toggleEditingMode = () => {
-    setIsEditingMode(prev => !prev)
+    if (permissions.canEdit) {
+      setIsEditingMode(prev => !prev)
+    }
   }
 
   const setEditingMode = (isEditing: boolean) => {
+    if (isEditing && !permissions.canEdit) {
+      return // Don't allow editing if no permission
+    }
     setIsEditingMode(isEditing)
   }
 
@@ -34,7 +66,10 @@ export function EditingModeProvider({
       value={{ 
         isEditingMode, 
         toggleEditingMode, 
-        setEditingMode 
+        setEditingMode,
+        permissions,
+        permissionsLoading,
+        canEdit: permissions.canEdit
       }}
     >
       {children}

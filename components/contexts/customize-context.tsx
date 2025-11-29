@@ -21,6 +21,10 @@ interface CustomizeContextType {
   getSectionConfig: (sectionId: string) => Record<string, any> | null
   weddingDate?: string | null
   weddingNameId?: string
+  // Settings panel state
+  isSettingsPanelOpen: boolean
+  openSettingsPanel: () => void
+  closeSettingsPanel: () => void
 }
 
 const CustomizeContext = createContext<CustomizeContextType | undefined>(undefined)
@@ -39,11 +43,22 @@ export function CustomizeProvider({ children, weddingDate, weddingNameId }: Cust
     sectionConfig: {}
   })
   
+  // Settings panel state
+  const [isSettingsPanelOpen, setIsSettingsPanelOpen] = useState(false)
+  
   // Get page config context
   const pageConfig = usePageConfigSafe()
   
   // Persistent section configurations
   const [sectionConfigs, setSectionConfigs] = useState<Record<string, Record<string, any>>>({})
+  
+  // Use ref to track the latest sectionId to avoid stale closures
+  const currentSectionIdRef = useRef<string | null>(null)
+  
+  // Update ref when sectionId changes
+  useEffect(() => {
+    currentSectionIdRef.current = state.sectionId
+  }, [state.sectionId])
   
   // Sync sectionConfigs with page config when it changes (e.g., after discarding)
   useEffect(() => {
@@ -52,21 +67,10 @@ export function CustomizeProvider({ children, weddingDate, weddingNameId }: Cust
       setSectionConfigs(pageConfig.config.sectionConfigs || {})
     }
   }, [pageConfig?.config])
-  
-  // Ref to track pending page config updates
-  const pendingPageConfigUpdates = useRef<Array<{ sectionId: string; config: Record<string, any> }>>([])
-  
-  // Effect to handle page config updates outside of render
-  useEffect(() => {
-    if (pendingPageConfigUpdates.current.length > 0 && pageConfig) {
-      pendingPageConfigUpdates.current.forEach(({ sectionId, config }) => {
-        pageConfig.updateSectionConfig(sectionId, config)
-      })
-      pendingPageConfigUpdates.current = []
-    }
-  }, [pageConfig, sectionConfigs]) // Dependency on sectionConfigs ensures updates are applied
 
   const openCustomizer = (sectionId: string, sectionType: string, config: Record<string, any>) => {
+    // Close settings panel if open
+    setIsSettingsPanelOpen(false)
     setState({
       isOpen: true,
       sectionId,
@@ -84,44 +88,54 @@ export function CustomizeProvider({ children, weddingDate, weddingNameId }: Cust
     })
   }
 
+  const openSettingsPanel = () => {
+    // Close section customizer if open
+    closeCustomizer()
+    setIsSettingsPanelOpen(true)
+  }
+
+  const closeSettingsPanel = () => {
+    setIsSettingsPanelOpen(false)
+  }
+
   const updateConfig = (key: string, value: any) => {
-    setState(prev => {
-      const newSectionConfig = {
+    const currentSectionId = state.sectionId
+    
+    // Update local state
+    setState(prev => ({
+      ...prev,
+      sectionConfig: {
         ...prev.sectionConfig,
         [key]: value
       }
+    }))
+    
+    // Update persistent configs and page config
+    if (currentSectionId) {
+      setSectionConfigs(prevConfigs => {
+        const updatedConfig = {
+          ...prevConfigs[currentSectionId],
+          [key]: value 
+        }
+        
+        return {
+          ...prevConfigs,
+          [currentSectionId]: updatedConfig
+        }
+      })
       
-      // Apply changes immediately to persistent config (live updates)
-      if (prev.sectionId) {
-        setSectionConfigs(prevConfigs => {
-          const updatedConfig = {
-            ...prevConfigs[prev.sectionId!],
-            [key]: value 
-          }
-          
-          // Queue page config update
-          if (pageConfig) {
-            pendingPageConfigUpdates.current.push({
-              sectionId: prev.sectionId!,
-              config: {
-                ...pageConfig.getSectionConfig(prev.sectionId!),
-                [key]: value
-              }
-            })
-          }
-          
-          return {
-            ...prevConfigs,
-            [prev.sectionId!]: updatedConfig
-          }
+      // Apply to page config - use setTimeout to avoid calling during render
+      if (pageConfig) {
+        // Use queueMicrotask to schedule after current render
+        queueMicrotask(() => {
+          const currentConfig = pageConfig.getSectionConfig(currentSectionId)
+          pageConfig.updateSectionConfig(currentSectionId, {
+            ...currentConfig,
+            [key]: value
+          })
         })
       }
-      
-      return {
-        ...prev,
-        sectionConfig: newSectionConfig
-      }
-    })
+    }
   }
 
   const resetConfig = () => {
@@ -169,7 +183,10 @@ export function CustomizeProvider({ children, weddingDate, weddingNameId }: Cust
       applySectionConfig,
       getSectionConfig,
       weddingDate,
-      weddingNameId
+      weddingNameId,
+      isSettingsPanelOpen,
+      openSettingsPanel,
+      closeSettingsPanel
     }}>
       {children}
     </CustomizeContext.Provider>

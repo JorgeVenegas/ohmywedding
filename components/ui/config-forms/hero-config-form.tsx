@@ -54,14 +54,33 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
     pageConfig.siteSettings.theme?.colors?.secondary,
     pageConfig.siteSettings.theme?.colors?.accent
   ])
+
+  // Check if hero image is provided
+  const hasHeroImage = !!config.heroImageUrl && config.heroImageUrl.trim() !== ''
+
+  // Variants that require an image
+  const imageRequiredVariants = ['background', 'side-by-side', 'framed', 'stacked']
   
-  const variants = [
-    { value: 'background', label: 'Background Hero', description: 'Fullscreen background with overlay text' },
-    { value: 'side-by-side', label: 'Side by Side', description: 'Split layout with image and content' },
-    { value: 'framed', label: 'Framed Photo', description: 'Decorative frame around photo' },
-    { value: 'minimal', label: 'Minimal', description: 'Text-focused with subtle decorations' },
-    { value: 'stacked', label: 'Stacked', description: 'Content above with image below' }
+  // All available variants
+  const allVariants = [
+    { value: 'background', label: 'Background Hero', description: 'Fullscreen background with overlay text', requiresImage: true },
+    { value: 'side-by-side', label: 'Side by Side', description: 'Split layout with image and content', requiresImage: true },
+    { value: 'framed', label: 'Framed Photo', description: 'Decorative frame around photo', requiresImage: true },
+    { value: 'minimal', label: 'Minimal', description: 'Text-focused with subtle decorations', requiresImage: false },
+    { value: 'stacked', label: 'Stacked', description: 'Content above with image below', requiresImage: true }
   ]
+
+  // Filter variants based on whether image is provided
+  const variants = hasHeroImage 
+    ? allVariants 
+    : allVariants.filter(v => !v.requiresImage)
+
+  // If current variant requires image but no image is provided, switch to minimal
+  React.useEffect(() => {
+    if (!hasHeroImage && config.variant && imageRequiredVariants.includes(config.variant)) {
+      onChange('variant', 'minimal')
+    }
+  }, [hasHeroImage, config.variant])
 
   const imagePositions = [
     { value: 'left', label: 'Left' },

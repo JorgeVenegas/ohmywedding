@@ -22,9 +22,13 @@ create policy "Anyone can view wedding content" on weddings
 create policy "Anyone can create weddings" on weddings
   for insert with check (true);
 
--- Update policies - owners can update their weddings, anyone can update unowned weddings
-create policy "Anyone can update weddings" on weddings
-  for update using (true);
+-- Update policies - owners and collaborators can update their weddings
+create policy "Owners and collaborators can update weddings" on weddings
+  for update using (
+    owner_id = auth.uid() -- Owner can edit
+    or owner_id is null -- Anyone logged in can claim/edit unowned weddings  
+    or auth.jwt() ->> 'email' = any(collaborator_emails) -- Collaborators can edit
+  );
 
 -- Delete policy - only owners can delete their weddings
 create policy "Wedding owners can delete their weddings" on weddings
@@ -58,53 +62,74 @@ create policy "Anyone can submit RSVPs" on rsvps
 create policy "Anyone can view RSVPs" on rsvps
   for select using (true);
 
--- Owner management policies
-create policy "Wedding owners can manage schedule" on wedding_schedule
+-- Owner management policies (includes collaborators)
+create policy "Wedding owners and collaborators can manage schedule" on wedding_schedule
   for all using (
     wedding_name_id in (
-      select wedding_name_id from weddings where owner_id = auth.uid()
+      select wedding_name_id from weddings 
+      where owner_id = auth.uid() 
+        or owner_id is null
+        or (select email from auth.users where id = auth.uid()) = any(collaborator_emails)
     )
   );
 
-create policy "Wedding owners can manage FAQs" on wedding_faqs
+create policy "Wedding owners and collaborators can manage FAQs" on wedding_faqs
   for all using (
     wedding_name_id in (
-      select wedding_name_id from weddings where owner_id = auth.uid()
+      select wedding_name_id from weddings 
+      where owner_id = auth.uid() 
+        or owner_id is null
+        or (select email from auth.users where id = auth.uid()) = any(collaborator_emails)
     )
   );
 
-create policy "Wedding owners can manage pages" on wedding_pages
+create policy "Wedding owners and collaborators can manage pages" on wedding_pages
   for all using (
     wedding_name_id in (
-      select wedding_name_id from weddings where owner_id = auth.uid()
+      select wedding_name_id from weddings 
+      where owner_id = auth.uid() 
+        or owner_id is null
+        or (select email from auth.users where id = auth.uid()) = any(collaborator_emails)
     )
   );
 
-create policy "Wedding owners can manage gallery" on gallery_albums
+create policy "Wedding owners and collaborators can manage gallery" on gallery_albums
   for all using (
     wedding_name_id in (
-      select wedding_name_id from weddings where owner_id = auth.uid()
+      select wedding_name_id from weddings 
+      where owner_id = auth.uid() 
+        or owner_id is null
+        or (select email from auth.users where id = auth.uid()) = any(collaborator_emails)
     )
   );
 
-create policy "Wedding owners can manage photos" on gallery_photos
+create policy "Wedding owners and collaborators can manage photos" on gallery_photos
   for all using (
     wedding_name_id in (
-      select wedding_name_id from weddings where owner_id = auth.uid()
+      select wedding_name_id from weddings 
+      where owner_id = auth.uid() 
+        or owner_id is null
+        or (select email from auth.users where id = auth.uid()) = any(collaborator_emails)
     )
   );
 
-create policy "Wedding owners can manage registries" on gift_registries
+create policy "Wedding owners and collaborators can manage registries" on gift_registries
   for all using (
     wedding_name_id in (
-      select wedding_name_id from weddings where owner_id = auth.uid()
+      select wedding_name_id from weddings 
+      where owner_id = auth.uid() 
+        or owner_id is null
+        or (select email from auth.users where id = auth.uid()) = any(collaborator_emails)
     )
   );
 
-create policy "Wedding owners can manage gift items" on gift_items
+create policy "Wedding owners and collaborators can manage gift items" on gift_items
   for all using (
     wedding_name_id in (
-      select wedding_name_id from weddings where owner_id = auth.uid()
+      select wedding_name_id from weddings 
+      where owner_id = auth.uid() 
+        or owner_id is null
+        or (select email from auth.users where id = auth.uid()) = any(collaborator_emails)
     )
   );
 

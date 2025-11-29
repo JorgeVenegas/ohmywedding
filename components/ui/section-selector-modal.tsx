@@ -73,6 +73,28 @@ export function SectionSelectorModal({
   enabledComponents = [],
   hasWeddingDate = false
 }: SectionSelectorModalProps) {
+  const [isClosing, setIsClosing] = React.useState(false)
+
+  // Lock body scroll when dialog is open
+  React.useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+      setIsClosing(false)
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isOpen])
+
+  const handleClose = () => {
+    setIsClosing(true)
+    setTimeout(() => {
+      onClose()
+    }, 200)
+  }
+
   if (!isOpen) return null
 
   // Date-dependent sections that require a wedding date
@@ -98,13 +120,13 @@ export function SectionSelectorModal({
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/50 z-50 transition-opacity animate-in fade-in duration-200"
-        onClick={onClose}
+        className={`fixed inset-0 bg-black/50 z-50 transition-opacity ${isClosing ? 'animate-out fade-out duration-200' : 'animate-in fade-in duration-200'}`}
+        onClick={handleClose}
       />
       
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-300">
-        <div className="bg-white rounded-lg shadow-2xl max-w-md w-full max-h-[70vh] overflow-hidden">
+      <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isClosing ? 'animate-out fade-out zoom-out-95 duration-200' : 'animate-in fade-in zoom-in-95 duration-300'}`} onClick={handleClose}>
+        <div className="bg-white rounded-lg shadow-2xl max-w-md w-full max-h-[70vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <div>
@@ -112,7 +134,7 @@ export function SectionSelectorModal({
               <p className="text-xs text-gray-500 mt-0.5">Position {position + 1}</p>
             </div>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="p-1.5 hover:bg-gray-100 rounded-full transition-all duration-200 hover:scale-110"
             >
               <X className="w-4 h-4 text-gray-500" />

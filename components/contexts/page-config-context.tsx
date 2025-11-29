@@ -3,6 +3,20 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react'
 import { PageConfiguration, createDefaultPageConfig, loadPageConfiguration, savePageConfiguration } from '@/lib/page-config'
 
+// Wedding details type for real-time updates
+export interface WeddingDetails {
+  partner1_first_name: string
+  partner1_last_name: string
+  partner2_first_name: string
+  partner2_last_name: string
+  wedding_date: string | null
+  wedding_time: string | null
+  ceremony_venue_name: string | null
+  ceremony_venue_address: string | null
+  reception_venue_name: string | null
+  reception_venue_address: string | null
+}
+
 // Deep equality check helper with smart undefined handling
 function deepEqual(obj1: any, obj2: any): boolean {
   if (obj1 === obj2) return true
@@ -53,6 +67,11 @@ interface PageConfigContextType {
   isSaving: boolean
   hasUnsavedChanges: boolean
   
+  // Wedding details for real-time updates
+  weddingDetails: WeddingDetails | null
+  updateWeddingDetails: (details: Partial<WeddingDetails>) => void
+  setWeddingDetails: (details: WeddingDetails) => void
+  
   // Configuration methods
   updateSectionConfig: (sectionId: string, sectionConfig: Record<string, any>) => void
   getSectionConfig: (sectionId: string) => Record<string, any>
@@ -82,6 +101,7 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
   const [originalConfig, setOriginalConfig] = useState<PageConfiguration>(createDefaultPageConfig())
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [weddingDetails, setWeddingDetailsState] = useState<WeddingDetails | null>(null)
   
   // Check if there are unsaved changes using useMemo to avoid unnecessary recalculations
   const hasUnsavedChanges = useMemo(() => {
@@ -231,6 +251,15 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
     }))
   }
 
+  // Wedding details update functions
+  const updateWeddingDetails = (details: Partial<WeddingDetails>) => {
+    setWeddingDetailsState(prev => prev ? { ...prev, ...details } : null)
+  }
+
+  const setWeddingDetails = (details: WeddingDetails) => {
+    setWeddingDetailsState(details)
+  }
+
   const saveConfiguration = async (): Promise<{ success: boolean; message?: string }> => {
     setIsSaving(true)
     try {
@@ -268,6 +297,9 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
       isLoading,
       isSaving,
       hasUnsavedChanges,
+      weddingDetails,
+      updateWeddingDetails,
+      setWeddingDetails,
       updateSectionConfig,
       getSectionConfig,
       updateSiteSettings,

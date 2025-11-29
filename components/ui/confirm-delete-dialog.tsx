@@ -17,33 +17,45 @@ export function ConfirmDeleteDialog({
   onCancel,
   componentType
 }: ConfirmDeleteDialogProps) {
-  // Handle Escape key to close
+  const [isClosing, setIsClosing] = React.useState(false)
+
+  // Handle Escape key to close and lock body scroll
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isOpen) {
-        onCancel()
+        handleClose()
       }
     }
 
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onCancel])
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+      setIsClosing(false)
+      document.addEventListener('keydown', handleKeyDown)
+    } else {
+      document.body.style.overflow = ''
+    }
+
+    return () => {
+      document.body.style.overflow = ''
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen])
+
+  const handleClose = () => {
+    setIsClosing(true)
+    setTimeout(() => {
+      onCancel()
+    }, 200)
+  }
 
   if (!isOpen) return null
 
-  // Handle backdrop click
-  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.target === event.currentTarget) {
-      onCancel()
-    }
-  }
-
   return (
     <div 
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
-      onClick={handleBackdropClick}
+      className={`fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 ${isClosing ? 'animate-out fade-out duration-200' : 'animate-in fade-in duration-200'}`}
+      onClick={handleClose}
     >
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full animate-in fade-in zoom-in-95 duration-300">
+      <div className={`bg-white rounded-lg shadow-xl max-w-md w-full ${isClosing ? 'animate-out fade-out zoom-out-95 duration-200' : 'animate-in fade-in zoom-in-95 duration-300'}`} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
@@ -55,7 +67,7 @@ export function ConfirmDeleteDialog({
             </h2>
           </div>
           <button
-            onClick={onCancel}
+            onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-all duration-200 hover:scale-110 hover:rotate-90"
           >
             <X className="w-5 h-5" />
@@ -76,7 +88,7 @@ export function ConfirmDeleteDialog({
         {/* Actions */}
         <div className="flex gap-3 p-6 border-t border-gray-200 bg-gray-50">
           <Button
-            onClick={onCancel}
+            onClick={handleClose}
             variant="outline"
             className="flex-1"
           >

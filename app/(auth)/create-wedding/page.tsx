@@ -10,7 +10,8 @@ import { Switch } from "@/components/ui/switch"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { WeddingPreview } from "@/components/wedding-preview"
 import { Header } from "@/components/header"
-import { Heart, ChevronDown, ChevronRight, Settings, Calendar, Users, Camera, MessageSquare, HelpCircle, MapPin } from "lucide-react"
+import { Heart, ChevronDown, ChevronRight, Settings, Calendar, Users, Camera, MessageSquare, HelpCircle, MapPin, Palette, Type, Check } from "lucide-react"
+import { FONT_PAIRINGS, COLOR_THEMES, DEFAULT_FONT_PAIRING, DEFAULT_COLOR_THEME } from "@/lib/theme-config"
 
 // Define available components with their props
 interface ComponentSection {
@@ -32,9 +33,11 @@ export default function CreateWeddingPage() {
     weddingDate: "",
     weddingTime: "",
     hasExistingWedding: true,
-    primaryColor: "#a86b8f",
-    secondaryColor: "#8b9d6f",
-    accentColor: "#e8a76a",
+    primaryColor: DEFAULT_COLOR_THEME.colors.primary,
+    secondaryColor: DEFAULT_COLOR_THEME.colors.secondary,
+    accentColor: DEFAULT_COLOR_THEME.colors.accent,
+    selectedColorThemeId: DEFAULT_COLOR_THEME.id,
+    selectedFontPairingId: DEFAULT_FONT_PAIRING.id,
   })
 
   const [componentSections, setComponentSections] = useState<ComponentSection[]>([
@@ -153,11 +156,6 @@ export default function CreateWeddingPage() {
     }))
   }
 
-  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
   const toggleComponent = (id: string) => {
     setComponentSections(prev => 
       prev.map(section => 
@@ -236,9 +234,21 @@ export default function CreateWeddingPage() {
           }
         })
 
+      // Get the selected font pairing details
+      const selectedFontPairing = FONT_PAIRINGS.find(p => p.id === formData.selectedFontPairingId) || DEFAULT_FONT_PAIRING
+
       const weddingData = {
         ...formData,
-        components: enabledComponents
+        components: enabledComponents,
+        fontPairing: {
+          display: selectedFontPairing.display,
+          heading: selectedFontPairing.heading,
+          body: selectedFontPairing.body,
+          displayFamily: selectedFontPairing.displayFamily,
+          headingFamily: selectedFontPairing.headingFamily,
+          bodyFamily: selectedFontPairing.bodyFamily,
+          googleFonts: selectedFontPairing.googleFonts
+        }
       }
 
       const response = await fetch('/api/weddings', {
@@ -427,61 +437,91 @@ export default function CreateWeddingPage() {
                 </div>
               </div>
 
-              {/* Wedding Colors */}
+              {/* Color Palette */}
               <div className="border-t border-border pt-8">
-                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <Settings className="w-5 h-5 text-primary" />
-                  Wedding Colors
+                <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <Palette className="w-5 h-5 text-primary" />
+                  Color Palette
                 </h3>
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div className="space-y-3">
-                    <label className="block text-sm font-medium text-foreground">Primary Color</label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="color"
-                        name="primaryColor"
-                        value={formData.primaryColor}
-                        onChange={handleColorChange}
-                        className="w-12 h-12 rounded-lg cursor-pointer border-2 border-border hover:border-primary transition-colors"
-                      />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Hex Code</p>
-                        <p className="text-sm font-mono text-foreground">{formData.primaryColor}</p>
+                <p className="text-sm text-muted-foreground mb-4">Choose a color scheme for your wedding website</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {COLOR_THEMES.map((theme) => (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      onClick={() => setFormData(prev => ({
+                        ...prev,
+                        selectedColorThemeId: theme.id,
+                        primaryColor: theme.colors.primary,
+                        secondaryColor: theme.colors.secondary,
+                        accentColor: theme.colors.accent
+                      }))}
+                      className={`relative p-3 rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
+                        formData.selectedColorThemeId === theme.id
+                          ? 'border-primary ring-2 ring-primary/20 bg-primary/5'
+                          : 'border-border hover:border-muted-foreground/50'
+                      }`}
+                    >
+                      {formData.selectedColorThemeId === theme.id && (
+                        <div className="absolute -top-2 -right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                      <div className="flex gap-1 mb-2">
+                        <div
+                          className="w-6 h-6 rounded-full border border-white/20"
+                          style={{ backgroundColor: theme.colors.primary }}
+                        />
+                        <div
+                          className="w-6 h-6 rounded-full border border-white/20"
+                          style={{ backgroundColor: theme.colors.secondary }}
+                        />
+                        <div
+                          className="w-6 h-6 rounded-full border border-white/20"
+                          style={{ backgroundColor: theme.colors.accent }}
+                        />
                       </div>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <label className="block text-sm font-medium text-foreground">Secondary Color</label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="color"
-                        name="secondaryColor"
-                        value={formData.secondaryColor}
-                        onChange={handleColorChange}
-                        className="w-12 h-12 rounded-lg cursor-pointer border-2 border-border hover:border-secondary transition-colors"
-                      />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Hex Code</p>
-                        <p className="text-sm font-mono text-foreground">{formData.secondaryColor}</p>
+                      <p className="text-xs font-medium text-foreground text-left truncate">{theme.name}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Font Pairing */}
+              <div className="border-t border-border pt-8">
+                <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <Type className="w-5 h-5 text-primary" />
+                  Font Style
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">Select a font combination for your website</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {FONT_PAIRINGS.map((pairing) => (
+                    <button
+                      key={pairing.id}
+                      type="button"
+                      onClick={() => setFormData(prev => ({
+                        ...prev,
+                        selectedFontPairingId: pairing.id
+                      }))}
+                      className={`relative p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-md text-left ${
+                        formData.selectedFontPairingId === pairing.id
+                          ? 'border-primary ring-2 ring-primary/20 bg-primary/5'
+                          : 'border-border hover:border-muted-foreground/50'
+                      }`}
+                    >
+                      {formData.selectedFontPairingId === pairing.id && (
+                        <div className="absolute -top-2 -right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                      <p className="text-sm font-medium text-foreground mb-2">{pairing.name}</p>
+                      <div className="space-y-1 text-xs text-muted-foreground">
+                        <p style={{ fontFamily: pairing.displayFamily }}>Display: {pairing.display}</p>
+                        <p style={{ fontFamily: pairing.headingFamily }}>Heading: {pairing.heading}</p>
+                        <p style={{ fontFamily: pairing.bodyFamily }}>Body: {pairing.body}</p>
                       </div>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <label className="block text-sm font-medium text-foreground">Accent Color</label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="color"
-                        name="accentColor"
-                        value={formData.accentColor}
-                        onChange={handleColorChange}
-                        className="w-12 h-12 rounded-lg cursor-pointer border-2 border-border hover:border-accent transition-colors"
-                      />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Hex Code</p>
-                        <p className="text-sm font-mono text-foreground">{formData.accentColor}</p>
-                      </div>
-                    </div>
-                  </div>
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -858,6 +898,8 @@ export default function CreateWeddingPage() {
                 {formData.hasExistingWedding && formData.weddingDate && (
                   <span>✓ Wedding: {formData.weddingDate}</span>
                 )}
+                <span>✓ {COLOR_THEMES.find(t => t.id === formData.selectedColorThemeId)?.name || 'Colors selected'}</span>
+                <span>✓ {FONT_PAIRINGS.find(f => f.id === formData.selectedFontPairingId)?.name || 'Fonts selected'}</span>
                 <span>✓ {componentSections.filter(s => s.enabled).length} components enabled</span>
               </div>
             </div>

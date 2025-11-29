@@ -17,7 +17,8 @@ create table "weddings" (
   "reception_venue_name" text,
   "reception_venue_address" text,
   "page_config" jsonb default '{}'::jsonb,
-  "owner_id" uuid, -- No foreign key constraint to allow guest weddings
+  "owner_id" uuid references auth.users(id) on delete set null,
+  "collaborator_emails" text[] default '{}', -- Array of email addresses with edit access
   "created_at" timestamp with time zone default now(),
   "updated_at" timestamp with time zone default now()
 );

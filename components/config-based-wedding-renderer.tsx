@@ -34,10 +34,51 @@ function ConfigBasedWeddingRendererContent({
   wedding,
   weddingNameId
 }: ConfigBasedWeddingRendererProps) {
-  const { config, isLoading, updateComponents, updateSiteSettings } = usePageConfig()
+  const { config, isLoading, updateComponents, updateSiteSettings, weddingDetails, setWeddingDetails } = usePageConfig()
   const siteConfigContext = useSiteConfigSafe()
   const editingContext = useEditingModeSafe()
   
+  // Initialize wedding details from the wedding prop
+  React.useEffect(() => {
+    if (wedding && !weddingDetails) {
+      setWeddingDetails({
+        partner1_first_name: wedding.partner1_first_name,
+        partner1_last_name: wedding.partner1_last_name,
+        partner2_first_name: wedding.partner2_first_name,
+        partner2_last_name: wedding.partner2_last_name,
+        wedding_date: wedding.wedding_date,
+        wedding_time: wedding.wedding_time,
+        ceremony_venue_name: wedding.ceremony_venue_name,
+        ceremony_venue_address: wedding.ceremony_venue_address,
+        reception_venue_name: wedding.reception_venue_name,
+        reception_venue_address: wedding.reception_venue_address,
+      })
+    }
+  }, [wedding, weddingDetails, setWeddingDetails])
+  
+  // Create an effective wedding object that merges original data with real-time updates
+  const effectiveWedding = React.useMemo(() => {
+    if (!weddingDetails) return wedding
+    return {
+      ...wedding,
+      ...weddingDetails
+    }
+  }, [wedding, weddingDetails])
+  
+  // Apply theme colors to CSS variables
+  React.useEffect(() => {
+    const colors = config.siteSettings.theme?.colors
+    if (colors) {
+      document.documentElement.style.setProperty('--theme-primary', colors.primary || '#d4a574')
+      document.documentElement.style.setProperty('--theme-secondary', colors.secondary || '#9ba082')
+      document.documentElement.style.setProperty('--theme-accent', colors.accent || '#e6b5a3')
+    }
+  }, [
+    config.siteSettings.theme?.colors?.primary,
+    config.siteSettings.theme?.colors?.secondary,
+    config.siteSettings.theme?.colors?.accent
+  ])
+
   // Load Google Fonts dynamically when fonts change
   React.useEffect(() => {
     const fonts = config.siteSettings.theme?.fonts
@@ -211,7 +252,7 @@ function ConfigBasedWeddingRendererContent({
 
   const renderComponent = (component: any, index: number) => {
     const commonProps = {
-      wedding,
+      wedding: effectiveWedding,
       dateId: wedding.date_id,
       weddingNameId,
       theme: config.siteSettings.theme,
@@ -302,7 +343,7 @@ function ConfigBasedWeddingRendererContent({
             position={index + 1} 
             onAddSection={handleAddSection}
             enabledComponents={allComponents.map(c => c.type)}
-            hasWeddingDate={!!wedding.wedding_date}
+            hasWeddingDate={!!effectiveWedding.wedding_date}
           />
         </div>
       </React.Fragment>
@@ -311,7 +352,7 @@ function ConfigBasedWeddingRendererContent({
 
   return (
     <>
-      <EditingTopBar />
+      <EditingTopBar weddingNameId={weddingNameId} />
       
       <ViewportWrapper>
         {allComponents.length === 0 ? (
@@ -323,7 +364,7 @@ function ConfigBasedWeddingRendererContent({
                 position={0} 
                 onAddSection={handleAddSection}
                 enabledComponents={[]}
-                hasWeddingDate={!!wedding.wedding_date}
+                hasWeddingDate={!!effectiveWedding.wedding_date}
               />
             </div>
           </div>
@@ -374,7 +415,7 @@ export function ConfigBasedWeddingRenderer(props: ConfigBasedWeddingRendererProp
   return (
     <VariantProvider>
       <ViewportProvider>
-        <EditingModeProvider>
+        <EditingModeProvider weddingNameId={props.weddingNameId}>
           <ConfigBasedWeddingRendererWithConfig {...props} />
         </EditingModeProvider>
       </ViewportProvider>

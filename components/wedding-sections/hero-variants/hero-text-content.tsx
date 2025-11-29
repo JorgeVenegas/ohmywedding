@@ -31,11 +31,17 @@ export function HeroTextContent({
     <div className={`${textAlign === 'left' ? 'text-left' : textAlign === 'right' ? 'text-right' : 'text-center'}`}>
       {/* Countdown Badge */}
       {showCountdown && wedding.wedding_date && (
-        <div className={`inline-flex items-center gap-2 px-8 py-4 rounded-full text-base md:text-lg font-medium mb-8 shadow-lg ${
-          isOverlay 
-            ? 'bg-white/20 backdrop-blur-sm text-white border border-white/30' 
-            : 'bg-white/80 backdrop-blur-sm text-orange-700'
-        }`}>
+        <div 
+          className={`inline-flex items-center gap-2 px-8 py-4 rounded-full text-base md:text-lg font-medium mb-8 shadow-lg ${
+            isOverlay 
+              ? 'bg-white/20 backdrop-blur-sm text-white border border-white/30' 
+              : 'bg-white/80 backdrop-blur-sm border'
+          }`}
+          style={!isOverlay ? {
+            color: theme?.colors?.primary || 'var(--theme-primary, #d4a574)',
+            borderColor: `${theme?.colors?.primary || 'var(--theme-primary, #d4a574)'}40`
+          } : undefined}
+        >
           <Heart className="w-5 h-5 fill-current" />
           {getCountdownMessage()}
         </div>

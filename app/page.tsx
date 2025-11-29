@@ -1,29 +1,175 @@
 "use client"
 
 import type React from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Heart, Calendar, Users, Gift, ImageIcon, MessageSquare, Star, ArrowRight } from "lucide-react"
+import { Heart, Calendar, Users, Gift, ImageIcon, MessageSquare, Star, ArrowRight, User, ChevronDown, Edit3 } from "lucide-react"
 import { Header } from "@/components/header"
+import { useAuth } from "@/hooks/use-auth"
+import { createClient } from "@/lib/supabase-client"
+
+// Component to handle auth code in URL (fallback for OAuth flows that redirect to root)
+function AuthCodeHandler() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const code = searchParams.get('code')
+  
+  useEffect(() => {
+    if (code) {
+      const supabase = createClient()
+      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+        if (error) {
+          console.error('Error exchanging code:', error)
+        }
+        router.replace('/')
+      })
+    }
+  }, [code, router])
+  
+  return null
+}
+
+type UserWedding = {
+  id: string
+  wedding_name_id: string
+  partner1_first_name: string
+  partner2_first_name: string
+  wedding_date: string | null
+}
+
+function AuthButtons() {
+  const { user, loading, signOut } = useAuth()
+  const [showUserMenu, setShowUserMenu] = useState(false)
+  const [userWeddings, setUserWeddings] = useState<UserWedding[]>([])
+  const [weddingsLoading, setWeddingsLoading] = useState(false)
+
+  useEffect(() => {
+    if (user) {
+      setWeddingsLoading(true)
+      fetch('/api/weddings')
+        .then(res => res.json())
+        .then(data => {
+          setUserWeddings(data.weddings || [])
+        })
+        .catch(console.error)
+        .finally(() => setWeddingsLoading(false))
+    } else {
+      setUserWeddings([])
+    }
+  }, [user])
+
+  if (loading) {
+    return (
+      <div className="flex gap-3">
+        <div className="h-10 w-20 bg-muted animate-pulse rounded-md" />
+        <div className="h-10 w-32 bg-muted animate-pulse rounded-md" />
+      </div>
+    )
+  }
+
+  if (user) {
+    const hasWedding = userWeddings.length > 0
+    const firstWedding = userWeddings[0]
+
+    return (
+      <div className="flex gap-3 items-center">
+        <div className="relative">
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors"
+          >
+            <User className="w-4 h-4" />
+            <span className="text-sm font-medium hidden sm:inline max-w-[150px] truncate">{user.email}</span>
+            <ChevronDown className={`w-3 h-3 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {showUserMenu && (
+            <>
+              <div 
+                className="fixed inset-0 z-40" 
+                onClick={() => setShowUserMenu(false)}
+              />
+              <div className="absolute top-full mt-2 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[200px] z-50">
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <p className="text-xs text-gray-500">Signed in as</p>
+                  <p className="text-sm font-medium text-gray-700 truncate">{user.email}</p>
+                </div>
+                {userWeddings.length > 0 && (
+                  <div className="border-b border-gray-100">
+                    <p className="px-4 py-1 text-xs text-gray-500">Your Weddings</p>
+                    {userWeddings.map(wedding => (
+                      <Link
+                        key={wedding.id}
+                        href={`/${wedding.wedding_name_id}`}
+                        onClick={() => setShowUserMenu(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        {wedding.partner1_first_name} & {wedding.partner2_first_name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false)
+                    signOut()
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  Sign Out
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+        {weddingsLoading ? (
+          <div className="h-10 w-32 bg-muted animate-pulse rounded-md" />
+        ) : hasWedding ? (
+          <Link href={`/${firstWedding.wedding_name_id}`}>
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Edit3 className="w-4 h-4 mr-2" />
+              Edit Wedding
+            </Button>
+          </Link>
+        ) : (
+          <Link href="/create-wedding">
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Create Wedding</Button>
+          </Link>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex gap-3">
+      <Link href="/login">
+        <Button variant="ghost" className="text-foreground hover:bg-muted">
+          Sign In
+        </Button>
+      </Link>
+      <Link href="/create-wedding">
+        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Create Wedding</Button>
+      </Link>
+    </div>
+  )
+}
+
+import { Suspense } from "react"
 
 export default function LandingPage() {
   return (
     <main className="min-h-screen bg-background">
+      {/* Handle auth code if present in URL (fallback) */}
+      <Suspense fallback={null}>
+        <AuthCodeHandler />
+      </Suspense>
+      
       {/* Navigation */}
       <Header
-        rightContent={
-          <div className="flex gap-3">
-            <Link href="/login">
-              <Button variant="ghost" className="text-foreground hover:bg-muted">
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/create-wedding">
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Create Wedding</Button>
-            </Link>
-          </div>
-        }
+        rightContent={<AuthButtons />}
       />
 
       {/* Hero Section */}

@@ -80,7 +80,7 @@ export function CountdownCircularVariant({
               cy="50"
               r="45"
               fill="none"
-              stroke={theme?.colors?.muted + '30' || '#e5e7eb'}
+              stroke={theme?.colors?.muted ? theme.colors.muted + '30' : 'var(--theme-secondary, #e5e7eb)'}
               strokeWidth="6"
             />
             {/* Progress circle */}
@@ -89,7 +89,7 @@ export function CountdownCircularVariant({
               cy="50"
               r="45"
               fill="none"
-              stroke={theme?.colors?.accent || '#d97706'}
+              stroke={theme?.colors?.primary || 'var(--theme-primary, #d4a574)'}
               strokeWidth="6"
               strokeLinecap="round"
               strokeDasharray={strokeDasharray}

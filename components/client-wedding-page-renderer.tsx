@@ -235,7 +235,7 @@ function ClientWeddingPageRendererContent({
   const content = (
     <div className="min-h-screen">
       {/* Editing Top Bar */}
-      <EditingTopBar />
+      <EditingTopBar weddingNameId={weddingNameId} />
       
       {/* Section Customizer */}
       <SectionCustomizer />

@@ -63,6 +63,15 @@ export function HeroSection({
   overlayOpacity = 40,
   imageBrightness = 100
 }: HeroSectionProps) {
+  // Check if hero image is provided
+  const hasHeroImage = !!heroImageUrl && heroImageUrl.trim() !== ''
+  
+  // Variants that require an image
+  const imageRequiredVariants = ['background', 'side-by-side', 'framed', 'stacked']
+  
+  // Determine default variant based on whether image is provided
+  const effectiveDefaultVariant = hasHeroImage ? variant : 'minimal'
+  
   // Use standardized section behavior
   const {
     activeVariant: heroVariant,
@@ -70,7 +79,19 @@ export function HeroSection({
     shouldShowVariantSwitcher,
     setVariant,
     handleEditClick
-  } = useSectionVariants('hero', 'hero', 'background', variant, showVariantSwitcher)
+  } = useSectionVariants('hero', 'hero', effectiveDefaultVariant, effectiveDefaultVariant, showVariantSwitcher)
+
+  // Force minimal variant if no image and current variant requires one
+  const effectiveVariant = React.useMemo(() => {
+    // Check customConfig heroImageUrl as well
+    const customHasImage = customConfig.heroImageUrl && customConfig.heroImageUrl.trim() !== ''
+    const actualHasImage = customHasImage || hasHeroImage
+    
+    if (!actualHasImage && imageRequiredVariants.includes(heroVariant)) {
+      return 'minimal'
+    }
+    return heroVariant
+  }, [heroVariant, hasHeroImage, customConfig.heroImageUrl])
 
   // Define variants
   const heroVariants: VariantOption[] = [
@@ -227,7 +248,7 @@ export function HeroSection({
       sectionType="hero"
       onEditClick={onEditClick}
     >
-      {renderHeroContent(heroVariant)}
+      {renderHeroContent(effectiveVariant)}
     </EditableSectionWrapper>
   )
 }

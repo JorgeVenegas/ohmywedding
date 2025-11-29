@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-// GET /api/weddings/[weddingNameId]/config
+// GET /api/weddings/[weddingNameId]/details
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ weddingNameId: string }> }
@@ -13,30 +13,37 @@ export async function GET(
     const supabase = await createServerSupabaseClient()
     const { weddingNameId } = await params
 
-    console.log('GET /api/weddings/config - weddingNameId:', weddingNameId)
-
     const { data: wedding, error } = await supabase
       .from('weddings')
-      .select('page_config')
+      .select(`
+        partner1_first_name,
+        partner1_last_name,
+        partner2_first_name,
+        partner2_last_name,
+        wedding_date,
+        wedding_time,
+        ceremony_venue_name,
+        ceremony_venue_address,
+        reception_venue_name,
+        reception_venue_address
+      `)
       .eq('wedding_name_id', weddingNameId)
       .single()
 
     if (error) {
-      console.error('Error fetching wedding config:', error)
+      console.error('Error fetching wedding details:', error)
       return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
     }
 
-    return NextResponse.json({
-      config: wedding.page_config || {}
-    })
+    return NextResponse.json({ details: wedding })
 
   } catch (error) {
-    console.error('Error in GET /api/weddings/config:', error)
+    console.error('Error in GET /api/weddings/details:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// PUT /api/weddings/[weddingNameId]/config
+// PUT /api/weddings/[weddingNameId]/details
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ weddingNameId: string }> }
@@ -45,24 +52,19 @@ export async function PUT(
     const supabase = await createServerSupabaseClient()
     const { weddingNameId } = await params
     
-    console.log('PUT /api/weddings/config - weddingNameId:', weddingNameId)
-    
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
     
-    // First, check if the wedding exists and get owner info
+    // First, check if the wedding exists
     const { data: existingWedding, error: findError } = await supabase
       .from('weddings')
-      .select('id, date_id, wedding_name_id, owner_id')
+      .select('id, owner_id')
       .eq('wedding_name_id', weddingNameId)
       .single()
     
     if (findError || !existingWedding) {
-      console.log('Wedding not found:', findError)
       return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
     }
-    
-    console.log('Found wedding:', existingWedding)
     
     // Check permissions
     if (!user) {
@@ -92,41 +94,55 @@ export async function PUT(
     }
     
     const body = await request.json()
-    const { config } = body
+    const { details } = body
 
-    if (!config || typeof config !== 'object') {
-      return NextResponse.json({ error: 'Invalid configuration data' }, { status: 400 })
+    if (!details || typeof details !== 'object') {
+      return NextResponse.json({ error: 'Invalid details data' }, { status: 400 })
     }
 
-    const { data: updatedWeddings, error } = await supabase
+    // Only update allowed fields
+    const updateData: Record<string, any> = {
+      updated_at: new Date().toISOString()
+    }
+
+    const allowedFields = [
+      'partner1_first_name',
+      'partner1_last_name',
+      'partner2_first_name',
+      'partner2_last_name',
+      'wedding_date',
+      'wedding_time',
+      'ceremony_venue_name',
+      'ceremony_venue_address',
+      'reception_venue_name',
+      'reception_venue_address'
+    ]
+
+    for (const field of allowedFields) {
+      if (field in details) {
+        updateData[field] = details[field] || null
+      }
+    }
+
+    const { data: updatedWedding, error } = await supabase
       .from('weddings')
-      .update({
-        page_config: config,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('wedding_name_id', weddingNameId)
-      .select('id, page_config')
+      .select()
+      .single()
 
     if (error) {
-      console.error('Error updating wedding config:', error)
-      return NextResponse.json({ error: 'Failed to save configuration' }, { status: 500 })
+      console.error('Error updating wedding details:', error)
+      return NextResponse.json({ error: 'Failed to save wedding details' }, { status: 500 })
     }
-
-    if (!updatedWeddings || updatedWeddings.length === 0) {
-      console.error('No rows updated - wedding might not exist')
-      return NextResponse.json({ error: 'Wedding not found or update failed' }, { status: 404 })
-    }
-
-    const wedding = updatedWeddings[0]
 
     return NextResponse.json({
       success: true,
-      config: wedding.page_config,
-      message: 'Configuration saved successfully'
+      details: updatedWedding
     })
 
   } catch (error) {
-    console.error('Error in PUT /api/weddings/config:', error)
+    console.error('Error in PUT /api/weddings/details:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
