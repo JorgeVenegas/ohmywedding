@@ -62,13 +62,13 @@ export function OurStoryZigzagVariant({
       id="our-story"
       style={isColored ? { backgroundColor: bgColor } : undefined}
     >
-      <div className="py-16 px-4">
+      <div className="py-6 sm:py-8 px-4">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-4"
               style={{ color: sectionTitleColor }}>
             Our Love Story
           </h2>
-          <p className={`text-center mb-16 max-w-2xl mx-auto ${isColored ? '' : 'text-gray-600'}`}
+          <p className={`text-center mb-6 sm:mb-8 max-w-2xl mx-auto ${isColored ? '' : 'text-gray-600'}`}
              style={{ color: subtitleColor }}>
             Every great love story has a beginning, middle, and a happily ever after
           </p>
@@ -78,7 +78,7 @@ export function OurStoryZigzagVariant({
               return (
                 <div 
                   key={index} 
-                  className={`relative flex flex-col md:flex-row items-center gap-8 md:gap-12 ${
+                  className={`relative flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 ${
                     index % 2 === 0 ? '' : 'md:flex-row-reverse'
                   }`}
                 >

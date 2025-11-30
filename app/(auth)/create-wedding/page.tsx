@@ -32,6 +32,7 @@ export default function CreateWeddingPage() {
     partner2LastName: "",
     weddingDate: "",
     weddingTime: "",
+    receptionTime: "",
     hasExistingWedding: true,
     primaryColor: DEFAULT_COLOR_THEME.colors.primary,
     secondaryColor: DEFAULT_COLOR_THEME.colors.secondary,
@@ -410,7 +411,7 @@ export default function CreateWeddingPage() {
                   </div>
                   
                   {formData.hasExistingWedding && (
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">Wedding Date</label>
                         <Input
@@ -422,15 +423,27 @@ export default function CreateWeddingPage() {
                           required={formData.hasExistingWedding}
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">Wedding Time (Optional)</label>
-                        <Input
-                          name="weddingTime"
-                          type="time"
-                          value={formData.weddingTime}
-                          onChange={handleInputChange}
-                          className="border-border"
-                        />
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-2">Ceremony Time (Optional)</label>
+                          <Input
+                            name="weddingTime"
+                            type="time"
+                            value={formData.weddingTime}
+                            onChange={handleInputChange}
+                            className="border-border"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-2">Reception Time (Optional)</label>
+                          <Input
+                            name="receptionTime"
+                            type="time"
+                            value={formData.receptionTime}
+                            onChange={handleInputChange}
+                            className="border-border"
+                          />
+                        </div>
                       </div>
                     </div>
                   )}

@@ -51,14 +51,14 @@ export function OurStoryCardsVariant({
       id="our-story"
       style={isColored ? { backgroundColor: bgColor } : undefined}
     >
-      <div className="py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16"
+      <div className="py-6 sm:py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-6 sm:mb-8"
               style={{ color: sectionTitleColor }}>
             Our Love Story
           </h2>
           
-          <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+          <div className={`grid gap-4 sm:gap-6 lg:gap-8 ${stories.length === 1 ? 'md:grid-cols-1 max-w-xl mx-auto' : 'md:grid-cols-2'}`}>
             {stories.map((story, index) => (
               <div key={index} 
                    className={`rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:translate-y-[-4px] ${isColored ? '' : 'bg-white'}`}
@@ -94,7 +94,7 @@ export function OurStoryCardsVariant({
           {/* Photo gallery if provided */}
           {photos.length > 2 && (
             <div className="mt-16">
-              <h3 className="text-2xl font-bold text-center mb-8"
+              <h3 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6"
                   style={{ color: sectionTitleColor }}>
                 Our Journey
               </h3>

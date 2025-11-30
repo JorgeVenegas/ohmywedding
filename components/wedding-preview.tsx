@@ -11,6 +11,7 @@ interface WeddingPreviewProps {
     partner2LastName: string
     weddingDate: string
     weddingTime: string
+    receptionTime: string
     primaryColor: string
     secondaryColor: string
     accentColor: string
@@ -85,6 +86,7 @@ export function WeddingPreview({ formData, componentSections }: WeddingPreviewPr
     partner2_last_name: formData.partner2LastName || '',
     wedding_date: formData.weddingDate || null,
     wedding_time: formData.weddingTime || null,
+    reception_time: formData.receptionTime || null,
     story: null,
     primary_color: formData.primaryColor,
     secondary_color: formData.secondaryColor,

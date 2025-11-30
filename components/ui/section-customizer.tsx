@@ -8,7 +8,8 @@ import {
   HeroConfigForm, 
   CountdownConfigForm, 
   OurStoryConfigForm, 
-  RSVPConfigForm 
+  RSVPConfigForm,
+  EventDetailsConfigForm
 } from './config-forms'
 import { Button } from './button'
 
@@ -76,9 +77,15 @@ export function SectionCustomizer() {
             onChange={updateConfig}
           />
         )
+      case 'event-details':
+        return (
+          <EventDetailsConfigForm 
+            config={sectionConfig} 
+            onChange={updateConfig}
+          />
+        )
       case 'gallery':
       case 'faq':
-      case 'event-details':
         return (
           <div className="text-center py-8 text-gray-500">
             <p>Configuration options for {SECTION_NAMES[sectionType]} coming soon!</p>
@@ -105,17 +112,6 @@ export function SectionCustomizer() {
     >
       <div className="space-y-6">
         {renderConfigForm()}
-        
-        {/* Action Buttons */}
-        <div className="flex gap-3 pt-6 border-t border-gray-200">
-          <Button
-            onClick={resetConfig}
-            variant="outline"
-            className="flex-1"
-          >
-            Reset to Default
-          </Button>
-        </div>
       </div>
     </CustomizePanel>
   )

@@ -18,6 +18,7 @@ interface WeddingDetails {
   partner2_last_name: string
   wedding_date: string | null
   wedding_time: string | null
+  reception_time: string | null
   ceremony_venue_name: string | null
   ceremony_venue_address: string | null
   reception_venue_name: string | null

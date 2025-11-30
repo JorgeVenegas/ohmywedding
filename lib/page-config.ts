@@ -102,7 +102,19 @@ export const createDefaultPageConfig = (): PageConfiguration => ({
         photos: []
       }
     },
-    { id: 'event-details', type: 'event-details', enabled: true, order: 2 },
+    { 
+      id: 'event-details', 
+      type: 'event-details', 
+      enabled: true, 
+      order: 2,
+      props: {
+        variant: 'classic',
+        showCeremony: true,
+        showReception: true,
+        showMapLinks: true,
+        showMap: true
+      }
+    },
     { id: 'countdown', type: 'countdown', enabled: true, order: 3 },
     { id: 'gallery', type: 'gallery', enabled: true, order: 4 },
     { id: 'rsvp', type: 'rsvp', enabled: true, order: 5 },

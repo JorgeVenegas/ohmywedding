@@ -68,9 +68,9 @@ export function CountdownModernVariant({
   if (!isClient) {
     return (
       <SectionWrapper theme={theme} alignment={alignment} id="countdown">
-        <div className="text-center py-20">
+        <div className="text-center py-6 sm:py-8">
           <div className="animate-pulse">
-            <div className="h-6 bg-gray-200 rounded w-48 mx-auto mb-8"></div>
+            <div className="h-6 bg-gray-200 rounded w-48 mx-auto mb-4 sm:mb-6"></div>
             <div className="flex justify-center space-x-4">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="h-24 w-20 bg-gray-200 rounded-xl"></div>
@@ -106,9 +106,9 @@ export function CountdownModernVariant({
       alignment={alignment}
       style={isColored ? { backgroundColor: bgColor } : undefined}
     >
-        <div className="text-center py-20">
+        <div className="text-center py-6 sm:py-8">
           <p 
-            className={`text-sm md:text-base uppercase tracking-[0.3em] mb-10 font-medium ${isColored ? '' : 'text-gray-500'}`}
+            className={`text-xs sm:text-sm md:text-base uppercase tracking-[0.3em] mb-4 sm:mb-6 font-medium ${isColored ? '' : 'text-gray-500'}`}
             style={isColored ? { color: colorLight } : undefined}
           >
             {message}

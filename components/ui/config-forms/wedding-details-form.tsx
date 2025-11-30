@@ -13,6 +13,7 @@ interface WeddingDetails {
   partner2_last_name: string
   wedding_date: string | null
   wedding_time: string | null
+  reception_time: string | null
   ceremony_venue_name: string | null
   ceremony_venue_address: string | null
   reception_venue_name: string | null
@@ -144,25 +145,34 @@ export function WeddingDetailsForm({ weddingNameId, initialDetails, onSave }: We
         </div>
       </div>
 
-      {/* Date and Time */}
+      {/* Wedding Date */}
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
           <Calendar className="w-4 h-4" />
-          Date & Time
+          Wedding Date
         </h3>
         
-        <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Date</label>
+          <Input
+            type="date"
+            value={details.wedding_date || ''}
+            onChange={(e) => handleChange('wedding_date', e.target.value)}
+            className="h-9"
+          />
+        </div>
+      </div>
+
+      {/* Ceremony Details */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+          <MapPin className="w-4 h-4" />
+          Ceremony
+        </h3>
+        
+        <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Wedding Date</label>
-            <Input
-              type="date"
-              value={details.wedding_date || ''}
-              onChange={(e) => handleChange('wedding_date', e.target.value)}
-              className="h-9"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Wedding Time</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Time</label>
             <Input
               type="time"
               value={details.wedding_time || ''}
@@ -170,17 +180,6 @@ export function WeddingDetailsForm({ weddingNameId, initialDetails, onSave }: We
               className="h-9"
             />
           </div>
-        </div>
-      </div>
-
-      {/* Ceremony Venue */}
-      <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-          <MapPin className="w-4 h-4" />
-          Ceremony Venue
-        </h3>
-        
-        <div className="space-y-3">
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Venue Name</label>
             <Input
@@ -202,14 +201,23 @@ export function WeddingDetailsForm({ weddingNameId, initialDetails, onSave }: We
         </div>
       </div>
 
-      {/* Reception Venue */}
+      {/* Reception Details */}
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
           <MapPin className="w-4 h-4" />
-          Reception Venue
+          Reception
         </h3>
         
         <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Time</label>
+            <Input
+              type="time"
+              value={details.reception_time || ''}
+              onChange={(e) => handleChange('reception_time', e.target.value)}
+              className="h-9"
+            />
+          </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Venue Name</label>
             <Input

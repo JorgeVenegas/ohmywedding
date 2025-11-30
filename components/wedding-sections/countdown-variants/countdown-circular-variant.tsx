@@ -71,9 +71,9 @@ export function CountdownCircularVariant({
   if (!isClient) {
     return (
       <SectionWrapper theme={theme} alignment={alignment} id="countdown">
-        <div className="text-center py-20">
+        <div className="text-center py-6 sm:py-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-64 mx-auto mb-8"></div>
+            <div className="h-8 bg-gray-200 rounded w-64 mx-auto mb-4 sm:mb-6"></div>
             <div className="flex justify-center space-x-8">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="w-24 h-24 bg-gray-200 rounded-full"></div>
@@ -181,8 +181,8 @@ export function CountdownCircularVariant({
       alignment={alignment}
       style={isColored ? { backgroundColor: bgColor } : undefined}
     >
-        <div className="text-center py-20">
-          <div className="flex items-center justify-center mb-12">
+        <div className="text-center py-6 sm:py-8">
+          <div className="flex items-center justify-center mb-4 sm:mb-6">
             <Heart className="w-5 h-5 mr-2 fill-current" style={{ color: decorColor }} />
             <h2 
               className={`text-3xl md:text-4xl font-bold ${messageColor}`}

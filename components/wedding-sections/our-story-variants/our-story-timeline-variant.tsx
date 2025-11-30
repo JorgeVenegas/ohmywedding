@@ -51,9 +51,9 @@ export function OurStoryTimelineVariant({
       id="our-story"
       style={isColored ? { backgroundColor: bgColor } : undefined}
     >
-      <div className="py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 md:mb-16"
+      <div className="py-6 sm:py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-6 sm:mb-8"
               style={{ color: sectionTitleColor }}>
             Our Love Story
           </h2>
@@ -126,7 +126,7 @@ export function OurStoryTimelineVariant({
               }}
             />
             
-            <div className="space-y-16">
+            <div className="space-y-6 sm:space-y-8">
               {allEvents.map((event, index) => {
                 return (
                   <div key={index} className={`flex items-center ${index % 2 === 0 ? '' : 'flex-row-reverse'}`}>

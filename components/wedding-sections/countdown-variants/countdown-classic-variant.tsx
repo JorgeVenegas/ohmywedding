@@ -72,9 +72,9 @@ export function CountdownClassicVariant({
   if (!isClient) {
     return (
       <SectionWrapper theme={theme} alignment={alignment} id="countdown">
-        <div className="text-center py-20">
+        <div className="text-center py-6 sm:py-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-64 mx-auto mb-8"></div>
+            <div className="h-8 bg-gray-200 rounded w-64 mx-auto mb-4 sm:mb-6"></div>
             <div className="flex justify-center space-x-8">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="text-center">
@@ -117,11 +117,11 @@ export function CountdownClassicVariant({
       alignment={alignment}
       style={isColored ? { backgroundColor: bgColor } : undefined}
     >
-        <div className="text-center py-20">
-          <div className="flex items-center justify-center mb-8">
-            <Heart className="w-6 h-6 mr-3 fill-current" style={{ color: iconColor }} />
+        <div className="text-center py-4 sm:py-6 md:py-8 px-4">
+          <div className="flex items-center justify-center mb-6 sm:mb-8">
+            <Heart className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 fill-current flex-shrink-0" style={{ color: iconColor }} />
             <h2 
-              className="text-4xl md:text-5xl font-bold"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold italic"
               style={{ 
                 color: messageColor,
                 fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 
@@ -130,15 +130,15 @@ export function CountdownClassicVariant({
             >
               {message}
             </h2>
-            <Heart className="w-6 h-6 ml-3 fill-current" style={{ color: iconColor }} />
+            <Heart className="w-5 h-5 sm:w-6 sm:h-6 ml-2 sm:ml-3 fill-current flex-shrink-0" style={{ color: iconColor }} />
           </div>
 
-          <div className="flex justify-center items-center space-x-4 sm:space-x-6 md:space-x-12 flex-wrap gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-xl sm:max-w-2xl md:max-w-4xl mx-auto px-4">
             {units.map((unit, index) => {
               return (
                 <div key={unit.label} className="text-center">
                   <div 
-                    className={`relative rounded-lg shadow-lg border-2 p-4 sm:p-6 md:p-8 min-w-[70px] sm:min-w-[80px] md:min-w-[100px] ${isColored ? '' : 'bg-white'}`}
+                    className={`relative rounded-lg shadow-lg border-2 p-3 sm:p-4 md:p-6 lg:p-8 ${isColored ? '' : 'bg-white'}`}
                     style={{ 
                       backgroundColor: isColored ? cardBgColor : undefined,
                       borderColor: cardBorderColor,
@@ -146,7 +146,7 @@ export function CountdownClassicVariant({
                     }}
                   >
                     <div 
-                      className="text-2xl sm:text-3xl md:text-5xl font-bold mb-2"
+                      className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-1 sm:mb-2"
                       style={{ 
                         color: numberColor,
                         fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
@@ -155,20 +155,20 @@ export function CountdownClassicVariant({
                       {unit.value.toString().padStart(2, '0')}
                     </div>
                     <div 
-                      className="text-sm md:text-base font-semibold uppercase tracking-wide"
+                      className="text-xs sm:text-sm md:text-base font-semibold uppercase tracking-wide"
                       style={{ color: labelColor }}
                     >
                       {unit.label}
                     </div>
                     
-                    {/* Decorative corner elements */}
-                    <div className="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 rounded-tl-lg" 
+                    {/* Decorative corner elements - hidden on smallest screens */}
+                    <div className="hidden sm:block absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 rounded-tl-lg" 
                          style={{ borderColor: cardBorderColor }} />
-                    <div className="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 rounded-tr-lg" 
+                    <div className="hidden sm:block absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 rounded-tr-lg" 
                          style={{ borderColor: cardBorderColor }} />
-                    <div className="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 rounded-bl-lg" 
+                    <div className="hidden sm:block absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 rounded-bl-lg" 
                          style={{ borderColor: cardBorderColor }} />
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 rounded-br-lg" 
+                    <div className="hidden sm:block absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 rounded-br-lg" 
                          style={{ borderColor: cardBorderColor }} />
                   </div>
                 </div>
@@ -177,10 +177,10 @@ export function CountdownClassicVariant({
           </div>
 
           {/* Decorative elements */}
-          <div className="mt-12 flex items-center justify-center space-x-4">
-            <div className="w-16 h-px" style={{ backgroundColor: isColored ? 'rgba(255,255,255,0.6)' : theme?.colors?.accent }} />
-            <Clock className="w-5 h-5" style={{ color: iconColor }} />
-            <div className="w-16 h-px" style={{ backgroundColor: isColored ? 'rgba(255,255,255,0.6)' : theme?.colors?.accent }} />
+          <div className="mt-8 sm:mt-10 md:mt-12 flex items-center justify-center space-x-4">
+            <div className="w-12 sm:w-16 h-px" style={{ backgroundColor: isColored ? 'rgba(255,255,255,0.6)' : theme?.colors?.accent }} />
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: iconColor }} />
+            <div className="w-12 sm:w-16 h-px" style={{ backgroundColor: isColored ? 'rgba(255,255,255,0.6)' : theme?.colors?.accent }} />
           </div>
         </div>
     </SectionWrapper>

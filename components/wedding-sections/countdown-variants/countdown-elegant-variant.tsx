@@ -69,9 +69,9 @@ export function CountdownElegantVariant({
   if (!isClient) {
     return (
       <SectionWrapper theme={theme} alignment={alignment} id="countdown">
-        <div className="text-center py-20">
+        <div className="text-center py-6 sm:py-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-64 mx-auto mb-8"></div>
+            <div className="h-8 bg-gray-200 rounded w-64 mx-auto mb-4 sm:mb-6"></div>
             <div className="flex justify-center space-x-8">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="text-center">

@@ -50,6 +50,7 @@ interface WeddingDetails {
   partner2_last_name: string
   wedding_date: string | null
   wedding_time: string | null
+  reception_time: string | null
   ceremony_venue_name: string | null
   ceremony_venue_address: string | null
   reception_venue_name: string | null
@@ -925,28 +926,108 @@ export function SettingsPanel({
                   
                   {/* Color choice buttons - only show when color background is enabled */}
                   {navUseColorBackground && (
-                    <div className="flex gap-2 mt-2">
-                      {(['primary', 'secondary', 'accent'] as const).map((colorChoice) => (
-                        <button
-                          key={colorChoice}
-                          onClick={() => {
-                            setNavBackgroundColorChoice(colorChoice)
-                            onNavColorBackgroundChange?.(true, colorChoice)
-                          }}
-                          className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-all ${
-                            navBackgroundColorChoice === colorChoice
-                              ? 'ring-2 ring-offset-1 ring-blue-500'
-                              : 'hover:opacity-80'
-                          }`}
-                          style={{
-                            backgroundColor: currentColors[colorChoice],
-                            color: '#fff',
-                            textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-                          }}
-                        >
-                          {colorChoice.charAt(0).toUpperCase() + colorChoice.slice(1)}
-                        </button>
-                      ))}
+                    <div className="space-y-2 mt-2">
+                      {/* Primary row */}
+                      <div className="flex gap-1">
+                        <span className="text-xs text-gray-500 w-16 flex items-center">Primary</span>
+                        <div className="flex gap-1 flex-1">
+                          {(['primary', 'primary-light', 'primary-lighter'] as const).map((colorChoice) => {
+                            const baseColor = currentColors.primary
+                            const bgColor = colorChoice === 'primary' 
+                              ? baseColor 
+                              : colorChoice === 'primary-light' 
+                                ? getLightTint(baseColor, 0.7) 
+                                : getLightTint(baseColor, 0.88)
+                            return (
+                              <button
+                                key={colorChoice}
+                                onClick={() => {
+                                  setNavBackgroundColorChoice(colorChoice)
+                                  onNavColorBackgroundChange?.(true, colorChoice)
+                                }}
+                                className={`flex-1 py-2 rounded-md text-xs font-medium transition-all ${
+                                  navBackgroundColorChoice === colorChoice
+                                    ? 'ring-2 ring-offset-1 ring-blue-500'
+                                    : 'hover:opacity-80'
+                                }`}
+                                style={{
+                                  backgroundColor: bgColor,
+                                  color: colorChoice === 'primary' ? '#fff' : '#333',
+                                  textShadow: colorChoice === 'primary' ? '0 1px 2px rgba(0,0,0,0.3)' : 'none'
+                                }}
+                                title={colorChoice === 'primary' ? 'Primary' : colorChoice === 'primary-light' ? 'Primary Light' : 'Primary Lighter'}
+                              />
+                            )
+                          })}
+                        </div>
+                      </div>
+                      {/* Secondary row */}
+                      <div className="flex gap-1">
+                        <span className="text-xs text-gray-500 w-16 flex items-center">Secondary</span>
+                        <div className="flex gap-1 flex-1">
+                          {(['secondary', 'secondary-light', 'secondary-lighter'] as const).map((colorChoice) => {
+                            const baseColor = currentColors.secondary
+                            const bgColor = colorChoice === 'secondary' 
+                              ? baseColor 
+                              : colorChoice === 'secondary-light' 
+                                ? getLightTint(baseColor, 0.7) 
+                                : getLightTint(baseColor, 0.88)
+                            return (
+                              <button
+                                key={colorChoice}
+                                onClick={() => {
+                                  setNavBackgroundColorChoice(colorChoice)
+                                  onNavColorBackgroundChange?.(true, colorChoice)
+                                }}
+                                className={`flex-1 py-2 rounded-md text-xs font-medium transition-all ${
+                                  navBackgroundColorChoice === colorChoice
+                                    ? 'ring-2 ring-offset-1 ring-blue-500'
+                                    : 'hover:opacity-80'
+                                }`}
+                                style={{
+                                  backgroundColor: bgColor,
+                                  color: '#333',
+                                }}
+                                title={colorChoice === 'secondary' ? 'Secondary' : colorChoice === 'secondary-light' ? 'Secondary Light' : 'Secondary Lighter'}
+                              />
+                            )
+                          })}
+                        </div>
+                      </div>
+                      {/* Accent row */}
+                      <div className="flex gap-1">
+                        <span className="text-xs text-gray-500 w-16 flex items-center">Accent</span>
+                        <div className="flex gap-1 flex-1">
+                          {(['accent', 'accent-light', 'accent-lighter'] as const).map((colorChoice) => {
+                            const baseColor = currentColors.accent
+                            const bgColor = colorChoice === 'accent' 
+                              ? baseColor 
+                              : colorChoice === 'accent-light' 
+                                ? getLightTint(baseColor, 0.7) 
+                                : getLightTint(baseColor, 0.88)
+                            return (
+                              <button
+                                key={colorChoice}
+                                onClick={() => {
+                                  setNavBackgroundColorChoice(colorChoice)
+                                  onNavColorBackgroundChange?.(true, colorChoice)
+                                }}
+                                className={`flex-1 py-2 rounded-md text-xs font-medium transition-all ${
+                                  navBackgroundColorChoice === colorChoice
+                                    ? 'ring-2 ring-offset-1 ring-blue-500'
+                                    : 'hover:opacity-80'
+                                }`}
+                                style={{
+                                  backgroundColor: bgColor,
+                                  color: colorChoice === 'accent' ? '#fff' : '#333',
+                                  textShadow: colorChoice === 'accent' ? '0 1px 2px rgba(0,0,0,0.3)' : 'none'
+                                }}
+                                title={colorChoice === 'accent' ? 'Accent' : colorChoice === 'accent-light' ? 'Accent Light' : 'Accent Lighter'}
+                              />
+                            )
+                          })}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>

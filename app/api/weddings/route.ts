@@ -137,6 +137,7 @@ export async function POST(request: Request) {
       partner2_last_name: body.partner2LastName || null,
       wedding_date: body.weddingDate || null,
       wedding_time: body.weddingTime || null,
+      reception_time: body.receptionTime || null,
       primary_color: body.primaryColor,
       secondary_color: body.secondaryColor,
       accent_color: body.accentColor,

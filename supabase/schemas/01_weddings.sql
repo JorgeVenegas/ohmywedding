@@ -9,6 +9,7 @@ create table "weddings" (
   "partner2_last_name" text,
   "wedding_date" date,
   "wedding_time" time,
+  "reception_time" time,
   "primary_color" text default '#d4a574',
   "secondary_color" text default '#9ba082',
   "accent_color" text default '#e6b5a3',

@@ -10,6 +10,7 @@ export interface Wedding {
   partner2_last_name: string
   wedding_date: string | null
   wedding_time: string | null
+  reception_time: string | null
   primary_color: string
   secondary_color: string
   accent_color: string

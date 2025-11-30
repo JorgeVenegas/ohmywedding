@@ -41,7 +41,7 @@ export function OurStoryMinimalVariant({
             Our Love Story
           </h2>
           
-          <div className="space-y-16">
+          <div className="space-y-6 sm:space-y-8">
             {showHowWeMet && (
               <div className="space-y-8">
                 {showHowWeMetPhoto && howWeMetPhoto && (

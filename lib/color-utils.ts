@@ -1,8 +1,22 @@
 import { ThemeConfig } from './wedding-config'
 
 /**
+ * Creates a lighter tint of a hex color
+ */
+function getLightTint(hex: string, tintAmount: number): string {
+  const num = parseInt(hex.replace('#', ''), 16)
+  const r = (num >> 16) & 255
+  const g = (num >> 8) & 255
+  const b = num & 255
+  const newR = Math.round(r + (255 - r) * tintAmount)
+  const newG = Math.round(g + (255 - g) * tintAmount)
+  const newB = Math.round(b + (255 - b) * tintAmount)
+  return `rgb(${newR}, ${newG}, ${newB})`
+}
+
+/**
  * Resolves a color value that might be a palette reference or a direct hex color
- * @param colorValue - Either a palette reference (e.g., "palette:primary") or a hex color (e.g., "#9CAF88")
+ * @param colorValue - Either a palette reference (e.g., "palette:primary", "palette:primary-light") or a hex color (e.g., "#9CAF88")
  * @param theme - The theme configuration containing palette colors
  * @returns The resolved hex color
  */
@@ -11,7 +25,23 @@ export function resolveColor(colorValue: string | undefined, theme: Partial<Them
   
   // Check if it's a palette reference
   if (colorValue.startsWith('palette:')) {
-    const paletteKey = colorValue.replace('palette:', '') as keyof ThemeConfig['colors']
+    const paletteRef = colorValue.replace('palette:', '')
+    
+    // Check for light/lighter variants
+    if (paletteRef.endsWith('-lighter')) {
+      const baseColor = paletteRef.replace('-lighter', '') as keyof ThemeConfig['colors']
+      const hexColor = theme.colors[baseColor]
+      if (hexColor) return getLightTint(hexColor, 0.88)
+    }
+    
+    if (paletteRef.endsWith('-light')) {
+      const baseColor = paletteRef.replace('-light', '') as keyof ThemeConfig['colors']
+      const hexColor = theme.colors[baseColor]
+      if (hexColor) return getLightTint(hexColor, 0.5)
+    }
+    
+    // Standard palette reference
+    const paletteKey = paletteRef as keyof ThemeConfig['colors']
     return theme.colors[paletteKey] || colorValue
   }
   

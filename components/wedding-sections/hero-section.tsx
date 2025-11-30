@@ -32,8 +32,10 @@ interface HeroSectionProps extends BaseHeroProps {
   showDecorations?: boolean // for minimal and stacked variants
   textAlignment?: 'left' | 'center' | 'right' // text alignment
   showVariantSwitcher?: boolean // enable/disable variant switcher
-  overlayOpacity?: number // for background variant
+  overlayOpacity?: number // for background and side-by-side variants
   imageBrightness?: number // image brightness control
+  useColorBackground?: boolean // for side-by-side variant
+  backgroundColorChoice?: 'primary' | 'secondary' | 'accent' // for side-by-side variant
 }
 
 export function HeroSection({
@@ -61,7 +63,9 @@ export function HeroSection({
   textAlignment = 'center',
   showVariantSwitcher = true,
   overlayOpacity = 40,
-  imageBrightness = 100
+  imageBrightness = 100,
+  useColorBackground = false,
+  backgroundColorChoice = 'primary'
 }: HeroSectionProps) {
   // Check if hero image is provided
   const hasHeroImage = !!heroImageUrl && heroImageUrl.trim() !== ''
@@ -162,7 +166,9 @@ export function HeroSection({
     showDecorations,
     textAlignment,
     overlayOpacity,
-    imageBrightness
+    imageBrightness,
+    useColorBackground,
+    backgroundColorChoice
   })
 
   const commonProps = {
@@ -189,6 +195,9 @@ export function HeroSection({
             gradientColor1={config.gradientColor1}
             gradientColor2={config.gradientColor2}
             imageBrightness={config.imageBrightness ?? 100}
+            overlayOpacity={config.overlayOpacity ?? 0}
+            useColorBackground={config.useColorBackground ?? false}
+            backgroundColorChoice={config.backgroundColorChoice || 'primary'}
           />
         )
       case 'framed':
@@ -256,7 +265,9 @@ export function HeroSection({
         showRSVPButton: config.showRSVPButton ?? showRSVPButton,
         heroImageUrl: config.heroImageUrl || heroImageUrl,
         overlayOpacity: config.overlayOpacity ?? overlayOpacity,
-        imageBrightness: config.imageBrightness ?? imageBrightness
+        imageBrightness: config.imageBrightness ?? imageBrightness,
+        useColorBackground: config.useColorBackground ?? useColorBackground,
+        backgroundColorChoice: config.backgroundColorChoice || backgroundColorChoice
       }
       customizeContext.openCustomizer(sectionId, sectionType, configToPass)
     }

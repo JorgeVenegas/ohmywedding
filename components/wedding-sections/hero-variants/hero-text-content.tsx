@@ -32,7 +32,7 @@ export function HeroTextContent({
       {/* Countdown Badge */}
       {showCountdown && wedding.wedding_date && (
         <div 
-          className={`inline-flex items-center gap-2 px-8 py-4 rounded-full text-base md:text-lg font-medium mb-8 shadow-lg ${
+          className={`inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-full text-sm sm:text-base md:text-lg font-medium mb-4 sm:mb-6 md:mb-8 shadow-lg ${
             isOverlay 
               ? 'bg-white/20 backdrop-blur-sm text-white border border-white/30' 
               : 'bg-white/80 backdrop-blur-sm border'
@@ -42,17 +42,17 @@ export function HeroTextContent({
             borderColor: `${theme?.colors?.primary || 'var(--theme-primary, #d4a574)'}40`
           } : undefined}
         >
-          <Heart className="w-5 h-5 fill-current" />
-          {getCountdownMessage()}
+          <Heart className="w-4 h-4 sm:w-5 sm:h-5 fill-current flex-shrink-0" />
+          <span className="whitespace-nowrap">{getCountdownMessage()}</span>
         </div>
       )}
 
       {/* Couple Names */}
       <h1 
-        className={`font-serif mb-8 leading-tight ${
+        className={`font-serif mb-4 sm:mb-6 md:mb-8 leading-tight ${
           isOverlay 
-            ? 'text-6xl md:text-7xl lg:text-8xl text-white drop-shadow-lg' 
-            : 'text-5xl md:text-6xl lg:text-7xl text-slate-800'
+            ? 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-white drop-shadow-lg' 
+            : 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl text-slate-800'
         }`}
         style={{ 
           fontFamily: theme?.fonts?.heading === 'script' ? 'cursive' : 
@@ -66,10 +66,10 @@ export function HeroTextContent({
       {/* Tagline */}
       {showTagline && tagline && (
         <p 
-          className={`mb-8 font-light ${
+          className={`mb-4 sm:mb-6 md:mb-8 font-light ${
             isOverlay 
-              ? 'text-2xl md:text-3xl text-white/90 drop-shadow-md' 
-              : 'text-xl md:text-2xl'
+              ? 'text-base sm:text-xl md:text-2xl lg:text-3xl text-white/90 drop-shadow-md' 
+              : 'text-base sm:text-lg md:text-xl lg:text-2xl'
           }`}
           style={{ 
             color: isOverlay ? 'rgba(255,255,255,0.9)' : (theme?.colors?.muted || '#6b7280'),
@@ -81,12 +81,12 @@ export function HeroTextContent({
       )}
 
       {/* Date & Location */}
-      <div className={`flex flex-col gap-3 sm:flex-row sm:gap-4 mb-10 text-lg md:text-xl ${
+      <div className={`flex flex-col gap-2 sm:gap-3 sm:flex-row sm:gap-4 mb-6 sm:mb-8 md:mb-10 text-sm sm:text-base md:text-lg lg:text-xl ${
         textAlign === 'center' ? 'items-center sm:justify-center' : 
         textAlign === 'right' ? 'items-end sm:justify-end' : 'items-start sm:justify-start'
       }`}>
-        <div className="flex items-center gap-2">
-          <Calendar className={`w-6 h-6 ${isOverlay ? 'text-white/80' : ''}`} 
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <Calendar className={`w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 flex-shrink-0 ${isOverlay ? 'text-white/80' : ''}`} 
             style={{ color: isOverlay ? 'rgba(255,255,255,0.8)' : theme?.colors?.accent }} />
           <span className={isOverlay ? 'text-white/90 drop-shadow-sm' : ''} 
             style={{ color: isOverlay ? 'rgba(255,255,255,0.9)' : theme?.colors?.foreground }}>
@@ -118,7 +118,7 @@ export function HeroTextContent({
           <Button 
             asChild 
             size="lg" 
-            className="px-10 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+            className="px-6 sm:px-8 md:px-10 py-2.5 sm:py-3 md:py-4 text-sm sm:text-base md:text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
             style={{
               backgroundColor: theme?.colors?.primary || '#a86b8f',
               borderColor: theme?.colors?.primary || '#a86b8f'

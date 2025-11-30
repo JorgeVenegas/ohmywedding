@@ -1,0 +1,7 @@
+export { EventDetailsClassicVariant } from './event-details-classic-variant'
+export { EventDetailsElegantVariant } from './event-details-elegant-variant'
+export { EventDetailsTimelineVariant } from './event-details-timeline-variant'
+export { EventDetailsMinimalVariant } from './event-details-minimal-variant'
+export { EventDetailsSplitVariant } from './event-details-split-variant'
+export type { BaseEventDetailsProps, BackgroundColorChoice, CustomEvent, EventItem } from './types'
+export { getColorScheme, buildEventsList, getMapUrl, formatWeddingTime } from './types'

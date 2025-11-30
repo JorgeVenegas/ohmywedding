@@ -546,18 +546,17 @@ export interface ColorThemeCategory {
 
 export const COLOR_THEME_CATEGORIES: ColorThemeCategory[] = [
   {
-    id: 'popular',
-    name: 'Popular',
-    description: 'Most loved palettes',
+    id: 'romantic',
+    name: 'Romantic',
+    description: 'Love & elegance',
     themes: [
-      { id: 'sage-blush', name: 'Sage & Blush', colors: { primary: '#7A9A68', secondary: '#F4C2C2', accent: '#D4A574' } },
-      { id: 'rose-gold', name: 'Rose Gold', colors: { primary: '#C4848A', secondary: '#FAE8E8', accent: '#D4956A' } },
-      { id: 'champagne', name: 'Champagne Dreams', colors: { primary: '#B8956F', secondary: '#F5E6D3', accent: '#C9A66B' } },
-      { id: 'dusty-rose', name: 'Dusty Rose', colors: { primary: '#B07878', secondary: '#E8C5C5', accent: '#9A7A7A' } },
-      { id: 'eucalyptus', name: 'Eucalyptus', colors: { primary: '#6B7A5A', secondary: '#B8C5A6', accent: '#5A6B4F' } },
-      { id: 'navy-gold', name: 'Navy & Gold', colors: { primary: '#1E3A5F', secondary: '#D4AF37', accent: '#2C5F8D' } },
-      { id: 'blush-cream', name: 'Blush & Cream', colors: { primary: '#D4949A', secondary: '#FDF8F5', accent: '#C07078' } },
-      { id: 'terracotta', name: 'Terracotta & Cream', colors: { primary: '#A85A48', secondary: '#F5E6D3', accent: '#8A4838' } },
+      { id: 'dusty-rose', name: 'Dusty Rose', colors: { primary: '#B07878', secondary: '#FAF2F2', accent: '#D4AF37' } },
+      { id: 'sage-blush', name: 'Sage & Blush', colors: { primary: '#7A9A68', secondary: '#F8F2F0', accent: '#E8B4B8' } },
+      { id: 'rose-gold', name: 'Rose Gold', colors: { primary: '#C4848A', secondary: '#FDF5F5', accent: '#B76E79' } },
+      { id: 'mauve-taupe', name: 'Mauve & Taupe', colors: { primary: '#7A5A62', secondary: '#F8F5F5', accent: '#D4AF37' } },
+      { id: 'blush-wine', name: 'Blush & Wine', colors: { primary: '#8A3A42', secondary: '#FDF5F5', accent: '#D4AF37' } },
+      { id: 'wisteria-dreams', name: 'Wisteria Dreams', colors: { primary: '#8A6A9C', secondary: '#F8F5FA', accent: '#C0C0C0' } },
+      { id: 'blush-cream', name: 'Blush & Cream', colors: { primary: '#D4949A', secondary: '#FDF8F5', accent: '#C9B037' } },
     ]
   },
   {
@@ -565,25 +564,11 @@ export const COLOR_THEME_CATEGORIES: ColorThemeCategory[] = [
     name: 'Pastels',
     description: 'Soft & dreamy tones',
     themes: [
-      { id: 'blush-cream', name: 'Blush & Cream', colors: { primary: '#D4949A', secondary: '#8B7CB8', accent: '#F5E6D3' } },
-      { id: 'lavender-mist', name: 'Lavender Mist', colors: { primary: '#9A8AB8', secondary: '#E8B8C8', accent: '#7A9A88' } },
-      { id: 'mint-whisper', name: 'Mint Whisper', colors: { primary: '#6AAA94', secondary: '#A8C8E8', accent: '#E8D8C0' } },
-      { id: 'peach-sorbet', name: 'Peach Sorbet', colors: { primary: '#E8A878', secondary: '#C89888', accent: '#B8956F' } },
-      { id: 'baby-blue', name: 'Baby Blue', colors: { primary: '#6A9AB8', secondary: '#9A8AB0', accent: '#D4A8A0' } },
-      { id: 'buttercream', name: 'Buttercream', colors: { primary: '#D4B870', secondary: '#C9A86A', accent: '#8A9A78' } },
-    ]
-  },
-  {
-    id: 'romantic',
-    name: 'Romantic',
-    description: 'Love & elegance',
-    themes: [
-      { id: 'dusty-rose', name: 'Dusty Rose', colors: { primary: '#B07878', secondary: '#E8C5C5', accent: '#9A6868' } },
-      { id: 'sage-blush', name: 'Sage & Blush', colors: { primary: '#7A9A68', secondary: '#F4C2C2', accent: '#D4A574' } },
-      { id: 'rose-gold', name: 'Rose Gold', colors: { primary: '#C4848A', secondary: '#FAE8E8', accent: '#D4956A' } },
-      { id: 'mauve-taupe', name: 'Mauve & Taupe', colors: { primary: '#7A5A62', secondary: '#B8A99A', accent: '#6A4A52' } },
-      { id: 'blush-wine', name: 'Blush & Wine', colors: { primary: '#8A3A42', secondary: '#FAE8E8', accent: '#722F37' } },
-      { id: 'wisteria-dreams', name: 'Wisteria Dreams', colors: { primary: '#8A6A9C', secondary: '#E8D5F0', accent: '#6A4A7C' } },
+      { id: 'lavender-mist', name: 'Lavender Mist', colors: { primary: '#9A8AB8', secondary: '#F8F5FC', accent: '#C9A0DC' } },
+      { id: 'mint-whisper', name: 'Mint Whisper', colors: { primary: '#6AAA94', secondary: '#F2FAF7', accent: '#D4AF37' } },
+      { id: 'peach-sorbet', name: 'Peach Sorbet', colors: { primary: '#E8A878', secondary: '#FFF8F2', accent: '#CD7F32' } },
+      { id: 'baby-blue', name: 'Baby Blue', colors: { primary: '#6A9AB8', secondary: '#F2F7FC', accent: '#C0C0C0' } },
+      { id: 'buttercream', name: 'Buttercream', colors: { primary: '#D4B870', secondary: '#FFFCF5', accent: '#8B4513' } },
     ]
   },
   {
@@ -591,12 +576,12 @@ export const COLOR_THEME_CATEGORIES: ColorThemeCategory[] = [
     name: 'Earthy',
     description: 'Natural & organic',
     themes: [
-      { id: 'eucalyptus', name: 'Eucalyptus', colors: { primary: '#6B8A6A', secondary: '#C4A87A', accent: '#8A6A5A' } },
-      { id: 'terracotta', name: 'Terracotta & Cream', colors: { primary: '#B86A50', secondary: '#7A8A6A', accent: '#D4B896' } },
-      { id: 'olive-grove', name: 'Olive Grove', colors: { primary: '#6A7A4A', secondary: '#9A7A60', accent: '#C8A878' } },
-      { id: 'desert-sand', name: 'Desert Sand', colors: { primary: '#B8956A', secondary: '#7A9A8A', accent: '#C87868' } },
-      { id: 'moss-fern', name: 'Moss & Fern', colors: { primary: '#5A7A58', secondary: '#8A7A60', accent: '#A89078' } },
-      { id: 'clay-linen', name: 'Clay & Linen', colors: { primary: '#9A6050', secondary: '#6A8A7A', accent: '#C8B090' } },
+      { id: 'eucalyptus', name: 'Eucalyptus', colors: { primary: '#6B8A6A', secondary: '#F5F8F2', accent: '#CD7F32' } },
+      { id: 'terracotta', name: 'Terracotta & Cream', colors: { primary: '#B86A50', secondary: '#FAF5F0', accent: '#D4AF37' } },
+      { id: 'olive-grove', name: 'Olive Grove', colors: { primary: '#6A7A4A', secondary: '#F5F7F0', accent: '#B8860B' } },
+      { id: 'desert-sand', name: 'Desert Sand', colors: { primary: '#B8956A', secondary: '#FAF7F2', accent: '#8B4513' } },
+      { id: 'moss-fern', name: 'Moss & Fern', colors: { primary: '#5A7A58', secondary: '#F2F7F2', accent: '#CD7F32' } },
+      { id: 'clay-linen', name: 'Clay & Linen', colors: { primary: '#9A6050', secondary: '#FAF5F0', accent: '#D4AF37' } },
     ]
   },
   {
@@ -604,12 +589,12 @@ export const COLOR_THEME_CATEGORIES: ColorThemeCategory[] = [
     name: 'Golden',
     description: 'Warm & luxurious',
     themes: [
-      { id: 'champagne', name: 'Champagne Dreams', colors: { primary: '#C8A060', secondary: '#8A7A9A', accent: '#D4A8A0' } },
-      { id: 'gold-ivory', name: 'Gold & Ivory', colors: { primary: '#C8A030', secondary: '#5A7A8A', accent: '#E8C8B8' } },
-      { id: 'honey-amber', name: 'Honey & Amber', colors: { primary: '#C89040', secondary: '#9A7068', accent: '#7A8A6A' } },
-      { id: 'bronze-cream', name: 'Bronze & Cream', colors: { primary: '#9A7A50', secondary: '#8A9A78', accent: '#C8A8A0' } },
-      { id: 'sunset-glow', name: 'Sunset Glow', colors: { primary: '#D87850', secondary: '#C8A050', accent: '#8A6A9A' } },
-      { id: 'golden-hour', name: 'Golden Hour', colors: { primary: '#C89020', secondary: '#D8886A', accent: '#6A8A7A' } },
+      { id: 'champagne', name: 'Champagne Dreams', colors: { primary: '#C8A060', secondary: '#FFFAF2', accent: '#722F37' } },
+      { id: 'gold-ivory', name: 'Gold & Ivory', colors: { primary: '#C8A030', secondary: '#FFFCF5', accent: '#1E3A5F' } },
+      { id: 'honey-amber', name: 'Honey & Amber', colors: { primary: '#C89040', secondary: '#FFF8F0', accent: '#8B4513' } },
+      { id: 'bronze-cream', name: 'Bronze & Cream', colors: { primary: '#9A7A50', secondary: '#FAF7F2', accent: '#722F37' } },
+      { id: 'sunset-glow', name: 'Sunset Glow', colors: { primary: '#D87850', secondary: '#FFF5F0', accent: '#D4AF37' } },
+      { id: 'golden-hour', name: 'Golden Hour', colors: { primary: '#C89020', secondary: '#FFFAF2', accent: '#8B4513' } },
     ]
   },
   {
@@ -617,12 +602,12 @@ export const COLOR_THEME_CATEGORIES: ColorThemeCategory[] = [
     name: 'Vivid',
     description: 'Bold & vibrant',
     themes: [
-      { id: 'coral-mint', name: 'Coral & Mint', colors: { primary: '#E86868', secondary: '#58B8A8', accent: '#F8C858' } },
-      { id: 'fuchsia-teal', name: 'Fuchsia & Teal', colors: { primary: '#C82868', secondary: '#28A898', accent: '#F0A858' } },
-      { id: 'tropical-sunset', name: 'Tropical Sunset', colors: { primary: '#E86040', secondary: '#F8C040', accent: '#38A8A0' } },
-      { id: 'ocean-coral', name: 'Ocean & Coral', colors: { primary: '#20A0B0', secondary: '#E87878', accent: '#F8B858' } },
-      { id: 'citrus-splash', name: 'Citrus Splash', colors: { primary: '#E89020', secondary: '#68C888', accent: '#E86070' } },
-      { id: 'berry-punch', name: 'Berry Punch', colors: { primary: '#9848A8', secondary: '#E88898', accent: '#58A8C8' } },
+      { id: 'coral-mint', name: 'Coral & Mint', colors: { primary: '#E86868', secondary: '#FFF5F5', accent: '#D4AF37' } },
+      { id: 'fuchsia-teal', name: 'Fuchsia & Teal', colors: { primary: '#C82868', secondary: '#FFF2F8', accent: '#2A9D8F' } },
+      { id: 'tropical-sunset', name: 'Tropical Sunset', colors: { primary: '#E86040', secondary: '#FFF5F2', accent: '#D4AF37' } },
+      { id: 'ocean-coral', name: 'Ocean & Coral', colors: { primary: '#20A0B0', secondary: '#F0FAFA', accent: '#E86868' } },
+      { id: 'citrus-splash', name: 'Citrus Splash', colors: { primary: '#E89020', secondary: '#FFF8F0', accent: '#722F37' } },
+      { id: 'berry-punch', name: 'Berry Punch', colors: { primary: '#9848A8', secondary: '#FAF5FC', accent: '#D4AF37' } },
     ]
   },
   {
@@ -630,12 +615,12 @@ export const COLOR_THEME_CATEGORIES: ColorThemeCategory[] = [
     name: 'Dusty',
     description: 'Muted & vintage',
     themes: [
-      { id: 'dusty-blue', name: 'Dusty Blue', colors: { primary: '#6890A0', secondary: '#B8988A', accent: '#C8A8B0' } },
-      { id: 'lavender-sage', name: 'Lavender & Sage', colors: { primary: '#9080A8', secondary: '#88A080', accent: '#C8A890' } },
-      { id: 'dusty-mauve', name: 'Dusty Mauve', colors: { primary: '#A08088', secondary: '#88A098', accent: '#C8B890' } },
-      { id: 'vintage-rose', name: 'Vintage Rose', colors: { primary: '#B08080', secondary: '#80A090', accent: '#C8B898' } },
-      { id: 'muted-sage', name: 'Muted Sage', colors: { primary: '#789878', secondary: '#A89088', accent: '#90A0B0' } },
-      { id: 'powder-thistle', name: 'Powder & Thistle', colors: { primary: '#7898A8', secondary: '#A888A0', accent: '#B8A080' } },
+      { id: 'dusty-blue', name: 'Dusty Blue', colors: { primary: '#6890A0', secondary: '#F5F8FA', accent: '#D4AF37' } },
+      { id: 'lavender-sage', name: 'Lavender & Sage', colors: { primary: '#9080A8', secondary: '#F8F5FA', accent: '#7A9A68' } },
+      { id: 'dusty-mauve', name: 'Dusty Mauve', colors: { primary: '#A08088', secondary: '#FAF5F7', accent: '#C9B037' } },
+      { id: 'vintage-rose', name: 'Vintage Rose', colors: { primary: '#B08080', secondary: '#FAF5F5', accent: '#D4AF37' } },
+      { id: 'muted-sage', name: 'Muted Sage', colors: { primary: '#789878', secondary: '#F5F8F5', accent: '#E8B4B8' } },
+      { id: 'powder-thistle', name: 'Powder & Thistle', colors: { primary: '#7898A8', secondary: '#F5F8FA', accent: '#C0C0C0' } },
     ]
   },
   {
@@ -643,12 +628,12 @@ export const COLOR_THEME_CATEGORIES: ColorThemeCategory[] = [
     name: 'Classic',
     description: 'Timeless & elegant',
     themes: [
-      { id: 'navy-gold', name: 'Navy & Gold', colors: { primary: '#1E3A5F', secondary: '#D4AF37', accent: '#2C5F8D' } },
-      { id: 'burgundy-ivory', name: 'Burgundy & Ivory', colors: { primary: '#782030', secondary: '#E8D8C0', accent: '#386858' } },
-      { id: 'black-white', name: 'Black & White', colors: { primary: '#303030', secondary: '#E8E8E8', accent: '#A08070' } },
-      { id: 'midnight-rose', name: 'Midnight & Rose', colors: { primary: '#203848', secondary: '#D89898', accent: '#C8A868' } },
-      { id: 'charcoal-blush', name: 'Charcoal & Blush', colors: { primary: '#404048', secondary: '#E8B8C0', accent: '#88A898' } },
-      { id: 'ivory-black', name: 'Ivory & Black', colors: { primary: '#383838', secondary: '#E8E0D0', accent: '#987878' } },
+      { id: 'navy-gold', name: 'Navy & Gold', colors: { primary: '#1E3A5F', secondary: '#F5F7FA', accent: '#D4AF37' } },
+      { id: 'burgundy-ivory', name: 'Burgundy & Ivory', colors: { primary: '#782030', secondary: '#FAF5F2', accent: '#D4AF37' } },
+      { id: 'black-white', name: 'Black & White', colors: { primary: '#303030', secondary: '#F8F8F8', accent: '#D4AF37' } },
+      { id: 'midnight-rose', name: 'Midnight & Rose', colors: { primary: '#203848', secondary: '#F5F8FA', accent: '#E8B4B8' } },
+      { id: 'charcoal-blush', name: 'Charcoal & Blush', colors: { primary: '#404048', secondary: '#FAF5F7', accent: '#D4949A' } },
+      { id: 'ivory-black', name: 'Ivory & Black', colors: { primary: '#383838', secondary: '#FAF8F5', accent: '#C0C0C0' } },
     ]
   },
   {
@@ -656,12 +641,12 @@ export const COLOR_THEME_CATEGORIES: ColorThemeCategory[] = [
     name: 'Jewel Tones',
     description: 'Rich & regal',
     themes: [
-      { id: 'emerald-gold', name: 'Emerald & Gold', colors: { primary: '#286838', secondary: '#C8A040', accent: '#7A3050' } },
-      { id: 'sapphire-silver', name: 'Sapphire & Silver', colors: { primary: '#284878', secondary: '#A8A8B8', accent: '#883850' } },
-      { id: 'ruby-cream', name: 'Ruby & Cream', colors: { primary: '#A03040', secondary: '#D8C8A0', accent: '#286858' } },
-      { id: 'amethyst-gold', name: 'Amethyst & Gold', colors: { primary: '#603878', secondary: '#C8A850', accent: '#287858' } },
-      { id: 'forest-gold', name: 'Forest & Gold', colors: { primary: '#285830', secondary: '#C8A048', accent: '#784058' } },
-      { id: 'plum-champagne', name: 'Plum & Champagne', colors: { primary: '#684058', secondary: '#D8C8A8', accent: '#387868' } },
+      { id: 'emerald-gold', name: 'Emerald & Gold', colors: { primary: '#286838', secondary: '#F2F8F2', accent: '#D4AF37' } },
+      { id: 'sapphire-silver', name: 'Sapphire & Silver', colors: { primary: '#284878', secondary: '#F5F7FA', accent: '#C0C0C0' } },
+      { id: 'ruby-cream', name: 'Ruby & Cream', colors: { primary: '#A03040', secondary: '#FAF5F5', accent: '#D4AF37' } },
+      { id: 'amethyst-gold', name: 'Amethyst & Gold', colors: { primary: '#603878', secondary: '#F8F5FA', accent: '#D4AF37' } },
+      { id: 'forest-gold', name: 'Forest & Gold', colors: { primary: '#285830', secondary: '#F2F7F2', accent: '#D4AF37' } },
+      { id: 'plum-champagne', name: 'Plum & Champagne', colors: { primary: '#684058', secondary: '#FAF5F8', accent: '#C9B037' } },
     ]
   },
   {
@@ -669,12 +654,12 @@ export const COLOR_THEME_CATEGORIES: ColorThemeCategory[] = [
     name: 'Coastal',
     description: 'Beach & ocean inspired',
     themes: [
-      { id: 'ocean-sand', name: 'Ocean & Sand', colors: { primary: '#4090A0', secondary: '#D8C8A0', accent: '#C88878' } },
-      { id: 'seafoam', name: 'Seafoam', colors: { primary: '#58A898', secondary: '#C8A888', accent: '#90A0C0' } },
-      { id: 'coral-reef', name: 'Coral Reef', colors: { primary: '#D87068', secondary: '#58A8B0', accent: '#E8C878' } },
-      { id: 'nautical', name: 'Nautical', colors: { primary: '#285080', secondary: '#C08080', accent: '#D8C890' } },
-      { id: 'driftwood', name: 'Driftwood', colors: { primary: '#8A7860', secondary: '#68A098', accent: '#C8A8A0' } },
-      { id: 'sunset-beach', name: 'Sunset Beach', colors: { primary: '#D88050', secondary: '#68A8C0', accent: '#E8C068' } },
+      { id: 'ocean-sand', name: 'Ocean & Sand', colors: { primary: '#4090A0', secondary: '#F5FAFA', accent: '#D4AF37' } },
+      { id: 'seafoam', name: 'Seafoam', colors: { primary: '#58A898', secondary: '#F2FAF8', accent: '#E8B4B8' } },
+      { id: 'coral-reef', name: 'Coral Reef', colors: { primary: '#D87068', secondary: '#FFF5F5', accent: '#2A9D8F' } },
+      { id: 'nautical', name: 'Nautical', colors: { primary: '#285080', secondary: '#F5F7FA', accent: '#D4AF37' } },
+      { id: 'driftwood', name: 'Driftwood', colors: { primary: '#8A7860', secondary: '#FAF8F5', accent: '#4090A0' } },
+      { id: 'sunset-beach', name: 'Sunset Beach', colors: { primary: '#D88050', secondary: '#FFF8F5', accent: '#D4AF37' } },
     ]
   },
   {
@@ -682,12 +667,12 @@ export const COLOR_THEME_CATEGORIES: ColorThemeCategory[] = [
     name: 'Garden',
     description: 'Floral & botanical',
     themes: [
-      { id: 'english-rose', name: 'English Rose', colors: { primary: '#C88898', secondary: '#68A080', accent: '#E8C890' } },
-      { id: 'lavender-field', name: 'Lavender Field', colors: { primary: '#7858A0', secondary: '#88A878', accent: '#D8A8B0' } },
-      { id: 'peony-garden', name: 'Peony Garden', colors: { primary: '#D86898', secondary: '#78A888', accent: '#C8B880' } },
-      { id: 'wildflower', name: 'Wildflower', colors: { primary: '#A878A8', secondary: '#78A898', accent: '#E8B870' } },
-      { id: 'sunflower', name: 'Sunflower', colors: { primary: '#D89040', secondary: '#489858', accent: '#C87878' } },
-      { id: 'spring-bloom', name: 'Spring Bloom', colors: { primary: '#D88898', secondary: '#68B880', accent: '#A898C0' } },
+      { id: 'english-rose', name: 'English Rose', colors: { primary: '#C88898', secondary: '#FFF5F7', accent: '#7A9A68' } },
+      { id: 'lavender-field', name: 'Lavender Field', colors: { primary: '#7858A0', secondary: '#F8F5FA', accent: '#D4AF37' } },
+      { id: 'peony-garden', name: 'Peony Garden', colors: { primary: '#D86898', secondary: '#FFF5F8', accent: '#7A9A68' } },
+      { id: 'wildflower', name: 'Wildflower', colors: { primary: '#A878A8', secondary: '#FAF5FA', accent: '#D4AF37' } },
+      { id: 'sunflower', name: 'Sunflower', colors: { primary: '#D89040', secondary: '#FFFAF2', accent: '#285830' } },
+      { id: 'spring-bloom', name: 'Spring Bloom', colors: { primary: '#D88898', secondary: '#FFF5F7', accent: '#D4AF37' } },
     ]
   },
   {
@@ -695,7 +680,7 @@ export const COLOR_THEME_CATEGORIES: ColorThemeCategory[] = [
     name: 'Custom',
     description: 'Special palettes',
     themes: [
-      { id: 'yulis-wedding', name: 'Yulis Wedding', colors: { primary: '#5F5420', secondary: '#A1A8BE', accent: '#EA785B' } },
+      { id: 'yulis-wedding', name: 'Yulis Wedding', colors: { primary: '#5F5420', secondary: '#F8F8F5', accent: '#D4AF37' } },
     ]
   },
 ]

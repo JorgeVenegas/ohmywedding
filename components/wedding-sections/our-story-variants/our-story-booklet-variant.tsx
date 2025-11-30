@@ -64,10 +64,10 @@ export function OurStoryBookletVariant({
       className={isColored ? '' : 'bg-gradient-to-b from-gray-50 to-white'}
       style={isColored ? { backgroundColor: bgColor } : undefined}
     >
-      <div className="py-16 px-4">
+      <div className="py-6 sm:py-8 px-4">
         <div className="max-w-5xl mx-auto">
           {/* Book Header */}
-          <div className="text-center mb-16">
+          <div className="text-center mb-6 sm:mb-8">
             <div 
               className="inline-block text-sm uppercase tracking-[0.3em] mb-3"
               style={{ color: subtitleColor }}
@@ -87,15 +87,11 @@ export function OurStoryBookletVariant({
           </div>
           
           {/* Stacked Pages */}
-          <div className="relative">
+          <div className="relative space-y-6 sm:space-y-8">
             {allEvents.map((event, index) => {
               return (
                 <div 
                   key={index}
-                  className="mb-12 md:mb-16"
-                  style={{
-                    marginTop: index > 0 ? '-2rem' : '0'
-                  }}
                 >
                   {/* Page Container - light tinted background */}
                   <div 
@@ -221,19 +217,19 @@ export function OurStoryBookletVariant({
           </div>
 
           {/* The End */}
-          <div className="text-center mt-24 mb-8">
+          <div className="text-center mt-8 sm:mt-12 mb-4 sm:mb-6">
             <div 
               className="inline-block text-2xl md:text-3xl font-serif italic"
-              style={{ color: isColored ? colorLight : theme?.colors?.accent }}
+              style={{ color: isColored ? sectionTextColor : theme?.colors?.primary }}
             >
               To be continued...
             </div>
             <div className="mt-4 flex justify-center items-center gap-2">
               {isColored ? (
                 <>
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colorLight }} />
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: accentColor }} />
                   <div className="w-12 h-px" style={{ backgroundColor: sectionTextColor, opacity: 0.5 }} />
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colorLight }} />
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: accentColor }} />
                 </>
               ) : (
                 <svg width="60" height="20" viewBox="0 0 60 20" fill="none" className="mx-auto opacity-40">

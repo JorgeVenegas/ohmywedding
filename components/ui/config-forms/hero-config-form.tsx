@@ -7,8 +7,42 @@ import { Switch } from '@/components/ui/switch'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
 import { ImageGalleryDialog } from '@/components/ui/image-gallery-dialog'
 import { usePageConfig } from '@/components/contexts/page-config-context'
-import { Image as ImageIcon, X } from 'lucide-react'
+import { Image as ImageIcon, X, Check } from 'lucide-react'
 import { useParams } from 'next/navigation'
+
+// Helper to determine if a color is light (for contrast)
+function isLightColor(color: string): boolean {
+  if (color.startsWith('rgb')) {
+    const match = color.match(/(\d+),\s*(\d+),\s*(\d+)/)
+    if (match) {
+      const r = parseInt(match[1])
+      const g = parseInt(match[2])
+      const b = parseInt(match[3])
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+      return luminance > 0.5
+    }
+  }
+  const hex = color.replace('#', '')
+  const r = parseInt(hex.substr(0, 2), 16)
+  const g = parseInt(hex.substr(2, 2), 16)
+  const b = parseInt(hex.substr(4, 2), 16)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance > 0.5
+}
+
+// Helper to create a light tint of a color
+function getLightTint(hex: string, tintAmount: number): string {
+  const num = parseInt(hex.replace('#', ''), 16)
+  const r = (num >> 16) & 255
+  const g = (num >> 8) & 255
+  const b = num & 255
+  const newR = Math.round(r + (255 - r) * tintAmount)
+  const newG = Math.round(g + (255 - g) * tintAmount)
+  const newB = Math.round(b + (255 - b) * tintAmount)
+  return `rgb(${newR}, ${newG}, ${newB})`
+}
+
+type BackgroundColorChoice = 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
 
 interface HeroConfigFormProps {
   config: {
@@ -31,6 +65,8 @@ interface HeroConfigFormProps {
     heroImageUrl?: string
     overlayOpacity?: number
     imageBrightness?: number
+    useColorBackground?: boolean
+    backgroundColorChoice?: BackgroundColorChoice
   }
   onChange: (key: string, value: any) => void
   hasWeddingDate?: boolean
@@ -41,19 +77,52 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
   const [showImageDialog, setShowImageDialog] = useState(false)
   const { config: pageConfig } = usePageConfig()
   
-  // Palette colors from page config - recalculate whenever colors change
-  const paletteColors = React.useMemo(() => [
-    { value: 'palette:primary', displayColor: pageConfig.siteSettings.theme?.colors?.primary || '#9CAF88', label: 'Primary' },
-    { value: 'palette:secondary', displayColor: pageConfig.siteSettings.theme?.colors?.secondary || '#B8C5A6', label: 'Secondary' },
-    { value: 'palette:accent', displayColor: pageConfig.siteSettings.theme?.colors?.accent || '#8B9A7A', label: 'Accent' },
-    { value: '#ffffff', displayColor: '#ffffff', label: 'White' },
-    { value: '#f9fafb', displayColor: '#f9fafb', label: 'Light Gray' },
-    { value: '#1f2937', displayColor: '#1f2937', label: 'Dark Gray' }
-  ], [
-    pageConfig.siteSettings.theme?.colors?.primary,
-    pageConfig.siteSettings.theme?.colors?.secondary,
-    pageConfig.siteSettings.theme?.colors?.accent
-  ])
+  // Get theme colors
+  const themeColors = pageConfig.siteSettings.theme?.colors
+  const primaryColor = themeColors?.primary || '#9CAF88'
+  const secondaryColor = themeColors?.secondary || '#B8C5A6'
+  const accentColor = themeColors?.accent || '#8B9A7A'
+
+  // Create color options with full, light, and lighter variants for background
+  const bgColorGroups: { label: string; colors: { value: BackgroundColorChoice; color: string }[] }[] = [
+    {
+      label: 'Primary',
+      colors: [
+        { value: 'primary', color: primaryColor },
+        { value: 'primary-light', color: getLightTint(primaryColor, 0.5) },
+        { value: 'primary-lighter', color: getLightTint(primaryColor, 0.88) },
+      ]
+    },
+    {
+      label: 'Secondary',
+      colors: [
+        { value: 'secondary', color: secondaryColor },
+        { value: 'secondary-light', color: getLightTint(secondaryColor, 0.5) },
+        { value: 'secondary-lighter', color: getLightTint(secondaryColor, 0.88) },
+      ]
+    },
+    {
+      label: 'Accent',
+      colors: [
+        { value: 'accent', color: accentColor },
+        { value: 'accent-light', color: getLightTint(accentColor, 0.5) },
+        { value: 'accent-lighter', color: getLightTint(accentColor, 0.88) },
+      ]
+    }
+  ]
+  
+  // Palette colors for gradient overlay (with lighter variants)
+  const gradientColors = React.useMemo(() => [
+    { value: 'palette:primary', displayColor: primaryColor, label: 'Primary' },
+    { value: 'palette:primary-light', displayColor: getLightTint(primaryColor, 0.5), label: 'Primary Light' },
+    { value: 'palette:primary-lighter', displayColor: getLightTint(primaryColor, 0.88), label: 'Primary Lighter' },
+    { value: 'palette:secondary', displayColor: secondaryColor, label: 'Secondary' },
+    { value: 'palette:secondary-light', displayColor: getLightTint(secondaryColor, 0.5), label: 'Secondary Light' },
+    { value: 'palette:secondary-lighter', displayColor: getLightTint(secondaryColor, 0.88), label: 'Secondary Lighter' },
+    { value: 'palette:accent', displayColor: accentColor, label: 'Accent' },
+    { value: 'palette:accent-light', displayColor: getLightTint(accentColor, 0.5), label: 'Accent Light' },
+    { value: 'palette:accent-lighter', displayColor: getLightTint(accentColor, 0.88), label: 'Accent Lighter' },
+  ], [primaryColor, secondaryColor, accentColor])
 
   // Check if hero image is provided
   const hasHeroImage = !!config.heroImageUrl && config.heroImageUrl.trim() !== ''
@@ -228,23 +297,37 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Gradient Color 1
                 </label>
-                <div className="grid grid-cols-6 gap-1.5">
-                  {paletteColors.map((color) => (
-                    <button
-                      key={color.value}
-                      onClick={() => onChange('gradientColor1', color.value)}
-                      className={`rounded border-2 transition-all hover:scale-105 ${
-                        config.gradientColor1 === color.value 
-                          ? 'border-blue-500' 
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      title={color.label}
-                    >
-                      <div 
-                        className="w-full h-8 rounded"
-                        style={{ backgroundColor: color.displayColor }}
-                      />
-                    </button>
+                <div className="space-y-2">
+                  {[
+                    { label: 'Primary', colors: gradientColors.filter(c => c.value.includes('primary')) },
+                    { label: 'Secondary', colors: gradientColors.filter(c => c.value.includes('secondary')) },
+                    { label: 'Accent', colors: gradientColors.filter(c => c.value.includes('accent')) },
+                  ].map((group) => (
+                    <div key={group.label} className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 w-16">{group.label}</span>
+                      <div className="flex gap-1">
+                        {group.colors.map((color) => (
+                          <button
+                            key={color.value}
+                            onClick={() => onChange('gradientColor1', color.value)}
+                            className={`w-8 h-8 rounded-md border-2 transition-all flex items-center justify-center ${
+                              config.gradientColor1 === color.value 
+                                ? 'border-blue-500 ring-2 ring-blue-200' 
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                            style={{ backgroundColor: color.displayColor }}
+                            title={color.label}
+                          >
+                            {config.gradientColor1 === color.value && (
+                              <Check 
+                                className="w-4 h-4" 
+                                style={{ color: !isLightColor(color.displayColor) ? 'white' : '#1f2937' }} 
+                              />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -252,23 +335,37 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Gradient Color 2
                 </label>
-                <div className="grid grid-cols-6 gap-1.5">
-                  {paletteColors.map((color) => (
-                    <button
-                      key={color.value}
-                      onClick={() => onChange('gradientColor2', color.value)}
-                      className={`rounded border-2 transition-all hover:scale-105 ${
-                        config.gradientColor2 === color.value 
-                          ? 'border-blue-500' 
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      title={color.label}
-                    >
-                      <div 
-                        className="w-full h-8 rounded"
-                        style={{ backgroundColor: color.displayColor }}
-                      />
-                    </button>
+                <div className="space-y-2">
+                  {[
+                    { label: 'Primary', colors: gradientColors.filter(c => c.value.includes('primary')) },
+                    { label: 'Secondary', colors: gradientColors.filter(c => c.value.includes('secondary')) },
+                    { label: 'Accent', colors: gradientColors.filter(c => c.value.includes('accent')) },
+                  ].map((group) => (
+                    <div key={group.label} className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 w-16">{group.label}</span>
+                      <div className="flex gap-1">
+                        {group.colors.map((color) => (
+                          <button
+                            key={color.value}
+                            onClick={() => onChange('gradientColor2', color.value)}
+                            className={`w-8 h-8 rounded-md border-2 transition-all flex items-center justify-center ${
+                              config.gradientColor2 === color.value 
+                                ? 'border-blue-500 ring-2 ring-blue-200' 
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                            style={{ backgroundColor: color.displayColor }}
+                            title={color.label}
+                          >
+                            {config.gradientColor2 === color.value && (
+                              <Check 
+                                className="w-4 h-4" 
+                                style={{ color: !isLightColor(color.displayColor) ? 'white' : '#1f2937' }} 
+                              />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -299,6 +396,23 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
+              Image Overlay Opacity: {config.overlayOpacity ?? 0}%
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="80"
+              value={config.overlayOpacity ?? 0}
+              onChange={(e) => onChange('overlayOpacity', parseInt(e.target.value))}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>None</span>
+              <span>Dark</span>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Image Brightness: {config.imageBrightness ?? 100}%
             </label>
             <input
@@ -316,6 +430,51 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
           </div>
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-gray-700">
+              Use Color Background
+            </label>
+            <Switch
+              checked={config.useColorBackground ?? false}
+              onCheckedChange={(checked) => onChange('useColorBackground', checked)}
+            />
+          </div>
+          {config.useColorBackground && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Background Color
+              </label>
+              <div className="space-y-2">
+                {bgColorGroups.map((group) => (
+                  <div key={group.label} className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 w-16">{group.label}</span>
+                    <div className="flex gap-1">
+                      {group.colors.map((colorOption) => (
+                        <button
+                          key={colorOption.value}
+                          onClick={() => onChange('backgroundColorChoice', colorOption.value)}
+                          className={`w-8 h-8 rounded-md border-2 transition-all flex items-center justify-center ${
+                            config.backgroundColorChoice === colorOption.value 
+                              ? 'border-blue-500 ring-2 ring-blue-200' 
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                          style={{ backgroundColor: colorOption.color }}
+                          title={colorOption.value}
+                        >
+                          {config.backgroundColorChoice === colorOption.value && (
+                            <Check 
+                              className="w-4 h-4" 
+                              style={{ color: !isLightColor(colorOption.color) ? 'white' : '#1f2937' }} 
+                            />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-gray-700">
               Use Gradient Overlay
             </label>
             <Switch
@@ -329,23 +488,37 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Gradient Color 1
                 </label>
-                <div className="grid grid-cols-6 gap-1.5">
-                  {paletteColors.map((color) => (
-                    <button
-                      key={color.value}
-                      onClick={() => onChange('gradientColor1', color.value)}
-                      className={`rounded border-2 transition-all hover:scale-105 ${
-                        config.gradientColor1 === color.value 
-                          ? 'border-blue-500' 
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      title={color.label}
-                    >
-                      <div 
-                        className="w-full h-8 rounded"
-                        style={{ backgroundColor: color.displayColor }}
-                      />
-                    </button>
+                <div className="space-y-2">
+                  {[
+                    { label: 'Primary', colors: gradientColors.filter(c => c.value.includes('primary')) },
+                    { label: 'Secondary', colors: gradientColors.filter(c => c.value.includes('secondary')) },
+                    { label: 'Accent', colors: gradientColors.filter(c => c.value.includes('accent')) },
+                  ].map((group) => (
+                    <div key={group.label} className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 w-16">{group.label}</span>
+                      <div className="flex gap-1">
+                        {group.colors.map((color) => (
+                          <button
+                            key={color.value}
+                            onClick={() => onChange('gradientColor1', color.value)}
+                            className={`w-8 h-8 rounded-md border-2 transition-all flex items-center justify-center ${
+                              config.gradientColor1 === color.value 
+                                ? 'border-blue-500 ring-2 ring-blue-200' 
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                            style={{ backgroundColor: color.displayColor }}
+                            title={color.label}
+                          >
+                            {config.gradientColor1 === color.value && (
+                              <Check 
+                                className="w-4 h-4" 
+                                style={{ color: !isLightColor(color.displayColor) ? 'white' : '#1f2937' }} 
+                              />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -353,23 +526,37 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Gradient Color 2
                 </label>
-                <div className="grid grid-cols-6 gap-1.5">
-                  {paletteColors.map((color) => (
-                    <button
-                      key={color.value}
-                      onClick={() => onChange('gradientColor2', color.value)}
-                      className={`rounded border-2 transition-all hover:scale-105 ${
-                        config.gradientColor2 === color.value 
-                          ? 'border-blue-500' 
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      title={color.label}
-                    >
-                      <div 
-                        className="w-full h-8 rounded"
-                        style={{ backgroundColor: color.displayColor }}
-                      />
-                    </button>
+                <div className="space-y-2">
+                  {[
+                    { label: 'Primary', colors: gradientColors.filter(c => c.value.includes('primary')) },
+                    { label: 'Secondary', colors: gradientColors.filter(c => c.value.includes('secondary')) },
+                    { label: 'Accent', colors: gradientColors.filter(c => c.value.includes('accent')) },
+                  ].map((group) => (
+                    <div key={group.label} className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 w-16">{group.label}</span>
+                      <div className="flex gap-1">
+                        {group.colors.map((color) => (
+                          <button
+                            key={color.value}
+                            onClick={() => onChange('gradientColor2', color.value)}
+                            className={`w-8 h-8 rounded-md border-2 transition-all flex items-center justify-center ${
+                              config.gradientColor2 === color.value 
+                                ? 'border-blue-500 ring-2 ring-blue-200' 
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                            style={{ backgroundColor: color.displayColor }}
+                            title={color.label}
+                          >
+                            {config.gradientColor2 === color.value && (
+                              <Check 
+                                className="w-4 h-4" 
+                                style={{ color: !isLightColor(color.displayColor) ? 'white' : '#1f2937' }} 
+                              />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -437,23 +624,37 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Gradient Color 1
                 </label>
-                <div className="grid grid-cols-6 gap-1.5">
-                  {paletteColors.map((color) => (
-                    <button
-                      key={color.value}
-                      onClick={() => onChange('gradientColor1', color.value)}
-                      className={`rounded border-2 transition-all hover:scale-105 ${
-                        config.gradientColor1 === color.value 
-                          ? 'border-blue-500' 
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      title={color.label}
-                    >
-                      <div 
-                        className="w-full h-8 rounded"
-                        style={{ backgroundColor: color.displayColor }}
-                      />
-                    </button>
+                <div className="space-y-2">
+                  {[
+                    { label: 'Primary', colors: gradientColors.filter(c => c.value.includes('primary')) },
+                    { label: 'Secondary', colors: gradientColors.filter(c => c.value.includes('secondary')) },
+                    { label: 'Accent', colors: gradientColors.filter(c => c.value.includes('accent')) },
+                  ].map((group) => (
+                    <div key={group.label} className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 w-16">{group.label}</span>
+                      <div className="flex gap-1">
+                        {group.colors.map((color) => (
+                          <button
+                            key={color.value}
+                            onClick={() => onChange('gradientColor1', color.value)}
+                            className={`w-8 h-8 rounded-md border-2 transition-all flex items-center justify-center ${
+                              config.gradientColor1 === color.value 
+                                ? 'border-blue-500 ring-2 ring-blue-200' 
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                            style={{ backgroundColor: color.displayColor }}
+                            title={color.label}
+                          >
+                            {config.gradientColor1 === color.value && (
+                              <Check 
+                                className="w-4 h-4" 
+                                style={{ color: !isLightColor(color.displayColor) ? 'white' : '#1f2937' }} 
+                              />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -461,23 +662,37 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Gradient Color 2
                 </label>
-                <div className="grid grid-cols-6 gap-1.5">
-                  {paletteColors.map((color) => (
-                    <button
-                      key={color.value}
-                      onClick={() => onChange('gradientColor2', color.value)}
-                      className={`rounded border-2 transition-all hover:scale-105 ${
-                        config.gradientColor2 === color.value 
-                          ? 'border-blue-500' 
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      title={color.label}
-                    >
-                      <div 
-                        className="w-full h-8 rounded"
-                        style={{ backgroundColor: color.displayColor }}
-                      />
-                    </button>
+                <div className="space-y-2">
+                  {[
+                    { label: 'Primary', colors: gradientColors.filter(c => c.value.includes('primary')) },
+                    { label: 'Secondary', colors: gradientColors.filter(c => c.value.includes('secondary')) },
+                    { label: 'Accent', colors: gradientColors.filter(c => c.value.includes('accent')) },
+                  ].map((group) => (
+                    <div key={group.label} className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 w-16">{group.label}</span>
+                      <div className="flex gap-1">
+                        {group.colors.map((color) => (
+                          <button
+                            key={color.value}
+                            onClick={() => onChange('gradientColor2', color.value)}
+                            className={`w-8 h-8 rounded-md border-2 transition-all flex items-center justify-center ${
+                              config.gradientColor2 === color.value 
+                                ? 'border-blue-500 ring-2 ring-blue-200' 
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                            style={{ backgroundColor: color.displayColor }}
+                            title={color.label}
+                          >
+                            {config.gradientColor2 === color.value && (
+                              <Check 
+                                className="w-4 h-4" 
+                                style={{ color: !isLightColor(color.displayColor) ? 'white' : '#1f2937' }} 
+                              />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -487,23 +702,33 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Background Color
               </label>
-              <div className="grid grid-cols-6 gap-1.5">
-                {paletteColors.map((color) => (
-                  <button
-                    key={color.value}
-                    onClick={() => onChange('backgroundColor', color.value)}
-                    className={`rounded border-2 transition-all hover:scale-105 ${
-                      config.backgroundColor === color.value 
-                        ? 'border-blue-500' 
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                    title={color.label}
-                  >
-                    <div 
-                      className="w-full h-8 rounded"
-                      style={{ backgroundColor: color.displayColor }}
-                    />
-                  </button>
+              <div className="space-y-2">
+                {bgColorGroups.map((group) => (
+                  <div key={group.label} className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 w-16">{group.label}</span>
+                    <div className="flex gap-1">
+                      {group.colors.map((colorOption) => (
+                        <button
+                          key={colorOption.value}
+                          onClick={() => onChange('backgroundColor', colorOption.value)}
+                          className={`w-8 h-8 rounded-md border-2 transition-all flex items-center justify-center ${
+                            config.backgroundColor === colorOption.value 
+                              ? 'border-blue-500 ring-2 ring-blue-200' 
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                          style={{ backgroundColor: colorOption.color }}
+                          title={colorOption.value}
+                        >
+                          {config.backgroundColor === colorOption.value && (
+                            <Check 
+                              className="w-4 h-4" 
+                              style={{ color: !isLightColor(colorOption.color) ? 'white' : '#1f2937' }} 
+                            />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
