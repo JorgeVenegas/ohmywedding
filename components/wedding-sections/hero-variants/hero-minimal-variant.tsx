@@ -62,15 +62,17 @@ export function HeroMinimalVariant({
     return luminance > 0.5 ? '#1f2937' : '#ffffff'
   }
 
+  // Get default background from theme palette when no custom color is set
+  const defaultBgForText = theme?.colors?.secondary || theme?.colors?.primary || '#f5f5f4'
+  const effectiveBgForText = resolvedBackgroundColor || defaultBgForText
+
   // Determine text color based on background or gradient
   let textColor: string
   if (backgroundGradient && resolvedGradientColor1) {
     // For gradients, use the first color to determine contrast
     textColor = getTextColor(resolvedGradientColor1)
-  } else if (resolvedBackgroundColor) {
-    textColor = getTextColor(resolvedBackgroundColor)
   } else {
-    textColor = theme?.colors?.foreground || '#1f2937'
+    textColor = getTextColor(effectiveBgForText)
   }
   
   const isLightText = textColor === '#ffffff'
@@ -88,6 +90,10 @@ export function HeroMinimalVariant({
     }
   }
 
+  // Get default background from theme palette when no custom color is set
+  const defaultBackgroundColor = theme?.colors?.secondary || theme?.colors?.primary || '#f5f5f4'
+  const effectiveBackgroundColor = resolvedBackgroundColor || defaultBackgroundColor
+
   return (
     <SectionWrapper 
       theme={{
@@ -98,21 +104,19 @@ export function HeroMinimalVariant({
         }
       }} 
       alignment={alignment} 
-      background={resolvedBackgroundColor && !backgroundGradient ? 'default' : 'primary'}
+      background="default"
       className="h-[100dvh] max-h-[100dvh] relative overflow-hidden"
       id="hero"
       style={
-        resolvedBackgroundColor && !backgroundGradient 
-          ? { backgroundColor: resolvedBackgroundColor } 
-          : backgroundGradient && resolvedGradientColor1 && resolvedGradientColor2
+        backgroundGradient && resolvedGradientColor1 && resolvedGradientColor2
           ? { 
               background: `linear-gradient(135deg, ${resolvedGradientColor1} 0%, ${resolvedGradientColor2} 100%)` 
             }
-          : resolvedBackgroundColor && backgroundGradient
+          : backgroundGradient
           ? { 
-              background: `linear-gradient(135deg, ${resolvedBackgroundColor} 0%, ${adjustBrightness(resolvedBackgroundColor, -20)} 100%)` 
+              background: `linear-gradient(135deg, ${effectiveBackgroundColor} 0%, ${adjustBrightness(effectiveBackgroundColor, -20)} 100%)` 
             }
-          : undefined
+          : { backgroundColor: effectiveBackgroundColor }
       }
     >
       {/* Optional decorative elements */}

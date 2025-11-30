@@ -1,58 +1,61 @@
 "use client"
 
 import React from 'react'
-import { X } from 'lucide-react'
+import { X, Crown, Heart, Clock, MapPin, Image, Mail, HelpCircle } from 'lucide-react'
 import { Button } from './button'
+
+// Gold color for elegant icons
+const GOLD_COLOR = '#B8860B'
 
 interface SectionType {
   id: string
   name: string
   description: string
-  icon: string
+  icon: React.ReactNode
 }
 
 const AVAILABLE_SECTIONS: SectionType[] = [
   {
     id: 'hero',
-    name: 'Hero Section',
+    name: 'Main Banner',
     description: 'Main banner with names, date, and call-to-action',
-    icon: '🏠'
+    icon: <Crown className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
   },
   {
     id: 'our-story',
     name: 'Our Story',
     description: 'Share your love story and journey together',
-    icon: '💕'
+    icon: <Heart className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
   },
   {
     id: 'countdown',
     name: 'Countdown Timer',
     description: 'Display time remaining until the wedding',
-    icon: '⏰'
+    icon: <Clock className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
   },
   {
     id: 'event-details',
     name: 'Event Details',
     description: 'Ceremony and reception information',
-    icon: '📍'
+    icon: <MapPin className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
   },
   {
     id: 'gallery',
     name: 'Photo Gallery',
     description: 'Showcase your favorite photos together',
-    icon: '📸'
+    icon: <Image className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
   },
   {
     id: 'rsvp',
     name: 'RSVP',
     description: 'Allow guests to respond to your invitation',
-    icon: '📝'
+    icon: <Mail className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
   },
   {
     id: 'faq',
     name: 'FAQ',
     description: 'Answer common questions from guests',
-    icon: '❓'
+    icon: <HelpCircle className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
   }
 ]
 
@@ -153,18 +156,18 @@ export function SectionSelectorModal({
                 <button
                   key={section.id}
                   onClick={() => handleSelectSection(section.id)}
-                  className="w-full p-3 border border-gray-200 rounded-md hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 text-left group animate-in fade-in slide-in-from-left-4"
+                  className="w-full p-3 border border-gray-200 rounded-lg hover:border-amber-300 hover:bg-amber-50/50 transition-all duration-200 text-left group animate-in fade-in slide-in-from-left-4"
                   style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'backwards' }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="text-lg flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                    <div className="flex-shrink-0 p-2 rounded-lg bg-amber-50/80 group-hover:bg-amber-100/80 transition-colors duration-200">
                       {section.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 group-hover:text-blue-700 text-sm transition-colors duration-200">
+                      <h3 className="font-medium text-gray-900 group-hover:text-amber-900 text-sm transition-colors duration-200">
                         {section.name}
                       </h3>
-                      <p className="text-xs text-gray-500 mt-0.5 truncate">
+                      <p className="text-xs text-gray-500 mt-0.5">
                         {section.description}
                       </p>
                     </div>

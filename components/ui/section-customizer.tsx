@@ -1,6 +1,7 @@
 "use client"
 
 import React from 'react'
+import { Crown, Heart, Clock, MapPin, Image, Mail, HelpCircle } from 'lucide-react'
 import { CustomizePanel } from './customize-panel'
 import { useCustomizeSafe } from '@/components/contexts/customize-context'
 import { 
@@ -11,18 +12,21 @@ import {
 } from './config-forms'
 import { Button } from './button'
 
-const SECTION_ICONS: Record<string, string> = {
-  hero: '🏠',
-  countdown: '⏰',
-  'our-story': '💕',
-  rsvp: '📝',
-  gallery: '📸',
-  faq: '❓',
-  'event-details': '📍'
+// Gold color for elegant icons
+const GOLD_COLOR = '#B8860B'
+
+const SECTION_ICONS: Record<string, React.ReactNode> = {
+  hero: <Crown className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
+  countdown: <Clock className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
+  'our-story': <Heart className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
+  rsvp: <Mail className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
+  gallery: <Image className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
+  faq: <HelpCircle className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
+  'event-details': <MapPin className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
 }
 
 const SECTION_NAMES: Record<string, string> = {
-  hero: 'Hero Section',
+  hero: 'Main Banner',
   countdown: 'Countdown Timer',
   'our-story': 'Our Story',
   rsvp: 'RSVP',
@@ -89,15 +93,15 @@ export function SectionCustomizer() {
     }
   }
 
-  const sectionIcon = sectionType ? SECTION_ICONS[sectionType] : '⚙️'
   const sectionName = sectionType ? SECTION_NAMES[sectionType] : 'Section'
-  const title = `${sectionIcon} ${sectionName}`
+  const sectionIcon = sectionType ? SECTION_ICONS[sectionType] : null
 
   return (
     <CustomizePanel
       isOpen={isOpen}
       onClose={closeCustomizer}
-      title={title}
+      title={sectionName}
+      icon={sectionIcon}
     >
       <div className="space-y-6">
         {renderConfigForm()}

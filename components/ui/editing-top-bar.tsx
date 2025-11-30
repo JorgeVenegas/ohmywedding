@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Edit3, Eye, Settings, Monitor, Smartphone, ChevronDown, LogIn, User } from 'lucide-react'
 import { useEditingModeSafe } from '@/components/contexts/editing-mode-context'
 import { useSiteConfigSafe } from '@/components/contexts/site-config-context'
@@ -26,12 +26,37 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
   const { user, loading: authLoading, signOut } = useAuth()
   const [showDeviceMenu, setShowDeviceMenu] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [navIsVisible, setNavIsVisible] = useState(false)
+  const [currentNavHeight, setCurrentNavHeight] = useState(56)
+  
+  const currentViewportMode = viewportContext?.viewportMode || 'desktop'
+  
+  // Listen for wedding nav visibility changes - only affects desktop view, not mobile preview
+  useEffect(() => {
+    const handleNavVisibilityChange = (event: CustomEvent<{ isVisible: boolean; navHeight?: number }>) => {
+      // Only move buttons when in desktop viewport mode (nav is on same page)
+      // In mobile viewport mode, the nav is inside the iframe so buttons don't need to move
+      if (currentViewportMode === 'desktop') {
+        setNavIsVisible(event.detail.isVisible)
+        if (event.detail.navHeight) {
+          setCurrentNavHeight(event.detail.navHeight)
+        }
+      } else {
+        setNavIsVisible(false)
+      }
+    }
+    
+    window.addEventListener('weddingNavVisibilityChange', handleNavVisibilityChange as EventListener)
+    return () => {
+      window.removeEventListener('weddingNavVisibilityChange', handleNavVisibilityChange as EventListener)
+    }
+  }, [currentViewportMode])
   
   // Don't render if no editing context is available
   if (!editingContext) return null
   
   const { isEditingMode, toggleEditingMode, permissions, permissionsLoading, canEdit } = editingContext
-  const viewportMode = viewportContext?.viewportMode || 'desktop'
+  const viewportMode = currentViewportMode
   const mobileDevice = viewportContext?.mobileDevice || 'iphone-13'
   const toggleViewport = viewportContext?.toggleViewport
   const setMobileDevice = viewportContext?.setMobileDevice
@@ -49,10 +74,16 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
   }
 
   const showSettingsPanel = customizeContext?.isSettingsPanelOpen ?? false
+  
+  // Calculate top position based on nav visibility and dynamic nav height
+  const topOffset = navIsVisible ? currentNavHeight + 16 : 16 // 16px = top-4
 
   return (
     <>
-      <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 ${className}`}>
+      <div 
+        className={`fixed left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 transition-all duration-300 ${className}`}
+        style={{ top: `${topOffset}px` }}
+      >
         {/* Save Configuration Button - only visible in editing mode */}
         {isEditingMode && pageConfigContext && canEdit && (
           <SaveConfigButton size="sm" />
@@ -243,6 +274,14 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
         onColorsChange={pageConfigContext.updateColors}
         onCustomColorChange={pageConfigContext.updateCustomColor}
         onCustomFontChange={pageConfigContext.updateCustomFont}
+        showNavLinks={pageConfigContext.config.siteSettings.navigation?.showNavLinks !== false}
+        onNavLinksChange={(showNavLinks) => pageConfigContext.updateNavigation({ showNavLinks })}
+        navUseColorBackground={pageConfigContext.config.siteSettings.navigation?.useColorBackground || false}
+        navBackgroundColorChoice={pageConfigContext.config.siteSettings.navigation?.backgroundColorChoice || 'none'}
+        onNavColorBackgroundChange={(useColor, colorChoice) => pageConfigContext.updateNavigation({ 
+          useColorBackground: useColor, 
+          backgroundColorChoice: colorChoice 
+        })}
       />
     )}
     </>

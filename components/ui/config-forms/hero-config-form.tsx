@@ -75,12 +75,9 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
     ? allVariants 
     : allVariants.filter(v => !v.requiresImage)
 
-  // If current variant requires image but no image is provided, switch to minimal
-  React.useEffect(() => {
-    if (!hasHeroImage && config.variant && imageRequiredVariants.includes(config.variant)) {
-      onChange('variant', 'minimal')
-    }
-  }, [hasHeroImage, config.variant])
+  // Note: We no longer force minimal when no image - the user should upload an image
+  // if they want to use an image-required variant. The variant dropdown already
+  // filters to only show available variants.
 
   const imagePositions = [
     { value: 'left', label: 'Left' },
@@ -156,7 +153,25 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
       <ImageGalleryDialog
         isOpen={showImageDialog}
         onClose={() => setShowImageDialog(false)}
-        onSelectImage={(url) => onChange('heroImageUrl', url)}
+        onSelectImage={(url) => {
+          console.log('ImageGalleryDialog onSelectImage called with URL:', url)
+          
+          // If currently on minimal variant and adding an image, switch to background
+          // We need to call these in sequence to avoid state batching issues
+          const shouldSwitchToBackground = config.variant === 'minimal' && !hasHeroImage && url
+          
+          // First update the image
+          console.log('Calling onChange for heroImageUrl')
+          onChange('heroImageUrl', url)
+          
+          // Then update the variant after a timeout to ensure proper state update
+          if (shouldSwitchToBackground) {
+            setTimeout(() => {
+              console.log('Switching variant to background')
+              onChange('variant', 'background')
+            }, 0)
+          }
+        }}
         weddingNameId={weddingNameId || ''}
         mode="both"
       />

@@ -11,6 +11,7 @@ import {
   CountdownSection
 } from './wedding-sections'
 import { ClientWeddingPageRenderer } from './client-wedding-page-renderer'
+import { WeddingNav } from './ui/wedding-nav'
 
 interface WeddingPageRendererProps {
   wedding: Wedding
@@ -162,6 +163,14 @@ export function WeddingPageRenderer({
   // Otherwise render as server component for better performance
   return (
     <div className="min-h-screen">
+      {/* Wedding Navigation - appears after scrolling past hero */}
+      <WeddingNav 
+        person1Name={wedding.partner1_first_name}
+        person2Name={wedding.partner2_first_name}
+        accentColor={config.theme?.colors?.primary || '#B8860B'}
+        themeColors={config.theme?.colors}
+      />
+      
       {/* Render components in order */}
       {sortedComponents.map(renderComponent)}
     </div>

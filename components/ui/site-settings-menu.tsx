@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { Settings, ChevronDown, Palette, Type } from 'lucide-react'
 import { Button } from './button'
-import { FONT_PAIRINGS, COLOR_THEMES, AVAILABLE_FONTS } from '@/lib/theme-config'
+import { FONT_PAIRINGS, FONT_PAIRING_CATEGORIES, COLOR_THEMES, COLOR_THEME_CATEGORIES, AVAILABLE_FONTS } from '@/lib/theme-config'
 
 interface SiteSettingsMenuProps {
   currentFonts?: { display?: string; heading?: string; body?: string }
@@ -35,6 +35,11 @@ export function SiteSettingsMenu({
   const [selectedPaletteId, setSelectedPaletteId] = useState<string | null>(null)
   const [isCustomFontsAnimating, setIsCustomFontsAnimating] = useState(false)
   const [isCustomColorsAnimating, setIsCustomColorsAnimating] = useState(false)
+  
+  // Category filter state
+  const [fontPairingCategoryFilter, setFontPairingCategoryFilter] = useState<string | null>(null)
+  const [customFontCategoryFilter, setCustomFontCategoryFilter] = useState<string | null>(null)
+  const [colorPaletteCategoryFilter, setColorPaletteCategoryFilter] = useState<string | null>(null)
   
   // Ensure fonts have default values
   const displayFont = currentFonts.display || 'Playfair Display'
@@ -207,38 +212,60 @@ export function SiteSettingsMenu({
                         className="fixed inset-0 z-[52]" 
                         onClick={() => setIsFontsOpen(false)}
                       />
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-[53] max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
-                        {FONT_PAIRINGS.map((pairing) => (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-[53] max-h-80 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col">
+                        {/* Category filter tabs */}
+                        <div className="flex gap-1.5 p-2.5 border-b border-gray-100 bg-gray-50/50 flex-shrink-0 overflow-x-auto">
                           <button
-                            key={pairing.id}
-                            onClick={() => handleFontPairingChange(pairing.id)}
-                            className={`w-full flex flex-col gap-2 p-3 hover:bg-gray-50 transition-all duration-150 border-b border-gray-100 last:border-b-0 ${
-                              selectedFontPairingId === pairing.id ? 'bg-blue-50' : ''
+                            onClick={() => setFontPairingCategoryFilter(null)}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
+                              fontPairingCategoryFilter === null ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                             }`}
                           >
-                            <div className="flex items-center justify-between w-full">
-                              <span className="text-sm text-gray-700">{pairing.name}</span>
-                              {selectedFontPairingId === pairing.id && (
-                                <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center animate-in zoom-in duration-200">
-                                  <svg className="w-3 h-3 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path d="M5 13l4 4L19 7"></path>
-                                  </svg>
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex flex-col gap-1 w-full text-left">
-                              <div className="text-lg transition-transform hover:scale-105 duration-200" style={{ fontFamily: pairing.displayFamily }}>
-                                {pairing.display}
-                              </div>
-                              <div className="text-sm" style={{ fontFamily: pairing.headingFamily }}>
-                                {pairing.heading}
-                              </div>
-                              <div className="text-xs text-gray-500" style={{ fontFamily: pairing.bodyFamily }}>
-                                {pairing.body}
-                              </div>
-                            </div>
+                            All
                           </button>
-                        ))}
+                          {FONT_PAIRING_CATEGORIES.map((cat) => (
+                            <button
+                              key={cat.id}
+                              onClick={() => setFontPairingCategoryFilter(cat.id)}
+                              className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
+                                fontPairingCategoryFilter === cat.id ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                              }`}
+                            >
+                              {cat.name}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="overflow-y-auto flex-1">
+                          {FONT_PAIRING_CATEGORIES
+                            .filter(category => fontPairingCategoryFilter === null || category.id === fontPairingCategoryFilter)
+                            .map((category) => (
+                            <div key={category.id} className="border-b border-gray-100 last:border-b-0">
+                              <div className="px-3 py-2 bg-gray-50/80 sticky top-0">
+                                <h4 className="text-xs font-semibold text-gray-700">{category.name}</h4>
+                                <p className="text-[10px] text-gray-500">{category.description}</p>
+                              </div>
+                              <div className="p-2 space-y-1">
+                                {category.pairings.map((pairing) => (
+                                  <button
+                                    key={pairing.id}
+                                    onClick={() => handleFontPairingChange(pairing.id)}
+                                    className={`w-full flex flex-col gap-1.5 p-2.5 rounded-lg transition-all duration-150 hover:bg-gray-50 ${
+                                      selectedFontPairingId === pairing.id ? 'bg-blue-50 ring-2 ring-blue-500' : ''
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between w-full">
+                                      <span className="text-xs font-medium text-gray-700">{pairing.name}</span>
+                                    </div>
+                                    <div className="flex flex-col gap-0.5 w-full text-left">
+                                      <div className="text-base truncate transition-transform hover:scale-105 duration-200" style={{ fontFamily: pairing.displayFamily }}>{pairing.display}</div>
+                                      <div className="text-xs text-gray-600" style={{ fontFamily: pairing.headingFamily }}>{pairing.heading} / <span style={{ fontFamily: pairing.bodyFamily }}>{pairing.body}</span></div>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </>
                   )}
@@ -291,25 +318,62 @@ export function SiteSettingsMenu({
                             {isDisplayFontOpen && (
                               <>
                                 <div className="fixed inset-0 z-[50]" onClick={() => setIsDisplayFontOpen(false)} />
-                                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-[51] max-h-60 overflow-y-auto">
-                                  {AVAILABLE_FONTS.map((font) => (
+                                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-xl z-[51] max-h-60 overflow-hidden flex flex-col">
+                                  {/* Category filter tabs */}
+                                  <div className="flex gap-1.5 p-2 border-b border-gray-100 bg-gray-50/50 flex-shrink-0 overflow-x-auto">
                                     <button
-                                      key={font.name}
-                                      onClick={() => {
-                                        if (onCustomFontChange) {
-                                          onCustomFontChange('display', font.name, font.family)
-                                        }
-                                        setSelectedFontPairingId(null)
-                                        setIsDisplayFontOpen(false)
-                                      }}
-                                      className={`w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-sm border-b border-gray-100 last:border-b-0 ${
-                                        displayFont === font.name ? 'bg-blue-50' : ''
+                                      onClick={(e) => { e.stopPropagation(); setCustomFontCategoryFilter(null) }}
+                                      className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
+                                        customFontCategoryFilter === null ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                                       }`}
-                                      style={{ fontFamily: font.family }}
                                     >
-                                      {font.name}
+                                      All
                                     </button>
-                                  ))}
+                                    {['Display', 'Calligraphic', 'Serif', 'Sans-Serif'].map((cat) => (
+                                      <button
+                                        key={cat}
+                                        onClick={(e) => { e.stopPropagation(); setCustomFontCategoryFilter(cat) }}
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
+                                          customFontCategoryFilter === cat ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                        }`}
+                                      >
+                                        {cat}
+                                      </button>
+                                    ))}
+                                  </div>
+                                  <div className="overflow-y-auto flex-1">
+                                    {['Display', 'Calligraphic', 'Serif', 'Sans-Serif']
+                                      .filter(category => customFontCategoryFilter === null || category === customFontCategoryFilter)
+                                      .map((category) => {
+                                      const fontsInCategory = AVAILABLE_FONTS.filter(f => f.category === category)
+                                      if (fontsInCategory.length === 0) return null
+                                      return (
+                                        <div key={category} className="border-b border-gray-100 last:border-b-0">
+                                          <div className="px-3 py-1.5 bg-gray-50/80 sticky top-0">
+                                            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">{category}</span>
+                                          </div>
+                                          {fontsInCategory.map((font) => (
+                                            <button
+                                              key={font.name}
+                                              onClick={() => {
+                                                if (onCustomFontChange) {
+                                                  onCustomFontChange('display', font.name, font.family)
+                                                }
+                                                setSelectedFontPairingId(null)
+                                                setIsDisplayFontOpen(false)
+                                              }}
+                                              className={`w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-sm ${
+                                                displayFont === font.name ? 'bg-blue-50' : ''
+                                              }`}
+                                              style={{ fontFamily: font.family }}
+                                            >
+                                              {font.name}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
                                 </div>
                               </>
                             )}
@@ -339,25 +403,62 @@ export function SiteSettingsMenu({
                             {isHeadingFontOpen && (
                               <>
                                 <div className="fixed inset-0 z-[50]" onClick={() => setIsHeadingFontOpen(false)} />
-                                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-[51] max-h-60 overflow-y-auto">
-                                  {AVAILABLE_FONTS.map((font) => (
+                                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-xl z-[51] max-h-60 overflow-hidden flex flex-col">
+                                  {/* Category filter tabs */}
+                                  <div className="flex gap-1.5 p-2 border-b border-gray-100 bg-gray-50/50 flex-shrink-0 overflow-x-auto">
                                     <button
-                                      key={font.name}
-                                      onClick={() => {
-                                        if (onCustomFontChange) {
-                                          onCustomFontChange('heading', font.name, font.family)
-                                        }
-                                        setSelectedFontPairingId(null)
-                                        setIsHeadingFontOpen(false)
-                                      }}
-                                      className={`w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-sm border-b border-gray-100 last:border-b-0 ${
-                                        headingFont === font.name ? 'bg-blue-50' : ''
+                                      onClick={(e) => { e.stopPropagation(); setCustomFontCategoryFilter(null) }}
+                                      className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
+                                        customFontCategoryFilter === null ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                                       }`}
-                                      style={{ fontFamily: font.family }}
                                     >
-                                      {font.name}
+                                      All
                                     </button>
-                                  ))}
+                                    {['Display', 'Calligraphic', 'Serif', 'Sans-Serif'].map((cat) => (
+                                      <button
+                                        key={cat}
+                                        onClick={(e) => { e.stopPropagation(); setCustomFontCategoryFilter(cat) }}
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
+                                          customFontCategoryFilter === cat ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                        }`}
+                                      >
+                                        {cat}
+                                      </button>
+                                    ))}
+                                  </div>
+                                  <div className="overflow-y-auto flex-1">
+                                    {['Display', 'Calligraphic', 'Serif', 'Sans-Serif']
+                                      .filter(category => customFontCategoryFilter === null || category === customFontCategoryFilter)
+                                      .map((category) => {
+                                      const fontsInCategory = AVAILABLE_FONTS.filter(f => f.category === category)
+                                      if (fontsInCategory.length === 0) return null
+                                      return (
+                                        <div key={category} className="border-b border-gray-100 last:border-b-0">
+                                          <div className="px-3 py-1.5 bg-gray-50/80 sticky top-0">
+                                            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">{category}</span>
+                                          </div>
+                                          {fontsInCategory.map((font) => (
+                                            <button
+                                              key={font.name}
+                                              onClick={() => {
+                                                if (onCustomFontChange) {
+                                                  onCustomFontChange('heading', font.name, font.family)
+                                                }
+                                                setSelectedFontPairingId(null)
+                                                setIsHeadingFontOpen(false)
+                                              }}
+                                              className={`w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-sm ${
+                                                headingFont === font.name ? 'bg-blue-50' : ''
+                                              }`}
+                                              style={{ fontFamily: font.family }}
+                                            >
+                                              {font.name}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
                                 </div>
                               </>
                             )}
@@ -387,25 +488,62 @@ export function SiteSettingsMenu({
                             {isBodyFontOpen && (
                               <>
                                 <div className="fixed inset-0 z-[50]" onClick={() => setIsBodyFontOpen(false)} />
-                                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-[51] max-h-60 overflow-y-auto">
-                                  {AVAILABLE_FONTS.map((font) => (
+                                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-xl z-[51] max-h-60 overflow-hidden flex flex-col">
+                                  {/* Category filter tabs */}
+                                  <div className="flex gap-1.5 p-2 border-b border-gray-100 bg-gray-50/50 flex-shrink-0 overflow-x-auto">
                                     <button
-                                      key={font.name}
-                                      onClick={() => {
-                                        if (onCustomFontChange) {
-                                          onCustomFontChange('body', font.name, font.family)
-                                        }
-                                        setSelectedFontPairingId(null)
-                                        setIsBodyFontOpen(false)
-                                      }}
-                                      className={`w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-sm border-b border-gray-100 last:border-b-0 ${
-                                        bodyFont === font.name ? 'bg-blue-50' : ''
+                                      onClick={(e) => { e.stopPropagation(); setCustomFontCategoryFilter(null) }}
+                                      className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
+                                        customFontCategoryFilter === null ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                                       }`}
-                                      style={{ fontFamily: font.family }}
                                     >
-                                      {font.name}
+                                      All
                                     </button>
-                                  ))}
+                                    {['Display', 'Calligraphic', 'Serif', 'Sans-Serif'].map((cat) => (
+                                      <button
+                                        key={cat}
+                                        onClick={(e) => { e.stopPropagation(); setCustomFontCategoryFilter(cat) }}
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
+                                          customFontCategoryFilter === cat ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                        }`}
+                                      >
+                                        {cat}
+                                      </button>
+                                    ))}
+                                  </div>
+                                  <div className="overflow-y-auto flex-1">
+                                    {['Display', 'Calligraphic', 'Serif', 'Sans-Serif']
+                                      .filter(category => customFontCategoryFilter === null || category === customFontCategoryFilter)
+                                      .map((category) => {
+                                      const fontsInCategory = AVAILABLE_FONTS.filter(f => f.category === category)
+                                      if (fontsInCategory.length === 0) return null
+                                      return (
+                                        <div key={category} className="border-b border-gray-100 last:border-b-0">
+                                          <div className="px-3 py-1.5 bg-gray-50/80 sticky top-0">
+                                            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">{category}</span>
+                                          </div>
+                                          {fontsInCategory.map((font) => (
+                                            <button
+                                              key={font.name}
+                                              onClick={() => {
+                                                if (onCustomFontChange) {
+                                                  onCustomFontChange('body', font.name, font.family)
+                                                }
+                                                setSelectedFontPairingId(null)
+                                                setIsBodyFontOpen(false)
+                                              }}
+                                              className={`w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-sm ${
+                                                bodyFont === font.name ? 'bg-blue-50' : ''
+                                              }`}
+                                              style={{ fontFamily: font.family }}
+                                            >
+                                              {font.name}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
                                 </div>
                               </>
                             )}
@@ -465,41 +603,59 @@ export function SiteSettingsMenu({
                         className="fixed inset-0 z-[45]" 
                         onClick={() => setIsPaletteOpen(false)}
                       />
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-[46] max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
-                        {COLOR_THEMES.map((theme) => (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-[46] max-h-80 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col">
+                        {/* Category filter tabs */}
+                        <div className="flex gap-1.5 p-2.5 border-b border-gray-100 bg-gray-50/50 flex-shrink-0 overflow-x-auto">
                           <button
-                            key={theme.id}
-                            onClick={() => handleColorThemeChange(theme.id)}
-                            className={`w-full flex flex-col gap-2 p-3 hover:bg-gray-50 transition-all duration-150 border-b border-gray-100 last:border-b-0 ${
-                              selectedPaletteId === theme.id ? 'bg-blue-50' : ''
+                            onClick={() => setColorPaletteCategoryFilter(null)}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
+                              colorPaletteCategoryFilter === null ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                             }`}
                           >
-                            <div className="flex items-center justify-between w-full">
-                              <span className="text-sm text-gray-700">{theme.name}</span>
-                              {selectedPaletteId === theme.id && (
-                                <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center animate-in zoom-in duration-200">
-                                  <svg className="w-3 h-3 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path d="M5 13l4 4L19 7"></path>
-                                  </svg>
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex gap-1.5 w-full">
-                              <div 
-                                className="flex-1 h-10 rounded transition-transform hover:scale-105 duration-200"
-                                style={{ backgroundColor: theme.colors.primary }}
-                              />
-                              <div 
-                                className="flex-1 h-10 rounded transition-transform hover:scale-105 duration-200"
-                                style={{ backgroundColor: theme.colors.secondary }}
-                              />
-                              <div 
-                                className="flex-1 h-10 rounded transition-transform hover:scale-105 duration-200"
-                                style={{ backgroundColor: theme.colors.accent }}
-                              />
-                            </div>
+                            All
                           </button>
-                        ))}
+                          {COLOR_THEME_CATEGORIES.map((cat) => (
+                            <button
+                              key={cat.id}
+                              onClick={() => setColorPaletteCategoryFilter(cat.id)}
+                              className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
+                                colorPaletteCategoryFilter === cat.id ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                              }`}
+                            >
+                              {cat.name}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="overflow-y-auto flex-1">
+                          {COLOR_THEME_CATEGORIES
+                            .filter(category => colorPaletteCategoryFilter === null || category.id === colorPaletteCategoryFilter)
+                            .map((category) => (
+                            <div key={category.id} className="border-b border-gray-100 last:border-b-0">
+                              <div className="px-3 py-2 bg-gray-50/80 sticky top-0">
+                                <h4 className="text-xs font-semibold text-gray-700">{category.name}</h4>
+                                <p className="text-[10px] text-gray-500">{category.description}</p>
+                              </div>
+                              <div className="p-2 grid grid-cols-2 gap-2">
+                                {category.themes.map((theme) => (
+                                  <button
+                                    key={theme.id}
+                                    onClick={() => handleColorThemeChange(theme.id)}
+                                    className={`flex flex-col gap-1.5 p-2 rounded-lg transition-all duration-150 hover:bg-gray-50 ${
+                                      selectedPaletteId === theme.id ? 'bg-blue-50 ring-2 ring-blue-500' : ''
+                                    }`}
+                                  >
+                                    <div className="flex gap-1 w-full">
+                                      <div className="flex-1 h-8 rounded-md shadow-sm transition-transform hover:scale-105 duration-200" style={{ backgroundColor: theme.colors.primary }} />
+                                      <div className="flex-1 h-8 rounded-md shadow-sm transition-transform hover:scale-105 duration-200" style={{ backgroundColor: theme.colors.secondary }} />
+                                      <div className="flex-1 h-8 rounded-md shadow-sm transition-transform hover:scale-105 duration-200" style={{ backgroundColor: theme.colors.accent }} />
+                                    </div>
+                                    <span className="text-[10px] text-gray-600 truncate w-full text-center">{theme.name}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </>
                   )}

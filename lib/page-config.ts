@@ -33,6 +33,11 @@ export interface PageConfiguration {
       maxWidth?: string
       spacing?: string
     }
+    navigation?: {
+      showNavLinks?: boolean
+      useColorBackground?: boolean
+      backgroundColorChoice?: 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
+    }
   }
   
   // All components - single source of truth for ordering, visibility, and configuration
@@ -75,6 +80,9 @@ export const createDefaultPageConfig = (): PageConfiguration => ({
     layout: {
       maxWidth: '1200px',
       spacing: 'normal'
+    },
+    navigation: {
+      showNavLinks: true
     }
   },
   components: [
@@ -145,7 +153,17 @@ export const loadPageConfiguration = async (weddingNameId: string): Promise<Page
     }
     
     const data = await response.json()
-    return mergeWithDefaultConfig(data.config || {})
+    console.log('Loaded page config from API:', {
+      rawConfig: data.config,
+      sectionConfigs: data.config?.sectionConfigs,
+      heroConfig: data.config?.sectionConfigs?.hero
+    })
+    const mergedConfig = mergeWithDefaultConfig(data.config || {})
+    console.log('Merged config:', {
+      sectionConfigs: mergedConfig.sectionConfigs,
+      heroConfig: mergedConfig.sectionConfigs?.hero
+    })
+    return mergedConfig
   } catch (error) {
     console.error('Error loading page configuration:', error)
     return createDefaultPageConfig()

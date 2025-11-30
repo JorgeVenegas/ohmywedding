@@ -5,6 +5,8 @@ import {
   CountdownClassicVariant,
   CountdownMinimalVariant,
   CountdownCircularVariant,
+  CountdownElegantVariant,
+  CountdownModernVariant,
   BaseCountdownProps
 } from './countdown-variants'
 import { 
@@ -15,7 +17,7 @@ import {
 import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
 
 interface CountdownSectionProps extends BaseCountdownProps {
-  variant?: 'classic' | 'minimal' | 'circular'
+  variant?: 'classic' | 'minimal' | 'circular' | 'elegant' | 'modern'
   showVariantSwitcher?: boolean
 }
 
@@ -23,10 +25,12 @@ export function CountdownSection({
   weddingDate,
   theme,
   alignment,
+  showYears = true,
+  showMonths = true,
   showDays = true,
   showHours = true,
   showMinutes = true,
-  showSeconds = false,
+  showSeconds = true,
   message = "Until we say \"I do\"",
   variant = 'classic',
   showVariantSwitcher = true
@@ -56,27 +60,45 @@ export function CountdownSection({
       value: 'circular',
       label: 'Circular Progress',
       description: 'Animated progress circles'
+    },
+    {
+      value: 'elegant',
+      label: 'Elegant Script',
+      description: 'Romantic script style with flourishes'
+    },
+    {
+      value: 'modern',
+      label: 'Modern Bold',
+      description: 'Bold contemporary cards with gradient'
     }
   ]
 
   // Create config using standardized helper
   const config = createVariantConfig(customConfig, {
+    showYears,
+    showMonths,
     showDays,
     showHours,
     showMinutes,
     showSeconds,
-    message
+    message,
+    useColorBackground: false,
+    backgroundColorChoice: 'none'
   })
 
   const commonProps = {
     weddingDate,
     theme,
     alignment,
+    showYears: config.showYears ?? true,
+    showMonths: config.showMonths ?? true,
     showDays: config.showDays ?? true,
     showHours: config.showHours ?? true,
     showMinutes: config.showMinutes ?? true,
-    showSeconds: config.showSeconds ?? false,
-    message: config.message || message
+    showSeconds: config.showSeconds ?? true,
+    message: config.message || message,
+    useColorBackground: config.useColorBackground ?? false,
+    backgroundColorChoice: config.backgroundColorChoice || 'none'
   }
 
   const renderCountdownContent = (activeVariant: string) => {
@@ -85,6 +107,10 @@ export function CountdownSection({
         return <CountdownMinimalVariant {...commonProps} />
       case 'circular':
         return <CountdownCircularVariant {...commonProps} />
+      case 'elegant':
+        return <CountdownElegantVariant {...commonProps} />
+      case 'modern':
+        return <CountdownModernVariant {...commonProps} />
       case 'classic':
       default:
         return <CountdownClassicVariant {...commonProps} />
@@ -93,11 +119,15 @@ export function CountdownSection({
 
   const onEditClick = (sectionId: string, sectionType: string) => {
     handleEditClick(sectionType, {
+      showYears: config.showYears ?? showYears,
+      showMonths: config.showMonths ?? showMonths,
       showDays: config.showDays ?? showDays,
       showHours: config.showHours ?? showHours,
       showMinutes: config.showMinutes ?? showMinutes,
       showSeconds: config.showSeconds ?? showSeconds,
-      message: config.message || message
+      message: config.message || message,
+      useColorBackground: config.useColorBackground ?? false,
+      backgroundColorChoice: config.backgroundColorChoice || 'none'
     })
   }
 

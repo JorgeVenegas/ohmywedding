@@ -98,8 +98,23 @@ export function CustomizeProvider({ children, weddingDate, weddingNameId }: Cust
     setIsSettingsPanelOpen(false)
   }
 
+  // Track pending updates that need to be synced to pageConfig
+  const pendingUpdateRef = useRef<{ sectionId: string; config: Record<string, any> } | null>(null)
+  
+  // Sync pending updates to page config after state updates
+  useEffect(() => {
+    if (pendingUpdateRef.current && pageConfig) {
+      const { sectionId, config } = pendingUpdateRef.current
+      console.log('Syncing to pageConfig.updateSectionConfig:', { sectionId, config })
+      pageConfig.updateSectionConfig(sectionId, config)
+      pendingUpdateRef.current = null
+    }
+  })
+
   const updateConfig = (key: string, value: any) => {
     const currentSectionId = state.sectionId
+    
+    console.log('updateConfig called:', { key, value, currentSectionId })
     
     // Update local state
     setState(prev => ({
@@ -110,7 +125,7 @@ export function CustomizeProvider({ children, weddingDate, weddingNameId }: Cust
       }
     }))
     
-    // Update persistent configs and page config
+    // Update persistent configs and schedule page config update
     if (currentSectionId) {
       setSectionConfigs(prevConfigs => {
         const updatedConfig = {
@@ -118,23 +133,16 @@ export function CustomizeProvider({ children, weddingDate, weddingNameId }: Cust
           [key]: value 
         }
         
+        console.log('setSectionConfigs updating:', { currentSectionId, updatedConfig })
+        
+        // Schedule the pageConfig update for after this render
+        pendingUpdateRef.current = { sectionId: currentSectionId, config: updatedConfig }
+        
         return {
           ...prevConfigs,
           [currentSectionId]: updatedConfig
         }
       })
-      
-      // Apply to page config - use setTimeout to avoid calling during render
-      if (pageConfig) {
-        // Use queueMicrotask to schedule after current render
-        queueMicrotask(() => {
-          const currentConfig = pageConfig.getSectionConfig(currentSectionId)
-          pageConfig.updateSectionConfig(currentSectionId, {
-            ...currentConfig,
-            [key]: value
-          })
-        })
-      }
     }
   }
 
@@ -165,11 +173,28 @@ export function CustomizeProvider({ children, weddingDate, weddingNameId }: Cust
   }
 
   const getSectionConfig = (sectionId: string): Record<string, any> | null => {
-    // Check local config first, then page config
-    const localConfig = sectionConfigs[sectionId]
-    const pageConfigData = pageConfig?.getSectionConfig(sectionId)
+    // Merge page config with local config, with current editing state taking highest precedence
+    const pageConfigData = pageConfig?.getSectionConfig(sectionId) || {}
+    const localConfig = sectionConfigs[sectionId] || {}
     
-    return localConfig || pageConfigData || null
+    // If we're currently editing this section, include the live editing state
+    const currentEditingConfig = state.sectionId === sectionId ? state.sectionConfig : {}
+    
+    // Return merged config: page config < local config < current editing state
+    const mergedConfig = { ...pageConfigData, ...localConfig, ...currentEditingConfig }
+    
+    // Debug logging
+    if (sectionId === 'hero') {
+      console.log('getSectionConfig for hero:', {
+        pageConfigData,
+        localConfig,
+        currentEditingConfig,
+        mergedConfig,
+        sectionConfigs
+      })
+    }
+    
+    return Object.keys(mergedConfig).length > 0 ? mergedConfig : null
   }
 
   return (

@@ -1,29 +1,29 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Heart, Clock } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
-import { BaseCountdownProps } from './types'
-
-interface TimeLeft {
-  days: number
-  hours: number
-  minutes: number
-  seconds: number
-}
+import { BaseCountdownProps, TimeLeft, getColorScheme } from './types'
 
 export function CountdownClassicVariant({
   weddingDate,
   theme,
   alignment,
+  showYears = true,
+  showMonths = true,
   showDays = true,
   showHours = true,
   showMinutes = true,
-  showSeconds = false,
-  message = "Until we say \"I do\""
+  showSeconds = true,
+  message = "Until we say \"I do\"",
+  useColorBackground = false,
+  backgroundColorChoice
 }: BaseCountdownProps) {
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ years: 0, months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 })
   const [isClient, setIsClient] = useState(false)
+
+  // Get enhanced color scheme with complementary palette colors
+  const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, contrastColor, colorLight, colorDark, cardBg: cardBgColor, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
 
   useEffect(() => {
     setIsClient(true)
@@ -33,20 +33,35 @@ export function CountdownClassicVariant({
     if (!isClient) return
 
     const calculateTimeLeft = () => {
-      const wedding = new Date(weddingDate).getTime()
-      const now = new Date().getTime()
-      const difference = wedding - now
-
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60),
-        })
-      } else {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+      const wedding = new Date(weddingDate)
+      const now = new Date()
+      
+      if (wedding.getTime() <= now.getTime()) {
+        setTimeLeft({ years: 0, months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 })
+        return
       }
+
+      // Calculate years and months difference
+      let years = wedding.getFullYear() - now.getFullYear()
+      let months = wedding.getMonth() - now.getMonth()
+      let days = wedding.getDate() - now.getDate()
+      let hours = wedding.getHours() - now.getHours()
+      let minutes = wedding.getMinutes() - now.getMinutes()
+      let seconds = wedding.getSeconds() - now.getSeconds()
+
+      // Handle negative values by borrowing from larger units
+      if (seconds < 0) { seconds += 60; minutes-- }
+      if (minutes < 0) { minutes += 60; hours-- }
+      if (hours < 0) { hours += 24; days-- }
+      if (days < 0) {
+        // Get days in previous month
+        const prevMonth = new Date(wedding.getFullYear(), wedding.getMonth(), 0)
+        days += prevMonth.getDate()
+        months--
+      }
+      if (months < 0) { months += 12; years-- }
+
+      setTimeLeft({ years, months, days, hours, minutes, seconds })
     }
 
     calculateTimeLeft()
@@ -56,7 +71,7 @@ export function CountdownClassicVariant({
 
   if (!isClient) {
     return (
-      <SectionWrapper theme={theme} alignment={alignment}>
+      <SectionWrapper theme={theme} alignment={alignment} id="countdown">
         <div className="text-center py-20">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-64 mx-auto mb-8"></div>
@@ -74,78 +89,100 @@ export function CountdownClassicVariant({
     )
   }
 
-  const units = [
-    { value: timeLeft.days, label: 'Days', show: showDays },
-    { value: timeLeft.hours, label: 'Hours', show: showHours },
-    { value: timeLeft.minutes, label: 'Minutes', show: showMinutes },
-    { value: timeLeft.seconds, label: 'Seconds', show: showSeconds },
-  ].filter(unit => unit.show)
+  // Build all available units based on config
+  const allUnits = [
+    { value: timeLeft.years, label: 'Years', enabled: showYears, hasValue: timeLeft.years > 0 },
+    { value: timeLeft.months, label: 'Months', enabled: showMonths, hasValue: timeLeft.years > 0 || timeLeft.months > 0 },
+    { value: timeLeft.days, label: 'Days', enabled: showDays, hasValue: true },
+    { value: timeLeft.hours, label: 'Hours', enabled: showHours, hasValue: true },
+    { value: timeLeft.minutes, label: 'Minutes', enabled: showMinutes, hasValue: true },
+    { value: timeLeft.seconds, label: 'Seconds', enabled: showSeconds, hasValue: true },
+  ]
+
+  // Smart display: show 4 most relevant units that are enabled
+  const enabledUnits = allUnits.filter(u => u.enabled && u.hasValue)
+  const units = enabledUnits.slice(0, 4)
+
+  // Color scheme - use titleColor for high contrast numbers, bodyTextColor for labels
+  const numberColor = isColored ? titleColor : theme?.colors?.primary  // Use darkest color for numbers (high contrast)
+  const labelColor = isColored ? bodyTextColor : theme?.colors?.muted  // Use body text color for labels
+  const messageColor = isColored ? sectionTextColor : theme?.colors?.foreground
+  const cardBorderColor = isColored ? subtitleColor : theme?.colors?.accent
+  const iconColor = isColored ? sectionTextColor : theme?.colors?.accent
 
   return (
-    <SectionWrapper theme={theme} alignment={alignment}>
-      <div className="text-center py-20">
-        <div className="flex items-center justify-center mb-8">
-          <Heart className="w-6 h-6 mr-3 fill-current" style={{ color: theme?.colors?.accent }} />
-          <h2 
-            className="text-4xl md:text-5xl font-bold"
-            style={{ 
-              color: theme?.colors?.foreground,
-              fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 
-                         theme?.fonts?.heading === 'script' ? 'cursive' : 'sans-serif'
-            }}
-          >
-            {message}
-          </h2>
-          <Heart className="w-6 h-6 ml-3 fill-current" style={{ color: theme?.colors?.accent }} />
-        </div>
+    <SectionWrapper 
+      id="countdown"
+      theme={isColored ? undefined : theme} 
+      alignment={alignment}
+      style={isColored ? { backgroundColor: bgColor } : undefined}
+    >
+        <div className="text-center py-20">
+          <div className="flex items-center justify-center mb-8">
+            <Heart className="w-6 h-6 mr-3 fill-current" style={{ color: iconColor }} />
+            <h2 
+              className="text-4xl md:text-5xl font-bold"
+              style={{ 
+                color: messageColor,
+                fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 
+                           theme?.fonts?.heading === 'script' ? 'cursive' : 'sans-serif'
+              }}
+            >
+              {message}
+            </h2>
+            <Heart className="w-6 h-6 ml-3 fill-current" style={{ color: iconColor }} />
+          </div>
 
-        <div className="flex justify-center items-center space-x-4 sm:space-x-6 md:space-x-12 flex-wrap gap-4">
-          {units.map((unit, index) => (
-            <div key={unit.label} className="text-center">
-              <div 
-                className="relative bg-white rounded-lg shadow-lg border-2 p-4 sm:p-6 md:p-8 min-w-[70px] sm:min-w-[80px] md:min-w-[100px]"
-                style={{ 
-                  borderColor: theme?.colors?.accent,
-                  boxShadow: `0 4px 20px ${theme?.colors?.accent}20`
-                }}
-              >
-                <div 
-                  className="text-2xl sm:text-3xl md:text-5xl font-bold mb-2"
-                  style={{ 
-                    color: theme?.colors?.primary,
-                    fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
-                  }}
-                >
-                  {unit.value.toString().padStart(2, '0')}
+          <div className="flex justify-center items-center space-x-4 sm:space-x-6 md:space-x-12 flex-wrap gap-4">
+            {units.map((unit, index) => {
+              return (
+                <div key={unit.label} className="text-center">
+                  <div 
+                    className={`relative rounded-lg shadow-lg border-2 p-4 sm:p-6 md:p-8 min-w-[70px] sm:min-w-[80px] md:min-w-[100px] ${isColored ? '' : 'bg-white'}`}
+                    style={{ 
+                      backgroundColor: isColored ? cardBgColor : undefined,
+                      borderColor: cardBorderColor,
+                      boxShadow: isColored ? `0 8px 32px rgba(0,0,0,0.15)` : `0 4px 20px ${theme?.colors?.accent}20`
+                    }}
+                  >
+                    <div 
+                      className="text-2xl sm:text-3xl md:text-5xl font-bold mb-2"
+                      style={{ 
+                        color: numberColor,
+                        fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
+                      }}
+                    >
+                      {unit.value.toString().padStart(2, '0')}
+                    </div>
+                    <div 
+                      className="text-sm md:text-base font-semibold uppercase tracking-wide"
+                      style={{ color: labelColor }}
+                    >
+                      {unit.label}
+                    </div>
+                    
+                    {/* Decorative corner elements */}
+                    <div className="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 rounded-tl-lg" 
+                         style={{ borderColor: cardBorderColor }} />
+                    <div className="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 rounded-tr-lg" 
+                         style={{ borderColor: cardBorderColor }} />
+                    <div className="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 rounded-bl-lg" 
+                         style={{ borderColor: cardBorderColor }} />
+                    <div className="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 rounded-br-lg" 
+                         style={{ borderColor: cardBorderColor }} />
+                  </div>
                 </div>
-                <div 
-                  className="text-sm md:text-base font-semibold uppercase tracking-wide"
-                  style={{ color: theme?.colors?.muted }}
-                >
-                  {unit.label}
-                </div>
-                
-                {/* Decorative corner elements */}
-                <div className="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 rounded-tl-lg" 
-                     style={{ borderColor: theme?.colors?.accent }} />
-                <div className="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 rounded-tr-lg" 
-                     style={{ borderColor: theme?.colors?.accent }} />
-                <div className="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 rounded-bl-lg" 
-                     style={{ borderColor: theme?.colors?.accent }} />
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 rounded-br-lg" 
-                     style={{ borderColor: theme?.colors?.accent }} />
-              </div>
-            </div>
-          ))}
-        </div>
+              )
+            })}
+          </div>
 
-        {/* Decorative elements */}
-        <div className="mt-12 flex items-center justify-center space-x-4">
-          <div className="w-16 h-px" style={{ backgroundColor: theme?.colors?.accent }} />
-          <Clock className="w-5 h-5" style={{ color: theme?.colors?.accent }} />
-          <div className="w-16 h-px" style={{ backgroundColor: theme?.colors?.accent }} />
+          {/* Decorative elements */}
+          <div className="mt-12 flex items-center justify-center space-x-4">
+            <div className="w-16 h-px" style={{ backgroundColor: isColored ? 'rgba(255,255,255,0.6)' : theme?.colors?.accent }} />
+            <Clock className="w-5 h-5" style={{ color: iconColor }} />
+            <div className="w-16 h-px" style={{ backgroundColor: isColored ? 'rgba(255,255,255,0.6)' : theme?.colors?.accent }} />
+          </div>
         </div>
-      </div>
     </SectionWrapper>
   )
 }

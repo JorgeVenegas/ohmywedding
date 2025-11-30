@@ -11,7 +11,7 @@ import { ImageUpload } from "@/components/ui/image-upload"
 import { WeddingPreview } from "@/components/wedding-preview"
 import { Header } from "@/components/header"
 import { Heart, ChevronDown, ChevronRight, Settings, Calendar, Users, Camera, MessageSquare, HelpCircle, MapPin, Palette, Type, Check } from "lucide-react"
-import { FONT_PAIRINGS, COLOR_THEMES, DEFAULT_FONT_PAIRING, DEFAULT_COLOR_THEME } from "@/lib/theme-config"
+import { FONT_PAIRINGS, FONT_PAIRING_CATEGORIES, COLOR_THEMES, COLOR_THEME_CATEGORIES, DEFAULT_FONT_PAIRING, DEFAULT_COLOR_THEME } from "@/lib/theme-config"
 
 // Define available components with their props
 interface ComponentSection {
@@ -444,45 +444,55 @@ export default function CreateWeddingPage() {
                   Color Palette
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">Choose a color scheme for your wedding website</p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {COLOR_THEMES.map((theme) => (
-                    <button
-                      key={theme.id}
-                      type="button"
-                      onClick={() => setFormData(prev => ({
-                        ...prev,
-                        selectedColorThemeId: theme.id,
-                        primaryColor: theme.colors.primary,
-                        secondaryColor: theme.colors.secondary,
-                        accentColor: theme.colors.accent
-                      }))}
-                      className={`relative p-3 rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
-                        formData.selectedColorThemeId === theme.id
-                          ? 'border-primary ring-2 ring-primary/20 bg-primary/5'
-                          : 'border-border hover:border-muted-foreground/50'
-                      }`}
-                    >
-                      {formData.selectedColorThemeId === theme.id && (
-                        <div className="absolute -top-2 -right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                          <Check className="w-3 h-3 text-white" />
-                        </div>
-                      )}
-                      <div className="flex gap-1 mb-2">
-                        <div
-                          className="w-6 h-6 rounded-full border border-white/20"
-                          style={{ backgroundColor: theme.colors.primary }}
-                        />
-                        <div
-                          className="w-6 h-6 rounded-full border border-white/20"
-                          style={{ backgroundColor: theme.colors.secondary }}
-                        />
-                        <div
-                          className="w-6 h-6 rounded-full border border-white/20"
-                          style={{ backgroundColor: theme.colors.accent }}
-                        />
+                <div className="space-y-6">
+                  {COLOR_THEME_CATEGORIES.map((category) => (
+                    <div key={category.id}>
+                      <div className="mb-3">
+                        <h4 className="text-sm font-medium text-foreground">{category.name}</h4>
+                        <p className="text-xs text-muted-foreground">{category.description}</p>
                       </div>
-                      <p className="text-xs font-medium text-foreground text-left truncate">{theme.name}</p>
-                    </button>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+                        {category.themes.map((theme) => (
+                          <button
+                            key={theme.id}
+                            type="button"
+                            onClick={() => setFormData(prev => ({
+                              ...prev,
+                              selectedColorThemeId: theme.id,
+                              primaryColor: theme.colors.primary,
+                              secondaryColor: theme.colors.secondary,
+                              accentColor: theme.colors.accent
+                            }))}
+                            className={`relative p-3 rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
+                              formData.selectedColorThemeId === theme.id
+                                ? 'border-primary ring-2 ring-primary/20 bg-primary/5'
+                                : 'border-border hover:border-muted-foreground/50'
+                            }`}
+                          >
+                            {formData.selectedColorThemeId === theme.id && (
+                              <div className="absolute -top-2 -right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                <Check className="w-3 h-3 text-white" />
+                              </div>
+                            )}
+                            <div className="flex gap-1 mb-2">
+                              <div
+                                className="w-6 h-6 rounded-full border border-white/20 shadow-sm"
+                                style={{ backgroundColor: theme.colors.primary }}
+                              />
+                              <div
+                                className="w-6 h-6 rounded-full border border-white/20 shadow-sm"
+                                style={{ backgroundColor: theme.colors.secondary }}
+                              />
+                              <div
+                                className="w-6 h-6 rounded-full border border-white/20 shadow-sm"
+                                style={{ backgroundColor: theme.colors.accent }}
+                              />
+                            </div>
+                            <p className="text-xs font-medium text-foreground text-left truncate">{theme.name}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -494,33 +504,42 @@ export default function CreateWeddingPage() {
                   Font Style
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">Select a font combination for your website</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {FONT_PAIRINGS.map((pairing) => (
-                    <button
-                      key={pairing.id}
-                      type="button"
-                      onClick={() => setFormData(prev => ({
-                        ...prev,
-                        selectedFontPairingId: pairing.id
-                      }))}
-                      className={`relative p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-md text-left ${
-                        formData.selectedFontPairingId === pairing.id
-                          ? 'border-primary ring-2 ring-primary/20 bg-primary/5'
-                          : 'border-border hover:border-muted-foreground/50'
-                      }`}
-                    >
-                      {formData.selectedFontPairingId === pairing.id && (
-                        <div className="absolute -top-2 -right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                          <Check className="w-3 h-3 text-white" />
-                        </div>
-                      )}
-                      <p className="text-sm font-medium text-foreground mb-2">{pairing.name}</p>
-                      <div className="space-y-1 text-xs text-muted-foreground">
-                        <p style={{ fontFamily: pairing.displayFamily }}>Display: {pairing.display}</p>
-                        <p style={{ fontFamily: pairing.headingFamily }}>Heading: {pairing.heading}</p>
-                        <p style={{ fontFamily: pairing.bodyFamily }}>Body: {pairing.body}</p>
+                <div className="space-y-6">
+                  {FONT_PAIRING_CATEGORIES.map((category) => (
+                    <div key={category.id}>
+                      <div className="mb-3">
+                        <h4 className="text-sm font-medium text-foreground">{category.name}</h4>
+                        <p className="text-xs text-muted-foreground">{category.description}</p>
                       </div>
-                    </button>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                        {category.pairings.map((pairing) => (
+                          <button
+                            key={pairing.id}
+                            type="button"
+                            onClick={() => setFormData(prev => ({
+                              ...prev,
+                              selectedFontPairingId: pairing.id
+                            }))}
+                            className={`relative p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-md text-left ${
+                              formData.selectedFontPairingId === pairing.id
+                                ? 'border-primary ring-2 ring-primary/20 bg-primary/5'
+                                : 'border-border hover:border-muted-foreground/50'
+                            }`}
+                          >
+                            {formData.selectedFontPairingId === pairing.id && (
+                              <div className="absolute -top-2 -right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                <Check className="w-3 h-3 text-white" />
+                              </div>
+                            )}
+                            <p className="text-sm font-medium text-foreground mb-2">{pairing.name}</p>
+                            <div className="space-y-1">
+                              <p className="text-lg truncate" style={{ fontFamily: pairing.displayFamily }}>{pairing.display}</p>
+                              <p className="text-xs text-muted-foreground" style={{ fontFamily: pairing.headingFamily }}>{pairing.heading} / <span style={{ fontFamily: pairing.bodyFamily }}>{pairing.body}</span></p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>

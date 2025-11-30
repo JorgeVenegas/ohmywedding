@@ -69,8 +69,8 @@ export function HeroSection({
   // Variants that require an image
   const imageRequiredVariants = ['background', 'side-by-side', 'framed', 'stacked']
   
-  // Determine default variant based on whether image is provided
-  const effectiveDefaultVariant = hasHeroImage ? variant : 'minimal'
+  // Use the provided variant - no longer forcing minimal based on image
+  // The config form handles filtering available variants
   
   // Use standardized section behavior
   const {
@@ -78,20 +78,35 @@ export function HeroSection({
     customConfig,
     shouldShowVariantSwitcher,
     setVariant,
-    handleEditClick
-  } = useSectionVariants('hero', 'hero', effectiveDefaultVariant, effectiveDefaultVariant, showVariantSwitcher)
+    handleEditClick,
+    customizeContext
+  } = useSectionVariants('hero', 'hero', variant, variant, showVariantSwitcher)
 
-  // Force minimal variant if no image and current variant requires one
+  // Check if we have an image (from props or customConfig)
+  const effectiveHasImage = React.useMemo(() => {
+    const customHasImage = customConfig?.heroImageUrl && customConfig.heroImageUrl.trim() !== ''
+    console.log('Hero effectiveHasImage check:', { 
+      customConfigHeroImageUrl: customConfig?.heroImageUrl, 
+      hasHeroImage, 
+      customHasImage,
+      result: customHasImage || hasHeroImage
+    })
+    return customHasImage || hasHeroImage
+  }, [hasHeroImage, customConfig?.heroImageUrl])
+
+  // Only force minimal if the active variant requires an image but none is provided
   const effectiveVariant = React.useMemo(() => {
-    // Check customConfig heroImageUrl as well
-    const customHasImage = customConfig.heroImageUrl && customConfig.heroImageUrl.trim() !== ''
-    const actualHasImage = customHasImage || hasHeroImage
-    
-    if (!actualHasImage && imageRequiredVariants.includes(heroVariant)) {
+    console.log('Hero effectiveVariant check:', { 
+      heroVariant, 
+      effectiveHasImage,
+      imageRequiredVariants,
+      wouldForceMinimal: !effectiveHasImage && imageRequiredVariants.includes(heroVariant)
+    })
+    if (!effectiveHasImage && imageRequiredVariants.includes(heroVariant)) {
       return 'minimal'
     }
     return heroVariant
-  }, [heroVariant, hasHeroImage, customConfig.heroImageUrl])
+  }, [heroVariant, effectiveHasImage])
 
   // Define variants
   const heroVariants: VariantOption[] = [
@@ -220,26 +235,31 @@ export function HeroSection({
   }
 
   const onEditClick = (sectionId: string, sectionType: string) => {
-    handleEditClick(sectionType, {
-      imagePosition: config.imagePosition || (alignment?.imagePosition === 'split-right' ? 'right' : imagePosition),
-      frameStyle: config.frameStyle || frameStyle,
-      imageSize: config.imageSize || imageSize,
-      imageHeight: config.imageHeight || imageHeight,
-      imageWidth: config.imageWidth || imageWidth,
-      backgroundColor: config.backgroundColor || backgroundColor,
-      backgroundGradient: config.backgroundGradient ?? backgroundGradient,
-      gradientColor1: config.gradientColor1 || gradientColor1,
-      gradientColor2: config.gradientColor2 || gradientColor2,
-      showDecorations: config.showDecorations ?? showDecorations,
-      textAlignment: config.textAlignment || textAlignment,
-      showTagline: config.showTagline ?? showTagline,
-      tagline: config.tagline || tagline,
-      showCountdown: config.showCountdown ?? showCountdown,
-      showRSVPButton: config.showRSVPButton ?? showRSVPButton,
-      heroImageUrl: config.heroImageUrl || heroImageUrl,
-      overlayOpacity: config.overlayOpacity ?? overlayOpacity,
-      imageBrightness: config.imageBrightness ?? imageBrightness
-    })
+    // Use effectiveVariant instead of heroVariant to show the actual displayed variant
+    if (customizeContext) {
+      const configToPass = {
+        variant: effectiveVariant,  // Use the actual displayed variant
+        imagePosition: config.imagePosition || (alignment?.imagePosition === 'split-right' ? 'right' : imagePosition),
+        frameStyle: config.frameStyle || frameStyle,
+        imageSize: config.imageSize || imageSize,
+        imageHeight: config.imageHeight || imageHeight,
+        imageWidth: config.imageWidth || imageWidth,
+        backgroundColor: config.backgroundColor || backgroundColor,
+        backgroundGradient: config.backgroundGradient ?? backgroundGradient,
+        gradientColor1: config.gradientColor1 || gradientColor1,
+        gradientColor2: config.gradientColor2 || gradientColor2,
+        showDecorations: config.showDecorations ?? showDecorations,
+        textAlignment: config.textAlignment || textAlignment,
+        showTagline: config.showTagline ?? showTagline,
+        tagline: config.tagline || tagline,
+        showCountdown: config.showCountdown ?? showCountdown,
+        showRSVPButton: config.showRSVPButton ?? showRSVPButton,
+        heroImageUrl: config.heroImageUrl || heroImageUrl,
+        overlayOpacity: config.overlayOpacity ?? overlayOpacity,
+        imageBrightness: config.imageBrightness ?? imageBrightness
+      }
+      customizeContext.openCustomizer(sectionId, sectionType, configToPass)
+    }
   }
 
   return (

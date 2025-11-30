@@ -19,6 +19,7 @@ import { CustomizeProvider, useCustomizeSafe } from './contexts/customize-contex
 import { SectionCustomizer } from './ui/section-customizer'
 import { EditingTopBar } from './ui/editing-top-bar'
 import { AddSectionButton } from './ui/add-section-button'
+import { WeddingNav } from './ui/wedding-nav'
 import { createConfigFromWedding } from '@/lib/wedding-configs'
 
 interface ClientWeddingPageRendererProps {
@@ -234,6 +235,14 @@ function ClientWeddingPageRendererContent({
 
   const content = (
     <div className="min-h-screen">
+      {/* Wedding Navigation - appears after scrolling past hero */}
+      <WeddingNav 
+        person1Name={wedding.partner1_first_name}
+        person2Name={wedding.partner2_first_name}
+        accentColor={appliedConfig.theme?.colors?.primary || '#B8860B'}
+        themeColors={appliedConfig.theme?.colors}
+      />
+      
       {/* Editing Top Bar */}
       <EditingTopBar weddingNameId={weddingNameId} />
       

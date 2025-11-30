@@ -2,7 +2,7 @@ import React from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { MapPin, Clock, Shirt, ExternalLink } from 'lucide-react'
+import { MapPin, Clock, Shirt, ExternalLink, Church, PartyPopper, Calendar } from 'lucide-react'
 import { SectionWrapper } from './section-wrapper'
 import { ThemeConfig, AlignmentConfig } from '@/lib/wedding-config'
 import { formatWeddingTime } from '@/lib/wedding-utils-client'
@@ -50,7 +50,7 @@ export function EventDetailsSection({
       venue: wedding.ceremony_venue_name,
       address: wedding.ceremony_venue_address,
       description: "Join us as we exchange vows",
-      icon: "💒"
+      iconType: "ceremony" as const
     }] : []),
     ...(showReception && wedding.reception_venue_name ? [{
       title: "Reception",
@@ -58,13 +58,25 @@ export function EventDetailsSection({
       venue: wedding.reception_venue_name,
       address: wedding.reception_venue_address,
       description: "Dinner, dancing, and celebration",
-      icon: "🎉"
+      iconType: "reception" as const
     }] : []),
     ...customEvents.map(event => ({
       ...event,
-      icon: "📅"
+      iconType: "custom" as const
     }))
   ]
+
+  const renderEventIcon = (iconType: "ceremony" | "reception" | "custom", color?: string) => {
+    const iconProps = { className: "w-8 h-8", style: { color: color || theme?.colors?.primary } }
+    switch (iconType) {
+      case "ceremony":
+        return <Church {...iconProps} />
+      case "reception":
+        return <PartyPopper {...iconProps} />
+      default:
+        return <Calendar {...iconProps} />
+    }
+  }
 
   const getMapUrl = (address: string) => {
     return `https://maps.google.com/?q=${encodeURIComponent(address)}`
@@ -100,8 +112,8 @@ export function EventDetailsSection({
         {events.map((event, index) => (
           <Card key={index} className="p-8 hover:shadow-lg transition-shadow duration-300">
             {/* Event Icon */}
-            <div className="text-4xl mb-4 text-center">
-              {event.icon}
+            <div className="flex justify-center mb-4">
+              {renderEventIcon(event.iconType, theme?.colors?.primary)}
             </div>
 
             {/* Event Title */}

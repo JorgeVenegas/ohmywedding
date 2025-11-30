@@ -21,6 +21,7 @@ import { EditingTopBar } from './ui/editing-top-bar'
 import { AddSectionButton } from './ui/add-section-button'
 import { DeleteSectionButton } from './ui/delete-section-button'
 import { ViewportWrapper } from './ui/viewport-wrapper'
+import { WeddingNav } from './ui/wedding-nav'
 import { usePageConfig } from './contexts/page-config-context'
 import { useSiteConfigSafe } from './contexts/site-config-context'
 import { useEditingModeSafe } from './contexts/editing-mode-context'
@@ -296,6 +297,7 @@ function ConfigBasedWeddingRendererContent({
             key={component.id}
             {...commonProps}
             {...component.props}
+            weddingDate={effectiveWedding.wedding_date}
           />
         )
         break
@@ -353,8 +355,20 @@ function ConfigBasedWeddingRendererContent({
   return (
     <>
       <EditingTopBar weddingNameId={weddingNameId} />
-      
+
       <ViewportWrapper>
+        {/* Wedding Navigation - appears after scrolling past hero */}
+        <WeddingNav 
+          person1Name={effectiveWedding.partner1_first_name}
+          person2Name={effectiveWedding.partner2_first_name}
+          accentColor={config.siteSettings.theme?.colors?.primary || '#B8860B'}
+          showNavLinks={config.siteSettings.navigation?.showNavLinks !== false}
+          enabledSections={allComponents.map(c => c.type)}
+          useColorBackground={config.siteSettings.navigation?.useColorBackground || false}
+          backgroundColorChoice={config.siteSettings.navigation?.backgroundColorChoice || 'none'}
+          themeColors={config.siteSettings.theme?.colors}
+        />
+        
         {allComponents.length === 0 ? (
           <div className="min-h-screen flex items-center justify-center">
             <div className="text-center">

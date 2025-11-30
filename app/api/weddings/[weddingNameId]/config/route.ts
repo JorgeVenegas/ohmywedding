@@ -17,7 +17,7 @@ export async function GET(
 
     const { data: wedding, error } = await supabase
       .from('weddings')
-      .select('page_config')
+      .select('page_config, primary_color, secondary_color, accent_color')
       .eq('wedding_name_id', weddingNameId)
       .single()
 
@@ -26,8 +26,26 @@ export async function GET(
       return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
     }
 
+    // Merge wedding colors into the page config if they exist
+    const pageConfig = wedding.page_config || {}
+    
+    // If the page config doesn't have colors set, use the wedding's colors
+    if (!pageConfig.siteSettings?.theme?.colors || 
+        (!pageConfig.siteSettings.theme.colors.primary && 
+         !pageConfig.siteSettings.theme.colors.secondary && 
+         !pageConfig.siteSettings.theme.colors.accent)) {
+      pageConfig.siteSettings = pageConfig.siteSettings || {}
+      pageConfig.siteSettings.theme = pageConfig.siteSettings.theme || {}
+      pageConfig.siteSettings.theme.colors = {
+        ...pageConfig.siteSettings.theme.colors,
+        primary: wedding.primary_color || pageConfig.siteSettings?.theme?.colors?.primary,
+        secondary: wedding.secondary_color || pageConfig.siteSettings?.theme?.colors?.secondary,
+        accent: wedding.accent_color || pageConfig.siteSettings?.theme?.colors?.accent
+      }
+    }
+
     return NextResponse.json({
-      config: wedding.page_config || {}
+      config: pageConfig
     })
 
   } catch (error) {

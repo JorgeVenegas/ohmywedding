@@ -89,7 +89,9 @@ export function OurStorySection({
     howWeMetPhoto,
     proposalText,
     proposalPhoto,
-    photos
+    photos,
+    useColorBackground: false,
+    backgroundColorChoice: 'none'
   })
 
   const commonProps = {
@@ -105,7 +107,9 @@ export function OurStorySection({
     proposalText: config.proposalText || proposalText,
     proposalPhoto: (config.showProposalPhoto && config.proposalPhoto) ? config.proposalPhoto : undefined,
     photos: config.photos || photos,
-    timeline
+    timeline,
+    useColorBackground: config.useColorBackground ?? false,
+    backgroundColorChoice: config.backgroundColorChoice || 'none'
   }
 
   const renderStoryContent = (activeVariant: string) => {
@@ -135,7 +139,9 @@ export function OurStorySection({
       howWeMetPhoto: config.howWeMetPhoto || howWeMetPhoto,
       proposalText: config.proposalText || proposalText,
       proposalPhoto: config.proposalPhoto || proposalPhoto,
-      photos: config.photos || photos
+      photos: config.photos || photos,
+      useColorBackground: config.useColorBackground ?? false,
+      backgroundColorChoice: config.backgroundColorChoice || 'none'
     })
   }
 

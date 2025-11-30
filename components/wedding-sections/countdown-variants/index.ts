@@ -1,4 +1,6 @@
 export { CountdownClassicVariant } from './countdown-classic-variant'
 export { CountdownMinimalVariant } from './countdown-minimal-variant'
 export { CountdownCircularVariant } from './countdown-circular-variant'
+export { CountdownElegantVariant } from './countdown-elegant-variant'
+export { CountdownModernVariant } from './countdown-modern-variant'
 export type { BaseCountdownProps, TimeLeft } from './types'
