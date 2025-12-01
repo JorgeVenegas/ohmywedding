@@ -26,7 +26,7 @@ export function AddSectionButton({ position, onAddSection, enabledComponents = [
 
   return (
     <>
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
         <button
           onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 h-9 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-all duration-300 hover:scale-105"

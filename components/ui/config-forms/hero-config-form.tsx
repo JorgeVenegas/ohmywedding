@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
 import { ImageGalleryDialog } from '@/components/ui/image-gallery-dialog'
 import { usePageConfig } from '@/components/contexts/page-config-context'
-import { Image as ImageIcon, X, Check } from 'lucide-react'
+import { Image as ImageIcon, X, Check, AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
 import { useParams } from 'next/navigation'
 
 // Helper to determine if a color is light (for contrast)
@@ -813,16 +813,18 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
           </label>
           <div className="flex gap-2">
             {[
-              { value: 'left', label: 'Left' },
-              { value: 'center', label: 'Center' },
-              { value: 'right', label: 'Right' }
+              { value: 'left', label: 'Left', icon: AlignLeft },
+              { value: 'center', label: 'Center', icon: AlignCenter },
+              { value: 'right', label: 'Right', icon: AlignRight }
             ].map((alignment) => (
               <Button
                 key={alignment.value}
                 variant={config.textAlignment === alignment.value ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => onChange('textAlignment', alignment.value)}
+                className="gap-1.5"
               >
+                <alignment.icon className="w-4 h-4" />
                 {alignment.label}
               </Button>
             ))}

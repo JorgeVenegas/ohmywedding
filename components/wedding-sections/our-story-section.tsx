@@ -7,6 +7,7 @@ import {
   OurStoryMinimalVariant,
   OurStoryZigzagVariant,
   OurStoryBookletVariant,
+  OurStorySplitVariant,
   BaseOurStoryProps,
 } from './our-story-variants'
 import { 
@@ -17,7 +18,7 @@ import {
 import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
 
 interface OurStorySectionProps extends BaseOurStoryProps {
-  variant?: 'timeline' | 'cards' | 'minimal' | 'zigzag' | 'booklet'
+  variant?: 'timeline' | 'cards' | 'minimal' | 'zigzag' | 'booklet' | 'split'
   showVariantSwitcher?: boolean
   showHowWeMetPhoto?: boolean
   showProposalPhoto?: boolean
@@ -75,6 +76,11 @@ export function OurStorySection({
       value: 'booklet',
       label: 'Booklet',
       description: 'Storybook-style stacked pages with elegant typography - romantic and narrative'
+    },
+    {
+      value: 'split',
+      label: 'Split View',
+      description: 'Full-width alternating layout with large photos - elegant and immersive'
     }
   ]
 
@@ -91,7 +97,9 @@ export function OurStorySection({
     proposalPhoto,
     photos,
     useColorBackground: false,
-    backgroundColorChoice: 'none'
+    backgroundColorChoice: 'none',
+    howWeMetTextAlignment: 'center',
+    proposalTextAlignment: 'center'
   })
 
   const commonProps = {
@@ -103,13 +111,15 @@ export function OurStorySection({
     showHowWeMetPhoto: config.showHowWeMetPhoto ?? false,
     showProposalPhoto: config.showProposalPhoto ?? false,
     howWeMetText: config.howWeMetText || howWeMetText,
-    howWeMetPhoto: (config.showHowWeMetPhoto && config.howWeMetPhoto) ? config.howWeMetPhoto : undefined,
+    howWeMetPhoto: config.howWeMetPhoto || howWeMetPhoto,
     proposalText: config.proposalText || proposalText,
-    proposalPhoto: (config.showProposalPhoto && config.proposalPhoto) ? config.proposalPhoto : undefined,
+    proposalPhoto: config.proposalPhoto || proposalPhoto,
     photos: config.photos || photos,
     timeline,
     useColorBackground: config.useColorBackground ?? false,
-    backgroundColorChoice: config.backgroundColorChoice || 'none'
+    backgroundColorChoice: config.backgroundColorChoice || 'none',
+    howWeMetTextAlignment: config.howWeMetTextAlignment || 'center',
+    proposalTextAlignment: config.proposalTextAlignment || 'center'
   }
 
   const renderStoryContent = (activeVariant: string) => {
@@ -122,6 +132,8 @@ export function OurStorySection({
         return <OurStoryZigzagVariant {...commonProps} />
       case 'booklet':
         return <OurStoryBookletVariant {...commonProps} />
+      case 'split':
+        return <OurStorySplitVariant {...commonProps} />
       case 'cards':
       default:
         return <OurStoryCardsVariant {...commonProps} />
@@ -141,7 +153,9 @@ export function OurStorySection({
       proposalPhoto: config.proposalPhoto || proposalPhoto,
       photos: config.photos || photos,
       useColorBackground: config.useColorBackground ?? false,
-      backgroundColorChoice: config.backgroundColorChoice || 'none'
+      backgroundColorChoice: config.backgroundColorChoice || 'none',
+      howWeMetTextAlignment: config.howWeMetTextAlignment || 'center',
+      proposalTextAlignment: config.proposalTextAlignment || 'center'
     })
   }
 

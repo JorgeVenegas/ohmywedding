@@ -6,10 +6,11 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
 import { ImageGalleryDialog } from '@/components/ui/image-gallery-dialog'
-import { Image as ImageIcon, X, Check } from 'lucide-react'
+import { Image as ImageIcon, X, Check, AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
 import { usePageConfig } from '@/components/contexts/page-config-context'
 
 type BackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
+type TextAlignment = 'left' | 'center' | 'right'
 
 // Helper to determine if a color is light (for contrast)
 function isLightColor(color: string): boolean {
@@ -60,6 +61,8 @@ interface OurStoryConfigFormProps {
     photos?: string[]
     useColorBackground?: boolean
     backgroundColorChoice?: BackgroundColorChoice
+    howWeMetTextAlignment?: TextAlignment
+    proposalTextAlignment?: TextAlignment
   }
   onChange: (key: string, value: any) => void
   weddingNameId?: string
@@ -114,7 +117,8 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
     { value: 'timeline', label: 'Timeline', description: 'Vertical timeline with milestones' },
     { value: 'minimal', label: 'Minimal', description: 'Clean text-focused layout' },
     { value: 'zigzag', label: 'Zigzag', description: 'Dynamic diagonal layout - modern and eye-catching' },
-    { value: 'booklet', label: 'Booklet', description: 'Storybook-style stacked pages - romantic and narrative' }
+    { value: 'booklet', label: 'Booklet', description: 'Storybook-style stacked pages - romantic and narrative' },
+    { value: 'split', label: 'Split View', description: 'Full-width alternating layout with large photos - elegant and immersive' }
   ]
 
   const currentChoice = config.backgroundColorChoice || (config.useColorBackground ? 'primary' : 'none')
@@ -225,17 +229,20 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
             />
           </div>
           
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-700">
-              Show How We Met Photo
-            </label>
-            <Switch
-              checked={config.showHowWeMetPhoto ?? false}
-              onCheckedChange={(checked) => onChange('showHowWeMetPhoto', checked)}
-            />
-          </div>
+          {/* For split variant, always show photo option. For others, use toggle */}
+          {config.variant !== 'split' && (
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-700">
+                Show How We Met Photo
+              </label>
+              <Switch
+                checked={config.showHowWeMetPhoto ?? false}
+                onCheckedChange={(checked) => onChange('showHowWeMetPhoto', checked)}
+              />
+            </div>
+          )}
           
-          {config.showHowWeMetPhoto && (
+          {(config.showHowWeMetPhoto || config.variant === 'split') && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 How We Met Photo
@@ -277,6 +284,31 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
               )}
             </div>
           )}
+
+          {/* How We Met Text Alignment - Only for Split variant */}
+          {config.variant === 'split' && (
+            <div className="space-y-2">
+              <span className="text-sm text-gray-600">Text Alignment</span>
+              <div className="flex gap-2">
+                {[
+                  { value: 'left', label: 'Left', icon: AlignLeft },
+                  { value: 'center', label: 'Center', icon: AlignCenter },
+                  { value: 'right', label: 'Right', icon: AlignRight }
+                ].map((alignment) => (
+                  <Button
+                    key={alignment.value}
+                    variant={(config.howWeMetTextAlignment || 'center') === alignment.value ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => onChange('howWeMetTextAlignment', alignment.value)}
+                    className="gap-1.5"
+                  >
+                    <alignment.icon className="w-4 h-4" />
+                    {alignment.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -302,17 +334,20 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
             />
           </div>
           
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-700">
-              Show Proposal Photo
-            </label>
-            <Switch
-              checked={config.showProposalPhoto ?? false}
-              onCheckedChange={(checked) => onChange('showProposalPhoto', checked)}
-            />
-          </div>
+          {/* For split variant, always show photo option. For others, use toggle */}
+          {config.variant !== 'split' && (
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-700">
+                Show Proposal Photo
+              </label>
+              <Switch
+                checked={config.showProposalPhoto ?? false}
+                onCheckedChange={(checked) => onChange('showProposalPhoto', checked)}
+              />
+            </div>
+          )}
           
-          {config.showProposalPhoto && (
+          {(config.showProposalPhoto || config.variant === 'split') && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Proposal Photo
@@ -352,6 +387,31 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
                   Select Image
                 </Button>
               )}
+            </div>
+          )}
+
+          {/* Proposal Text Alignment - Only for Split variant */}
+          {config.variant === 'split' && (
+            <div className="space-y-2">
+              <span className="text-sm text-gray-600">Text Alignment</span>
+              <div className="flex gap-2">
+                {[
+                  { value: 'left', label: 'Left', icon: AlignLeft },
+                  { value: 'center', label: 'Center', icon: AlignCenter },
+                  { value: 'right', label: 'Right', icon: AlignRight }
+                ].map((alignment) => (
+                  <Button
+                    key={alignment.value}
+                    variant={(config.proposalTextAlignment || 'center') === alignment.value ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => onChange('proposalTextAlignment', alignment.value)}
+                    className="gap-1.5"
+                  >
+                    <alignment.icon className="w-4 h-4" />
+                    {alignment.label}
+                  </Button>
+                ))}
+              </div>
             </div>
           )}
         </div>

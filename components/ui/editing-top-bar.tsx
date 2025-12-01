@@ -81,7 +81,7 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
   return (
     <>
       <div 
-        className={`fixed left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 transition-all duration-300 ${className}`}
+        className={`fixed left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 sm:gap-2 max-w-[95vw] transition-all duration-300 ${className}`}
         style={{ top: `${topOffset}px` }}
       >
         {/* Save Configuration Button - only visible in editing mode */}
@@ -93,11 +93,11 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
         {isEditingMode && pageConfigContext && weddingNameId && canEdit && (
           <button
             onClick={handleOpenSettings}
-            className="flex items-center gap-2 h-9 px-3 py-2 rounded-full font-medium shadow-lg bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 transition-all duration-300 hover:shadow-xl hover:scale-105"
+            className="flex items-center gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full font-medium shadow-lg bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 transition-all duration-300 hover:shadow-xl hover:scale-105"
             title="Wedding Settings"
           >
-            <Settings className="w-4 h-4" />
-            <span className="text-sm font-medium">Settings</span>
+            <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="text-xs sm:text-sm font-medium">Settings</span>
           </button>
         )}
         
@@ -107,7 +107,7 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
           <button
             onClick={toggleEditingMode}
             className={`
-              flex items-center gap-2 h-9 px-3 py-2 rounded-full font-medium shadow-lg
+              flex items-center gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full font-medium shadow-lg
               transition-all duration-300 hover:shadow-xl hover:scale-105
               ${isEditingMode 
                 ? 'bg-blue-600 hover:bg-blue-700 text-white' 
@@ -118,13 +118,13 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
           >
             {isEditingMode ? (
               <>
-                <Eye className="w-4 h-4" />
-                <span className="text-sm font-medium">Preview</span>
+                <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="text-xs sm:text-sm font-medium">Preview</span>
               </>
             ) : (
               <>
-                <Edit3 className="w-4 h-4" />
-                <span className="text-sm font-medium">Edit</span>
+                <Edit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="text-xs sm:text-sm font-medium">Edit</span>
               </>
             )}
           </button>
@@ -141,51 +141,11 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
         {!authLoading && !permissionsLoading && !canEdit && !user && (
           <Link
             href={`/login?redirect=${encodeURIComponent('/' + (weddingNameId || ''))}`}
-            className="flex items-center gap-2 h-9 px-3 py-2 rounded-full font-medium shadow-lg bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 transition-all duration-300 hover:shadow-xl hover:scale-105"
+            className="flex items-center gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full font-medium shadow-lg bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 transition-all duration-300 hover:shadow-xl hover:scale-105"
           >
-            <LogIn className="w-4 h-4" />
-            <span className="text-sm font-medium">Sign In to Edit</span>
+            <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="text-xs sm:text-sm font-medium"><span className="hidden sm:inline">Sign In to </span>Edit</span>
           </Link>
-        )}
-
-        {/* User Menu - show if user is logged in */}
-        {!authLoading && user && (
-          <div className="relative">
-            <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2 h-9 px-3 py-2 rounded-full font-medium shadow-lg bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 transition-all duration-300 hover:shadow-xl hover:scale-105"
-            >
-              <User className="w-4 h-4" />
-              <ChevronDown className={`w-3 h-3 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
-            </button>
-            
-            {showUserMenu && (
-              <>
-                <div 
-                  className="fixed inset-0 z-40" 
-                  onClick={() => setShowUserMenu(false)}
-                />
-                <div className="absolute top-full mt-2 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[200px] z-50">
-                  <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-xs text-gray-500">Signed in as</p>
-                    <p className="text-sm font-medium text-gray-700 truncate">{user.email}</p>
-                    {permissions.role !== 'guest' && (
-                      <p className="text-xs text-blue-600 mt-1 capitalize">{permissions.role}</p>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => {
-                      setShowUserMenu(false)
-                      signOut()
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
         )}
 
       {/* Viewport Toggle - visible on larger screens */}
@@ -253,6 +213,46 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
         </div>
       )}
     </div>
+
+    {/* User Menu - Fixed at bottom right corner */}
+    {!authLoading && user && (
+      <div className="fixed bottom-4 right-4 z-50">
+        <button
+          onClick={() => setShowUserMenu(!showUserMenu)}
+          className="flex items-center gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full font-medium shadow-lg bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 transition-all duration-300 hover:shadow-xl hover:scale-105"
+        >
+          <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <ChevronDown className={`w-3 h-3 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
+        </button>
+        
+        {showUserMenu && (
+          <>
+            <div 
+              className="fixed inset-0 z-40" 
+              onClick={() => setShowUserMenu(false)}
+            />
+            <div className="absolute bottom-full mb-2 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[200px] z-50">
+              <div className="px-4 py-2 border-b border-gray-100">
+                <p className="text-xs text-gray-500">Signed in as</p>
+                <p className="text-sm font-medium text-gray-700 truncate">{user.email}</p>
+                {permissions.role !== 'guest' && (
+                  <p className="text-xs text-blue-600 mt-1 capitalize">{permissions.role}</p>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  setShowUserMenu(false)
+                  signOut()
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+              >
+                Sign Out
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    )}
     
     {/* Settings Panel */}
     {weddingNameId && pageConfigContext && (

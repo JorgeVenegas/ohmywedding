@@ -32,6 +32,9 @@ export interface BaseOurStoryProps {
   timeline?: TimelineEvent[]
   useColorBackground?: boolean // deprecated, use backgroundColorChoice
   backgroundColorChoice?: BackgroundColorChoice
+  // Text alignment options for split variant
+  howWeMetTextAlignment?: 'left' | 'center' | 'right'
+  proposalTextAlignment?: 'left' | 'center' | 'right'
 }
 
 // Helper to adjust color brightness

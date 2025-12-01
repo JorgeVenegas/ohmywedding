@@ -9,7 +9,8 @@ import {
   CountdownConfigForm, 
   OurStoryConfigForm, 
   RSVPConfigForm,
-  EventDetailsConfigForm
+  EventDetailsConfigForm,
+  FAQConfigForm
 } from './config-forms'
 import { Button } from './button'
 
@@ -84,8 +85,14 @@ export function SectionCustomizer() {
             onChange={updateConfig}
           />
         )
-      case 'gallery':
       case 'faq':
+        return (
+          <FAQConfigForm 
+            config={sectionConfig} 
+            onChange={updateConfig}
+          />
+        )
+      case 'gallery':
         return (
           <div className="text-center py-8 text-gray-500">
             <p>Configuration options for {SECTION_NAMES[sectionType]} coming soon!</p>

@@ -1,14 +1,16 @@
 "use client"
 
 import React from 'react'
+import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
 import { ImageUpload } from '@/components/ui/image-upload'
 import { usePageConfig } from '@/components/contexts/page-config-context'
-import { Check } from 'lucide-react'
+import { Check, AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
 
 type BackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
+type TextAlignment = 'left' | 'center' | 'right'
 
 // Helper to determine if a color is light (for contrast)
 function isLightColor(color: string): boolean {
@@ -57,6 +59,8 @@ interface EventDetailsConfigFormProps {
     sectionSubtitle?: string
     useColorBackground?: boolean
     backgroundColorChoice?: BackgroundColorChoice
+    ceremonyTextAlignment?: TextAlignment
+    receptionTextAlignment?: TextAlignment
   }
   onChange: (key: string, value: any) => void
 }
@@ -103,6 +107,7 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
   ]
 
   const currentBgChoice = config.backgroundColorChoice || 'none'
+  const isSplitVariant = config.variant === 'split'
 
   return (
     <div className="space-y-6">
@@ -119,6 +124,16 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
             { value: 'minimal', label: 'Minimal Clean', description: 'Clean and modern minimalist design' },
             { value: 'split', label: 'Split Layout', description: 'Side-by-side image and details layout' },
           ]}
+        />
+      </div>
+
+      {/* Section Subtitle */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700">Section Subtitle</label>
+        <Input
+          value={config.sectionSubtitle ?? ''}
+          onChange={(e) => onChange('sectionSubtitle', e.target.value)}
+          placeholder="We invite you to celebrate with us..."
         />
       </div>
 
@@ -161,26 +176,10 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
         </div>
       </div>
 
-      {/* Show Options */}
+      {/* Display Options */}
       <div className="space-y-4">
         <label className="text-sm font-medium text-gray-700">Display Options</label>
         
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Show Ceremony</span>
-          <Switch
-            checked={config.showCeremony ?? true}
-            onCheckedChange={(checked) => onChange('showCeremony', checked)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Show Reception</span>
-          <Switch
-            checked={config.showReception ?? true}
-            onCheckedChange={(checked) => onChange('showReception', checked)}
-          />
-        </div>
-
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-600">Show Embedded Map</span>
           <Switch
@@ -206,68 +205,127 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
         </div>
       </div>
 
-      {/* Venue Photos */}
-      {config.showPhotos && (
-        <div className="space-y-4">
-          <label className="text-sm font-medium text-gray-700">Venue Photos</label>
-          
-          {config.showCeremony !== false && (
-            <div className="space-y-2">
-              <span className="text-sm text-gray-600">Ceremony Venue</span>
-              <ImageUpload
-                currentImageUrl={config.ceremonyImageUrl}
-                onUpload={(url) => onChange('ceremonyImageUrl', url)}
-                placeholder="Upload ceremony venue photo"
-              />
-            </div>
-          )}
-
-          {config.showReception !== false && (
-            <div className="space-y-2">
-              <span className="text-sm text-gray-600">Reception Venue</span>
-              <ImageUpload
-                currentImageUrl={config.receptionImageUrl}
-                onUpload={(url) => onChange('receptionImageUrl', url)}
-                placeholder="Upload reception venue photo"
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Text Customization */}
-      <div className="space-y-4">
-        <label className="text-sm font-medium text-gray-700">Text Customization</label>
-        
-        <div className="space-y-2">
-          <span className="text-sm text-gray-600">Section Subtitle</span>
-          <Input
-            value={config.sectionSubtitle ?? ''}
-            onChange={(e) => onChange('sectionSubtitle', e.target.value)}
-            placeholder="We invite you to celebrate with us..."
+      {/* Ceremony Section */}
+      <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium text-gray-700">Ceremony</label>
+          <Switch
+            checked={config.showCeremony ?? true}
+            onCheckedChange={(checked) => onChange('showCeremony', checked)}
           />
         </div>
 
         {config.showCeremony !== false && (
-          <div className="space-y-2">
-            <span className="text-sm text-gray-600">Ceremony Description</span>
-            <Input
-              value={config.ceremonyDescription ?? ''}
-              onChange={(e) => onChange('ceremonyDescription', e.target.value)}
-              placeholder="Join us as we exchange vows"
-            />
-          </div>
+          <>
+            {/* Ceremony Photo */}
+            {config.showPhotos && (
+              <div className="space-y-2">
+                <span className="text-sm text-gray-600">Venue Photo</span>
+                <ImageUpload
+                  currentImageUrl={config.ceremonyImageUrl}
+                  onUpload={(url) => onChange('ceremonyImageUrl', url)}
+                  placeholder="Upload ceremony venue photo"
+                />
+              </div>
+            )}
+
+            {/* Ceremony Description */}
+            <div className="space-y-2">
+              <span className="text-sm text-gray-600">Description</span>
+              <Input
+                value={config.ceremonyDescription ?? ''}
+                onChange={(e) => onChange('ceremonyDescription', e.target.value)}
+                placeholder="Join us as we exchange vows"
+              />
+            </div>
+
+            {/* Ceremony Text Alignment - Only for Split variant */}
+            {isSplitVariant && (
+              <div className="space-y-2">
+                <span className="text-sm text-gray-600">Text Alignment</span>
+                <div className="flex gap-2">
+                  {[
+                    { value: 'left', label: 'Left', icon: AlignLeft },
+                    { value: 'center', label: 'Center', icon: AlignCenter },
+                    { value: 'right', label: 'Right', icon: AlignRight }
+                  ].map((alignment) => (
+                    <Button
+                      key={alignment.value}
+                      variant={(config.ceremonyTextAlignment || 'center') === alignment.value ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => onChange('ceremonyTextAlignment', alignment.value)}
+                      className="gap-1.5"
+                    >
+                      <alignment.icon className="w-4 h-4" />
+                      {alignment.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
+      </div>
+
+      {/* Reception Section */}
+      <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium text-gray-700">Reception</label>
+          <Switch
+            checked={config.showReception ?? true}
+            onCheckedChange={(checked) => onChange('showReception', checked)}
+          />
+        </div>
 
         {config.showReception !== false && (
-          <div className="space-y-2">
-            <span className="text-sm text-gray-600">Reception Description</span>
-            <Input
-              value={config.receptionDescription ?? ''}
-              onChange={(e) => onChange('receptionDescription', e.target.value)}
-              placeholder="Dinner, dancing, and celebration"
-            />
-          </div>
+          <>
+            {/* Reception Photo */}
+            {config.showPhotos && (
+              <div className="space-y-2">
+                <span className="text-sm text-gray-600">Venue Photo</span>
+                <ImageUpload
+                  currentImageUrl={config.receptionImageUrl}
+                  onUpload={(url) => onChange('receptionImageUrl', url)}
+                  placeholder="Upload reception venue photo"
+                />
+              </div>
+            )}
+
+            {/* Reception Description */}
+            <div className="space-y-2">
+              <span className="text-sm text-gray-600">Description</span>
+              <Input
+                value={config.receptionDescription ?? ''}
+                onChange={(e) => onChange('receptionDescription', e.target.value)}
+                placeholder="Dinner, dancing, and celebration"
+              />
+            </div>
+
+            {/* Reception Text Alignment - Only for Split variant */}
+            {isSplitVariant && (
+              <div className="space-y-2">
+                <span className="text-sm text-gray-600">Text Alignment</span>
+                <div className="flex gap-2">
+                  {[
+                    { value: 'left', label: 'Left', icon: AlignLeft },
+                    { value: 'center', label: 'Center', icon: AlignCenter },
+                    { value: 'right', label: 'Right', icon: AlignRight }
+                  ].map((alignment) => (
+                    <Button
+                      key={alignment.value}
+                      variant={(config.receptionTextAlignment || 'center') === alignment.value ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => onChange('receptionTextAlignment', alignment.value)}
+                      className="gap-1.5"
+                    >
+                      <alignment.icon className="w-4 h-4" />
+                      {alignment.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -24,15 +24,15 @@ export function EditableSectionWrapper({
 
   return (
     <div className={`relative group ${className}`}>
-      {/* Edit Button - only visible in editing mode */}
+      {/* Edit Button - only visible in editing mode, always visible on mobile, positioned lower on mobile to avoid top bar */}
       {isEditingMode && (
         <button
           onClick={() => onEditClick(sectionId, sectionType)}
-          className="absolute top-4 right-[110px] z-30 flex items-center gap-2 h-9 bg-blue-700 hover:bg-blue-800 text-white px-3 py-2 rounded-full shadow-lg transition-all duration-300 hover:scale-105 opacity-0 group-hover:opacity-100"
+          className="absolute top-16 sm:top-4 right-2 sm:right-[110px] z-30 flex items-center gap-1 sm:gap-2 h-8 sm:h-9 bg-blue-700 hover:bg-blue-800 text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-full shadow-lg transition-all duration-300 hover:scale-105 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
           title={`Customize ${sectionType} section`}
         >
-          <Pencil className="w-4 h-4" />
-          <span className="text-sm font-medium">Edit</span>
+          <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span className="text-xs sm:text-sm font-medium">Edit</span>
         </button>
       )}
       

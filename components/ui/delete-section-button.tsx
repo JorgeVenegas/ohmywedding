@@ -37,14 +37,14 @@ export function DeleteSectionButton({
 
   return (
     <>
-      <div className="absolute top-4 right-4 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      <div className="absolute top-[6.5rem] sm:top-4 right-2 sm:right-4 z-30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
         <button
           onClick={handleDeleteClick}
-          className="flex items-center gap-2 h-9 px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-all duration-300 hover:scale-105"
+          className="flex items-center gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 py-1.5 sm:py-2 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-all duration-300 hover:scale-105"
           title={`Delete ${componentType} section`}
         >
-          <Trash2 className="w-4 h-4" />
-          <span className="text-sm font-medium">Delete</span>
+          <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span className="text-xs sm:text-sm font-medium">Delete</span>
         </button>
       </div>
       

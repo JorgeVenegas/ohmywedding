@@ -1,0 +1,6 @@
+export { FAQAccordionVariant } from './faq-accordion-variant'
+export { FAQMinimalVariant } from './faq-minimal-variant'
+export { FAQCardsVariant } from './faq-cards-variant'
+export { FAQElegantVariant } from './faq-elegant-variant'
+export { FAQSimpleVariant } from './faq-simple-variant'
+export * from './types'

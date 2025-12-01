@@ -22,11 +22,45 @@ export function EventDetailsSplitVariant({
   sectionSubtitle,
   customEvents = [],
   useColorBackground = false,
-  backgroundColorChoice
+  backgroundColorChoice,
+  ceremonyTextAlignment = 'center',
+  receptionTextAlignment = 'center'
 }: BaseEventDetailsProps) {
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
   
   const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription)
+
+  // Helper to get text alignment for an event
+  const getEventAlignment = (iconType: EventItem['iconType']): 'left' | 'center' | 'right' => {
+    if (iconType === 'ceremony') return ceremonyTextAlignment
+    if (iconType === 'reception') return receptionTextAlignment
+    return 'center' // default for custom events
+  }
+
+  // Helper to get alignment classes - center on mobile, configured alignment on desktop
+  const getAlignmentClasses = (alignment: 'left' | 'center' | 'right') => {
+    switch (alignment) {
+      case 'left':
+        return {
+          text: 'text-center sm:text-left',
+          flex: 'justify-center sm:justify-start',
+          items: 'items-center sm:items-start'
+        }
+      case 'right':
+        return {
+          text: 'text-center sm:text-right',
+          flex: 'justify-center sm:justify-end',
+          items: 'items-center sm:items-end'
+        }
+      case 'center':
+      default:
+        return {
+          text: 'text-center',
+          flex: 'justify-center',
+          items: 'items-center'
+        }
+    }
+  }
 
   const renderEventIcon = (iconType: EventItem['iconType'], large: boolean = false) => {
     const color = isColored ? titleColor : theme?.colors?.primary
@@ -101,13 +135,17 @@ export function EventDetailsSplitVariant({
           return (
             <div className="max-w-6xl mx-auto px-4 sm:px-8 pb-8 sm:pb-10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
-                {events.map((event, index) => (
+                {events.map((event, index) => {
+                  const eventAlignment = getEventAlignment(event.iconType)
+                  const alignClasses = getAlignmentClasses(eventAlignment)
+                  
+                  return (
                   <div 
                     key={index}
-                    className="text-center"
+                    className={alignClasses.text}
                   >
                     {/* Event Icon */}
-                    <div className="flex items-center justify-center gap-3 mb-3 sm:mb-4">
+                    <div className={`flex ${alignClasses.flex} gap-3 mb-3 sm:mb-4`}>
                       <div 
                         className="w-12 h-12 rounded-full flex items-center justify-center border"
                         style={{ 
@@ -132,7 +170,7 @@ export function EventDetailsSplitVariant({
                     </h3>
 
                     {/* Time */}
-                    <div className="flex items-center justify-center gap-3 mb-2 sm:mb-3">
+                    <div className={`flex ${alignClasses.flex} gap-3 mb-2 sm:mb-3`}>
                       <Clock className="w-4 h-4" style={{ color: accentLineColor }} />
                       <span 
                         className="text-lg font-medium"
@@ -188,7 +226,8 @@ export function EventDetailsSplitVariant({
                       </a>
                     )}
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )
@@ -197,6 +236,8 @@ export function EventDetailsSplitVariant({
         // Original full-width side-by-side layout with photos
         return events.map((event, index) => {
           const isImageRight = index % 2 === 1
+          const eventAlignment = getEventAlignment(event.iconType)
+          const alignClasses = getAlignmentClasses(eventAlignment)
 
           return (
             <div 
@@ -227,9 +268,9 @@ export function EventDetailsSplitVariant({
 
                 {/* Content Side */}
                 <div className="w-full lg:w-1/2 flex items-center">
-                  <div className="w-full max-w-lg mx-auto px-4 sm:px-8 py-8 sm:py-10 lg:px-12 lg:py-12">
+                  <div className={`w-full max-w-lg mx-auto px-4 sm:px-8 py-8 sm:py-10 lg:px-12 lg:py-12 ${alignClasses.text}`}>
                     {/* Event Type Label */}
-                    <div className="flex items-center gap-3 mb-3 sm:mb-4">
+                    <div className={`flex ${alignClasses.flex} gap-3 mb-3 sm:mb-4`}>
                       <div 
                         className="w-10 h-10 rounded-full flex items-center justify-center border"
                         style={{ 
@@ -239,10 +280,6 @@ export function EventDetailsSplitVariant({
                       >
                         {renderEventIcon(event.iconType)}
                       </div>
-                      <div 
-                        className="h-px flex-1 max-w-[60px]"
-                        style={{ backgroundColor: accentLineColor, opacity: 0.3 }}
-                      />
                     </div>
 
                     {/* Event Title */}
@@ -258,14 +295,14 @@ export function EventDetailsSplitVariant({
                     </h3>
 
                     {/* Time */}
-                    <div className="flex items-center gap-4 mb-3 sm:mb-4 pb-3 sm:pb-4 border-b" style={{ borderColor: `${accentLineColor}20` }}>
+                    <div className={`flex ${alignClasses.flex} gap-4 mb-3 sm:mb-4 pb-3 sm:pb-4 border-b`} style={{ borderColor: `${accentLineColor}20` }}>
                       <div 
                         className="w-9 h-9 rounded-full flex items-center justify-center"
                         style={{ backgroundColor: isColored ? `${titleColor}08` : `${theme?.colors?.primary}05` }}
                       >
                         <Clock className="w-4 h-4" style={{ color: accentLineColor }} />
                       </div>
-                      <div>
+                      <div className={alignClasses.text}>
                         <p className="text-xs uppercase tracking-widest mb-1 font-light" style={{ color: cardMutedColor }}>
                           Time
                         </p>
@@ -279,14 +316,14 @@ export function EventDetailsSplitVariant({
                     </div>
 
                     {/* Venue Info */}
-                    <div className="flex items-start gap-4 mb-3 sm:mb-4 pb-3 sm:pb-4 border-b" style={{ borderColor: `${accentLineColor}20` }}>
+                    <div className={`flex ${alignClasses.flex} gap-4 mb-3 sm:mb-4 pb-3 sm:pb-4 border-b`} style={{ borderColor: `${accentLineColor}20` }}>
                       <div 
                         className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-1"
                         style={{ backgroundColor: isColored ? `${titleColor}08` : `${theme?.colors?.primary}05` }}
                       >
                         <MapPin className="w-4 h-4" style={{ color: accentLineColor }} />
                       </div>
-                      <div>
+                      <div className={alignClasses.text}>
                         <p className="text-xs uppercase tracking-widest mb-1 font-light" style={{ color: cardMutedColor }}>
                           Location
                         </p>

@@ -98,7 +98,9 @@ export function EventDetailsSection({
     sectionSubtitle: '',
     customEvents,
     useColorBackground: false,
-    backgroundColorChoice: 'none'
+    backgroundColorChoice: 'none',
+    ceremonyTextAlignment: 'center',
+    receptionTextAlignment: 'center'
   })
 
   const commonProps = {
@@ -118,7 +120,9 @@ export function EventDetailsSection({
     sectionSubtitle: config.sectionSubtitle || undefined,
     customEvents: config.customEvents || customEvents,
     useColorBackground: config.useColorBackground ?? false,
-    backgroundColorChoice: config.backgroundColorChoice || 'none'
+    backgroundColorChoice: config.backgroundColorChoice || 'none',
+    ceremonyTextAlignment: config.ceremonyTextAlignment || 'center',
+    receptionTextAlignment: config.receptionTextAlignment || 'center'
   }
 
   const renderEventDetailsContent = (activeVariant: string) => {
@@ -151,7 +155,9 @@ export function EventDetailsSection({
       sectionSubtitle: config.sectionSubtitle || '',
       customEvents: config.customEvents || customEvents,
       useColorBackground: config.useColorBackground ?? false,
-      backgroundColorChoice: config.backgroundColorChoice || 'none'
+      backgroundColorChoice: config.backgroundColorChoice || 'none',
+      ceremonyTextAlignment: config.ceremonyTextAlignment || 'center',
+      receptionTextAlignment: config.receptionTextAlignment || 'center'
     })
   }
 

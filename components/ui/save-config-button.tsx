@@ -37,8 +37,8 @@ export function SaveConfigButton({ className, variant = 'default', size = 'defau
     if (isSaving) {
       return (
         <>
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span className="text-sm font-medium ml-2">Saving...</span>
+          <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+          <span className="text-xs sm:text-sm font-medium ml-1 sm:ml-2">Saving...</span>
         </>
       )
     }
@@ -46,8 +46,8 @@ export function SaveConfigButton({ className, variant = 'default', size = 'defau
     if (saveStatus === 'success') {
       return (
         <>
-          <Check className="w-4 h-4" />
-          <span className="text-sm font-medium ml-2">Saved!</span>
+          <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span className="text-xs sm:text-sm font-medium ml-1 sm:ml-2">Saved!</span>
         </>
       )
     }
@@ -55,16 +55,16 @@ export function SaveConfigButton({ className, variant = 'default', size = 'defau
     if (saveStatus === 'error') {
       return (
         <>
-          <AlertCircle className="w-4 h-4" />
-          <span className="text-sm font-medium ml-2">Error</span>
+          <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span className="text-xs sm:text-sm font-medium ml-1 sm:ml-2">Error</span>
         </>
       )
     }
 
     return (
       <>
-        <Save className="w-4 h-4" />
-        <span className="text-sm font-medium ml-2">{'Save'}</span>
+        <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        <span className="text-xs sm:text-sm font-medium ml-1 sm:ml-2">{'Save'}</span>
       </>
     )
   }
@@ -87,17 +87,17 @@ export function SaveConfigButton({ className, variant = 'default', size = 'defau
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1 sm:gap-2">
       {hasUnsavedChanges && (
         <Button
           onClick={handleDiscard}
           disabled={isSaving}
           variant={showConfirm ? 'destructive' : 'outline'}
           size={size}
-          className={`h-9 px-3 py-2 gap-2`}
+          className={`h-8 sm:h-9 px-2 sm:px-3 py-1.5 sm:py-2 gap-1 sm:gap-2`}
         >
-          <X className="w-4 h-4" />
-          <span className="text-sm font-medium">{showConfirm ? 'Confirm?' : 'Discard'}</span>
+          <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span className="text-xs sm:text-sm font-medium">{showConfirm ? 'Confirm?' : 'Discard'}</span>
         </Button>
       )}
       <Button
@@ -105,7 +105,7 @@ export function SaveConfigButton({ className, variant = 'default', size = 'defau
         disabled={isSaving || !hasUnsavedChanges}
         variant={getButtonVariant()}
         size={size}
-        className={`h-9 px-3 py-2 gap-2 ${className || ''}`}
+        className={`h-8 sm:h-9 px-2 sm:px-3 py-1.5 sm:py-2 gap-1 sm:gap-2 ${className || ''}`}
       >
         {getButtonContent()}
       </Button>

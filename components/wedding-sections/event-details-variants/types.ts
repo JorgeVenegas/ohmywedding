@@ -29,6 +29,8 @@ export interface BaseEventDetailsProps {
   customEvents?: CustomEvent[]
   useColorBackground?: boolean
   backgroundColorChoice?: BackgroundColorChoice
+  ceremonyTextAlignment?: 'left' | 'center' | 'right'
+  receptionTextAlignment?: 'left' | 'center' | 'right'
 }
 
 export interface EventItem {
