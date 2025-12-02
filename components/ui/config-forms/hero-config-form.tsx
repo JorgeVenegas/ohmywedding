@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
 import { ImageGalleryDialog } from '@/components/ui/image-gallery-dialog'
 import { usePageConfig } from '@/components/contexts/page-config-context'
+import { useI18n } from '@/components/contexts/i18n-context'
 import { Image as ImageIcon, X, Check, AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
 import { useParams } from 'next/navigation'
 
@@ -76,6 +77,7 @@ interface HeroConfigFormProps {
 export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddingNameId }: HeroConfigFormProps) {
   const [showImageDialog, setShowImageDialog] = useState(false)
   const { config: pageConfig } = usePageConfig()
+  const { t } = useI18n()
   
   // Get theme colors
   const themeColors = pageConfig.siteSettings.theme?.colors
@@ -86,7 +88,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
   // Create color options with full, light, and lighter variants for background
   const bgColorGroups: { label: string; colors: { value: BackgroundColorChoice; color: string }[] }[] = [
     {
-      label: 'Primary',
+      label: t('config.primary'),
       colors: [
         { value: 'primary', color: primaryColor },
         { value: 'primary-light', color: getLightTint(primaryColor, 0.5) },
@@ -94,7 +96,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
       ]
     },
     {
-      label: 'Secondary',
+      label: t('config.secondary'),
       colors: [
         { value: 'secondary', color: secondaryColor },
         { value: 'secondary-light', color: getLightTint(secondaryColor, 0.5) },
@@ -102,7 +104,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
       ]
     },
     {
-      label: 'Accent',
+      label: t('config.accent'),
       colors: [
         { value: 'accent', color: accentColor },
         { value: 'accent-light', color: getLightTint(accentColor, 0.5) },
@@ -113,16 +115,16 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
   
   // Palette colors for gradient overlay (with lighter variants)
   const gradientColors = React.useMemo(() => [
-    { value: 'palette:primary', displayColor: primaryColor, label: 'Primary' },
-    { value: 'palette:primary-light', displayColor: getLightTint(primaryColor, 0.5), label: 'Primary Light' },
-    { value: 'palette:primary-lighter', displayColor: getLightTint(primaryColor, 0.88), label: 'Primary Lighter' },
-    { value: 'palette:secondary', displayColor: secondaryColor, label: 'Secondary' },
-    { value: 'palette:secondary-light', displayColor: getLightTint(secondaryColor, 0.5), label: 'Secondary Light' },
-    { value: 'palette:secondary-lighter', displayColor: getLightTint(secondaryColor, 0.88), label: 'Secondary Lighter' },
-    { value: 'palette:accent', displayColor: accentColor, label: 'Accent' },
-    { value: 'palette:accent-light', displayColor: getLightTint(accentColor, 0.5), label: 'Accent Light' },
-    { value: 'palette:accent-lighter', displayColor: getLightTint(accentColor, 0.88), label: 'Accent Lighter' },
-  ], [primaryColor, secondaryColor, accentColor])
+    { value: 'palette:primary', displayColor: primaryColor, label: t('config.primary') },
+    { value: 'palette:primary-light', displayColor: getLightTint(primaryColor, 0.5), label: t('config.primaryLight') },
+    { value: 'palette:primary-lighter', displayColor: getLightTint(primaryColor, 0.88), label: t('config.primaryLighter') },
+    { value: 'palette:secondary', displayColor: secondaryColor, label: t('config.secondary') },
+    { value: 'palette:secondary-light', displayColor: getLightTint(secondaryColor, 0.5), label: t('config.secondaryLight') },
+    { value: 'palette:secondary-lighter', displayColor: getLightTint(secondaryColor, 0.88), label: t('config.secondaryLighter') },
+    { value: 'palette:accent', displayColor: accentColor, label: t('config.accent') },
+    { value: 'palette:accent-light', displayColor: getLightTint(accentColor, 0.5), label: t('config.accentLight') },
+    { value: 'palette:accent-lighter', displayColor: getLightTint(accentColor, 0.88), label: t('config.accentLighter') },
+  ], [primaryColor, secondaryColor, accentColor, t])
 
   // Check if hero image is provided
   const hasHeroImage = !!config.heroImageUrl && config.heroImageUrl.trim() !== ''
@@ -132,11 +134,11 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
   
   // All available variants
   const allVariants = [
-    { value: 'background', label: 'Background Hero', description: 'Fullscreen background with overlay text', requiresImage: true },
-    { value: 'side-by-side', label: 'Side by Side', description: 'Split layout with image and content', requiresImage: true },
-    { value: 'framed', label: 'Framed Photo', description: 'Decorative frame around photo', requiresImage: true },
-    { value: 'minimal', label: 'Minimal', description: 'Text-focused with subtle decorations', requiresImage: false },
-    { value: 'stacked', label: 'Stacked', description: 'Content above with image below', requiresImage: true }
+    { value: 'background', label: t('config.backgroundHero'), description: t('config.backgroundHeroDesc'), requiresImage: true },
+    { value: 'side-by-side', label: t('config.sideBySide'), description: t('config.sideBySideDesc'), requiresImage: true },
+    { value: 'framed', label: t('config.framedPhoto'), description: t('config.framedPhotoDesc'), requiresImage: true },
+    { value: 'minimal', label: t('config.minimal'), description: t('config.minimalDesc'), requiresImage: false },
+    { value: 'stacked', label: t('config.stacked'), description: t('config.stackedDesc'), requiresImage: true }
   ]
 
   // Filter variants based on whether image is provided
@@ -149,38 +151,38 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
   // filters to only show available variants.
 
   const imagePositions = [
-    { value: 'left', label: 'Left' },
-    { value: 'right', label: 'Right' }
+    { value: 'left', label: t('config.left') },
+    { value: 'right', label: t('config.right') }
   ]
 
   const frameStyles = [
-    { value: 'circular', label: 'Circular' },
-    { value: 'rounded', label: 'Rounded' },
-    { value: 'square', label: 'Square' },
-    { value: 'polaroid', label: 'Polaroid' }
+    { value: 'circular', label: t('config.circular') },
+    { value: 'rounded', label: t('config.rounded') },
+    { value: 'square', label: t('config.square') },
+    { value: 'polaroid', label: t('config.polaroid') }
   ]
 
   const imageSizes = [
-    { value: 'small', label: 'Small' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'large', label: 'Large' }
+    { value: 'small', label: t('config.small') },
+    { value: 'medium', label: t('config.medium') },
+    { value: 'large', label: t('config.large') }
   ]
 
   return (
     <div className="space-y-6">
       {/* Variant Selection */}
       <VariantDropdown
-        label="Layout Style"
+        label={t('config.layoutStyle')}
         value={config.variant || 'background'}
         options={variants}
         onChange={(value) => onChange('variant', value)}
-        placeholder="Choose hero layout"
+        placeholder={t('config.layoutStyle')}
       />
 
       {/* Hero Image Selection */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Hero Image
+          {t('config.heroImage')}
         </label>
         {config.heroImageUrl ? (
           <div className="space-y-2">
@@ -204,7 +206,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
               className="w-full"
             >
               <ImageIcon className="w-4 h-4 mr-2" />
-              Change Image
+              {t('config.changeImage')}
             </Button>
           </div>
         ) : (
@@ -214,7 +216,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
             className="w-full"
           >
             <ImageIcon className="w-4 h-4 mr-2" />
-            Select Image
+            {t('config.selectImage')}
           </Button>
         )}
       </div>
@@ -250,7 +252,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
         <>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Overlay Opacity: {config.overlayOpacity ?? 40}%
+              {t('config.overlayOpacity')}: {config.overlayOpacity ?? 40}%
             </label>
             <input
               type="range"
@@ -261,13 +263,13 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>Transparent</span>
-              <span>Dark</span>
+              <span>{t('config.transparent')}</span>
+              <span>{t('config.dark')}</span>
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Image Brightness: {config.imageBrightness ?? 100}%
+              {t('config.imageBrightness')}: {config.imageBrightness ?? 100}%
             </label>
             <input
               type="range"
@@ -278,13 +280,13 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>Darker</span>
-              <span>Bright</span>
+              <span>{t('config.darker')}</span>
+              <span>{t('config.bright')}</span>
             </div>
           </div>
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-gray-700">
-              Use Gradient Overlay
+              {t('config.useGradientOverlay')}
             </label>
             <Switch
               checked={config.backgroundGradient ?? false}
@@ -310,7 +312,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
                           <button
                             key={color.value}
                             onClick={() => onChange('gradientColor1', color.value)}
-                            className={`w-8 h-8 rounded-md border-2 transition-all flex items-center justify-center ${
+                            className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${
                               config.gradientColor1 === color.value 
                                 ? 'border-blue-500 ring-2 ring-blue-200' 
                                 : 'border-gray-200 hover:border-gray-300'
@@ -348,7 +350,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
                           <button
                             key={color.value}
                             onClick={() => onChange('gradientColor2', color.value)}
-                            className={`w-8 h-8 rounded-md border-2 transition-all flex items-center justify-center ${
+                            className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${
                               config.gradientColor2 === color.value 
                                 ? 'border-blue-500 ring-2 ring-blue-200' 
                                 : 'border-gray-200 hover:border-gray-300'
@@ -379,7 +381,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
         <>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Image Position
+              {t('config.imagePosition')}
             </label>
             <div className="flex gap-2">
               {imagePositions.map((position) => (
@@ -396,7 +398,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Image Overlay Opacity: {config.overlayOpacity ?? 0}%
+              {t('config.overlayOpacity')}: {config.overlayOpacity ?? 0}%
             </label>
             <input
               type="range"
@@ -407,13 +409,13 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>None</span>
-              <span>Dark</span>
+              <span>{t('config.none')}</span>
+              <span>{t('config.dark')}</span>
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Image Brightness: {config.imageBrightness ?? 100}%
+              {t('config.imageBrightness')}: {config.imageBrightness ?? 100}%
             </label>
             <input
               type="range"
@@ -424,13 +426,13 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>Darker</span>
-              <span>Bright</span>
+              <span>{t('config.darker')}</span>
+              <span>{t('config.bright')}</span>
             </div>
           </div>
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-gray-700">
-              Use Color Background
+              {t('config.useColorBackground')}
             </label>
             <Switch
               checked={config.useColorBackground ?? false}
@@ -440,7 +442,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
           {config.useColorBackground && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Background Color
+                {t('config.backgroundColor')}
               </label>
               <div className="space-y-2">
                 {bgColorGroups.map((group) => (
@@ -451,7 +453,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
                         <button
                           key={colorOption.value}
                           onClick={() => onChange('backgroundColorChoice', colorOption.value)}
-                          className={`w-8 h-8 rounded-md border-2 transition-all flex items-center justify-center ${
+                          className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${
                             config.backgroundColorChoice === colorOption.value 
                               ? 'border-blue-500 ring-2 ring-blue-200' 
                               : 'border-gray-200 hover:border-gray-300'
@@ -475,7 +477,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
           )}
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-gray-700">
-              Use Gradient Overlay
+              {t('config.useGradientOverlay')}
             </label>
             <Switch
               checked={config.backgroundGradient ?? false}
@@ -486,13 +488,13 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Gradient Color 1
+                  {t('config.gradientColor1')}
                 </label>
                 <div className="space-y-2">
                   {[
-                    { label: 'Primary', colors: gradientColors.filter(c => c.value.includes('primary')) },
-                    { label: 'Secondary', colors: gradientColors.filter(c => c.value.includes('secondary')) },
-                    { label: 'Accent', colors: gradientColors.filter(c => c.value.includes('accent')) },
+                    { label: t('config.primary'), colors: gradientColors.filter(c => c.value.includes('primary')) },
+                    { label: t('config.secondary'), colors: gradientColors.filter(c => c.value.includes('secondary')) },
+                    { label: t('config.accent'), colors: gradientColors.filter(c => c.value.includes('accent')) },
                   ].map((group) => (
                     <div key={group.label} className="flex items-center gap-2">
                       <span className="text-xs text-gray-500 w-16">{group.label}</span>
@@ -501,7 +503,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
                           <button
                             key={color.value}
                             onClick={() => onChange('gradientColor1', color.value)}
-                            className={`w-8 h-8 rounded-md border-2 transition-all flex items-center justify-center ${
+                            className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${
                               config.gradientColor1 === color.value 
                                 ? 'border-blue-500 ring-2 ring-blue-200' 
                                 : 'border-gray-200 hover:border-gray-300'
@@ -524,13 +526,13 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Gradient Color 2
+                  {t('config.gradientColor2')}
                 </label>
                 <div className="space-y-2">
                   {[
-                    { label: 'Primary', colors: gradientColors.filter(c => c.value.includes('primary')) },
-                    { label: 'Secondary', colors: gradientColors.filter(c => c.value.includes('secondary')) },
-                    { label: 'Accent', colors: gradientColors.filter(c => c.value.includes('accent')) },
+                    { label: t('config.primary'), colors: gradientColors.filter(c => c.value.includes('primary')) },
+                    { label: t('config.secondary'), colors: gradientColors.filter(c => c.value.includes('secondary')) },
+                    { label: t('config.accent'), colors: gradientColors.filter(c => c.value.includes('accent')) },
                   ].map((group) => (
                     <div key={group.label} className="flex items-center gap-2">
                       <span className="text-xs text-gray-500 w-16">{group.label}</span>
@@ -539,7 +541,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
                           <button
                             key={color.value}
                             onClick={() => onChange('gradientColor2', color.value)}
-                            className={`w-8 h-8 rounded-md border-2 transition-all flex items-center justify-center ${
+                            className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${
                               config.gradientColor2 === color.value 
                                 ? 'border-blue-500 ring-2 ring-blue-200' 
                                 : 'border-gray-200 hover:border-gray-300'
@@ -570,7 +572,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
         <>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Frame Style
+              {t('config.imageFrame')}
             </label>
             <div className="flex flex-wrap gap-2">
               {frameStyles.map((style) => (
@@ -587,7 +589,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Image Size
+              {t('config.imageSize')}
             </label>
             <div className="flex gap-2">
               {imageSizes.map((size) => (
@@ -610,7 +612,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
         <>
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-gray-700">
-              Use Gradient
+              {t('config.useGradientOverlay')}
             </label>
             <Switch
               checked={config.backgroundGradient ?? false}
@@ -622,13 +624,13 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Gradient Color 1
+                  {t('config.gradientColor1')}
                 </label>
                 <div className="space-y-2">
                   {[
-                    { label: 'Primary', colors: gradientColors.filter(c => c.value.includes('primary')) },
-                    { label: 'Secondary', colors: gradientColors.filter(c => c.value.includes('secondary')) },
-                    { label: 'Accent', colors: gradientColors.filter(c => c.value.includes('accent')) },
+                    { label: t('config.primary'), colors: gradientColors.filter(c => c.value.includes('primary')) },
+                    { label: t('config.secondary'), colors: gradientColors.filter(c => c.value.includes('secondary')) },
+                    { label: t('config.accent'), colors: gradientColors.filter(c => c.value.includes('accent')) },
                   ].map((group) => (
                     <div key={group.label} className="flex items-center gap-2">
                       <span className="text-xs text-gray-500 w-16">{group.label}</span>
@@ -637,7 +639,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
                           <button
                             key={color.value}
                             onClick={() => onChange('gradientColor1', color.value)}
-                            className={`w-8 h-8 rounded-md border-2 transition-all flex items-center justify-center ${
+                            className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${
                               config.gradientColor1 === color.value 
                                 ? 'border-blue-500 ring-2 ring-blue-200' 
                                 : 'border-gray-200 hover:border-gray-300'
@@ -660,13 +662,13 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Gradient Color 2
+                  {t('config.gradientColor2')}
                 </label>
                 <div className="space-y-2">
                   {[
-                    { label: 'Primary', colors: gradientColors.filter(c => c.value.includes('primary')) },
-                    { label: 'Secondary', colors: gradientColors.filter(c => c.value.includes('secondary')) },
-                    { label: 'Accent', colors: gradientColors.filter(c => c.value.includes('accent')) },
+                    { label: t('config.primary'), colors: gradientColors.filter(c => c.value.includes('primary')) },
+                    { label: t('config.secondary'), colors: gradientColors.filter(c => c.value.includes('secondary')) },
+                    { label: t('config.accent'), colors: gradientColors.filter(c => c.value.includes('accent')) },
                   ].map((group) => (
                     <div key={group.label} className="flex items-center gap-2">
                       <span className="text-xs text-gray-500 w-16">{group.label}</span>
@@ -675,7 +677,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
                           <button
                             key={color.value}
                             onClick={() => onChange('gradientColor2', color.value)}
-                            className={`w-8 h-8 rounded-md border-2 transition-all flex items-center justify-center ${
+                            className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${
                               config.gradientColor2 === color.value 
                                 ? 'border-blue-500 ring-2 ring-blue-200' 
                                 : 'border-gray-200 hover:border-gray-300'
@@ -700,7 +702,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
           ) : (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Background Color
+                {t('config.backgroundColor')}
               </label>
               <div className="space-y-2">
                 {bgColorGroups.map((group) => (
@@ -711,7 +713,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
                         <button
                           key={colorOption.value}
                           onClick={() => onChange('backgroundColor', colorOption.value)}
-                          className={`w-8 h-8 rounded-md border-2 transition-all flex items-center justify-center ${
+                          className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${
                             config.backgroundColor === colorOption.value 
                               ? 'border-blue-500 ring-2 ring-blue-200' 
                               : 'border-gray-200 hover:border-gray-300'
@@ -736,7 +738,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
           
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-gray-700">
-              Show Decorations
+              {t('config.showDecorations')}
             </label>
             <Switch
               checked={config.showDecorations ?? true}
@@ -751,12 +753,12 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
         <>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Image Width
+              {t('config.imageWidth')}
             </label>
             <div className="flex gap-2">
               {[
-                { value: 'centered', label: 'Centered' },
-                { value: 'full', label: 'Full Width' }
+                { value: 'centered', label: t('config.centered') },
+                { value: 'full', label: t('config.full') }
               ].map((width) => (
                 <Button
                   key={width.value}
@@ -771,13 +773,13 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Image Height
+              {t('config.imageHeight')}
             </label>
             <div className="flex gap-2">
               {[
-                { value: 'small', label: 'Small' },
-                { value: 'medium', label: 'Medium' },
-                { value: 'large', label: 'Large' }
+                { value: 'small', label: t('config.small') },
+                { value: 'medium', label: t('config.medium') },
+                { value: 'large', label: t('config.large') }
               ].map((height) => (
                 <Button
                   key={height.value}
@@ -792,7 +794,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
           </div>
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-gray-700">
-              Show Decorations
+              {t('config.showDecorations')}
             </label>
             <Switch
               checked={config.showDecorations ?? true}
@@ -804,18 +806,18 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
 
       {/* Content Options */}
       <div className="space-y-4">
-        <h4 className="font-medium text-gray-900">Content Settings</h4>
+        <h4 className="font-medium text-gray-900">{t('config.content')}</h4>
         
         {/* Text Alignment */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Text Alignment
+            {t('config.textAlignment')}
           </label>
           <div className="flex gap-2">
             {[
-              { value: 'left', label: 'Left', icon: AlignLeft },
-              { value: 'center', label: 'Center', icon: AlignCenter },
-              { value: 'right', label: 'Right', icon: AlignRight }
+              { value: 'left', label: t('config.left'), icon: AlignLeft },
+              { value: 'center', label: t('config.center'), icon: AlignCenter },
+              { value: 'right', label: t('config.right'), icon: AlignRight }
             ].map((alignment) => (
               <Button
                 key={alignment.value}
@@ -833,7 +835,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
         
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-700">
-            Show Tagline
+            {t('config.showTagline')}
           </label>
           <Switch
             checked={config.showTagline ?? true}
@@ -844,13 +846,13 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
         {config.showTagline && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tagline Text
+              {t('config.tagline')}
             </label>
             <Input
               type="text"
               value={config.tagline || ''}
               onChange={(e) => onChange('tagline', e.target.value)}
-              placeholder="Join us as we tie the knot!"
+              placeholder={t('hero.tagline')}
             />
           </div>
         )}
@@ -858,11 +860,11 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <label className="text-sm font-medium text-gray-700">
-              Show Countdown
+              {t('config.showCountdown')}
             </label>
             {!hasWeddingDate && (
               <p className="text-xs text-gray-500 mt-0.5">
-                Requires a wedding date to be set
+                {t('common.required')}
               </p>
             )}
           </div>
@@ -875,7 +877,7 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
 
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-700">
-            Show RSVP Button
+            {t('config.showRSVPButton')}
           </label>
           <Switch
             checked={config.showRSVPButton ?? true}

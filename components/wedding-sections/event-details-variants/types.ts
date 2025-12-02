@@ -25,6 +25,7 @@ export interface BaseEventDetailsProps {
   receptionImageUrl?: string
   ceremonyDescription?: string
   receptionDescription?: string
+  sectionTitle?: string
   sectionSubtitle?: string
   customEvents?: CustomEvent[]
   useColorBackground?: boolean
@@ -275,7 +276,14 @@ export function formatWeddingTime(time: string | null): string {
   }
 }
 
+// Translation function type for buildEventsList
+type TranslateFunction = (key: string) => string
+
 // Helper to build events list
+// Note: ceremonyDescription/receptionDescription can be:
+//   - undefined: use default translated text
+//   - empty string "": show no description
+//   - non-empty string: use custom description
 export function buildEventsList(
   wedding: Wedding,
   showCeremony: boolean,
@@ -284,29 +292,45 @@ export function buildEventsList(
   ceremonyImageUrl?: string,
   receptionImageUrl?: string,
   ceremonyDescription?: string,
-  receptionDescription?: string
+  receptionDescription?: string,
+  t?: TranslateFunction
 ): EventItem[] {
   const ceremonyTime = formatWeddingTime(wedding.wedding_time)
   const receptionTime = wedding.reception_time 
     ? formatWeddingTime(wedding.reception_time) 
-    : 'Following ceremony'
+    : (t ? t('eventDetails.followingCeremony') : 'Following ceremony')
+  
+  // Get description: if undefined use default, if empty string use undefined (no description), otherwise use the value
+  const getCeremonyDescription = () => {
+    if (ceremonyDescription === undefined) {
+      return t ? t('eventDetails.ceremonyDescriptionDefault') : "Join us as we exchange vows"
+    }
+    return ceremonyDescription || undefined // empty string becomes undefined
+  }
+  
+  const getReceptionDescription = () => {
+    if (receptionDescription === undefined) {
+      return t ? t('eventDetails.receptionDescriptionDefault') : "Dinner, dancing, and celebration"
+    }
+    return receptionDescription || undefined // empty string becomes undefined
+  }
   
   return [
     ...(showCeremony && wedding.ceremony_venue_name ? [{
-      title: "Ceremony",
+      title: t ? t('eventDetails.ceremony') : "Ceremony",
       time: ceremonyTime,
       venue: wedding.ceremony_venue_name,
       address: wedding.ceremony_venue_address || undefined,
-      description: ceremonyDescription || "Join us as we exchange vows",
+      description: getCeremonyDescription(),
       imageUrl: ceremonyImageUrl,
       iconType: "ceremony" as const
     }] : []),
     ...(showReception && wedding.reception_venue_name ? [{
-      title: "Reception",
+      title: t ? t('eventDetails.reception') : "Reception",
       time: receptionTime,
       venue: wedding.reception_venue_name,
       address: wedding.reception_venue_address || undefined,
-      description: receptionDescription || "Dinner, dancing, and celebration",
+      description: getReceptionDescription(),
       imageUrl: receptionImageUrl,
       iconType: "reception" as const
     }] : []),

@@ -39,7 +39,7 @@ export function VariantDropdown({
         {/* Dropdown Button */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150 hover:border-gray-400 hover:shadow-sm"
+          className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all duration-150 hover:border-gray-400 hover:shadow-sm"
         >
           {selectedOption ? (
             <div className="flex flex-col gap-1 w-full animate-in fade-in slide-in-from-left-2 duration-200">
@@ -75,13 +75,13 @@ export function VariantDropdown({
                     setIsOpen(false)
                   }}
                   className={`w-full flex flex-col gap-1 p-3 hover:bg-gray-50 transition-all duration-150 border-b border-gray-100 last:border-b-0 text-left ${
-                    value === option.value ? 'bg-blue-50' : ''
+                    value === option.value ? 'bg-gray-100' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between w-full">
                     <span className="text-sm text-gray-700 font-medium">{option.label}</span>
                     {value === option.value && (
-                      <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center animate-in zoom-in duration-200">
+                      <div className="w-5 h-5 bg-gray-800 rounded-full flex items-center justify-center animate-in zoom-in duration-200">
                         <svg className="w-3 h-3 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                           <path d="M5 13l4 4L19 7"></path>
                         </svg>

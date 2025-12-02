@@ -27,14 +27,16 @@ interface OurStorySectionProps extends BaseOurStoryProps {
 export function OurStorySection({
   theme,
   alignment,
+  sectionTitle,
+  sectionSubtitle,
   showHowWeMet = true,
   showProposal = true,
   showPhotos = true,
   showHowWeMetPhoto = false,
   showProposalPhoto = false,
-  howWeMetText = "Our love story began in the most unexpected way. From the moment we met, we knew there was something special between us. What started as a chance encounter blossomed into a beautiful friendship, and eventually, a love that we knew would last forever.",
+  howWeMetText,
   howWeMetPhoto,
-  proposalText = "The proposal was a magical moment we'll cherish forever. Surrounded by the beauty of nature and the warmth of our love, the question was asked and answered with tears of joy. It was the perfect beginning to our next chapter together.",
+  proposalText,
   proposalPhoto,
   photos = [],
   timeline = [],
@@ -90,6 +92,8 @@ export function OurStorySection({
     showProposal,
     showPhotos,
     showHowWeMetPhoto,
+    sectionTitle,
+    sectionSubtitle,
     showProposalPhoto,
     howWeMetText,
     howWeMetPhoto,
@@ -102,17 +106,42 @@ export function OurStorySection({
     proposalTextAlignment: 'center'
   })
 
+  // Helper to check if text is an old hardcoded English default that should be replaced with i18n
+  const isOldEnglishDefault = (text: string | undefined) => {
+    if (!text) return false // empty string is NOT an old default, it's intentionally empty
+    const oldDefaults = [
+      'Our love story began in the most unexpected way',
+      'The proposal was a magical moment'
+    ]
+    return oldDefaults.some(d => text.startsWith(d))
+  }
+
+  // Get text value: if config has a value (including empty string), use it; otherwise use prop
+  const getHowWeMetText = () => {
+    const value = config.howWeMetText !== undefined ? config.howWeMetText : howWeMetText
+    // If it's an old English default, return undefined to use i18n default
+    return isOldEnglishDefault(value) ? undefined : value
+  }
+  
+  const getProposalText = () => {
+    const value = config.proposalText !== undefined ? config.proposalText : proposalText
+    // If it's an old English default, return undefined to use i18n default
+    return isOldEnglishDefault(value) ? undefined : value
+  }
+
   const commonProps = {
     theme,
     alignment,
+    sectionTitle: config.sectionTitle || sectionTitle,
+    sectionSubtitle: config.sectionSubtitle || sectionSubtitle,
     showHowWeMet: config.showHowWeMet ?? true,
     showProposal: config.showProposal ?? true,
     showPhotos: config.showPhotos ?? true,
     showHowWeMetPhoto: config.showHowWeMetPhoto ?? false,
     showProposalPhoto: config.showProposalPhoto ?? false,
-    howWeMetText: config.howWeMetText || howWeMetText,
+    howWeMetText: getHowWeMetText(),
     howWeMetPhoto: config.howWeMetPhoto || howWeMetPhoto,
-    proposalText: config.proposalText || proposalText,
+    proposalText: getProposalText(),
     proposalPhoto: config.proposalPhoto || proposalPhoto,
     photos: config.photos || photos,
     timeline,
@@ -141,15 +170,31 @@ export function OurStorySection({
   }
 
   const onEditClick = (sectionId: string, sectionType: string) => {
+    // For text fields, preserve empty strings - don't fall back to props
+    // This allows users to intentionally clear text to use defaults
+    const getEditHowWeMetText = () => {
+      if (config.howWeMetText !== undefined) return config.howWeMetText
+      // Only use prop if it's not an old default
+      return isOldEnglishDefault(howWeMetText) ? '' : (howWeMetText || '')
+    }
+    
+    const getEditProposalText = () => {
+      if (config.proposalText !== undefined) return config.proposalText
+      // Only use prop if it's not an old default
+      return isOldEnglishDefault(proposalText) ? '' : (proposalText || '')
+    }
+    
     handleEditClick(sectionType, {
+      sectionTitle: config.sectionTitle || sectionTitle || '',
+      sectionSubtitle: config.sectionSubtitle || sectionSubtitle || '',
       showHowWeMet: config.showHowWeMet ?? showHowWeMet,
       showProposal: config.showProposal ?? showProposal,
       showPhotos: config.showPhotos ?? showPhotos,
       showHowWeMetPhoto: config.showHowWeMetPhoto ?? showHowWeMetPhoto,
       showProposalPhoto: config.showProposalPhoto ?? showProposalPhoto,
-      howWeMetText: config.howWeMetText || howWeMetText,
+      howWeMetText: getEditHowWeMetText(),
       howWeMetPhoto: config.howWeMetPhoto || howWeMetPhoto,
-      proposalText: config.proposalText || proposalText,
+      proposalText: getEditProposalText(),
       proposalPhoto: config.proposalPhoto || proposalPhoto,
       photos: config.photos || photos,
       useColorBackground: config.useColorBackground ?? false,

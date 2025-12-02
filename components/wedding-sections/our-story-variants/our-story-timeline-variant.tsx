@@ -2,35 +2,38 @@ import React from 'react'
 import Image from 'next/image'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseOurStoryProps, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function OurStoryTimelineVariant({
   theme,
   alignment,
   showHowWeMet = true,
   showProposal = true,
-  howWeMetText = "Our love story began in the most unexpected way. From the moment we met, we knew there was something special between us. What started as a chance encounter blossomed into a beautiful friendship, and eventually, a love that we knew would last forever.",
+  howWeMetText,
   howWeMetPhoto,
-  proposalText = "The proposal was a magical moment we'll cherish forever. Surrounded by the beauty of nature and the warmth of our love, the question was asked and answered with tears of joy. It was the perfect beginning to our next chapter together.",
+  proposalText,
   proposalPhoto,
   timeline = [],
   useColorBackground = false,
   backgroundColorChoice
 }: BaseOurStoryProps) {
+  const { t } = useI18n()
+  
   // Get enhanced color scheme with complementary palette colors
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, contrastColor, colorLight, colorDark, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
   
   const allEvents = [
     ...(showHowWeMet ? [{
-      date: "First Meeting",
-      title: "How We Met",
-      description: howWeMetText,
+      date: t('ourStory.chapterOne'),
+      title: t('ourStory.howWeMet'),
+      description: howWeMetText || t('ourStory.howWeMetDefault'),
       photo: howWeMetPhoto
     }] : []),
     ...timeline,
     ...(showProposal ? [{
-      date: "The Proposal",
-      title: "The Big Question",
-      description: proposalText,
+      date: t('ourStory.theProposal'),
+      title: t('ourStory.theBigMoment'),
+      description: proposalText || t('ourStory.proposalDefault'),
       photo: proposalPhoto
     }] : [])
   ]
@@ -55,7 +58,7 @@ export function OurStoryTimelineVariant({
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-6 sm:mb-8"
               style={{ color: sectionTitleColor }}>
-            Our Love Story
+            {t('ourStory.title')}
           </h2>
           
           {/* Mobile Timeline - Simple Vertical Stack */}

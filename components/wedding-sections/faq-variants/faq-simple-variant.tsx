@@ -2,18 +2,25 @@
 
 import React from 'react'
 import { BaseFAQProps, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function FAQSimpleVariant({
   theme,
   questions = [],
-  sectionTitle = "FAQ",
-  sectionSubtitle = "Common questions about our wedding",
+  sectionTitle,
+  sectionSubtitle,
   showContactNote = true,
-  contactNoteText = "Have more questions? Feel free to contact us.",
+  contactNoteText,
   useColorBackground = false,
   backgroundColorChoice = 'none'
 }: BaseFAQProps) {
   const { bgColor, titleColor, subtitleColor, bodyTextColor, mutedTextColor, accentColor, isColored, primary } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
+  const { t } = useI18n()
+
+  // Use translated defaults if not provided
+  const title = sectionTitle || t('faq.title')
+  const subtitle = sectionSubtitle || t('faq.subtitle')
+  const contactNote = contactNoteText || t('faq.contactNote')
 
   const faqItems = questions || []
   const hasQuestions = faqItems.length > 0
@@ -34,9 +41,9 @@ export function FAQSimpleVariant({
               fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
             }}
           >
-            {sectionTitle}
+            {title}
           </h2>
-          {sectionSubtitle && (
+          {subtitle && (
             <p 
               className="text-base sm:text-lg"
               style={{ 
@@ -44,7 +51,7 @@ export function FAQSimpleVariant({
                 fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
               }}
             >
-              {sectionSubtitle}
+              {subtitle}
             </p>
           )}
         </div>
@@ -58,7 +65,7 @@ export function FAQSimpleVariant({
               className="text-base"
               style={{ color: isColored ? 'rgba(255,255,255,0.5)' : '#9ca3af' }}
             >
-              No FAQs added yet. Questions will appear here.
+              {t('faq.noFaqsYet')}. {t('faq.questionsWillAppear')}.
             </p>
           </div>
         ) : (
@@ -100,7 +107,7 @@ export function FAQSimpleVariant({
         )}
 
         {/* Contact Note */}
-        {showContactNote && contactNoteText && (
+        {showContactNote && contactNote && (
           <div 
             className="mt-10 sm:mt-14 pt-8 sm:pt-10 text-center sm:text-left"
             style={{ 
@@ -114,7 +121,7 @@ export function FAQSimpleVariant({
                 fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
               }}
             >
-              {contactNoteText}
+              {contactNote}
             </p>
           </div>
         )}

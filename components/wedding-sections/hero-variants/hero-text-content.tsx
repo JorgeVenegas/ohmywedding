@@ -1,9 +1,12 @@
+"use client"
+
 import React from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Heart, Calendar } from 'lucide-react'
 import { formatWeddingDate, formatWeddingTime, calculateDaysUntilWedding } from '@/lib/wedding-utils-client'
 import { HeroContentProps } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function HeroTextContent({
   wedding,
@@ -11,20 +14,39 @@ export function HeroTextContent({
   theme,
   alignment,
   showTagline = true,
-  tagline = "Join us as we tie the knot!",
+  tagline,
   showCountdown = true,
   showRSVPButton = true,
   isOverlay = false
 }: HeroContentProps) {
+  const { t, locale } = useI18n()
+  
+  // Helper to check if tagline is an old hardcoded English default
+  const isOldTaglineDefault = (text: string | undefined) => {
+    if (!text) return true
+    const oldDefaults = [
+      'Join us as we tie the knot',
+      'We\'re getting married'
+    ]
+    return oldDefaults.some(d => text.startsWith(d))
+  }
+  
+  // Use translated default tagline if not provided or if it's an old English default
+  const displayTagline = isOldTaglineDefault(tagline) ? t('hero.joinUs') : tagline
+  
   const daysUntil = calculateDaysUntilWedding(wedding.wedding_date)
-  const formattedDate = formatWeddingDate(wedding.wedding_date)
-  const formattedTime = formatWeddingTime(wedding.wedding_time)
+  const formattedDate = formatWeddingDate(wedding.wedding_date, locale)
+  const formattedTime = formatWeddingTime(wedding.wedding_time, locale)
   const textAlign = alignment?.text || 'center'
 
   const getCountdownMessage = () => {
-    if (daysUntil > 0) return `${daysUntil} days until the big day`
-    if (daysUntil === 0) return "Today is the day!"
-    return "Just married!"
+    if (daysUntil > 0) {
+      // Use singular or plural based on count
+      const daysLabel = daysUntil === 1 ? t('countdown.day') : t('countdown.days')
+      return `${daysUntil} ${daysLabel.toLowerCase()} ${t('hero.untilBigDay')}`
+    }
+    if (daysUntil === 0) return t('hero.todayIsTheDay')
+    return t('hero.justMarried')
   }
 
   return (
@@ -64,7 +86,7 @@ export function HeroTextContent({
       </h1>
 
       {/* Tagline */}
-      {showTagline && tagline && (
+      {showTagline && displayTagline && (
         <p 
           className={`mb-4 sm:mb-6 md:mb-8 font-light ${
             isOverlay 
@@ -76,7 +98,7 @@ export function HeroTextContent({
             fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
           }}
         >
-          {tagline}
+          {displayTagline}
         </p>
       )}
 
@@ -125,7 +147,7 @@ export function HeroTextContent({
             }}
           >
             <Link href={`/${weddingNameId}/rsvp`}>
-              RSVP Now
+              {t('hero.rsvpNow')}
             </Link>
           </Button>
         )}

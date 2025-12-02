@@ -118,8 +118,6 @@ export const defaultComponentConfigs: Record<ComponentType, Omit<ComponentConfig
       showHowWeMet: true,
       showProposal: true,
       showPhotos: true,
-      howWeMetText: 'Our love story began in the most unexpected way. From the moment we met, we knew there was something special between us. What started as a chance encounter blossomed into a beautiful friendship, and eventually, a love that we knew would last forever.',
-      proposalText: 'The proposal was a magical moment we\'ll cherish forever. Surrounded by the beauty of nature and the warmth of our love, the question was asked and answered with tears of joy. It was the perfect beginning to our next chapter together.',
       photos: []
     },
     alignment: { text: 'left', content: 'center', image: 'center' }

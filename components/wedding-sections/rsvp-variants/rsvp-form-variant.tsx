@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { CheckCircle2, Heart, Users } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseRSVPProps } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function RSVPFormVariant({
   dateId,
@@ -18,6 +19,7 @@ export function RSVPFormVariant({
   showCustomQuestions = false,
   customQuestions = []
 }: BaseRSVPProps) {
+  const { t } = useI18n()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -52,17 +54,17 @@ export function RSVPFormVariant({
           <div className="max-w-2xl mx-auto text-center">
             <CheckCircle2 className="w-20 h-20 mx-auto mb-6 text-green-500" />
             <h2 className="text-3xl font-bold mb-4" style={{ color: theme?.colors?.foreground }}>
-              Thank You!
+              {t('rsvp.thankYou')}
             </h2>
             <p className="text-lg text-gray-600 mb-8">
-              We've received your RSVP and can't wait to celebrate with you!
+              {t('rsvp.responseReceived')}
             </p>
             <Button 
               onClick={() => setIsSubmitted(false)}
               variant="outline"
               style={{ borderColor: theme?.colors?.primary, color: theme?.colors?.primary }}
             >
-              Submit Another RSVP
+              {t('rsvp.updateResponse')}
             </Button>
           </div>
         </div>
@@ -78,10 +80,10 @@ export function RSVPFormVariant({
             <Heart className="w-12 h-12 mx-auto mb-4" style={{ color: theme?.colors?.accent }} />
             <h2 className="text-3xl md:text-4xl font-bold mb-4" 
                 style={{ color: theme?.colors?.foreground }}>
-              RSVP
+              {t('rsvp.title')}
             </h2>
             <p className="text-gray-600">
-              Please let us know if you can join us for our special day
+              {t('rsvp.subtitle')}
             </p>
           </div>
 
@@ -89,30 +91,30 @@ export function RSVPFormVariant({
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium mb-2">Full Name *</label>
+                <label className="block text-sm font-medium mb-2">{t('rsvp.firstName')} *</label>
                 <Input
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter your full name"
+                  placeholder={t('rsvp.firstName')}
                 />
               </div>
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-medium mb-2">Email Address *</label>
+                <label className="block text-sm font-medium mb-2">{t('rsvp.email')} *</label>
                 <Input
                   type="email"
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="Enter your email"
+                  placeholder={t('rsvp.email')}
                 />
               </div>
 
               {/* Attendance */}
               <div>
-                <label className="block text-sm font-medium mb-2">Will you be attending? *</label>
+                <label className="block text-sm font-medium mb-2">{t('rsvp.willYouAttend')} *</label>
                 <div className="space-y-2">
                   <label className="flex items-center">
                     <input
@@ -123,7 +125,7 @@ export function RSVPFormVariant({
                       onChange={(e) => setFormData({ ...formData, attending: e.target.value })}
                       className="mr-2"
                     />
-                    Yes, I'll be there!
+                    {t('rsvp.attending')}
                   </label>
                   <label className="flex items-center">
                     <input
@@ -134,7 +136,7 @@ export function RSVPFormVariant({
                       onChange={(e) => setFormData({ ...formData, attending: e.target.value })}
                       className="mr-2"
                     />
-                    Sorry, I can't make it
+                    {t('rsvp.notAttending')}
                   </label>
                 </div>
               </div>
@@ -142,7 +144,7 @@ export function RSVPFormVariant({
               {/* Guest Count */}
               {formData.attending === 'yes' && (
                 <div>
-                  <label className="block text-sm font-medium mb-2">Number of Guests</label>
+                  <label className="block text-sm font-medium mb-2">{t('rsvp.numberOfGuests')}</label>
                   <div className="flex items-center gap-2">
                     <Users className="w-5 h-5 text-gray-400" />
                     <Input
@@ -160,27 +162,27 @@ export function RSVPFormVariant({
               {formData.attending === 'yes' && showMealPreferences && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Meal Preference</label>
+                    <label className="block text-sm font-medium mb-2">{t('rsvp.mealPreference')}</label>
                     <select
                       value={formData.mealPreference}
                       onChange={(e) => setFormData({ ...formData, mealPreference: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
                     >
-                      <option value="">Select a meal option</option>
-                      <option value="beef">Beef</option>
-                      <option value="chicken">Chicken</option>
-                      <option value="fish">Fish</option>
-                      <option value="vegetarian">Vegetarian</option>
-                      <option value="vegan">Vegan</option>
+                      <option value="">{t('rsvp.selectMealOption')}</option>
+                      <option value="beef">{t('rsvp.beef')}</option>
+                      <option value="chicken">{t('rsvp.chicken')}</option>
+                      <option value="fish">{t('rsvp.fish')}</option>
+                      <option value="vegetarian">{t('rsvp.vegetarian')}</option>
+                      <option value="vegan">{t('rsvp.vegan')}</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">Dietary Restrictions</label>
+                    <label className="block text-sm font-medium mb-2">{t('rsvp.dietaryRestrictions')}</label>
                     <Textarea
                       value={formData.dietaryRestrictions}
                       onChange={(e) => setFormData({ ...formData, dietaryRestrictions: e.target.value })}
-                      placeholder="Please let us know about any allergies or dietary restrictions"
+                      placeholder={t('rsvp.dietaryRestrictionsPlaceholder')}
                       rows={3}
                     />
                   </div>
@@ -214,11 +216,11 @@ export function RSVPFormVariant({
 
               {/* Message */}
               <div>
-                <label className="block text-sm font-medium mb-2">Message for the Couple (Optional)</label>
+                <label className="block text-sm font-medium mb-2">{t('rsvp.message')}</label>
                 <Textarea
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  placeholder="Share your wishes, memories, or anything you'd like to say..."
+                  placeholder={t('rsvp.messagePlaceholder')}
                   rows={4}
                 />
               </div>
@@ -230,7 +232,7 @@ export function RSVPFormVariant({
                 className="w-full py-3 text-lg"
                 style={{ backgroundColor: theme?.colors?.primary }}
               >
-                {isSubmitting ? 'Sending...' : 'Send RSVP'}
+                {isSubmitting ? t('rsvp.submitting') : t('rsvp.submit')}
               </Button>
             </form>
           </Card>

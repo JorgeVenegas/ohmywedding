@@ -5,6 +5,18 @@ import { Settings, ChevronDown, Palette, Type } from 'lucide-react'
 import { Button } from './button'
 import { FONT_PAIRINGS, FONT_PAIRING_CATEGORIES, COLOR_THEMES, COLOR_THEME_CATEGORIES, AVAILABLE_FONTS } from '@/lib/theme-config'
 
+// Helper to create a light tint of a color
+function getLightTint(hex: string, tintAmount: number): string {
+  const num = parseInt(hex.replace('#', ''), 16)
+  const r = (num >> 16) & 255
+  const g = (num >> 8) & 255
+  const b = num & 255
+  const newR = Math.round(r + (255 - r) * tintAmount)
+  const newG = Math.round(g + (255 - g) * tintAmount)
+  const newB = Math.round(b + (255 - b) * tintAmount)
+  return `rgb(${newR}, ${newG}, ${newB})`
+}
+
 interface SiteSettingsMenuProps {
   currentFonts?: { display?: string; heading?: string; body?: string }
   currentColors: { primary: string; secondary: string; accent: string }
@@ -45,6 +57,9 @@ export function SiteSettingsMenu({
   const displayFont = currentFonts.display || 'Playfair Display'
   const headingFont = currentFonts.heading || 'Cormorant Garamond'
   const bodyFont = currentFonts.body || 'Lato'
+  
+  // Use current theme primary color for UI accents
+  const primaryColor = currentColors.primary || '#d4a574'
   
   // Check if current fonts match any pairing
   useEffect(() => {
@@ -162,7 +177,7 @@ export function SiteSettingsMenu({
           >
             {/* Header */}
             <div className="flex items-center gap-2 mb-4 pb-4 border-b border-gray-200">
-              <Settings className="w-5 h-5 text-blue-600" />
+              <Settings className="w-5 h-5" style={{ color: primaryColor }} />
               <h3 className="font-semibold text-gray-900">Site Settings</h3>
             </div>
 
@@ -177,7 +192,7 @@ export function SiteSettingsMenu({
                   {/* Custom Dropdown Button */}
                   <button
                     onClick={() => setIsFontsOpen(!isFontsOpen)}
-                    className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150 hover:border-gray-400 hover:shadow-sm"
+                    className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all duration-150 hover:border-gray-400 hover:shadow-sm"
                   >
                     {selectedFontPairing ? (
                       <div className="flex flex-col gap-2 w-full animate-in fade-in slide-in-from-left-2 duration-200">
@@ -218,7 +233,7 @@ export function SiteSettingsMenu({
                           <button
                             onClick={() => setFontPairingCategoryFilter(null)}
                             className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
-                              fontPairingCategoryFilter === null ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                              fontPairingCategoryFilter === null ? 'bg-gray-800 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                             }`}
                           >
                             All
@@ -228,7 +243,7 @@ export function SiteSettingsMenu({
                               key={cat.id}
                               onClick={() => setFontPairingCategoryFilter(cat.id)}
                               className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
-                                fontPairingCategoryFilter === cat.id ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                fontPairingCategoryFilter === cat.id ? 'bg-gray-800 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                               }`}
                             >
                               {cat.name}
@@ -250,7 +265,7 @@ export function SiteSettingsMenu({
                                     key={pairing.id}
                                     onClick={() => handleFontPairingChange(pairing.id)}
                                     className={`w-full flex flex-col gap-1.5 p-2.5 rounded-lg transition-all duration-150 hover:bg-gray-50 ${
-                                      selectedFontPairingId === pairing.id ? 'bg-blue-50 ring-2 ring-blue-500' : ''
+                                      selectedFontPairingId === pairing.id ? 'bg-gray-100 ring-2 ring-gray-500' : ''
                                     }`}
                                   >
                                     <div className="flex items-center justify-between w-full">
@@ -305,7 +320,7 @@ export function SiteSettingsMenu({
                                 setIsHeadingFontOpen(false)
                                 setIsBodyFontOpen(false)
                               }}
-                              className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150 hover:border-gray-400"
+                              className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm text-left focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all duration-150 hover:border-gray-400"
                             >
                               <div className="flex items-center justify-between">
                                 <span className="truncate" style={{ fontFamily: AVAILABLE_FONTS.find(f => f.name === displayFont)?.family || 'inherit' }}>
@@ -324,7 +339,7 @@ export function SiteSettingsMenu({
                                     <button
                                       onClick={(e) => { e.stopPropagation(); setCustomFontCategoryFilter(null) }}
                                       className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
-                                        customFontCategoryFilter === null ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                        customFontCategoryFilter === null ? 'bg-gray-800 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                                       }`}
                                     >
                                       All
@@ -334,7 +349,7 @@ export function SiteSettingsMenu({
                                         key={cat}
                                         onClick={(e) => { e.stopPropagation(); setCustomFontCategoryFilter(cat) }}
                                         className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
-                                          customFontCategoryFilter === cat ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                          customFontCategoryFilter === cat ? 'bg-gray-800 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                                         }`}
                                       >
                                         {cat}
@@ -363,7 +378,7 @@ export function SiteSettingsMenu({
                                                 setIsDisplayFontOpen(false)
                                               }}
                                               className={`w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-sm ${
-                                                displayFont === font.name ? 'bg-blue-50' : ''
+                                                displayFont === font.name ? 'bg-gray-100' : ''
                                               }`}
                                               style={{ fontFamily: font.family }}
                                             >
@@ -390,7 +405,7 @@ export function SiteSettingsMenu({
                                 setIsDisplayFontOpen(false)
                                 setIsBodyFontOpen(false)
                               }}
-                              className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150 hover:border-gray-400"
+                              className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm text-left focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all duration-150 hover:border-gray-400"
                             >
                               <div className="flex items-center justify-between">
                                 <span className="truncate" style={{ fontFamily: AVAILABLE_FONTS.find(f => f.name === headingFont)?.family || 'inherit' }}>
@@ -409,7 +424,7 @@ export function SiteSettingsMenu({
                                     <button
                                       onClick={(e) => { e.stopPropagation(); setCustomFontCategoryFilter(null) }}
                                       className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
-                                        customFontCategoryFilter === null ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                        customFontCategoryFilter === null ? 'bg-gray-800 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                                       }`}
                                     >
                                       All
@@ -419,7 +434,7 @@ export function SiteSettingsMenu({
                                         key={cat}
                                         onClick={(e) => { e.stopPropagation(); setCustomFontCategoryFilter(cat) }}
                                         className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
-                                          customFontCategoryFilter === cat ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                          customFontCategoryFilter === cat ? 'bg-gray-800 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                                         }`}
                                       >
                                         {cat}
@@ -448,7 +463,7 @@ export function SiteSettingsMenu({
                                                 setIsHeadingFontOpen(false)
                                               }}
                                               className={`w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-sm ${
-                                                headingFont === font.name ? 'bg-blue-50' : ''
+                                                headingFont === font.name ? 'bg-gray-100' : ''
                                               }`}
                                               style={{ fontFamily: font.family }}
                                             >
@@ -475,7 +490,7 @@ export function SiteSettingsMenu({
                                 setIsDisplayFontOpen(false)
                                 setIsHeadingFontOpen(false)
                               }}
-                              className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150 hover:border-gray-400"
+                              className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm text-left focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all duration-150 hover:border-gray-400"
                             >
                               <div className="flex items-center justify-between">
                                 <span className="truncate" style={{ fontFamily: AVAILABLE_FONTS.find(f => f.name === bodyFont)?.family || 'inherit' }}>
@@ -494,7 +509,7 @@ export function SiteSettingsMenu({
                                     <button
                                       onClick={(e) => { e.stopPropagation(); setCustomFontCategoryFilter(null) }}
                                       className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
-                                        customFontCategoryFilter === null ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                        customFontCategoryFilter === null ? 'bg-gray-800 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                                       }`}
                                     >
                                       All
@@ -504,7 +519,7 @@ export function SiteSettingsMenu({
                                         key={cat}
                                         onClick={(e) => { e.stopPropagation(); setCustomFontCategoryFilter(cat) }}
                                         className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
-                                          customFontCategoryFilter === cat ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                          customFontCategoryFilter === cat ? 'bg-gray-800 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                                         }`}
                                       >
                                         {cat}
@@ -533,7 +548,7 @@ export function SiteSettingsMenu({
                                                 setIsBodyFontOpen(false)
                                               }}
                                               className={`w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors text-sm ${
-                                                bodyFont === font.name ? 'bg-blue-50' : ''
+                                                bodyFont === font.name ? 'bg-gray-100' : ''
                                               }`}
                                               style={{ fontFamily: font.family }}
                                             >
@@ -565,7 +580,7 @@ export function SiteSettingsMenu({
                   {/* Custom Dropdown Button */}
                   <button
                     onClick={() => setIsPaletteOpen(!isPaletteOpen)}
-                    className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150 hover:border-gray-400 hover:shadow-sm"
+                    className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all duration-150 hover:border-gray-400 hover:shadow-sm"
                   >
                     {selectedPalette ? (
                       <div className="flex flex-col gap-2 w-full animate-in fade-in slide-in-from-left-2 duration-200">
@@ -609,7 +624,7 @@ export function SiteSettingsMenu({
                           <button
                             onClick={() => setColorPaletteCategoryFilter(null)}
                             className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
-                              colorPaletteCategoryFilter === null ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                              colorPaletteCategoryFilter === null ? 'bg-gray-800 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                             }`}
                           >
                             All
@@ -619,7 +634,7 @@ export function SiteSettingsMenu({
                               key={cat.id}
                               onClick={() => setColorPaletteCategoryFilter(cat.id)}
                               className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
-                                colorPaletteCategoryFilter === cat.id ? 'bg-blue-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                colorPaletteCategoryFilter === cat.id ? 'bg-gray-800 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                               }`}
                             >
                               {cat.name}
@@ -641,7 +656,7 @@ export function SiteSettingsMenu({
                                     key={theme.id}
                                     onClick={() => handleColorThemeChange(theme.id)}
                                     className={`flex flex-col gap-1.5 p-2 rounded-lg transition-all duration-150 hover:bg-gray-50 ${
-                                      selectedPaletteId === theme.id ? 'bg-blue-50 ring-2 ring-blue-500' : ''
+                                      selectedPaletteId === theme.id ? 'bg-gray-100 ring-2 ring-gray-500' : ''
                                     }`}
                                   >
                                     <div className="flex gap-1 w-full">
@@ -702,7 +717,7 @@ export function SiteSettingsMenu({
                             onCustomColorChange('primary', e.target.value)
                             setSelectedPaletteId(null)
                           }}
-                          className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150"
+                          className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all duration-150"
                           placeholder="#000000"
                         />
                       </div>
@@ -724,7 +739,7 @@ export function SiteSettingsMenu({
                             onCustomColorChange('secondary', e.target.value)
                             setSelectedPaletteId(null)
                           }}
-                          className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150"
+                          className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all duration-150"
                           placeholder="#000000"
                         />
                       </div>
@@ -746,7 +761,7 @@ export function SiteSettingsMenu({
                             onCustomColorChange('accent', e.target.value)
                             setSelectedPaletteId(null)
                           }}
-                          className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150"
+                          className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all duration-150"
                           placeholder="#000000"
                         />
                       </div>

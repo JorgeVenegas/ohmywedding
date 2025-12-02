@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card'
 import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseEventDetailsProps, EventItem, buildEventsList, getMapUrl, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function EventDetailsClassicVariant({
   wedding,
@@ -24,9 +25,10 @@ export function EventDetailsClassicVariant({
   useColorBackground = false,
   backgroundColorChoice
 }: BaseEventDetailsProps) {
+  const { t } = useI18n()
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
   
-  const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription)
+  const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription, t)
 
   const renderEventIcon = (iconType: EventItem['iconType']) => {
     const color = isColored ? titleColor : theme?.colors?.primary
@@ -70,7 +72,7 @@ export function EventDetailsClassicVariant({
             color: sectionTitleColor
           }}
         >
-          Event Details
+          {t('eventDetails.title')}
         </h2>
         <div 
           className="w-24 h-1 mx-auto rounded"
@@ -177,7 +179,7 @@ export function EventDetailsClassicVariant({
                 style={{ color: cardTitleColor }}
               >
                 <ExternalLink className="w-4 h-4" />
-                Get Directions
+                {t('eventDetails.getDirections')}
               </a>
             )}
             </div>

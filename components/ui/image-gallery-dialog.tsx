@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { X, Upload, Loader2, Check } from 'lucide-react'
 import { Button } from './button'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 interface Image {
   id: string
@@ -36,6 +37,7 @@ export function ImageGalleryDialog({
   const [mounted, setMounted] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const supabase = createClientComponentClient()
+  const { t } = useI18n()
 
   useEffect(() => {
     setMounted(true)
@@ -185,12 +187,12 @@ export function ImageGalleryDialog({
         <div className="flex items-center justify-between p-6 border-b">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
-              {mode === 'select' ? 'Select Image' : mode === 'upload' ? 'Upload Images' : 'Image Gallery'}
+              {mode === 'select' ? t('imageGallery.selectImage') : mode === 'upload' ? t('imageGallery.uploadImages') : t('imageGallery.title')}
             </h2>
             <p className="text-sm text-gray-600 mt-1">
-              {showSelect && showUpload && 'Upload new images or select from existing'}
-              {showSelect && !showUpload && 'Choose an image from your gallery'}
-              {!showSelect && showUpload && 'Upload images to your gallery'}
+              {showSelect && showUpload && t('imageGallery.uploadOrSelect')}
+              {showSelect && !showUpload && t('imageGallery.chooseFromGallery')}
+              {!showSelect && showUpload && t('imageGallery.uploadToGallery')}
             </p>
           </div>
           <button
@@ -213,7 +215,7 @@ export function ImageGalleryDialog({
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-sm font-medium text-red-800 mb-1">Upload Error</h3>
+                  <h3 className="text-sm font-medium text-red-800 mb-1">{t('imageGallery.uploadError')}</h3>
                   <p className="text-sm text-red-700">{errorMessage}</p>
                 </div>
                 <button
@@ -233,10 +235,10 @@ export function ImageGalleryDialog({
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer">
                   <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                   <p className="text-gray-700 font-medium mb-2">
-                    Click to upload or drag and drop
+                    {t('imageGallery.clickToUpload')}
                   </p>
                   <p className="text-sm text-gray-500">
-                    PNG, JPG, GIF up to 10MB
+                    {t('imageGallery.fileFormats')}
                   </p>
                   <input
                     type="file"
@@ -249,9 +251,9 @@ export function ImageGalleryDialog({
                 </div>
               </label>
               {uploading && (
-                <div className="flex items-center justify-center gap-2 mt-4 text-blue-600">
+                <div className="flex items-center justify-center gap-2 mt-4 text-gray-600">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Uploading...</span>
+                  <span>{t('imageGallery.uploading')}</span>
                 </div>
               )}
             </div>
@@ -265,12 +267,12 @@ export function ImageGalleryDialog({
               </div>
             ) : images.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
-                <p>No images yet. Upload some to get started!</p>
+                <p>{t('imageGallery.noImagesYet')}</p>
               </div>
             ) : (
               <>
                 <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                  Your Images ({images.length})
+                  {t('imageGallery.yourImages')} ({images.length})
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {images.map((image) => (
@@ -279,7 +281,7 @@ export function ImageGalleryDialog({
                       onClick={() => showSelect && handleSelectImage(image.url)}
                       className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
                         selectedImageUrl === image.url
-                          ? 'border-blue-500 ring-2 ring-blue-200'
+                          ? 'border-gray-800 ring-2 ring-gray-300'
                           : 'border-transparent hover:border-gray-300'
                       }`}
                     >
@@ -290,8 +292,8 @@ export function ImageGalleryDialog({
                           className="w-full h-full object-cover"
                         />
                         {selectedImageUrl === image.url && (
-                          <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                            <div className="bg-blue-500 rounded-full p-2">
+                          <div className="absolute inset-0 bg-gray-500/20 flex items-center justify-center">
+                            <div className="bg-gray-800 rounded-full p-2">
                               <Check className="w-5 h-5 text-white" />
                             </div>
                           </div>
@@ -312,13 +314,13 @@ export function ImageGalleryDialog({
         {showSelect && (
           <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
             <Button variant="outline" onClick={onClose}>
-              Cancel
+              {t('imageGallery.cancel')}
             </Button>
             <Button
               onClick={handleConfirmSelection}
               disabled={!selectedImageUrl}
             >
-              Select Image
+              {t('imageGallery.select')}
             </Button>
           </div>
         )}

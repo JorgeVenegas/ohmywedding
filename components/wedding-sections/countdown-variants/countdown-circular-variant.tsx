@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Heart } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseCountdownProps, TimeLeft, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function CountdownCircularVariant({
   weddingDate,
@@ -15,12 +16,16 @@ export function CountdownCircularVariant({
   showHours = true,
   showMinutes = true,
   showSeconds = true,
-  message = "Until we say \"I do\"",
+  message,
   useColorBackground = false,
   backgroundColorChoice
 }: BaseCountdownProps) {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ years: 0, months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 })
   const [isClient, setIsClient] = useState(false)
+  const { t } = useI18n()
+
+  // Use translated default if not provided
+  const displayMessage = message || t('countdown.untilWeSayIDo')
 
   // Get enhanced color scheme with complementary palette colors
   const { bgColor, titleColor, subtitleColor, sectionTextColor, accentColor, contrastColor, colorLight, colorDark, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
@@ -156,14 +161,16 @@ export function CountdownCircularVariant({
     )
   }
 
-  // Build all available units based on config
+  // Build all available units based on config with translated labels
+  const getLabel = (value: number, singular: string, plural: string) => value === 1 ? t(singular) : t(plural)
+
   const allUnits = [
-    { value: timeLeft.years, max: 10, label: 'Years', unit: 'Y', enabled: showYears, hasValue: timeLeft.years > 0 },
-    { value: timeLeft.months, max: 12, label: 'Months', unit: 'Mo', enabled: showMonths, hasValue: timeLeft.years > 0 || timeLeft.months > 0 },
-    { value: timeLeft.days, max: 31, label: 'Days', unit: 'D', enabled: showDays, hasValue: true },
-    { value: timeLeft.hours, max: 24, label: 'Hours', unit: 'H', enabled: showHours, hasValue: true },
-    { value: timeLeft.minutes, max: 60, label: 'Minutes', unit: 'M', enabled: showMinutes, hasValue: true },
-    { value: timeLeft.seconds, max: 60, label: 'Seconds', unit: 'S', enabled: showSeconds, hasValue: true },
+    { value: timeLeft.years, max: 10, label: getLabel(timeLeft.years, 'countdown.year', 'countdown.years'), unit: 'Y', enabled: showYears, hasValue: timeLeft.years > 0 },
+    { value: timeLeft.months, max: 12, label: getLabel(timeLeft.months, 'countdown.month', 'countdown.months'), unit: 'Mo', enabled: showMonths, hasValue: timeLeft.years > 0 || timeLeft.months > 0 },
+    { value: timeLeft.days, max: 31, label: getLabel(timeLeft.days, 'countdown.day', 'countdown.days'), unit: 'D', enabled: showDays, hasValue: true },
+    { value: timeLeft.hours, max: 24, label: getLabel(timeLeft.hours, 'countdown.hour', 'countdown.hours'), unit: 'H', enabled: showHours, hasValue: true },
+    { value: timeLeft.minutes, max: 60, label: getLabel(timeLeft.minutes, 'countdown.minute', 'countdown.minutes'), unit: 'M', enabled: showMinutes, hasValue: true },
+    { value: timeLeft.seconds, max: 60, label: getLabel(timeLeft.seconds, 'countdown.second', 'countdown.seconds'), unit: 'S', enabled: showSeconds, hasValue: true },
   ]
 
   // Smart display: show 4 most relevant units that are enabled
@@ -192,7 +199,7 @@ export function CountdownCircularVariant({
                            theme?.fonts?.heading === 'script' ? 'cursive' : 'sans-serif'
               }}
             >
-              {message}
+              {displayMessage}
             </h2>
             <Heart className="w-5 h-5 ml-2 fill-current" style={{ color: decorColor }} />
           </div>

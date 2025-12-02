@@ -216,16 +216,6 @@ export default function CreateWeddingPage() {
         .map(section => {
           const props = { ...section.props }
           
-          // Inject default values for our-story if fields are empty
-          if (section.id === 'our-story') {
-            if (!props.howWeMetText || props.howWeMetText.trim() === '') {
-              props.howWeMetText = "Our love story began in the most unexpected way. From the moment we met, we knew there was something special between us. What started as a chance encounter blossomed into a beautiful friendship, and eventually, a love that we knew would last forever."
-            }
-            if (!props.proposalText || props.proposalText.trim() === '') {
-              props.proposalText = "The proposal was a magical moment we'll cherish forever. Surrounded by the beauty of nature and the warmth of our love, the question was asked and answered with tears of joy. It was the perfect beginning to our next chapter together."
-            }
-          }
-          
           return {
             id: section.id,
             type: section.id,

@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card'
 import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseEventDetailsProps, EventItem, buildEventsList, getMapUrl, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function EventDetailsTimelineVariant({
   wedding,
@@ -25,9 +26,10 @@ export function EventDetailsTimelineVariant({
   useColorBackground = false,
   backgroundColorChoice
 }: BaseEventDetailsProps) {
+  const { t } = useI18n()
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
   
-  const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription)
+  const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription, t)
 
   const renderEventIcon = (iconType: EventItem['iconType']) => {
     const iconProps = { className: "w-6 h-6", style: { color: 'white' } }
@@ -67,7 +69,7 @@ export function EventDetailsTimelineVariant({
             className="text-sm uppercase tracking-[0.3em] mb-3"
             style={{ color: isColored ? sectionTextColorAlt : theme?.colors?.accent }}
           >
-            Schedule
+            {t('eventDetails.subtitle')}
           </p>
           <h2 
             className="text-4xl md:text-5xl font-bold"
@@ -77,7 +79,7 @@ export function EventDetailsTimelineVariant({
               color: sectionTitleColor
             }}
           >
-            Order of Events
+            {t('eventDetails.title')}
           </h2>
         </div>
 
@@ -201,7 +203,7 @@ export function EventDetailsTimelineVariant({
                         className="flex items-center gap-1 text-sm hover:underline"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
-                        Get Directions
+                        {t('eventDetails.getDirections')}
                       </a>
                     </Button>
                   )}

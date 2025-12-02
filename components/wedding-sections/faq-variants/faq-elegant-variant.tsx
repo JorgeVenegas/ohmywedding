@@ -3,20 +3,27 @@
 import React, { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { BaseFAQProps, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function FAQElegantVariant({
   theme,
   questions = [],
   allowMultipleOpen = false,
-  sectionTitle = "Questions & Answers",
-  sectionSubtitle = "We've gathered answers to your most common questions",
+  sectionTitle,
+  sectionSubtitle,
   showContactNote = true,
-  contactNoteText = "For any other inquiries, please don't hesitate to reach out.",
+  contactNoteText,
   useColorBackground = false,
   backgroundColorChoice = 'none'
 }: BaseFAQProps) {
   const [openItems, setOpenItems] = useState<Set<number>>(new Set())
   const { bgColor, titleColor, subtitleColor, bodyTextColor, mutedTextColor, accentColor, isColored, primary } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
+  const { t } = useI18n()
+
+  // Use translated defaults if not provided
+  const title = sectionTitle || t('faq.title')
+  const subtitle = sectionSubtitle || t('faq.subtitle')
+  const contactNote = contactNoteText || t('faq.contactNote')
 
   const faqItems = questions || []
   const hasQuestions = faqItems.length > 0
@@ -68,9 +75,9 @@ export function FAQElegantVariant({
               fontFamily: theme?.fonts?.script || 'Georgia, serif'
             }}
           >
-            {sectionTitle}
+            {title}
           </h2>
-          {sectionSubtitle && (
+          {subtitle && (
             <p 
               className="text-base sm:text-lg font-light"
               style={{ 
@@ -78,7 +85,7 @@ export function FAQElegantVariant({
                 fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
               }}
             >
-              {sectionSubtitle}
+              {subtitle}
             </p>
           )}
         </div>
@@ -98,13 +105,13 @@ export function FAQElegantVariant({
                 fontFamily: theme?.fonts?.script || 'Georgia, serif'
               }}
             >
-              No questions yet
+              {t('faq.noFaqsYet')}
             </p>
             <p 
               className="text-sm"
               style={{ color: isColored ? 'rgba(255,255,255,0.4)' : '#9ca3af' }}
             >
-              FAQs will appear here once added
+              {t('faq.questionsWillAppear')}
             </p>
           </div>
         ) : (
@@ -164,7 +171,7 @@ export function FAQElegantVariant({
         )}
 
         {/* Contact Note - Elegant styling */}
-        {showContactNote && contactNoteText && (
+        {showContactNote && contactNote && (
           <div className="mt-12 sm:mt-16 text-center">
             {/* Decorative line */}
             <div 
@@ -178,7 +185,7 @@ export function FAQElegantVariant({
                 fontFamily: theme?.fonts?.script || 'Georgia, serif'
               }}
             >
-              {contactNoteText}
+              {contactNote}
             </p>
           </div>
         )}

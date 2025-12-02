@@ -947,7 +947,7 @@ export function SettingsPanel({
                                 }}
                                 className={`flex-1 py-2 rounded-md text-xs font-medium transition-all ${
                                   navBackgroundColorChoice === colorChoice
-                                    ? 'ring-2 ring-offset-1 ring-blue-500'
+                                    ? 'ring-2 ring-blue-500 ring-offset-1'
                                     : 'hover:opacity-80'
                                 }`}
                                 style={{
@@ -981,7 +981,7 @@ export function SettingsPanel({
                                 }}
                                 className={`flex-1 py-2 rounded-md text-xs font-medium transition-all ${
                                   navBackgroundColorChoice === colorChoice
-                                    ? 'ring-2 ring-offset-1 ring-blue-500'
+                                    ? 'ring-2 ring-blue-500 ring-offset-1'
                                     : 'hover:opacity-80'
                                 }`}
                                 style={{
@@ -1014,7 +1014,7 @@ export function SettingsPanel({
                                 }}
                                 className={`flex-1 py-2 rounded-md text-xs font-medium transition-all ${
                                   navBackgroundColorChoice === colorChoice
-                                    ? 'ring-2 ring-offset-1 ring-blue-500'
+                                    ? 'ring-2 ring-blue-500 ring-offset-1'
                                     : 'hover:opacity-80'
                                 }`}
                                 style={{

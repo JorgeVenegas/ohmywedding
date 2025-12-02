@@ -171,6 +171,39 @@ export function HeroSection({
     backgroundColorChoice
   })
 
+  // Helper to check if tagline is an old hardcoded English default
+  const isOldTaglineDefault = (text: string | undefined) => {
+    if (!text) return false
+    const oldDefaults = [
+      'Join us as we tie the knot',
+      'We\'re getting married'
+    ]
+    return oldDefaults.some(d => text.startsWith(d))
+  }
+
+  // Get tagline: filter out old English defaults to use i18n, preserve custom text
+  const getTagline = () => {
+    // Check the actual customConfig first (before createVariantConfig merges defaults)
+    const customTagline = customConfig?.tagline
+    
+    // If customConfig has a value (including empty string), check it
+    if (customTagline !== undefined) {
+      // Empty string means user wants to use default
+      if (customTagline === '') return undefined
+      // If it's an old default, use i18n instead
+      if (isOldTaglineDefault(customTagline)) return undefined
+      // Otherwise use the custom value
+      return customTagline
+    }
+    
+    // No custom config value - check the prop, but filter out old defaults
+    if (isOldTaglineDefault(tagline)) return undefined
+    
+    // If tagline prop is truly custom (not the default parameter), use it
+    // But since we can't distinguish, filter out the known default
+    return undefined  // Let hero-text-content use i18n default
+  }
+
   const commonProps = {
     wedding,
     weddingNameId,
@@ -178,7 +211,7 @@ export function HeroSection({
     theme,
     alignment: effectiveAlignment,
     showTagline: config.showTagline ?? true,
-    tagline: config.tagline || "Join us as we tie the knot!",
+    tagline: getTagline(),
     showCountdown: config.showCountdown ?? true,
     showRSVPButton: config.showRSVPButton ?? true,
     heroImageUrl: config.heroImageUrl || 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2387&q=80'
@@ -246,6 +279,13 @@ export function HeroSection({
   const onEditClick = (sectionId: string, sectionType: string) => {
     // Use effectiveVariant instead of heroVariant to show the actual displayed variant
     if (customizeContext) {
+      // For tagline, preserve empty strings - don't fall back to props with old defaults
+      const getEditTagline = () => {
+        if (config.tagline !== undefined) return config.tagline
+        // Only use prop if it's not an old default
+        return isOldTaglineDefault(tagline) ? '' : (tagline || '')
+      }
+      
       const configToPass = {
         variant: effectiveVariant,  // Use the actual displayed variant
         imagePosition: config.imagePosition || (alignment?.imagePosition === 'split-right' ? 'right' : imagePosition),
@@ -260,7 +300,7 @@ export function HeroSection({
         showDecorations: config.showDecorations ?? showDecorations,
         textAlignment: config.textAlignment || textAlignment,
         showTagline: config.showTagline ?? showTagline,
-        tagline: config.tagline || tagline,
+        tagline: getEditTagline(),
         showCountdown: config.showCountdown ?? showCountdown,
         showRSVPButton: config.showRSVPButton ?? showRSVPButton,
         heroImageUrl: config.heroImageUrl || heroImageUrl,

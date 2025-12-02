@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 interface CustomQuestion {
   id: string
@@ -18,6 +19,8 @@ interface CustomQuestion {
 interface RSVPConfigFormProps {
   config: {
     variant?: string
+    sectionTitle?: string
+    sectionSubtitle?: string
     textAlignment?: string
     showMealPreferences?: boolean
     showCustomQuestions?: boolean
@@ -28,9 +31,11 @@ interface RSVPConfigFormProps {
 }
 
 export function RSVPConfigForm({ config, onChange }: RSVPConfigFormProps) {
+  const { t } = useI18n()
+  
   const variants = [
-    { value: 'cta', label: 'Call to Action', description: 'Simple button linking to dedicated RSVP page' },
-    { value: 'form', label: 'Embedded Form', description: 'Full RSVP form with meal preferences and custom questions' }
+    { value: 'cta', label: t('config.callToAction'), description: t('config.callToActionDesc') },
+    { value: 'form', label: t('config.embeddedForm'), description: t('config.embeddedFormDesc') }
   ]
 
   const addCustomQuestion = () => {
@@ -63,23 +68,52 @@ export function RSVPConfigForm({ config, onChange }: RSVPConfigFormProps) {
     <div className="space-y-6">
       {/* Variant Selection */}
       <VariantDropdown
-        label="RSVP Style"
+        label={t('config.rsvpStyle')}
         value={config.variant || 'cta'}
         options={variants}
         onChange={(value) => onChange('variant', value)}
-        placeholder="Choose RSVP style"
+        placeholder={t('config.rsvpStyle')}
       />
+
+      {/* Section Title & Subtitle */}
+      <div className="p-4 border border-gray-200 rounded-lg space-y-4">
+        <h4 className="font-medium text-gray-900 text-sm">{t('config.sectionContent')}</h4>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {t('config.sectionTitle')}
+          </label>
+          <Input
+            type="text"
+            value={config.sectionTitle || ''}
+            onChange={(e) => onChange('sectionTitle', e.target.value)}
+            placeholder={t('rsvp.title')}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {t('config.sectionSubtitle')}
+          </label>
+          <Input
+            type="text"
+            value={config.sectionSubtitle || ''}
+            onChange={(e) => onChange('sectionSubtitle', e.target.value)}
+            placeholder={t('rsvp.subtitle')}
+          />
+        </div>
+      </div>
 
       {/* Text Alignment */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Text Alignment
+          {t('config.textAlignment')}
         </label>
         <div className="flex gap-2">
           {[
-            { value: 'left', label: 'Left' },
-            { value: 'center', label: 'Center' },
-            { value: 'right', label: 'Right' }
+            { value: 'left', label: t('config.left') },
+            { value: 'center', label: t('config.center') },
+            { value: 'right', label: t('config.right') }
           ].map((alignment) => (
             <Button
               key={alignment.value}
@@ -96,11 +130,11 @@ export function RSVPConfigForm({ config, onChange }: RSVPConfigFormProps) {
       {/* Form Options - only show if embedded form is selected */}
       {config.variant === 'form' && (
         <div className="space-y-4">
-          <h4 className="font-medium text-gray-900">Form Options</h4>
+          <h4 className="font-medium text-gray-900">{t('config.formOptions')}</h4>
           
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-gray-700">
-              Show Meal Preferences
+              {t('config.showMealPreferences')}
             </label>
             <Switch
               checked={config.showMealPreferences ?? true}
@@ -110,7 +144,7 @@ export function RSVPConfigForm({ config, onChange }: RSVPConfigFormProps) {
 
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-gray-700">
-              Enable Custom Questions
+              {t('config.enableCustomQuestions')}
             </label>
             <Switch
               checked={config.showCustomQuestions ?? false}
@@ -122,13 +156,13 @@ export function RSVPConfigForm({ config, onChange }: RSVPConfigFormProps) {
           {config.showCustomQuestions && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h5 className="font-medium text-gray-900">Custom Questions</h5>
+                <h5 className="font-medium text-gray-900">{t('config.customQuestions')}</h5>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={addCustomQuestion}
                 >
-                  Add Question
+                  {t('config.addQuestion')}
                 </Button>
               </div>
 
@@ -136,19 +170,19 @@ export function RSVPConfigForm({ config, onChange }: RSVPConfigFormProps) {
                 <div key={question.id} className="p-4 border border-gray-200 rounded-lg space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-700">
-                      Question {index + 1}
+                      {t('config.question')} {index + 1}
                     </span>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => removeCustomQuestion(index)}
                     >
-                      Remove
+                      {t('config.removeQuestion')}
                     </Button>
                   </div>
 
                   <Input
-                    placeholder="Enter your question..."
+                    placeholder={t('config.enterQuestion')}
                     value={question.question}
                     onChange={(e) => updateCustomQuestion(index, 'question', e.target.value)}
                   />
@@ -159,10 +193,10 @@ export function RSVPConfigForm({ config, onChange }: RSVPConfigFormProps) {
                       onChange={(e) => updateCustomQuestion(index, 'type', e.target.value)}
                       className="px-3 py-2 border border-gray-300 rounded-md text-sm"
                     >
-                      <option value="text">Text Input</option>
-                      <option value="textarea">Text Area</option>
-                      <option value="select">Dropdown</option>
-                      <option value="checkbox">Checkbox</option>
+                      <option value="text">{t('config.textInput')}</option>
+                      <option value="textarea">{t('config.textArea')}</option>
+                      <option value="select">{t('config.dropdown')}</option>
+                      <option value="checkbox">{t('config.checkbox')}</option>
                     </select>
 
                     <div className="flex items-center gap-2">
@@ -172,14 +206,14 @@ export function RSVPConfigForm({ config, onChange }: RSVPConfigFormProps) {
                         onChange={(e) => updateCustomQuestion(index, 'required', e.target.checked)}
                         className="rounded"
                       />
-                      <label className="text-sm text-gray-700">Required</label>
+                      <label className="text-sm text-gray-700">{t('config.required')}</label>
                     </div>
                   </div>
 
                   {(question.type === 'select' || question.type === 'checkbox') && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Options (one per line)
+                        {t('config.optionsOnePer')}
                       </label>
                       <Textarea
                         value={(question.options || []).join('\n')}

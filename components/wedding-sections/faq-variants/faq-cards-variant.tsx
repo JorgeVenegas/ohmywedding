@@ -2,18 +2,25 @@
 
 import React from 'react'
 import { BaseFAQProps, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function FAQCardsVariant({
   theme,
   questions = [],
-  sectionTitle = "Frequently Asked Questions",
-  sectionSubtitle = "Everything you need to know about our special day",
+  sectionTitle,
+  sectionSubtitle,
   showContactNote = true,
-  contactNoteText = "Can't find what you're looking for? Please reach out to us directly.",
+  contactNoteText,
   useColorBackground = false,
   backgroundColorChoice = 'none'
 }: BaseFAQProps) {
   const { bgColor, titleColor, subtitleColor, bodyTextColor, mutedTextColor, accentColor, isColored, primary } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
+  const { t } = useI18n()
+
+  // Use translated defaults if not provided
+  const title = sectionTitle || t('faq.title')
+  const subtitle = sectionSubtitle || t('faq.subtitle')
+  const contactNote = contactNoteText || t('faq.contactNote')
 
   const faqItems = questions || []
   const hasQuestions = faqItems.length > 0
@@ -39,9 +46,9 @@ export function FAQCardsVariant({
               fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
             }}
           >
-            {sectionTitle}
+            {title}
           </h2>
-          {sectionSubtitle && (
+          {subtitle && (
             <p 
               className="text-base sm:text-lg max-w-xl mx-auto"
               style={{ 
@@ -49,7 +56,7 @@ export function FAQCardsVariant({
                 fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
               }}
             >
-              {sectionSubtitle}
+              {subtitle}
             </p>
           )}
         </div>
@@ -67,13 +74,13 @@ export function FAQCardsVariant({
               className="text-lg font-medium mb-1"
               style={{ color: isColored ? 'rgba(255,255,255,0.7)' : '#6b7280' }}
             >
-              No FAQs yet
+              {t('faq.noFaqsYet')}
             </p>
             <p 
               className="text-sm"
               style={{ color: isColored ? 'rgba(255,255,255,0.5)' : '#9ca3af' }}
             >
-              Questions will appear here once added
+              {t('faq.questionsWillAppear')}
             </p>
           </div>
         ) : (
@@ -126,7 +133,7 @@ export function FAQCardsVariant({
         )}
 
         {/* Contact Note */}
-        {showContactNote && contactNoteText && (
+        {showContactNote && contactNote && (
           <div 
             className="mt-10 sm:mt-14 text-center p-6 sm:p-8 rounded-xl"
             style={{ 
@@ -141,7 +148,7 @@ export function FAQCardsVariant({
                 fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
               }}
             >
-              {contactNoteText}
+              {contactNote}
             </p>
           </div>
         )}

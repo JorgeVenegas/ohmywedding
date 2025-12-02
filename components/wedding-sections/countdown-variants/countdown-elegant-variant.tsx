@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Heart } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseCountdownProps, TimeLeft, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function CountdownElegantVariant({
   weddingDate,
@@ -15,12 +16,16 @@ export function CountdownElegantVariant({
   showHours = true,
   showMinutes = true,
   showSeconds = true,
-  message = "Until we say \"I do\"",
+  message,
   useColorBackground = false,
   backgroundColorChoice
 }: BaseCountdownProps) {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ years: 0, months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 })
   const [isClient, setIsClient] = useState(false)
+  const { t } = useI18n()
+
+  // Use translated default if not provided
+  const displayMessage = message || t('countdown.untilWeSayIDo')
 
   // Get enhanced color scheme with complementary palette colors
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, contrastColor, colorLight, colorDark, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
@@ -85,13 +90,16 @@ export function CountdownElegantVariant({
     )
   }
 
+  // Build all available units with translated labels
+  const getLabel = (value: number, singular: string, plural: string) => value === 1 ? t(singular) : t(plural)
+
   const allUnits = [
-    { value: timeLeft.years, label: 'Years', enabled: showYears, hasValue: timeLeft.years > 0 },
-    { value: timeLeft.months, label: 'Months', enabled: showMonths, hasValue: timeLeft.years > 0 || timeLeft.months > 0 },
-    { value: timeLeft.days, label: 'Days', enabled: showDays, hasValue: true },
-    { value: timeLeft.hours, label: 'Hours', enabled: showHours, hasValue: true },
-    { value: timeLeft.minutes, label: 'Minutes', enabled: showMinutes, hasValue: true },
-    { value: timeLeft.seconds, label: 'Seconds', enabled: showSeconds, hasValue: true },
+    { value: timeLeft.years, label: getLabel(timeLeft.years, 'countdown.year', 'countdown.years'), enabled: showYears, hasValue: timeLeft.years > 0 },
+    { value: timeLeft.months, label: getLabel(timeLeft.months, 'countdown.month', 'countdown.months'), enabled: showMonths, hasValue: timeLeft.years > 0 || timeLeft.months > 0 },
+    { value: timeLeft.days, label: getLabel(timeLeft.days, 'countdown.day', 'countdown.days'), enabled: showDays, hasValue: true },
+    { value: timeLeft.hours, label: getLabel(timeLeft.hours, 'countdown.hour', 'countdown.hours'), enabled: showHours, hasValue: true },
+    { value: timeLeft.minutes, label: getLabel(timeLeft.minutes, 'countdown.minute', 'countdown.minutes'), enabled: showMinutes, hasValue: true },
+    { value: timeLeft.seconds, label: getLabel(timeLeft.seconds, 'countdown.second', 'countdown.seconds'), enabled: showSeconds, hasValue: true },
   ]
 
   const enabledUnits = allUnits.filter(u => u.enabled && u.hasValue)
@@ -126,7 +134,7 @@ export function CountdownElegantVariant({
               color: isColored ? sectionTextColorAlt : undefined
             }}
           >
-            {message}
+            {displayMessage}
           </h2>
 
           <div className="flex justify-center items-start flex-wrap gap-6 md:gap-10">

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Calendar, MapPin, Clock, Users, Save, Loader2 } from 'lucide-react'
 import { usePageConfigSafe } from '@/components/contexts/page-config-context'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 interface WeddingDetails {
   partner1_first_name: string
@@ -33,6 +34,7 @@ export function WeddingDetailsForm({ weddingNameId, initialDetails, onSave }: We
   const [hasChanges, setHasChanges] = useState(false)
   
   const pageConfigContext = usePageConfigSafe()
+  const { t } = useI18n()
 
   // Initialize wedding details in context
   useEffect(() => {
@@ -79,14 +81,14 @@ export function WeddingDetailsForm({ weddingNameId, initialDetails, onSave }: We
         throw new Error(errorData.error || 'Failed to save wedding details')
       }
 
-      setSaveMessage({ type: 'success', text: 'Wedding details saved successfully!' })
+      setSaveMessage({ type: 'success', text: t('config.savedSuccessfully') })
       onSave?.(details)
       setHasChanges(false)
     } catch (error) {
       console.error('Error saving wedding details:', error)
       setSaveMessage({ 
         type: 'error', 
-        text: error instanceof Error ? error.message : 'Failed to save wedding details' 
+        text: error instanceof Error ? error.message : t('config.failedToSave') 
       })
     } finally {
       setIsSaving(false)
@@ -99,25 +101,25 @@ export function WeddingDetailsForm({ weddingNameId, initialDetails, onSave }: We
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
           <Users className="w-4 h-4" />
-          Partner Names
+          {t('config.partnerNames')}
         </h3>
         
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Partner 1 First Name</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('config.partner1FirstName')}</label>
             <Input
               value={details.partner1_first_name || ''}
               onChange={(e) => handleChange('partner1_first_name', e.target.value)}
-              placeholder="First name"
+              placeholder={t('config.firstName')}
               className="h-9"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Partner 1 Last Name</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('config.partner1LastName')}</label>
             <Input
               value={details.partner1_last_name || ''}
               onChange={(e) => handleChange('partner1_last_name', e.target.value)}
-              placeholder="Last name"
+              placeholder={t('config.lastName')}
               className="h-9"
             />
           </div>
@@ -125,20 +127,20 @@ export function WeddingDetailsForm({ weddingNameId, initialDetails, onSave }: We
         
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Partner 2 First Name</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('config.partner2FirstName')}</label>
             <Input
               value={details.partner2_first_name || ''}
               onChange={(e) => handleChange('partner2_first_name', e.target.value)}
-              placeholder="First name"
+              placeholder={t('config.firstName')}
               className="h-9"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Partner 2 Last Name</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('config.partner2LastName')}</label>
             <Input
               value={details.partner2_last_name || ''}
               onChange={(e) => handleChange('partner2_last_name', e.target.value)}
-              placeholder="Last name"
+              placeholder={t('config.lastName')}
               className="h-9"
             />
           </div>
@@ -149,11 +151,11 @@ export function WeddingDetailsForm({ weddingNameId, initialDetails, onSave }: We
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
           <Calendar className="w-4 h-4" />
-          Wedding Date
+          {t('config.weddingDate')}
         </h3>
         
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Date</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">{t('config.date')}</label>
           <Input
             type="date"
             value={details.wedding_date || ''}
@@ -167,12 +169,12 @@ export function WeddingDetailsForm({ weddingNameId, initialDetails, onSave }: We
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
           <MapPin className="w-4 h-4" />
-          Ceremony
+          {t('config.ceremony')}
         </h3>
         
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Time</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('config.time')}</label>
             <Input
               type="time"
               value={details.wedding_time || ''}
@@ -181,7 +183,7 @@ export function WeddingDetailsForm({ weddingNameId, initialDetails, onSave }: We
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Venue Name</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('config.venueName')}</label>
             <Input
               value={details.ceremony_venue_name || ''}
               onChange={(e) => handleChange('ceremony_venue_name', e.target.value)}
@@ -190,11 +192,11 @@ export function WeddingDetailsForm({ weddingNameId, initialDetails, onSave }: We
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Address</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('config.address')}</label>
             <Input
               value={details.ceremony_venue_address || ''}
               onChange={(e) => handleChange('ceremony_venue_address', e.target.value)}
-              placeholder="Full address"
+              placeholder={t('config.fullAddress')}
               className="h-9"
             />
           </div>
@@ -205,12 +207,12 @@ export function WeddingDetailsForm({ weddingNameId, initialDetails, onSave }: We
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
           <MapPin className="w-4 h-4" />
-          Reception
+          {t('config.reception')}
         </h3>
         
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Time</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('config.time')}</label>
             <Input
               type="time"
               value={details.reception_time || ''}
@@ -219,7 +221,7 @@ export function WeddingDetailsForm({ weddingNameId, initialDetails, onSave }: We
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Venue Name</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('config.venueName')}</label>
             <Input
               value={details.reception_venue_name || ''}
               onChange={(e) => handleChange('reception_venue_name', e.target.value)}
@@ -228,11 +230,11 @@ export function WeddingDetailsForm({ weddingNameId, initialDetails, onSave }: We
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Address</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('config.address')}</label>
             <Input
               value={details.reception_venue_address || ''}
               onChange={(e) => handleChange('reception_venue_address', e.target.value)}
-              placeholder="Full address"
+              placeholder={t('config.fullAddress')}
               className="h-9"
             />
           </div>
@@ -259,12 +261,12 @@ export function WeddingDetailsForm({ weddingNameId, initialDetails, onSave }: We
         {isSaving ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Saving...
+            {t('editing.saving')}
           </>
         ) : (
           <>
             <Save className="w-4 h-4 mr-2" />
-            {hasChanges ? 'Save Changes' : 'No Changes'}
+            {hasChanges ? t('editing.saveChanges') : t('config.noChanges')}
           </>
         )}
       </Button>

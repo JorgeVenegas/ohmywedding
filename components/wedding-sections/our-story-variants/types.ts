@@ -19,6 +19,8 @@ export interface TimelineEvent {
 export interface BaseOurStoryProps {
   theme?: Partial<ThemeConfig>
   alignment?: Partial<AlignmentConfig>
+  sectionTitle?: string
+  sectionSubtitle?: string
   showHowWeMet?: boolean
   showProposal?: boolean
   showPhotos?: boolean

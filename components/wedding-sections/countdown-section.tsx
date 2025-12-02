@@ -15,6 +15,17 @@ import {
   VariantOption
 } from './base-section'
 import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
+import { useI18n } from '@/components/contexts/i18n-context'
+
+// Helper to detect old hardcoded English defaults
+function isOldHardcodedDefault(value: string | undefined): boolean {
+  if (!value) return false
+  const oldDefaults = [
+    'Until we say "I do"',
+    "Until we say \"I do\""
+  ]
+  return oldDefaults.includes(value)
+}
 
 interface CountdownSectionProps extends BaseCountdownProps {
   variant?: 'classic' | 'minimal' | 'circular' | 'elegant' | 'modern'
@@ -31,10 +42,17 @@ export function CountdownSection({
   showHours = true,
   showMinutes = true,
   showSeconds = true,
-  message = "Until we say \"I do\"",
+  sectionTitle,
+  sectionSubtitle,
+  message,
   variant = 'classic',
   showVariantSwitcher = true
 }: CountdownSectionProps) {
+  const { t } = useI18n()
+  
+  // Use translated default for message
+  const defaultMessage = t('countdown.untilWeSayIDo')
+  
   // Use standardized section behavior
   const {
     activeVariant,
@@ -81,10 +99,24 @@ export function CountdownSection({
     showHours,
     showMinutes,
     showSeconds,
+    sectionTitle,
+    sectionSubtitle,
     message,
     useColorBackground: false,
     backgroundColorChoice: 'none'
   })
+
+  // Get the message - use translated default if not set or is old hardcoded English
+  const getTranslatedMessage = () => {
+    const configMessage = config.message
+    if (configMessage && !isOldHardcodedDefault(configMessage)) {
+      return configMessage
+    }
+    if (message && !isOldHardcodedDefault(message)) {
+      return message
+    }
+    return defaultMessage
+  }
 
   const commonProps = {
     weddingDate,
@@ -96,7 +128,9 @@ export function CountdownSection({
     showHours: config.showHours ?? true,
     showMinutes: config.showMinutes ?? true,
     showSeconds: config.showSeconds ?? true,
-    message: config.message || message,
+    sectionTitle: config.sectionTitle || sectionTitle,
+    sectionSubtitle: config.sectionSubtitle || sectionSubtitle,
+    message: getTranslatedMessage(),
     useColorBackground: config.useColorBackground ?? false,
     backgroundColorChoice: config.backgroundColorChoice || 'none'
   }
@@ -125,7 +159,9 @@ export function CountdownSection({
       showHours: config.showHours ?? showHours,
       showMinutes: config.showMinutes ?? showMinutes,
       showSeconds: config.showSeconds ?? showSeconds,
-      message: config.message || message,
+      sectionTitle: config.sectionTitle || sectionTitle,
+      sectionSubtitle: config.sectionSubtitle || sectionSubtitle,
+      message: getTranslatedMessage(),
       useColorBackground: config.useColorBackground ?? false,
       backgroundColorChoice: config.backgroundColorChoice || 'none'
     })

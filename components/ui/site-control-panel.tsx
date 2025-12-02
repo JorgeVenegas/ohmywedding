@@ -106,7 +106,7 @@ export function SiteControlPanel({
               <select
                 value={currentStyle}
                 onChange={(e) => onStyleChange(e.target.value)}
-                className="appearance-none bg-white border border-gray-300 rounded-md px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="appearance-none bg-white border border-gray-300 rounded-md px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
               >
                 {WEDDING_STYLES.map((style) => (
                   <option key={style.id} value={style.id}>
@@ -124,7 +124,7 @@ export function SiteControlPanel({
             <div className="relative">
               <select
                 onChange={(e) => handleColorThemeChange(e.target.value)}
-                className="appearance-none bg-white border border-gray-300 rounded-md px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="appearance-none bg-white border border-gray-300 rounded-md px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
               >
                 <option value="">Choose Theme</option>
                 {COLOR_THEMES.map((theme) => (
@@ -176,12 +176,12 @@ export function SiteControlPanel({
                   disabled={component.essential}
                   className={`px-3 py-1 text-xs rounded-md border transition-colors ${
                     enabledComponents.includes(component.id)
-                      ? 'bg-blue-100 border-blue-300 text-blue-800'
+                      ? 'bg-gray-100 border-gray-400 text-gray-800'
                       : 'bg-gray-100 border-gray-300 text-gray-600'
                   } ${
                     component.essential
                       ? 'opacity-75 cursor-not-allowed'
-                      : 'hover:bg-blue-50 cursor-pointer'
+                      : 'hover:bg-gray-100 cursor-pointer'
                   }`}
                   title={component.essential ? 'Essential component' : 'Click to toggle'}
                 >

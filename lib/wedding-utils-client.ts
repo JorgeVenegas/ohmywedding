@@ -1,32 +1,40 @@
 // Client-side utility functions for wedding data formatting
 // These functions don't require server components and can be used in client components
 
-export function formatWeddingDate(dateString: string | null | undefined): string {
-  if (!dateString) return 'Date TBD'
+import { Locale } from './i18n'
+
+// Locale mapping for date/time formatting
+const localeMap: Record<Locale, string> = {
+  en: 'en-US',
+  es: 'es-ES'
+}
+
+export function formatWeddingDate(dateString: string | null | undefined, locale: Locale = 'en'): string {
+  if (!dateString) return locale === 'es' ? 'Fecha por confirmar' : 'Date TBD'
   
   const date = new Date(dateString)
-  if (isNaN(date.getTime())) return 'Date TBD'
+  if (isNaN(date.getTime())) return locale === 'es' ? 'Fecha por confirmar' : 'Date TBD'
   
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString(localeMap[locale], {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   })
 }
 
-export function formatWeddingTime(timeString: string | null | undefined): string {
-  if (!timeString) return 'Time TBD'
+export function formatWeddingTime(timeString: string | null | undefined, locale: Locale = 'en'): string {
+  if (!timeString) return locale === 'es' ? 'Hora por confirmar' : 'Time TBD'
   
   const [hours, minutes] = timeString.split(':')
-  if (!hours || !minutes) return 'Time TBD'
+  if (!hours || !minutes) return locale === 'es' ? 'Hora por confirmar' : 'Time TBD'
   
   const date = new Date()
   date.setHours(parseInt(hours), parseInt(minutes))
   
-  return date.toLocaleTimeString('en-US', {
+  return date.toLocaleTimeString(localeMap[locale], {
     hour: 'numeric',
     minute: '2-digit',
-    hour12: true
+    hour12: locale === 'en' // Use 12-hour format for English, 24-hour for Spanish
   })
 }
 

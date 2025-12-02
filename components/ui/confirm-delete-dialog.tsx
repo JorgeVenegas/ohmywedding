@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, X } from 'lucide-react'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 interface ConfirmDeleteDialogProps {
   isOpen: boolean
@@ -17,6 +18,7 @@ export function ConfirmDeleteDialog({
   onCancel,
   componentType
 }: ConfirmDeleteDialogProps) {
+  const { t } = useI18n()
   const [isClosing, setIsClosing] = React.useState(false)
 
   // Handle Escape key to close and lock body scroll
@@ -63,7 +65,7 @@ export function ConfirmDeleteDialog({
               <AlertTriangle className="w-5 h-5 text-red-600" />
             </div>
             <h2 className="text-lg font-semibold text-gray-900">
-              Delete Section
+              {t('common.deleteConfirmTitle')}
             </h2>
           </div>
           <button
@@ -77,11 +79,10 @@ export function ConfirmDeleteDialog({
         {/* Content */}
         <div className="p-6">
           <p className="text-gray-700 mb-4">
-            Are you sure you want to delete this <strong>{componentType}</strong> section? 
-            This action cannot be undone.
+            {t('common.deleteConfirmMessage')}
           </p>
           <p className="text-sm text-gray-500">
-            The section and all its customizations will be permanently removed from your wedding page.
+            {t('common.deleteConfirmWarning')}
           </p>
         </div>
 
@@ -92,13 +93,13 @@ export function ConfirmDeleteDialog({
             variant="outline"
             className="flex-1"
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={onConfirm}
             className="flex-1 bg-red-600 hover:bg-red-700 text-white"
           >
-            Delete Section
+            {t('common.deleteSection')}
           </Button>
         </div>
       </div>

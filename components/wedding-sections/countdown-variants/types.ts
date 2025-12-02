@@ -12,6 +12,8 @@ export interface BaseCountdownProps {
   showHours?: boolean
   showMinutes?: boolean
   showSeconds?: boolean
+  sectionTitle?: string
+  sectionSubtitle?: string
   message?: string
   useColorBackground?: boolean // deprecated, use backgroundColorChoice
   backgroundColorChoice?: BackgroundColorChoice

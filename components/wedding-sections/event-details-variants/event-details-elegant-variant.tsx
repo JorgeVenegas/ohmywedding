@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card'
 import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar, Heart } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseEventDetailsProps, EventItem, buildEventsList, getMapUrl, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function EventDetailsElegantVariant({
   wedding,
@@ -26,9 +27,10 @@ export function EventDetailsElegantVariant({
   useColorBackground = false,
   backgroundColorChoice
 }: BaseEventDetailsProps) {
+  const { t } = useI18n()
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
   
-  const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription)
+  const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription, t)
 
   const renderEventIcon = (iconType: EventItem['iconType']) => {
     const color = isColored ? titleColor : theme?.colors?.primary
@@ -76,7 +78,7 @@ export function EventDetailsElegantVariant({
               color: sectionTitleColor
             }}
           >
-            The Celebration
+            {t('eventDetails.title')}
           </h2>
           <p 
             className="text-base max-w-lg mx-auto"
@@ -85,7 +87,7 @@ export function EventDetailsElegantVariant({
               fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
             }}
           >
-            {sectionSubtitle || "Join us for a day filled with love, laughter, and happily ever after"}
+            {sectionSubtitle || t('eventDetails.joinUsForOurCelebration')}
           </p>
         </div>
 
@@ -214,7 +216,7 @@ export function EventDetailsElegantVariant({
                       className="flex items-center gap-1.5"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
-                      View on Map
+                      {t('eventDetails.viewOnMap')}
                     </a>
                   </Button>
                 )}

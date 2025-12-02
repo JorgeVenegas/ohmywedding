@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Save, Check, AlertCircle, Loader2, X } from 'lucide-react'
 import { usePageConfig } from '@/components/contexts/page-config-context'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 interface SaveConfigButtonProps {
   className?: string
@@ -13,6 +14,7 @@ interface SaveConfigButtonProps {
 
 export function SaveConfigButton({ className, variant = 'default', size = 'default' }: SaveConfigButtonProps) {
   const { saveConfiguration, discardChanges, isSaving, hasUnsavedChanges } = usePageConfig()
+  const { t } = useI18n()
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [showConfirm, setShowConfirm] = useState(false)
 
@@ -38,7 +40,7 @@ export function SaveConfigButton({ className, variant = 'default', size = 'defau
       return (
         <>
           <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
-          <span className="text-xs sm:text-sm font-medium ml-1 sm:ml-2">Saving...</span>
+          <span className="text-xs sm:text-sm font-medium ml-1 sm:ml-2">{t('editing.saving')}</span>
         </>
       )
     }
@@ -47,7 +49,7 @@ export function SaveConfigButton({ className, variant = 'default', size = 'defau
       return (
         <>
           <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          <span className="text-xs sm:text-sm font-medium ml-1 sm:ml-2">Saved!</span>
+          <span className="text-xs sm:text-sm font-medium ml-1 sm:ml-2">{t('editing.saved')}</span>
         </>
       )
     }
@@ -56,7 +58,7 @@ export function SaveConfigButton({ className, variant = 'default', size = 'defau
       return (
         <>
           <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          <span className="text-xs sm:text-sm font-medium ml-1 sm:ml-2">Error</span>
+          <span className="text-xs sm:text-sm font-medium ml-1 sm:ml-2">{t('rsvp.error')}</span>
         </>
       )
     }
@@ -64,7 +66,7 @@ export function SaveConfigButton({ className, variant = 'default', size = 'defau
     return (
       <>
         <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-        <span className="text-xs sm:text-sm font-medium ml-1 sm:ml-2">{'Save'}</span>
+        <span className="text-xs sm:text-sm font-medium ml-1 sm:ml-2">{t('editing.save')}</span>
       </>
     )
   }
@@ -97,7 +99,7 @@ export function SaveConfigButton({ className, variant = 'default', size = 'defau
           className={`h-8 sm:h-9 px-2 sm:px-3 py-1.5 sm:py-2 gap-1 sm:gap-2`}
         >
           <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          <span className="text-xs sm:text-sm font-medium">{showConfirm ? 'Confirm?' : 'Discard'}</span>
+          <span className="text-xs sm:text-sm font-medium">{showConfirm ? t('editing.confirm') : t('editing.discard')}</span>
         </Button>
       )}
       <Button

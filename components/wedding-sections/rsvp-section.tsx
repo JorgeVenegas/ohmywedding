@@ -13,6 +13,7 @@ import {
   VariantOption
 } from './base-section'
 import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 interface RSVPSectionProps extends BaseRSVPProps {
   variant?: 'cta' | 'form'
@@ -24,6 +25,8 @@ export function RSVPSection({
   weddingNameId,
   theme,
   alignment,
+  sectionTitle,
+  sectionSubtitle,
   showMealPreferences = true,
   showCustomQuestions = false,
   customQuestions = [],
@@ -31,6 +34,8 @@ export function RSVPSection({
   variant = 'cta',
   showVariantSwitcher = true
 }: RSVPSectionProps) {
+  const { t } = useI18n()
+  
   // Use standardized section behavior
   const {
     activeVariant: actualVariant,
@@ -44,18 +49,20 @@ export function RSVPSection({
   const rsvpVariants: VariantOption[] = [
     {
       value: 'cta',
-      label: 'Call to Action',
-      description: 'Simple button linking to dedicated RSVP page - clean and direct'
+      label: t('config.callToAction'),
+      description: t('config.callToActionDesc')
     },
     {
       value: 'form',
-      label: 'Embedded Form',
-      description: 'Full RSVP form with meal preferences and custom questions - all-in-one solution'
+      label: t('config.embeddedForm'),
+      description: t('config.embeddedFormDesc')
     }
   ]
 
   // Create config using standardized helper
   const config = createVariantConfig(customConfig, {
+    sectionTitle,
+    sectionSubtitle,
     showMealPreferences,
     showCustomQuestions,
     customQuestions,
@@ -67,6 +74,8 @@ export function RSVPSection({
     weddingNameId,
     theme,
     alignment,
+    sectionTitle: config.sectionTitle || sectionTitle,
+    sectionSubtitle: config.sectionSubtitle || sectionSubtitle,
     showMealPreferences: config.showMealPreferences ?? true,
     showCustomQuestions: config.showCustomQuestions ?? false,
     customQuestions: config.customQuestions || customQuestions,
@@ -85,6 +94,8 @@ export function RSVPSection({
 
   const onEditClick = (sectionId: string, sectionType: string) => {
     handleEditClick(sectionType, {
+      sectionTitle,
+      sectionSubtitle,
       showMealPreferences: config.showMealPreferences ?? showMealPreferences,
       showCustomQuestions: config.showCustomQuestions ?? showCustomQuestions,
       customQuestions: config.customQuestions || customQuestions,

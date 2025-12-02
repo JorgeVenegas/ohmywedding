@@ -2,6 +2,7 @@ import React from 'react'
 import Image from 'next/image'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseOurStoryProps, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function OurStoryMinimalVariant({
   theme,
@@ -10,13 +11,15 @@ export function OurStoryMinimalVariant({
   showProposal = true,
   showHowWeMetPhoto = false,
   showProposalPhoto = false,
-  howWeMetText = "Our love story began in the most unexpected way. From the moment we met, we knew there was something special between us. What started as a chance encounter blossomed into a beautiful friendship, and eventually, a love that we knew would last forever.",
+  howWeMetText,
   howWeMetPhoto,
-  proposalText = "The proposal was a magical moment we'll cherish forever. Surrounded by the beauty of nature and the warmth of our love, the question was asked and answered with tears of joy. It was the perfect beginning to our next chapter together.",
+  proposalText,
   proposalPhoto,
   useColorBackground = false,
   backgroundColorChoice
 }: BaseOurStoryProps) {
+  const { t } = useI18n()
+  
   // Get enhanced color scheme with complementary palette colors
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, contrastColor, colorLight, colorDark, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
   
@@ -38,7 +41,7 @@ export function OurStoryMinimalVariant({
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-16" 
               style={{ color: sectionTitleColor }}>
-            Our Love Story
+            {t('ourStory.title')}
           </h2>
           
           <div className="space-y-6 sm:space-y-8">
@@ -51,7 +54,7 @@ export function OurStoryMinimalVariant({
                   >
                     <Image
                       src={howWeMetPhoto}
-                      alt="How We Met"
+                      alt={t('ourStory.howWeMet')}
                       fill
                       className="object-cover"
                     />
@@ -60,11 +63,11 @@ export function OurStoryMinimalVariant({
                 <div className="prose prose-lg mx-auto">
                   <h3 className="text-2xl font-semibold mb-6" 
                       style={{ color: headingColor }}>
-                    How We Met
+                    {t('ourStory.howWeMet')}
                   </h3>
                   <p className={`leading-relaxed text-lg ${isColored ? '' : 'text-gray-600'}`}
                      style={{ color: textColor }}>
-                    {howWeMetText}
+                    {howWeMetText || t('ourStory.howWeMetDefault')}
                   </p>
                 </div>
               </div>
@@ -79,7 +82,7 @@ export function OurStoryMinimalVariant({
                   >
                     <Image
                       src={proposalPhoto}
-                      alt="The Proposal"
+                      alt={t('ourStory.theProposal')}
                       fill
                       className="object-cover"
                     />
@@ -88,11 +91,11 @@ export function OurStoryMinimalVariant({
                 <div className="prose prose-lg mx-auto">
                   <h3 className="text-2xl font-semibold mb-6" 
                       style={{ color: headingColor }}>
-                    The Proposal
+                    {t('ourStory.theProposal')}
                   </h3>
                   <p className={`leading-relaxed text-lg ${isColored ? '' : 'text-gray-600'}`}
                      style={{ color: textColor }}>
-                    {proposalText}
+                    {proposalText || t('ourStory.proposalDefault')}
                   </p>
                 </div>
               </div>

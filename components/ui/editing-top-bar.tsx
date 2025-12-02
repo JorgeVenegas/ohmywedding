@@ -1,12 +1,13 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { Edit3, Eye, Settings, Monitor, Smartphone, ChevronDown, LogIn, User } from 'lucide-react'
+import { Edit3, Eye, Settings, Monitor, Smartphone, ChevronDown, LogIn, User, Globe } from 'lucide-react'
 import { useEditingModeSafe } from '@/components/contexts/editing-mode-context'
 import { useSiteConfigSafe } from '@/components/contexts/site-config-context'
 import { usePageConfigSafe } from '@/components/contexts/page-config-context'
 import { useViewportSafe, MOBILE_DEVICES, type MobileDeviceSize } from '@/components/contexts/viewport-context'
 import { useCustomizeSafe } from '@/components/contexts/customize-context'
+import { useI18n } from '@/components/contexts/i18n-context'
 import { useAuth } from '@/hooks/use-auth'
 import { SaveConfigButton } from './save-config-button'
 import { SettingsPanel } from './settings-panel'
@@ -23,9 +24,11 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
   const pageConfigContext = usePageConfigSafe()
   const viewportContext = useViewportSafe()
   const customizeContext = useCustomizeSafe()
+  const { t, locale, setLocale } = useI18n()
   const { user, loading: authLoading, signOut } = useAuth()
   const [showDeviceMenu, setShowDeviceMenu] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false)
   const [navIsVisible, setNavIsVisible] = useState(false)
   const [currentNavHeight, setCurrentNavHeight] = useState(56)
   
@@ -94,10 +97,10 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
           <button
             onClick={handleOpenSettings}
             className="flex items-center gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full font-medium shadow-lg bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 transition-all duration-300 hover:shadow-xl hover:scale-105"
-            title="Wedding Settings"
+            title={t('editing.settings')}
           >
             <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span className="text-xs sm:text-sm font-medium">Settings</span>
+            <span className="text-xs sm:text-sm font-medium">{t('editing.settings')}</span>
           </button>
         )}
         
@@ -114,17 +117,17 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
                 : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-200'
               }
             `}
-            title={isEditingMode ? 'Exit editing mode' : 'Enter editing mode'}
+            title={isEditingMode ? t('editing.preview') : t('editing.edit')}
           >
             {isEditingMode ? (
               <>
                 <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span className="text-xs sm:text-sm font-medium">Preview</span>
+                <span className="text-xs sm:text-sm font-medium">{t('editing.preview')}</span>
               </>
             ) : (
               <>
                 <Edit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span className="text-xs sm:text-sm font-medium">Edit</span>
+                <span className="text-xs sm:text-sm font-medium">{t('editing.edit')}</span>
               </>
             )}
           </button>
@@ -144,7 +147,7 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
             className="flex items-center gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full font-medium shadow-lg bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 transition-all duration-300 hover:shadow-xl hover:scale-105"
           >
             <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span className="text-xs sm:text-sm font-medium"><span className="hidden sm:inline">Sign In to </span>Edit</span>
+            <span className="text-xs sm:text-sm font-medium">{t('editing.signInToEdit')}</span>
           </Link>
         )}
 
@@ -154,17 +157,17 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
           <button
             onClick={toggleViewport}
             className="flex items-center gap-2 h-9 px-3 py-2 rounded-full font-medium shadow-lg bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 transition-all duration-300 hover:shadow-xl hover:scale-105"
-            title={`Switch to ${viewportMode === 'desktop' ? 'mobile' : 'desktop'} preview`}
+            title={viewportMode === 'desktop' ? t('editing.mobile') : t('editing.desktop')}
           >
             {viewportMode === 'desktop' ? (
               <>
                 <Monitor className="w-4 h-4" />
-                <span className="text-sm font-medium">Desktop</span>
+                <span className="text-sm font-medium">{t('editing.desktop')}</span>
               </>
             ) : (
               <>
                 <Smartphone className="w-4 h-4" />
-                <span className="text-sm font-medium">Mobile</span>
+                <span className="text-sm font-medium">{t('editing.mobile')}</span>
               </>
             )}
           </button>
@@ -196,7 +199,7 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
                           setShowDeviceMenu(false)
                         }}
                         className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                          mobileDevice === device.id ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
+                          mobileDevice === device.id ? 'bg-gray-100 text-gray-800 font-medium' : 'text-gray-700'
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -214,45 +217,99 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
       )}
     </div>
 
-    {/* User Menu - Fixed at bottom right corner */}
-    {!authLoading && user && (
-      <div className="fixed bottom-4 right-4 z-50">
+    {/* Bottom Right Controls - Language and User Menu */}
+    <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2">
+      {/* Language Switcher Button */}
+      <div className="relative">
         <button
-          onClick={() => setShowUserMenu(!showUserMenu)}
+          onClick={() => setShowLanguageMenu(!showLanguageMenu)}
           className="flex items-center gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full font-medium shadow-lg bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 transition-all duration-300 hover:shadow-xl hover:scale-105"
+          title={t('editing.language')}
         >
-          <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          <ChevronDown className={`w-3 h-3 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
+          <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span className="text-xs sm:text-sm font-medium uppercase">{locale}</span>
+          <ChevronDown className={`w-3 h-3 transition-transform ${showLanguageMenu ? 'rotate-180' : ''}`} />
         </button>
         
-        {showUserMenu && (
+        {showLanguageMenu && (
           <>
             <div 
               className="fixed inset-0 z-40" 
-              onClick={() => setShowUserMenu(false)}
+              onClick={() => setShowLanguageMenu(false)}
             />
-            <div className="absolute bottom-full mb-2 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[200px] z-50">
+            <div className="absolute bottom-full mb-2 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[140px] z-50">
               <div className="px-4 py-2 border-b border-gray-100">
-                <p className="text-xs text-gray-500">Signed in as</p>
-                <p className="text-sm font-medium text-gray-700 truncate">{user.email}</p>
-                {permissions.role !== 'guest' && (
-                  <p className="text-xs text-blue-600 mt-1 capitalize">{permissions.role}</p>
-                )}
+                <p className="text-xs text-gray-500">{t('editing.selectLanguage')}</p>
               </div>
               <button
                 onClick={() => {
-                  setShowUserMenu(false)
-                  signOut()
+                  setLocale('en')
+                  setShowLanguageMenu(false)
                 }}
-                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between ${
+                  locale === 'en' ? 'bg-gray-100 text-gray-800 font-medium' : 'text-gray-700'
+                }`}
               >
-                Sign Out
+                <span>English</span>
+                <span className="text-xs text-gray-400">EN</span>
+              </button>
+              <button
+                onClick={() => {
+                  setLocale('es')
+                  setShowLanguageMenu(false)
+                }}
+                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between ${
+                  locale === 'es' ? 'bg-gray-100 text-gray-800 font-medium' : 'text-gray-700'
+                }`}
+              >
+                <span>Español</span>
+                <span className="text-xs text-gray-400">ES</span>
               </button>
             </div>
           </>
         )}
       </div>
-    )}
+
+      {/* User Menu */}
+      {!authLoading && user && (
+        <div className="relative">
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="flex items-center gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full font-medium shadow-lg bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 transition-all duration-300 hover:shadow-xl hover:scale-105"
+          >
+            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <ChevronDown className={`w-3 h-3 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {showUserMenu && (
+            <>
+              <div 
+                className="fixed inset-0 z-40" 
+                onClick={() => setShowUserMenu(false)}
+              />
+              <div className="absolute bottom-full mb-2 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[200px] z-50">
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <p className="text-xs text-gray-500">{t('editing.signedInAs')}</p>
+                  <p className="text-sm font-medium text-gray-700 truncate">{user.email}</p>
+                  {permissions.role !== 'guest' && (
+                    <p className="text-xs text-gray-600 mt-1 capitalize">{permissions.role}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false)
+                    signOut()
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  {t('editing.signOut')}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
     
     {/* Settings Panel */}
     {weddingNameId && pageConfigContext && (

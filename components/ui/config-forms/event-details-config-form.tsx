@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
 import { ImageUpload } from '@/components/ui/image-upload'
 import { usePageConfig } from '@/components/contexts/page-config-context'
+import { useI18n } from '@/components/contexts/i18n-context'
 import { Check, AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
 
 type BackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
@@ -56,6 +57,7 @@ interface EventDetailsConfigFormProps {
     receptionImageUrl?: string
     ceremonyDescription?: string
     receptionDescription?: string
+    sectionTitle?: string
     sectionSubtitle?: string
     useColorBackground?: boolean
     backgroundColorChoice?: BackgroundColorChoice
@@ -66,6 +68,8 @@ interface EventDetailsConfigFormProps {
 }
 
 export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigFormProps) {
+  const { t } = useI18n()
+  
   // Get colors from page config (theme settings)
   const { config: pageConfig } = usePageConfig()
   const themeColors = pageConfig.siteSettings.theme?.colors
@@ -77,11 +81,11 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
   // Create color options with full, light, and lighter variants
   const colorGroups: { label: string; colors: { value: BackgroundColorChoice; color: string | null }[] }[] = [
     {
-      label: 'None',
+      label: t('config.none'),
       colors: [{ value: 'none', color: null }]
     },
     {
-      label: 'Primary',
+      label: t('config.primary'),
       colors: [
         { value: 'primary', color: primaryColor },
         { value: 'primary-light', color: getLightTint(primaryColor, 0.5) },
@@ -89,7 +93,7 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
       ]
     },
     {
-      label: 'Secondary',
+      label: t('config.secondary'),
       colors: [
         { value: 'secondary', color: secondaryColor },
         { value: 'secondary-light', color: getLightTint(secondaryColor, 0.5) },
@@ -97,7 +101,7 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
       ]
     },
     {
-      label: 'Accent',
+      label: t('config.accent'),
       colors: [
         { value: 'accent', color: accentColor },
         { value: 'accent-light', color: getLightTint(accentColor, 0.5) },
@@ -113,33 +117,51 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
     <div className="space-y-6">
       {/* Variant Selector */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-700">Style</label>
+        <label className="text-sm font-medium text-gray-700">{t('config.style')}</label>
         <VariantDropdown
           value={config.variant || 'classic'}
           onChange={(value) => onChange('variant', value)}
           options={[
-            { value: 'classic', label: 'Classic Cards', description: 'Traditional card layout with icons' },
-            { value: 'elegant', label: 'Elegant Script', description: 'Romantic style with ornamental details' },
-            { value: 'timeline', label: 'Timeline', description: 'Vertical timeline with connected events' },
-            { value: 'minimal', label: 'Minimal Clean', description: 'Clean and modern minimalist design' },
-            { value: 'split', label: 'Split Layout', description: 'Side-by-side image and details layout' },
+            { value: 'classic', label: t('config.classicCards'), description: t('config.classicCardsDesc') },
+            { value: 'elegant', label: t('config.elegantScript'), description: t('config.elegantScriptDesc') },
+            { value: 'timeline', label: t('config.timeline'), description: t('config.timelineDesc') },
+            { value: 'minimal', label: t('config.minimalClean'), description: t('config.minimalCleanDesc') },
+            { value: 'split', label: t('config.splitLayout'), description: t('config.splitLayoutDesc') },
           ]}
         />
       </div>
 
-      {/* Section Subtitle */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-700">Section Subtitle</label>
-        <Input
-          value={config.sectionSubtitle ?? ''}
-          onChange={(e) => onChange('sectionSubtitle', e.target.value)}
-          placeholder="We invite you to celebrate with us..."
-        />
+      {/* Section Title & Subtitle */}
+      <div className="p-4 border border-gray-200 rounded-lg space-y-4">
+        <h4 className="font-medium text-gray-900 text-sm">{t('config.sectionContent')}</h4>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {t('config.sectionTitle')}
+          </label>
+          <Input
+            type="text"
+            value={config.sectionTitle || ''}
+            onChange={(e) => onChange('sectionTitle', e.target.value)}
+            placeholder={t('eventDetails.title')}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {t('config.sectionSubtitle')}
+          </label>
+          <Input
+            value={config.sectionSubtitle ?? ''}
+            onChange={(e) => onChange('sectionSubtitle', e.target.value)}
+            placeholder={t('eventDetails.subtitle')}
+          />
+        </div>
       </div>
 
       {/* Background Color */}
       <div className="space-y-3">
-        <label className="text-sm font-medium text-gray-700">Background Color</label>
+        <label className="text-sm font-medium text-gray-700">{t('config.backgroundColor')}</label>
         <div className="space-y-2">
           {colorGroups.map((group) => (
             <div key={group.label} className="flex items-center gap-2">
@@ -149,7 +171,7 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
                   <button
                     key={colorOption.value}
                     onClick={() => onChange('backgroundColorChoice', colorOption.value)}
-                    className={`w-8 h-8 rounded-md border-2 transition-all flex items-center justify-center ${
+                    className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${
                       currentBgChoice === colorOption.value 
                         ? 'border-blue-500 ring-2 ring-blue-200' 
                         : 'border-gray-200 hover:border-gray-300'
@@ -178,10 +200,10 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
 
       {/* Display Options */}
       <div className="space-y-4">
-        <label className="text-sm font-medium text-gray-700">Display Options</label>
+        <label className="text-sm font-medium text-gray-700">{t('config.displayOptions')}</label>
         
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Show Embedded Map</span>
+          <span className="text-sm text-gray-600">{t('config.showEmbeddedMap')}</span>
           <Switch
             checked={config.showMap ?? true}
             onCheckedChange={(checked) => onChange('showMap', checked)}
@@ -189,7 +211,7 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Show Map Links</span>
+          <span className="text-sm text-gray-600">{t('config.showMapLinks')}</span>
           <Switch
             checked={config.showMapLinks ?? true}
             onCheckedChange={(checked) => onChange('showMapLinks', checked)}
@@ -197,7 +219,7 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Show Venue Photos</span>
+          <span className="text-sm text-gray-600">{t('config.showVenuePhotos')}</span>
           <Switch
             checked={config.showPhotos ?? false}
             onCheckedChange={(checked) => onChange('showPhotos', checked)}
@@ -208,7 +230,7 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
       {/* Ceremony Section */}
       <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-gray-700">Ceremony</label>
+          <label className="text-sm font-medium text-gray-700">{t('config.ceremony')}</label>
           <Switch
             checked={config.showCeremony ?? true}
             onCheckedChange={(checked) => onChange('showCeremony', checked)}
@@ -220,34 +242,34 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
             {/* Ceremony Photo */}
             {config.showPhotos && (
               <div className="space-y-2">
-                <span className="text-sm text-gray-600">Venue Photo</span>
+                <span className="text-sm text-gray-600">{t('config.ceremonyImage')}</span>
                 <ImageUpload
                   currentImageUrl={config.ceremonyImageUrl}
                   onUpload={(url) => onChange('ceremonyImageUrl', url)}
-                  placeholder="Upload ceremony venue photo"
+                  placeholder={t('config.uploadImage')}
                 />
               </div>
             )}
 
             {/* Ceremony Description */}
             <div className="space-y-2">
-              <span className="text-sm text-gray-600">Description</span>
+              <span className="text-sm text-gray-600">{t('config.ceremonyDescription')}</span>
               <Input
                 value={config.ceremonyDescription ?? ''}
                 onChange={(e) => onChange('ceremonyDescription', e.target.value)}
-                placeholder="Join us as we exchange vows"
+                placeholder={t('config.enterDescription')}
               />
             </div>
 
             {/* Ceremony Text Alignment - Only for Split variant */}
             {isSplitVariant && (
               <div className="space-y-2">
-                <span className="text-sm text-gray-600">Text Alignment</span>
+                <span className="text-sm text-gray-600">{t('config.textAlignment')}</span>
                 <div className="flex gap-2">
                   {[
-                    { value: 'left', label: 'Left', icon: AlignLeft },
-                    { value: 'center', label: 'Center', icon: AlignCenter },
-                    { value: 'right', label: 'Right', icon: AlignRight }
+                    { value: 'left', label: t('config.left'), icon: AlignLeft },
+                    { value: 'center', label: t('config.center'), icon: AlignCenter },
+                    { value: 'right', label: t('config.right'), icon: AlignRight }
                   ].map((alignment) => (
                     <Button
                       key={alignment.value}
@@ -270,7 +292,7 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
       {/* Reception Section */}
       <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-gray-700">Reception</label>
+          <label className="text-sm font-medium text-gray-700">{t('config.reception')}</label>
           <Switch
             checked={config.showReception ?? true}
             onCheckedChange={(checked) => onChange('showReception', checked)}
@@ -282,34 +304,34 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
             {/* Reception Photo */}
             {config.showPhotos && (
               <div className="space-y-2">
-                <span className="text-sm text-gray-600">Venue Photo</span>
+                <span className="text-sm text-gray-600">{t('config.receptionImage')}</span>
                 <ImageUpload
                   currentImageUrl={config.receptionImageUrl}
                   onUpload={(url) => onChange('receptionImageUrl', url)}
-                  placeholder="Upload reception venue photo"
+                  placeholder={t('config.uploadImage')}
                 />
               </div>
             )}
 
             {/* Reception Description */}
             <div className="space-y-2">
-              <span className="text-sm text-gray-600">Description</span>
+              <span className="text-sm text-gray-600">{t('config.receptionDescription')}</span>
               <Input
                 value={config.receptionDescription ?? ''}
                 onChange={(e) => onChange('receptionDescription', e.target.value)}
-                placeholder="Dinner, dancing, and celebration"
+                placeholder={t('config.enterDescription')}
               />
             </div>
 
             {/* Reception Text Alignment - Only for Split variant */}
             {isSplitVariant && (
               <div className="space-y-2">
-                <span className="text-sm text-gray-600">Text Alignment</span>
+                <span className="text-sm text-gray-600">{t('config.textAlignment')}</span>
                 <div className="flex gap-2">
                   {[
-                    { value: 'left', label: 'Left', icon: AlignLeft },
-                    { value: 'center', label: 'Center', icon: AlignCenter },
-                    { value: 'right', label: 'Right', icon: AlignRight }
+                    { value: 'left', label: t('config.left'), icon: AlignLeft },
+                    { value: 'center', label: t('config.center'), icon: AlignCenter },
+                    { value: 'right', label: t('config.right'), icon: AlignRight }
                   ].map((alignment) => (
                     <Button
                       key={alignment.value}

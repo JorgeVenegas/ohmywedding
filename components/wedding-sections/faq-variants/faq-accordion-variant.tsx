@@ -3,20 +3,27 @@
 import React, { useState } from 'react'
 import { ChevronDown, ChevronUp, HelpCircle } from 'lucide-react'
 import { BaseFAQProps, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function FAQAccordionVariant({
   theme,
   questions = [],
   allowMultipleOpen = false,
-  sectionTitle = "Frequently Asked Questions",
-  sectionSubtitle = "Everything you need to know for our special day",
+  sectionTitle,
+  sectionSubtitle,
   showContactNote = true,
-  contactNoteText = "Have a question that's not answered here? Feel free to reach out to us directly!",
+  contactNoteText,
   useColorBackground = false,
   backgroundColorChoice = 'none'
 }: BaseFAQProps) {
   const [openItems, setOpenItems] = useState<Set<number>>(new Set())
   const { bgColor, titleColor, subtitleColor, bodyTextColor, mutedTextColor, accentColor, cardBg, cardBorder, isColored, primary } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
+  const { t } = useI18n()
+
+  // Use translated defaults if not provided
+  const title = sectionTitle || t('faq.title')
+  const subtitle = sectionSubtitle || t('faq.subtitle')
+  const contactNote = contactNoteText || t('faq.contactNote')
 
   const faqItems = questions || []
   const hasQuestions = faqItems.length > 0
@@ -57,7 +64,7 @@ export function FAQAccordionVariant({
               fontWeight: 400
             }}
           >
-            {sectionTitle}
+            {title}
           </h2>
           <div 
             className="w-20 sm:w-24 h-1 mx-auto rounded mb-4 sm:mb-6"
@@ -70,7 +77,7 @@ export function FAQAccordionVariant({
               fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
             }}
           >
-            {sectionSubtitle}
+            {subtitle}
           </p>
         </div>
 
@@ -91,13 +98,13 @@ export function FAQAccordionVariant({
               className="text-lg font-medium mb-1"
               style={{ color: isColored ? 'rgba(255,255,255,0.7)' : '#6b7280' }}
             >
-              No FAQs yet
+              {t('faq.noFaqsYet')}
             </p>
             <p 
               className="text-sm"
               style={{ color: isColored ? 'rgba(255,255,255,0.5)' : '#9ca3af' }}
             >
-              Questions will appear here once added
+              {t('faq.questionsWillAppear')}
             </p>
           </div>
         ) : (
@@ -171,7 +178,7 @@ export function FAQAccordionVariant({
         )}
 
         {/* Contact Note */}
-        {showContactNote && contactNoteText && (
+        {showContactNote && contactNote && (
           <div className="mt-10 sm:mt-12 text-center">
             <p 
               className="text-sm"
@@ -180,7 +187,7 @@ export function FAQAccordionVariant({
                 fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
               }}
             >
-              {contactNoteText}
+              {contactNote}
             </p>
           </div>
         )}

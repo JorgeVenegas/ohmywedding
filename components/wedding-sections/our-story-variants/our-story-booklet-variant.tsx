@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseOurStoryProps, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function OurStoryBookletVariant({
   theme,
@@ -10,30 +11,32 @@ export function OurStoryBookletVariant({
   showHowWeMet = true,
   showProposal = true,
   showPhotos = false,
-  howWeMetText = "From strangers to soulmates, our journey began in the most unexpected way.",
+  howWeMetText,
   howWeMetPhoto,
-  proposalText = "Under the stars, a question was asked and forever was promised.",
+  proposalText,
   proposalPhoto,
   timeline = [],
   photos = [],
   useColorBackground = false,
   backgroundColorChoice
 }: BaseOurStoryProps) {
+  const { t } = useI18n()
+  
   // Get enhanced color scheme with complementary palette colors
   const { bgColor, titleColor, subtitleColor: paletteSubtitle, sectionTextColor, sectionTextColorAlt, accentColor, contrastColor, colorLight, colorDark, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
   
   const allEvents = [
     ...(showHowWeMet ? [{
-      date: "Chapter One",
-      title: "How We Met",
-      description: howWeMetText,
+      date: t('ourStory.chapterOne'),
+      title: t('ourStory.howWeMet'),
+      description: howWeMetText || t('ourStory.howWeMetDefault'),
       photo: howWeMetPhoto || photos[0]?.url
     }] : []),
     ...timeline,
     ...(showProposal ? [{
-      date: "The Big Moment",
-      title: "The Proposal",
-      description: proposalText,
+      date: t('ourStory.theBigMoment'),
+      title: t('ourStory.theProposal'),
+      description: proposalText || t('ourStory.proposalDefault'),
       photo: proposalPhoto || photos[photos.length - 1]?.url
     }] : [])
   ]
@@ -72,17 +75,17 @@ export function OurStoryBookletVariant({
               className="inline-block text-sm uppercase tracking-[0.3em] mb-3"
               style={{ color: subtitleColor }}
             >
-              ━━ Our Story ━━
+              ━━ {t('ourStory.title')} ━━
             </div>
             <h2 
               className="text-4xl md:text-5xl font-serif mb-4"
               style={{ color: sectionTitleColor }}
             >
-              The Pages of Our Love
+              {t('ourStory.ourJourney')}
             </h2>
             <p className={isColored ? '' : 'text-gray-600 italic'}
                style={{ color: introColor }}>
-              A chapter-by-chapter journey of our love story
+              {t('ourStory.subtitle')}
             </p>
           </div>
           

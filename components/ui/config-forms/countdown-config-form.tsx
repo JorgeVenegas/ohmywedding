@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
 import { usePageConfig } from '@/components/contexts/page-config-context'
+import { useI18n } from '@/components/contexts/i18n-context'
 import { Check } from 'lucide-react'
 
 type BackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
@@ -46,6 +47,8 @@ function getLightTint(hex: string, tintAmount: number): string {
 interface CountdownConfigFormProps {
   config: {
     variant?: string
+    sectionTitle?: string
+    sectionSubtitle?: string
     showYears?: boolean
     showMonths?: boolean
     showDays?: boolean
@@ -62,6 +65,7 @@ interface CountdownConfigFormProps {
 export function CountdownConfigForm({ config, onChange }: CountdownConfigFormProps) {
   // Get colors from page config (theme settings)
   const { config: pageConfig } = usePageConfig()
+  const { t } = useI18n()
   const themeColors = pageConfig.siteSettings.theme?.colors
   
   const primaryColor = themeColors?.primary || '#d4a574'
@@ -71,11 +75,11 @@ export function CountdownConfigForm({ config, onChange }: CountdownConfigFormPro
   // Create color options with full, light, and lighter variants
   const colorGroups: { label: string; colors: { value: BackgroundColorChoice; color: string | null }[] }[] = [
     {
-      label: 'None',
+      label: t('config.none'),
       colors: [{ value: 'none', color: null }]
     },
     {
-      label: 'Primary',
+      label: t('config.primary'),
       colors: [
         { value: 'primary', color: primaryColor },
         { value: 'primary-light', color: getLightTint(primaryColor, 0.5) },
@@ -83,7 +87,7 @@ export function CountdownConfigForm({ config, onChange }: CountdownConfigFormPro
       ]
     },
     {
-      label: 'Secondary',
+      label: t('config.secondary'),
       colors: [
         { value: 'secondary', color: secondaryColor },
         { value: 'secondary-light', color: getLightTint(secondaryColor, 0.5) },
@@ -91,7 +95,7 @@ export function CountdownConfigForm({ config, onChange }: CountdownConfigFormPro
       ]
     },
     {
-      label: 'Accent',
+      label: t('config.accent'),
       colors: [
         { value: 'accent', color: accentColor },
         { value: 'accent-light', color: getLightTint(accentColor, 0.5) },
@@ -101,11 +105,11 @@ export function CountdownConfigForm({ config, onChange }: CountdownConfigFormPro
   ]
 
   const variants = [
-    { value: 'classic', label: 'Classic Cards', description: 'Elegant bordered cards with decorative corners' },
-    { value: 'minimal', label: 'Minimal Clean', description: 'Clean typography with subtle separators' },
-    { value: 'circular', label: 'Circular Progress', description: 'Animated progress circles' },
-    { value: 'elegant', label: 'Elegant Script', description: 'Romantic script style with flourishes' },
-    { value: 'modern', label: 'Modern Bold', description: 'Bold contemporary cards with gradient' }
+    { value: 'classic', label: t('config.classicCards'), description: t('config.classicCardsDesc') },
+    { value: 'minimal', label: t('config.minimalClean'), description: t('config.minimalCleanDesc') },
+    { value: 'circular', label: t('config.circularProgress'), description: t('countdown.title') },
+    { value: 'elegant', label: t('config.elegantScript'), description: t('config.elegantScriptDesc') },
+    { value: 'modern', label: t('config.modernBold'), description: t('config.timelineDesc') }
   ]
 
   const currentChoice = config.backgroundColorChoice || (config.useColorBackground ? 'primary' : 'none')
@@ -114,20 +118,48 @@ export function CountdownConfigForm({ config, onChange }: CountdownConfigFormPro
     <div className="space-y-6">
       {/* Variant Selection */}
       <VariantDropdown
-        label="Countdown Style"
+        label={t('config.countdownStyle')}
         value={config.variant || 'classic'}
         options={variants}
         onChange={(value) => onChange('variant', value)}
-        placeholder="Choose countdown style"
+        placeholder={t('config.countdownStyle')}
       />
+
+      {/* Section Title & Subtitle */}
+      <div className="p-4 border border-gray-200 rounded-lg space-y-4">
+        <h4 className="font-medium text-gray-900 text-sm">{t('config.sectionContent')}</h4>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {t('config.sectionTitle')}
+          </label>
+          <Input
+            type="text"
+            value={config.sectionTitle || ''}
+            onChange={(e) => onChange('sectionTitle', e.target.value)}
+            placeholder={t('countdown.title')}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {t('config.sectionSubtitle')}
+          </label>
+          <Input
+            type="text"
+            value={config.sectionSubtitle || ''}
+            onChange={(e) => onChange('sectionSubtitle', e.target.value)}
+            placeholder={t('countdown.untilWeSayIDo')}
+          />
+        </div>
+      </div>
 
       {/* Color Background Selection */}
       <div className="space-y-3">
         <div>
           <label className="text-sm font-medium text-gray-700">
-            Background Color
+            {t('config.backgroundColor')}
           </label>
-          <p className="text-xs text-gray-500">Choose a palette color for the section background</p>
         </div>
         <div className="space-y-3">
           {colorGroups.map((group) => (
@@ -179,24 +211,23 @@ export function CountdownConfigForm({ config, onChange }: CountdownConfigFormPro
       {/* Message */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Countdown Message
+          {t('config.countdownMessage')}
         </label>
         <Input
           type="text"
           value={config.message || ''}
           onChange={(e) => onChange('message', e.target.value)}
-          placeholder='Until we say "I do"'
+          placeholder={t('countdown.untilWeSayIDo')}
         />
       </div>
 
       {/* Time Units */}
       <div className="space-y-4">
-        <h4 className="font-medium text-gray-900">Display Options</h4>
-        <p className="text-xs text-gray-500">By default, shows 4 most relevant units based on time remaining</p>
+        <h4 className="font-medium text-gray-900">{t('config.displayOptions')}</h4>
         
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-700">
-            Show Years
+            {t('config.showYears')}
           </label>
           <Switch
             checked={config.showYears ?? true}
@@ -206,7 +237,7 @@ export function CountdownConfigForm({ config, onChange }: CountdownConfigFormPro
 
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-700">
-            Show Months
+            {t('config.showMonths')}
           </label>
           <Switch
             checked={config.showMonths ?? true}
@@ -216,7 +247,7 @@ export function CountdownConfigForm({ config, onChange }: CountdownConfigFormPro
 
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-700">
-            Show Days
+            {t('config.showDays')}
           </label>
           <Switch
             checked={config.showDays ?? true}
@@ -226,7 +257,7 @@ export function CountdownConfigForm({ config, onChange }: CountdownConfigFormPro
 
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-700">
-            Show Hours
+            {t('config.showHours')}
           </label>
           <Switch
             checked={config.showHours ?? true}
@@ -236,7 +267,7 @@ export function CountdownConfigForm({ config, onChange }: CountdownConfigFormPro
 
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-700">
-            Show Minutes
+            {t('config.showMinutes')}
           </label>
           <Switch
             checked={config.showMinutes ?? true}
@@ -246,7 +277,7 @@ export function CountdownConfigForm({ config, onChange }: CountdownConfigFormPro
 
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-700">
-            Show Seconds
+            {t('config.showSeconds')}
           </label>
           <Switch
             checked={config.showSeconds ?? true}

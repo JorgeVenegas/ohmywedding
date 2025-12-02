@@ -16,7 +16,7 @@ export function HeroFramedVariant({
   theme,
   alignment,
   showTagline = true,
-  tagline = "Join us as we tie the knot!",
+  tagline,
   showCountdown = true,
   showRSVPButton = true,
   heroImageUrl,

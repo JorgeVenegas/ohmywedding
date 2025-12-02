@@ -15,6 +15,19 @@ import {
   VariantOption
 } from './base-section'
 import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
+import { useI18n } from '@/components/contexts/i18n-context'
+
+// Old hardcoded English defaults to detect
+const OLD_ENGLISH_DEFAULTS = {
+  title: ['Frequently Asked Questions'],
+  subtitle: ['Everything you need to know for our special day'],
+  contactNote: ["Have a question that's not answered here? Feel free to reach out to us directly!"]
+}
+
+function isOldHardcodedDefault(value: string | undefined, type: 'title' | 'subtitle' | 'contactNote'): boolean {
+  if (!value) return false
+  return OLD_ENGLISH_DEFAULTS[type].includes(value)
+}
 
 interface FAQSectionProps extends BaseFAQProps {
   variant?: 'accordion' | 'minimal' | 'cards' | 'elegant' | 'simple'
@@ -26,13 +39,15 @@ export function FAQSection({
   alignment,
   questions = [],
   allowMultipleOpen = false,
-  sectionTitle = "Frequently Asked Questions",
-  sectionSubtitle = "Everything you need to know for our special day",
+  sectionTitle,
+  sectionSubtitle,
   showContactNote = true,
-  contactNoteText = "Have a question that's not answered here? Feel free to reach out to us directly!",
+  contactNoteText,
   variant = 'accordion',
   showVariantSwitcher = true
 }: FAQSectionProps) {
+  const { t } = useI18n()
+  
   // Use standardized section behavior
   const {
     activeVariant,
@@ -83,15 +98,49 @@ export function FAQSection({
     backgroundColorChoice: 'none'
   })
 
+  // Get translated values, treating old hardcoded English defaults as empty
+  const getTranslatedTitle = () => {
+    const configTitle = config.sectionTitle
+    if (configTitle && !isOldHardcodedDefault(configTitle, 'title')) {
+      return configTitle
+    }
+    if (sectionTitle && !isOldHardcodedDefault(sectionTitle, 'title')) {
+      return sectionTitle
+    }
+    return undefined // Let variant use translated default
+  }
+
+  const getTranslatedSubtitle = () => {
+    const configSubtitle = config.sectionSubtitle
+    if (configSubtitle && !isOldHardcodedDefault(configSubtitle, 'subtitle')) {
+      return configSubtitle
+    }
+    if (sectionSubtitle && !isOldHardcodedDefault(sectionSubtitle, 'subtitle')) {
+      return sectionSubtitle
+    }
+    return undefined // Let variant use translated default
+  }
+
+  const getTranslatedContactNote = () => {
+    const configNote = config.contactNoteText
+    if (configNote && !isOldHardcodedDefault(configNote, 'contactNote')) {
+      return configNote
+    }
+    if (contactNoteText && !isOldHardcodedDefault(contactNoteText, 'contactNote')) {
+      return contactNoteText
+    }
+    return undefined // Let variant use translated default
+  }
+
   const commonProps: BaseFAQProps = {
     theme,
     alignment,
     questions: config.questions || questions,
     allowMultipleOpen: config.allowMultipleOpen ?? allowMultipleOpen,
-    sectionTitle: config.sectionTitle || sectionTitle,
-    sectionSubtitle: config.sectionSubtitle || sectionSubtitle,
+    sectionTitle: getTranslatedTitle(),
+    sectionSubtitle: getTranslatedSubtitle(),
     showContactNote: config.showContactNote ?? showContactNote,
-    contactNoteText: config.contactNoteText || contactNoteText,
+    contactNoteText: getTranslatedContactNote(),
     useColorBackground: config.useColorBackground ?? false,
     backgroundColorChoice: config.backgroundColorChoice || 'none'
   }
@@ -113,13 +162,14 @@ export function FAQSection({
   }
 
   const onEditClick = (sectionId: string, sectionType: string) => {
+    // Pass translated defaults for the edit form
     handleEditClick(sectionType, {
       questions: config.questions || questions,
       allowMultipleOpen: config.allowMultipleOpen ?? allowMultipleOpen,
-      sectionTitle: config.sectionTitle || sectionTitle,
-      sectionSubtitle: config.sectionSubtitle || sectionSubtitle,
+      sectionTitle: getTranslatedTitle() || t('faq.title'),
+      sectionSubtitle: getTranslatedSubtitle() || t('faq.subtitle'),
       showContactNote: config.showContactNote ?? showContactNote,
-      contactNoteText: config.contactNoteText || contactNoteText,
+      contactNoteText: getTranslatedContactNote() || t('faq.contactNoteDefault'),
       useColorBackground: config.useColorBackground ?? false,
       backgroundColorChoice: config.backgroundColorChoice || 'none'
     })

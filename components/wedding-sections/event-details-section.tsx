@@ -15,6 +15,7 @@ import {
   VariantOption
 } from './base-section'
 import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 type BackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
 
@@ -40,12 +41,16 @@ export function EventDetailsSection({
   showPhotos = false,
   ceremonyImageUrl,
   receptionImageUrl,
+  sectionTitle,
+  sectionSubtitle,
   customEvents = [],
   variant = 'classic',
   showVariantSwitcher = true,
   useColorBackground = false,
   backgroundColorChoice = 'none'
 }: EventDetailsSectionProps) {
+  const { t } = useI18n()
+  
   // Use standardized section behavior
   const {
     activeVariant,
@@ -59,28 +64,28 @@ export function EventDetailsSection({
   const eventDetailsVariants: VariantOption[] = [
     {
       value: 'classic',
-      label: 'Classic Cards',
-      description: 'Traditional card layout with icons'
+      label: t('config.classicCards'),
+      description: t('config.classicCardsDesc')
     },
     {
       value: 'elegant',
-      label: 'Elegant Script',
-      description: 'Romantic style with ornamental details'
+      label: t('config.elegantScript'),
+      description: t('config.elegantScriptDesc')
     },
     {
       value: 'timeline',
-      label: 'Timeline',
-      description: 'Vertical timeline with connected events'
+      label: t('config.timeline'),
+      description: t('config.timelineDesc')
     },
     {
       value: 'minimal',
-      label: 'Minimal Clean',
-      description: 'Clean and modern minimalist design'
+      label: t('config.minimalClean'),
+      description: t('config.minimalCleanDesc')
     },
     {
       value: 'split',
-      label: 'Split Layout',
-      description: 'Side-by-side image and details layout'
+      label: t('config.splitLayout'),
+      description: t('config.splitLayoutDesc')
     }
   ]
 
@@ -95,7 +100,8 @@ export function EventDetailsSection({
     receptionImageUrl,
     ceremonyDescription: '',
     receptionDescription: '',
-    sectionSubtitle: '',
+    sectionTitle,
+    sectionSubtitle,
     customEvents,
     useColorBackground: false,
     backgroundColorChoice: 'none',
@@ -115,9 +121,11 @@ export function EventDetailsSection({
     showPhotos: config.showPhotos ?? showPhotos,
     ceremonyImageUrl: config.ceremonyImageUrl ?? ceremonyImageUrl,
     receptionImageUrl: config.receptionImageUrl ?? receptionImageUrl,
-    ceremonyDescription: config.ceremonyDescription || undefined,
-    receptionDescription: config.receptionDescription || undefined,
-    sectionSubtitle: config.sectionSubtitle || undefined,
+    // Pass empty string as-is to hide description, undefined for default
+    ceremonyDescription: config.ceremonyDescription !== undefined ? config.ceremonyDescription : undefined,
+    receptionDescription: config.receptionDescription !== undefined ? config.receptionDescription : undefined,
+    sectionTitle: config.sectionTitle || sectionTitle,
+    sectionSubtitle: config.sectionSubtitle || sectionSubtitle,
     customEvents: config.customEvents || customEvents,
     useColorBackground: config.useColorBackground ?? false,
     backgroundColorChoice: config.backgroundColorChoice || 'none',
@@ -152,7 +160,8 @@ export function EventDetailsSection({
       receptionImageUrl: config.receptionImageUrl ?? receptionImageUrl,
       ceremonyDescription: config.ceremonyDescription || '',
       receptionDescription: config.receptionDescription || '',
-      sectionSubtitle: config.sectionSubtitle || '',
+      sectionTitle: config.sectionTitle || sectionTitle || '',
+      sectionSubtitle: config.sectionSubtitle || sectionSubtitle || '',
       customEvents: config.customEvents || customEvents,
       useColorBackground: config.useColorBackground ?? false,
       backgroundColorChoice: config.backgroundColorChoice || 'none',

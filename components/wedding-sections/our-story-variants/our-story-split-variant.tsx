@@ -4,6 +4,7 @@ import React from 'react'
 import Image from 'next/image'
 import { Heart, BookOpen, Sparkles } from 'lucide-react'
 import { BaseOurStoryProps, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function OurStorySplitVariant({
   theme,
@@ -13,9 +14,9 @@ export function OurStorySplitVariant({
   showPhotos = true,
   showHowWeMetPhoto = false,
   showProposalPhoto = false,
-  howWeMetText = "From strangers to soulmates, our journey began in the most unexpected way.",
+  howWeMetText,
   howWeMetPhoto,
-  proposalText = "Under the stars, a question was asked and forever was promised.",
+  proposalText,
   proposalPhoto,
   timeline = [],
   photos = [],
@@ -24,6 +25,7 @@ export function OurStorySplitVariant({
   howWeMetTextAlignment = 'center',
   proposalTextAlignment = 'center'
 }: BaseOurStoryProps) {
+  const { t } = useI18n()
   const { bgColor, titleColor, subtitleColor: paletteSubtitle, sectionTextColor, sectionTextColorAlt, accentColor, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
 
   // Helper to get alignment classes - center on mobile, configured alignment on desktop
@@ -91,9 +93,9 @@ export function OurStorySplitVariant({
   const storySections = [
     ...(showHowWeMet ? [{
       id: 'how-we-met',
-      label: 'Chapter One',
-      title: 'How We Met',
-      text: howWeMetText,
+      label: t('ourStory.chapterOne'),
+      title: t('ourStory.howWeMet'),
+      text: howWeMetText || t('ourStory.howWeMetDefault'),
       photo: getHowWeMetPhoto(),
       icon: BookOpen
     }] : []),
@@ -107,9 +109,9 @@ export function OurStorySplitVariant({
     })),
     ...(showProposal ? [{
       id: 'proposal',
-      label: 'The Big Moment',
-      title: 'The Proposal',
-      text: proposalText,
+      label: t('ourStory.theBigMoment'),
+      title: t('ourStory.theProposal'),
+      text: proposalText || t('ourStory.proposalDefault'),
       photo: getProposalPhoto(),
       icon: Heart
     }] : [])
@@ -150,7 +152,7 @@ export function OurStorySplitVariant({
           className="text-xs uppercase tracking-[0.3em] mb-2 sm:mb-3 font-light"
           style={{ color: isColored ? sectionTextColorAlt : theme?.colors?.accent }}
         >
-          Our Journey
+          {t('ourStory.ourJourney')}
         </p>
         <h2 
           className="text-3xl sm:text-4xl md:text-5xl mb-2 sm:mb-3"
@@ -160,7 +162,7 @@ export function OurStorySplitVariant({
             fontWeight: 400
           }}
         >
-          Our Love Story
+          {t('ourStory.title')}
         </h2>
         <p 
           className="text-base max-w-md mx-auto font-light"
@@ -169,7 +171,7 @@ export function OurStorySplitVariant({
             fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
           }}
         >
-          Every great love story has a beginning, and this is ours
+          {t('ourStory.subtitle')}
         </p>
       </div>
 

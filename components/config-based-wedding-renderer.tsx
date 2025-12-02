@@ -16,6 +16,7 @@ import { SiteConfigProvider } from './contexts/site-config-context'
 import { EditingModeProvider } from './contexts/editing-mode-context'
 import { CustomizeProvider } from './contexts/customize-context'
 import { ViewportProvider } from './contexts/viewport-context'
+import { I18nProvider } from './contexts/i18n-context'
 import { SectionCustomizer } from './ui/section-customizer'
 import { EditingTopBar } from './ui/editing-top-bar'
 import { AddSectionButton } from './ui/add-section-button'
@@ -132,7 +133,7 @@ function ConfigBasedWeddingRendererContent({
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading configuration...</p>
         </div>
       </div>
@@ -200,8 +201,6 @@ function ConfigBasedWeddingRendererContent({
       case 'our-story':
         return {
           variant: 'cards',
-          howWeMetText: 'Our love story began in the most unexpected way. From the moment we met, we knew there was something special between us. What started as a chance encounter blossomed into a beautiful friendship, and eventually, a love that we knew would last forever.',
-          proposalText: 'The proposal was a magical moment we\'ll cherish forever. Surrounded by the beauty of nature and the warmth of our love, the question was asked and answered with tears of joy. It was the perfect beginning to our next chapter together.',
           showHowWeMet: true,
           showProposal: true,
           showPhotos: false
@@ -427,13 +426,15 @@ function ConfigBasedWeddingRendererContent({
 export function ConfigBasedWeddingRenderer(props: ConfigBasedWeddingRendererProps) {
   // We need to wrap this in PageConfigProvider first to get initial colors
   return (
-    <VariantProvider>
-      <ViewportProvider>
-        <EditingModeProvider weddingNameId={props.weddingNameId}>
-          <ConfigBasedWeddingRendererWithConfig {...props} />
-        </EditingModeProvider>
-      </ViewportProvider>
-    </VariantProvider>
+    <I18nProvider>
+      <VariantProvider>
+        <ViewportProvider>
+          <EditingModeProvider weddingNameId={props.weddingNameId}>
+            <ConfigBasedWeddingRendererWithConfig {...props} />
+          </EditingModeProvider>
+        </ViewportProvider>
+      </VariantProvider>
+    </I18nProvider>
   )
 }
 

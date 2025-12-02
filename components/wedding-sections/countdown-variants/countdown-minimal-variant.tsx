@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseCountdownProps, TimeLeft, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function CountdownMinimalVariant({
   weddingDate,
@@ -14,12 +15,16 @@ export function CountdownMinimalVariant({
   showHours = true,
   showMinutes = true,
   showSeconds = true,
-  message = "Until we say \"I do\"",
+  message,
   useColorBackground = false,
   backgroundColorChoice
 }: BaseCountdownProps) {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ years: 0, months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 })
   const [isClient, setIsClient] = useState(false)
+  const { t } = useI18n()
+
+  // Use translated default if not provided
+  const displayMessage = message || t('countdown.untilWeSayIDo')
 
   // Get enhanced color scheme with complementary palette colors
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, contrastColor, colorLight, colorDark, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
@@ -113,7 +118,7 @@ export function CountdownMinimalVariant({
               color: isColored ? sectionTextColorAlt : undefined
             }}
           >
-            {message}
+            {displayMessage}
           </p>
 
           <div className="flex justify-center items-baseline flex-wrap space-x-2 sm:space-x-3 md:space-x-4 gap-2">

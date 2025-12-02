@@ -13,6 +13,8 @@ export interface BaseRSVPProps {
   weddingNameId: string
   theme?: Partial<ThemeConfig>
   alignment?: Partial<AlignmentConfig>
+  sectionTitle?: string
+  sectionSubtitle?: string
   showMealPreferences?: boolean
   showCustomQuestions?: boolean
   customQuestions?: CustomQuestion[]

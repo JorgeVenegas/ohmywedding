@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseOurStoryProps, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function OurStoryZigzagVariant({
   theme,
@@ -10,30 +11,32 @@ export function OurStoryZigzagVariant({
   showHowWeMet = true,
   showProposal = true,
   showPhotos = false,
-  howWeMetText = "From strangers to soulmates, our journey began in the most unexpected way.",
+  howWeMetText,
   howWeMetPhoto,
-  proposalText = "Under the stars, a question was asked and forever was promised.",
+  proposalText,
   proposalPhoto,
   timeline = [],
   photos = [],
   useColorBackground = false,
   backgroundColorChoice
 }: BaseOurStoryProps) {
+  const { t } = useI18n()
+  
   // Get enhanced color scheme with complementary palette colors
   const { bgColor, titleColor, subtitleColor: paletteSubtitle, sectionTextColor, sectionTextColorAlt, accentColor, contrastColor, colorLight, colorDark, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
   
   const allEvents = [
     ...(showHowWeMet ? [{
-      date: "Chapter One",
-      title: "How We Met",
-      description: howWeMetText,
+      date: t('ourStory.chapterOne'),
+      title: t('ourStory.howWeMet'),
+      description: howWeMetText || t('ourStory.howWeMetDefault'),
       photo: howWeMetPhoto || photos[0]?.url
     }] : []),
     ...timeline,
     ...(showProposal ? [{
-      date: "The Big Moment",
-      title: "The Proposal",
-      description: proposalText,
+      date: t('ourStory.theBigMoment'),
+      title: t('ourStory.theProposal'),
+      description: proposalText || t('ourStory.proposalDefault'),
       photo: proposalPhoto || photos[photos.length - 1]?.url
     }] : [])
   ]
@@ -66,11 +69,11 @@ export function OurStoryZigzagVariant({
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-4"
               style={{ color: sectionTitleColor }}>
-            Our Love Story
+            {t('ourStory.title')}
           </h2>
           <p className={`text-center mb-6 sm:mb-8 max-w-2xl mx-auto ${isColored ? '' : 'text-gray-600'}`}
              style={{ color: subtitleColor }}>
-            Every great love story has a beginning, middle, and a happily ever after
+            {t('ourStory.subtitle')}
           </p>
           
           <div className="space-y-24">

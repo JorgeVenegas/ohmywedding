@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseCountdownProps, TimeLeft, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function CountdownModernVariant({
   weddingDate,
@@ -14,12 +15,16 @@ export function CountdownModernVariant({
   showHours = true,
   showMinutes = true,
   showSeconds = true,
-  message = "Until we say \"I do\"",
+  message,
   useColorBackground = false,
   backgroundColorChoice
 }: BaseCountdownProps) {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ years: 0, months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 })
   const [isClient, setIsClient] = useState(false)
+  const { t } = useI18n()
+
+  // Use translated default if not provided
+  const displayMessage = message || t('countdown.untilWeSayIDo')
 
   // Get enhanced color scheme with complementary palette colors
   const { bgColor, titleColor, subtitleColor, sectionTextColor, accentColor, contrastColor, colorLight, colorDark, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
@@ -111,7 +116,7 @@ export function CountdownModernVariant({
             className={`text-xs sm:text-sm md:text-base uppercase tracking-[0.3em] mb-4 sm:mb-6 font-medium ${isColored ? '' : 'text-gray-500'}`}
             style={isColored ? { color: colorLight } : undefined}
           >
-            {message}
+            {displayMessage}
           </p>
 
           <div className="flex justify-center items-stretch flex-wrap gap-3 md:gap-4">

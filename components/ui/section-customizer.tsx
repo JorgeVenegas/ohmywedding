@@ -4,6 +4,7 @@ import React from 'react'
 import { Crown, Heart, Clock, MapPin, Image, Mail, HelpCircle } from 'lucide-react'
 import { CustomizePanel } from './customize-panel'
 import { useCustomizeSafe } from '@/components/contexts/customize-context'
+import { useI18n } from '@/components/contexts/i18n-context'
 import { 
   HeroConfigForm, 
   CountdownConfigForm, 
@@ -27,23 +28,29 @@ const SECTION_ICONS: Record<string, React.ReactNode> = {
   'event-details': <MapPin className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
 }
 
-const SECTION_NAMES: Record<string, string> = {
-  hero: 'Main Banner',
-  countdown: 'Countdown Timer',
-  'our-story': 'Our Story',
-  rsvp: 'RSVP',
-  gallery: 'Photo Gallery',
-  faq: 'FAQ',
-  'event-details': 'Event Details'
-}
-
 export function SectionCustomizer() {
   const customizeContext = useCustomizeSafe()
+  const { t } = useI18n()
   
   if (!customizeContext) return null
   
   const { state, closeCustomizer, updateConfig, resetConfig } = customizeContext
   const { isOpen, sectionType, sectionConfig } = state
+
+  // Get translated section name
+  const getSectionName = (type: string | null): string => {
+    if (!type) return t('config.unknownSection')
+    const sectionNameMap: Record<string, string> = {
+      hero: t('config.sectionMainBanner'),
+      countdown: t('config.sectionCountdown'),
+      'our-story': t('config.sectionOurStory'),
+      rsvp: t('config.sectionRsvp'),
+      gallery: t('config.sectionGallery'),
+      faq: t('config.sectionFaq'),
+      'event-details': t('config.sectionEventDetails')
+    }
+    return sectionNameMap[type] || t('config.unknownSection')
+  }
 
   const renderConfigForm = () => {
     switch (sectionType) {
@@ -95,19 +102,19 @@ export function SectionCustomizer() {
       case 'gallery':
         return (
           <div className="text-center py-8 text-gray-500">
-            <p>Configuration options for {SECTION_NAMES[sectionType]} coming soon!</p>
+            <p>{t('config.sectionComingSoon')}</p>
           </div>
         )
       default:
         return (
           <div className="text-center py-8 text-gray-500">
-            <p>Unknown section type</p>
+            <p>{t('config.unknownSection')}</p>
           </div>
         )
     }
   }
 
-  const sectionName = sectionType ? SECTION_NAMES[sectionType] : 'Section'
+  const sectionName = getSectionName(sectionType)
   const sectionIcon = sectionType ? SECTION_ICONS[sectionType] : null
 
   return (

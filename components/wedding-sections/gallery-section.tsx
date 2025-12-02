@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Camera, Play } from 'lucide-react'
 import { SectionWrapper } from './section-wrapper'
 import { ThemeConfig, AlignmentConfig } from '@/lib/wedding-config'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 interface Photo {
   id: string
@@ -51,6 +52,7 @@ export function GallerySection({
   showViewAllButton = true,
   showDemoPhotos = false
 }: GallerySectionProps) {
+  const { t } = useI18n()
   const displayPhotos = photos.slice(0, maxDisplayPhotos)
   const hasMorePhotos = photos.length > maxDisplayPhotos
 
@@ -89,7 +91,7 @@ export function GallerySection({
             color: theme?.colors?.foreground || '#1f2937'
           }}
         >
-          Our Gallery
+          {t('gallery.title')}
         </h2>
         <div 
           className="w-24 h-1 mx-auto rounded mb-6"
@@ -102,7 +104,7 @@ export function GallerySection({
             fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
           }}
         >
-          A glimpse into our love story and journey together
+          {t('gallery.subtitle')}
         </p>
       </div>
 
@@ -169,7 +171,7 @@ export function GallerySection({
               fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
             }}
           >
-            Captured Moments
+            {t('gallery.capturedMoments')}
           </h3>
           
           {photosToShow.length > 0 ? (
@@ -207,13 +209,13 @@ export function GallerySection({
                 className="text-xl font-semibold mb-2"
                 style={{ color: theme?.colors?.foreground || '#1f2937' }}
               >
-                Photos Coming Soon
+                {t('gallery.photosComingSoon')}
               </h4>
               <p 
                 className="text-base max-w-md mx-auto"
                 style={{ color: theme?.colors?.muted || '#6b7280' }}
               >
-                We're still capturing our beautiful moments. Check back soon to see our engagement photos and memories!
+                {t('gallery.checkBackSoon')}
               </p>
             </div>
           ) : null}
@@ -233,7 +235,7 @@ export function GallerySection({
               >
                 <Link href={`/${weddingNameId}/gallery`}>
                   <Camera className="w-5 h-5 mr-2" />
-                  View Full Gallery
+                  {t('gallery.viewAll')}
                 </Link>
               </Button>
             </div>

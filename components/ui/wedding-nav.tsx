@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { Menu, X } from 'lucide-react'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 interface SectionLink {
   id: string
@@ -31,17 +32,6 @@ interface WeddingNavProps {
 
 // Export visibility state for other components to use
 export const NAV_HEIGHT = 76 // Taller nav with links: py-3 + content
-
-// Section labels mapping
-const SECTION_LABELS: Record<string, string> = {
-  'hero': 'Home',
-  'our-story': 'Our Story',
-  'countdown': 'Countdown',
-  'event-details': 'Details',
-  'gallery': 'Gallery',
-  'rsvp': 'RSVP',
-  'faq': 'FAQ'
-}
 
 // Helper to calculate relative luminance
 function getLuminance(hex: string): number {
@@ -170,6 +160,21 @@ export function WeddingNav({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const rafRef = useRef<number | null>(null)
   const navRef = useRef<HTMLElement | null>(null)
+  const { t } = useI18n()
+
+  // Section labels mapping using i18n
+  const getSectionLabel = (sectionId: string): string => {
+    const labelMap: Record<string, string> = {
+      'hero': t('nav.home'),
+      'our-story': t('nav.ourStory'),
+      'countdown': t('countdown.title'),
+      'event-details': t('nav.eventDetails'),
+      'gallery': t('nav.gallery'),
+      'rsvp': t('nav.rsvp'),
+      'faq': t('nav.faq')
+    }
+    return labelMap[sectionId] || sectionId
+  }
 
   // Get color scheme for nav
   const { bgColor, textColor, textColorMuted, borderColor, isColored } = getNavColorScheme(
@@ -263,12 +268,15 @@ export function WeddingNav({
 
   const initials = `${getInitial(person1Name)} & ${getInitial(person2Name)}`
 
+  // Valid section ids that we support in navigation
+  const validSectionIds = ['hero', 'our-story', 'countdown', 'event-details', 'gallery', 'rsvp', 'faq']
+
   // Generate section links from enabled sections (including hero as "Home")
   const sectionLinks: SectionLink[] = enabledSections
-    .filter(sectionId => SECTION_LABELS[sectionId])
+    .filter(sectionId => validSectionIds.includes(sectionId))
     .map(sectionId => ({
       id: sectionId,
-      label: SECTION_LABELS[sectionId]
+      label: getSectionLabel(sectionId)
     }))
 
   // Handle smooth scroll to section
@@ -400,7 +408,7 @@ export function WeddingNav({
           </div>
           
           {/* Desktop layout: Initials with links below */}
-          <div className="hidden sm:flex flex-col items-center py-3">
+          <div className="hidden sm:flex flex-col items-center py-3 relative">
             {/* Initials */}
             <div 
               className="text-xl tracking-wide"

@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
 import { usePageConfig } from '@/components/contexts/page-config-context'
+import { useI18n } from '@/components/contexts/i18n-context'
 import { Check, Plus, Trash2, ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
 
 type BackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
@@ -67,6 +68,7 @@ interface FAQConfigFormProps {
 
 export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null)
+  const { t } = useI18n()
   
   // Get colors from page config (theme settings)
   const { config: pageConfig } = usePageConfig()
@@ -114,11 +116,11 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
   // Create color options with full, light, and lighter variants
   const colorGroups: { label: string; colors: { value: BackgroundColorChoice; color: string | null }[] }[] = [
     {
-      label: 'None',
+      label: t('config.none'),
       colors: [{ value: 'none', color: null }]
     },
     {
-      label: 'Primary',
+      label: t('config.primary'),
       colors: [
         { value: 'primary', color: primaryColor },
         { value: 'primary-light', color: getLightTint(primaryColor, 0.5) },
@@ -126,7 +128,7 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
       ]
     },
     {
-      label: 'Secondary',
+      label: t('config.secondary'),
       colors: [
         { value: 'secondary', color: secondaryColor },
         { value: 'secondary-light', color: getLightTint(secondaryColor, 0.5) },
@@ -134,7 +136,7 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
       ]
     },
     {
-      label: 'Accent',
+      label: t('config.accent'),
       colors: [
         { value: 'accent', color: accentColor },
         { value: 'accent-light', color: getLightTint(accentColor, 0.5) },
@@ -144,11 +146,11 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
   ]
 
   const variants = [
-    { value: 'accordion', label: 'Accordion', description: 'Classic expandable accordion style' },
-    { value: 'minimal', label: 'Minimal', description: 'Ultra-clean and compact design' },
-    { value: 'cards', label: 'Cards Grid', description: 'All questions visible in a grid' },
-    { value: 'elegant', label: 'Elegant', description: 'Romantic style with decorative elements' },
-    { value: 'simple', label: 'Simple List', description: 'Clean numbered list format' }
+    { value: 'accordion', label: t('config.accordion'), description: t('config.accordionDesc') },
+    { value: 'minimal', label: t('config.minimal'), description: t('config.minimalCleanDesc') },
+    { value: 'cards', label: t('config.cardsGrid'), description: t('config.cardsGridDesc') },
+    { value: 'elegant', label: t('config.elegant'), description: t('config.elegantScriptDesc') },
+    { value: 'simple', label: t('config.simpleList'), description: t('config.simpleListDesc') }
   ]
 
   const currentChoice = config.backgroundColorChoice || (config.useColorBackground ? 'primary' : 'none')
@@ -157,38 +159,38 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
     <div className="space-y-6">
       {/* Variant Selection */}
       <VariantDropdown
-        label="FAQ Style"
+        label={t('config.faqStyle')}
         value={config.variant || 'accordion'}
         options={variants}
         onChange={(value) => onChange('variant', value)}
-        placeholder="Choose FAQ style"
+        placeholder={t('config.faqStyle')}
       />
 
       {/* Section Title & Subtitle */}
       <div className="p-4 border border-gray-200 rounded-lg space-y-4">
-        <h4 className="font-medium text-gray-900 text-sm">Section Content</h4>
+        <h4 className="font-medium text-gray-900 text-sm">{t('config.sectionContent')}</h4>
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Section Title
+            {t('config.sectionTitle')}
           </label>
           <Input
             type="text"
             value={config.sectionTitle || ''}
             onChange={(e) => onChange('sectionTitle', e.target.value)}
-            placeholder="Frequently Asked Questions"
+            placeholder={t('faq.title')}
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Section Subtitle
+            {t('config.sectionSubtitle')}
           </label>
           <Input
             type="text"
             value={config.sectionSubtitle || ''}
             onChange={(e) => onChange('sectionSubtitle', e.target.value)}
-            placeholder="Everything you need to know for our special day"
+            placeholder={t('faq.subtitle')}
           />
         </div>
       </div>
@@ -197,9 +199,8 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
       <div className="space-y-3">
         <div>
           <label className="text-sm font-medium text-gray-700">
-            Background Color
+            {t('config.backgroundColor')}
           </label>
-          <p className="text-xs text-gray-500">Choose a palette color for the section background</p>
         </div>
         <div className="space-y-3">
           {colorGroups.map((group) => (
@@ -250,14 +251,13 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
 
       {/* Display Options */}
       <div className="p-4 border border-gray-200 rounded-lg space-y-4">
-        <h4 className="font-medium text-gray-900 text-sm">Display Options</h4>
+        <h4 className="font-medium text-gray-900 text-sm">{t('config.displayOptions')}</h4>
         
         <div className="flex items-center justify-between">
           <div>
             <label className="text-sm font-medium text-gray-700">
-              Allow Multiple Open
+              {t('config.allowMultipleOpen')}
             </label>
-            <p className="text-xs text-gray-500">Allow opening multiple questions at once</p>
           </div>
           <Switch
             checked={config.allowMultipleOpen ?? false}
@@ -268,9 +268,8 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
         <div className="flex items-center justify-between">
           <div>
             <label className="text-sm font-medium text-gray-700">
-              Show Contact Note
+              {t('config.showContactNote')}
             </label>
-            <p className="text-xs text-gray-500">Display a note at the bottom of the section</p>
           </div>
           <Switch
             checked={config.showContactNote ?? true}
@@ -281,12 +280,12 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
         {(config.showContactNote ?? true) && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Contact Note Text
+              {t('config.contactNoteText')}
             </label>
             <Textarea
               value={config.contactNoteText || ''}
               onChange={(e) => onChange('contactNoteText', e.target.value)}
-              placeholder="Have a question that's not answered here? Feel free to reach out to us directly!"
+              placeholder={t('faq.contactNote')}
               rows={2}
             />
           </div>
@@ -297,8 +296,8 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
       <div className="p-4 border border-gray-200 rounded-lg space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="font-medium text-gray-900 text-sm">Questions</h4>
-            <p className="text-xs text-gray-500">{questions.length} question{questions.length !== 1 ? 's' : ''}</p>
+            <h4 className="font-medium text-gray-900 text-sm">{t('config.questions')}</h4>
+            <p className="text-xs text-gray-500">{questions.length} {questions.length !== 1 ? t('config.questions').toLowerCase() : t('config.question').toLowerCase()}</p>
           </div>
           <Button
             type="button"
@@ -308,14 +307,13 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
             className="flex items-center gap-1"
           >
             <Plus className="w-4 h-4" />
-            Add Question
+            {t('config.addQuestion')}
           </Button>
         </div>
 
         {questions.length === 0 ? (
           <div className="text-center py-6 text-gray-500 border border-dashed border-gray-300 rounded-lg">
-            <p className="text-sm">No questions added yet</p>
-            <p className="text-xs mt-1">Click "Add Question" to create your first FAQ</p>
+            <p className="text-sm">{t('config.noQuestions')}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -334,7 +332,7 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
                     <GripVertical className="w-4 h-4 text-gray-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-700 truncate">
-                        {item.question || <span className="text-gray-400 italic">Untitled question</span>}
+                        {item.question || <span className="text-gray-400 italic">{t('config.enterQuestion')}</span>}
                       </p>
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
@@ -343,6 +341,7 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
                         onClick={(e) => { e.stopPropagation(); moveQuestion(index, 'up'); }}
                         disabled={index === 0}
                         className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                        title={t('config.moveUp')}
                       >
                         <ChevronUp className="w-4 h-4" />
                       </button>
@@ -351,6 +350,7 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
                         onClick={(e) => { e.stopPropagation(); moveQuestion(index, 'down'); }}
                         disabled={index === questions.length - 1}
                         className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                        title={t('config.moveDown')}
                       >
                         <ChevronDown className="w-4 h-4" />
                       </button>
@@ -358,6 +358,7 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
                         type="button"
                         onClick={(e) => { e.stopPropagation(); removeQuestion(index); }}
                         className="p-1 text-red-400 hover:text-red-600"
+                        title={t('config.deleteQuestion')}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -369,23 +370,23 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
                     <div className="p-3 space-y-3 border-t border-gray-200">
                       <div>
                         <label className="block text-xs font-medium text-gray-600 mb-1">
-                          Question
+                          {t('config.question')}
                         </label>
                         <Input
                           type="text"
                           value={item.question}
                           onChange={(e) => updateQuestion(index, 'question', e.target.value)}
-                          placeholder="What is the dress code?"
+                          placeholder={t('config.enterQuestion')}
                         />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-600 mb-1">
-                          Answer
+                          {t('config.answer')}
                         </label>
                         <Textarea
                           value={item.answer}
                           onChange={(e) => updateQuestion(index, 'answer', e.target.value)}
-                          placeholder="Black tie optional. We want you to feel comfortable..."
+                          placeholder={t('config.enterAnswer')}
                           rows={3}
                         />
                       </div>

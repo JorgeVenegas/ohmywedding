@@ -4,6 +4,7 @@ import React from 'react'
 import { Button } from '@/components/ui/button'
 import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar, Navigation, Heart } from 'lucide-react'
 import { BaseEventDetailsProps, EventItem, buildEventsList, getMapUrl, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function EventDetailsSplitVariant({
   wedding,
@@ -26,9 +27,10 @@ export function EventDetailsSplitVariant({
   ceremonyTextAlignment = 'center',
   receptionTextAlignment = 'center'
 }: BaseEventDetailsProps) {
+  const { t } = useI18n()
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
   
-  const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription)
+  const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription, t)
 
   // Helper to get text alignment for an event
   const getEventAlignment = (iconType: EventItem['iconType']): 'left' | 'center' | 'right' => {
@@ -103,7 +105,7 @@ export function EventDetailsSplitVariant({
           className="text-xs uppercase tracking-[0.3em] mb-2 sm:mb-3 font-light"
           style={{ color: isColored ? sectionTextColorAlt : theme?.colors?.accent }}
         >
-          Celebration Details
+          {t('eventDetails.subtitle')}
         </p>
         <h2 
           className="text-3xl sm:text-4xl md:text-5xl mb-2 sm:mb-3"
@@ -113,7 +115,7 @@ export function EventDetailsSplitVariant({
             fontWeight: 400
           }}
         >
-          When & Where
+          {t('eventDetails.title')}
         </h2>
         <p 
           className="text-base max-w-md mx-auto font-light"
@@ -122,7 +124,7 @@ export function EventDetailsSplitVariant({
             fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
           }}
         >
-          {sectionSubtitle || "We invite you to celebrate with us at these beautiful venues"}
+          {sectionSubtitle || t('eventDetails.joinUsForOurCelebration')}
         </p>
       </div>
 
@@ -221,7 +223,7 @@ export function EventDetailsSplitVariant({
                         style={{ color: cardTitleColor }}
                       >
                         <Navigation className="w-4 h-4" />
-                        Get Directions
+                        {t('eventDetails.getDirections')}
                         <span className="ml-1">→</span>
                       </a>
                     )}
@@ -304,7 +306,7 @@ export function EventDetailsSplitVariant({
                       </div>
                       <div className={alignClasses.text}>
                         <p className="text-xs uppercase tracking-widest mb-1 font-light" style={{ color: cardMutedColor }}>
-                          Time
+                          {t('eventDetails.time')}
                         </p>
                         <span 
                           className="text-lg font-medium"
@@ -325,7 +327,7 @@ export function EventDetailsSplitVariant({
                       </div>
                       <div className={alignClasses.text}>
                         <p className="text-xs uppercase tracking-widest mb-1 font-light" style={{ color: cardMutedColor }}>
-                          Location
+                          {t('schedule.location')}
                         </p>
                         <p 
                           className="text-lg font-medium mb-1"
@@ -367,7 +369,7 @@ export function EventDetailsSplitVariant({
                         style={{ color: cardTitleColor }}
                       >
                         <Navigation className="w-4 h-4" />
-                        Get Directions
+                        {t('eventDetails.getDirections')}
                         <span className="ml-1">→</span>
                       </a>
                     )}

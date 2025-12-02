@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { Heart, Clock } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseCountdownProps, TimeLeft, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function CountdownClassicVariant({
   weddingDate,
@@ -15,12 +16,16 @@ export function CountdownClassicVariant({
   showHours = true,
   showMinutes = true,
   showSeconds = true,
-  message = "Until we say \"I do\"",
+  message,
   useColorBackground = false,
   backgroundColorChoice
 }: BaseCountdownProps) {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ years: 0, months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 })
   const [isClient, setIsClient] = useState(false)
+  const { t } = useI18n()
+
+  // Use translated default if not provided
+  const displayMessage = message || t('countdown.untilWeSayIDo')
 
   // Get enhanced color scheme with complementary palette colors
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, contrastColor, colorLight, colorDark, cardBg: cardBgColor, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
@@ -90,13 +95,16 @@ export function CountdownClassicVariant({
   }
 
   // Build all available units based on config
+  // Use plural forms by default, singular when value is 1
+  const getLabel = (value: number, singular: string, plural: string) => value === 1 ? t(singular) : t(plural)
+  
   const allUnits = [
-    { value: timeLeft.years, label: 'Years', enabled: showYears, hasValue: timeLeft.years > 0 },
-    { value: timeLeft.months, label: 'Months', enabled: showMonths, hasValue: timeLeft.years > 0 || timeLeft.months > 0 },
-    { value: timeLeft.days, label: 'Days', enabled: showDays, hasValue: true },
-    { value: timeLeft.hours, label: 'Hours', enabled: showHours, hasValue: true },
-    { value: timeLeft.minutes, label: 'Minutes', enabled: showMinutes, hasValue: true },
-    { value: timeLeft.seconds, label: 'Seconds', enabled: showSeconds, hasValue: true },
+    { value: timeLeft.years, label: getLabel(timeLeft.years, 'countdown.year', 'countdown.years'), enabled: showYears, hasValue: timeLeft.years > 0 },
+    { value: timeLeft.months, label: getLabel(timeLeft.months, 'countdown.month', 'countdown.months'), enabled: showMonths, hasValue: timeLeft.years > 0 || timeLeft.months > 0 },
+    { value: timeLeft.days, label: getLabel(timeLeft.days, 'countdown.day', 'countdown.days'), enabled: showDays, hasValue: true },
+    { value: timeLeft.hours, label: getLabel(timeLeft.hours, 'countdown.hour', 'countdown.hours'), enabled: showHours, hasValue: true },
+    { value: timeLeft.minutes, label: getLabel(timeLeft.minutes, 'countdown.minute', 'countdown.minutes'), enabled: showMinutes, hasValue: true },
+    { value: timeLeft.seconds, label: getLabel(timeLeft.seconds, 'countdown.second', 'countdown.seconds'), enabled: showSeconds, hasValue: true },
   ]
 
   // Smart display: show 4 most relevant units that are enabled
@@ -128,7 +136,7 @@ export function CountdownClassicVariant({
                            theme?.fonts?.heading === 'script' ? 'cursive' : 'sans-serif'
               }}
             >
-              {message}
+              {displayMessage}
             </h2>
             <Heart className="w-5 h-5 sm:w-6 sm:h-6 ml-2 sm:ml-3 fill-current flex-shrink-0" style={{ color: iconColor }} />
           </div>

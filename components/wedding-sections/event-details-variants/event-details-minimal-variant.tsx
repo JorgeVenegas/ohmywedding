@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card'
 import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar, ArrowRight } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseEventDetailsProps, EventItem, buildEventsList, getMapUrl, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function EventDetailsMinimalVariant({
   wedding,
@@ -24,9 +25,10 @@ export function EventDetailsMinimalVariant({
   useColorBackground = false,
   backgroundColorChoice
 }: BaseEventDetailsProps) {
-  const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
+  const { t } = useI18n()
+  const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, colorLight, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
   
-  const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription)
+  const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription, t)
 
   const renderEventIcon = (iconType: EventItem['iconType']) => {
     const color = isColored ? sectionTextColor : theme?.colors?.foreground
@@ -69,7 +71,7 @@ export function EventDetailsMinimalVariant({
               fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
             }}
           >
-            When & Where
+            {t('eventDetails.title')}
           </h2>
         </div>
 
@@ -142,7 +144,7 @@ export function EventDetailsMinimalVariant({
                       className="inline-flex items-center gap-1 text-sm hover:underline"
                       style={{ color: linkColor }}
                     >
-                      View on map
+                      {t('eventDetails.viewOnMap')}
                       <ArrowRight className="w-3 h-3" />
                     </a>
                   )}

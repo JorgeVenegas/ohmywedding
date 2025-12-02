@@ -3,11 +3,13 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
+import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
 import { ImageGalleryDialog } from '@/components/ui/image-gallery-dialog'
 import { Image as ImageIcon, X, Check, AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
 import { usePageConfig } from '@/components/contexts/page-config-context'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 type BackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
 type TextAlignment = 'left' | 'center' | 'right'
@@ -48,6 +50,8 @@ function getLightTint(hex: string, tintAmount: number): string {
 interface OurStoryConfigFormProps {
   config: {
     variant?: string
+    sectionTitle?: string
+    sectionSubtitle?: string
     textAlignment?: string
     showHowWeMet?: boolean
     showProposal?: boolean
@@ -71,6 +75,7 @@ interface OurStoryConfigFormProps {
 export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStoryConfigFormProps) {
   // Get colors from page config (theme settings)
   const { config: pageConfig } = usePageConfig()
+  const { t } = useI18n()
   const themeColors = pageConfig.siteSettings.theme?.colors
   
   const [showHowWeMetImageDialog, setShowHowWeMetImageDialog] = useState(false)
@@ -83,11 +88,11 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
   // Create color options with full, light, and lighter variants
   const colorGroups: { label: string; colors: { value: BackgroundColorChoice; color: string | null }[] }[] = [
     {
-      label: 'None',
+      label: t('config.none'),
       colors: [{ value: 'none', color: null }]
     },
     {
-      label: 'Primary',
+      label: t('config.primary'),
       colors: [
         { value: 'primary', color: primaryColor },
         { value: 'primary-light', color: getLightTint(primaryColor, 0.5) },
@@ -95,7 +100,7 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
       ]
     },
     {
-      label: 'Secondary',
+      label: t('config.secondary'),
       colors: [
         { value: 'secondary', color: secondaryColor },
         { value: 'secondary-light', color: getLightTint(secondaryColor, 0.5) },
@@ -103,7 +108,7 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
       ]
     },
     {
-      label: 'Accent',
+      label: t('config.accent'),
       colors: [
         { value: 'accent', color: accentColor },
         { value: 'accent-light', color: getLightTint(accentColor, 0.5) },
@@ -113,12 +118,12 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
   ]
 
   const variants = [
-    { value: 'cards', label: 'Cards Layout', description: 'Side-by-side cards with photos and text' },
-    { value: 'timeline', label: 'Timeline', description: 'Vertical timeline with milestones' },
-    { value: 'minimal', label: 'Minimal', description: 'Clean text-focused layout' },
-    { value: 'zigzag', label: 'Zigzag', description: 'Dynamic diagonal layout - modern and eye-catching' },
-    { value: 'booklet', label: 'Booklet', description: 'Storybook-style stacked pages - romantic and narrative' },
-    { value: 'split', label: 'Split View', description: 'Full-width alternating layout with large photos - elegant and immersive' }
+    { value: 'cards', label: t('config.cardsLayout'), description: t('config.cardsLayoutDesc') },
+    { value: 'timeline', label: t('config.timeline'), description: t('config.timelineDesc') },
+    { value: 'minimal', label: t('config.minimal'), description: t('config.minimalCleanDesc') },
+    { value: 'zigzag', label: t('config.zigzag'), description: t('config.zigzagDesc') },
+    { value: 'booklet', label: t('config.booklet'), description: t('config.bookletDesc') },
+    { value: 'split', label: t('config.splitView'), description: t('config.splitViewDesc') }
   ]
 
   const currentChoice = config.backgroundColorChoice || (config.useColorBackground ? 'primary' : 'none')
@@ -127,20 +132,48 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
     <div className="space-y-6">
       {/* Variant Selection */}
       <VariantDropdown
-        label="Story Layout"
+        label={t('config.storyLayout')}
         value={config.variant || 'cards'}
         options={variants}
         onChange={(value) => onChange('variant', value)}
-        placeholder="Choose story layout"
+        placeholder={t('config.storyLayout')}
       />
+
+      {/* Section Title & Subtitle */}
+      <div className="p-4 border border-gray-200 rounded-lg space-y-4">
+        <h4 className="font-medium text-gray-900 text-sm">{t('config.sectionContent')}</h4>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {t('config.sectionTitle')}
+          </label>
+          <Input
+            type="text"
+            value={config.sectionTitle || ''}
+            onChange={(e) => onChange('sectionTitle', e.target.value)}
+            placeholder={t('ourStory.title')}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {t('config.sectionSubtitle')}
+          </label>
+          <Input
+            type="text"
+            value={config.sectionSubtitle || ''}
+            onChange={(e) => onChange('sectionSubtitle', e.target.value)}
+            placeholder={t('ourStory.subtitle')}
+          />
+        </div>
+      </div>
 
       {/* Background Color Selection */}
       <div className="space-y-3">
         <div>
           <label className="text-sm font-medium text-gray-700">
-            Background Color
+            {t('config.backgroundColor')}
           </label>
-          <p className="text-xs text-gray-500">Choose a palette color for the section background</p>
         </div>
         <div className="space-y-3">
           {colorGroups.map((group) => (
@@ -191,11 +224,11 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
 
       {/* Content Toggles */}
       <div className="space-y-4">
-        <h4 className="font-medium text-gray-900">Content Sections</h4>
+        <h4 className="font-medium text-gray-900">{t('config.contentSections')}</h4>
         
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-700">
-            Show How We Met
+            {t('config.showHowWeMet')}
           </label>
           <Switch
             checked={config.showHowWeMet ?? true}
@@ -205,7 +238,7 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
 
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-700">
-            Show Proposal Story
+            {t('config.showProposalStory')}
           </label>
           <Switch
             checked={config.showProposal ?? true}
@@ -219,12 +252,12 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              How We Met Story
+              {t('config.howWeMetStory')}
             </label>
             <Textarea
               value={config.howWeMetText || ''}
               onChange={(e) => onChange('howWeMetText', e.target.value)}
-              placeholder="Tell your story about how you first met..."
+              placeholder={t('config.tellYourStory')}
               rows={4}
             />
           </div>
@@ -233,7 +266,7 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
           {config.variant !== 'split' && (
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-gray-700">
-                Show How We Met Photo
+                {t('config.showHowWeMetPhoto')}
               </label>
               <Switch
                 checked={config.showHowWeMetPhoto ?? false}
@@ -245,7 +278,7 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
           {(config.showHowWeMetPhoto || config.variant === 'split') && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                How We Met Photo
+                {t('config.howWeMetPhoto')}
               </label>
               {config.howWeMetPhoto ? (
                 <div className="space-y-2">
@@ -269,7 +302,7 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
                     className="w-full"
                   >
                     <ImageIcon className="w-4 h-4 mr-2" />
-                    Change Image
+                    {t('config.changeImage')}
                   </Button>
                 </div>
               ) : (
@@ -279,7 +312,7 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
                   className="w-full"
                 >
                   <ImageIcon className="w-4 h-4 mr-2" />
-                  Select Image
+                  {t('config.selectImage')}
                 </Button>
               )}
             </div>
@@ -288,12 +321,12 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
           {/* How We Met Text Alignment - Only for Split variant */}
           {config.variant === 'split' && (
             <div className="space-y-2">
-              <span className="text-sm text-gray-600">Text Alignment</span>
+              <span className="text-sm text-gray-600">{t('config.textAlignment')}</span>
               <div className="flex gap-2">
                 {[
-                  { value: 'left', label: 'Left', icon: AlignLeft },
-                  { value: 'center', label: 'Center', icon: AlignCenter },
-                  { value: 'right', label: 'Right', icon: AlignRight }
+                  { value: 'left', label: t('config.left'), icon: AlignLeft },
+                  { value: 'center', label: t('config.center'), icon: AlignCenter },
+                  { value: 'right', label: t('config.right'), icon: AlignRight }
                 ].map((alignment) => (
                   <Button
                     key={alignment.value}
@@ -324,12 +357,12 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Proposal Story
+              {t('config.proposalStory')}
             </label>
             <Textarea
               value={config.proposalText || ''}
               onChange={(e) => onChange('proposalText', e.target.value)}
-              placeholder="Share the story of your proposal..."
+              placeholder={t('config.tellYourStory')}
               rows={4}
             />
           </div>
@@ -338,7 +371,7 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
           {config.variant !== 'split' && (
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-gray-700">
-                Show Proposal Photo
+                {t('config.showProposalPhoto')}
               </label>
               <Switch
                 checked={config.showProposalPhoto ?? false}
@@ -350,7 +383,7 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
           {(config.showProposalPhoto || config.variant === 'split') && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Proposal Photo
+                {t('config.proposalPhoto')}
               </label>
               {config.proposalPhoto ? (
                 <div className="space-y-2">
@@ -374,7 +407,7 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
                     className="w-full"
                   >
                     <ImageIcon className="w-4 h-4 mr-2" />
-                    Change Image
+                    {t('config.changeImage')}
                   </Button>
                 </div>
               ) : (
@@ -384,7 +417,7 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
                   className="w-full"
                 >
                   <ImageIcon className="w-4 h-4 mr-2" />
-                  Select Image
+                  {t('config.selectImage')}
                 </Button>
               )}
             </div>
@@ -393,12 +426,12 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
           {/* Proposal Text Alignment - Only for Split variant */}
           {config.variant === 'split' && (
             <div className="space-y-2">
-              <span className="text-sm text-gray-600">Text Alignment</span>
+              <span className="text-sm text-gray-600">{t('config.textAlignment')}</span>
               <div className="flex gap-2">
                 {[
-                  { value: 'left', label: 'Left', icon: AlignLeft },
-                  { value: 'center', label: 'Center', icon: AlignCenter },
-                  { value: 'right', label: 'Right', icon: AlignRight }
+                  { value: 'left', label: t('config.left'), icon: AlignLeft },
+                  { value: 'center', label: t('config.center'), icon: AlignCenter },
+                  { value: 'right', label: t('config.right'), icon: AlignRight }
                 ].map((alignment) => (
                   <Button
                     key={alignment.value}

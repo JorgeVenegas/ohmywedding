@@ -3,20 +3,26 @@
 import React, { useState } from 'react'
 import { Plus, Minus } from 'lucide-react'
 import { BaseFAQProps, getColorScheme } from './types'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 export function FAQMinimalVariant({
   theme,
   questions = [],
   allowMultipleOpen = false,
-  sectionTitle = "Questions & Answers",
-  sectionSubtitle = "Here's what you need to know",
+  sectionTitle,
+  sectionSubtitle,
   showContactNote = true,
-  contactNoteText = "Still have questions? We'd love to hear from you.",
+  contactNoteText,
   useColorBackground = false,
   backgroundColorChoice = 'none'
 }: BaseFAQProps) {
   const [openItems, setOpenItems] = useState<Set<number>>(new Set())
   const { bgColor, titleColor, subtitleColor, bodyTextColor, mutedTextColor, accentColor, isColored, primary } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
+  const { t } = useI18n()
+
+  // Use translated defaults if not provided
+  const title = sectionTitle || t('faq.title')
+  const contactNote = contactNoteText || t('faq.contactNote')
 
   const faqItems = questions || []
   const hasQuestions = faqItems.length > 0
@@ -62,7 +68,7 @@ export function FAQMinimalVariant({
               fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
             }}
           >
-            {sectionTitle}
+            {title}
           </h2>
         </div>
 
@@ -75,7 +81,7 @@ export function FAQMinimalVariant({
               className="text-sm"
               style={{ color: isColored ? 'rgba(255,255,255,0.5)' : '#9ca3af' }}
             >
-              No FAQs added yet
+              {t('faq.noFaqsYet')}
             </p>
           </div>
         ) : (
@@ -134,7 +140,7 @@ export function FAQMinimalVariant({
         )}
 
         {/* Contact Note */}
-        {showContactNote && contactNoteText && (
+        {showContactNote && contactNote && (
           <div className="mt-10 sm:mt-12 text-center">
             <p 
               className="text-sm font-light"
@@ -143,7 +149,7 @@ export function FAQMinimalVariant({
                 fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
               }}
             >
-              {contactNoteText}
+              {contactNote}
             </p>
           </div>
         )}

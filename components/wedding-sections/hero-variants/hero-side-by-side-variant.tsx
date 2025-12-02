@@ -60,7 +60,7 @@ export function HeroSideBySideVariant({
   theme,
   alignment,
   showTagline = true,
-  tagline = "Join us as we tie the knot!",
+  tagline,
   showCountdown = true,
   showRSVPButton = true,
   heroImageUrl = 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=2387&q=80',
