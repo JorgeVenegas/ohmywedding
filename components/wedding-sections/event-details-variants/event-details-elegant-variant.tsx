@@ -22,12 +22,17 @@ export function EventDetailsElegantVariant({
   receptionImageUrl,
   ceremonyDescription,
   receptionDescription,
+  sectionTitle,
   sectionSubtitle,
   customEvents = [],
   useColorBackground = false,
   backgroundColorChoice
 }: BaseEventDetailsProps) {
   const { t } = useI18n()
+  
+  // Use translated defaults if not provided
+  const title = sectionTitle || t('eventDetails.title')
+  const subtitle = sectionSubtitle || t('eventDetails.joinUsForOurCelebration')
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
   
   const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription, t)
@@ -78,7 +83,7 @@ export function EventDetailsElegantVariant({
               color: sectionTitleColor
             }}
           >
-            {t('eventDetails.title')}
+            {title}
           </h2>
           <p 
             className="text-base max-w-lg mx-auto"
@@ -87,7 +92,7 @@ export function EventDetailsElegantVariant({
               fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
             }}
           >
-            {sectionSubtitle || t('eventDetails.joinUsForOurCelebration')}
+            {subtitle}
           </p>
         </div>
 

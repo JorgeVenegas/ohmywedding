@@ -1,11 +1,17 @@
 "use client"
+import { use } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Users, ImageIcon, MessageSquare, Settings, LogOut, BarChart3, CheckCircle2, ArrowRight } from "lucide-react"
+import { Users, ImageIcon, MessageSquare, Settings, LogOut, BarChart3, CheckCircle2, ArrowRight, Mail } from "lucide-react"
 import { Header } from "@/components/header"
 
-export default function AdminDashboard({ params }: { params: { weddingId: string } }) {
+interface AdminDashboardProps {
+  params: Promise<{ weddingId: string }>
+}
+
+export default function AdminDashboard({ params }: AdminDashboardProps) {
+  const { weddingId } = use(params)
   const stats = [
     { label: "Total Guests", value: "142", icon: Users, color: "primary" },
     { label: "RSVPs Received", value: "98", icon: CheckCircle2, color: "secondary" },
@@ -18,42 +24,49 @@ export default function AdminDashboard({ params }: { params: { weddingId: string
       title: "Wedding Details",
       description: "Update your wedding information, colors, and story",
       icon: Settings,
-      href: `/admin/${params.weddingId}/details`,
+      href: `/admin/${weddingId}/details`,
+      color: "primary",
+    },
+    {
+      title: "Invitations & Guests",
+      description: "Manage guest groups, invitations, and track confirmations",
+      icon: Mail,
+      href: `/admin/${weddingId}/invitations`,
       color: "primary",
     },
     {
       title: "Guest List & RSVPs",
       description: "View RSVPs, manage guest list, and track attendance",
       icon: Users,
-      href: `/admin/${params.weddingId}/guests`,
+      href: `/admin/${weddingId}/guests`,
       color: "secondary",
     },
     {
       title: "Gallery",
       description: "Upload and manage your engagement photos",
       icon: ImageIcon,
-      href: `/admin/${params.weddingId}/gallery`,
+      href: `/admin/${weddingId}/gallery`,
       color: "accent",
     },
     {
       title: "Guest Moments",
       description: "Review and approve photos uploaded by guests",
       icon: ImageIcon,
-      href: `/admin/${params.weddingId}/moments`,
+      href: `/admin/${weddingId}/moments`,
       color: "primary",
     },
     {
       title: "Guest Messages",
       description: "Read well-wishes and messages from your guests",
       icon: MessageSquare,
-      href: `/admin/${params.weddingId}/messages`,
+      href: `/admin/${weddingId}/messages`,
       color: "secondary",
     },
     {
       title: "Analytics",
       description: "View website traffic and engagement metrics",
       icon: BarChart3,
-      href: `/admin/${params.weddingId}/analytics`,
+      href: `/admin/${weddingId}/analytics`,
       color: "accent",
     },
   ]
@@ -63,7 +76,7 @@ export default function AdminDashboard({ params }: { params: { weddingId: string
       <Header
         rightContent={
           <div className="flex gap-2">
-            <Link href={`/${params.weddingId}`}>
+            <Link href={`/${weddingId}`}>
               <Button variant="ghost" size="sm" className="text-foreground hover:bg-muted">
                 View Website
               </Button>

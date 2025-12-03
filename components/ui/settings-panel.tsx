@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { X, Settings, FileText, Palette, Type, ChevronDown, Users, UserPlus, Trash2 } from 'lucide-react'
+import { X, Settings, FileText, Palette, Type, ChevronDown, Users, UserPlus, Trash2, Globe } from 'lucide-react'
 import { Button } from './button'
 import { Input } from './input'
 import { WeddingDetailsForm } from './config-forms/wedding-details-form'
@@ -41,6 +41,9 @@ interface SettingsPanelProps {
   navUseColorBackground?: boolean
   navBackgroundColorChoice?: NavBackgroundColorChoice
   onNavColorBackgroundChange?: (useColor: boolean, colorChoice: NavBackgroundColorChoice) => void
+  // Language settings
+  currentLocale?: 'en' | 'es'
+  onLocaleChange?: (locale: 'en' | 'es') => void
 }
 
 interface WeddingDetails {
@@ -73,7 +76,9 @@ export function SettingsPanel({
   onNavLinksChange,
   navUseColorBackground: navUseColorBackgroundProp = false,
   navBackgroundColorChoice: navBackgroundColorChoiceProp = 'none',
-  onNavColorBackgroundChange
+  onNavColorBackgroundChange,
+  currentLocale = 'en',
+  onLocaleChange
 }: SettingsPanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('details')
   const [details, setDetails] = useState<WeddingDetails | null>(null)
@@ -82,6 +87,7 @@ export function SettingsPanel({
   const [showNavLinks, setShowNavLinks] = useState(showNavLinksProp)
   const [navUseColorBackground, setNavUseColorBackground] = useState(navUseColorBackgroundProp)
   const [navBackgroundColorChoice, setNavBackgroundColorChoice] = useState<NavBackgroundColorChoice>(navBackgroundColorChoiceProp)
+  const [locale, setLocale] = useState<'en' | 'es'>(currentLocale)
   
   // Sync showNavLinks state when prop changes
   useEffect(() => {
@@ -93,6 +99,11 @@ export function SettingsPanel({
     setNavUseColorBackground(navUseColorBackgroundProp)
     setNavBackgroundColorChoice(navBackgroundColorChoiceProp)
   }, [navUseColorBackgroundProp, navBackgroundColorChoiceProp])
+  
+  // Sync locale state when props change
+  useEffect(() => {
+    setLocale(currentLocale)
+  }, [currentLocale])
   
   // Collaborators state
   const [newCollaboratorEmail, setNewCollaboratorEmail] = useState('')
@@ -312,11 +323,59 @@ export function SettingsPanel({
                 </Button>
               </div>
             ) : details ? (
-              <WeddingDetailsForm
-                weddingNameId={weddingNameId}
-                initialDetails={details}
-                onSave={handleDetailsSave}
-              />
+              <div className="space-y-6">
+                <WeddingDetailsForm
+                  weddingNameId={weddingNameId}
+                  initialDetails={details}
+                  onSave={handleDetailsSave}
+                />
+                
+                {/* Language Settings */}
+                <div className="border-t border-gray-200 pt-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Globe className="w-4 h-4 text-gray-600" />
+                    <h3 className="text-sm font-medium text-gray-700">Language Settings</h3>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {/* Default Language */}
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-2">Default Language</label>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setLocale('en')
+                            onLocaleChange?.('en')
+                          }}
+                          className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                            locale === 'en'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          English
+                        </button>
+                        <button
+                          onClick={() => {
+                            setLocale('es')
+                            onLocaleChange?.('es')
+                          }}
+                          className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                            locale === 'es'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          Español
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1.5">
+                        This sets the default language for your wedding website
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ) : null
           ) : activeTab === 'theme' ? (
             // Theme Tab

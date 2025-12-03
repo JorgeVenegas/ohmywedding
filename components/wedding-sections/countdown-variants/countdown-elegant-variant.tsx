@@ -16,6 +16,8 @@ export function CountdownElegantVariant({
   showHours = true,
   showMinutes = true,
   showSeconds = true,
+  sectionTitle,
+  sectionSubtitle,
   message,
   useColorBackground = false,
   backgroundColorChoice
@@ -24,8 +26,10 @@ export function CountdownElegantVariant({
   const [isClient, setIsClient] = useState(false)
   const { t } = useI18n()
 
-  // Use translated default if not provided
-  const displayMessage = message || t('countdown.untilWeSayIDo')
+  // Use translated defaults if not provided
+  // sectionTitle is optional - only show if provided
+  // For message: prefer sectionSubtitle, then message, then default
+  const displayMessage = sectionSubtitle || message || t('countdown.untilWeSayIDo')
 
   // Get enhanced color scheme with complementary palette colors
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, contrastColor, colorLight, colorDark, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
@@ -127,15 +131,27 @@ export function CountdownElegantVariant({
             <div className="w-12 h-px" style={{ backgroundColor: flourishColor }} />
           </div>
 
-          <h2 
-            className={`text-3xl md:text-4xl mb-10 ${messageColor}`}
+          {sectionTitle && (
+            <h2 
+              className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"
+              style={{ 
+                fontFamily: 'var(--font-display, var(--font-heading, cursive))',
+                color: isColored ? sectionTextColor : theme?.colors?.foreground
+              }}
+            >
+              {sectionTitle}
+            </h2>
+          )}
+
+          <p 
+            className={`text-xl md:text-2xl mb-10 ${messageColor}`}
             style={{ 
               fontFamily: 'var(--font-display, var(--font-heading, cursive))',
               color: isColored ? sectionTextColorAlt : undefined
             }}
           >
             {displayMessage}
-          </h2>
+          </p>
 
           <div className="flex justify-center items-start flex-wrap gap-6 md:gap-10">
             {units.map((unit, index) => (

@@ -95,6 +95,8 @@ export function WeddingPreview({ formData, componentSections }: WeddingPreviewPr
     ceremony_venue_address: null,
     reception_venue_name: null,
     reception_venue_address: null,
+    owner_id: null,
+    collaborator_emails: [],
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     page_config: {

@@ -5,8 +5,12 @@ create index "idx_weddings_compound_key" on weddings("date_id", "wedding_name_id
 create index "idx_weddings_owner_id" on weddings("owner_id");
 create index "idx_weddings_wedding_date" on weddings("wedding_date");
 
+create index "idx_guest_groups_wedding_name_id" on guest_groups("wedding_name_id");
+
 create index "idx_guests_wedding_name_id" on guests("wedding_name_id");
+create index "idx_guests_guest_group_id" on guests("guest_group_id");
 create index "idx_guests_email" on guests("email");
+create index "idx_guests_confirmation_status" on guests("confirmation_status");
 
 create index "idx_rsvps_wedding_name_id" on rsvps("wedding_name_id");
 create index "idx_rsvps_email" on rsvps("guest_email");

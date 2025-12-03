@@ -3,6 +3,7 @@
 -- Enable RLS on all tables
 alter table "weddings" enable row level security;
 alter table "wedding_schedule" enable row level security;
+alter table "guest_groups" enable row level security;
 alter table "guests" enable row level security;
 alter table "rsvps" enable row level security;
 alter table "gallery_albums" enable row level security;
@@ -55,12 +56,79 @@ create policy "Anyone can view gift registries" on gift_registries
 create policy "Anyone can view gift items" on gift_items
   for select using (true);
 
--- RSVP policies (guests can submit RSVPs)
+-- RSVP policies (guests can submit RSVPs, but only owners can read them)
 create policy "Anyone can submit RSVPs" on rsvps
   for insert with check (true);
 
-create policy "Anyone can view RSVPs" on rsvps
-  for select using (true);
+create policy "Owners and collaborators can view RSVPs" on rsvps
+  for select using (
+    wedding_name_id in (
+      select wedding_name_id from weddings 
+      where owner_id = auth.uid() 
+        or owner_id is null
+        or auth.email() = any(collaborator_emails)
+    )
+  );
+
+-- Guest groups policies (PRIVATE - only owners/collaborators can access)
+create policy "Owners and collaborators can view guest groups" on guest_groups
+  for select using (
+    wedding_name_id in (
+      select wedding_name_id from weddings 
+      where owner_id = auth.uid() 
+        or owner_id is null
+        or auth.email() = any(collaborator_emails)
+    )
+  );
+
+create policy "Wedding owners and collaborators can manage guest groups" on guest_groups
+  for all 
+  using (
+    wedding_name_id in (
+      select wedding_name_id from weddings 
+      where owner_id = auth.uid() 
+        or owner_id is null
+        or auth.email() = any(collaborator_emails)
+    )
+  )
+  with check (
+    wedding_name_id in (
+      select wedding_name_id from weddings 
+      where owner_id = auth.uid() 
+        or owner_id is null
+        or auth.email() = any(collaborator_emails)
+    )
+  );
+
+-- Guests policies (PRIVATE - only owners/collaborators can access)
+create policy "Owners and collaborators can view guests" on guests
+  for select using (
+    wedding_name_id in (
+      select wedding_name_id from weddings 
+      where owner_id = auth.uid() 
+        or owner_id is null
+        or auth.email() = any(collaborator_emails)
+    )
+  );
+
+create policy "Wedding owners and collaborators can manage guests" on guests
+  for all 
+  using (
+    wedding_name_id in (
+      select wedding_name_id from weddings 
+      where owner_id = auth.uid() 
+        or owner_id is null
+        or auth.email() = any(collaborator_emails)
+    )
+  )
+  with check (
+    wedding_name_id in (
+      select wedding_name_id from weddings 
+      where owner_id = auth.uid() 
+        or owner_id is null
+        or auth.email() = any(collaborator_emails)
+    )
+  );
 
 -- Owner management policies (includes collaborators)
 create policy "Wedding owners and collaborators can manage schedule" on wedding_schedule
@@ -69,7 +137,7 @@ create policy "Wedding owners and collaborators can manage schedule" on wedding_
       select wedding_name_id from weddings 
       where owner_id = auth.uid() 
         or owner_id is null
-        or (select email from auth.users where id = auth.uid()) = any(collaborator_emails)
+        or auth.email() = any(collaborator_emails)
     )
   );
 
@@ -79,7 +147,7 @@ create policy "Wedding owners and collaborators can manage FAQs" on wedding_faqs
       select wedding_name_id from weddings 
       where owner_id = auth.uid() 
         or owner_id is null
-        or (select email from auth.users where id = auth.uid()) = any(collaborator_emails)
+        or auth.email() = any(collaborator_emails)
     )
   );
 
@@ -89,7 +157,7 @@ create policy "Wedding owners and collaborators can manage pages" on wedding_pag
       select wedding_name_id from weddings 
       where owner_id = auth.uid() 
         or owner_id is null
-        or (select email from auth.users where id = auth.uid()) = any(collaborator_emails)
+        or auth.email() = any(collaborator_emails)
     )
   );
 
@@ -99,7 +167,7 @@ create policy "Wedding owners and collaborators can manage gallery" on gallery_a
       select wedding_name_id from weddings 
       where owner_id = auth.uid() 
         or owner_id is null
-        or (select email from auth.users where id = auth.uid()) = any(collaborator_emails)
+        or auth.email() = any(collaborator_emails)
     )
   );
 
@@ -109,7 +177,7 @@ create policy "Wedding owners and collaborators can manage photos" on gallery_ph
       select wedding_name_id from weddings 
       where owner_id = auth.uid() 
         or owner_id is null
-        or (select email from auth.users where id = auth.uid()) = any(collaborator_emails)
+        or auth.email() = any(collaborator_emails)
     )
   );
 
@@ -119,7 +187,7 @@ create policy "Wedding owners and collaborators can manage registries" on gift_r
       select wedding_name_id from weddings 
       where owner_id = auth.uid() 
         or owner_id is null
-        or (select email from auth.users where id = auth.uid()) = any(collaborator_emails)
+        or auth.email() = any(collaborator_emails)
     )
   );
 
@@ -129,7 +197,7 @@ create policy "Wedding owners and collaborators can manage gift items" on gift_i
       select wedding_name_id from weddings 
       where owner_id = auth.uid() 
         or owner_id is null
-        or (select email from auth.users where id = auth.uid()) = any(collaborator_emails)
+        or auth.email() = any(collaborator_emails)
     )
   );
 

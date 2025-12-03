@@ -16,6 +16,8 @@ export function CountdownCircularVariant({
   showHours = true,
   showMinutes = true,
   showSeconds = true,
+  sectionTitle,
+  sectionSubtitle,
   message,
   useColorBackground = false,
   backgroundColorChoice
@@ -24,8 +26,10 @@ export function CountdownCircularVariant({
   const [isClient, setIsClient] = useState(false)
   const { t } = useI18n()
 
-  // Use translated default if not provided
-  const displayMessage = message || t('countdown.untilWeSayIDo')
+  // Use translated defaults if not provided
+  // sectionTitle is optional - only show if provided
+  // For message: prefer sectionSubtitle, then message, then default
+  const displayMessage = sectionSubtitle || message || t('countdown.untilWeSayIDo')
 
   // Get enhanced color scheme with complementary palette colors
   const { bgColor, titleColor, subtitleColor, sectionTextColor, accentColor, contrastColor, colorLight, colorDark, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
@@ -189,10 +193,22 @@ export function CountdownCircularVariant({
       style={isColored ? { backgroundColor: bgColor } : undefined}
     >
         <div className="text-center py-6 sm:py-8">
+          {sectionTitle && (
+            <h2 
+              className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6"
+              style={{ 
+                color: isColored ? titleColor : theme?.colors?.foreground,
+                fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 
+                           theme?.fonts?.heading === 'script' ? 'cursive' : 'sans-serif'
+              }}
+            >
+              {sectionTitle}
+            </h2>
+          )}
           <div className="flex items-center justify-center mb-4 sm:mb-6">
             <Heart className="w-5 h-5 mr-2 fill-current" style={{ color: decorColor }} />
-            <h2 
-              className={`text-3xl md:text-4xl font-bold ${messageColor}`}
+            <p 
+              className={`text-xl md:text-2xl ${messageColor}`}
               style={{ 
                 color: isColored ? undefined : theme?.colors?.foreground,
                 fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 
@@ -200,7 +216,7 @@ export function CountdownCircularVariant({
               }}
             >
               {displayMessage}
-            </h2>
+            </p>
             <Heart className="w-5 h-5 ml-2 fill-current" style={{ color: decorColor }} />
           </div>
 

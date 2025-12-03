@@ -1,6 +1,8 @@
 "use client"
 
 import React from 'react'
+import Link from 'next/link'
+import { createBrowserClient } from '@supabase/ssr'
 import { Wedding } from '@/lib/wedding-data'
 import {
   HeroSection,
@@ -39,6 +41,56 @@ function ConfigBasedWeddingRendererContent({
   const { config, isLoading, updateComponents, updateSiteSettings, weddingDetails, setWeddingDetails } = usePageConfig()
   const siteConfigContext = useSiteConfigSafe()
   const editingContext = useEditingModeSafe()
+  
+  // Check if user is authorized to access admin (owner or collaborator)
+  const [isAuthorized, setIsAuthorized] = React.useState(false)
+  
+  React.useEffect(() => {
+    async function checkAuthorization() {
+      try {
+        const supabase = createBrowserClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        )
+        
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (!user) {
+          setIsAuthorized(false)
+          return
+        }
+        
+        // Check if user is owner or collaborator
+        const isOwner = wedding.owner_id === user.id
+        const isCollaborator = wedding.collaborator_emails?.includes(user.email || '') || false
+        const isUnowned = wedding.owner_id === null || wedding.owner_id === undefined
+        
+        // Debug logging
+        console.log('Auth check:', {
+          userId: user.id,
+          userEmail: user.email,
+          weddingOwnerId: wedding.owner_id,
+          collaboratorEmails: wedding.collaborator_emails,
+          isOwner,
+          isCollaborator,
+          isUnowned,
+          settingAuthorized: isOwner || isCollaborator || isUnowned
+        })
+        
+        setIsAuthorized(isOwner || isCollaborator || isUnowned)
+      } catch (error) {
+        console.error('Auth check error:', error)
+        setIsAuthorized(false)
+      }
+    }
+    
+    checkAuthorization()
+  }, [wedding.owner_id, wedding.collaborator_emails])
+  
+  // Debug: log when isAuthorized changes
+  React.useEffect(() => {
+    console.log('isAuthorized state changed:', isAuthorized)
+  }, [isAuthorized])
   
   // Initialize wedding details from the wedding prop
   React.useEffect(() => {
@@ -85,8 +137,6 @@ function ConfigBasedWeddingRendererContent({
   React.useEffect(() => {
     const fonts = config.siteSettings.theme?.fonts
     if (fonts?.googleFonts) {
-      console.log('Loading fonts from page config:', fonts)
-      
       // Remove existing font link if any
       const existingLink = document.getElementById('custom-google-fonts')
       if (existingLink) {
@@ -99,12 +149,6 @@ function ConfigBasedWeddingRendererContent({
       link.rel = 'stylesheet'
       link.href = `https://fonts.googleapis.com/css2?family=${fonts.googleFonts}&display=swap`
       document.head.appendChild(link)
-      
-      console.log('Setting CSS variables:', {
-        display: fonts.displayFamily,
-        heading: fonts.headingFamily,
-        body: fonts.bodyFamily
-      })
       
       // Apply fonts to CSS variables
       if (fonts.displayFamily) {
@@ -142,8 +186,6 @@ function ConfigBasedWeddingRendererContent({
 
   // Handler for adding new sections
   const handleAddSection = (position: number, sectionType: string) => {
-    console.log('Adding section:', sectionType, 'at position:', position)
-    
     // Check if the component already exists in the array
     const existingComponent = config.components.find(comp => comp.type === sectionType)
     
@@ -165,7 +207,6 @@ function ConfigBasedWeddingRendererContent({
       newEnabledComponents.splice(position, 0, newComponent)
     } else {
       // Component already exists and is enabled, do nothing
-      console.log('Component already enabled')
       return
     }
     
@@ -183,7 +224,6 @@ function ConfigBasedWeddingRendererContent({
     
     const updatedComponents = [...reorderedEnabled, ...disabledComponents]
     
-    console.log('Updated components:', updatedComponents)
     updateComponents(updatedComponents)
   }
   
@@ -404,6 +444,14 @@ function ConfigBasedWeddingRendererContent({
                 </a>
               </div>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                {isAuthorized && (
+                  <Link 
+                    href={`/admin/${weddingNameId}/dashboard`}
+                    className="hover:text-primary transition-colors font-medium"
+                  >
+                    Manage Wedding
+                  </Link>
+                )}
                 <a 
                   href="https://ohmywedding.com/create" 
                   className="hover:text-primary transition-colors"
@@ -426,7 +474,7 @@ function ConfigBasedWeddingRendererContent({
 export function ConfigBasedWeddingRenderer(props: ConfigBasedWeddingRendererProps) {
   // We need to wrap this in PageConfigProvider first to get initial colors
   return (
-    <I18nProvider>
+    <I18nProviderWithConfig>
       <VariantProvider>
         <ViewportProvider>
           <EditingModeProvider weddingNameId={props.weddingNameId}>
@@ -434,6 +482,18 @@ export function ConfigBasedWeddingRenderer(props: ConfigBasedWeddingRendererProp
           </EditingModeProvider>
         </ViewportProvider>
       </VariantProvider>
+    </I18nProviderWithConfig>
+  )
+}
+
+// Wrapper to get locale from page config
+function I18nProviderWithConfig({ children }: { children: React.ReactNode }) {
+  const { config } = usePageConfig()
+  const locale = config.siteSettings.locale || 'en'
+  
+  return (
+    <I18nProvider initialLocale={locale}>
+      {children}
     </I18nProvider>
   )
 }

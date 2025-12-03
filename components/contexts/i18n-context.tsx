@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, ReactNode } from 'react'
 import { Locale, Translations, getTranslations, createTranslator, defaultLocale, locales, localeNames } from '@/lib/i18n'
 
 interface I18nContextType {
@@ -22,6 +22,17 @@ interface I18nProviderProps {
 
 export function I18nProvider({ children, initialLocale = defaultLocale }: I18nProviderProps) {
   const [locale, setLocaleState] = useState<Locale>(initialLocale)
+  
+  // Update locale when initialLocale prop changes (e.g., from config)
+  useEffect(() => {
+    if (initialLocale && initialLocale !== locale) {
+      setLocaleState(initialLocale)
+      // Update html lang attribute
+      if (typeof document !== 'undefined') {
+        document.documentElement.lang = initialLocale
+      }
+    }
+  }, [initialLocale])
   
   const setLocale = useCallback((newLocale: Locale) => {
     if (locales.includes(newLocale)) {

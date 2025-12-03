@@ -1,10 +1,16 @@
 "use client"
+import { use } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Download, Filter, CheckCircle2, XCircle, Clock } from "lucide-react"
 import { Header } from "@/components/header"
 
-export default function GuestsPage({ params }: { params: { weddingId: string } }) {
+interface GuestsPageProps {
+  params: Promise<{ weddingId: string }>
+}
+
+export default function GuestsPage({ params }: GuestsPageProps) {
+  const { weddingId } = use(params)
   const guests = [
     { id: 1, name: "John Smith", email: "john@example.com", status: "Attending", companions: 1 },
     { id: 2, name: "Sarah Johnson", email: "sarah@example.com", status: "Attending", companions: 0 },
@@ -51,7 +57,7 @@ export default function GuestsPage({ params }: { params: { weddingId: string } }
       {/* Header */}
       <Header
         showBackButton
-        backHref={`/admin/${params.weddingId}/dashboard`}
+        backHref={`/admin/${weddingId}/dashboard`}
         title="Guest List"
         rightContent={
           <Button size="sm" variant="outline" className="border-border bg-transparent">

@@ -16,6 +16,8 @@ export function CountdownClassicVariant({
   showHours = true,
   showMinutes = true,
   showSeconds = true,
+  sectionTitle,
+  sectionSubtitle,
   message,
   useColorBackground = false,
   backgroundColorChoice
@@ -24,8 +26,10 @@ export function CountdownClassicVariant({
   const [isClient, setIsClient] = useState(false)
   const { t } = useI18n()
 
-  // Use translated default if not provided
-  const displayMessage = message || t('countdown.untilWeSayIDo')
+  // Use translated defaults if not provided
+  // sectionTitle is optional - only show if provided
+  // For message: prefer sectionSubtitle, then message, then default
+  const displayMessage = sectionSubtitle || message || t('countdown.untilWeSayIDo')
 
   // Get enhanced color scheme with complementary palette colors
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, contrastColor, colorLight, colorDark, cardBg: cardBgColor, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
@@ -126,6 +130,18 @@ export function CountdownClassicVariant({
       style={isColored ? { backgroundColor: bgColor } : undefined}
     >
         <div className="text-center py-4 sm:py-6 md:py-8 px-4">
+          {sectionTitle && (
+            <h2 
+              className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"
+              style={{ 
+                color: messageColor,
+                fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 
+                           theme?.fonts?.heading === 'script' ? 'cursive' : 'sans-serif'
+              }}
+            >
+              {sectionTitle}
+            </h2>
+          )}
           <div className="flex items-center justify-center mb-6 sm:mb-8">
             <Heart className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 fill-current flex-shrink-0" style={{ color: iconColor }} />
             <h2 

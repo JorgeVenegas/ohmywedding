@@ -9,12 +9,6 @@ export async function POST(request: NextRequest) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     
-    console.log('Upload API - Environment check:', {
-      hasUrl: !!supabaseUrl,
-      hasKey: !!supabaseAnonKey,
-      url: supabaseUrl
-    })
-    
     const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
     // Get the uploaded file
@@ -50,13 +44,6 @@ export async function POST(request: NextRequest) {
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
     const filePath = fileName // Don't include bucket name in path
 
-    console.log('Upload attempt:', {
-      fileName,
-      filePath,
-      fileSize: file.size,
-      fileType: file.type
-    })
-
     // Upload file to Supabase Storage
     const { data, error } = await supabase.storage
       .from('wedding-images')
@@ -76,11 +63,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
-
-    console.log('Upload successful:', {
-      path: data.path,
-      id: data.id
-    })
 
     // Get public URL
     const { data: publicUrlData } = supabase.storage

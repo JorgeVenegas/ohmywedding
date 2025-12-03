@@ -21,11 +21,17 @@ export function EventDetailsClassicVariant({
   receptionImageUrl,
   ceremonyDescription,
   receptionDescription,
+  sectionTitle,
+  sectionSubtitle,
   customEvents = [],
   useColorBackground = false,
   backgroundColorChoice
 }: BaseEventDetailsProps) {
   const { t } = useI18n()
+  
+  // Use translated defaults if not provided
+  const title = sectionTitle || t('eventDetails.title')
+  const subtitle = sectionSubtitle || t('eventDetails.subtitle')
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
   
   const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription, t)
@@ -72,8 +78,13 @@ export function EventDetailsClassicVariant({
             color: sectionTitleColor
           }}
         >
-          {t('eventDetails.title')}
+          {title}
         </h2>
+        {subtitle && (
+          <p className="text-base max-w-lg mx-auto mb-4" style={{ color: cardMutedColor }}>
+            {subtitle}
+          </p>
+        )}
         <div 
           className="w-24 h-1 mx-auto rounded"
           style={{ backgroundColor: dividerColor }}

@@ -10,18 +10,12 @@ export async function GET(request: Request) {
   const code = searchParams.get("code")
   const redirect = searchParams.get("redirect") || "/"
 
-  console.log('Auth callback - code:', code ? 'present' : 'missing')
-  console.log('Auth callback - redirect:', redirect)
-
   if (code) {
     const cookieStore = await cookies()
     const allCookies = cookieStore.getAll()
     
-    console.log('Auth callback - available cookies:', allCookies.map(c => c.name))
-    
     // Check for code verifier
     const codeVerifierCookie = allCookies.find(c => c.name.includes('code-verifier'))
-    console.log('Auth callback - code verifier cookie:', codeVerifierCookie ? 'present' : 'MISSING')
     
     // Track cookies that need to be set on the response
     const cookiesToSetOnResponse: { name: string; value: string; options: any }[] = []
@@ -35,7 +29,6 @@ export async function GET(request: Request) {
             return cookieStore.getAll()
           },
           setAll(cookiesToSet) {
-            console.log('Auth callback - setting cookies:', cookiesToSet.map(c => c.name))
             cookiesToSet.forEach(({ name, value, options }) => {
               cookiesToSetOnResponse.push({ name, value, options })
             })
@@ -45,12 +38,6 @@ export async function GET(request: Request) {
     )
     
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-    
-    console.log('Auth callback - exchange result:', { 
-      success: !!data.session, 
-      userId: data.session?.user?.id,
-      error: error?.message 
-    })
     
     if (error) {
       console.error('Auth callback error:', error)
@@ -84,7 +71,6 @@ export async function GET(request: Request) {
     })
     
     // Set all the auth cookies on the response
-    console.log('Auth callback - cookies to set:', cookiesToSetOnResponse.map(c => c.name))
     cookiesToSetOnResponse.forEach(({ name, value, options }) => {
       response.cookies.set(name, value, {
         ...options,

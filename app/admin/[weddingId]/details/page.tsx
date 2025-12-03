@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, use } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,7 +9,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Save, CheckCircle2 } from "lucide-react"
 import { Header } from "@/components/header"
 
-export default function DetailsPage({ params }: { params: { weddingId: string } }) {
+interface DetailsPageProps {
+  params: Promise<{ weddingId: string }>
+}
+
+export default function DetailsPage({ params }: DetailsPageProps) {
+  const { weddingId } = use(params)
   const [isSaving, setIsSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [formData, setFormData] = useState({
@@ -48,7 +53,7 @@ export default function DetailsPage({ params }: { params: { weddingId: string } 
 
   return (
     <main className="min-h-screen bg-background">
-      <Header showBackButton backHref={`/admin/${params.weddingId}/dashboard`} title="Wedding Details" />
+      <Header showBackButton backHref={`/admin/${weddingId}/dashboard`} title="Wedding Details" />
 
       {/* Form */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

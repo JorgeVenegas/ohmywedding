@@ -15,6 +15,8 @@ export function CountdownModernVariant({
   showHours = true,
   showMinutes = true,
   showSeconds = true,
+  sectionTitle,
+  sectionSubtitle,
   message,
   useColorBackground = false,
   backgroundColorChoice
@@ -23,8 +25,10 @@ export function CountdownModernVariant({
   const [isClient, setIsClient] = useState(false)
   const { t } = useI18n()
 
-  // Use translated default if not provided
-  const displayMessage = message || t('countdown.untilWeSayIDo')
+  // Use translated defaults if not provided
+  // sectionTitle is optional - only show if provided
+  // For message: prefer sectionSubtitle, then message, then default
+  const displayMessage = sectionSubtitle || message || t('countdown.untilWeSayIDo')
 
   // Get enhanced color scheme with complementary palette colors
   const { bgColor, titleColor, subtitleColor, sectionTextColor, accentColor, contrastColor, colorLight, colorDark, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
@@ -112,6 +116,17 @@ export function CountdownModernVariant({
       style={isColored ? { backgroundColor: bgColor } : undefined}
     >
         <div className="text-center py-6 sm:py-8">
+          {sectionTitle && (
+            <h2 
+              className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4"
+              style={{ 
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                color: isColored ? titleColor : theme?.colors?.foreground
+              }}
+            >
+              {sectionTitle}
+            </h2>
+          )}
           <p 
             className={`text-xs sm:text-sm md:text-base uppercase tracking-[0.3em] mb-4 sm:mb-6 font-medium ${isColored ? '' : 'text-gray-500'}`}
             style={isColored ? { color: colorLight } : undefined}

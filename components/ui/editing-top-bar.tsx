@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { Edit3, Eye, Settings, Monitor, Smartphone, ChevronDown, LogIn, User, Globe } from 'lucide-react'
+import { Edit3, Eye, Settings, Monitor, Smartphone, ChevronDown, LogIn, User, LayoutDashboard } from 'lucide-react'
 import { useEditingModeSafe } from '@/components/contexts/editing-mode-context'
 import { useSiteConfigSafe } from '@/components/contexts/site-config-context'
 import { usePageConfigSafe } from '@/components/contexts/page-config-context'
@@ -24,11 +24,10 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
   const pageConfigContext = usePageConfigSafe()
   const viewportContext = useViewportSafe()
   const customizeContext = useCustomizeSafe()
-  const { t, locale, setLocale } = useI18n()
+  const { t } = useI18n()
   const { user, loading: authLoading, signOut } = useAuth()
   const [showDeviceMenu, setShowDeviceMenu] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
-  const [showLanguageMenu, setShowLanguageMenu] = useState(false)
   const [navIsVisible, setNavIsVisible] = useState(false)
   const [currentNavHeight, setCurrentNavHeight] = useState(56)
   
@@ -217,59 +216,8 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
       )}
     </div>
 
-    {/* Bottom Right Controls - Language and User Menu */}
+    {/* Bottom Right Controls - User Menu */}
     <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2">
-      {/* Language Switcher Button */}
-      <div className="relative">
-        <button
-          onClick={() => setShowLanguageMenu(!showLanguageMenu)}
-          className="flex items-center gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full font-medium shadow-lg bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 transition-all duration-300 hover:shadow-xl hover:scale-105"
-          title={t('editing.language')}
-        >
-          <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          <span className="text-xs sm:text-sm font-medium uppercase">{locale}</span>
-          <ChevronDown className={`w-3 h-3 transition-transform ${showLanguageMenu ? 'rotate-180' : ''}`} />
-        </button>
-        
-        {showLanguageMenu && (
-          <>
-            <div 
-              className="fixed inset-0 z-40" 
-              onClick={() => setShowLanguageMenu(false)}
-            />
-            <div className="absolute bottom-full mb-2 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[140px] z-50">
-              <div className="px-4 py-2 border-b border-gray-100">
-                <p className="text-xs text-gray-500">{t('editing.selectLanguage')}</p>
-              </div>
-              <button
-                onClick={() => {
-                  setLocale('en')
-                  setShowLanguageMenu(false)
-                }}
-                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between ${
-                  locale === 'en' ? 'bg-gray-100 text-gray-800 font-medium' : 'text-gray-700'
-                }`}
-              >
-                <span>English</span>
-                <span className="text-xs text-gray-400">EN</span>
-              </button>
-              <button
-                onClick={() => {
-                  setLocale('es')
-                  setShowLanguageMenu(false)
-                }}
-                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between ${
-                  locale === 'es' ? 'bg-gray-100 text-gray-800 font-medium' : 'text-gray-700'
-                }`}
-              >
-                <span>Español</span>
-                <span className="text-xs text-gray-400">ES</span>
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-
       {/* User Menu */}
       {!authLoading && user && (
         <div className="relative">
@@ -295,6 +243,16 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
                     <p className="text-xs text-gray-600 mt-1 capitalize">{permissions.role}</p>
                   )}
                 </div>
+                {weddingNameId && canEdit && (
+                  <Link
+                    href={`/admin/${weddingNameId}/dashboard`}
+                    onClick={() => setShowUserMenu(false)}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <LayoutDashboard className="w-4 h-4" />
+                    Admin Dashboard
+                  </Link>
+                )}
                 <button
                   onClick={() => {
                     setShowUserMenu(false)
@@ -339,6 +297,8 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
           useColorBackground: useColor, 
           backgroundColorChoice: colorChoice 
         })}
+        currentLocale={pageConfigContext.config.siteSettings.locale || 'en'}
+        onLocaleChange={pageConfigContext.updateLocale}
       />
     )}
     </>

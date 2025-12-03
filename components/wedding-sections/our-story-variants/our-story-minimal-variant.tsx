@@ -11,6 +11,8 @@ export function OurStoryMinimalVariant({
   showProposal = true,
   showHowWeMetPhoto = false,
   showProposalPhoto = false,
+  sectionTitle,
+  sectionSubtitle,
   howWeMetText,
   howWeMetPhoto,
   proposalText,
@@ -19,6 +21,10 @@ export function OurStoryMinimalVariant({
   backgroundColorChoice
 }: BaseOurStoryProps) {
   const { t } = useI18n()
+  
+  // Use translated defaults if not provided
+  const title = sectionTitle || t('ourStory.title')
+  const subtitle = sectionSubtitle
   
   // Get enhanced color scheme with complementary palette colors
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, contrastColor, colorLight, colorDark, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
@@ -41,8 +47,13 @@ export function OurStoryMinimalVariant({
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-16" 
               style={{ color: sectionTitleColor }}>
-            {t('ourStory.title')}
+            {title}
           </h2>
+          {subtitle && (
+            <p className="text-center -mt-12 mb-12 max-w-2xl mx-auto" style={{ color: isColored ? sectionTextColorAlt : theme?.colors?.muted }}>
+              {subtitle}
+            </p>
+          )}
           
           <div className="space-y-6 sm:space-y-8">
             {showHowWeMet && (

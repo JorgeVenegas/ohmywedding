@@ -32,15 +32,14 @@ export async function initializeStorageBucket() {
 
     // Bucket already exists is not an error for us
     if (bucketError && !bucketError.message.includes('already exists')) {
-      console.error('❌ Error creating storage bucket:', bucketError)
+      console.error('Error creating storage bucket:', bucketError)
       return { success: false, error: bucketError }
     }
 
-    console.log('✅ Storage bucket ready: wedding-images')
     return { success: true, bucket: bucketData }
 
   } catch (error) {
-    console.error('❌ Error setting up storage bucket:', error)
+    console.error('Error setting up storage bucket:', error)
     return { success: false, error }
   }
 }

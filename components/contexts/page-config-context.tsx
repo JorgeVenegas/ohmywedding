@@ -82,6 +82,7 @@ interface PageConfigContextType {
   updateColors: (colors: { primary: string; secondary: string; accent: string }) => void
   updateCustomColor: (colorType: 'primary' | 'secondary' | 'accent', color: string) => void
   updateNavigation: (navigation: { showNavLinks?: boolean; useColorBackground?: boolean; backgroundColorChoice?: 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter' }) => void
+  updateLocale: (locale: 'en' | 'es') => void
   
   // Save functionality
   saveConfiguration: () => Promise<{ success: boolean; message?: string }>
@@ -112,14 +113,6 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
     // Use deep equality check instead of JSON.stringify for more reliable comparison
     const hasChanges = !deepEqual(config, originalConfig)
     
-    // Debug logging
-    if (hasChanges) {
-      console.log('Config has unsaved changes detected')
-      // Uncomment to debug what's different:
-      // console.log('Current config:', JSON.stringify(config, null, 2))
-      // console.log('Original config:', JSON.stringify(originalConfig, null, 2))
-    }
-    
     return hasChanges
   }, [config, originalConfig, isLoading])
 
@@ -142,7 +135,6 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
   }
 
   const updateSectionConfig = (sectionId: string, sectionConfig: Record<string, any>) => {
-    console.log('pageConfig.updateSectionConfig called:', { sectionId, sectionConfig })
     setConfig(prev => {
       const newConfig = {
         ...prev,
@@ -151,14 +143,12 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
           [sectionId]: { ...sectionConfig }
         }
       }
-      console.log('pageConfig state updated, new sectionConfigs:', newConfig.sectionConfigs)
       return newConfig
     })
   }
 
   const getSectionConfig = (sectionId: string): Record<string, any> => {
     const sectionConfig = config.sectionConfigs[sectionId] || {}
-    console.log(`Getting config for section ${sectionId}:`, sectionConfig)
     return sectionConfig
   }
 
@@ -270,6 +260,16 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
     }))
   }
 
+  const updateLocale = (locale: 'en' | 'es') => {
+    setConfig(prev => ({
+      ...prev,
+      siteSettings: {
+        ...prev.siteSettings,
+        locale
+      }
+    }))
+  }
+
   // Wedding details update functions
   const updateWeddingDetails = (details: Partial<WeddingDetails>) => {
     setWeddingDetailsState(prev => prev ? { ...prev, ...details } : null)
@@ -282,10 +282,6 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
   const saveConfiguration = async (): Promise<{ success: boolean; message?: string }> => {
     setIsSaving(true)
     try {
-      console.log('Saving configuration:', {
-        sectionConfigs: config.sectionConfigs,
-        heroConfig: config.sectionConfigs?.hero
-      })
       const result = await savePageConfiguration(weddingNameId, config)
       if (result.success) {
         setOriginalConfig(JSON.parse(JSON.stringify(config))) // Update original config
@@ -307,10 +303,6 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
 
   const discardChanges = () => {
     const restoredConfig = JSON.parse(JSON.stringify(originalConfig)) // Restore from original
-    console.log('Discarding changes, restoring config:', restoredConfig)
-    console.log('Original config was:', originalConfig)
-    console.log('Section configs being restored:', restoredConfig.sectionConfigs)
-    console.log('Components being restored:', restoredConfig.components.map((c: any) => ({ id: c.id, type: c.type, enabled: c.enabled })))
     setConfig(restoredConfig)
   }
 
@@ -332,6 +324,7 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
       updateColors,
       updateCustomColor,
       updateNavigation,
+      updateLocale,
       saveConfiguration,
       loadConfiguration,
       resetToDefaults,

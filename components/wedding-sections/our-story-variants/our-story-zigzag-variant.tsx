@@ -11,6 +11,8 @@ export function OurStoryZigzagVariant({
   showHowWeMet = true,
   showProposal = true,
   showPhotos = false,
+  sectionTitle,
+  sectionSubtitle,
   howWeMetText,
   howWeMetPhoto,
   proposalText,
@@ -21,6 +23,10 @@ export function OurStoryZigzagVariant({
   backgroundColorChoice
 }: BaseOurStoryProps) {
   const { t } = useI18n()
+  
+  // Use translated defaults if not provided
+  const title = sectionTitle || t('ourStory.title')
+  const subtitle = sectionSubtitle || t('ourStory.subtitle')
   
   // Get enhanced color scheme with complementary palette colors
   const { bgColor, titleColor, subtitleColor: paletteSubtitle, sectionTextColor, sectionTextColorAlt, accentColor, contrastColor, colorLight, colorDark, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
@@ -69,11 +75,11 @@ export function OurStoryZigzagVariant({
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-4"
               style={{ color: sectionTitleColor }}>
-            {t('ourStory.title')}
+            {title}
           </h2>
           <p className={`text-center mb-6 sm:mb-8 max-w-2xl mx-auto ${isColored ? '' : 'text-gray-600'}`}
              style={{ color: subtitleColor }}>
-            {t('ourStory.subtitle')}
+            {subtitle}
           </p>
           
           <div className="space-y-24">

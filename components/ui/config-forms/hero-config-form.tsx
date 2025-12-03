@@ -225,20 +225,16 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
         isOpen={showImageDialog}
         onClose={() => setShowImageDialog(false)}
         onSelectImage={(url) => {
-          console.log('ImageGalleryDialog onSelectImage called with URL:', url)
-          
           // If currently on minimal variant and adding an image, switch to background
           // We need to call these in sequence to avoid state batching issues
           const shouldSwitchToBackground = config.variant === 'minimal' && !hasHeroImage && url
           
           // First update the image
-          console.log('Calling onChange for heroImageUrl')
           onChange('heroImageUrl', url)
           
           // Then update the variant after a timeout to ensure proper state update
           if (shouldSwitchToBackground) {
             setTimeout(() => {
-              console.log('Switching variant to background')
               onChange('variant', 'background')
             }, 0)
           }

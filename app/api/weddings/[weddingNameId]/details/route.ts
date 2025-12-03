@@ -11,9 +11,17 @@ export async function GET(
 ) {
   try {
     const supabase = await createServerSupabaseClient()
-    const { weddingNameId } = await params
+    const { weddingNameId: rawWeddingNameId } = await params
+    
+    // Decode the weddingNameId in case it's URL encoded
+    const weddingNameId = decodeURIComponent(rawWeddingNameId)
 
-    const { data: wedding, error } = await supabase
+    // Check if it's a UUID or wedding_name_id
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(weddingNameId)
+    
+    console.log('Fetching wedding details:', { weddingNameId, isUuid })
+    
+    let query = supabase
       .from('weddings')
       .select(`
         partner1_first_name,
@@ -28,8 +36,17 @@ export async function GET(
         reception_venue_name,
         reception_venue_address
       `)
-      .eq('wedding_name_id', weddingNameId)
-      .single()
+    
+    // Query by id if UUID, otherwise by wedding_name_id
+    if (isUuid) {
+      query = query.eq('id', weddingNameId)
+    } else {
+      query = query.eq('wedding_name_id', weddingNameId)
+    }
+    
+    const { data: wedding, error } = await query.single()
+
+    console.log('Wedding query result:', { wedding, error: error?.message })
 
     if (error) {
       console.error('Error fetching wedding details:', error)

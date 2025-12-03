@@ -33,7 +33,19 @@ export async function middleware(request: NextRequest) {
   )
 
   // Refresh session if expired - required for Server Components
-  await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Protect admin routes - require authentication
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    if (!user) {
+      // Extract wedding ID from path for redirect after login
+      const pathParts = request.nextUrl.pathname.split('/')
+      const weddingId = pathParts[2] || ''
+      const redirectUrl = new URL('/login', request.url)
+      redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
+      return NextResponse.redirect(redirectUrl)
+    }
+  }
 
   return supabaseResponse
 }

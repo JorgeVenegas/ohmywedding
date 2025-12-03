@@ -13,8 +13,6 @@ export async function GET(
     const supabase = await createServerSupabaseClient()
     const { weddingNameId } = await params
 
-    console.log('GET /api/weddings/config - weddingNameId:', weddingNameId)
-
     const { data: wedding, error } = await supabase
       .from('weddings')
       .select('page_config, primary_color, secondary_color, accent_color')
@@ -63,8 +61,6 @@ export async function PUT(
     const supabase = await createServerSupabaseClient()
     const { weddingNameId } = await params
     
-    console.log('PUT /api/weddings/config - weddingNameId:', weddingNameId)
-    
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
     
@@ -76,11 +72,8 @@ export async function PUT(
       .single()
     
     if (findError || !existingWedding) {
-      console.log('Wedding not found:', findError)
       return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
     }
-    
-    console.log('Found wedding:', existingWedding)
     
     // Check permissions
     if (!user) {

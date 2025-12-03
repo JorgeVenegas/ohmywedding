@@ -11,6 +11,8 @@ export function OurStoryBookletVariant({
   showHowWeMet = true,
   showProposal = true,
   showPhotos = false,
+  sectionTitle,
+  sectionSubtitle,
   howWeMetText,
   howWeMetPhoto,
   proposalText,
@@ -21,6 +23,11 @@ export function OurStoryBookletVariant({
   backgroundColorChoice
 }: BaseOurStoryProps) {
   const { t } = useI18n()
+  
+  // Use translated defaults if not provided
+  const title = sectionTitle || t('ourStory.title')
+  const journeyTitle = t('ourStory.ourJourney')
+  const subtitle = sectionSubtitle || t('ourStory.subtitle')
   
   // Get enhanced color scheme with complementary palette colors
   const { bgColor, titleColor, subtitleColor: paletteSubtitle, sectionTextColor, sectionTextColorAlt, accentColor, contrastColor, colorLight, colorDark, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
@@ -75,17 +82,17 @@ export function OurStoryBookletVariant({
               className="inline-block text-sm uppercase tracking-[0.3em] mb-3"
               style={{ color: subtitleColor }}
             >
-              ━━ {t('ourStory.title')} ━━
+              ━━ {title} ━━
             </div>
             <h2 
               className="text-4xl md:text-5xl font-serif mb-4"
               style={{ color: sectionTitleColor }}
             >
-              {t('ourStory.ourJourney')}
+              {journeyTitle}
             </h2>
             <p className={isColored ? '' : 'text-gray-600 italic'}
                style={{ color: introColor }}>
-              {t('ourStory.subtitle')}
+              {subtitle}
             </p>
           </div>
           

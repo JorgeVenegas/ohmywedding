@@ -21,11 +21,17 @@ export function EventDetailsMinimalVariant({
   receptionImageUrl,
   ceremonyDescription,
   receptionDescription,
+  sectionTitle,
+  sectionSubtitle,
   customEvents = [],
   useColorBackground = false,
   backgroundColorChoice
 }: BaseEventDetailsProps) {
   const { t } = useI18n()
+  
+  // Use translated defaults if not provided
+  const title = sectionTitle || t('eventDetails.title')
+  const subtitle = sectionSubtitle
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, colorLight, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
   
   const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription, t)
@@ -71,8 +77,13 @@ export function EventDetailsMinimalVariant({
               fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
             }}
           >
-            {t('eventDetails.title')}
+            {title}
           </h2>
+          {subtitle && (
+            <p className="text-base max-w-lg mx-auto mt-3" style={{ color: mutedColor }}>
+              {subtitle}
+            </p>
+          )}
         </div>
 
         {/* Events Grid */}

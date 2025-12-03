@@ -162,14 +162,15 @@ export function FAQSection({
   }
 
   const onEditClick = (sectionId: string, sectionType: string) => {
-    // Pass translated defaults for the edit form
+    // Pass custom values to the edit form - leave empty if no custom value set
+    // The page will display translated defaults, but the form should show empty inputs
     handleEditClick(sectionType, {
       questions: config.questions || questions,
       allowMultipleOpen: config.allowMultipleOpen ?? allowMultipleOpen,
-      sectionTitle: getTranslatedTitle() || t('faq.title'),
-      sectionSubtitle: getTranslatedSubtitle() || t('faq.subtitle'),
+      sectionTitle: getTranslatedTitle() || '', // Empty string if no custom title
+      sectionSubtitle: getTranslatedSubtitle() || '', // Empty string if no custom subtitle
       showContactNote: config.showContactNote ?? showContactNote,
-      contactNoteText: getTranslatedContactNote() || t('faq.contactNoteDefault'),
+      contactNoteText: getTranslatedContactNote() || '', // Empty string if no custom note
       useColorBackground: config.useColorBackground ?? false,
       backgroundColorChoice: config.backgroundColorChoice || 'none'
     })

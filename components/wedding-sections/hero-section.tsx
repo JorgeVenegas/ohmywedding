@@ -89,23 +89,11 @@ export function HeroSection({
   // Check if we have an image (from props or customConfig)
   const effectiveHasImage = React.useMemo(() => {
     const customHasImage = customConfig?.heroImageUrl && customConfig.heroImageUrl.trim() !== ''
-    console.log('Hero effectiveHasImage check:', { 
-      customConfigHeroImageUrl: customConfig?.heroImageUrl, 
-      hasHeroImage, 
-      customHasImage,
-      result: customHasImage || hasHeroImage
-    })
     return customHasImage || hasHeroImage
   }, [hasHeroImage, customConfig?.heroImageUrl])
 
   // Only force minimal if the active variant requires an image but none is provided
   const effectiveVariant = React.useMemo(() => {
-    console.log('Hero effectiveVariant check:', { 
-      heroVariant, 
-      effectiveHasImage,
-      imageRequiredVariants,
-      wouldForceMinimal: !effectiveHasImage && imageRequiredVariants.includes(heroVariant)
-    })
     if (!effectiveHasImage && imageRequiredVariants.includes(heroVariant)) {
       return 'minimal'
     }

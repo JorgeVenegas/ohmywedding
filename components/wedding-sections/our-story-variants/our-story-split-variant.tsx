@@ -14,6 +14,8 @@ export function OurStorySplitVariant({
   showPhotos = true,
   showHowWeMetPhoto = false,
   showProposalPhoto = false,
+  sectionTitle,
+  sectionSubtitle,
   howWeMetText,
   howWeMetPhoto,
   proposalText,
@@ -26,6 +28,11 @@ export function OurStorySplitVariant({
   proposalTextAlignment = 'center'
 }: BaseOurStoryProps) {
   const { t } = useI18n()
+  
+  // Use translated defaults if not provided
+  const title = sectionTitle || t('ourStory.title')
+  const preTitle = t('ourStory.ourJourney')
+  const subtitle = sectionSubtitle || t('ourStory.subtitle')
   const { bgColor, titleColor, subtitleColor: paletteSubtitle, sectionTextColor, sectionTextColorAlt, accentColor, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
 
   // Helper to get alignment classes - center on mobile, configured alignment on desktop
@@ -152,7 +159,7 @@ export function OurStorySplitVariant({
           className="text-xs uppercase tracking-[0.3em] mb-2 sm:mb-3 font-light"
           style={{ color: isColored ? sectionTextColorAlt : theme?.colors?.accent }}
         >
-          {t('ourStory.ourJourney')}
+          {preTitle}
         </p>
         <h2 
           className="text-3xl sm:text-4xl md:text-5xl mb-2 sm:mb-3"
@@ -162,7 +169,7 @@ export function OurStorySplitVariant({
             fontWeight: 400
           }}
         >
-          {t('ourStory.title')}
+          {title}
         </h2>
         <p 
           className="text-base max-w-md mx-auto font-light"
@@ -171,7 +178,7 @@ export function OurStorySplitVariant({
             fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
           }}
         >
-          {t('ourStory.subtitle')}
+          {subtitle}
         </p>
       </div>
 

@@ -63,7 +63,6 @@ export function CustomizeProvider({ children, weddingDate, weddingNameId }: Cust
   // Sync sectionConfigs with page config when it changes (e.g., after discarding)
   useEffect(() => {
     if (pageConfig?.config) {
-      console.log('Syncing customize context with page config:', pageConfig.config.sectionConfigs)
       setSectionConfigs(pageConfig.config.sectionConfigs || {})
     }
   }, [pageConfig?.config])
@@ -105,7 +104,6 @@ export function CustomizeProvider({ children, weddingDate, weddingNameId }: Cust
   useEffect(() => {
     if (pendingUpdateRef.current && pageConfig) {
       const { sectionId, config } = pendingUpdateRef.current
-      console.log('Syncing to pageConfig.updateSectionConfig:', { sectionId, config })
       pageConfig.updateSectionConfig(sectionId, config)
       pendingUpdateRef.current = null
     }
@@ -113,8 +111,6 @@ export function CustomizeProvider({ children, weddingDate, weddingNameId }: Cust
 
   const updateConfig = (key: string, value: any) => {
     const currentSectionId = state.sectionId
-    
-    console.log('updateConfig called:', { key, value, currentSectionId })
     
     // Update local state
     setState(prev => ({
@@ -132,8 +128,6 @@ export function CustomizeProvider({ children, weddingDate, weddingNameId }: Cust
           ...prevConfigs[currentSectionId],
           [key]: value 
         }
-        
-        console.log('setSectionConfigs updating:', { currentSectionId, updatedConfig })
         
         // Schedule the pageConfig update for after this render
         pendingUpdateRef.current = { sectionId: currentSectionId, config: updatedConfig }
@@ -182,17 +176,6 @@ export function CustomizeProvider({ children, weddingDate, weddingNameId }: Cust
     
     // Return merged config: page config < local config < current editing state
     const mergedConfig = { ...pageConfigData, ...localConfig, ...currentEditingConfig }
-    
-    // Debug logging
-    if (sectionId === 'hero') {
-      console.log('getSectionConfig for hero:', {
-        pageConfigData,
-        localConfig,
-        currentEditingConfig,
-        mergedConfig,
-        sectionConfigs
-      })
-    }
     
     return Object.keys(mergedConfig).length > 0 ? mergedConfig : null
   }

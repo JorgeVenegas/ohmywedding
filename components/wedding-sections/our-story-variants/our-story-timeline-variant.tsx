@@ -9,6 +9,8 @@ export function OurStoryTimelineVariant({
   alignment,
   showHowWeMet = true,
   showProposal = true,
+  sectionTitle,
+  sectionSubtitle,
   howWeMetText,
   howWeMetPhoto,
   proposalText,
@@ -18,6 +20,10 @@ export function OurStoryTimelineVariant({
   backgroundColorChoice
 }: BaseOurStoryProps) {
   const { t } = useI18n()
+  
+  // Use translated defaults if not provided
+  const title = sectionTitle || t('ourStory.title')
+  const subtitle = sectionSubtitle
   
   // Get enhanced color scheme with complementary palette colors
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, contrastColor, colorLight, colorDark, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
@@ -58,8 +64,13 @@ export function OurStoryTimelineVariant({
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-6 sm:mb-8"
               style={{ color: sectionTitleColor }}>
-            {t('ourStory.title')}
+            {title}
           </h2>
+          {subtitle && (
+            <p className="text-center mb-6 sm:mb-8 max-w-2xl mx-auto" style={{ color: isColored ? sectionTextColorAlt : theme?.colors?.muted }}>
+              {subtitle}
+            </p>
+          )}
           
           {/* Mobile Timeline - Simple Vertical Stack */}
           <div className="md:hidden space-y-8 relative">

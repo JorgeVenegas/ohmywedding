@@ -20,6 +20,7 @@ export function EventDetailsSplitVariant({
   receptionImageUrl,
   ceremonyDescription,
   receptionDescription,
+  sectionTitle,
   sectionSubtitle,
   customEvents = [],
   useColorBackground = false,
@@ -28,6 +29,11 @@ export function EventDetailsSplitVariant({
   receptionTextAlignment = 'center'
 }: BaseEventDetailsProps) {
   const { t } = useI18n()
+  
+  // Use translated defaults if not provided
+  const title = sectionTitle || t('eventDetails.title')
+  const preTitle = t('eventDetails.subtitle')
+  const subtitle = sectionSubtitle || t('eventDetails.joinUsForOurCelebration')
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
   
   const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription, t)
@@ -105,7 +111,7 @@ export function EventDetailsSplitVariant({
           className="text-xs uppercase tracking-[0.3em] mb-2 sm:mb-3 font-light"
           style={{ color: isColored ? sectionTextColorAlt : theme?.colors?.accent }}
         >
-          {t('eventDetails.subtitle')}
+          {preTitle}
         </p>
         <h2 
           className="text-3xl sm:text-4xl md:text-5xl mb-2 sm:mb-3"
@@ -115,7 +121,7 @@ export function EventDetailsSplitVariant({
             fontWeight: 400
           }}
         >
-          {t('eventDetails.title')}
+          {title}
         </h2>
         <p 
           className="text-base max-w-md mx-auto font-light"
@@ -124,7 +130,7 @@ export function EventDetailsSplitVariant({
             fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
           }}
         >
-          {sectionSubtitle || t('eventDetails.joinUsForOurCelebration')}
+          {subtitle}
         </p>
       </div>
 

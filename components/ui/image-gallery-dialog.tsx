@@ -83,8 +83,6 @@ export function ImageGalleryDialog({
     try {
       // Decode the wedding name ID in case it's URL encoded
       const decodedWeddingNameId = decodeURIComponent(weddingNameId)
-      console.log('Uploading file for wedding:', decodedWeddingNameId)
-      console.log('Original weddingNameId:', weddingNameId)
       
       // Verify wedding exists
       const { data: wedding, error: weddingError } = await supabase
@@ -93,21 +91,15 @@ export function ImageGalleryDialog({
         .eq('wedding_name_id', decodedWeddingNameId)
         .single()
       
-      console.log('Wedding query result:', { wedding, weddingError })
-      
       if (weddingError || !wedding) {
         throw new Error('Wedding not found. Please make sure you are on a valid wedding page.')
       }
       
       for (const file of Array.from(files)) {
-        console.log('Uploading file:', file.name)
-        
         // Upload to storage
         const fileExt = file.name.split('.').pop()
         const fileName = `${decodedWeddingNameId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
         const filePath = `${fileName}`
-
-        console.log('Storage path:', filePath)
         
         const { error: uploadError, data } = await supabase.storage
           .from('wedding-images')
@@ -118,14 +110,10 @@ export function ImageGalleryDialog({
           throw new Error(`Failed to upload file: ${uploadError.message}`)
         }
 
-        console.log('Upload successful, getting public URL...')
-        
         // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from('wedding-images')
           .getPublicUrl(filePath)
-
-        console.log('Public URL:', publicUrl)
 
         // Save to images table
         const { error: dbError } = await supabase
@@ -144,7 +132,6 @@ export function ImageGalleryDialog({
           throw new Error(`Failed to save image data: ${dbError.message}`)
         }
         
-        console.log('Successfully saved to database')
         uploadedUrls.push(publicUrl)
       }
 
