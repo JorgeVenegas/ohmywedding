@@ -1331,20 +1331,25 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                     Add Group
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <label className="cursor-pointer flex items-center">
-                      <Upload className="w-4 h-4 mr-2" />
-                      Import CSV
-                      <input
-                        type="file"
-                        accept=".csv"
-                        className="hidden"
-                        onChange={handleCsvFileSelect}
-                      />
-                    </label>
+                  <DropdownMenuItem 
+                    onSelect={(e) => {
+                      e.preventDefault()
+                      document.getElementById('csv-import-input')?.click()
+                    }}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Import CSV
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              {/* Hidden file input for CSV import */}
+              <input
+                id="csv-import-input"
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={handleCsvFileSelect}
+              />
               <Button 
                 size="sm" 
                 className="h-8 bg-blue-600 hover:bg-blue-700" 
@@ -1784,7 +1789,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               <h3 className="text-base font-semibold text-foreground mb-2">No guests yet</h3>
               <p className="text-sm text-muted-foreground mb-3">Create your first guest group or add individual guests</p>
               <div className="flex gap-2 justify-center">
-                <Button variant="outline" size="sm" onClick={() => {
+                <Button variant="outline" onClick={() => {
                   setSelectedGroupId(null)
                   setShowAddGuestModal(true)
                 }}>
