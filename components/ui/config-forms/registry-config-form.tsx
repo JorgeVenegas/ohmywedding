@@ -67,7 +67,7 @@ export function RegistryConfigForm({ config, onChange }: RegistryConfigFormProps
       name: provider.name,
       logoUrl: provider.logoUrl,
       url: '',
-      description: provider.description,
+      description: provider.descriptionKey,
       isCustom: providerId === 'custom'
     }
     onChange('registries', [...registries, newRegistry])

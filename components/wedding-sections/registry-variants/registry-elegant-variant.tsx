@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { ExternalLink, Gift, Heart, Sparkles } from 'lucide-react'
 import { BaseRegistryProps, getColorScheme, getProviderLogoUrl } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
-import { RegistryAlertDialog } from '@/components/ui/registry-alert-dialog'
+
 import Link from 'next/link'
 
 export function RegistryElegantVariant({
