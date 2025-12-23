@@ -10,8 +10,20 @@ import { Switch } from "@/components/ui/switch"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { WeddingPreview } from "@/components/wedding-preview"
 import { Header } from "@/components/header"
-import { Heart, ChevronDown, ChevronRight, Settings, Calendar, Users, Camera, MessageSquare, HelpCircle, MapPin, Palette, Type, Check } from "lucide-react"
-import { FONT_PAIRINGS, FONT_PAIRING_CATEGORIES, COLOR_THEMES, COLOR_THEME_CATEGORIES, DEFAULT_FONT_PAIRING, DEFAULT_COLOR_THEME } from "@/lib/theme-config"
+import { Heart, ChevronDown, ChevronRight, Settings, Calendar, Users, Camera, MessageSquare, HelpCircle, MapPin, Palette, Type, Check, Globe } from "lucide-react"
+import { FONT_PAIRINGS, FONT_PAIRING_CATEGORIES, COLOR_THEMES, COLOR_THEME_CATEGORIES, DEFAULT_FONT_PAIRING, DEFAULT_COLOR_THEME, AVAILABLE_FONTS } from "@/lib/theme-config"
+
+// Helper to create a light tint of a color for palette display
+function getLightTint(hex: string, tintAmount: number): string {
+  const num = parseInt(hex.replace('#', ''), 16)
+  const r = (num >> 16) & 255
+  const g = (num >> 8) & 255
+  const b = num & 255
+  const newR = Math.round(r + (255 - r) * tintAmount)
+  const newG = Math.round(g + (255 - g) * tintAmount)
+  const newB = Math.round(b + (255 - b) * tintAmount)
+  return `rgb(${newR}, ${newG}, ${newB})`
+}
 
 // Define available components with their props
 interface ComponentSection {
@@ -39,6 +51,7 @@ export default function CreateWeddingPage() {
     accentColor: DEFAULT_COLOR_THEME.colors.accent,
     selectedColorThemeId: DEFAULT_COLOR_THEME.id,
     selectedFontPairingId: DEFAULT_FONT_PAIRING.id,
+    locale: 'en' as 'en' | 'es',
   })
 
   const [componentSections, setComponentSections] = useState<ComponentSection[]>([
@@ -148,6 +161,10 @@ export default function CreateWeddingPage() {
   ])
 
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false)
+  const [isFontsOpen, setIsFontsOpen] = useState(false)
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false)
+  const [fontPairingCategoryFilter, setFontPairingCategoryFilter] = useState<string | null>(null)
+  const [colorPaletteCategoryFilter, setColorPaletteCategoryFilter] = useState<string | null>(null)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type, checked } = e.target as HTMLInputElement
@@ -447,56 +464,133 @@ export default function CreateWeddingPage() {
                   Color Palette
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">Choose a color scheme for your wedding website</p>
-                <div className="space-y-6">
-                  {COLOR_THEME_CATEGORIES.map((category) => (
-                    <div key={category.id}>
-                      <div className="mb-3">
-                        <h4 className="text-sm font-medium text-foreground">{category.name}</h4>
-                        <p className="text-xs text-muted-foreground">{category.description}</p>
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-                        {category.themes.map((theme) => (
+                
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsPaletteOpen(!isPaletteOpen)}
+                    className="w-full bg-background border-2 border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-150 hover:border-primary/50 hover:shadow-md"
+                  >
+                    {(() => {
+                      const selectedPalette = COLOR_THEMES.find(t => t.id === formData.selectedColorThemeId)
+                      return selectedPalette ? (
+                        <div className="flex flex-col gap-2 w-full">
+                          <div className="flex items-center justify-between w-full">
+                            <span className="text-foreground text-left text-sm font-medium">{selectedPalette.name}</span>
+                            <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-300 flex-shrink-0 ${isPaletteOpen ? 'rotate-180' : ''}`} />
+                          </div>
+                          {/* Full colors */}
+                          <div className="flex gap-1.5 w-full">
+                            <div className="flex-1 h-6 rounded-t-md shadow-sm" style={{ backgroundColor: selectedPalette.colors.primary }} />
+                            <div className="flex-1 h-6 rounded-t-md shadow-sm" style={{ backgroundColor: selectedPalette.colors.secondary }} />
+                            <div className="flex-1 h-6 rounded-t-md shadow-sm" style={{ backgroundColor: selectedPalette.colors.accent }} />
+                          </div>
+                          {/* Light variants */}
+                          <div className="flex gap-1.5 w-full -mt-1">
+                            <div className="flex-1 h-4 shadow-sm" style={{ backgroundColor: getLightTint(selectedPalette.colors.primary, 0.5) }} />
+                            <div className="flex-1 h-4 shadow-sm" style={{ backgroundColor: getLightTint(selectedPalette.colors.secondary, 0.5) }} />
+                            <div className="flex-1 h-4 shadow-sm" style={{ backgroundColor: getLightTint(selectedPalette.colors.accent, 0.5) }} />
+                          </div>
+                          {/* Lighter variants */}
+                          <div className="flex gap-1.5 w-full -mt-1">
+                            <div className="flex-1 h-3 rounded-b-md shadow-sm" style={{ backgroundColor: getLightTint(selectedPalette.colors.primary, 0.88) }} />
+                            <div className="flex-1 h-3 rounded-b-md shadow-sm" style={{ backgroundColor: getLightTint(selectedPalette.colors.secondary, 0.88) }} />
+                            <div className="flex-1 h-3 rounded-b-md shadow-sm" style={{ backgroundColor: getLightTint(selectedPalette.colors.accent, 0.88) }} />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-muted-foreground text-left text-sm">Select a color palette</span>
+                          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-300 flex-shrink-0 ${isPaletteOpen ? 'rotate-180' : ''}`} />
+                        </div>
+                      )
+                    })()}
+                  </button>
+                  
+                  {isPaletteOpen && (
+                    <>
+                      <div className="fixed inset-0 z-[45]" onClick={() => setIsPaletteOpen(false)} />
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-background border-2 border-border rounded-xl shadow-2xl z-[46] max-h-96 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col">
+                        {/* Category filter tabs */}
+                        <div className="flex gap-1.5 p-3 border-b border-border bg-muted/30 flex-shrink-0 overflow-x-auto">
                           <button
-                            key={theme.id}
                             type="button"
-                            onClick={() => setFormData(prev => ({
-                              ...prev,
-                              selectedColorThemeId: theme.id,
-                              primaryColor: theme.colors.primary,
-                              secondaryColor: theme.colors.secondary,
-                              accentColor: theme.colors.accent
-                            }))}
-                            className={`relative p-3 rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
-                              formData.selectedColorThemeId === theme.id
-                                ? 'border-primary ring-2 ring-primary/20 bg-primary/5'
-                                : 'border-border hover:border-muted-foreground/50'
+                            onClick={() => setColorPaletteCategoryFilter(null)}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
+                              colorPaletteCategoryFilter === null ? 'bg-primary text-white shadow-sm' : 'bg-background text-foreground hover:bg-muted border border-border'
                             }`}
                           >
-                            {formData.selectedColorThemeId === theme.id && (
-                              <div className="absolute -top-2 -right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                                <Check className="w-3 h-3 text-white" />
-                              </div>
-                            )}
-                            <div className="flex gap-1 mb-2">
-                              <div
-                                className="w-6 h-6 rounded-full border border-white/20 shadow-sm"
-                                style={{ backgroundColor: theme.colors.primary }}
-                              />
-                              <div
-                                className="w-6 h-6 rounded-full border border-white/20 shadow-sm"
-                                style={{ backgroundColor: theme.colors.secondary }}
-                              />
-                              <div
-                                className="w-6 h-6 rounded-full border border-white/20 shadow-sm"
-                                style={{ backgroundColor: theme.colors.accent }}
-                              />
-                            </div>
-                            <p className="text-xs font-medium text-foreground text-left truncate">{theme.name}</p>
+                            All
                           </button>
-                        ))}
+                          {COLOR_THEME_CATEGORIES.map((cat) => (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              onClick={() => setColorPaletteCategoryFilter(cat.id)}
+                              className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
+                                colorPaletteCategoryFilter === cat.id ? 'bg-primary text-white shadow-sm' : 'bg-background text-foreground hover:bg-muted border border-border'
+                              }`}
+                            >
+                              {cat.name}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="overflow-y-auto flex-1 p-2">
+                          {COLOR_THEME_CATEGORIES
+                            .filter(category => colorPaletteCategoryFilter === null || category.id === colorPaletteCategoryFilter)
+                            .map((category) => (
+                            <div key={category.id} className="mb-4 last:mb-0">
+                              <div className="px-2 py-2 sticky top-0 bg-background/95 backdrop-blur-sm">
+                                <h4 className="text-xs font-semibold text-foreground">{category.name}</h4>
+                                <p className="text-[10px] text-muted-foreground">{category.description}</p>
+                              </div>
+                              <div className="grid grid-cols-3 gap-2 p-2">
+                                {category.themes.map((theme) => (
+                                  <button
+                                    key={theme.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        selectedColorThemeId: theme.id,
+                                        primaryColor: theme.colors.primary,
+                                        secondaryColor: theme.colors.secondary,
+                                        accentColor: theme.colors.accent
+                                      }))
+                                      setIsPaletteOpen(false)
+                                    }}
+                                    className={`flex flex-col gap-1.5 p-2 rounded-lg transition-all duration-150 hover:bg-muted ${
+                                      formData.selectedColorThemeId === theme.id ? 'bg-primary/10 ring-2 ring-primary' : ''
+                                    }`}
+                                  >
+                                    {/* Full colors */}
+                                    <div className="flex gap-1 w-full">
+                                      <div className="flex-1 h-7 rounded-t-md shadow-sm" style={{ backgroundColor: theme.colors.primary }} />
+                                      <div className="flex-1 h-7 rounded-t-md shadow-sm" style={{ backgroundColor: theme.colors.secondary }} />
+                                      <div className="flex-1 h-7 rounded-t-md shadow-sm" style={{ backgroundColor: theme.colors.accent }} />
+                                    </div>
+                                    {/* Light variants */}
+                                    <div className="flex gap-1 w-full -mt-1">
+                                      <div className="flex-1 h-4 shadow-sm" style={{ backgroundColor: getLightTint(theme.colors.primary, 0.5) }} />
+                                      <div className="flex-1 h-4 shadow-sm" style={{ backgroundColor: getLightTint(theme.colors.secondary, 0.5) }} />
+                                      <div className="flex-1 h-4 shadow-sm" style={{ backgroundColor: getLightTint(theme.colors.accent, 0.5) }} />
+                                    </div>
+                                    {/* Lighter variants */}
+                                    <div className="flex gap-1 w-full -mt-1">
+                                      <div className="flex-1 h-3 rounded-b-md shadow-sm" style={{ backgroundColor: getLightTint(theme.colors.primary, 0.88) }} />
+                                      <div className="flex-1 h-3 rounded-b-md shadow-sm" style={{ backgroundColor: getLightTint(theme.colors.secondary, 0.88) }} />
+                                      <div className="flex-1 h-3 rounded-b-md shadow-sm" style={{ backgroundColor: getLightTint(theme.colors.accent, 0.88) }} />
+                                    </div>
+                                    <span className="text-[10px] text-foreground/80 truncate w-full text-center font-medium">{theme.name}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -507,44 +601,155 @@ export default function CreateWeddingPage() {
                   Font Style
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">Select a font combination for your website</p>
-                <div className="space-y-6">
-                  {FONT_PAIRING_CATEGORIES.map((category) => (
-                    <div key={category.id}>
-                      <div className="mb-3">
-                        <h4 className="text-sm font-medium text-foreground">{category.name}</h4>
-                        <p className="text-xs text-muted-foreground">{category.description}</p>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                        {category.pairings.map((pairing) => (
+                
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsFontsOpen(!isFontsOpen)}
+                    className="w-full bg-background border-2 border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-150 hover:border-primary/50 hover:shadow-md"
+                  >
+                    {(() => {
+                      const selectedFontPairing = FONT_PAIRINGS.find(p => p.id === formData.selectedFontPairingId)
+                      return selectedFontPairing ? (
+                        <div className="flex flex-col gap-2 w-full">
+                          <div className="flex items-center justify-between w-full">
+                            <span className="text-foreground text-left text-sm font-medium">{selectedFontPairing.name}</span>
+                            <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-300 flex-shrink-0 ${isFontsOpen ? 'rotate-180' : ''}`} />
+                          </div>
+                          <div className="flex flex-col gap-1 w-full text-left">
+                            <div className="text-xl truncate" style={{ fontFamily: selectedFontPairing.displayFamily }}>
+                              {selectedFontPairing.display}
+                            </div>
+                            <div className="text-sm text-foreground/70" style={{ fontFamily: selectedFontPairing.headingFamily }}>
+                              {selectedFontPairing.heading}
+                            </div>
+                            <div className="text-xs text-muted-foreground" style={{ fontFamily: selectedFontPairing.bodyFamily }}>
+                              {selectedFontPairing.body}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-muted-foreground text-left text-sm">Select a font pairing</span>
+                          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-300 flex-shrink-0 ${isFontsOpen ? 'rotate-180' : ''}`} />
+                        </div>
+                      )
+                    })()}
+                  </button>
+                  
+                  {isFontsOpen && (
+                    <>
+                      <div className="fixed inset-0 z-[52]" onClick={() => setIsFontsOpen(false)} />
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-background border-2 border-border rounded-xl shadow-2xl z-[53] max-h-96 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col">
+                        {/* Category filter tabs */}
+                        <div className="flex gap-1.5 p-3 border-b border-border bg-muted/30 flex-shrink-0 overflow-x-auto">
                           <button
-                            key={pairing.id}
                             type="button"
-                            onClick={() => setFormData(prev => ({
-                              ...prev,
-                              selectedFontPairingId: pairing.id
-                            }))}
-                            className={`relative p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-md text-left ${
-                              formData.selectedFontPairingId === pairing.id
-                                ? 'border-primary ring-2 ring-primary/20 bg-primary/5'
-                                : 'border-border hover:border-muted-foreground/50'
+                            onClick={() => setFontPairingCategoryFilter(null)}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
+                              fontPairingCategoryFilter === null ? 'bg-primary text-white shadow-sm' : 'bg-background text-foreground hover:bg-muted border border-border'
                             }`}
                           >
-                            {formData.selectedFontPairingId === pairing.id && (
-                              <div className="absolute -top-2 -right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                                <Check className="w-3 h-3 text-white" />
-                              </div>
-                            )}
-                            <p className="text-sm font-medium text-foreground mb-2">{pairing.name}</p>
-                            <div className="space-y-1">
-                              <p className="text-lg truncate" style={{ fontFamily: pairing.displayFamily }}>{pairing.display}</p>
-                              <p className="text-xs text-muted-foreground" style={{ fontFamily: pairing.headingFamily }}>{pairing.heading} / <span style={{ fontFamily: pairing.bodyFamily }}>{pairing.body}</span></p>
-                            </div>
+                            All
                           </button>
-                        ))}
+                          {FONT_PAIRING_CATEGORIES.map((cat) => (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              onClick={() => setFontPairingCategoryFilter(cat.id)}
+                              className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
+                                fontPairingCategoryFilter === cat.id ? 'bg-primary text-white shadow-sm' : 'bg-background text-foreground hover:bg-muted border border-border'
+                              }`}
+                            >
+                              {cat.name}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="overflow-y-auto flex-1">
+                          {FONT_PAIRING_CATEGORIES
+                            .filter(category => fontPairingCategoryFilter === null || category.id === fontPairingCategoryFilter)
+                            .map((category) => (
+                            <div key={category.id} className="border-b border-border last:border-b-0">
+                              <div className="px-3 py-2 bg-muted/20 sticky top-0 backdrop-blur-sm">
+                                <h4 className="text-xs font-semibold text-foreground">{category.name}</h4>
+                                <p className="text-[10px] text-muted-foreground">{category.description}</p>
+                              </div>
+                              <div className="p-2 space-y-1">
+                                {category.pairings.map((pairing) => (
+                                  <button
+                                    key={pairing.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        selectedFontPairingId: pairing.id
+                                      }))
+                                      setIsFontsOpen(false)
+                                    }}
+                                    className={`w-full flex flex-col gap-1.5 p-3 rounded-lg transition-all duration-150 hover:bg-muted text-left ${
+                                      formData.selectedFontPairingId === pairing.id ? 'bg-primary/10 ring-2 ring-primary' : ''
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between w-full">
+                                      <span className="text-xs font-medium text-foreground">{pairing.name}</span>
+                                    </div>
+                                    <div className="flex flex-col gap-0.5 w-full">
+                                      <div className="text-base truncate" style={{ fontFamily: pairing.displayFamily }}>{pairing.display}</div>
+                                      <div className="text-xs text-foreground/70" style={{ fontFamily: pairing.headingFamily }}>{pairing.heading} / <span style={{ fontFamily: pairing.bodyFamily }}>{pairing.body}</span></div>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    </>
+                  )}
                 </div>
+              </div>
+
+              {/* Language Settings */}
+              <div className="border-t border-border pt-8">
+                <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-primary" />
+                  Website Language
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">Choose the default language for your wedding website</p>
+                
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, locale: 'en' }))}
+                    className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200 border-2 ${
+                      formData.locale === 'en'
+                        ? 'bg-primary text-white border-primary shadow-md'
+                        : 'bg-background text-foreground border-border hover:border-primary/50 hover:bg-muted'
+                    }`}
+                  >
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-2xl">🇺🇸</span>
+                      <span>English</span>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, locale: 'es' }))}
+                    className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200 border-2 ${
+                      formData.locale === 'es'
+                        ? 'bg-primary text-white border-primary shadow-md'
+                        : 'bg-background text-foreground border-border hover:border-primary/50 hover:bg-muted'
+                    }`}
+                  >
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-2xl">🇪🇸</span>
+                      <span>Español</span>
+                    </div>
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Guests can still switch between languages if both are enabled
+                </p>
               </div>
             </div>
           </Card>

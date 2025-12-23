@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { X, FileText } from 'lucide-react'
 import { Button } from './button'
 import { WeddingDetailsForm } from './config-forms/wedding-details-form'
+import { UpdateWeddingNameId } from './update-wedding-name-id'
 import { usePageConfig } from '@/components/contexts/page-config-context'
 import { useI18n } from '@/components/contexts/i18n-context'
 
@@ -113,30 +114,39 @@ export function WeddingDetailsPanel({ isOpen, onClose, weddingNameId }: WeddingD
 
         {/* Content */}
         <div className="p-4 overflow-y-auto h-[calc(100%-65px)]">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <div 
-                  className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-3"
-                  style={{ borderColor: primaryColor }}
-                ></div>
-                <p className="text-sm text-gray-500">{t('common.loading')}</p>
+          <div className="space-y-6">
+            {/* Wedding Name ID Update Section - Always visible */}
+            <UpdateWeddingNameId currentWeddingNameId={weddingNameId} />
+            
+            {/* Divider */}
+            <div className="border-t border-gray-200" />
+            
+            {/* Wedding Details Section */}
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div 
+                    className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-3"
+                    style={{ borderColor: primaryColor }}
+                  ></div>
+                  <p className="text-sm text-gray-500">{t('common.loading')}</p>
+                </div>
               </div>
-            </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-red-500 mb-4">{error}</p>
-              <Button onClick={loadDetails} variant="outline" size="sm">
-                {t('common.tryAgain')}
-              </Button>
-            </div>
-          ) : details ? (
-            <WeddingDetailsForm
-              weddingNameId={weddingNameId}
-              initialDetails={details}
-              onSave={handleSave}
-            />
-          ) : null}
+            ) : error ? (
+              <div className="text-center py-12">
+                <p className="text-red-500 mb-4">{error}</p>
+                <Button onClick={loadDetails} variant="outline" size="sm">
+                  {t('common.tryAgain')}
+                </Button>
+              </div>
+            ) : details ? (
+              <WeddingDetailsForm
+                weddingNameId={weddingNameId}
+                initialDetails={details}
+                onSave={handleSave}
+              />
+            ) : null}
+          </div>
         </div>
       </div>
     </>

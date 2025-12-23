@@ -3,12 +3,20 @@ import { type Wedding } from '@/lib/wedding-data'
 
 export type BackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
 
+export type EventType = 'civilCeremony' | 'religiousCeremony' | 'cocktail' | 'reception' | 'afterParty' | 'custom'
+
 export interface CustomEvent {
+  id: string
+  type: EventType
   title: string
+  date?: string // ISO date string, defaults to wedding date if not provided
   time: string
   venue: string
   address?: string
   description?: string
+  imageUrl?: string // Optional image for the event
+  order: number // For custom ordering
+  useWeddingDate?: boolean // If true, use wedding date instead of custom date
 }
 
 export interface BaseEventDetailsProps {
@@ -16,20 +24,22 @@ export interface BaseEventDetailsProps {
   weddingNameId: string
   theme?: Partial<ThemeConfig>
   alignment?: Partial<AlignmentConfig>
-  showCeremony?: boolean
-  showReception?: boolean
+  events?: CustomEvent[] // New primary way to manage events
   showMapLinks?: boolean
   showMap?: boolean
+  sectionTitle?: string
+  sectionSubtitle?: string
+  useColorBackground?: boolean
+  backgroundColorChoice?: BackgroundColorChoice
+  // Legacy props for backward compatibility
+  showCeremony?: boolean
+  showReception?: boolean
   showPhotos?: boolean
   ceremonyImageUrl?: string
   receptionImageUrl?: string
   ceremonyDescription?: string
   receptionDescription?: string
-  sectionTitle?: string
-  sectionSubtitle?: string
   customEvents?: CustomEvent[]
-  useColorBackground?: boolean
-  backgroundColorChoice?: BackgroundColorChoice
   ceremonyTextAlignment?: 'left' | 'center' | 'right'
   receptionTextAlignment?: 'left' | 'center' | 'right'
 }
@@ -316,19 +326,19 @@ export function buildEventsList(
   }
   
   return [
-    ...(showCeremony && wedding.ceremony_venue_name ? [{
+    ...(showCeremony && (wedding.ceremony_venue_name || wedding.wedding_time) ? [{
       title: t ? t('eventDetails.ceremony') : "Ceremony",
       time: ceremonyTime,
-      venue: wedding.ceremony_venue_name,
+      venue: wedding.ceremony_venue_name || '',
       address: wedding.ceremony_venue_address || undefined,
       description: getCeremonyDescription(),
       imageUrl: ceremonyImageUrl,
       iconType: "ceremony" as const
     }] : []),
-    ...(showReception && wedding.reception_venue_name ? [{
+    ...(showReception && (wedding.reception_venue_name || wedding.reception_time) ? [{
       title: t ? t('eventDetails.reception') : "Reception",
       time: receptionTime,
-      venue: wedding.reception_venue_name,
+      venue: wedding.reception_venue_name || '',
       address: wedding.reception_venue_address || undefined,
       description: getReceptionDescription(),
       imageUrl: receptionImageUrl,
@@ -339,6 +349,113 @@ export function buildEventsList(
       iconType: "custom" as const
     }))
   ]
+}
+
+// Helper to get icon name for event type
+export function getEventIconType(type: EventType): 'ceremony' | 'reception' | 'custom' {
+  switch (type) {
+    case 'civilCeremony':
+    case 'religiousCeremony':
+      return 'ceremony'
+    case 'reception':
+      return 'reception'
+    default:
+      return 'custom'
+  }
+}
+
+// Helper to sort events by date and time
+export function sortEventsByDateTime(events: CustomEvent[], weddingDate?: string): CustomEvent[] {
+  return [...events].sort((a, b) => {
+    const dateA = a.useWeddingDate ? (weddingDate || a.date || '') : (a.date || weddingDate || '')
+    const dateB = b.useWeddingDate ? (weddingDate || b.date || '') : (b.date || weddingDate || '')
+    
+    // If dates are different, sort by date
+    if (dateA !== dateB) {
+      return dateA.localeCompare(dateB)
+    }
+    
+    // If dates are same, sort by time
+    const timeA = a.time || '00:00'
+    const timeB = b.time || '00:00'
+    if (timeA !== timeB) {
+      return timeA.localeCompare(timeB)
+    }
+    
+    // If date and time are same, sort by order property
+    return (a.order || 0) - (b.order || 0)
+  })
+}
+
+// Helper to build unified event list (supports both new events array and legacy ceremony/reception props)
+export function buildEventList(props: BaseEventDetailsProps): CustomEvent[] {
+  const { 
+    events, 
+    wedding,
+    showCeremony, 
+    showReception, 
+    customEvents,
+    ceremonyDescription,
+    receptionDescription,
+    ceremonyImageUrl,
+    receptionImageUrl
+  } = props
+
+  // If events array is provided, use it (new approach)
+  if (events && events.length > 0) {
+    return sortEventsByDateTime(events, wedding.wedding_date || undefined)
+  }
+
+  // Otherwise, build from legacy props for backward compatibility
+  const legacyEvents: CustomEvent[] = []
+
+  // Show ceremony if enabled and has either venue name or time
+  if (showCeremony && (wedding.ceremony_venue_name || wedding.wedding_time)) {
+    legacyEvents.push({
+      id: 'ceremony',
+      type: 'religiousCeremony',
+      title: wedding.ceremony_venue_name || 'Ceremony',
+      date: wedding.wedding_date || '',
+      time: wedding.wedding_time || '',
+      venue: wedding.ceremony_venue_name || '',
+      address: wedding.ceremony_venue_address || '',
+      description: ceremonyDescription || '',
+      imageUrl: ceremonyImageUrl,
+      order: 0,
+      useWeddingDate: true
+    })
+  }
+
+  // Show reception if enabled and has either venue name or time
+  if (showReception && (wedding.reception_venue_name || wedding.reception_time)) {
+    legacyEvents.push({
+      id: 'reception',
+      type: 'reception',
+      title: wedding.reception_venue_name || 'Reception',
+      date: wedding.wedding_date || '',
+      time: wedding.reception_time || '',
+      venue: wedding.reception_venue_name || '',
+      address: wedding.reception_venue_address || '',
+      description: receptionDescription || '',
+      imageUrl: receptionImageUrl,
+      order: 1,
+      useWeddingDate: true
+    })
+  }
+
+  // Add any custom events
+  if (customEvents) {
+    legacyEvents.push(...customEvents.map((event, index) => ({
+      ...event,
+      id: event.id || `custom-${index}`,
+      type: (event.type || 'custom') as EventType,
+      order: legacyEvents.length + index,
+      useWeddingDate: event.useWeddingDate ?? true,
+      date: event.date || wedding.wedding_date || ''
+    })))
+  }
+
+  return sortEventsByDateTime(legacyEvents, wedding.wedding_date || undefined)
 }
 
 // Helper to get map URL

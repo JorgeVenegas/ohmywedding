@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react'
 import { WeddingPageRenderer } from '@/components/wedding-page-renderer'
+import { I18nProvider } from '@/components/contexts/i18n-context'
 
 interface WeddingPreviewProps {
   formData: {
@@ -130,13 +131,15 @@ export function WeddingPreview({ formData, componentSections }: WeddingPreviewPr
         <h3 className="text-sm font-medium text-gray-700">Live Preview</h3>
       </div>
       <div className="max-h-96 overflow-y-auto">
-        <WeddingPageRenderer 
-          wedding={mockWedding}
-          dateId="preview"
-          weddingNameId="preview"
-          config={weddingConfig}
-          showVariantSwitchers={false}
-        />
+        <I18nProvider initialLocale="en">
+          <WeddingPageRenderer 
+            wedding={mockWedding}
+            dateId="preview"
+            weddingNameId="preview"
+            config={weddingConfig}
+            showVariantSwitchers={false}
+          />
+        </I18nProvider>
       </div>
     </div>
   )

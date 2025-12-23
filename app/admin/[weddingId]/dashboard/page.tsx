@@ -3,8 +3,9 @@ import { use } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Users, ImageIcon, MessageSquare, Settings, LogOut, BarChart3, CheckCircle2, ArrowRight, Mail } from "lucide-react"
+import { LogOut, ArrowRight, Mail, Gift } from "lucide-react"
 import { Header } from "@/components/header"
+import { UpdateWeddingNameId } from "@/components/ui/update-wedding-name-id"
 
 interface AdminDashboardProps {
   params: Promise<{ weddingId: string }>
@@ -12,61 +13,21 @@ interface AdminDashboardProps {
 
 export default function AdminDashboard({ params }: AdminDashboardProps) {
   const { weddingId } = use(params)
-  const stats = [
-    { label: "Total Guests", value: "142", icon: Users, color: "primary" },
-    { label: "RSVPs Received", value: "98", icon: CheckCircle2, color: "secondary" },
-    { label: "Guest Photos", value: "24", icon: ImageIcon, color: "accent" },
-    { label: "Messages", value: "15", icon: MessageSquare, color: "primary" },
-  ]
+  const decodedWeddingId = decodeURIComponent(weddingId)
 
   const sections = [
     {
-      title: "Wedding Details",
-      description: "Update your wedding information, colors, and story",
-      icon: Settings,
-      href: `/admin/${weddingId}/details`,
-      color: "primary",
-    },
-    {
       title: "Invitations & Guests",
-      description: "Manage guest groups, invitations, and track confirmations",
+      description: "Manage guest groups, invitations, RSVPs, and track confirmations",
       icon: Mail,
       href: `/admin/${weddingId}/invitations`,
       color: "primary",
     },
     {
-      title: "Guest List & RSVPs",
-      description: "View RSVPs, manage guest list, and track attendance",
-      icon: Users,
-      href: `/admin/${weddingId}/guests`,
-      color: "secondary",
-    },
-    {
-      title: "Gallery",
-      description: "Upload and manage your engagement photos",
-      icon: ImageIcon,
-      href: `/admin/${weddingId}/gallery`,
-      color: "accent",
-    },
-    {
-      title: "Guest Moments",
-      description: "Review and approve photos uploaded by guests",
-      icon: ImageIcon,
-      href: `/admin/${weddingId}/moments`,
-      color: "primary",
-    },
-    {
-      title: "Guest Messages",
-      description: "Read well-wishes and messages from your guests",
-      icon: MessageSquare,
-      href: `/admin/${weddingId}/messages`,
-      color: "secondary",
-    },
-    {
-      title: "Analytics",
-      description: "View website traffic and engagement metrics",
-      icon: BarChart3,
-      href: `/admin/${weddingId}/analytics`,
+      title: "Gift Registry",
+      description: "Manage your wedding gift registries and wishlists",
+      icon: Gift,
+      href: `/admin/${weddingId}/registry`,
       color: "accent",
     },
   ]
@@ -95,33 +56,6 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-2">Welcome Back!</h1>
           <p className="text-lg text-muted-foreground">Manage your wedding website and guest information</p>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid md:grid-cols-4 gap-6 mb-16">
-          {stats.map((stat, index) => {
-            const Icon = stat.icon
-            const colorClasses = {
-              primary: "bg-primary/10 text-primary",
-              secondary: "bg-secondary/10 text-secondary",
-              accent: "bg-accent/10 text-accent",
-            }
-            return (
-              <Card key={index} className="p-6 border border-border shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
-                      {stat.label}
-                    </p>
-                    <p className="text-3xl font-bold text-foreground">{stat.value}</p>
-                  </div>
-                  <div className={`p-3 rounded-lg ${colorClasses[stat.color as keyof typeof colorClasses]}`}>
-                    <Icon className="w-6 h-6" />
-                  </div>
-                </div>
-              </Card>
-            )
-          })}
         </div>
 
         {/* Management Sections */}
@@ -170,6 +104,12 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
               )
             })}
           </div>
+        </div>
+
+        {/* Settings Section */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold text-foreground mb-6">Settings</h2>
+          <UpdateWeddingNameId currentWeddingNameId={decodedWeddingId} />
         </div>
       </div>
     </main>

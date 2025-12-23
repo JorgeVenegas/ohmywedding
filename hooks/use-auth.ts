@@ -49,7 +49,7 @@ export function useAuth() {
   const signOut = useCallback(async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
-    setUser(null)
+    window.location.href = '/'
   }, [])
 
   return { user, loading, signOut }

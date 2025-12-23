@@ -19,6 +19,7 @@ interface WeddingDetails {
   ceremony_venue_address: string | null
   reception_venue_name: string | null
   reception_venue_address: string | null
+  wedding_name_id?: string
 }
 
 interface WeddingDetailsFormProps {

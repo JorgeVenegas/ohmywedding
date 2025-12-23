@@ -5,29 +5,23 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar, Heart } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
-import { BaseEventDetailsProps, EventItem, buildEventsList, getMapUrl, getColorScheme } from './types'
+import { BaseEventDetailsProps, buildEventList, getMapUrl, getColorScheme, getEventIconType, formatWeddingTime } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 
-export function EventDetailsElegantVariant({
-  wedding,
-  weddingNameId,
-  theme,
-  alignment,
-  showCeremony = true,
-  showReception = true,
-  showMapLinks = true,
-  showMap = true,
-  showPhotos = false,
-  ceremonyImageUrl,
-  receptionImageUrl,
-  ceremonyDescription,
-  receptionDescription,
-  sectionTitle,
-  sectionSubtitle,
-  customEvents = [],
-  useColorBackground = false,
-  backgroundColorChoice
-}: BaseEventDetailsProps) {
+export function EventDetailsElegantVariant(props: BaseEventDetailsProps) {
+  const {
+    wedding,
+    theme,
+    alignment,
+    showMapLinks = true,
+    showMap = true,
+    showPhotos = false,
+    sectionTitle,
+    sectionSubtitle,
+    useColorBackground = false,
+    backgroundColorChoice
+  } = props
+  
   const { t } = useI18n()
   
   // Use translated defaults if not provided
@@ -35,9 +29,10 @@ export function EventDetailsElegantVariant({
   const subtitle = sectionSubtitle || t('eventDetails.joinUsForOurCelebration')
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
   
-  const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription, t)
+  const events = buildEventList(props)
 
-  const renderEventIcon = (iconType: EventItem['iconType']) => {
+  const renderEventIcon = (type: string) => {
+    const iconType = getEventIconType(type as any)
     const color = isColored ? titleColor : theme?.colors?.primary
     const iconProps = { className: "w-6 h-6", style: { color } }
     switch (iconType) {
@@ -59,6 +54,10 @@ export function EventDetailsElegantVariant({
   // Get the first event with an address for the map
   const mapEvent = events.find(e => e.address)
   const mapAddress = mapEvent?.address
+
+  if (events.length === 0) {
+    return null
+  }
 
   return (
     <SectionWrapper 
@@ -100,7 +99,7 @@ export function EventDetailsElegantVariant({
         <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 mb-6 sm:mb-8">
           {events.map((event, index) => (
             <div 
-              key={index}
+              key={event.id}
               className="relative"
             >
               {/* Decorative connector line */}
@@ -123,7 +122,7 @@ export function EventDetailsElegantVariant({
                   <div className="aspect-[3/1] overflow-hidden">
                     <img 
                       src={event.imageUrl} 
-                      alt={`${event.title} venue`}
+                      alt={`${event.venue} venue`}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -144,11 +143,11 @@ export function EventDetailsElegantVariant({
                         backgroundColor: isColored ? `${titleColor}15` : `${theme?.colors?.primary}10`
                       }}
                     >
-                      {renderEventIcon(event.iconType)}
+                      {renderEventIcon(event.type)}
                     </div>
                   </div>
 
-                {/* Event Title */}
+                {/* Event Title - use custom title if provided */}
                 <h3 
                   className="text-2xl mb-1"
                   style={{ 
@@ -156,38 +155,55 @@ export function EventDetailsElegantVariant({
                     color: cardTitleColor
                   }}
                 >
-                  {event.title}
+                  {event.title || t(`eventDetails.eventTypes.${event.type}`) || event.venue}
                 </h3>
 
                 {/* Time */}
-                <div className="flex items-center justify-center gap-2 mb-2 sm:mb-3">
-                  <Clock className="w-3.5 h-3.5" style={{ color: ornamentColor }} />
-                  <span 
-                    className="text-base font-medium"
-                    style={{ color: cardTextColor }}
-                  >
-                    {event.time}
-                  </span>
-                </div>
+                {event.time && (
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <Clock className="w-4 h-4" style={{ color: ornamentColor }} />
+                    <span 
+                      className="text-base font-medium"
+                      style={{ color: cardTextColor }}
+                    >
+                      {formatWeddingTime(event.time)}
+                    </span>
+                  </div>
+                )}
 
-                {/* Venue Info */}
-                <div className="space-y-0.5 sm:space-y-1 mb-2 sm:mb-3">
-                  <p 
-                    className="text-lg font-semibold"
-                    style={{ color: cardTextColor }}
-                  >
-                    {event.venue}
-                  </p>
-                  {event.address && (
+                {/* Venue Info - Show if different from title */}
+                {event.venue && event.venue !== event.title && (
+                  <div className="space-y-1 mb-3">
                     <p 
-                      className="text-sm flex items-center justify-center gap-1.5"
+                      className="text-base sm:text-lg font-semibold flex items-center justify-center gap-2"
+                      style={{ color: cardTextColor }}
+                    >
+                      <MapPin className="w-4 h-4" style={{ color: ornamentColor }} />
+                      {event.venue}
+                    </p>
+                    {event.address && (
+                      <p 
+                        className="text-sm"
+                        style={{ color: cardMutedColor }}
+                      >
+                        {event.address}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Address only (if no venue) */}
+                {!event.venue && event.address && (
+                  <div className="mb-3">
+                    <p 
+                      className="text-sm flex items-center justify-center gap-2"
                       style={{ color: cardMutedColor }}
                     >
-                      <MapPin className="w-3.5 h-3.5" />
+                      <MapPin className="w-4 h-4" />
                       {event.address}
                     </p>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* Description */}
                 {event.description && (

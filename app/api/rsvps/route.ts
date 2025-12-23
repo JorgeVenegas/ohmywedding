@@ -9,10 +9,20 @@ export async function POST(request: Request) {
     const supabase = await createServerSupabaseClient()
     const body = await request.json()
 
+    // Get wedding ID from wedding_name_id
+    const { data: wedding, error: weddingError } = await supabase
+      .from('weddings')
+      .select('id')
+      .eq('wedding_name_id', body.weddingNameId)
+      .single()
+    
+    if (weddingError || !wedding) {
+      return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
+    }
+
     const { data, error } = await supabase.from("rsvps").insert([
       {
-        date_id: body.dateId,
-        wedding_name_id: body.weddingNameId,
+        wedding_id: wedding.id,
         guest_name: body.name,
         guest_email: body.email,
         attending: body.attending,

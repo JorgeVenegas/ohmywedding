@@ -1,9 +1,10 @@
 "use client"
 
 import React from 'react'
-import { Crown, Heart, Clock, MapPin, Image, Mail, HelpCircle } from 'lucide-react'
+import { Crown, Heart, Clock, MapPin, Image, Mail, HelpCircle, Gift } from 'lucide-react'
 import { CustomizePanel } from './customize-panel'
 import { useCustomizeSafe } from '@/components/contexts/customize-context'
+import { usePageConfigSafe } from '@/components/contexts/page-config-context'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { 
   HeroConfigForm, 
@@ -11,7 +12,8 @@ import {
   OurStoryConfigForm, 
   RSVPConfigForm,
   EventDetailsConfigForm,
-  FAQConfigForm
+  FAQConfigForm,
+  RegistryConfigForm
 } from './config-forms'
 import { Button } from './button'
 
@@ -25,11 +27,13 @@ const SECTION_ICONS: Record<string, React.ReactNode> = {
   rsvp: <Mail className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
   gallery: <Image className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
   faq: <HelpCircle className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
-  'event-details': <MapPin className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
+  'event-details': <MapPin className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
+  registry: <Gift className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
 }
 
 export function SectionCustomizer() {
   const customizeContext = useCustomizeSafe()
+  const pageConfigContext = usePageConfigSafe()
   const { t } = useI18n()
   
   if (!customizeContext) return null
@@ -47,7 +51,8 @@ export function SectionCustomizer() {
       rsvp: t('config.sectionRsvp'),
       gallery: t('config.sectionGallery'),
       faq: t('config.sectionFaq'),
-      'event-details': t('config.sectionEventDetails')
+      'event-details': t('config.sectionEventDetails'),
+      registry: t('registry.title')
     }
     return sectionNameMap[type] || t('config.unknownSection')
   }
@@ -89,12 +94,20 @@ export function SectionCustomizer() {
         return (
           <EventDetailsConfigForm 
             config={sectionConfig} 
+            wedding={pageConfigContext?.weddingDetails || undefined}
             onChange={updateConfig}
           />
         )
       case 'faq':
         return (
           <FAQConfigForm 
+            config={sectionConfig} 
+            onChange={updateConfig}
+          />
+        )
+      case 'registry':
+        return (
+          <RegistryConfigForm 
             config={sectionConfig} 
             onChange={updateConfig}
           />

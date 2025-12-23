@@ -7,6 +7,7 @@ export { RSVPSection } from './rsvp-section'
 export { GallerySection } from './gallery-section'
 export { FAQSection } from './faq-section'
 export { CountdownSection } from './countdown-section'
+export { RegistrySection } from './registry-section'
 
 // Export base section utilities  
 export { 

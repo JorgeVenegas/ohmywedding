@@ -15,7 +15,10 @@ export default function WeddingPage() {
   // Extract params using Next.js hooks
   const routeParams = useParams()
   const urlSearchParams = useSearchParams()
-  const { weddingNameId } = routeParams as { weddingNameId: string }
+  const rawWeddingNameId = routeParams.weddingNameId as string
+  const weddingNameId = decodeURIComponent(rawWeddingNameId)
+  
+  console.log('[WeddingPage] Raw:', rawWeddingNameId, 'Decoded:', weddingNameId)
   
   // Check for demo mode in search params
   const isDemoMode = urlSearchParams.get('demo') === 'true'

@@ -27,11 +27,11 @@ create table "weddings" (
 -- Wedding schedule table - Timeline events
 create table "wedding_schedule" (
   "id" uuid primary key default gen_random_uuid(),
-  "wedding_name_id" text not null,
+  "wedding_id" uuid not null references weddings(id) on delete cascade,
+  "wedding_name_id" text,
   "event_name" text not null,
   "event_time" time not null,
   "event_description" text,
   "display_order" integer default 0,
-  "created_at" timestamp with time zone default now(),
-  foreign key ("wedding_name_id") references weddings("wedding_name_id") on delete cascade
+  "created_at" timestamp with time zone default now()
 );

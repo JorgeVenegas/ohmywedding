@@ -56,6 +56,17 @@ export async function POST(request: Request) {
       // Decode the weddingNameId in case it's URL encoded
       const weddingNameId = decodeURIComponent(body.weddingNameId)
       
+      // Get wedding ID
+      const { data: wedding, error: weddingError } = await supabase
+        .from('weddings')
+        .select('id')
+        .eq('wedding_name_id', weddingNameId)
+        .single()
+      
+      if (weddingError || !wedding) {
+        return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
+      }
+      
       const guestsToInsert = body.guests.map((guest: {
         name: string
         phoneNumber?: string
@@ -67,7 +78,7 @@ export async function POST(request: Request) {
         guestGroupId?: string
         invitedBy?: string[]
       }) => ({
-        wedding_name_id: weddingNameId,
+        wedding_id: wedding.id,
         guest_group_id: guest.guestGroupId || null,
         name: guest.name,
         phone_number: guest.phoneNumber || null,
@@ -95,9 +106,20 @@ export async function POST(request: Request) {
     // Decode the weddingNameId in case it's URL encoded
     const weddingNameId = decodeURIComponent(body.weddingNameId)
 
+    // Get wedding ID
+    const { data: wedding, error: weddingError } = await supabase
+      .from('weddings')
+      .select('id')
+      .eq('wedding_name_id', weddingNameId)
+      .single()
+    
+    if (weddingError || !wedding) {
+      return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
+    }
+
     const { data, error } = await supabase.from("guests").insert([
       {
-        wedding_name_id: weddingNameId,
+        wedding_id: wedding.id,
         guest_group_id: body.guestGroupId || null,
         name: body.name,
         phone_number: body.phoneNumber || null,

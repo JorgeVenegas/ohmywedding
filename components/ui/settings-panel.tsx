@@ -5,6 +5,7 @@ import { X, Settings, FileText, Palette, Type, ChevronDown, Users, UserPlus, Tra
 import { Button } from './button'
 import { Input } from './input'
 import { WeddingDetailsForm } from './config-forms/wedding-details-form'
+import { UpdateWeddingNameId } from './update-wedding-name-id'
 import { ColorPicker } from './color-picker'
 import { FONT_PAIRINGS, FONT_PAIRING_CATEGORIES, COLOR_THEMES, COLOR_THEME_CATEGORIES, AVAILABLE_FONTS } from '@/lib/theme-config'
 import { useCollaborators } from '@/hooks/use-auth'
@@ -324,6 +325,12 @@ export function SettingsPanel({
               </div>
             ) : details ? (
               <div className="space-y-6">
+                {/* Wedding Name ID Update Section */}
+                <UpdateWeddingNameId currentWeddingNameId={weddingNameId} />
+                
+                {/* Divider */}
+                <div className="border-t border-gray-200" />
+                
                 <WeddingDetailsForm
                   weddingNameId={weddingNameId}
                   initialDetails={details}
