@@ -6,6 +6,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-12-15.clover",
 })
 
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
   try {
     const { itemId, amount, contributorName, contributorEmail, message } = await request.json()
