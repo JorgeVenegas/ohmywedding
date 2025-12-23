@@ -84,10 +84,10 @@ export function ImageGalleryDialog({
       // Decode the wedding name ID in case it's URL encoded
       const decodedWeddingNameId = decodeURIComponent(weddingNameId)
       
-      // Verify wedding exists
+      // Verify wedding exists and get wedding_id
       const { data: wedding, error: weddingError } = await supabase
         .from('weddings')
-        .select('wedding_name_id')
+        .select('id, wedding_name_id')
         .eq('wedding_name_id', decodedWeddingNameId)
         .single()
       
@@ -115,10 +115,11 @@ export function ImageGalleryDialog({
           .from('wedding-images')
           .getPublicUrl(filePath)
 
-        // Save to images table
+        // Save to images table with wedding_id
         const { error: dbError } = await supabase
           .from('images')
           .insert({
+            wedding_id: wedding.id,
             wedding_name_id: decodedWeddingNameId,
             url: publicUrl,
             storage_path: filePath,

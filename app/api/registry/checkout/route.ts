@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createServerSupabaseClient } from "@/lib/supabase-server"
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-12-15.clover",
-})
-
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error("STRIPE_SECRET_KEY is not set")
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2025-12-15.clover",
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,13 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check Stripe key
-    if (!process.env.STRIPE_SECRET_KEY) {
-      console.error("STRIPE_SECRET_KEY is not set")
-      return NextResponse.json(
-        { error: "Stripe is not configured" },
-        { status: 500 }
-      )
-    }
+    const stripe = getStripe()
 
     // Get the registry item details
     const supabase = await createServerSupabaseClient()
@@ -65,8 +65,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get base URL
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://127.0.0.1:3000'
+    // Get base URL from request headers (works in all environments)
+    const host = request.headers.get('host')
+    const protocol = request.headers.get('x-forwarded-proto') || 'http'
+    const baseUrl = `${protocol}://${host}`
+    
     const successUrl = `${baseUrl}/${encodeURIComponent(wedding.wedding_name_id)}/registry?success=true`
     const cancelUrl = `${baseUrl}/${encodeURIComponent(wedding.wedding_name_id)}/registry?canceled=true`
 
