@@ -244,14 +244,6 @@ export function RegistryCardsVariant({
           </div>
         )}
       </div>
-
-      {/* Alert Dialog */}
-      <RegistryAlertDialog 
-        isOpen={showAlert}
-        onClose={() => setShowAlert(false)}
-        primary={primary}
-        accent={accentColor}
-      />
     </section>
   )
 }

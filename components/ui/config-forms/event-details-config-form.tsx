@@ -559,10 +559,8 @@ export function EventDetailsConfigForm({ config, wedding, onChange }: EventDetai
                         Event Image
                       </label>
                       <ImageUpload
-                        value={event.imageUrl || ''}
-                        onChange={(url) => updateEvent(index, 'imageUrl', url)}
-                        bucket="event-images"
-                        path={`events/${event.id}`}
+                        currentImageUrl={event.imageUrl || ''}
+                        onUpload={(url) => updateEvent(index, 'imageUrl', url)}
                       />
                     </div>
                   </div>

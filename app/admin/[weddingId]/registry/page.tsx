@@ -8,6 +8,7 @@ import { Plus, Edit, Trash2, DollarSign, X, AlertCircle } from "lucide-react"
 import { Header } from "@/components/header"
 import { createBrowserClient } from "@supabase/ssr"
 import { ImageUpload } from "@/components/ui/image-upload"
+import { useImageUpload } from "@/hooks/use-image-upload"
 
 interface RegistryItem {
   id: string
@@ -27,6 +28,8 @@ interface RegistryPageProps {
 export default function RegistryPage({ params }: RegistryPageProps) {
   const resolvedParams = use(params)
   const weddingId = decodeURIComponent(resolvedParams.weddingId)
+  
+  const { uploadImage } = useImageUpload()
   
   const [items, setItems] = useState<RegistryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
