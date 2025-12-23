@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, use, useMemo } from "react"
+import React, { useState, useEffect, use, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -16,6 +16,7 @@ import {
 import { Header } from "@/components/header"
 import {
   Users,
+  Users2,
   Plus,
   Phone,
   ChevronDown,
@@ -36,6 +37,7 @@ import {
   Columns,
   FolderPlus,
   Upload,
+  Download,
   FileSpreadsheet,
   AlertCircle,
   Send,
@@ -101,12 +103,12 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [showUngroupedExpanded, setShowUngroupedExpanded] = useState(true)
   
-  // View mode: 'grouped' or 'flat' - initialized from URL param
-  const initialViewMode = searchParams.get('view') === 'flat' ? 'flat' : 'grouped'
-  const [viewMode, setViewModeState] = useState<'grouped' | 'flat'>(initialViewMode)
+  // View mode: 'flat' or 'groups' - initialized from URL param
+  const initialViewMode = searchParams.get('view') === 'flat' ? 'flat' : 'groups'
+  const [viewMode, setViewModeState] = useState<'flat' | 'groups'>(initialViewMode)
   
   // Update URL when view mode changes
-  const setViewMode = (mode: 'grouped' | 'flat') => {
+  const setViewMode = (mode: 'flat' | 'groups') => {
     setViewModeState(mode)
     const params = new URLSearchParams(searchParams.toString())
     params.set('view', mode)
@@ -174,6 +176,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const [editingGroup, setEditingGroup] = useState<GuestGroup | null>(null)
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null)
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
+  const [addDropdownOpen, setAddDropdownOpen] = useState(false)
   
   // Confirmation/Notification dialog states
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -194,15 +197,17 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   
   // CSV Import states
   const [showCsvImportModal, setShowCsvImportModal] = useState(false)
+  const [csvImportMode, setCsvImportMode] = useState<'guests' | 'groups'>('guests')
   const [csvData, setCsvData] = useState<string[][]>([])
   const [csvHeaders, setCsvHeaders] = useState<string[]>([])
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({})
   const [csvImportError, setCsvImportError] = useState<string | null>(null)
   const [csvImporting, setCsvImporting] = useState(false)
   
-  // Database fields for CSV mapping
-  const DB_FIELDS = [
-    { key: 'name', label: 'Name', required: true },
+  // Database fields for CSV mapping - Guests mode
+  const GUEST_DB_FIELDS = [
+    { key: 'name', label: 'Guest Name', required: true },
+    { key: 'groupName', label: 'Group Name', required: true },
     { key: 'phoneNumber', label: 'Phone Number', required: false },
     { key: 'tags', label: 'Tags (comma-separated)', required: false },
     { key: 'confirmationStatus', label: 'Status (pending/confirmed/declined)', required: false },
@@ -210,6 +215,19 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     { key: 'invitedBy', label: 'Invited By (comma-separated)', required: false },
     { key: 'notes', label: 'Notes', required: false },
   ]
+  
+  // Database fields for CSV mapping - Groups mode
+  const GROUP_DB_FIELDS = [
+    { key: 'groupName', label: 'Group Name', required: true },
+    { key: 'guestCount', label: 'Number of Guests', required: true },
+    { key: 'phoneNumber', label: 'Phone Number', required: false },
+    { key: 'tags', label: 'Tags (comma-separated)', required: false },
+    { key: 'invitedBy', label: 'Invited By (comma-separated)', required: false },
+    { key: 'notes', label: 'Notes', required: false },
+  ]
+  
+  // Get current DB fields based on import mode
+  const DB_FIELDS = csvImportMode === 'groups' ? GROUP_DB_FIELDS : GUEST_DB_FIELDS
   
   // Form states
   const [groupForm, setGroupForm] = useState({
@@ -229,6 +247,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     notes: "",
     invitedBy: [] as string[],
   })
+  
+  // State for creating a new group from guest form
+  const [newGroupNameForGuest, setNewGroupNameForGuest] = useState("")
+  const [isCreatingNewGroup, setIsCreatingNewGroup] = useState(false)
 
   useEffect(() => {
     fetchGuestGroups()
@@ -398,12 +420,55 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   const handleAddGuest = async () => {
     try {
+      let groupIdToUse = selectedGroupId
+      
+      // If creating a new group, create it first
+      if (isCreatingNewGroup && newGroupNameForGuest.trim()) {
+        const groupResponse = await fetch("/api/guest-groups", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            weddingNameId: weddingId,
+            name: newGroupNameForGuest.trim(),
+            tags: [],
+            invitedBy: [],
+          }),
+        })
+        
+        if (groupResponse.ok) {
+          const { data: newGroup } = await groupResponse.json()
+          groupIdToUse = newGroup.id
+        } else {
+          setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Failed to create group. Please try again.' })
+          return
+        }
+      }
+      
+      // If no group selected and not creating new, create a group with the guest's name
+      if (!groupIdToUse && !isCreatingNewGroup) {
+        const groupResponse = await fetch("/api/guest-groups", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            weddingNameId: weddingId,
+            name: guestForm.name.trim() || "New Group",
+            tags: [],
+            invitedBy: guestForm.invitedBy,
+          }),
+        })
+        
+        if (groupResponse.ok) {
+          const { data: newGroup } = await groupResponse.json()
+          groupIdToUse = newGroup.id
+        }
+      }
+      
       const response = await fetch("/api/guests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           weddingNameId: weddingId,
-          guestGroupId: selectedGroupId,
+          guestGroupId: groupIdToUse,
           name: guestForm.name,
           phoneNumber: guestForm.phoneNumber || null,
           tags: guestForm.tags,
@@ -419,6 +484,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         await fetchUngroupedGuests()
         setShowAddGuestModal(false)
         setSelectedGroupId(null)
+        setIsCreatingNewGroup(false)
+        setNewGroupNameForGuest("")
         resetGuestForm()
       }
     } catch (error) {
@@ -525,6 +592,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       notes: "",
       invitedBy: [],
     })
+    setIsCreatingNewGroup(false)
+    setNewGroupNameForGuest("")
   }
 
   const openEditGroup = (group: GuestGroup) => {
@@ -824,7 +893,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   }
 
   // Update all guests in a group to a specific status
-  const handleGroupStatusUpdate = async (group: GuestGroup, newStatus: 'confirmed' | 'declined') => {
+  const handleGroupStatusUpdate = async (group: GuestGroup, newStatus: 'pending' | 'confirmed' | 'declined') => {
     if (group.guests.length === 0) return
     
     try {
@@ -924,22 +993,39 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         setCsvHeaders(headers)
         setCsvData(data)
         
+        // Detect import mode based on headers
+        const headersLower = headers.map(h => h.toLowerCase().trim())
+        const hasGuestCount = headersLower.some(h => h.includes('count') || h.includes('guests') || h.includes('number'))
+        const hasGuestName = headersLower.some(h => (h.includes('name') && (h.includes('guest') || h.includes('person'))) || h === 'name')
+        
+        // If we have guest count but no individual guest names, assume groups mode
+        if (hasGuestCount && !hasGuestName) {
+          setCsvImportMode('groups')
+        } else {
+          setCsvImportMode('guests')
+        }
+        
         // Auto-map columns based on header names
         const autoMapping: Record<string, string> = {}
         headers.forEach((header, index) => {
           const headerLower = header.toLowerCase().trim()
-          if (headerLower.includes('name') && !headerLower.includes('phone')) {
+          // Group name detection
+          if ((headerLower.includes('group') && headerLower.includes('name')) || headerLower === 'group' || headerLower === 'family' || headerLower === 'household') {
+            autoMapping[index.toString()] = 'groupName'
+          } else if (headerLower.includes('count') || headerLower.includes('guests') || (headerLower.includes('number') && !headerLower.includes('phone'))) {
+            autoMapping[index.toString()] = 'guestCount'
+          } else if ((headerLower.includes('name') && !headerLower.includes('phone') && !headerLower.includes('group')) || headerLower === 'name') {
             autoMapping[index.toString()] = 'name'
           } else if (headerLower.includes('phone') || headerLower.includes('tel') || headerLower.includes('mobile')) {
             autoMapping[index.toString()] = 'phoneNumber'
-          } else if (headerLower.includes('email') || headerLower.includes('mail')) {
-            autoMapping[index.toString()] = 'email'
           } else if (headerLower.includes('tag')) {
             autoMapping[index.toString()] = 'tags'
           } else if (headerLower.includes('status') || headerLower.includes('confirm')) {
             autoMapping[index.toString()] = 'confirmationStatus'
           } else if (headerLower.includes('diet') || headerLower.includes('allerg') || headerLower.includes('restriction')) {
             autoMapping[index.toString()] = 'dietaryRestrictions'
+          } else if (headerLower.includes('invited')) {
+            autoMapping[index.toString()] = 'invitedBy'
           } else if (headerLower.includes('note') || headerLower.includes('comment')) {
             autoMapping[index.toString()] = 'notes'
           }
@@ -1026,11 +1112,30 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   }
 
   const validateCsvMapping = (): boolean => {
-    // Check if name field is mapped
-    const hasNameMapping = Object.values(columnMapping).includes('name')
-    if (!hasNameMapping) {
-      setCsvImportError("Name field is required. Please map a column to 'Name'.")
-      return false
+    if (csvImportMode === 'groups') {
+      // Check if group name and guest count are mapped
+      const hasGroupNameMapping = Object.values(columnMapping).includes('groupName')
+      const hasGuestCountMapping = Object.values(columnMapping).includes('guestCount')
+      if (!hasGroupNameMapping) {
+        setCsvImportError("Group Name field is required. Please map a column to 'Group Name'.")
+        return false
+      }
+      if (!hasGuestCountMapping) {
+        setCsvImportError("Number of Guests field is required. Please map a column to 'Number of Guests'.")
+        return false
+      }
+    } else {
+      // Guests mode - check if name and group name are mapped
+      const hasNameMapping = Object.values(columnMapping).includes('name')
+      const hasGroupNameMapping = Object.values(columnMapping).includes('groupName')
+      if (!hasNameMapping) {
+        setCsvImportError("Guest Name field is required. Please map a column to 'Guest Name'.")
+        return false
+      }
+      if (!hasGroupNameMapping) {
+        setCsvImportError("Group Name field is required. All guests must be assigned to a group.")
+        return false
+      }
     }
     setCsvImportError(null)
     return true
@@ -1043,70 +1148,122 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     setCsvImportError(null)
     
     try {
-      // Transform CSV data to guest objects
-      const guests = csvData.map(row => {
-        const guest: Record<string, string | string[]> = {}
-        
-        Object.entries(columnMapping).forEach(([csvIndex, dbField]) => {
-          const value = row[parseInt(csvIndex)] || ''
+      if (csvImportMode === 'groups') {
+        // Groups mode: Create groups with auto-generated guests
+        const groupsData = csvData.map(row => {
+          const group: Record<string, string | string[] | number> = {}
           
-          if (dbField === 'tags') {
-            // Split tags by comma
-            guest[dbField] = value.split(',').map(t => t.trim().toLowerCase()).filter(t => t)
-          } else if (dbField === 'confirmationStatus') {
-            // Normalize status values
-            const statusLower = value.toLowerCase().trim()
-            if (statusLower === 'confirmed' || statusLower === 'yes' || statusLower === 'attending') {
-              guest[dbField] = 'confirmed'
-            } else if (statusLower === 'declined' || statusLower === 'no' || statusLower === 'not attending') {
-              guest[dbField] = 'declined'
+          Object.entries(columnMapping).forEach(([csvIndex, dbField]) => {
+            const value = row[parseInt(csvIndex)] || ''
+            
+            if (dbField === 'guestCount') {
+              group[dbField] = parseInt(value) || 1
+            } else if (dbField === 'tags' || dbField === 'invitedBy') {
+              group[dbField] = value.split(',').map(t => t.trim()).filter(t => t)
             } else {
-              guest[dbField] = 'pending'
+              group[dbField] = value
             }
-          } else {
-            guest[dbField] = value
-          }
+          })
+          
+          return group
+        }).filter(group => group.groupName && (group.groupName as string).trim())
+        
+        if (groupsData.length === 0) {
+          setCsvImportError("No valid groups found in CSV. Make sure the Group Name column has values.")
+          setCsvImporting(false)
+          return
+        }
+        
+        // Create groups with guests via API
+        const response = await fetch("/api/guest-groups/bulk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            weddingNameId: weddingId,
+            groups: groupsData,
+          }),
         })
         
-        return guest
-      }).filter(guest => guest.name && (guest.name as string).trim())
-      
-      if (guests.length === 0) {
-        setCsvImportError("No valid guests found in CSV. Make sure the Name column has values.")
-        setCsvImporting(false)
-        return
+        const result = await response.json()
+        
+        if (!response.ok) {
+          setCsvImportError(result.error || "Failed to import groups")
+          setCsvImporting(false)
+          return
+        }
+        
+        // Success
+        await fetchGuestGroups()
+        await fetchUngroupedGuests()
+        
+        setShowCsvImportModal(false)
+        setCsvData([])
+        setCsvHeaders([])
+        setColumnMapping({})
+        setNotification({ isOpen: true, type: 'success', title: 'Import Complete', message: `Successfully imported ${result.groupCount} groups with ${result.guestCount} guests!` })
+      } else {
+        // Guests mode: Create guests and auto-create groups as needed
+        const guestsData = csvData.map(row => {
+          const guest: Record<string, string | string[]> = {}
+          
+          Object.entries(columnMapping).forEach(([csvIndex, dbField]) => {
+            const value = row[parseInt(csvIndex)] || ''
+            
+            if (dbField === 'tags' || dbField === 'invitedBy') {
+              guest[dbField] = value.split(',').map(t => t.trim()).filter(t => t)
+            } else if (dbField === 'confirmationStatus') {
+              const statusLower = value.toLowerCase().trim()
+              if (statusLower === 'confirmed' || statusLower === 'yes' || statusLower === 'attending') {
+                guest[dbField] = 'confirmed'
+              } else if (statusLower === 'declined' || statusLower === 'no' || statusLower === 'not attending') {
+                guest[dbField] = 'declined'
+              } else {
+                guest[dbField] = 'pending'
+              }
+            } else {
+              guest[dbField] = value
+            }
+          })
+          
+          return guest
+        }).filter(guest => guest.name && (guest.name as string).trim() && guest.groupName && (guest.groupName as string).trim())
+        
+        if (guestsData.length === 0) {
+          setCsvImportError("No valid guests found in CSV. Make sure both Name and Group Name columns have values.")
+          setCsvImporting(false)
+          return
+        }
+        
+        // Create guests with auto-group creation via API
+        const response = await fetch("/api/guests/bulk-with-groups", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            weddingNameId: weddingId,
+            guests: guestsData,
+          }),
+        })
+        
+        const result = await response.json()
+        
+        if (!response.ok) {
+          setCsvImportError(result.error || "Failed to import guests")
+          setCsvImporting(false)
+          return
+        }
+        
+        // Success
+        await fetchGuestGroups()
+        await fetchUngroupedGuests()
+        
+        setShowCsvImportModal(false)
+        setCsvData([])
+        setCsvHeaders([])
+        setColumnMapping({})
+        setNotification({ isOpen: true, type: 'success', title: 'Import Complete', message: `Successfully imported ${result.guestCount} guests into ${result.groupCount} groups!` })
       }
-      
-      // Bulk import
-      const response = await fetch("/api/guests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bulk: true,
-          weddingNameId: weddingId,
-          guests,
-        }),
-      })
-      
-      const result = await response.json()
-      
-      if (!response.ok) {
-        setCsvImportError(result.error || "Failed to import guests")
-        setCsvImporting(false)
-        return
-      }
-      
-      // Success - refresh data and close modal
-      await fetchGuestGroups()
-      await fetchUngroupedGuests()
-      
-      setShowCsvImportModal(false)
-      setCsvData([])
-      setCsvHeaders([])
-      setColumnMapping({})
-      setNotification({ isOpen: true, type: 'success', title: 'Import Complete', message: `Successfully imported ${result.count} guests!` })
     } catch {
-      setCsvImportError("Failed to import guests. Please try again.")
+      setCsvImportError("Failed to import. Please try again.")
     } finally {
       setCsvImporting(false)
     }
@@ -1114,10 +1271,92 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   const resetCsvImport = () => {
     setShowCsvImportModal(false)
+    setCsvImportMode('guests')
     setCsvData([])
     setCsvHeaders([])
     setColumnMapping({})
     setCsvImportError(null)
+  }
+
+  const handleExportCsv = () => {
+    // Gather all guests from groups and ungrouped
+    const allGuestsForExport: Array<{
+      groupName: string
+      name: string
+      phone: string
+      status: string
+      tags: string
+      invitedBy: string
+      dietaryRestrictions: string
+      notes: string
+    }> = []
+
+    // Add guests from groups
+    guestGroups.forEach(group => {
+      group.guests.forEach(guest => {
+        allGuestsForExport.push({
+          groupName: group.name,
+          name: guest.name,
+          phone: guest.phone_number || '',
+          status: guest.confirmation_status,
+          tags: (guest.tags || []).join(', '),
+          invitedBy: (guest.invited_by || []).join(', '),
+          dietaryRestrictions: guest.dietary_restrictions || '',
+          notes: guest.notes || '',
+        })
+      })
+    })
+
+    // Add ungrouped guests (legacy)
+    ungroupedGuests.forEach(guest => {
+      allGuestsForExport.push({
+        groupName: '(No Group)',
+        name: guest.name,
+        phone: guest.phone_number || '',
+        status: guest.confirmation_status,
+        tags: (guest.tags || []).join(', '),
+        invitedBy: (guest.invited_by || []).join(', '),
+        dietaryRestrictions: guest.dietary_restrictions || '',
+        notes: guest.notes || '',
+      })
+    })
+
+    // Create CSV content
+    const headers = ['Group Name', 'Guest Name', 'Phone', 'Status', 'Tags', 'Invited By', 'Dietary Restrictions', 'Notes']
+    const escapeForCsv = (value: string) => {
+      if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+        return `"${value.replace(/"/g, '""')}"`
+      }
+      return value
+    }
+
+    const csvContent = [
+      headers.join(','),
+      ...allGuestsForExport.map(guest => [
+        escapeForCsv(guest.groupName),
+        escapeForCsv(guest.name),
+        escapeForCsv(guest.phone),
+        escapeForCsv(guest.status),
+        escapeForCsv(guest.tags),
+        escapeForCsv(guest.invitedBy),
+        escapeForCsv(guest.dietaryRestrictions),
+        escapeForCsv(guest.notes),
+      ].join(','))
+    ].join('\n')
+
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `guests-${weddingId}-${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+
+    setAddDropdownOpen(false)
   }
 
   const getStatusIcon = (status: string) => {
@@ -1172,14 +1411,22 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     { label: "Pending", value: pendingGuests.toString(), color: "muted" },
   ]
 
-  // Get all unique tags from groups
+  // Get all unique tags from groups AND individual guests
   const allTags = useMemo(() => {
     const tags = new Set<string>()
     guestGroups.forEach(group => {
       group.tags?.forEach(tag => tags.add(tag))
+      // Also include tags from individual guests within groups
+      group.guests?.forEach(guest => {
+        guest.tags?.forEach(tag => tags.add(tag))
+      })
+    })
+    // Include tags from ungrouped guests
+    ungroupedGuests.forEach(guest => {
+      guest.tags?.forEach(tag => tags.add(tag))
     })
     return Array.from(tags)
-  }, [guestGroups])
+  }, [guestGroups, ungroupedGuests])
 
   // Create a flat list of all guests with their group info and merged tags
   const allGuests = useMemo(() => {
@@ -1252,6 +1499,39 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     })
   }, [allGuests, searchQuery, statusFilter, tagFilter, groupFilter, invitedByFilter])
 
+  // Filter groups based on current filters (for groups view)
+  const filteredGroups = useMemo(() => {
+    return guestGroups.filter(group => {
+      // Search filter - search in group name
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        if (!group.name.toLowerCase().includes(query)) return false
+      }
+      
+      // Status filter - check if any guest in group matches status
+      if (statusFilter !== 'all') {
+        const hasMatchingStatus = group.guests.some(g => g.confirmation_status === statusFilter)
+        if (!hasMatchingStatus) return false
+      }
+      
+      // Tag filter - check group tags or any guest tags
+      if (tagFilter !== 'all') {
+        const groupHasTag = group.tags?.includes(tagFilter)
+        const guestsHaveTag = group.guests.some(g => g.tags?.includes(tagFilter))
+        if (!groupHasTag && !guestsHaveTag) return false
+      }
+      
+      // Invited by filter - check group invited_by or any guest invited_by
+      if (invitedByFilter !== 'all') {
+        const groupHasInvitedBy = group.invited_by?.includes(invitedByFilter)
+        const guestsHaveInvitedBy = group.guests.some(g => g.invited_by?.includes(invitedByFilter))
+        if (!groupHasInvitedBy && !guestsHaveInvitedBy) return false
+      }
+      
+      return true
+    })
+  }, [guestGroups, searchQuery, statusFilter, tagFilter, invitedByFilter])
+
   if (loading) {
     return (
       <main className="min-h-screen bg-background">
@@ -1310,7 +1590,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
               {/* Add Actions Dropdown */}
-              <DropdownMenu>
+              <DropdownMenu open={addDropdownOpen} onOpenChange={setAddDropdownOpen}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="h-8">
                     <Plus className="w-3.5 h-3.5 mr-1.5" />
@@ -1322,11 +1602,15 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                   <DropdownMenuItem onClick={() => {
                     setSelectedGroupId(null)
                     setShowAddGuestModal(true)
+                    setAddDropdownOpen(false)
                   }}>
                     <UserPlus className="w-4 h-4 mr-2" />
                     Add Guest
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setShowAddGroupModal(true)}>
+                  <DropdownMenuItem onClick={() => {
+                    setShowAddGroupModal(true)
+                    setAddDropdownOpen(false)
+                  }}>
                     <FolderPlus className="w-4 h-4 mr-2" />
                     Add Group
                   </DropdownMenuItem>
@@ -1334,11 +1618,19 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                   <DropdownMenuItem 
                     onSelect={(e) => {
                       e.preventDefault()
-                      document.getElementById('csv-import-input')?.click()
+                      setAddDropdownOpen(false)
+                      // Small delay to ensure dropdown closes before file picker opens
+                      setTimeout(() => {
+                        document.getElementById('csv-import-input')?.click()
+                      }, 100)
                     }}
                   >
                     <Upload className="w-4 h-4 mr-2" />
                     Import CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportCsv}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Export CSV
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -1366,37 +1658,53 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-4">
           {/* Left: View Toggle and Filters */}
           <div className="flex items-center gap-3 flex-wrap">
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-2 border rounded-lg px-2 py-1 bg-muted/30">
-              <LayoutGrid className={`w-3.5 h-3.5 ${viewMode === 'grouped' ? 'text-primary' : 'text-muted-foreground'}`} />
-              <Switch
-                checked={viewMode === 'flat'}
-                onCheckedChange={(checked) => setViewMode(checked ? 'flat' : 'grouped')}
-                className="scale-75"
-              />
-              <LayoutList className={`w-3.5 h-3.5 ${viewMode === 'flat' ? 'text-primary' : 'text-muted-foreground'}`} />
+            {/* View Mode Toggle - 2 options */}
+            <div className="flex items-center border rounded-lg bg-muted/30 p-0.5">
+              <button
+                onClick={() => setViewMode('groups')}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-colors ${
+                  viewMode === 'groups' 
+                    ? 'bg-background text-primary shadow-sm' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="Groups table"
+              >
+                <Users2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Groups</span>
+              </button>
+              <button
+                onClick={() => setViewMode('flat')}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-colors ${
+                  viewMode === 'flat' 
+                    ? 'bg-background text-primary shadow-sm' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="Flat guest list"
+              >
+                <LayoutList className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Guests</span>
+              </button>
             </div>
 
-            {/* Inline Filters - Only in flat view */}
-            {viewMode === 'flat' && (
-              <>
-                <div className="relative">
-                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                  <Input
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-7 h-8 w-36 text-sm"
-                  />
-                </div>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                  className="h-8 rounded-md border border-border bg-background px-2 text-xs"
-                >
-                  <option value="all">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
+            {/* Inline Filters */}
+            <>
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <Input
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-7 h-8 w-36 text-sm"
+                />
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
                   <option value="declined">Declined</option>
                 </select>
                 <select
@@ -1409,17 +1717,19 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                     <option key={tag} value={tag}>{tag}</option>
                   ))}
                 </select>
-                <select
-                  value={groupFilter}
-                  onChange={(e) => setGroupFilter(e.target.value)}
-                  className="h-8 rounded-md border border-border bg-background px-2 text-xs"
-                >
-                  <option value="all">All Groups</option>
-                  <option value="ungrouped">Ungrouped</option>
-                  {guestGroups.map(group => (
-                    <option key={group.id} value={group.id}>{group.name}</option>
-                  ))}
-                </select>
+                {viewMode === 'flat' && (
+                  <select
+                    value={groupFilter}
+                    onChange={(e) => setGroupFilter(e.target.value)}
+                    className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+                  >
+                    <option value="all">All Groups</option>
+                    <option value="ungrouped">Ungrouped</option>
+                    {guestGroups.map(group => (
+                      <option key={group.id} value={group.id}>{group.name}</option>
+                    ))}
+                  </select>
+                )}
                 <select
                   value={invitedByFilter}
                   onChange={(e) => setInvitedByFilter(e.target.value)}
@@ -1448,10 +1758,12 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                   </Button>
                 )}
                 <span className="text-xs text-muted-foreground">
-                  {filteredGuests.length}/{totalGuests}
+                  {viewMode === 'groups' 
+                    ? `${filteredGroups.length}/${guestGroups.length} groups`
+                    : `${filteredGuests.length}/${totalGuests} guests`
+                  }
                 </span>
               </>
-            )}
 
             {/* Column Visibility Menu - Available in both views */}
             <div className="relative">
@@ -1780,159 +2092,95 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           </Card>
         )}
 
-        {/* Grouped View - Guest Groups List */}
-        {viewMode === 'grouped' && (
-        <div className="space-y-3">
-          {guestGroups.length === 0 && ungroupedGuests.length === 0 ? (
-            <Card className="p-8 text-center border border-border">
-              <Users className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-              <h3 className="text-base font-semibold text-foreground mb-2">No guests yet</h3>
-              <p className="text-sm text-muted-foreground mb-3">Create your first guest group or add individual guests</p>
-              <div className="flex gap-2 justify-center">
-                <Button variant="outline" onClick={() => {
-                  setSelectedGroupId(null)
-                  setShowAddGuestModal(true)
-                }}>
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Add Guest
-                </Button>
-                <Button onClick={() => setShowAddGroupModal(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Group
-                </Button>
+        {/* Groups Table View with Expandable Rows */}
+        {viewMode === 'groups' && (
+          <Card className="border border-border overflow-hidden shadow-sm">
+            {filteredGroups.length === 0 && ungroupedGuests.length === 0 ? (
+              <div className="p-12 text-center">
+                <Users2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">No groups found</h3>
+                <p className="text-muted-foreground">
+                  {guestGroups.length === 0 ? "Create your first group to get started" : "Try adjusting your filters"}
+                </p>
               </div>
-            </Card>
-          ) : (
-            <>
-            {guestGroups.map((group) => (
-              <Card key={group.id} className="border border-border overflow-hidden shadow-sm">
-                {/* Group Header */}
-                <div
-                  className="p-4 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => toggleGroupExpansion(group.id)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {expandedGroups.has(group.id) ? (
-                        <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                      ) : (
-                        <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/20 border-b border-border">
+                    <tr>
+                      <th className="px-2 py-2 w-8"></th>
+                      <th className="px-2 py-2 w-8"></th>
+                      <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        Group Name
+                      </th>
+                      <th className="px-3 py-2 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        Guests
+                      </th>
+                      <th className="px-3 py-2 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        <span className="inline-flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-green-600" />
+                          Confirmed
+                        </span>
+                      </th>
+                      <th className="px-3 py-2 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        <span className="inline-flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-amber-600" />
+                          Pending
+                        </span>
+                      </th>
+                      <th className="px-3 py-2 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        <span className="inline-flex items-center gap-1">
+                          <XCircle className="w-3 h-3 text-red-600" />
+                          Declined
+                        </span>
+                      </th>
+                      {visibleColumns.tags && (
+                        <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                          Tags
+                        </th>
                       )}
-                      <div>
-                        <h3 className="font-semibold text-foreground">{group.name}</h3>
-                        <div className="flex items-center gap-4 mt-1">
-                          {group.phone_number && (
-                            <span className="text-sm text-muted-foreground flex items-center gap-1">
-                              <Phone className="w-3 h-3" />
-                              {group.phone_number}
-                            </span>
-                          )}
-                          <span className="text-sm text-muted-foreground">
-                            {group.guests.length} guest{group.guests.length !== 1 ? "s" : ""}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {/* Tags */}
-                      <div className="flex gap-1">
-                        {group.tags?.map((tag) => (
-                          <span
-                            key={tag}
-                            className={`px-2 py-0.5 text-xs rounded-full border ${getTagColor(tag)}`}
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                      {/* Group Status Actions */}
-                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
-                          onClick={() => handleGroupStatusUpdate(group, 'confirmed')}
-                          title="Confirm all guests in group"
-                        >
-                          <Check className="w-3.5 h-3.5 mr-1" />
-                          All
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => handleGroupStatusUpdate(group, 'declined')}
-                          title="Decline all guests in group"
-                        >
-                          <X className="w-3.5 h-3.5 mr-1" />
-                          All
-                        </Button>
-                        {group.invitation_sent ? (
-                          <span className="inline-flex items-center gap-1 text-xs text-green-600 px-2">
-                            <MailCheck className="w-3.5 h-3.5" />
-                            Sent
-                          </span>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs"
-                            onClick={() => handleSendGroupInvite(group)}
-                            title="Send invite to this group"
-                          >
-                            <Send className="w-3.5 h-3.5 mr-1" />
-                            Invite
-                          </Button>
-                        )}
-                      </div>
-                      {/* Actions */}
-                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openAddGuestToGroup(group.id)}
-                        >
-                          <UserPlus className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditGroup(group)}
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteGroup(group.id)}
-                        >
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                      {visibleColumns.invitedBy && (
+                        <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                          Invited By
+                        </th>
+                      )}
+                      {visibleColumns.inviteSent && (
+                        <th className="px-3 py-2 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                          Invite
+                        </th>
+                      )}
+                      <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredGroups.map((group, index) => {
+                      const confirmedCount = group.guests.filter(g => g.confirmation_status === 'confirmed').length
+                      const pendingCount = group.guests.filter(g => g.confirmation_status === 'pending').length
+                      const declinedCount = group.guests.filter(g => g.confirmation_status === 'declined').length
+                      const allGroupTags = [...new Set([
+                        ...(group.tags || []),
+                        ...group.guests.flatMap(g => g.tags || [])
+                      ])]
+                      const allGroupInvitedBy = [...new Set([
+                        ...(group.invited_by || []),
+                        ...group.guests.flatMap(g => g.invited_by || [])
+                      ])]
+                      const allGuestsInvited = group.guests.length > 0 && group.guests.every(g => g.invitation_sent)
+                      const someGuestsInvited = group.guests.some(g => g.invitation_sent)
+                      const isExpanded = expandedGroups.has(group.id)
 
-                {/* Guests Table */}
-                {expandedGroups.has(group.id) && (
-                  <div className="border-t border-border">
-                    {group.guests.length === 0 ? (
-                      <div className="p-8 text-center text-muted-foreground">
-                        <p className="mb-2">No guests in this group</p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openAddGuestToGroup(group.id)}
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add Guest
-                        </Button>
-                      </div>
-                    ) : (
-                      <table className="w-full">
-                        <thead className="bg-muted/20 border-b border-border">
-                          <tr>
-                            <th className="px-2 py-3 text-left w-8">
+                      return (
+                        <React.Fragment key={group.id}>
+                          {/* Group Row */}
+                          <tr
+                            className={`border-b border-border hover:bg-muted/30 transition-colors cursor-pointer ${
+                              index % 2 === 0 ? "bg-background" : "bg-muted/10"
+                            } ${isExpanded ? "bg-muted/40" : ""} ${isGroupFullySelected(group.guests) ? "bg-primary/5" : ""}`}
+                            onClick={() => toggleGroupExpansion(group.id)}
+                          >
+                            <td className="px-2 py-2 text-center" onClick={(e) => e.stopPropagation()}>
                               <button
                                 onClick={() => toggleSelectGroup(group.guests)}
                                 className={`w-4 h-4 border rounded flex items-center justify-center ${
@@ -1946,370 +2194,506 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                 {isGroupFullySelected(group.guests) && <Check className="w-3 h-3 text-primary-foreground" />}
                                 {isGroupPartiallySelected(group.guests) && <div className="w-2 h-0.5 bg-primary-foreground" />}
                               </button>
-                            </th>
-                            <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                              Name
-                            </th>
-                            {visibleColumns.phone && (
-                              <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                                Phone
-                              </th>
-                            )}
+                            </td>
+                            <td className="px-2 py-2 text-center">
+                              {isExpanded ? (
+                                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                              )}
+                            </td>
+                            <td className="px-3 py-2">
+                              <div className="font-medium text-foreground">{group.name}</div>
+                              {group.phone_number && (
+                                <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                  <Phone className="w-3 h-3" />
+                                  {group.phone_number}
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-3 py-2 text-center">
+                              <span className="inline-flex items-center justify-center min-w-[24px] px-1.5 py-0.5 rounded-full bg-muted text-xs font-medium">
+                                {group.guests.length}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-center">
+                              {confirmedCount > 0 ? (
+                                <span className="inline-flex items-center justify-center min-w-[24px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium">
+                                  {confirmedCount}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2 text-center">
+                              {pendingCount > 0 ? (
+                                <span className="inline-flex items-center justify-center min-w-[24px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">
+                                  {pendingCount}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2 text-center">
+                              {declinedCount > 0 ? (
+                                <span className="inline-flex items-center justify-center min-w-[24px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-medium">
+                                  {declinedCount}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </td>
                             {visibleColumns.tags && (
-                              <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                                Tags
-                              </th>
-                            )}
-                            {visibleColumns.status && (
-                              <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                                Status
-                              </th>
-                            )}
-                            {visibleColumns.dietary && (
-                              <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                                Dietary
-                              </th>
-                            )}
-                            {visibleColumns.invitedBy && (
-                              <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                                Invited By
-                              </th>
-                            )}
-                            {visibleColumns.inviteSent && (
-                              <th className="px-3 py-3 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                                Invite
-                              </th>
-                            )}
-                            <th className="px-3 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {group.guests.map((guest, index) => (
-                            <tr
-                              key={guest.id}
-                              className={`border-b border-border hover:bg-muted/30 transition-colors ${
-                                index % 2 === 0 ? "bg-background" : "bg-muted/10"
-                              } ${selectedGuestIds.has(guest.id) ? "bg-primary/5" : ""}`}
-                            >
-                              <td className="px-2 py-3">
-                                <button
-                                  onClick={() => toggleGuestSelection(guest.id)}
-                                  className={`w-4 h-4 border rounded flex items-center justify-center ${
-                                    selectedGuestIds.has(guest.id) ? 'bg-primary border-primary' : 'border-border'
-                                  }`}
-                                >
-                                  {selectedGuestIds.has(guest.id) && <Check className="w-3 h-3 text-primary-foreground" />}
-                                </button>
-                              </td>
-                              <td className="px-3 py-3 font-medium text-foreground">{guest.name}</td>
-                              {visibleColumns.phone && (
-                                <td className="px-3 py-3 text-muted-foreground text-sm">{guest.phone_number || "-"}</td>
-                              )}
-                              {visibleColumns.tags && (
-                                <td className="px-3 py-3">
-                                  <div className="flex gap-1 flex-wrap">
-                                    {guest.tags?.map(tag => (
-                                      <span
-                                        key={tag}
-                                        className={`px-1.5 py-0.5 text-[10px] rounded-full border ${getTagColor(tag)}`}
-                                      >
-                                        {tag}
-                                      </span>
-                                    ))}
-                                    {(!guest.tags || guest.tags.length === 0) && "-"}
-                                  </div>
-                                </td>
-                              )}
-                              {visibleColumns.status && (
-                                <td className="px-3 py-3">
-                                  <select
-                                    value={guest.confirmation_status}
-                                    onChange={(e) => handleUpdateGuestStatus(guest, e.target.value as 'pending' | 'confirmed' | 'declined')}
-                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium cursor-pointer border-0 ${getStatusBadgeClass(guest.confirmation_status)}`}
-                                  >
-                                    <option value="pending">Pending</option>
-                                    <option value="confirmed">Confirmed</option>
-                                    <option value="declined">Declined</option>
-                                  </select>
-                                </td>
-                              )}
-                              {visibleColumns.dietary && (
-                                <td className="px-3 py-3 text-muted-foreground text-sm">
-                                  {guest.dietary_restrictions || "-"}
-                                </td>
-                              )}
-                              {visibleColumns.invitedBy && (
-                                <td className="px-3 py-3">
-                                  {guest.invited_by && guest.invited_by.length > 0 ? (
-                                    <div className="flex gap-1 flex-wrap">
-                                      {guest.invited_by.map(name => (
-                                        <span
-                                          key={name}
-                                          className="px-1.5 py-0.5 text-[10px] rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200"
-                                        >
-                                          {name}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <span className="text-muted-foreground text-sm">-</span>
-                                  )}
-                                </td>
-                              )}
-                              {visibleColumns.inviteSent && (
-                                <td className="px-3 py-3 text-center">
-                                  {guest.invitation_sent ? (
-                                    <span className="inline-flex items-center gap-1 text-[10px] text-green-600">
-                                      <MailCheck className="w-3.5 h-3.5" />
-                                      Sent
-                                    </span>
-                                  ) : (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-6 px-2 text-[10px]"
-                                      onClick={() => handleSendGuestInvite(guest)}
+                              <td className="px-3 py-2">
+                                <div className="flex gap-1 flex-wrap">
+                                  {allGroupTags.slice(0, 3).map(tag => (
+                                    <span
+                                      key={tag}
+                                      className={`px-1.5 py-0.5 text-[10px] rounded-full border ${getTagColor(tag)}`}
                                     >
-                                      <Send className="w-3 h-3 mr-1" />
-                                      Send
-                                    </Button>
+                                      {tag}
+                                    </span>
+                                  ))}
+                                  {allGroupTags.length > 3 && (
+                                    <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-muted text-muted-foreground">
+                                      +{allGroupTags.length - 3}
+                                    </span>
                                   )}
-                                </td>
-                              )}
-                              <td className="px-3 py-3 text-right">
-                                <div className="flex justify-end gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => openEditGuest(guest)}
-                                  >
-                                    <Edit2 className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleDeleteGuest(guest.id)}
-                                  >
-                                    <Trash2 className="w-4 h-4 text-destructive" />
-                                  </Button>
+                                  {allGroupTags.length === 0 && "-"}
                                 </div>
                               </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                )}
-              </Card>
-            ))}
+                            )}
+                            {visibleColumns.invitedBy && (
+                              <td className="px-3 py-2">
+                                {allGroupInvitedBy.length > 0 ? (
+                                  <div className="flex gap-1 flex-wrap">
+                                    {allGroupInvitedBy.map(name => (
+                                      <span
+                                        key={name}
+                                        className="px-1.5 py-0.5 text-[10px] rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200"
+                                      >
+                                        {name}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground">-</span>
+                                )}
+                              </td>
+                            )}
+                            {visibleColumns.inviteSent && (
+                              <td className="px-3 py-2 text-center">
+                                {allGuestsInvited ? (
+                                  <span className="inline-flex items-center gap-1 text-[10px] text-green-600">
+                                    <MailCheck className="w-3.5 h-3.5" />
+                                    All Sent
+                                  </span>
+                                ) : someGuestsInvited ? (
+                                  <span className="inline-flex items-center gap-1 text-[10px] text-amber-600">
+                                    <Mail className="w-3.5 h-3.5" />
+                                    Partial
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                                    <Mail className="w-3.5 h-3.5" />
+                                    Not Sent
+                                  </span>
+                                )}
+                              </td>
+                            )}
+                            <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                    <MoreVertical className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => openAddGuestToGroup(group.id)}>
+                                    <UserPlus className="w-4 h-4 mr-2" />
+                                    Add Guest
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => openEditGroup(group)}>
+                                    <Edit2 className="w-4 h-4 mr-2" />
+                                    Edit Group
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={() => handleGroupStatusUpdate(group, 'confirmed')}
+                                    className="text-green-600"
+                                  >
+                                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                                    Confirm All
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleGroupStatusUpdate(group, 'pending')}
+                                    className="text-amber-600"
+                                  >
+                                    <Clock className="w-4 h-4 mr-2" />
+                                    Set All Pending
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleGroupStatusUpdate(group, 'declined')}
+                                    className="text-red-600"
+                                  >
+                                    <XCircle className="w-4 h-4 mr-2" />
+                                    Decline All
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  {!allGuestsInvited && (
+                                    <DropdownMenuItem onClick={() => handleSendGroupInvite(group)}>
+                                      <Send className="w-4 h-4 mr-2" />
+                                      Send Invites
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuItem 
+                                    onClick={() => handleDeleteGroup(group.id)}
+                                    className="text-destructive"
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete Group
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </td>
+                          </tr>
 
-          {/* Ungrouped Guests Section */}
-          {ungroupedGuests.length > 0 && (
-            <Card className="border border-border overflow-hidden shadow-sm mt-6">
-              <div
-                className="p-4 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => setShowUngroupedExpanded(!showUngroupedExpanded)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {showUngroupedExpanded ? (
-                      <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                    )}
-                    <div>
-                      <h3 className="font-semibold text-foreground">Ungrouped Guests</h3>
-                      <span className="text-sm text-muted-foreground">
-                        {ungroupedGuests.length} guest{ungroupedGuests.length !== 1 ? "s" : ""}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                          {/* Expanded Guest Rows */}
+                          {isExpanded && (
+                            <>
+                              {group.guests.length === 0 ? (
+                                <tr className="bg-muted/20">
+                                  <td colSpan={11} className="px-8 py-4 text-center text-muted-foreground">
+                                    <p className="mb-2">No guests in this group</p>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        openAddGuestToGroup(group.id)
+                                      }}
+                                    >
+                                      <Plus className="w-4 h-4 mr-2" />
+                                      Add Guest
+                                    </Button>
+                                  </td>
+                                </tr>
+                              ) : (
+                                group.guests.map((guest) => (
+                                  <tr
+                                    key={guest.id}
+                                    className={`border-b border-border bg-muted/20 hover:bg-muted/40 transition-colors ${
+                                      selectedGuestIds.has(guest.id) ? "bg-primary/5" : ""
+                                    }`}
+                                  >
+                                    <td className="px-2 py-2 text-center">
+                                      <button
+                                        onClick={() => toggleGuestSelection(guest.id)}
+                                        className={`w-4 h-4 border rounded flex items-center justify-center ${
+                                          selectedGuestIds.has(guest.id) ? 'bg-primary border-primary' : 'border-border'
+                                        }`}
+                                      >
+                                        {selectedGuestIds.has(guest.id) && <Check className="w-3 h-3 text-primary-foreground" />}
+                                      </button>
+                                    </td>
+                                    <td className="px-2 py-2"></td>
+                                    <td className="px-3 py-2 pl-4">
+                                      <span className="text-foreground">{guest.name}</span>
+                                    </td>
+                                    <td className="px-3 py-2 text-center text-muted-foreground text-xs">
+                                      {guest.phone_number || "-"}
+                                    </td>
+                                    <td colSpan={3} className="px-3 py-2 text-center">
+                                      <select
+                                        value={guest.confirmation_status}
+                                        onChange={(e) => handleUpdateGuestStatus(guest, e.target.value as 'pending' | 'confirmed' | 'declined')}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium cursor-pointer border-0 ${getStatusBadgeClass(guest.confirmation_status)}`}
+                                      >
+                                        <option value="pending">Pending</option>
+                                        <option value="confirmed">Confirmed</option>
+                                        <option value="declined">Declined</option>
+                                      </select>
+                                    </td>
+                                    {visibleColumns.tags && (
+                                      <td className="px-3 py-2">
+                                        <div className="flex gap-1 flex-wrap">
+                                          {guest.tags?.map(tag => (
+                                            <span
+                                              key={tag}
+                                              className={`px-1.5 py-0.5 text-[10px] rounded-full border ${getTagColor(tag)}`}
+                                            >
+                                              {tag}
+                                            </span>
+                                          ))}
+                                          {(!guest.tags || guest.tags.length === 0) && "-"}
+                                        </div>
+                                      </td>
+                                    )}
+                                    {visibleColumns.invitedBy && (
+                                      <td className="px-3 py-2">
+                                        {guest.invited_by && guest.invited_by.length > 0 ? (
+                                          <div className="flex gap-1 flex-wrap">
+                                            {guest.invited_by.map(name => (
+                                              <span
+                                                key={name}
+                                                className="px-1.5 py-0.5 text-[10px] rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200"
+                                              >
+                                                {name}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <span className="text-muted-foreground">-</span>
+                                        )}
+                                      </td>
+                                    )}
+                                    {visibleColumns.inviteSent && (
+                                      <td className="px-3 py-2 text-center">
+                                        {guest.invitation_sent ? (
+                                          <span className="inline-flex items-center gap-1 text-[10px] text-green-600">
+                                            <MailCheck className="w-3.5 h-3.5" />
+                                          </span>
+                                        ) : (
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-6 px-2 text-[10px]"
+                                            onClick={(e) => {
+                                              e.stopPropagation()
+                                              handleSendGuestInvite(guest)
+                                            }}
+                                          >
+                                            <Send className="w-3 h-3" />
+                                          </Button>
+                                        )}
+                                      </td>
+                                    )}
+                                    <td className="px-3 py-2 text-right">
+                                      <div className="flex justify-end gap-0.5">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-6 w-6 p-0"
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            openEditGuest(guest)
+                                          }}
+                                        >
+                                          <Edit2 className="w-3 h-3" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-6 w-6 p-0"
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            handleDeleteGuest(guest.id)
+                                          }}
+                                        >
+                                          <Trash2 className="w-3 h-3 text-destructive" />
+                                        </Button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </>
+                          )}
+                        </React.Fragment>
+                      )
+                    })}
 
-              {showUngroupedExpanded && (
-                <div className="border-t border-border">
-                  <table className="w-full">
-                    <thead className="bg-muted/20 border-b border-border">
-                      <tr>
-                        <th className="px-2 py-3 text-left w-8">
-                          <button
-                            onClick={() => toggleSelectGroup(ungroupedGuests)}
-                            className={`w-4 h-4 border rounded flex items-center justify-center ${
-                              isGroupFullySelected(ungroupedGuests)
-                                ? 'bg-primary border-primary'
-                                : isGroupPartiallySelected(ungroupedGuests)
-                                  ? 'bg-primary/50 border-primary'
-                                  : 'border-border'
-                            }`}
-                          >
-                            {isGroupFullySelected(ungroupedGuests) && <Check className="w-3 h-3 text-primary-foreground" />}
-                            {isGroupPartiallySelected(ungroupedGuests) && <div className="w-2 h-0.5 bg-primary-foreground" />}
-                          </button>
-                        </th>
-                        <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                          Name
-                        </th>
-                        {visibleColumns.phone && (
-                          <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                            Phone
-                          </th>
-                        )}
-                        {visibleColumns.tags && (
-                          <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                            Tags
-                          </th>
-                        )}
-                        {visibleColumns.status && (
-                          <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                            Status
-                          </th>
-                        )}
-                        {visibleColumns.dietary && (
-                          <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                            Dietary
-                          </th>
-                        )}
-                        {visibleColumns.invitedBy && (
-                          <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                            Invited By
-                          </th>
-                        )}
-                        {visibleColumns.inviteSent && (
-                          <th className="px-3 py-3 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                            Invite
-                          </th>
-                        )}
-                        <th className="px-3 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ungroupedGuests.map((guest, index) => (
+                    {/* Ungrouped Guests Section */}
+                    {ungroupedGuests.length > 0 && (
+                      <>
                         <tr
-                          key={guest.id}
-                          className={`border-b border-border hover:bg-muted/30 transition-colors ${
-                            index % 2 === 0 ? "bg-background" : "bg-muted/10"
-                          } ${selectedGuestIds.has(guest.id) ? "bg-primary/5" : ""}`}
+                          className={`border-b border-amber-300 bg-amber-50/50 hover:bg-amber-100/50 transition-colors cursor-pointer ${isGroupFullySelected(ungroupedGuests) ? "bg-primary/5" : ""}`}
+                          onClick={() => setShowUngroupedExpanded(!showUngroupedExpanded)}
                         >
-                          <td className="px-2 py-3">
+                          <td className="px-2 py-2 text-center" onClick={(e) => e.stopPropagation()}>
                             <button
-                              onClick={() => toggleGuestSelection(guest.id)}
+                              onClick={() => toggleSelectGroup(ungroupedGuests)}
                               className={`w-4 h-4 border rounded flex items-center justify-center ${
-                                selectedGuestIds.has(guest.id) ? 'bg-primary border-primary' : 'border-border'
+                                isGroupFullySelected(ungroupedGuests)
+                                  ? 'bg-primary border-primary'
+                                  : isGroupPartiallySelected(ungroupedGuests)
+                                    ? 'bg-primary/50 border-primary'
+                                    : 'border-amber-400'
                               }`}
                             >
-                              {selectedGuestIds.has(guest.id) && <Check className="w-3 h-3 text-primary-foreground" />}
+                              {isGroupFullySelected(ungroupedGuests) && <Check className="w-3 h-3 text-primary-foreground" />}
+                              {isGroupPartiallySelected(ungroupedGuests) && <div className="w-2 h-0.5 bg-primary-foreground" />}
                             </button>
                           </td>
-                          <td className="px-3 py-3 font-medium text-foreground">{guest.name}</td>
-                          {visibleColumns.phone && (
-                            <td className="px-3 py-3 text-muted-foreground text-sm">{guest.phone_number || "-"}</td>
-                          )}
-                          {visibleColumns.tags && (
-                            <td className="px-3 py-3">
-                              <div className="flex gap-1 flex-wrap">
-                                {guest.tags?.map(tag => (
-                                  <span
-                                    key={tag}
-                                    className={`px-1.5 py-0.5 text-[10px] rounded-full border ${getTagColor(tag)}`}
-                                  >
-                                    {tag}
-                                  </span>
-                                ))}
-                                {(!guest.tags || guest.tags.length === 0) && "-"}
+                          <td className="px-2 py-2 text-center">
+                            {showUngroupedExpanded ? (
+                              <ChevronDown className="w-4 h-4 text-amber-600" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 text-amber-600" />
+                            )}
+                          </td>
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className="w-4 h-4 text-amber-600" />
+                              <div>
+                                <div className="font-medium text-amber-800">Ungrouped Guests</div>
+                                <div className="text-xs text-amber-600">Legacy - needs group assignment</div>
                               </div>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <span className="inline-flex items-center justify-center min-w-[24px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">
+                              {ungroupedGuests.length}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            {ungroupedGuests.filter(g => g.confirmation_status === 'confirmed').length > 0 ? (
+                              <span className="inline-flex items-center justify-center min-w-[24px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium">
+                                {ungroupedGuests.filter(g => g.confirmation_status === 'confirmed').length}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            {ungroupedGuests.filter(g => g.confirmation_status === 'pending').length > 0 ? (
+                              <span className="inline-flex items-center justify-center min-w-[24px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">
+                                {ungroupedGuests.filter(g => g.confirmation_status === 'pending').length}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            {ungroupedGuests.filter(g => g.confirmation_status === 'declined').length > 0 ? (
+                              <span className="inline-flex items-center justify-center min-w-[24px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-medium">
+                                {ungroupedGuests.filter(g => g.confirmation_status === 'declined').length}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </td>
+                          {visibleColumns.tags && <td className="px-3 py-2">-</td>}
+                          {visibleColumns.invitedBy && <td className="px-3 py-2">-</td>}
+                          {visibleColumns.inviteSent && <td className="px-3 py-2">-</td>}
+                          <td className="px-3 py-2"></td>
+                        </tr>
+                        {showUngroupedExpanded && ungroupedGuests.map((guest) => (
+                          <tr
+                            key={guest.id}
+                            className={`border-b border-amber-200 bg-amber-50/30 hover:bg-amber-100/30 transition-colors ${
+                              selectedGuestIds.has(guest.id) ? "bg-primary/5" : ""
+                            }`}
+                          >
+                            <td className="px-2 py-2 text-center">
+                              <button
+                                onClick={() => toggleGuestSelection(guest.id)}
+                                className={`w-4 h-4 border rounded flex items-center justify-center ${
+                                  selectedGuestIds.has(guest.id) ? 'bg-primary border-primary' : 'border-border'
+                                }`}
+                              >
+                                {selectedGuestIds.has(guest.id) && <Check className="w-3 h-3 text-primary-foreground" />}
+                              </button>
                             </td>
-                          )}
-                          {visibleColumns.status && (
-                            <td className="px-3 py-3">
+                            <td className="px-2 py-2"></td>
+                            <td className="px-3 py-2 pl-4">
+                              <span className="text-foreground">{guest.name}</span>
+                            </td>
+                            <td className="px-3 py-2 text-center text-muted-foreground text-xs">
+                              {guest.phone_number || "-"}
+                            </td>
+                            <td colSpan={3} className="px-3 py-2 text-center">
                               <select
                                 value={guest.confirmation_status}
                                 onChange={(e) => handleUpdateGuestStatus(guest, e.target.value as 'pending' | 'confirmed' | 'declined')}
-                                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium cursor-pointer border-0 ${getStatusBadgeClass(guest.confirmation_status)}`}
+                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium cursor-pointer border-0 ${getStatusBadgeClass(guest.confirmation_status)}`}
                               >
                                 <option value="pending">Pending</option>
                                 <option value="confirmed">Confirmed</option>
                                 <option value="declined">Declined</option>
                               </select>
                             </td>
-                          )}
-                          {visibleColumns.dietary && (
-                            <td className="px-3 py-3 text-muted-foreground text-sm">
-                              {guest.dietary_restrictions || "-"}
-                            </td>
-                          )}
-                          {visibleColumns.invitedBy && (
-                            <td className="px-3 py-3">
-                              {guest.invited_by && guest.invited_by.length > 0 ? (
+                            {visibleColumns.tags && (
+                              <td className="px-3 py-2">
                                 <div className="flex gap-1 flex-wrap">
-                                  {guest.invited_by.map(name => (
+                                  {guest.tags?.map(tag => (
                                     <span
-                                      key={name}
-                                      className="px-1.5 py-0.5 text-[10px] rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200"
+                                      key={tag}
+                                      className={`px-1.5 py-0.5 text-[10px] rounded-full border ${getTagColor(tag)}`}
                                     >
-                                      {name}
+                                      {tag}
                                     </span>
                                   ))}
+                                  {(!guest.tags || guest.tags.length === 0) && "-"}
                                 </div>
-                              ) : (
-                                <span className="text-muted-foreground text-sm">-</span>
-                              )}
-                            </td>
-                          )}
-                          {visibleColumns.inviteSent && (
-                            <td className="px-3 py-3 text-center">
-                              {guest.invitation_sent ? (
-                                <span className="inline-flex items-center gap-1 text-[10px] text-green-600">
-                                  <MailCheck className="w-3.5 h-3.5" />
-                                  Sent
-                                </span>
-                              ) : (
+                              </td>
+                            )}
+                            {visibleColumns.invitedBy && (
+                              <td className="px-3 py-2">
+                                {guest.invited_by && guest.invited_by.length > 0 ? (
+                                  <div className="flex gap-1 flex-wrap">
+                                    {guest.invited_by.map(name => (
+                                      <span
+                                        key={name}
+                                        className="px-1.5 py-0.5 text-[10px] rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200"
+                                      >
+                                        {name}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground">-</span>
+                                )}
+                              </td>
+                            )}
+                            {visibleColumns.inviteSent && (
+                              <td className="px-3 py-2 text-center">
+                                {guest.invitation_sent ? (
+                                  <span className="inline-flex items-center gap-1 text-[10px] text-green-600">
+                                    <MailCheck className="w-3.5 h-3.5" />
+                                  </span>
+                                ) : (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 px-2 text-[10px]"
+                                    onClick={() => handleSendGuestInvite(guest)}
+                                  >
+                                    <Send className="w-3 h-3" />
+                                  </Button>
+                                )}
+                              </td>
+                            )}
+                            <td className="px-3 py-2 text-right">
+                              <div className="flex justify-end gap-0.5">
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-6 px-2 text-[10px]"
-                                  onClick={() => handleSendGuestInvite(guest)}
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => openEditGuest(guest)}
                                 >
-                                  <Send className="w-3 h-3 mr-1" />
-                                  Send
+                                  <Edit2 className="w-3 h-3" />
                                 </Button>
-                              )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => handleDeleteGuest(guest.id)}
+                                >
+                                  <Trash2 className="w-3 h-3 text-destructive" />
+                                </Button>
+                              </div>
                             </td>
-                          )}
-                          <td className="px-3 py-3 text-right">
-                            <div className="flex justify-end gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openEditGuest(guest)}
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteGuest(guest.id)}
-                              >
-                                <Trash2 className="w-4 h-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </Card>
-          )}
-          </>
-          )}
-        </div>
+                          </tr>
+                        ))}
+                      </>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
         )}
       </div>
 
@@ -2446,8 +2830,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       {/* Add/Edit Guest Modal */}
       {(showAddGuestModal || editingGuest) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-6">
+          <Card className="w-full max-w-md max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 pb-4 border-b">
               <h2 className="text-xl font-semibold text-foreground">
                 {editingGuest ? "Edit Guest" : "Add Guest"}
               </h2>
@@ -2465,7 +2849,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               </Button>
             </div>
 
-            <div className="space-y-4">
+            <div className="flex-1 overflow-y-auto p-6 pt-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Guest Name *
@@ -2491,20 +2875,58 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Group
+                  Group *
                 </label>
-                <select
-                  value={selectedGroupId || ""}
-                  onChange={(e) => setSelectedGroupId(e.target.value || null)}
-                  className="w-full h-9 rounded-lg border border-border bg-background px-3 py-1.5 text-sm"
-                >
-                  <option value="">No group</option>
-                  {guestGroups.map((group) => (
-                    <option key={group.id} value={group.id}>
-                      {group.name}
-                    </option>
-                  ))}
-                </select>
+                {!isCreatingNewGroup ? (
+                  <div className="space-y-2">
+                    <select
+                      value={selectedGroupId || ""}
+                      onChange={(e) => setSelectedGroupId(e.target.value || null)}
+                      className="w-full h-9 rounded-lg border border-border bg-background px-3 py-1.5 text-sm"
+                    >
+                      <option value="">Select a group...</option>
+                      {guestGroups.map((group) => (
+                        <option key={group.id} value={group.id}>
+                          {group.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCreatingNewGroup(true)
+                        setSelectedGroupId(null)
+                      }}
+                      className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      Create new group
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Input
+                      value={newGroupNameForGuest}
+                      onChange={(e) => setNewGroupNameForGuest(e.target.value)}
+                      placeholder="Enter new group name"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCreatingNewGroup(false)
+                        setNewGroupNameForGuest("")
+                      }}
+                      className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                    >
+                      <X className="w-3 h-3" />
+                      Select existing group instead
+                    </button>
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground mt-2">
+                  All guests must belong to a group. If no group is selected, one will be created automatically.
+                </p>
               </div>
 
               <div>
@@ -2594,27 +3016,28 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => {
-                    setShowAddGuestModal(false)
-                    setEditingGuest(null)
-                    setSelectedGroupId(null)
-                    resetGuestForm()
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="flex-1"
-                  onClick={editingGuest ? handleUpdateGuest : handleAddGuest}
-                  disabled={!guestForm.name}
-                >
-                  {editingGuest ? "Update" : "Add"} Guest
-                </Button>
-              </div>
+            </div>
+
+            <div className="flex gap-2 p-6 pt-4 border-t">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setShowAddGuestModal(false)
+                  setEditingGuest(null)
+                  setSelectedGroupId(null)
+                  resetGuestForm()
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={editingGuest ? handleUpdateGuest : handleAddGuest}
+                disabled={!guestForm.name}
+              >
+                {editingGuest ? "Update" : "Add"} Guest
+              </Button>
             </div>
           </Card>
         </div>
@@ -2814,9 +3237,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                 <div className="flex items-center gap-3">
                   <FileSpreadsheet className="w-6 h-6 text-primary" />
                   <div>
-                    <h2 className="text-xl font-semibold">Import Guests from CSV</h2>
+                    <h2 className="text-xl font-semibold">Import from CSV</h2>
                     <p className="text-sm text-muted-foreground">
-                      Map your CSV columns to guest fields. {csvData.length} rows found.
+                      {csvData.length} rows found. Map columns and import.
                     </p>
                   </div>
                 </div>
@@ -2827,6 +3250,53 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             </div>
             
             <div className="flex-1 overflow-y-auto p-6">
+              {/* Import Mode Selector */}
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-foreground mb-3">Import Mode</h3>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCsvImportMode('guests')
+                      setColumnMapping({})
+                    }}
+                    className={`flex-1 p-4 rounded-lg border-2 transition-colors text-left ${
+                      csvImportMode === 'guests'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <UserPlus className="w-4 h-4" />
+                      <span className="font-medium">Import Guests</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Import individual guests with names. Groups will be auto-created.
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCsvImportMode('groups')
+                      setColumnMapping({})
+                    }}
+                    className={`flex-1 p-4 rounded-lg border-2 transition-colors text-left ${
+                      csvImportMode === 'groups'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Users className="w-4 h-4" />
+                      <span className="font-medium">Import Groups</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Import groups with guest count. Guests named &quot;Guest 1&quot;, &quot;Guest 2&quot;, etc.
+                    </p>
+                  </button>
+                </div>
+              </div>
+
               {/* Error message */}
               {csvImportError && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
@@ -2839,7 +3309,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               <div className="mb-6">
                 <h3 className="text-sm font-medium text-foreground mb-3">Column Mapping</h3>
                 <p className="text-xs text-muted-foreground mb-4">
-                  Map each CSV column to a guest field. Name is required. Leave unmapped for columns you don&apos;t need.
+                  {csvImportMode === 'groups' 
+                    ? 'Map columns. Group Name and Number of Guests are required.'
+                    : 'Map columns. Guest Name and Group Name are required.'
+                  }
                 </p>
                 
                 <div className="border rounded-lg overflow-hidden">
@@ -2866,7 +3339,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                               value={columnMapping[index.toString()] || ''}
                               onChange={(e) => updateColumnMapping(index.toString(), e.target.value)}
                               className={`w-full px-3 py-2 text-sm border rounded-md bg-background ${
-                                columnMapping[index.toString()] === 'name' 
+                                columnMapping[index.toString()] === 'name' || columnMapping[index.toString()] === 'groupName' || columnMapping[index.toString()] === 'guestCount'
                                   ? 'border-green-300 bg-green-50/50' 
                                   : columnMapping[index.toString()] 
                                     ? 'border-primary/30 bg-primary/5' 
@@ -2897,13 +3370,35 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                 </div>
 
                 {/* Required field indicator */}
-                <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                   <span className="text-red-500">*</span>
                   <span>Required field</span>
-                  {!Object.values(columnMapping).includes('name') && (
-                    <span className="ml-4 text-amber-600 font-medium">
-                      ⚠️ Name field must be mapped
-                    </span>
+                  {csvImportMode === 'groups' ? (
+                    <>
+                      {!Object.values(columnMapping).includes('groupName') && (
+                        <span className="ml-4 text-amber-600 font-medium">
+                          ⚠️ Group Name must be mapped
+                        </span>
+                      )}
+                      {!Object.values(columnMapping).includes('guestCount') && (
+                        <span className="ml-4 text-amber-600 font-medium">
+                          ⚠️ Number of Guests must be mapped
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {!Object.values(columnMapping).includes('name') && (
+                        <span className="ml-4 text-amber-600 font-medium">
+                          ⚠️ Guest Name must be mapped
+                        </span>
+                      )}
+                      {!Object.values(columnMapping).includes('groupName') && (
+                        <span className="ml-4 text-amber-600 font-medium">
+                          ⚠️ Group Name must be mapped
+                        </span>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -2954,7 +3449,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             <div className="p-6 border-t bg-muted/20">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  {csvData.length} guests will be imported as ungrouped guests
+                  {csvImportMode === 'groups' 
+                    ? `${csvData.length} groups will be created with auto-generated guests`
+                    : `${csvData.length} guests will be imported into groups`
+                  }
                 </p>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={resetCsvImport}>
@@ -2962,7 +3460,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                   </Button>
                   <Button 
                     onClick={handleCsvImport}
-                    disabled={csvImporting || !Object.values(columnMapping).includes('name')}
+                    disabled={csvImporting || (csvImportMode === 'groups' 
+                      ? !Object.values(columnMapping).includes('groupName') || !Object.values(columnMapping).includes('guestCount')
+                      : !Object.values(columnMapping).includes('name') || !Object.values(columnMapping).includes('groupName')
+                    )}
                   >
                     {csvImporting ? (
                       <>
@@ -2972,7 +3473,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                     ) : (
                       <>
                         <Upload className="w-4 h-4 mr-2" />
-                        Import {csvData.length} Guests
+                        {csvImportMode === 'groups' 
+                          ? `Import ${csvData.length} Groups`
+                          : `Import ${csvData.length} Guests`
+                        }
                       </>
                     )}
                   </Button>

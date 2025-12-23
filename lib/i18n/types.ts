@@ -110,6 +110,29 @@ export interface Translations {
     ceremonyDescriptionDefault: string
     receptionDescriptionDefault: string
     followingCeremony: string
+    eventTypes: {
+      civilCeremony: string
+      religiousCeremony: string
+      cocktail: string
+      reception: string
+      afterParty: string
+      custom: string
+    }
+    addEvent: string
+    removeEvent: string
+    customEventName: string
+    useWeddingDate: string
+    eventDate: string
+    eventOrder: string
+    eventTypeDescription: string
+    titleDescription: string
+    eventNamePlaceholder: string
+    timeDescription: string
+    venueDescription: string
+    venuePlaceholder: string
+    addressDescription: string
+    addressPlaceholder: string
+    descriptionDescription: string
   }
 
   // RSVP Section
@@ -187,6 +210,48 @@ export interface Translations {
     answer: string
     addQuestion: string
     editQuestion: string
+  }
+
+  // Registry Section
+  registry: {
+    title: string
+    subtitle: string
+    message: string
+    noRegistriesYet: string
+    registriesWillAppear: string
+    viewRegistry: string
+    visitRegistry: string
+    visit: string
+    ourWishlist: string
+    fulfilled: string
+    addRegistry: string
+    removeRegistry: string
+    registryName: string
+    registryUrl: string
+    selectProvider: string
+    customRegistry: string
+    manageWishlist: string
+    addItem: string
+    itemName: string
+    itemDescription: string
+    itemPrice: string
+    itemImage: string
+    quantity: string
+    showCustomRegistry: string
+    customTitle: string
+    customDescription: string
+    providers: {
+      amazon: string
+      liverpool: string
+      palacio: string
+      target: string
+      crateBarrel: string
+      williamsSonoma: string
+      zola: string
+      honeyfund: string
+      bedBath: string
+      custom: string
+    }
   }
 
   // Schedule Section
@@ -456,6 +521,9 @@ export interface Translations {
     firstName: string
     lastName: string
     weddingDate: string
+    weddingUrl: string
+    weddingNameId: string
+    weddingNameIdHint: string
     date: string
     time: string
     venueName: string

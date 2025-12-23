@@ -102,6 +102,7 @@ export function EventDetailsSection({
     receptionDescription: '',
     sectionTitle,
     sectionSubtitle,
+    events: [],
     customEvents,
     useColorBackground: false,
     backgroundColorChoice: 'none',
@@ -126,7 +127,8 @@ export function EventDetailsSection({
     receptionDescription: config.receptionDescription !== undefined ? config.receptionDescription : undefined,
     sectionTitle: config.sectionTitle || sectionTitle,
     sectionSubtitle: config.sectionSubtitle || sectionSubtitle,
-    customEvents: config.customEvents || customEvents,
+    events: config.events, // New primary events array
+    customEvents: config.customEvents || customEvents, // Legacy support
     useColorBackground: config.useColorBackground ?? false,
     backgroundColorChoice: config.backgroundColorChoice || 'none',
     ceremonyTextAlignment: config.ceremonyTextAlignment || 'center',
@@ -162,7 +164,8 @@ export function EventDetailsSection({
       receptionDescription: config.receptionDescription || '',
       sectionTitle: config.sectionTitle || sectionTitle || '',
       sectionSubtitle: config.sectionSubtitle || sectionSubtitle || '',
-      customEvents: config.customEvents || customEvents,
+      events: config.events, // New primary events array
+      customEvents: config.customEvents || customEvents, // Legacy support
       useColorBackground: config.useColorBackground ?? false,
       backgroundColorChoice: config.backgroundColorChoice || 'none',
       ceremonyTextAlignment: config.ceremonyTextAlignment || 'center',

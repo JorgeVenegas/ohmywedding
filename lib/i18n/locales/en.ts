@@ -92,9 +92,9 @@ export const en: Translations = {
 
   // Event Details Section
   eventDetails: {
-    title: 'Wedding Details',
-    subtitle: 'Join us for our celebration of love',
-    joinUsForOurCelebration: 'Join Us for Our Celebration',
+    title: 'Event Details',
+    subtitle: 'Join us for our celebration',
+    joinUsForOurCelebration: 'Join us for our celebration',
     ceremony: 'Ceremony',
     reception: 'Reception',
     date: 'Date',
@@ -105,9 +105,32 @@ export const en: Translations = {
     viewOnMap: 'View on Map',
     dressCode: 'Dress Code',
     additionalInfo: 'Additional Information',
-    ceremonyDescriptionDefault: 'Join us as we exchange vows',
-    receptionDescriptionDefault: 'Dinner, dancing, and celebration',
-    followingCeremony: 'Following ceremony'
+    ceremonyDescriptionDefault: 'Join us as we exchange our vows',
+    receptionDescriptionDefault: 'Dinner and dancing to follow',
+    followingCeremony: 'Following the ceremony',
+    eventTypes: {
+      civilCeremony: 'Civil Ceremony',
+      religiousCeremony: 'Religious Ceremony',
+      cocktail: 'Cocktail Hour',
+      reception: 'Reception',
+      afterParty: 'After Party',
+      custom: 'Custom Event'
+    },
+    addEvent: 'Add Event',
+    removeEvent: 'Remove Event',
+    customEventName: 'Event Name',
+    useWeddingDate: 'Use wedding date',
+    eventDate: 'Event Date',
+    eventOrder: 'Display Order',
+    eventTypeDescription: 'Select the type of event (ceremony, reception, cocktail, etc.)',
+    titleDescription: 'The main title/name that will appear for this event',
+    eventNamePlaceholder: 'e.g., Wedding Ceremony, Cocktail Hour, Reception',
+    timeDescription: 'What time does this event start?',
+    venueDescription: 'The name of the location where the event takes place',
+    venuePlaceholder: 'e.g., St. Mary\'s Church, The Grand Ballroom',
+    addressDescription: 'Full address with street, city, and zip code',
+    addressPlaceholder: 'e.g., 123 Main Street, New York, NY 10001',
+    descriptionDescription: 'Additional details or instructions for guests (optional)'
   },
 
   // RSVP Section
@@ -185,6 +208,48 @@ export const en: Translations = {
     answer: 'Answer',
     addQuestion: 'Add Question',
     editQuestion: 'Edit Question'
+  },
+
+  // Registry Section
+  registry: {
+    title: 'Gift Registry',
+    subtitle: 'Your presence is the greatest gift',
+    message: 'Your presence is the greatest gift, but if you wish to honor us with a gift, we have registered at:',
+    noRegistriesYet: 'No registries yet',
+    registriesWillAppear: 'Registry links will appear here once added',
+    viewRegistry: 'View Registry',
+    visitRegistry: 'Visit Registry',
+    visit: 'Visit',
+    ourWishlist: 'Our Wishlist',
+    fulfilled: 'Fulfilled',
+    addRegistry: 'Add Registry',
+    removeRegistry: 'Remove Registry',
+    registryName: 'Registry Name',
+    registryUrl: 'Registry URL',
+    selectProvider: 'Select Provider',
+    customRegistry: 'Custom Registry',
+    manageWishlist: 'Manage Wishlist',
+    addItem: 'Add Item',
+    itemName: 'Item Name',
+    itemDescription: 'Description',
+    itemPrice: 'Price',
+    itemImage: 'Image',
+    quantity: 'Quantity',
+    showCustomRegistry: 'Show Custom Wishlist',
+    customTitle: 'Our Custom Registry',
+    customDescription: 'Support our special experiences and dreams',
+    providers: {
+      amazon: 'Wide selection of gifts from the world\'s largest marketplace',
+      liverpool: 'Premium department store registry in Mexico',
+      palacio: 'Luxury department store registry',
+      target: 'Affordable home essentials and more',
+      crateBarrel: 'Modern furniture and housewares',
+      williamsSonoma: 'Premium kitchen and home goods',
+      zola: 'All-in-one wedding registry platform',
+      honeyfund: 'Honeymoon and experience registry',
+      bedBath: 'Home essentials and decor',
+      custom: 'Custom registry provider'
+    }
   },
 
   // Schedule Section
@@ -454,6 +519,9 @@ export const en: Translations = {
     firstName: 'First name',
     lastName: 'Last name',
     weddingDate: 'Wedding Date',
+    weddingUrl: 'Wedding URL',
+    weddingNameId: 'Wedding Name ID',
+    weddingNameIdHint: 'This will be used in your wedding URL. Example: jorge&yuli',
     date: 'Date',
     time: 'Time',
     venueName: 'Venue Name',

@@ -1,7 +1,8 @@
 -- Images table - Store all user-uploaded images
 create table "images" (
   "id" uuid primary key default gen_random_uuid(),
-  "wedding_name_id" text not null,
+  "wedding_id" uuid not null references weddings(id) on delete cascade,
+  "wedding_name_id" text,
   "url" text not null,
   "storage_path" text not null,
   "filename" text not null,
@@ -11,12 +12,11 @@ create table "images" (
   "alt_text" text,
   "uploaded_by" uuid references auth.users(id) on delete set null,
   "created_at" timestamp with time zone default now(),
-  "updated_at" timestamp with time zone default now(),
-  foreign key ("wedding_name_id") references weddings("wedding_name_id") on delete cascade
+  "updated_at" timestamp with time zone default now()
 );
 
 -- Add index for faster queries by wedding
-create index "idx_images_wedding" on "images"("wedding_name_id");
+create index "idx_images_wedding" on "images"("wedding_id");
 
 -- Add index for uploaded_by for user's image management
 create index "idx_images_uploaded_by" on "images"("uploaded_by");

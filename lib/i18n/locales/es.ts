@@ -107,7 +107,30 @@ export const es: Translations = {
     additionalInfo: 'Información Adicional',
     ceremonyDescriptionDefault: 'Acompáñanos mientras intercambiamos votos',
     receptionDescriptionDefault: 'Cena, baile y celebración',
-    followingCeremony: 'Después de la ceremonia'
+    followingCeremony: 'Después de la ceremonia',
+    eventTypes: {
+      civilCeremony: 'Ceremonia Civil',
+      religiousCeremony: 'Ceremonia Religiosa',
+      cocktail: 'Cóctel',
+      reception: 'Recepción',
+      afterParty: 'Fiesta de Después',
+      custom: 'Evento Personalizado'
+    },
+    addEvent: 'Agregar Evento',
+    removeEvent: 'Eliminar Evento',
+    customEventName: 'Nombre del Evento',
+    useWeddingDate: 'Usar fecha de la boda',
+    eventDate: 'Fecha del Evento',
+    eventOrder: 'Orden de Visualización',
+    eventTypeDescription: 'Selecciona el tipo de evento (ceremonia, recepción, cóctel, etc.)',
+    titleDescription: 'El título/nombre principal que aparecerá para este evento',
+    eventNamePlaceholder: 'ej., Ceremonia Nupcial, Cóctel, Recepción',
+    timeDescription: '¿A qué hora comienza este evento?',
+    venueDescription: 'El nombre del lugar donde se llevará a cabo el evento',
+    venuePlaceholder: 'ej., Iglesia Santa María, El Gran Salón',
+    addressDescription: 'Dirección completa con calle, ciudad y código postal',
+    addressPlaceholder: 'ej., Calle Principal 123, Ciudad de México, CDMX 01000',
+    descriptionDescription: 'Detalles adicionales o instrucciones para los invitados (opcional)'
   },
 
   // RSVP Section
@@ -185,6 +208,48 @@ export const es: Translations = {
     answer: 'Respuesta',
     addQuestion: 'Agregar Pregunta',
     editQuestion: 'Editar Pregunta'
+  },
+
+  // Registry Section
+  registry: {
+    title: 'Mesa de Regalos',
+    subtitle: 'Tu presencia es el mejor regalo',
+    message: 'Tu presencia es el mejor regalo, pero si deseas honrarnos con un obsequio, estamos registrados en:',
+    noRegistriesYet: 'Aún no hay registros',
+    registriesWillAppear: 'Los enlaces de registro aparecerán aquí una vez agregados',
+    viewRegistry: 'Ver Registro',
+    visitRegistry: 'Visitar Registro',
+    visit: 'Visitar',
+    ourWishlist: 'Nuestra Lista de Deseos',
+    fulfilled: 'Completado',
+    addRegistry: 'Agregar Registro',
+    removeRegistry: 'Eliminar Registro',
+    registryName: 'Nombre del Registro',
+    registryUrl: 'URL del Registro',
+    selectProvider: 'Seleccionar Proveedor',
+    customRegistry: 'Registro Personalizado',
+    manageWishlist: 'Administrar Lista',
+    addItem: 'Agregar Artículo',
+    itemName: 'Nombre del Artículo',
+    itemDescription: 'Descripción',
+    itemPrice: 'Precio',
+    itemImage: 'Imagen',
+    quantity: 'Cantidad',
+    showCustomRegistry: 'Mostrar Lista de Deseos',
+    customTitle: 'Nuestra Lista Personalizada',
+    customDescription: 'Apoya nuestras experiencias especiales y sueños',
+    providers: {
+      amazon: 'Amplia selección de regalos del mercado más grande del mundo',
+      liverpool: 'Registro de tienda departamental premium en México',
+      palacio: 'Registro de tienda departamental de lujo',
+      target: 'Artículos esenciales para el hogar a precios accesibles',
+      crateBarrel: 'Muebles y artículos para el hogar modernos',
+      williamsSonoma: 'Artículos premium para cocina y hogar',
+      zola: 'Plataforma todo-en-uno de registro de bodas',
+      honeyfund: 'Registro para luna de miel y experiencias',
+      bedBath: 'Artículos esenciales y decoración para el hogar',
+      custom: 'Proveedor de registro personalizado'
+    }
   },
 
   // Schedule Section
@@ -454,6 +519,9 @@ export const es: Translations = {
     firstName: 'Nombre',
     lastName: 'Apellido',
     weddingDate: 'Fecha de la Boda',
+    weddingUrl: 'URL de la Boda',
+    weddingNameId: 'Identificador de la Boda',
+    weddingNameIdHint: 'Esto se usará en la URL de tu boda. Ejemplo: jorge&yuli',
     date: 'Fecha',
     time: 'Hora',
     venueName: 'Nombre del Lugar',

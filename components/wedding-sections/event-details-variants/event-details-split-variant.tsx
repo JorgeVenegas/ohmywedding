@@ -3,31 +3,25 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
 import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar, Navigation, Heart } from 'lucide-react'
-import { BaseEventDetailsProps, EventItem, buildEventsList, getMapUrl, getColorScheme } from './types'
+import { BaseEventDetailsProps, buildEventList, getMapUrl, getColorScheme, getEventIconType, formatWeddingTime } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 
-export function EventDetailsSplitVariant({
-  wedding,
-  weddingNameId,
-  theme,
-  alignment,
-  showCeremony = true,
-  showReception = true,
-  showMapLinks = true,
-  showMap = true,
-  showPhotos = false,
-  ceremonyImageUrl,
-  receptionImageUrl,
-  ceremonyDescription,
-  receptionDescription,
-  sectionTitle,
-  sectionSubtitle,
-  customEvents = [],
-  useColorBackground = false,
-  backgroundColorChoice,
-  ceremonyTextAlignment = 'center',
-  receptionTextAlignment = 'center'
-}: BaseEventDetailsProps) {
+export function EventDetailsSplitVariant(props: BaseEventDetailsProps) {
+  const {
+    wedding,
+    theme,
+    alignment,
+    showMapLinks = true,
+    showMap = true,
+    showPhotos = false,
+    sectionTitle,
+    sectionSubtitle,
+    useColorBackground = false,
+    backgroundColorChoice,
+    ceremonyTextAlignment = 'center',
+    receptionTextAlignment = 'center'
+  } = props
+  
   const { t } = useI18n()
   
   // Use translated defaults if not provided
@@ -36,10 +30,11 @@ export function EventDetailsSplitVariant({
   const subtitle = sectionSubtitle || t('eventDetails.joinUsForOurCelebration')
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
   
-  const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription, t)
+  const events = buildEventList(props)
 
   // Helper to get text alignment for an event
-  const getEventAlignment = (iconType: EventItem['iconType']): 'left' | 'center' | 'right' => {
+  const getEventAlignment = (type: string): 'left' | 'center' | 'right' => {
+    const iconType = getEventIconType(type as any)
     if (iconType === 'ceremony') return ceremonyTextAlignment
     if (iconType === 'reception') return receptionTextAlignment
     return 'center' // default for custom events
@@ -70,7 +65,8 @@ export function EventDetailsSplitVariant({
     }
   }
 
-  const renderEventIcon = (iconType: EventItem['iconType'], large: boolean = false) => {
+  const renderEventIcon = (type: string, large: boolean = false) => {
+    const iconType = getEventIconType(type as any)
     const color = isColored ? titleColor : theme?.colors?.primary
     const iconProps = { className: large ? "w-10 h-10" : "w-5 h-5", style: { color } }
     switch (iconType) {
@@ -93,6 +89,10 @@ export function EventDetailsSplitVariant({
   // Get the first event with an address for the map
   const mapEvent = events.find(e => e.address)
   const mapAddress = mapEvent?.address
+
+  if (events.length === 0) {
+    return null
+  }
 
   return (
     <section 
@@ -142,14 +142,18 @@ export function EventDetailsSplitVariant({
           // Side-by-side text layout when no photos
           return (
             <div className="max-w-6xl mx-auto px-4 sm:px-8 pb-8 sm:pb-10">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
+              <div className={`grid gap-6 sm:gap-8 lg:gap-12 ${
+                events.length === 1 
+                  ? 'grid-cols-1 max-w-2xl mx-auto' 
+                  : 'grid-cols-1 md:grid-cols-2'
+              }`}>
                 {events.map((event, index) => {
-                  const eventAlignment = getEventAlignment(event.iconType)
+                  const eventAlignment = getEventAlignment(event.type)
                   const alignClasses = getAlignmentClasses(eventAlignment)
                   
                   return (
                   <div 
-                    key={index}
+                    key={event.id}
                     className={alignClasses.text}
                   >
                     {/* Event Icon */}
@@ -161,7 +165,7 @@ export function EventDetailsSplitVariant({
                           backgroundColor: isColored ? `${titleColor}08` : `${theme?.colors?.primary}05`
                         }}
                       >
-                        {renderEventIcon(event.iconType)}
+                        {renderEventIcon(event.type, false)}
                       </div>
                     </div>
 
@@ -174,37 +178,44 @@ export function EventDetailsSplitVariant({
                         fontWeight: 400
                       }}
                     >
-                      {event.title}
+                      {event.title || t(`eventDetails.eventTypes.${event.type}`) || event.venue}
                     </h3>
 
                     {/* Time */}
-                    <div className={`flex ${alignClasses.flex} gap-3 mb-2 sm:mb-3`}>
-                      <Clock className="w-4 h-4" style={{ color: accentLineColor }} />
-                      <span 
-                        className="text-lg font-medium"
-                        style={{ color: cardTextColor }}
-                      >
-                        {event.time}
-                      </span>
-                    </div>
-
-                    {/* Venue */}
-                    <div className="mb-2 sm:mb-3">
-                      <p 
-                        className="text-lg font-medium mb-1"
-                        style={{ color: cardTextColor }}
-                      >
-                        {event.venue}
-                      </p>
-                      {event.address && (
-                        <p 
-                          className="text-sm font-light"
-                          style={{ color: cardMutedColor }}
+                    {event.time && (
+                      <div className={`flex ${alignClasses.flex} gap-3 mb-2 sm:mb-3`}>
+                        <Clock className="w-4 h-4" style={{ color: accentLineColor }} />
+                        <span 
+                          className="text-lg font-medium"
+                          style={{ color: cardTextColor }}
                         >
-                          {event.address}
+                          {formatWeddingTime(event.time)}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Venue - Show if different from title */}
+                    {event.venue && event.venue !== event.title && (
+                      <div className={`flex ${alignClasses.flex} gap-3 mb-2 sm:mb-3`}>
+                        <MapPin className="w-4 h-4" style={{ color: accentLineColor }} />
+                        <p 
+                          className="text-lg font-medium"
+                          style={{ color: cardTextColor }}
+                        >
+                          {event.venue}
                         </p>
-                      )}
-                    </div>
+                      </div>
+                    )}
+
+                    {/* Address */}
+                    {event.address && (
+                      <p 
+                        className="text-sm mb-3 font-light"
+                        style={{ color: cardMutedColor }}
+                      >
+                        {event.address}
+                      </p>
+                    )}
 
                     {/* Description */}
                     {event.description && (
@@ -244,12 +255,12 @@ export function EventDetailsSplitVariant({
         // Original full-width side-by-side layout with photos
         return events.map((event, index) => {
           const isImageRight = index % 2 === 1
-          const eventAlignment = getEventAlignment(event.iconType)
+          const eventAlignment = getEventAlignment(event.type)
           const alignClasses = getAlignmentClasses(eventAlignment)
 
           return (
             <div 
-              key={index}
+              key={event.id}
               className="w-full"
               style={{ 
                 backgroundColor: isColored ? bgColor : (index % 2 === 0 ? '#ffffff' : (theme?.colors?.muted ? `${theme.colors.muted}08` : '#fafafa'))
@@ -260,7 +271,7 @@ export function EventDetailsSplitVariant({
                 <div className="w-full lg:w-1/2 min-h-[350px] lg:min-h-[550px] relative overflow-hidden">
                   <img 
                     src={event.imageUrl} 
-                    alt={`${event.title} venue`}
+                    alt={`${event.venue} venue`}
                     className="w-full h-full object-cover absolute inset-0 transition-transform duration-700 hover:scale-105"
                   />
                   {/* Subtle gradient overlay for elegance */}
@@ -286,7 +297,7 @@ export function EventDetailsSplitVariant({
                           backgroundColor: 'transparent'
                         }}
                       >
-                        {renderEventIcon(event.iconType)}
+                        {renderEventIcon(event.type, false)}
                       </div>
                     </div>
 
@@ -299,58 +310,66 @@ export function EventDetailsSplitVariant({
                         fontWeight: 400
                       }}
                     >
-                      {event.title}
+                      {event.title || t(`eventDetails.eventTypes.${event.type}`) || event.venue}
                     </h3>
 
                     {/* Time */}
-                    <div className={`flex ${alignClasses.flex} gap-4 mb-3 sm:mb-4 pb-3 sm:pb-4 border-b`} style={{ borderColor: `${accentLineColor}20` }}>
-                      <div 
-                        className="w-9 h-9 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: isColored ? `${titleColor}08` : `${theme?.colors?.primary}05` }}
-                      >
-                        <Clock className="w-4 h-4" style={{ color: accentLineColor }} />
-                      </div>
-                      <div className={alignClasses.text}>
-                        <p className="text-xs uppercase tracking-widest mb-1 font-light" style={{ color: cardMutedColor }}>
-                          {t('eventDetails.time')}
-                        </p>
-                        <span 
-                          className="text-lg font-medium"
-                          style={{ color: cardTextColor }}
+                    {event.time && (
+                      <div className={`flex ${alignClasses.flex} gap-4 mb-3 sm:mb-4 pb-3 sm:pb-4 border-b`} style={{ borderColor: `${accentLineColor}20` }}>
+                        <div 
+                          className="w-9 h-9 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: isColored ? `${titleColor}08` : `${theme?.colors?.primary}05` }}
                         >
-                          {event.time}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Venue Info */}
-                    <div className={`flex ${alignClasses.flex} gap-4 mb-3 sm:mb-4 pb-3 sm:pb-4 border-b`} style={{ borderColor: `${accentLineColor}20` }}>
-                      <div 
-                        className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-1"
-                        style={{ backgroundColor: isColored ? `${titleColor}08` : `${theme?.colors?.primary}05` }}
-                      >
-                        <MapPin className="w-4 h-4" style={{ color: accentLineColor }} />
-                      </div>
-                      <div className={alignClasses.text}>
-                        <p className="text-xs uppercase tracking-widest mb-1 font-light" style={{ color: cardMutedColor }}>
-                          {t('schedule.location')}
-                        </p>
-                        <p 
-                          className="text-lg font-medium mb-1"
-                          style={{ color: cardTextColor }}
-                        >
-                          {event.venue}
-                        </p>
-                        {event.address && (
-                          <p 
-                            className="text-sm font-light"
-                            style={{ color: cardMutedColor }}
-                          >
-                            {event.address}
+                          <Clock className="w-4 h-4" style={{ color: accentLineColor }} />
+                        </div>
+                        <div className={alignClasses.text}>
+                          <p className="text-xs uppercase tracking-widest mb-1 font-light" style={{ color: cardMutedColor }}>
+                            {t('eventDetails.time')}
                           </p>
-                        )}
+                          <span 
+                            className="text-lg font-medium"
+                            style={{ color: cardTextColor }}
+                          >
+                            {formatWeddingTime(event.time)}
+                          </span>
+                        </div>
                       </div>
-                    </div>
+                    )}
+
+                    {/* Venue Info - Show if different from title */}
+                    {event.venue && event.venue !== event.title && (
+                      <div className={`flex ${alignClasses.flex} gap-4 mb-3 sm:mb-4 pb-3 sm:pb-4 border-b`} style={{ borderColor: `${accentLineColor}20` }}>
+                        <div 
+                          className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-1"
+                          style={{ backgroundColor: isColored ? `${titleColor}08` : `${theme?.colors?.primary}05` }}
+                        >
+                          <MapPin className="w-4 h-4" style={{ color: accentLineColor }} />
+                        </div>
+                        <div className={alignClasses.text}>
+                          <p className="text-xs uppercase tracking-widest mb-1 font-light" style={{ color: cardMutedColor }}>
+                            {t('schedule.location')}
+                          </p>
+                          <p 
+                            className="text-lg font-medium"
+                            style={{ color: cardTextColor }}
+                          >
+                            {event.venue}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Address */}
+                    {event.address && (
+                      <div className={alignClasses.text}>
+                        <p 
+                          className="text-sm font-light mb-3"
+                          style={{ color: cardMutedColor }}
+                        >
+                          {event.address}
+                        </p>
+                      </div>
+                    )}
 
                     {/* Description */}
                     {event.description && (

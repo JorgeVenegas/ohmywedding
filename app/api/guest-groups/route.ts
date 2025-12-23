@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     // Debug: Check the wedding ownership
     const { data: wedding, error: weddingError } = await supabase
       .from('weddings')
-      .select('owner_id, collaborator_emails')
+      .select('id, owner_id, collaborator_emails')
       .eq('wedding_name_id', weddingNameId)
       .single()
     
@@ -76,9 +76,13 @@ export async function POST(request: Request) {
       isUnowned: wedding?.owner_id === null
     })
 
+    if (!wedding) {
+      return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
+    }
+
     const { data, error } = await supabase.from("guest_groups").insert([
       {
-        wedding_name_id: weddingNameId,
+        wedding_id: wedding.id,
         name: body.name,
         phone_number: body.phoneNumber || null,
         tags: body.tags || [],

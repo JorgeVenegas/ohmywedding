@@ -49,7 +49,6 @@ function LoginForm() {
       setError(error.message)
       setIsLoading(false)
     }
-    // Note: on success, the user is redirected to Google, so no need to handle here
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

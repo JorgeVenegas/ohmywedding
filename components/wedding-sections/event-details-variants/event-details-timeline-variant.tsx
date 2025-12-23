@@ -5,29 +5,23 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
-import { BaseEventDetailsProps, EventItem, buildEventsList, getMapUrl, getColorScheme } from './types'
+import { BaseEventDetailsProps, buildEventList, getMapUrl, getColorScheme, getEventIconType, formatWeddingTime } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 
-export function EventDetailsTimelineVariant({
-  wedding,
-  weddingNameId,
-  theme,
-  alignment,
-  showCeremony = true,
-  showReception = true,
-  showMapLinks = true,
-  showMap = true,
-  showPhotos = false,
-  ceremonyImageUrl,
-  receptionImageUrl,
-  ceremonyDescription,
-  receptionDescription,
-  sectionTitle,
-  sectionSubtitle,
-  customEvents = [],
-  useColorBackground = false,
-  backgroundColorChoice
-}: BaseEventDetailsProps) {
+export function EventDetailsTimelineVariant(props: BaseEventDetailsProps) {
+  const {
+    wedding,
+    theme,
+    alignment,
+    showMapLinks = true,
+    showMap = true,
+    showPhotos = false,
+    sectionTitle,
+    sectionSubtitle,
+    useColorBackground = false,
+    backgroundColorChoice
+  } = props
+  
   const { t } = useI18n()
   
   // Use translated defaults if not provided
@@ -35,9 +29,10 @@ export function EventDetailsTimelineVariant({
   const subtitle = sectionSubtitle || t('eventDetails.subtitle')
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
   
-  const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription, t)
+  const events = buildEventList(props)
 
-  const renderEventIcon = (iconType: EventItem['iconType']) => {
+  const renderEventIcon = (type: string) => {
+    const iconType = getEventIconType(type as any)
     const iconProps = { className: "w-6 h-6", style: { color: 'white' } }
     switch (iconType) {
       case "ceremony":
@@ -59,6 +54,10 @@ export function EventDetailsTimelineVariant({
   // Get the first event with an address for the map
   const mapEvent = events.find(e => e.address)
   const mapAddress = mapEvent?.address
+
+  if (events.length === 0) {
+    return null
+  }
 
   return (
     <SectionWrapper 
@@ -99,7 +98,7 @@ export function EventDetailsTimelineVariant({
 
           {events.map((event, index) => (
             <div 
-              key={index}
+              key={event.id}
               className={`relative flex items-start gap-4 sm:gap-6 md:gap-8 mb-6 sm:mb-8 ${
                 index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
               }`}
@@ -109,7 +108,7 @@ export function EventDetailsTimelineVariant({
                 className="absolute left-8 md:left-1/2 w-12 h-12 rounded-full flex items-center justify-center -translate-x-1/2 z-10 shadow-lg"
                 style={{ backgroundColor: dotBgColor }}
               >
-                {renderEventIcon(event.iconType)}
+                {renderEventIcon(event.type)}
               </div>
 
               {/* Spacer for mobile */}
@@ -137,50 +136,52 @@ export function EventDetailsTimelineVariant({
 
                   <div className="p-6">
                     {/* Time badge */}
-                    <div 
-                      className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm mb-3"
-                      style={{ 
-                        backgroundColor: isColored ? `${titleColor}15` : `${theme?.colors?.primary}10`,
-                        color: cardTitleColor
-                      }}
-                    >
-                      <Clock className="w-3.5 h-3.5" />
-                      {event.time}
-                    </div>
+                    {event.time && (
+                      <div 
+                        className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm mb-3"
+                        style={{ 
+                          backgroundColor: isColored ? `${titleColor}15` : `${theme?.colors?.primary}10`,
+                          color: cardTitleColor
+                        }}
+                      >
+                        <Clock className="w-3.5 h-3.5" />
+                        {formatWeddingTime(event.time)}
+                      </div>
+                    )}
 
-                    {/* Event Title */}
+                    {/* Title */}
                     <h3 
-                      className="text-2xl font-bold mb-2"
+                      className="text-2xl font-bold mb-3"
                       style={{ 
                         color: cardTitleColor,
                         fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
                       }}
                     >
-                      {event.title}
+                      {event.title || t(`eventDetails.eventTypes.${event.type}`) || event.venue}
                     </h3>
 
-                    {/* Venue */}
-                    <p 
-                      className="font-medium mb-1"
-                      style={{ color: cardTextColor }}
-                    >
-                      {event.venue}
-                    </p>
-
-                    {event.address && (
+                    {/* Venue - Show if different from title */}
+                    {event.venue && event.venue !== event.title && (
                       <p 
-                        className="text-sm flex items-center gap-1 mb-3"
-                        style={{ 
-                          color: cardMutedColor,
-                          justifyContent: 'flex-start'
-                        }}
+                        className="text-lg font-semibold mb-2 flex items-center gap-2"
+                        style={{ color: cardTextColor }}
                       >
-                        <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span>{event.address}</span>
+                        <MapPin className="w-4 h-4" />
+                        {event.venue}
                       </p>
                     )}
 
-                  {/* Description */}
+                    {/* Address */}
+                    {event.address && (
+                      <p 
+                        className="text-sm mb-3"
+                        style={{ color: cardMutedColor }}
+                      >
+                        {event.address}
+                      </p>
+                    )}
+
+                    {/* Description */}
                   {event.description && (
                     <p 
                       className="text-sm mb-4"

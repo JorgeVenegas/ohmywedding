@@ -1,19 +1,20 @@
 "use client"
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
-import { VariantDropdown } from '@/components/ui/variant-dropdown'
+import { Textarea } from '@/components/ui/textarea'
 import { ImageUpload } from '@/components/ui/image-upload'
+import { VariantDropdown } from '@/components/ui/variant-dropdown'
 import { usePageConfig } from '@/components/contexts/page-config-context'
 import { useI18n } from '@/components/contexts/i18n-context'
-import { Check, AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
+import { Check, Plus, Trash2, GripVertical, ChevronDown, ChevronUp } from 'lucide-react'
+import { CustomEvent, EventType } from '@/components/wedding-sections/event-details-variants/types'
 
 type BackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
-type TextAlignment = 'left' | 'center' | 'right'
 
-// Helper to determine if a color is light (for contrast)
+// Helper functions
 function isLightColor(color: string): boolean {
   if (color.startsWith('rgb')) {
     const match = color.match(/(\d+),\s*(\d+),\s*(\d+)/)
@@ -33,7 +34,6 @@ function isLightColor(color: string): boolean {
   return luminance > 0.5
 }
 
-// Helper to create a light tint of a color
 function getLightTint(hex: string, tintAmount: number): string {
   const num = parseInt(hex.replace('#', ''), 16)
   const r = (num >> 16) & 255
@@ -48,29 +48,43 @@ function getLightTint(hex: string, tintAmount: number): string {
 interface EventDetailsConfigFormProps {
   config: {
     variant?: string
-    showCeremony?: boolean
-    showReception?: boolean
+    sectionTitle?: string
+    sectionSubtitle?: string
+    events?: CustomEvent[]
     showMapLinks?: boolean
     showMap?: boolean
-    showPhotos?: boolean
+    useColorBackground?: boolean
+    backgroundColorChoice?: BackgroundColorChoice
+    // Legacy props that might exist in config
+    showCeremony?: boolean
+    showReception?: boolean
     ceremonyImageUrl?: string
     receptionImageUrl?: string
     ceremonyDescription?: string
     receptionDescription?: string
-    sectionTitle?: string
-    sectionSubtitle?: string
-    useColorBackground?: boolean
-    backgroundColorChoice?: BackgroundColorChoice
-    ceremonyTextAlignment?: TextAlignment
-    receptionTextAlignment?: TextAlignment
+  }
+  wedding?: {
+    partner1_first_name?: string
+    partner1_last_name?: string
+    partner2_first_name?: string
+    partner2_last_name?: string
+    wedding_date?: string | null
+    wedding_time?: string | null
+    reception_time?: string | null
+    ceremony_venue_name?: string | null
+    ceremony_venue_address?: string | null
+    reception_venue_name?: string | null
+    reception_venue_address?: string | null
   }
   onChange: (key: string, value: any) => void
 }
 
-export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigFormProps) {
+export function EventDetailsConfigForm({ config, wedding, onChange }: EventDetailsConfigFormProps) {
   const { t } = useI18n()
+  const [expandedEvent, setExpandedEvent] = useState<number | null>(null)
+  const [initialized, setInitialized] = useState(false)
   
-  // Get colors from page config (theme settings)
+  // Get colors from page config
   const { config: pageConfig } = usePageConfig()
   const themeColors = pageConfig.siteSettings.theme?.colors
   
@@ -78,7 +92,57 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
   const secondaryColor = themeColors?.secondary || '#9ba082'
   const accentColor = themeColors?.accent || '#e6b5a3'
 
-  // Create color options with full, light, and lighter variants
+  const weddingDate = wedding?.wedding_date || undefined
+
+  // Initialize events from legacy wedding data if no events exist yet
+  React.useEffect(() => {
+    if (!initialized && (!config.events || config.events.length === 0) && wedding) {
+      const legacyEvents: CustomEvent[] = []
+      
+      // Check if there's ceremony data in wedding (venue name OR time)
+      if ((wedding.ceremony_venue_name || wedding.wedding_time) && config.showCeremony !== false) {
+        legacyEvents.push({
+          id: 'ceremony',
+          type: 'religiousCeremony',
+          title: t('eventDetails.eventTypes.religiousCeremony'),
+          time: wedding.wedding_time || '16:00',
+          venue: wedding.ceremony_venue_name || '',
+          address: wedding.ceremony_venue_address || '',
+          description: config.ceremonyDescription || '',
+          imageUrl: config.ceremonyImageUrl,
+          order: 0,
+          useWeddingDate: true,
+          date: weddingDate
+        })
+      }
+      
+      // Check if there's reception data in wedding (venue name OR time)
+      if ((wedding.reception_venue_name || wedding.reception_time) && config.showReception !== false) {
+        legacyEvents.push({
+          id: 'reception',
+          type: 'reception',
+          title: t('eventDetails.eventTypes.reception'),
+          time: wedding.reception_time || '18:00',
+          venue: wedding.reception_venue_name || '',
+          address: wedding.reception_venue_address || '',
+          description: config.receptionDescription || '',
+          imageUrl: config.receptionImageUrl,
+          order: 1,
+          useWeddingDate: true,
+          date: weddingDate
+        })
+      }
+      
+      if (legacyEvents.length > 0) {
+        onChange('events', legacyEvents)
+      }
+      setInitialized(true)
+    }
+  }, [initialized, config.events, wedding, config.showCeremony, config.showReception, config.ceremonyDescription, config.receptionDescription, config.ceremonyImageUrl, config.receptionImageUrl, weddingDate, onChange])
+
+  const events = config.events || []
+
+  // Color groups for background selection
   const colorGroups: { label: string; colors: { value: BackgroundColorChoice; color: string | null }[] }[] = [
     {
       label: t('config.none'),
@@ -111,7 +175,67 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
   ]
 
   const currentBgChoice = config.backgroundColorChoice || 'none'
-  const isSplitVariant = config.variant === 'split'
+
+  // Event management functions
+  const addEvent = (type: EventType) => {
+    const newEvent: CustomEvent = {
+      id: `event-${Date.now()}`,
+      type,
+      title: t(`eventDetails.eventTypes.${type}`),
+      time: '16:00',
+      venue: '',
+      address: '',
+      description: '',
+      imageUrl: undefined,
+      order: events.length,
+      useWeddingDate: true,
+      date: weddingDate
+    }
+    onChange('events', [...events, newEvent])
+    setExpandedEvent(events.length)
+  }
+
+  const updateEvent = (index: number, field: keyof CustomEvent, value: any) => {
+    const updated = [...events]
+    updated[index] = { ...updated[index], [field]: value }
+    onChange('events', updated)
+  }
+
+  const removeEvent = (index: number) => {
+    const updated = events.filter((_, i) => i !== index)
+    onChange('events', updated)
+    setExpandedEvent(null)
+  }
+
+  const moveEvent = (index: number, direction: 'up' | 'down') => {
+    if (
+      (direction === 'up' && index === 0) ||
+      (direction === 'down' && index === events.length - 1)
+    ) {
+      return
+    }
+
+    const updated = [...events]
+    const targetIndex = direction === 'up' ? index - 1 : index + 1
+    ;[updated[index], updated[targetIndex]] = [updated[targetIndex], updated[index]]
+    
+    // Update order values
+    updated.forEach((event, idx) => {
+      event.order = idx
+    })
+
+    onChange('events', updated)
+    setExpandedEvent(targetIndex)
+  }
+
+  const eventTypeOptions: { value: EventType; label: string }[] = [
+    { value: 'civilCeremony', label: t('eventDetails.eventTypes.civilCeremony') },
+    { value: 'religiousCeremony', label: t('eventDetails.eventTypes.religiousCeremony') },
+    { value: 'cocktail', label: t('eventDetails.eventTypes.cocktail') },
+    { value: 'reception', label: t('eventDetails.eventTypes.reception') },
+    { value: 'afterParty', label: t('eventDetails.eventTypes.afterParty') },
+    { value: 'custom', label: t('eventDetails.eventTypes.custom') }
+  ]
 
   return (
     <div className="space-y-6">
@@ -217,137 +341,233 @@ export function EventDetailsConfigForm({ config, onChange }: EventDetailsConfigF
             onCheckedChange={(checked) => onChange('showMapLinks', checked)}
           />
         </div>
-
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">{t('config.showVenuePhotos')}</span>
-          <Switch
-            checked={config.showPhotos ?? false}
-            onCheckedChange={(checked) => onChange('showPhotos', checked)}
-          />
-        </div>
       </div>
 
-      {/* Ceremony Section */}
-      <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+      {/* Events Management */}
+      <div className="p-4 border border-gray-200 rounded-lg space-y-4">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-gray-700">{t('config.ceremony')}</label>
-          <Switch
-            checked={config.showCeremony ?? true}
-            onCheckedChange={(checked) => onChange('showCeremony', checked)}
-          />
+          <h4 className="font-medium text-gray-900 text-sm">{t('eventDetails.title')}</h4>
+          <div className="relative group">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs"
+            >
+              <Plus className="w-3 h-3 mr-1" />
+              {t('eventDetails.addEvent')}
+            </Button>
+            {/* Dropdown menu for event types */}
+            <div className="hidden group-hover:block absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-[180px]">
+              {eventTypeOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => addEvent(option.value)}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 text-gray-700"
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {config.showCeremony !== false && (
-          <>
-            {/* Ceremony Photo */}
-            {config.showPhotos && (
-              <div className="space-y-2">
-                <span className="text-sm text-gray-600">{t('config.ceremonyImage')}</span>
-                <ImageUpload
-                  currentImageUrl={config.ceremonyImageUrl}
-                  onUpload={(url) => onChange('ceremonyImageUrl', url)}
-                  placeholder={t('config.uploadImage')}
-                />
-              </div>
-            )}
-
-            {/* Ceremony Description */}
-            <div className="space-y-2">
-              <span className="text-sm text-gray-600">{t('config.ceremonyDescription')}</span>
-              <Input
-                value={config.ceremonyDescription ?? ''}
-                onChange={(e) => onChange('ceremonyDescription', e.target.value)}
-                placeholder={t('config.enterDescription')}
-              />
-            </div>
-
-            {/* Ceremony Text Alignment - Only for Split variant */}
-            {isSplitVariant && (
-              <div className="space-y-2">
-                <span className="text-sm text-gray-600">{t('config.textAlignment')}</span>
-                <div className="flex gap-2">
-                  {[
-                    { value: 'left', label: t('config.left'), icon: AlignLeft },
-                    { value: 'center', label: t('config.center'), icon: AlignCenter },
-                    { value: 'right', label: t('config.right'), icon: AlignRight }
-                  ].map((alignment) => (
+        {/* Events List */}
+        {events.length === 0 ? (
+          <p className="text-sm text-gray-500 text-center py-4">
+            {t('eventDetails.addEvent')}
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {events.map((event, index) => (
+              <div 
+                key={event.id}
+                className="border border-gray-200 rounded-lg overflow-hidden"
+              >
+                {/* Event Header */}
+                <div 
+                  className="flex items-center justify-between p-3 bg-gray-50 cursor-pointer"
+                  onClick={() => setExpandedEvent(expandedEvent === index ? null : index)}
+                >
+                  <div className="flex items-center gap-3">
+                    <GripVertical className="w-4 h-4 text-gray-400" />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-900">
+                        {event.title || t(`eventDetails.eventTypes.${event.type}`) || 'Event'}
+                      </span>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        {event.time && <span>{event.time}</span>}
+                        {event.venue && (
+                          <>
+                            {event.time && <span>•</span>}
+                            <span>{event.venue}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <Button
-                      key={alignment.value}
-                      variant={(config.ceremonyTextAlignment || 'center') === alignment.value ? 'default' : 'outline'}
+                      type="button"
+                      variant="ghost"
                       size="sm"
-                      onClick={() => onChange('ceremonyTextAlignment', alignment.value)}
-                      className="gap-1.5"
+                      onClick={(e) => { e.stopPropagation(); moveEvent(index, 'up'); }}
+                      disabled={index === 0}
+                      className="h-7 w-7 p-0"
                     >
-                      <alignment.icon className="w-4 h-4" />
-                      {alignment.label}
+                      <ChevronUp className="w-4 h-4" />
                     </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Reception Section */}
-      <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-gray-700">{t('config.reception')}</label>
-          <Switch
-            checked={config.showReception ?? true}
-            onCheckedChange={(checked) => onChange('showReception', checked)}
-          />
-        </div>
-
-        {config.showReception !== false && (
-          <>
-            {/* Reception Photo */}
-            {config.showPhotos && (
-              <div className="space-y-2">
-                <span className="text-sm text-gray-600">{t('config.receptionImage')}</span>
-                <ImageUpload
-                  currentImageUrl={config.receptionImageUrl}
-                  onUpload={(url) => onChange('receptionImageUrl', url)}
-                  placeholder={t('config.uploadImage')}
-                />
-              </div>
-            )}
-
-            {/* Reception Description */}
-            <div className="space-y-2">
-              <span className="text-sm text-gray-600">{t('config.receptionDescription')}</span>
-              <Input
-                value={config.receptionDescription ?? ''}
-                onChange={(e) => onChange('receptionDescription', e.target.value)}
-                placeholder={t('config.enterDescription')}
-              />
-            </div>
-
-            {/* Reception Text Alignment - Only for Split variant */}
-            {isSplitVariant && (
-              <div className="space-y-2">
-                <span className="text-sm text-gray-600">{t('config.textAlignment')}</span>
-                <div className="flex gap-2">
-                  {[
-                    { value: 'left', label: t('config.left'), icon: AlignLeft },
-                    { value: 'center', label: t('config.center'), icon: AlignCenter },
-                    { value: 'right', label: t('config.right'), icon: AlignRight }
-                  ].map((alignment) => (
                     <Button
-                      key={alignment.value}
-                      variant={(config.receptionTextAlignment || 'center') === alignment.value ? 'default' : 'outline'}
+                      type="button"
+                      variant="ghost"
                       size="sm"
-                      onClick={() => onChange('receptionTextAlignment', alignment.value)}
-                      className="gap-1.5"
+                      onClick={(e) => { e.stopPropagation(); moveEvent(index, 'down'); }}
+                      disabled={index === events.length - 1}
+                      className="h-7 w-7 p-0"
                     >
-                      <alignment.icon className="w-4 h-4" />
-                      {alignment.label}
+                      <ChevronDown className="w-4 h-4" />
                     </Button>
-                  ))}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => { e.stopPropagation(); removeEvent(index); }}
+                      className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
+
+                {/* Event Details (Expanded) */}
+                {expandedEvent === index && (
+                  <div className="p-4 space-y-4 bg-white">
+                    {/* Event Type */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Event Type
+                      </label>
+                      <select
+                        value={event.type}
+                        onChange={(e) => updateEvent(index, 'type', e.target.value as EventType)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                      >
+                        {eventTypeOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Event Title */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Event Name
+                      </label>
+                      <Input
+                        type="text"
+                        value={event.title}
+                        onChange={(e) => updateEvent(index, 'title', e.target.value)}
+                        placeholder={t(`eventDetails.eventTypes.${event.type}`)}
+                      />
+                    </div>
+
+                    {/* Use Wedding Date Toggle */}
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm text-gray-700">{t('eventDetails.useWeddingDate')}</label>
+                      <Switch
+                        checked={event.useWeddingDate !== false}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            updateEvent(index, 'date', weddingDate)
+                          }
+                          updateEvent(index, 'useWeddingDate', checked)
+                        }}
+                      />
+                    </div>
+
+                    {/* Custom Date (if not using wedding date) */}
+                    {event.useWeddingDate === false && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {t('eventDetails.eventDate')}
+                        </label>
+                        <Input
+                          type="date"
+                          value={event.date || ''}
+                          onChange={(e) => updateEvent(index, 'date', e.target.value)}
+                        />
+                      </div>
+                    )}
+
+                    {/* Time */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Time
+                      </label>
+                      <Input
+                        type="time"
+                        value={event.time}
+                        onChange={(e) => updateEvent(index, 'time', e.target.value)}
+                      />
+                    </div>
+
+                    {/* Venue */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Venue
+                      </label>
+                      <Input
+                        type="text"
+                        value={event.venue}
+                        onChange={(e) => updateEvent(index, 'venue', e.target.value)}
+                        placeholder="Venue name"
+                      />
+                    </div>
+
+                    {/* Address */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Address
+                      </label>
+                      <Input
+                        type="text"
+                        value={event.address || ''}
+                        onChange={(e) => updateEvent(index, 'address', e.target.value)}
+                        placeholder="Full address"
+                      />
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Description
+                      </label>
+                      <Textarea
+                        value={event.description || ''}
+                        onChange={(e) => updateEvent(index, 'description', e.target.value)}
+                        placeholder="Additional details for guests (optional)"
+                        rows={3}
+                      />
+                    </div>
+
+                    {/* Event Image */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Event Image
+                      </label>
+                      <ImageUpload
+                        currentImageUrl={event.imageUrl || ''}
+                        onUpload={(url) => updateEvent(index, 'imageUrl', url)}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </>
+            ))}
+          </div>
         )}
       </div>
     </div>

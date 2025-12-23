@@ -11,7 +11,8 @@ import {
   RSVPSection,
   GallerySection,
   FAQSection,
-  CountdownSection
+  CountdownSection,
+  RegistrySection
 } from './wedding-sections'
 import { VariantProvider } from './contexts/variant-context'
 import { SiteConfigProvider } from './contexts/site-config-context'
@@ -274,6 +275,13 @@ function ConfigBasedWeddingRendererContent({
         return {
           questions: []
         }
+      case 'registry':
+        return {
+          variant: 'cards',
+          registries: [],
+          customItems: [],
+          showCustomRegistry: false
+        }
       default:
         return {}
     }
@@ -364,6 +372,16 @@ function ConfigBasedWeddingRendererContent({
             key={component.id}
             {...commonProps}
             {...component.props}
+          />
+        )
+        break
+      case 'registry':
+        renderedComponent = (
+          <RegistrySection
+            key={component.id}
+            {...commonProps}
+            {...component.props}
+            weddingNameId={weddingNameId}
           />
         )
         break

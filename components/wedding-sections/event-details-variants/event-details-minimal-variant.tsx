@@ -4,29 +4,23 @@ import React from 'react'
 import { Card } from '@/components/ui/card'
 import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar, ArrowRight } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
-import { BaseEventDetailsProps, EventItem, buildEventsList, getMapUrl, getColorScheme } from './types'
+import { BaseEventDetailsProps, buildEventList, getMapUrl, getColorScheme, getEventIconType, formatWeddingTime } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 
-export function EventDetailsMinimalVariant({
-  wedding,
-  weddingNameId,
-  theme,
-  alignment,
-  showCeremony = true,
-  showReception = true,
-  showMapLinks = true,
-  showMap = true,
-  showPhotos = false,
-  ceremonyImageUrl,
-  receptionImageUrl,
-  ceremonyDescription,
-  receptionDescription,
-  sectionTitle,
-  sectionSubtitle,
-  customEvents = [],
-  useColorBackground = false,
-  backgroundColorChoice
-}: BaseEventDetailsProps) {
+export function EventDetailsMinimalVariant(props: BaseEventDetailsProps) {
+  const {
+    wedding,
+    theme,
+    alignment,
+    showMapLinks = true,
+    showMap = true,
+    showPhotos = false,
+    sectionTitle,
+    sectionSubtitle,
+    useColorBackground = false,
+    backgroundColorChoice
+  } = props
+  
   const { t } = useI18n()
   
   // Use translated defaults if not provided
@@ -34,9 +28,10 @@ export function EventDetailsMinimalVariant({
   const subtitle = sectionSubtitle
   const { bgColor, titleColor, subtitleColor, sectionTextColor, sectionTextColorAlt, accentColor, colorLight, cardBg, bodyTextColor, isColored, isLightBg } = getColorScheme(theme, backgroundColorChoice, useColorBackground)
   
-  const events = buildEventsList(wedding, showCeremony, showReception, customEvents, ceremonyImageUrl, receptionImageUrl, ceremonyDescription, receptionDescription, t)
+  const events = buildEventList(props)
 
-  const renderEventIcon = (iconType: EventItem['iconType']) => {
+  const renderEventIcon = (type: string) => {
+    const iconType = getEventIconType(type as any)
     const color = isColored ? sectionTextColor : theme?.colors?.foreground
     const iconProps = { className: "w-5 h-5", style: { color } }
     switch (iconType) {
@@ -58,6 +53,10 @@ export function EventDetailsMinimalVariant({
   // Get the first event with an address for the map
   const mapEvent = events.find(e => e.address)
   const mapAddress = mapEvent?.address
+
+  if (events.length === 0) {
+    return null
+  }
 
   return (
     <SectionWrapper 
@@ -90,13 +89,13 @@ export function EventDetailsMinimalVariant({
         <div className="max-w-5xl mx-auto mb-6 sm:mb-8">
           <div className={`grid gap-6 sm:gap-8 ${events.length === 1 ? 'max-w-md mx-auto' : 'md:grid-cols-2'}`}>
             {events.map((event, index) => (
-              <div key={index} className="relative">
+              <div key={event.id} className="relative">
                 {/* Event Image */}
                 {showPhotos && event.imageUrl && (
                   <div className="aspect-[4/3] mb-6 overflow-hidden rounded-lg">
                     <img 
                       src={event.imageUrl} 
-                      alt={`${event.title} venue`}
+                      alt={`${event.venue} venue`}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -106,12 +105,12 @@ export function EventDetailsMinimalVariant({
                 <div className="space-y-4">
                   {/* Icon and title row */}
                   <div className="flex items-center gap-3">
-                    {renderEventIcon(event.iconType)}
+                    {renderEventIcon(event.type)}
                     <h3 
                       className="text-xl font-medium"
                       style={{ color: textColor }}
                     >
-                      {event.title}
+                      {event.title || t(`eventDetails.eventTypes.${event.type}`) || event.venue}
                     </h3>
                   </div>
 
@@ -122,20 +121,37 @@ export function EventDetailsMinimalVariant({
                   />
 
                   {/* Time */}
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" style={{ color: mutedColor }} />
-                    <span style={{ color: textColor }}>{event.time}</span>
-                  </div>
+                  {event.time && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" style={{ color: mutedColor }} />
+                      <span style={{ color: textColor }}>{formatWeddingTime(event.time)}</span>
+                    </div>
+                  )}
 
-                  {/* Venue */}
-                  <div>
-                    <p 
-                      className="font-medium mb-1"
-                      style={{ color: textColor }}
-                    >
-                      {event.venue}
-                    </p>
-                    {event.address && (
+                  {/* Venue - Show if different from title */}
+                  {event.venue && event.venue !== event.title && (
+                    <div>
+                      <p 
+                        className="font-medium mb-1 flex items-center gap-2"
+                        style={{ color: textColor }}
+                      >
+                        <MapPin className="w-4 h-4" style={{ color: mutedColor }} />
+                        {event.venue}
+                      </p>
+                      {event.address && (
+                        <p 
+                          className="text-sm"
+                          style={{ color: mutedColor }}
+                        >
+                          {event.address}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Address only (if no venue) */}
+                  {!event.venue && event.address && (
+                    <div>
                       <p 
                         className="text-sm flex items-start gap-2"
                         style={{ color: mutedColor }}
@@ -143,8 +159,8 @@ export function EventDetailsMinimalVariant({
                         <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
                         <span>{event.address}</span>
                       </p>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   {/* Map Link */}
                   {showMapLinks && event.address && (
