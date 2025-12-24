@@ -2,8 +2,9 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  // Skip middleware for auth callback to prevent cookie interference
-  if (request.nextUrl.pathname.startsWith('/auth/callback')) {
+  // Skip middleware for auth callback and Stripe webhook to prevent interference
+  if (request.nextUrl.pathname.startsWith('/auth/callback') || 
+      request.nextUrl.pathname.startsWith('/api/registry/webhook')) {
     return NextResponse.next()
   }
 
