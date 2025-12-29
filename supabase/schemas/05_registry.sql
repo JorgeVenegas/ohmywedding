@@ -2,7 +2,6 @@
 create table "gift_registries" (
   "id" uuid primary key default gen_random_uuid(),
   "wedding_id" uuid not null references weddings(id) on delete cascade,
-  "wedding_name_id" text,
   "registry_name" text not null,
   "store_name" text,
   "registry_url" text,
@@ -16,7 +15,6 @@ create table "gift_items" (
   "id" uuid primary key default gen_random_uuid(),
   "registry_id" uuid references gift_registries(id) on delete cascade,
   "wedding_id" uuid not null references weddings(id) on delete cascade,
-  "wedding_name_id" text,
   "item_name" text not null,
   "description" text,
   "price" decimal(10,2),
@@ -32,7 +30,6 @@ create table "gift_items" (
 create table "custom_registry_items" (
   "id" uuid primary key default gen_random_uuid(),
   "wedding_id" uuid not null references weddings(id) on delete cascade,
-  "wedding_name_id" text,
   "title" text not null,
   "description" text,
   "goal_amount" decimal(10,2) not null default 0,
@@ -49,7 +46,6 @@ create table "registry_contributions" (
   "id" uuid primary key default gen_random_uuid(),
   "custom_registry_item_id" uuid not null references custom_registry_items(id) on delete cascade,
   "wedding_id" uuid not null references weddings(id) on delete cascade,
-  "wedding_name_id" text,
   "contributor_name" text,
   "contributor_email" text,
   "amount" decimal(10,2) not null,

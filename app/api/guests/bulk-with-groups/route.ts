@@ -9,9 +9,11 @@ export async function POST(request: Request) {
   try {
     const supabase = await createServerSupabaseClient()
     const body = await request.json()
+    const weddingId = body.weddingId
 
-    // Decode the weddingNameId in case it's URL encoded
-    const weddingNameId = decodeURIComponent(body.weddingNameId)
+    if (!weddingId) {
+      return NextResponse.json({ error: "weddingId is required" }, { status: 400 })
+    }
 
     // Check if user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -24,22 +26,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Guests array is required" }, { status: 400 })
     }
 
-    // Get wedding ID
-    const { data: wedding, error: weddingError } = await supabase
-      .from('weddings')
-      .select('id')
-      .eq('wedding_name_id', weddingNameId)
-      .single()
-    
-    if (weddingError || !wedding) {
-      return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
-    }
-
     // First, get existing groups for this wedding
     const { data: existingGroups, error: groupsError } = await supabase
       .from("guest_groups")
       .select("id, name")
-      .eq("wedding_id", wedding.id)
+      .eq("wedding_id", weddingId)
 
     if (groupsError) {
       console.error('Error fetching existing groups:', groupsError)
@@ -69,7 +60,7 @@ export async function POST(request: Request) {
       const { data: newGroup, error: createError } = await supabase
         .from("guest_groups")
         .insert([{
-          wedding_id: wedding.id,
+          wedding_id: weddingId,
           name: groupName,
           phone_number: null,
           tags: [],
@@ -107,7 +98,7 @@ export async function POST(request: Request) {
         const groupId = groupMap.get(groupName.toLowerCase())
         
         return {
-          wedding_id: wedding.id,
+          wedding_id: weddingId,
           guest_group_id: groupId || null,
           name: guest.name.trim(),
           phone_number: guest.phoneNumber || null,

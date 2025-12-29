@@ -51,7 +51,6 @@ import {
 
 interface Guest {
   id: string
-  wedding_name_id: string
   guest_group_id: string | null
   name: string
   phone_number: string | null
@@ -68,7 +67,6 @@ interface Guest {
 
 interface GuestGroup {
   id: string
-  wedding_name_id: string
   name: string
   phone_number: string | null
   tags: string[]
@@ -300,7 +298,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   const fetchGuestGroups = async () => {
     try {
-      const response = await fetch(`/api/guest-groups?weddingNameId=${encodeURIComponent(weddingId)}`)
+      const response = await fetch(`/api/guest-groups?weddingId=${encodeURIComponent(weddingId)}`)
       const result = await response.json()
       if (result.data) {
         setGuestGroups(result.data)
@@ -314,7 +312,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   const fetchUngroupedGuests = async () => {
     try {
-      const response = await fetch(`/api/guests?weddingNameId=${encodeURIComponent(weddingId)}&ungrouped=true`)
+      const response = await fetch(`/api/guests?weddingId=${encodeURIComponent(weddingId)}&ungrouped=true`)
       const result = await response.json()
       if (result.data) {
         setUngroupedGuests(result.data)
@@ -340,7 +338,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          weddingNameId: weddingId,
+          weddingId: weddingId,
           name: groupForm.name,
           phoneNumber: groupForm.phoneNumber || null,
           tags: groupForm.tags,
@@ -430,7 +428,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            weddingNameId: weddingId,
+            weddingId: weddingId,
             name: newGroupNameForGuest.trim(),
             tags: [],
             invitedBy: [],
@@ -452,7 +450,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            weddingNameId: weddingId,
+            weddingId: weddingId,
             name: guestForm.name.trim() || "New Group",
             tags: [],
             invitedBy: guestForm.invitedBy,
@@ -469,7 +467,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          weddingNameId: weddingId,
+          weddingId: weddingId,
           guestGroupId: groupIdToUse,
           name: guestForm.name,
           phoneNumber: guestForm.phoneNumber || null,
@@ -714,7 +712,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            weddingNameId: weddingId,
+            weddingId: weddingId,
             name: newGroupName.trim(),
             tags: [],
             notes: null,
@@ -1202,7 +1200,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            weddingNameId: weddingId,
+            weddingId: weddingId,
             groups: groupsData,
           }),
         })
@@ -1262,7 +1260,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            weddingNameId: weddingId,
+            weddingId: weddingId,
             guests: guestsData,
           }),
         })

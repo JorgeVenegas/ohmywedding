@@ -4,7 +4,6 @@
 create table "guest_groups" (
   "id" uuid primary key default gen_random_uuid(),
   "wedding_id" uuid not null references weddings(id) on delete cascade,
-  "wedding_name_id" text,
   "name" text not null,
   "phone_number" text,
   "tags" text[] default '{}',
@@ -20,7 +19,6 @@ create table "guest_groups" (
 create table "guests" (
   "id" uuid primary key default gen_random_uuid(),
   "wedding_id" uuid not null references weddings(id) on delete cascade,
-  "wedding_name_id" text,
   "guest_group_id" uuid references guest_groups(id) on delete set null,
   "name" text not null,
   "phone_number" text,
@@ -43,7 +41,6 @@ create index "idx_guests_ungrouped" on guests (wedding_id) where guest_group_id 
 create table "rsvps" (
   "id" uuid primary key default gen_random_uuid(),
   "wedding_id" uuid not null references weddings(id) on delete cascade,
-  "wedding_name_id" text,
   "guest_name" text not null,
   "guest_email" text not null,
   "attending" text not null,

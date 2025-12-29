@@ -2,7 +2,6 @@
 create table "images" (
   "id" uuid primary key default gen_random_uuid(),
   "wedding_id" uuid not null references weddings(id) on delete cascade,
-  "wedding_name_id" text,
   "url" text not null,
   "storage_path" text not null,
   "filename" text not null,
@@ -33,7 +32,7 @@ create policy "Anyone can upload images" on images
 
 create policy "Wedding owners can manage images" on images
   for all using (
-    wedding_name_id in (
-      select wedding_name_id from weddings where owner_id = auth.uid()
+    wedding_id in (
+      select id from weddings where owner_id = auth.uid()
     )
   );

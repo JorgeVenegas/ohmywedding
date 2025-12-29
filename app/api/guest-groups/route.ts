@@ -8,27 +8,13 @@ export const runtime = 'nodejs'
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const rawWeddingNameId = searchParams.get('weddingNameId')
+    const weddingId = searchParams.get('weddingId')
 
-    if (!rawWeddingNameId) {
-      return NextResponse.json({ error: "weddingNameId is required" }, { status: 400 })
+    if (!weddingId) {
+      return NextResponse.json({ error: "weddingId is required" }, { status: 400 })
     }
-
-    // Decode the weddingNameId in case it's URL encoded
-    const weddingNameId = decodeURIComponent(rawWeddingNameId)
 
     const supabase = await createServerSupabaseClient()
-    
-    // First, get the wedding ID from the wedding_name_id
-    const { data: wedding, error: weddingError } = await supabase
-      .from('weddings')
-      .select('id')
-      .eq('wedding_name_id', weddingNameId)
-      .single()
-    
-    if (weddingError || !wedding) {
-      return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
-    }
     
     const { data, error } = await supabase
       .from("guest_groups")
@@ -36,7 +22,7 @@ export async function GET(request: Request) {
         *,
         guests (*)
       `)
-      .eq("wedding_id", wedding.id)
+      .eq("wedding_id", weddingId)
       .order("created_at", { ascending: true })
 
     if (error) {
@@ -54,9 +40,11 @@ export async function POST(request: Request) {
   try {
     const supabase = await createServerSupabaseClient()
     const body = await request.json()
+    const weddingId = body.weddingId
 
-    // Decode the weddingNameId in case it's URL encoded
-    const weddingNameId = decodeURIComponent(body.weddingNameId)
+    if (!weddingId) {
+      return NextResponse.json({ error: "weddingId is required" }, { status: 400 })
+    }
 
     // Debug: Check if user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -69,7 +57,7 @@ export async function POST(request: Request) {
     const { data: wedding, error: weddingError } = await supabase
       .from('weddings')
       .select('id, owner_id, collaborator_emails')
-      .eq('wedding_name_id', weddingNameId)
+      .eq('id', weddingId)
       .single()
     
     if (!wedding) {
@@ -78,8 +66,7 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabase.from("guest_groups").insert([
       {
-        wedding_id: wedding.id,
-        wedding_name_id: weddingNameId,
+        wedding_id: weddingId,
         name: body.name,
         phone_number: body.phoneNumber || null,
         tags: body.tags || [],

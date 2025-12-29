@@ -9,9 +9,11 @@ export async function POST(request: Request) {
   try {
     const supabase = await createServerSupabaseClient()
     const body = await request.json()
+    const weddingId = body.weddingId
 
-    // Decode the weddingNameId in case it's URL encoded
-    const weddingNameId = decodeURIComponent(body.weddingNameId)
+    if (!weddingId) {
+      return NextResponse.json({ error: "weddingId is required" }, { status: 400 })
+    }
 
     // Check if user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -22,17 +24,6 @@ export async function POST(request: Request) {
 
     if (!body.groups || !Array.isArray(body.groups)) {
       return NextResponse.json({ error: "Groups array is required" }, { status: 400 })
-    }
-
-    // Get wedding ID
-    const { data: wedding, error: weddingError } = await supabase
-      .from('weddings')
-      .select('id')
-      .eq('wedding_name_id', weddingNameId)
-      .single()
-    
-    if (weddingError || !wedding) {
-      return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
     }
 
     let totalGroupsCreated = 0
@@ -48,7 +39,7 @@ export async function POST(request: Request) {
       const { data: group, error: groupError } = await supabase
         .from("guest_groups")
         .insert([{
-          wedding_id: wedding.id,
+          wedding_id: weddingId,
           name: groupName,
           phone_number: groupData.phoneNumber || null,
           tags: groupData.tags || [],
@@ -68,7 +59,7 @@ export async function POST(request: Request) {
       const guestsToCreate = []
       for (let i = 1; i <= guestCount; i++) {
         guestsToCreate.push({
-          wedding_id: wedding.id,
+          wedding_id: weddingId,
           guest_group_id: group.id,
           name: guestCount === 1 ? groupName : `Guest ${i}`,
           phone_number: null,
