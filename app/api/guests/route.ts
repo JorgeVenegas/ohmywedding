@@ -21,10 +21,21 @@ export async function GET(request: Request) {
 
     const supabase = await createServerSupabaseClient()
     
+    // First, get the wedding ID from the wedding_name_id
+    const { data: wedding, error: weddingError } = await supabase
+      .from('weddings')
+      .select('id')
+      .eq('wedding_name_id', weddingNameId)
+      .single()
+    
+    if (weddingError || !wedding) {
+      return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
+    }
+    
     let query = supabase
       .from("guests")
       .select("*")
-      .eq("wedding_name_id", weddingNameId)
+      .eq("wedding_id", wedding.id)
       .order("created_at", { ascending: true })
 
     if (groupId) {
@@ -79,6 +90,7 @@ export async function POST(request: Request) {
         invitedBy?: string[]
       }) => ({
         wedding_id: wedding.id,
+        wedding_name_id: weddingNameId,
         guest_group_id: guest.guestGroupId || null,
         name: guest.name,
         phone_number: guest.phoneNumber || null,
@@ -120,6 +132,7 @@ export async function POST(request: Request) {
     const { data, error } = await supabase.from("guests").insert([
       {
         wedding_id: wedding.id,
+        wedding_name_id: weddingNameId,
         guest_group_id: body.guestGroupId || null,
         name: body.name,
         phone_number: body.phoneNumber || null,
@@ -133,6 +146,7 @@ export async function POST(request: Request) {
     ]).select().single()
 
     if (error) {
+      console.error('Guest POST - Insert error:', error)
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 

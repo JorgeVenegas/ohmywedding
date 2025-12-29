@@ -9,7 +9,31 @@ export async function POST(request: Request) {
     const supabase = await createServerSupabaseClient()
     const body = await request.json()
 
-    // Get wedding ID from wedding_name_id
+    // Update each guest's confirmation status
+    if (body.guests && Array.isArray(body.guests)) {
+      for (const guest of body.guests) {
+        const confirmationStatus = 
+          guest.attending === true ? 'confirmed' : 
+          guest.attending === false ? 'declined' : 
+          'pending'
+        
+        const { error: updateError } = await supabase
+          .from('guests')
+          .update({ confirmation_status: confirmationStatus })
+          .eq('id', guest.guestId)
+
+        if (updateError) {
+          return NextResponse.json(
+            { error: `Failed to update guest ${guest.guestId}` },
+            { status: 500 }
+          )
+        }
+      }
+
+      return NextResponse.json({ success: true })
+    }
+
+    // Legacy single guest RSVP support (for backward compatibility)
     const { data: wedding, error: weddingError } = await supabase
       .from('weddings')
       .select('id')

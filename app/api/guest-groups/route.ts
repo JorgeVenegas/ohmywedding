@@ -19,13 +19,24 @@ export async function GET(request: Request) {
 
     const supabase = await createServerSupabaseClient()
     
+    // First, get the wedding ID from the wedding_name_id
+    const { data: wedding, error: weddingError } = await supabase
+      .from('weddings')
+      .select('id')
+      .eq('wedding_name_id', weddingNameId)
+      .single()
+    
+    if (weddingError || !wedding) {
+      return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
+    }
+    
     const { data, error } = await supabase
       .from("guest_groups")
       .select(`
         *,
         guests (*)
       `)
-      .eq("wedding_name_id", weddingNameId)
+      .eq("wedding_id", wedding.id)
       .order("created_at", { ascending: true })
 
     if (error) {
@@ -49,13 +60,6 @@ export async function POST(request: Request) {
 
     // Debug: Check if user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser()
-    console.log('Guest groups POST - Auth check:', { 
-      userId: user?.id, 
-      userEmail: user?.email,
-      authError: authError?.message,
-      weddingNameId,
-      originalWeddingNameId: body.weddingNameId
-    })
 
     if (!user) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
@@ -68,14 +72,6 @@ export async function POST(request: Request) {
       .eq('wedding_name_id', weddingNameId)
       .single()
     
-    console.log('Guest groups POST - Wedding check:', {
-      wedding,
-      weddingError: weddingError?.message,
-      isOwner: wedding?.owner_id === user.id,
-      isCollaborator: wedding?.collaborator_emails?.includes(user.email || ''),
-      isUnowned: wedding?.owner_id === null
-    })
-
     if (!wedding) {
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
     }
@@ -83,6 +79,7 @@ export async function POST(request: Request) {
     const { data, error } = await supabase.from("guest_groups").insert([
       {
         wedding_id: wedding.id,
+        wedding_name_id: weddingNameId,
         name: body.name,
         phone_number: body.phoneNumber || null,
         tags: body.tags || [],
@@ -92,13 +89,11 @@ export async function POST(request: Request) {
     ]).select().single()
 
     if (error) {
-      console.log('Guest groups POST - Insert error:', error)
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
     return NextResponse.json({ success: true, data })
   } catch (error) {
-    console.error('Guest groups POST - Exception:', error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

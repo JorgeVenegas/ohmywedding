@@ -1,3 +1,5 @@
-export { RSVPCallToActionVariant } from './rsvp-cta-variant'
-export { RSVPFormVariant } from './rsvp-form-variant'
+export { RSVPElegantVariant } from './rsvp-elegant-variant'
+export { RSVPMinimalisticVariant } from './rsvp-minimalistic-variant'
+export { RSVPCardsVariant } from './rsvp-cards-variant'
 export type { BaseRSVPProps, CustomQuestion } from './types'
+export { getColorScheme } from './types'

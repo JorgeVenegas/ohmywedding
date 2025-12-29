@@ -2,8 +2,9 @@
 
 import React from 'react'
 import {
-  RSVPCallToActionVariant,
-  RSVPFormVariant,
+  RSVPElegantVariant,
+  RSVPMinimalisticVariant,
+  RSVPCardsVariant,
   BaseRSVPProps,
   CustomQuestion
 } from './rsvp-variants'
@@ -16,8 +17,9 @@ import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper
 import { useI18n } from '@/components/contexts/i18n-context'
 
 interface RSVPSectionProps extends BaseRSVPProps {
-  variant?: 'cta' | 'form'
+  variant?: 'elegant' | 'minimalistic' | 'cards'
   showVariantSwitcher?: boolean
+  groupId?: string
 }
 
 export function RSVPSection({
@@ -31,10 +33,15 @@ export function RSVPSection({
   showCustomQuestions = false,
   customQuestions = [],
   embedForm = false,
-  variant = 'cta',
-  showVariantSwitcher = true
+  variant = 'elegant',
+  showVariantSwitcher = true,
+  groupId,
+  useColorBackground,
+  backgroundColorChoice
 }: RSVPSectionProps) {
   const { t } = useI18n()
+  
+  console.log('[RSVPSection] Props:', { variant, groupId, weddingNameId })
   
   // Use standardized section behavior
   const {
@@ -43,19 +50,26 @@ export function RSVPSection({
     shouldShowVariantSwitcher,
     setVariant,
     handleEditClick
-  } = useSectionVariants('rsvp', 'rsvp', embedForm ? 'form' : 'cta', variant, showVariantSwitcher)
+  } = useSectionVariants('rsvp', 'rsvp', variant, variant, showVariantSwitcher)
+  
+  console.log('[RSVPSection] Active variant:', actualVariant)
 
   // Define variants
   const rsvpVariants: VariantOption[] = [
     {
-      value: 'cta',
-      label: t('config.callToAction'),
-      description: t('config.callToActionDesc')
+      value: 'elegant',
+      label: 'Elegant',
+      description: 'Romantic serif typography with floral accents'
     },
     {
-      value: 'form',
-      label: t('config.embeddedForm'),
-      description: t('config.embeddedFormDesc')
+      value: 'minimalistic',
+      label: 'Minimalistic',
+      description: 'Modern and clean with subtle sophistication'
+    },
+    {
+      value: 'cards',
+      label: 'Cards',
+      description: 'Individual guest cards with contemporary style'
     }
   ]
 
@@ -73,27 +87,36 @@ export function RSVPSection({
     dateId,
     weddingNameId,
     theme,
-    alignment,
+    alignment: {
+      ...alignment,
+      text: config.textAlignment || alignment?.text || 'center'
+    },
     sectionTitle: config.sectionTitle || sectionTitle,
     sectionSubtitle: config.sectionSubtitle || sectionSubtitle,
     showMealPreferences: config.showMealPreferences ?? true,
     showCustomQuestions: config.showCustomQuestions ?? false,
     customQuestions: config.customQuestions || customQuestions,
-    embedForm: config.embedForm ?? embedForm
+    embedForm: config.embedForm ?? embedForm,
+    groupId,
+    useColorBackground: config.useColorBackground ?? useColorBackground,
+    backgroundColorChoice: config.backgroundColorChoice ?? backgroundColorChoice
   }
 
   const renderRSVPContent = (activeVariant: string) => {
     switch (activeVariant) {
-      case 'form':
-        return <RSVPFormVariant {...commonProps} />
-      case 'cta':
+      case 'minimalistic':
+        return <RSVPMinimalisticVariant {...commonProps} />
+      case 'cards':
+        return <RSVPCardsVariant {...commonProps} />
+      case 'elegant':
       default:
-        return <RSVPCallToActionVariant {...commonProps} />
+        return <RSVPElegantVariant {...commonProps} />
     }
   }
 
   const onEditClick = (sectionId: string, sectionType: string) => {
     handleEditClick(sectionType, {
+      variant: actualVariant,
       sectionTitle,
       sectionSubtitle,
       showMealPreferences: config.showMealPreferences ?? showMealPreferences,

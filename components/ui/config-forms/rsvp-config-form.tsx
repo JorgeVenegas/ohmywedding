@@ -7,6 +7,11 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
+import { 
+  BackgroundColorPicker, 
+  type BackgroundColorChoice
+} from '@/components/ui/config-forms/shared'
 
 interface CustomQuestion {
   id: string
@@ -26,6 +31,8 @@ interface RSVPConfigFormProps {
     showCustomQuestions?: boolean
     customQuestions?: CustomQuestion[]
     embedForm?: boolean
+    useColorBackground?: boolean
+    backgroundColorChoice?: BackgroundColorChoice
   }
   onChange: (key: string, value: any) => void
 }
@@ -34,8 +41,9 @@ export function RSVPConfigForm({ config, onChange }: RSVPConfigFormProps) {
   const { t } = useI18n()
   
   const variants = [
-    { value: 'cta', label: t('config.callToAction'), description: t('config.callToActionDesc') },
-    { value: 'form', label: t('config.embeddedForm'), description: t('config.embeddedFormDesc') }
+    { value: 'elegant', label: 'Elegant', description: 'Romantic invitation-style design with elegant typography' },
+    { value: 'minimalistic', label: 'Minimalistic', description: 'Modern and clean with refined sophistication' },
+    { value: 'cards', label: 'Cards', description: 'Contemporary card-based layout with smooth interactions' }
   ]
 
   const addCustomQuestion = () => {
@@ -69,11 +77,44 @@ export function RSVPConfigForm({ config, onChange }: RSVPConfigFormProps) {
       {/* Variant Selection */}
       <VariantDropdown
         label={t('config.rsvpStyle')}
-        value={config.variant || 'cta'}
+        value={config.variant || 'elegant'}
         options={variants}
         onChange={(value) => onChange('variant', value)}
         placeholder={t('config.rsvpStyle')}
       />
+
+      {/* Background Color Picker */}
+      <BackgroundColorPicker
+        useColorBackground={config.useColorBackground}
+        backgroundColorChoice={config.backgroundColorChoice}
+        onUseColorBackgroundChange={(value) => onChange('useColorBackground', value)}
+        onBackgroundColorChoiceChange={(value) => onChange('backgroundColorChoice', value)}
+      />
+
+      {/* Text Alignment */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {t('config.textAlignment')}
+        </label>
+        <div className="flex gap-2">
+          {[
+            { value: 'left', label: t('config.left'), icon: AlignLeft },
+            { value: 'center', label: t('config.center'), icon: AlignCenter },
+            { value: 'right', label: t('config.right'), icon: AlignRight }
+          ].map((alignment) => (
+            <Button
+              key={alignment.value}
+              variant={config.textAlignment === alignment.value ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onChange('textAlignment', alignment.value)}
+              className="gap-1.5"
+            >
+              <alignment.icon className="w-4 h-4" />
+              {alignment.label}
+            </Button>
+          ))}
+        </div>
+      </div>
 
       {/* Section Title & Subtitle */}
       <div className="p-4 border border-gray-200 rounded-lg space-y-4">
@@ -101,29 +142,6 @@ export function RSVPConfigForm({ config, onChange }: RSVPConfigFormProps) {
             onChange={(e) => onChange('sectionSubtitle', e.target.value)}
             placeholder={t('rsvp.subtitle')}
           />
-        </div>
-      </div>
-
-      {/* Text Alignment */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          {t('config.textAlignment')}
-        </label>
-        <div className="flex gap-2">
-          {[
-            { value: 'left', label: t('config.left') },
-            { value: 'center', label: t('config.center') },
-            { value: 'right', label: t('config.right') }
-          ].map((alignment) => (
-            <Button
-              key={alignment.value}
-              variant={config.textAlignment === alignment.value ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onChange('textAlignment', alignment.value)}
-            >
-              {alignment.label}
-            </Button>
-          ))}
         </div>
       </div>
 

@@ -150,6 +150,7 @@ export const classicWeddingConfig: WeddingPageConfig = {
       enabled: true,
       order: 5,
       props: {
+        variant: 'elegant',
         embedForm: false, // Show CTA instead of full form
         showMealPreferences: true,
         showCustomQuestions: true,
@@ -239,6 +240,7 @@ export const modernWeddingConfig: WeddingPageConfig = {
       enabled: true,
       order: 2,
       props: {
+        variant: 'elegant',
         embedForm: true, // Show full embedded form
         showMealPreferences: false,
         showCustomQuestions: false
@@ -457,6 +459,7 @@ export const rusticWeddingConfig: WeddingPageConfig = {
       enabled: true,
       order: 5,
       props: {
+        variant: 'elegant',
         embedForm: false
       }
     },

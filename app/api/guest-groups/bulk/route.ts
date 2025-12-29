@@ -59,7 +59,6 @@ export async function POST(request: Request) {
         .single()
 
       if (groupError) {
-        console.error('Error creating group:', groupError)
         continue
       }
 
@@ -87,7 +86,7 @@ export async function POST(request: Request) {
         .select()
 
       if (guestsError) {
-        console.error('Error creating guests for group:', guestsError)
+        // Failed to create guests for this group
       } else {
         totalGuestsCreated += guests.length
       }
@@ -99,7 +98,6 @@ export async function POST(request: Request) {
       guestCount: totalGuestsCreated
     })
   } catch (error) {
-    console.error('Bulk guest groups POST - Exception:', error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
