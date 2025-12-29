@@ -1,10 +1,10 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server"
+import { getWeddingByDateAndNameId } from "./wedding-data"
 
 // RSVP related functions
 export interface RSVP {
   id: string
-  date_id: string
-  wedding_name_id: string
+  wedding_id: string
   guest_name: string
   guest_email: string
   attending: string
@@ -15,13 +15,18 @@ export interface RSVP {
 }
 
 export async function getRSVPsByDateAndNameId(dateId: string, weddingNameId: string): Promise<RSVP[]> {
+  // First, get the wedding to obtain the UUID
+  const wedding = await getWeddingByDateAndNameId(dateId, weddingNameId)
+  if (!wedding) {
+    return []
+  }
+
   const supabase = await createServerSupabaseClient()
   
   const { data, error } = await supabase
     .from('rsvps')
     .select('*')
-    .eq('date_id', dateId)
-    .eq('wedding_name_id', weddingNameId)
+    .eq('wedding_id', wedding.id)
     .order('submitted_at', { ascending: false })
 
   if (error || !data) {
@@ -61,8 +66,7 @@ export async function getRSVPStats(weddingId: string) {
 // Gallery functions
 export interface GalleryAlbum {
   id: string
-  date_id: string
-  wedding_name_id: string
+  wedding_id: string
   name: string
   description: string | null
   cover_photo_url: string | null
@@ -74,8 +78,7 @@ export interface GalleryAlbum {
 export interface GalleryPhoto {
   id: string
   album_id: string
-  date_id: string
-  wedding_name_id: string
+  wedding_id: string
   title: string | null
   description: string | null
   photo_url: string
@@ -86,13 +89,18 @@ export interface GalleryPhoto {
 }
 
 export async function getGalleryAlbumsByDateAndNameId(dateId: string, weddingNameId: string): Promise<GalleryAlbum[]> {
+  // First, get the wedding to obtain the UUID
+  const wedding = await getWeddingByDateAndNameId(dateId, weddingNameId)
+  if (!wedding) {
+    return []
+  }
+
   const supabase = await createServerSupabaseClient()
   
   const { data, error } = await supabase
     .from('gallery_albums')
     .select('*')
-    .eq('date_id', dateId)
-    .eq('wedding_name_id', weddingNameId)
+    .eq('wedding_id', wedding.id)
     .eq('is_public', true)
     .order('display_order', { ascending: true })
 
@@ -131,8 +139,7 @@ export async function getPhotosByAlbumId(albumId: string): Promise<GalleryPhoto[
 // FAQ functions
 export interface WeddingFAQ {
   id: string
-  date_id: string
-  wedding_name_id: string
+  wedding_id: string
   question: string
   answer: string
   display_order: number
@@ -141,13 +148,18 @@ export interface WeddingFAQ {
 }
 
 export async function getFAQsByDateAndNameId(dateId: string, weddingNameId: string): Promise<WeddingFAQ[]> {
+  // First, get the wedding to obtain the UUID
+  const wedding = await getWeddingByDateAndNameId(dateId, weddingNameId)
+  if (!wedding) {
+    return []
+  }
+
   const supabase = await createServerSupabaseClient()
   
   const { data, error } = await supabase
     .from('wedding_faqs')
     .select('*')
-    .eq('date_id', dateId)
-    .eq('wedding_name_id', weddingNameId)
+    .eq('wedding_id', wedding.id)
     .eq('is_visible', true)
     .order('display_order', { ascending: true })
 
@@ -170,8 +182,7 @@ export async function getFAQsByWeddingId(weddingId: string): Promise<WeddingFAQ[
 // Schedule functions
 export interface WeddingSchedule {
   id: string
-  date_id: string
-  wedding_name_id: string
+  wedding_id: string
   event_name: string
   event_time: string
   event_description: string | null
@@ -180,13 +191,18 @@ export interface WeddingSchedule {
 }
 
 export async function getScheduleByDateAndNameId(dateId: string, weddingNameId: string): Promise<WeddingSchedule[]> {
+  // First, get the wedding to obtain the UUID
+  const wedding = await getWeddingByDateAndNameId(dateId, weddingNameId)
+  if (!wedding) {
+    return []
+  }
+
   const supabase = await createServerSupabaseClient()
   
   const { data, error } = await supabase
     .from('wedding_schedule')
     .select('*')
-    .eq('date_id', dateId)
-    .eq('wedding_name_id', weddingNameId)
+    .eq('wedding_id', wedding.id)
     .order('event_time', { ascending: true })
 
   if (error || !data) {

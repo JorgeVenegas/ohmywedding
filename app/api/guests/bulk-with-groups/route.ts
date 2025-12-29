@@ -15,11 +15,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "weddingId is required" }, { status: 400 })
     }
 
+    const decodedWeddingId = decodeURIComponent(weddingId)
+
     // Check if user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     if (!user) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
+    }
+
+    // Get the wedding UUID from the wedding_name_id
+    const { data: wedding, error: weddingError } = await supabase
+      .from('weddings')
+      .select('id')
+      .eq('wedding_name_id', decodedWeddingId)
+      .single()
+    
+    if (weddingError || !wedding) {
+      return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
     }
 
     if (!body.guests || !Array.isArray(body.guests)) {
@@ -30,7 +43,7 @@ export async function POST(request: Request) {
     const { data: existingGroups, error: groupsError } = await supabase
       .from("guest_groups")
       .select("id, name")
-      .eq("wedding_id", weddingId)
+      .eq("wedding_id", wedding.id)
 
     if (groupsError) {
       console.error('Error fetching existing groups:', groupsError)
@@ -60,7 +73,7 @@ export async function POST(request: Request) {
       const { data: newGroup, error: createError } = await supabase
         .from("guest_groups")
         .insert([{
-          wedding_id: weddingId,
+          wedding_id: wedding.id,
           name: groupName,
           phone_number: null,
           tags: [],
@@ -98,7 +111,7 @@ export async function POST(request: Request) {
         const groupId = groupMap.get(groupName.toLowerCase())
         
         return {
-          wedding_id: weddingId,
+          wedding_id: wedding.id,
           guest_group_id: groupId || null,
           name: guest.name.trim(),
           phone_number: guest.phoneNumber || null,

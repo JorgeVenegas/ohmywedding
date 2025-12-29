@@ -16,12 +16,25 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "weddingId is required" }, { status: 400 })
     }
 
+    const decodedWeddingId = decodeURIComponent(weddingId)
+
     const supabase = await createServerSupabaseClient()
+    
+    // First, get the wedding UUID from the wedding_name_id
+    const { data: wedding, error: weddingError } = await supabase
+      .from('weddings')
+      .select('id')
+      .eq('wedding_name_id', decodedWeddingId)
+      .single()
+    
+    if (weddingError || !wedding) {
+      return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
+    }
     
     let query = supabase
       .from("guests")
       .select("*")
-      .eq("wedding_id", weddingId)
+      .eq("wedding_id", wedding.id)
       .order("created_at", { ascending: true })
 
     if (groupId) {
@@ -56,6 +69,19 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "weddingId is required" }, { status: 400 })
       }
       
+      const decodedWeddingId = decodeURIComponent(weddingId)
+      
+      // Get the wedding UUID from the wedding_name_id
+      const { data: wedding, error: weddingError } = await supabase
+        .from('weddings')
+        .select('id')
+        .eq('wedding_name_id', decodedWeddingId)
+        .single()
+      
+      if (weddingError || !wedding) {
+        return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
+      }
+      
       const guestsToInsert = body.guests.map((guest: {
         name: string
         phoneNumber?: string
@@ -67,7 +93,7 @@ export async function POST(request: Request) {
         guestGroupId?: string
         invitedBy?: string[]
       }) => ({
-        wedding_id: weddingId,
+        wedding_id: wedding.id,
         guest_group_id: guest.guestGroupId || null,
         name: guest.name,
         phone_number: guest.phoneNumber || null,
@@ -98,9 +124,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "weddingId is required" }, { status: 400 })
     }
 
+    const decodedWeddingId = decodeURIComponent(weddingId)
+
+    // Get the wedding UUID from the wedding_name_id
+    const { data: wedding, error: weddingError } = await supabase
+      .from('weddings')
+      .select('id')
+      .eq('wedding_name_id', decodedWeddingId)
+      .single()
+    
+    if (weddingError || !wedding) {
+      return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
+    }
+
     const { data, error } = await supabase.from("guests").insert([
       {
-        wedding_id: weddingId,
+        wedding_id: wedding.id,
         guest_group_id: body.guestGroupId || null,
         name: body.name,
         phone_number: body.phoneNumber || null,

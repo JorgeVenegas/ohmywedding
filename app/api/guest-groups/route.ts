@@ -14,7 +14,20 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "weddingId is required" }, { status: 400 })
     }
 
+    const decodedWeddingId = decodeURIComponent(weddingId)
+
     const supabase = await createServerSupabaseClient()
+    
+    // First, get the wedding UUID from the wedding_name_id
+    const { data: wedding, error: weddingError } = await supabase
+      .from('weddings')
+      .select('id')
+      .eq('wedding_name_id', decodedWeddingId)
+      .single()
+    
+    if (weddingError || !wedding) {
+      return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
+    }
     
     const { data, error } = await supabase
       .from("guest_groups")
@@ -22,7 +35,7 @@ export async function GET(request: Request) {
         *,
         guests (*)
       `)
-      .eq("wedding_id", weddingId)
+      .eq("wedding_id", wedding.id)
       .order("created_at", { ascending: true })
 
     if (error) {
@@ -46,6 +59,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "weddingId is required" }, { status: 400 })
     }
 
+    const decodedWeddingId = decodeURIComponent(weddingId)
+
     // Debug: Check if user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -57,8 +72,13 @@ export async function POST(request: Request) {
     const { data: wedding, error: weddingError } = await supabase
       .from('weddings')
       .select('id, owner_id, collaborator_emails')
-      .eq('id', weddingId)
+      .eq('wedding_name_id', decodedWeddingId)
       .single()
+    
+    if (weddingError) {
+      console.error('Wedding lookup error:', weddingError)
+      return NextResponse.json({ error: `Wedding lookup failed: ${weddingError.message}` }, { status: 500 })
+    }
     
     if (!wedding) {
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
@@ -66,7 +86,7 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabase.from("guest_groups").insert([
       {
-        wedding_id: weddingId,
+        wedding_id: wedding.id,
         name: body.name,
         phone_number: body.phoneNumber || null,
         tags: body.tags || [],
@@ -76,12 +96,17 @@ export async function POST(request: Request) {
     ]).select().single()
 
     if (error) {
+      console.error('Guest group insert error:', error)
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
     return NextResponse.json({ success: true, data })
   } catch (error) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error('Guest group POST error:', error)
+    return NextResponse.json({ 
+      error: "Internal server error",
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 })
   }
 }
 
