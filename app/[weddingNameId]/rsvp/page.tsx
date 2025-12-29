@@ -23,8 +23,14 @@ export default function RSVPPage({ params }: RSVPPageProps) {
             weddingNameId={weddingNameId}
             groupId={groupId}
             theme={{
-              primaryColor: '#000000',
-              secondaryColor: '#ffffff'
+              colors: {
+                primary: '#000000',
+                secondary: '#666666',
+                accent: '#999999',
+                background: '#ffffff',
+                foreground: '#000000',
+                muted: '#f5f5f5'
+              }
             }}
             alignment={{
               horizontal: 'center' as const,
@@ -34,6 +40,7 @@ export default function RSVPPage({ params }: RSVPPageProps) {
             sectionSubtitle="Please confirm your attendance"
             variant="elegant"
             showVariantSwitcher={false}
+            dateId=""
           />
         </main>
         <WeddingFooter />

@@ -2311,11 +2311,17 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                 <div className="flex items-center justify-center gap-2">
                                   {/* Status Indicator */}
                                   {allGuestsInvited ? (
-                                    <MailCheck className="w-3.5 h-3.5 text-green-600" title="All invites sent" />
+                                    <span title="All invites sent">
+                                      <MailCheck className="w-3.5 h-3.5 text-green-600" />
+                                    </span>
                                   ) : someGuestsInvited ? (
-                                    <Mail className="w-3.5 h-3.5 text-amber-600" title="Partial invites sent" />
+                                    <span title="Partial invites sent">
+                                      <Mail className="w-3.5 h-3.5 text-amber-600" />
+                                    </span>
                                   ) : (
-                                    <Mail className="w-3.5 h-3.5 text-gray-400" title="No invites sent" />
+                                    <span title="No invites sent">
+                                      <Mail className="w-3.5 h-3.5 text-gray-400" />
+                                    </span>
                                   )}
                                   
                                   <div className="w-px h-4 bg-border" />

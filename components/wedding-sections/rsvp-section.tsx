@@ -41,8 +41,6 @@ export function RSVPSection({
 }: RSVPSectionProps) {
   const { t } = useI18n()
   
-  console.log('[RSVPSection] Props:', { variant, groupId, weddingNameId })
-  
   // Use standardized section behavior
   const {
     activeVariant: actualVariant,
@@ -51,8 +49,6 @@ export function RSVPSection({
     setVariant,
     handleEditClick
   } = useSectionVariants('rsvp', 'rsvp', variant, variant, showVariantSwitcher)
-  
-  console.log('[RSVPSection] Active variant:', actualVariant)
 
   // Define variants
   const rsvpVariants: VariantOption[] = [
