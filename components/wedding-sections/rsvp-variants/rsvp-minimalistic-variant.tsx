@@ -102,21 +102,6 @@ export function RSVPMinimalisticVariant({
   }
 
   const handleSubmitClick = () => {
-    // Validate travel requirements for confirmed guests
-    for (const guest of guests) {
-      if (guest.attending === true && guest.is_traveling) {
-        // If they selected "will buy ticket", must upload ticket
-        if (guest.travel_arrangement === 'will_buy_ticket' && !guest.ticket_attachment_url) {
-          setSubmitError(t('rsvp.ticketRequired'))
-          return
-        }
-        // If they selected "no ticket needed", must provide reason
-        if (guest.travel_arrangement === 'no_ticket_needed' && !guest.no_ticket_reason) {
-          setSubmitError(`${guest.name}: ${t('rsvp.ticketRequired')}`)
-          return
-        }
-      }
-    }
     setShowOTPDialog(true)
   }
 
@@ -231,14 +216,6 @@ export function RSVPMinimalisticVariant({
                 </div>
               ))}
             </div>
-
-            <button
-              onClick={() => setIsEditing(true)}
-              className="w-full py-3 rounded-lg font-medium text-white transition-all hover:opacity-90"
-              style={{ backgroundColor: titleColor }}
-            >
-              {t('rsvp.editResponse')}
-            </button>
           </div>
         </div>
       </SectionWrapper>

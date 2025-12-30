@@ -139,17 +139,6 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
       </div>
         )}
 
-        {/* Login Button - show if user is not logged in and can't edit */}
-        {!authLoading && !permissionsLoading && !canEdit && !user && (
-          <Link
-            href={`/login?redirect=${encodeURIComponent('/' + (weddingNameId || ''))}`}
-            className="flex items-center gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full font-medium shadow-lg bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 transition-all duration-300 hover:shadow-xl hover:scale-105"
-          >
-            <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span className="text-xs sm:text-sm font-medium">{t('editing.signInToEdit')}</span>
-          </Link>
-        )}
-
       {/* Viewport Toggle - visible on larger screens */}
       {toggleViewport && canEdit && (
         <div className="hidden lg:flex items-center gap-2">

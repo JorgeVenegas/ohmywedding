@@ -22,6 +22,7 @@ export function formatWeddingDate(dateString: string | null | undefined, locale:
   if (isNaN(date.getTime())) return locale === 'es' ? 'Fecha por confirmar' : 'Date TBD'
   
   return date.toLocaleDateString(localeMap[locale], {
+    weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric'

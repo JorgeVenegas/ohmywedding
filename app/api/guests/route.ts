@@ -195,7 +195,7 @@ export async function PUT(request: Request) {
         travel_arrangement: body.travelArrangement || null,
         ticket_attachment_url: body.ticketAttachmentUrl || null,
         no_ticket_reason: body.noTicketReason || null,
-        admin_set_travel: body.isTraveling === true, // Mark as admin-set when admin updates
+        admin_set_travel: body.adminSetTravel !== undefined ? body.adminSetTravel : (body.isTraveling === true),
         updated_at: new Date().toISOString(),
       })
       .eq("id", body.id)

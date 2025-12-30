@@ -1023,23 +1023,23 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       
       if (guestsToUpdate.length === 0) return
       
-      // Build updates object
+      // Build updates object - use camelCase for API
       const updates: any = {
-        is_traveling: groupTravelForm.isTraveling,
-        admin_set_travel: true,
+        isTraveling: groupTravelForm.isTraveling,
+        adminSetTravel: true,
       }
       
       if (groupTravelForm.isTraveling) {
-        updates.traveling_from = groupTravelForm.travelingFrom || null
-        updates.travel_arrangement = groupTravelForm.travelArrangement
-        updates.no_ticket_reason = groupTravelForm.travelArrangement === 'no_ticket_needed' 
+        updates.travelingFrom = groupTravelForm.travelingFrom || null
+        updates.travelArrangement = groupTravelForm.travelArrangement || null
+        updates.noTicketReason = groupTravelForm.travelArrangement === 'no_ticket_needed' 
           ? groupTravelForm.noTicketReason 
           : null
       } else {
-        updates.traveling_from = null
-        updates.travel_arrangement = null
-        updates.no_ticket_reason = null
-        updates.ticket_attachment_url = null
+        updates.travelingFrom = null
+        updates.travelArrangement = null
+        updates.noTicketReason = null
+        updates.ticketAttachmentUrl = null
       }
       
       // Update all guests
@@ -1051,11 +1051,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             id: guest.id,
             name: guest.name,
             phoneNumber: guest.phone_number,
+            email: guest.email,
             tags: guest.tags || [],
             guestGroupId: guest.guest_group_id,
             confirmationStatus: guest.confirmation_status,
             dietaryRestrictions: guest.dietary_restrictions,
             notes: guest.notes,
+            invitedBy: guest.invited_by || [],
             ...updates,
           }),
         })
@@ -2626,7 +2628,69 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                             )}
                             {visibleColumns.travelInfo && (
                               <td className="px-3 py-2">
-                                <span className="text-muted-foreground text-[10px]">-</span>
+                                {(() => {
+                                  const travelingGuests = group.guests.filter(g => g.is_traveling)
+                                  if (travelingGuests.length === 0) {
+                                    return <span className="text-muted-foreground text-[10px]">-</span>
+                                  }
+                                  
+                                  const willBuyTicket = travelingGuests.some(g => g.travel_arrangement === 'will_buy_ticket')
+                                  const noTicketNeeded = travelingGuests.some(g => g.travel_arrangement === 'no_ticket_needed')
+                                  const hasTicketUploaded = travelingGuests.some(g => g.ticket_attachment_url)
+                                  
+                                  return (
+                                    <TooltipProvider>
+                                      <div className="flex items-center gap-1">
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 border border-blue-200 cursor-help">
+                                              <Plane className="w-3 h-3 text-blue-700" />
+                                            </div>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p>{travelingGuests.length} guest{travelingGuests.length > 1 ? 's' : ''} traveling</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                        {willBuyTicket && (
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 border border-blue-200 cursor-help">
+                                                <Ticket className="w-3 h-3 text-blue-700" />
+                                              </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                              <p>Some guests will purchase tickets</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        )}
+                                        {noTicketNeeded && (
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-purple-100 border border-purple-200 cursor-help">
+                                                <X className="w-3 h-3 text-purple-700" />
+                                              </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                              <p>Some guests don't need tickets</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        )}
+                                        {hasTicketUploaded && (
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 border border-green-200 cursor-help">
+                                                <Check className="w-3 h-3 text-green-700" />
+                                              </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                              <p>Some guests have uploaded tickets</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        )}
+                                      </div>
+                                    </TooltipProvider>
+                                  )
+                                })()}
                               </td>
                             )}
                             <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
@@ -2809,7 +2873,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                     )}
                                     {visibleColumns.travelInfo && (
                                       <td className="px-3 py-2">
-                                        {guest.confirmation_status === 'confirmed' && guest.is_traveling ? (
+                                        {guest.is_traveling ? (
                                           <TooltipProvider>
                                             <div className="flex items-center gap-1">
                                               <Tooltip>
@@ -2975,6 +3039,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                           {visibleColumns.tags && <td className="px-3 py-2">-</td>}
                           {visibleColumns.invitedBy && <td className="px-3 py-2">-</td>}
                           {visibleColumns.inviteSent && <td className="px-3 py-2">-</td>}
+                          {visibleColumns.travelInfo && <td className="px-3 py-2">-</td>}
                           <td className="px-3 py-2"></td>
                         </tr>
                         {showUngroupedExpanded && ungroupedGuests.map((guest) => (
@@ -3060,6 +3125,66 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                   >
                                     <Send className="w-3 h-3" />
                                   </Button>
+                                )}
+                              </td>
+                            )}
+                            {visibleColumns.travelInfo && (
+                              <td className="px-3 py-2">
+                                {guest.is_traveling ? (
+                                  <TooltipProvider>
+                                    <div className="flex items-center gap-1">
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 border border-blue-200 cursor-help">
+                                            <Plane className="w-3 h-3 text-blue-700" />
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Guest is traveling{guest.traveling_from ? ` from ${guest.traveling_from}` : ''}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                      {guest.travel_arrangement === 'will_buy_ticket' && (
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 border border-blue-200 cursor-help">
+                                              <Ticket className="w-3 h-3 text-blue-700" />
+                                            </div>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p>Travel arrangement: Will purchase ticket</p>
+                                            <p className="text-xs opacity-80">(verification required)</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      )}
+                                      {guest.travel_arrangement === 'no_ticket_needed' && (
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-purple-100 border border-purple-200 cursor-help">
+                                              <X className="w-3 h-3 text-purple-700" />
+                                            </div>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p>Travel arrangement: No ticket needed</p>
+                                            {guest.no_ticket_reason && <p className="text-xs opacity-80 mt-1">{guest.no_ticket_reason}</p>}
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      )}
+                                      {guest.ticket_attachment_url && (
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 border border-green-200 cursor-help">
+                                              <Check className="w-3 h-3 text-green-700" />
+                                            </div>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p>Travel ticket uploaded and verified</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      )}
+                                    </div>
+                                  </TooltipProvider>
+                                ) : (
+                                  <span className="text-muted-foreground text-[10px]">-</span>
                                 )}
                               </td>
                             )}
@@ -4221,7 +4346,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Travel arrangement</label>
+                      <label className="text-sm font-medium mb-2 block">Travel arrangement <span className="text-muted-foreground">(optional)</span></label>
                       <div className="space-y-2">
                         <button
                           onClick={() => setGroupTravelForm(prev => ({ ...prev, travelArrangement: 'will_buy_ticket' }))}
@@ -4256,6 +4381,15 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                             </div>
                           </div>
                         </button>
+                        
+                        {groupTravelForm.travelArrangement && (
+                          <button
+                            onClick={() => setGroupTravelForm(prev => ({ ...prev, travelArrangement: null }))}
+                            className="w-full p-2 rounded-lg border border-border hover:bg-muted transition-colors text-sm text-muted-foreground"
+                          >
+                            Clear selection
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -4288,8 +4422,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                   onClick={handleSetGroupTravel}
                   disabled={
                     groupTravelForm.isTraveling && 
-                    (!groupTravelForm.travelArrangement || 
-                      (groupTravelForm.travelArrangement === 'no_ticket_needed' && !groupTravelForm.noTicketReason.trim()))
+                    groupTravelForm.travelArrangement === 'no_ticket_needed' && 
+                    !groupTravelForm.noTicketReason.trim()
                   }
                 >
                   <Check className="w-4 h-4 mr-2" />

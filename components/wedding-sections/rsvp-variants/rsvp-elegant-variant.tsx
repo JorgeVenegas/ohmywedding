@@ -142,22 +142,6 @@ export function RSVPElegantVariant({
       return
     }
 
-    // Validate travel requirements for confirmed guests
-    for (const guest of guests) {
-      if (guest.attending === true && guest.is_traveling) {
-        // If they selected "will buy ticket", must upload ticket
-        if (guest.travel_arrangement === 'will_buy_ticket' && !guest.ticket_attachment_url) {
-          setSubmitError(t('rsvp.ticketRequired'))
-          return
-        }
-        // If they selected "no ticket needed", must provide reason
-        if (guest.travel_arrangement === 'no_ticket_needed' && !guest.no_ticket_reason) {
-          setSubmitError(`${guest.name}: ${t('rsvp.ticketRequired')}`)
-          return
-        }
-      }
-    }
-
     // Open OTP dialog
     setShowOTPDialog(true)
   }
@@ -277,17 +261,6 @@ export function RSVPElegantVariant({
                     </div>
                   ))}
                 </div>
-
-                <Button
-                  onClick={() => setIsEditing(true)}
-                  className="mt-6 px-8 py-3 rounded-full font-medium text-white transition-all duration-300 hover:scale-105 hover:shadow-xl"
-                  style={{ 
-                    backgroundColor: titleColor,
-                    color: 'white'
-                  }}
-                >
-                  {t('rsvp.editResponse')}
-                </Button>
               </div>
             </div>
           </div>
