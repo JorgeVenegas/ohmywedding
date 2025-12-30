@@ -186,19 +186,22 @@ export function OTPVerificationDialog({
                         setSelectedPhone(phone)
                         setError('')
                       }}
-                      className={`w-full px-4 py-3 rounded-lg border-2 text-center font-medium transition-all ${
+                      className={`w-full px-4 py-4 rounded-lg border-2 text-center font-semibold transition-all duration-200 ${
                         selectedPhone === phone 
-                          ? 'ring-2 ring-offset-2' 
-                          : 'hover:border-opacity-70'
+                          ? 'scale-[1.02] shadow-lg' 
+                          : 'hover:scale-[1.01] opacity-60 hover:opacity-80'
                       }`}
                       style={{
-                        borderColor: buttonColor,
-                        color: selectedPhone === phone ? 'white' : textColor,
-                        backgroundColor: selectedPhone === phone ? buttonColor : `${buttonColor}10`,
-                        ringColor: buttonColor
+                        borderColor: selectedPhone === phone ? buttonColor : `${buttonColor}40`,
+                        color: selectedPhone === phone ? 'white' : `${textColor}99`,
+                        backgroundColor: selectedPhone === phone ? buttonColor : 'transparent',
+                        ...(selectedPhone === phone && { boxShadow: `0 4px 12px ${buttonColor}40, 0 0 0 3px white, 0 0 0 5px ${buttonColor}` })
                       }}
                     >
                       <span className="text-lg tracking-wider">**{getPhoneHint(phone)}</span>
+                      {selectedPhone === phone && (
+                        <span className="ml-2 text-white">✓</span>
+                      )}
                     </button>
                   ))}
                 </div>
