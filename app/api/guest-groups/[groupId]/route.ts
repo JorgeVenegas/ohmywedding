@@ -30,7 +30,13 @@ export async function GET(
         id,
         name,
         phone_number,
-        confirmation_status
+        confirmation_status,
+        is_traveling,
+        traveling_from,
+        travel_arrangement,
+        ticket_attachment_url,
+        no_ticket_reason,
+        admin_set_travel
       `)
       .eq("guest_group_id", groupId)
       .order("name")
@@ -48,7 +54,13 @@ export async function GET(
       name: guest.name,
       phone_number: guest.phone_number,
       attending: guest.confirmation_status === 'confirmed' ? true : 
-                 guest.confirmation_status === 'declined' ? false : null
+                 guest.confirmation_status === 'declined' ? false : null,
+      is_traveling: guest.is_traveling,
+      traveling_from: guest.traveling_from,
+      travel_arrangement: guest.travel_arrangement,
+      ticket_attachment_url: guest.ticket_attachment_url,
+      no_ticket_reason: guest.no_ticket_reason,
+      admin_set_travel: guest.admin_set_travel || false
     })) || []
 
     // Check if all guests have responded

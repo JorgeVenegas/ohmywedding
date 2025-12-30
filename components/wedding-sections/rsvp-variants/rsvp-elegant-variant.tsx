@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { OTPVerificationDialog } from '@/components/ui/otp-verification-dialog'
+import { TravelFields } from '@/components/ui/travel-fields'
 import { Heart, Sparkles } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseRSVPProps, getColorScheme } from './types'
@@ -14,6 +15,12 @@ interface GuestInfo {
   id: string
   name: string
   attending: boolean | null
+  is_traveling?: boolean
+  traveling_from?: string
+  travel_arrangement?: 'will_buy_ticket' | 'no_ticket_needed' | null
+  ticket_attachment_url?: string | null
+  no_ticket_reason?: string
+  adminSetTravel?: boolean // Track if admin pre-set travel status
 }
 
 interface GroupData {
@@ -79,13 +86,25 @@ export function RSVPElegantVariant({
         const data = await response.json()
         setGroupData(data)
         
+        console.log('[DEBUG] Guest data from API:', data.guests)
+        console.log('[DEBUG] hasSubmitted:', data.hasSubmitted)
+        
         // Set guests with their existing RSVP status
         setGuests(
-          data.guests.map((g: any) => ({
-            id: g.id,
-            name: g.name,
-            attending: g.attending,
-          }))
+          data.guests.map((g: any) => {
+            console.log('[DEBUG] Guest:', g.name, '| is_traveling:', g.is_traveling, '| hasSubmitted:', data.hasSubmitted, '| admin_set_travel:', g.admin_set_travel)
+            return {
+              id: g.id,
+              name: g.name,
+              attending: g.attending,
+              is_traveling: g.is_traveling || false,
+              traveling_from: g.traveling_from || '',
+              travel_arrangement: g.travel_arrangement || null,
+              ticket_attachment_url: g.ticket_attachment_url || null,
+              no_ticket_reason: g.no_ticket_reason || '',
+              adminSetTravel: g.admin_set_travel || false
+            }
+          })
         )
         
         // If all guests have responded, show submitted state
@@ -123,6 +142,22 @@ export function RSVPElegantVariant({
       return
     }
 
+    // Validate travel requirements for confirmed guests
+    for (const guest of guests) {
+      if (guest.attending === true && guest.is_traveling) {
+        // If they selected "will buy ticket", must upload ticket
+        if (guest.travel_arrangement === 'will_buy_ticket' && !guest.ticket_attachment_url) {
+          setSubmitError(t('rsvp.ticketRequired'))
+          return
+        }
+        // If they selected "no ticket needed", must provide reason
+        if (guest.travel_arrangement === 'no_ticket_needed' && !guest.no_ticket_reason) {
+          setSubmitError(`${guest.name}: ${t('rsvp.ticketRequired')}`)
+          return
+        }
+      }
+    }
+
     // Open OTP dialog
     setShowOTPDialog(true)
   }
@@ -143,6 +178,11 @@ export function RSVPElegantVariant({
           guests: guests.map(g => ({
             guestId: g.id,
             attending: g.attending,
+            is_traveling: g.is_traveling,
+            traveling_from: g.traveling_from,
+            travel_arrangement: g.travel_arrangement,
+            ticket_attachment_url: g.ticket_attachment_url,
+            no_ticket_reason: g.no_ticket_reason
           })),
           message
         })
@@ -429,6 +469,50 @@ export function RSVPElegantVariant({
                         {t('rsvp.decline')}
                       </button>
                     </div>
+                    
+                    {/* Travel Fields - only show if attending */}
+                    {guest.attending === true && (
+                      <div className="pl-14 pt-2">
+                        <TravelFields
+                          guestId={guest.id}
+                          guestName={guest.name}
+                          weddingNameId={weddingNameId}
+                          isTraveling={guest.is_traveling || false}
+                          travelingFrom={guest.traveling_from || ''}
+                          travelArrangement={guest.travel_arrangement || null}
+                          ticketUrl={guest.ticket_attachment_url || null}
+                          noTicketReason={guest.no_ticket_reason || ''}
+                          adminSetTravel={guest.adminSetTravel || false}
+                          onTravelChange={(isTraveling) => {
+                            setGuests(guests.map(g => 
+                              g.id === guest.id ? { ...g, is_traveling: isTraveling } : g
+                            ))
+                          }}
+                          onTravelingFromChange={(location) => {
+                            setGuests(guests.map(g => 
+                              g.id === guest.id ? { ...g, traveling_from: location } : g
+                            ))
+                          }}
+                          onTravelArrangementChange={(arrangement) => {
+                            setGuests(guests.map(g => 
+                              g.id === guest.id ? { ...g, travel_arrangement: arrangement } : g
+                            ))
+                          }}
+                          onTicketUpload={(url) => {
+                            setGuests(guests.map(g => 
+                              g.id === guest.id ? { ...g, ticket_attachment_url: url } : g
+                            ))
+                          }}
+                          onNoTicketReasonChange={(reason) => {
+                            setGuests(guests.map(g => 
+                              g.id === guest.id ? { ...g, no_ticket_reason: reason } : g
+                            ))
+                          }}
+                          primaryColor={theme?.colors?.accent || titleColor}
+                          textColor={textColor}
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

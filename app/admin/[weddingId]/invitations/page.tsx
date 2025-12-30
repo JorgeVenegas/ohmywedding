@@ -7,6 +7,12 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -46,7 +52,10 @@ import {
   UserCheck,
   MoreVertical,
   Copy,
-  Link
+  Link,
+  FileText,
+  Plane,
+  Ticket
 } from "lucide-react"
 
 interface Guest {
@@ -63,6 +72,13 @@ interface Guest {
   invitation_sent: boolean
   invitation_sent_at: string | null
   created_at: string
+  attending?: boolean | null
+  is_traveling?: boolean
+  traveling_from?: string | null
+  travel_arrangement?: 'will_buy_ticket' | 'no_ticket_needed' | null
+  ticket_attachment_url?: string | null
+  no_ticket_reason?: string | null
+  admin_set_travel?: boolean
 }
 
 interface GuestGroup {
@@ -135,17 +151,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   
   // Column visibility state - initialized from localStorage
   const [visibleColumns, setVisibleColumns] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(`invitations-columns-${weddingId}`)
-      if (saved) {
-        try {
-          return JSON.parse(saved)
-        } catch {
-          // Fall through to default
-        }
-      }
-    }
-    return {
+    const defaultColumns = {
       phone: true,
       group: true,
       tags: true,
@@ -153,7 +159,27 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       dietary: true,
       invitedBy: true,
       inviteSent: true,
+      travelInfo: true,
     }
+    
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`invitations-columns-${weddingId}`)
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved)
+          // Check if the saved config has the new structure (travelInfo instead of old travel columns)
+          if (parsed.hasOwnProperty('travelInfo')) {
+            return parsed
+          }
+          // Old structure detected, clear it and use defaults
+          localStorage.removeItem(`invitations-columns-${weddingId}`)
+        } catch {
+          // Invalid data, clear it
+          localStorage.removeItem(`invitations-columns-${weddingId}`)
+        }
+      }
+    }
+    return defaultColumns
   })
   const [showColumnMenu, setShowColumnMenu] = useState(false)
   
@@ -246,6 +272,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     dietaryRestrictions: "",
     notes: "",
     invitedBy: [] as string[],
+    isTraveling: false,
+    travelingFrom: "",
+    travelArrangement: null as 'will_buy_ticket' | 'no_ticket_needed' | null,
+    ticketAttachmentUrl: null as string | null,
+    noTicketReason: "",
   })
   
   // State for creating a new group from guest form
@@ -476,6 +507,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           dietaryRestrictions: guestForm.dietaryRestrictions || null,
           notes: guestForm.notes || null,
           invitedBy: guestForm.invitedBy,
+          isTraveling: guestForm.isTraveling,
+          travelingFrom: guestForm.travelingFrom || null,
+          travelArrangement: guestForm.travelArrangement || null,
         }),
       })
       
@@ -510,6 +544,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           dietaryRestrictions: guestForm.dietaryRestrictions || null,
           notes: guestForm.notes || null,
           invitedBy: guestForm.invitedBy,
+          isTraveling: guestForm.isTraveling,
+          travelingFrom: guestForm.travelingFrom || null,
+          travelArrangement: guestForm.travelArrangement || null,
+          ticketAttachmentUrl: guestForm.ticketAttachmentUrl || null,
+          noTicketReason: guestForm.noTicketReason || null,
         }),
       })
       
@@ -591,6 +630,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       dietaryRestrictions: "",
       notes: "",
       invitedBy: [],
+      isTraveling: false,
+      travelingFrom: "",
+      travelArrangement: null,
+      ticketAttachmentUrl: null,
+      noTicketReason: "",
     })
     setIsCreatingNewGroup(false)
     setNewGroupNameForGuest("")
@@ -616,6 +660,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       dietaryRestrictions: guest.dietary_restrictions || "",
       notes: guest.notes || "",
       invitedBy: guest.invited_by || [],
+      isTraveling: guest.is_traveling || false,
+      travelingFrom: guest.traveling_from || "",
+      travelArrangement: guest.travel_arrangement || null,
+      ticketAttachmentUrl: guest.ticket_attachment_url || null,
+      noTicketReason: guest.no_ticket_reason || "",
     })
     setSelectedGroupId(guest.guest_group_id)
     setEditingGuest(guest)
@@ -1799,7 +1848,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               </Button>
               {showColumnMenu && (
                 <div className="absolute top-full left-0 mt-1 bg-background border border-border rounded-md shadow-lg z-10 min-w-[140px]">
-                  {(['phone', 'group', 'tags', 'status', 'dietary', 'invitedBy', 'inviteSent'] as const).map((key) => (
+                  {(['phone', 'group', 'tags', 'status', 'dietary', 'invitedBy', 'inviteSent', 'travelInfo'] as const).map((key) => (
                     <button
                       key={key}
                       className="w-full px-3 py-1.5 text-left text-xs hover:bg-muted flex items-center gap-2"
@@ -1808,7 +1857,12 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                       <div className={`w-3.5 h-3.5 border rounded flex items-center justify-center ${visibleColumns[key] ? 'bg-primary border-primary' : 'border-border'}`}>
                         {visibleColumns[key] && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
                       </div>
-                      <span className="capitalize">{key === 'inviteSent' ? 'Invite Sent' : key === 'invitedBy' ? 'Invited By' : key}</span>
+                      <span className="capitalize">
+                        {key === 'inviteSent' ? 'Invite Sent' : 
+                         key === 'invitedBy' ? 'Invited By' : 
+                         key === 'travelInfo' ? 'Travel Info' :
+                         key}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -1981,6 +2035,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                           Invite
                         </th>
                       )}
+                      {visibleColumns.travelInfo && (
+                        <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                          Travel Info
+                        </th>
+                      )}
                       <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                         Actions
                       </th>
@@ -2084,6 +2143,66 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                             )}
                           </td>
                         )}
+                        {visibleColumns.travelInfo && (
+                          <td className="px-3 py-2">
+                            {guest.confirmation_status === 'confirmed' && guest.is_traveling ? (
+                              <TooltipProvider>
+                                <div className="flex items-center gap-1">
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 border border-blue-200 cursor-help">
+                                        <Plane className="w-3 h-3 text-blue-700" />
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Guest is traveling{guest.traveling_from ? ` from ${guest.traveling_from}` : ''}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                  {guest.travel_arrangement === 'will_buy_ticket' && (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 border border-blue-200 cursor-help">
+                                          <Ticket className="w-3 h-3 text-blue-700" />
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Travel arrangement: Will purchase ticket</p>
+                                        <p className="text-xs opacity-80">(verification required)</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                  {guest.travel_arrangement === 'no_ticket_needed' && (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-purple-100 border border-purple-200 cursor-help">
+                                          <X className="w-3 h-3 text-purple-700" />
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Travel arrangement: No ticket needed</p>
+                                        {guest.no_ticket_reason && <p className="text-xs opacity-80 mt-1">{guest.no_ticket_reason}</p>}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                  {guest.ticket_attachment_url && (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 border border-green-200 cursor-help">
+                                          <Check className="w-3 h-3 text-green-700" />
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Travel ticket uploaded and verified</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                </div>
+                              </TooltipProvider>
+                            ) : (
+                              <span className="text-muted-foreground text-[10px]">-</span>
+                            )}
+                          </td>
+                        )}
                         <td className="px-3 py-2 text-right">
                           <div className="flex justify-end gap-0.5">
                             <Button
@@ -2168,6 +2287,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                       {visibleColumns.inviteSent && (
                         <th className="px-3 py-2 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                           Invite
+                        </th>
+                      )}
+                      {visibleColumns.travelInfo && (
+                        <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                          Travel Info
                         </th>
                       )}
                       <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -2368,6 +2492,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                 </div>
                               </td>
                             )}
+                            {visibleColumns.travelInfo && (
+                              <td className="px-3 py-2">
+                                <span className="text-muted-foreground text-[10px]">-</span>
+                              </td>
+                            )}
                             <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -2538,6 +2667,66 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                           >
                                             <Send className="w-3 h-3" />
                                           </Button>
+                                        )}
+                                      </td>
+                                    )}
+                                    {visibleColumns.travelInfo && (
+                                      <td className="px-3 py-2">
+                                        {guest.confirmation_status === 'confirmed' && guest.is_traveling ? (
+                                          <TooltipProvider>
+                                            <div className="flex items-center gap-1">
+                                              <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                  <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 border border-blue-200 cursor-help">
+                                                    <Plane className="w-3 h-3 text-blue-700" />
+                                                  </div>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                  <p>Guest is traveling{guest.traveling_from ? ` from ${guest.traveling_from}` : ''}</p>
+                                                </TooltipContent>
+                                              </Tooltip>
+                                              {guest.travel_arrangement === 'will_buy_ticket' && (
+                                                <Tooltip>
+                                                  <TooltipTrigger asChild>
+                                                    <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 border border-blue-200 cursor-help">
+                                                      <Ticket className="w-3 h-3 text-blue-700" />
+                                                    </div>
+                                                  </TooltipTrigger>
+                                                  <TooltipContent>
+                                                    <p>Travel arrangement: Will purchase ticket</p>
+                                                    <p className="text-xs opacity-80">(verification required)</p>
+                                                  </TooltipContent>
+                                                </Tooltip>
+                                              )}
+                                              {guest.travel_arrangement === 'no_ticket_needed' && (
+                                                <Tooltip>
+                                                  <TooltipTrigger asChild>
+                                                    <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-purple-100 border border-purple-200 cursor-help">
+                                                      <X className="w-3 h-3 text-purple-700" />
+                                                    </div>
+                                                  </TooltipTrigger>
+                                                  <TooltipContent>
+                                                    <p>Travel arrangement: No ticket needed</p>
+                                                    {guest.no_ticket_reason && <p className="text-xs opacity-80 mt-1">{guest.no_ticket_reason}</p>}
+                                                  </TooltipContent>
+                                                </Tooltip>
+                                              )}
+                                              {guest.ticket_attachment_url && (
+                                                <Tooltip>
+                                                  <TooltipTrigger asChild>
+                                                    <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 border border-green-200 cursor-help">
+                                                      <Check className="w-3 h-3 text-green-700" />
+                                                    </div>
+                                                  </TooltipTrigger>
+                                                  <TooltipContent>
+                                                    <p>Travel ticket uploaded and verified</p>
+                                                  </TooltipContent>
+                                                </Tooltip>
+                                              )}
+                                            </div>
+                                          </TooltipProvider>
+                                        ) : (
+                                          <span className="text-muted-foreground text-[10px]">-</span>
                                         )}
                                       </td>
                                     )}
@@ -3087,6 +3276,98 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                   ))}
                 </div>
               </div>
+
+              {/* Travel Information Section - Always visible for admin to pre-configure */}
+              <div className="border-t pt-4 space-y-4">
+                <h3 className="text-sm font-semibold text-foreground">Travel Information</h3>
+                
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={guestForm.isTraveling}
+                    onCheckedChange={(checked) => setGuestForm({ ...guestForm, isTraveling: checked })}
+                  />
+                  <label className="text-sm font-medium text-foreground">
+                    Guest is traveling
+                  </label>
+                </div>
+
+                  {guestForm.isTraveling && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">
+                          Traveling From
+                        </label>
+                        <Input
+                          value={guestForm.travelingFrom}
+                          onChange={(e) => setGuestForm({ ...guestForm, travelingFrom: e.target.value })}
+                          placeholder="City or location"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">
+                          Travel Arrangement
+                        </label>
+                        <div className="space-y-2">
+                          <button
+                            type="button"
+                            onClick={() => setGuestForm({ ...guestForm, travelArrangement: 'will_buy_ticket' })}
+                            className={`w-full px-3 py-2 rounded-lg border-2 transition-colors text-sm text-left ${
+                              guestForm.travelArrangement === 'will_buy_ticket'
+                                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                : 'border-border bg-background text-foreground hover:border-primary/50'
+                            }`}
+                          >
+                            Will purchase ticket (requires verification)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setGuestForm({ ...guestForm, travelArrangement: 'no_ticket_needed' })}
+                            className={`w-full px-3 py-2 rounded-lg border-2 transition-colors text-sm text-left ${
+                              guestForm.travelArrangement === 'no_ticket_needed'
+                                ? 'border-purple-500 bg-purple-50 text-purple-700'
+                                : 'border-border bg-background text-foreground hover:border-primary/50'
+                            }`}
+                          >
+                            Does not need ticket (requires reason)
+                          </button>
+                        </div>
+                      </div>
+
+                      {guestForm.travelArrangement === 'no_ticket_needed' && (
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-2">
+                            Reason for No Ticket
+                          </label>
+                          <Input
+                            value={guestForm.noTicketReason}
+                            onChange={(e) => setGuestForm({ ...guestForm, noTicketReason: e.target.value })}
+                            placeholder="e.g., Lives at destination, traveling by car, etc."
+                          />
+                        </div>
+                      )}
+
+                      {guestForm.ticketAttachmentUrl && (
+                        <div className="p-3 bg-muted rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <FileText className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-sm text-foreground">Ticket uploaded</span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-[10px]"
+                              onClick={() => window.open(guestForm.ticketAttachmentUrl!, '_blank')}
+                            >
+                              View
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
 
             </div>
 

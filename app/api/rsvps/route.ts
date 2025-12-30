@@ -53,14 +53,39 @@ export async function POST(request: Request) {
           guest.attending === false ? 'declined' : 
           'pending'
         
+        // Prepare update object with confirmation status and optional travel fields
+        const updateData: any = { 
+          confirmation_status: confirmationStatus 
+        }
+        
+        // Add travel information if provided
+        if (guest.is_traveling !== undefined) {
+          updateData.is_traveling = guest.is_traveling
+        }
+        if (guest.traveling_from) {
+          updateData.traveling_from = guest.traveling_from
+        }
+        if (guest.travel_arrangement) {
+          updateData.travel_arrangement = guest.travel_arrangement
+        }
+        if (guest.ticket_attachment_url !== undefined) {
+          updateData.ticket_attachment_url = guest.ticket_attachment_url
+        }
+        if (guest.no_ticket_reason !== undefined) {
+          updateData.no_ticket_reason = guest.no_ticket_reason
+        }
+        
+        console.log('[RSVP API] Updating guest:', guest.guestId, 'with data:', updateData)
+        
         const { error: updateError } = await supabase
           .from('guests')
-          .update({ confirmation_status: confirmationStatus })
+          .update(updateData)
           .eq('id', guest.guestId)
 
         if (updateError) {
+          console.error('[RSVP API] Update error:', updateError)
           return NextResponse.json(
-            { error: `Failed to update guest ${guest.guestId}` },
+            { error: `Failed to update guest: ${updateError.message}` },
             { status: 500 }
           )
         }
@@ -105,6 +130,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data })
   } catch (error) {
+    console.error('[RSVP API] Unexpected error:', error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

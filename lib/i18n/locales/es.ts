@@ -216,7 +216,26 @@ export const es: Translations = {
     codeSentTo: 'Código enviado a',
     verificationRequired: 'Se requiere verificación telefónica para enviar tu respuesta',
     selectPhoneNumber: 'Selecciona un número de teléfono',
-    selectPhone: 'Seleccionar número...'
+    selectPhone: 'Seleccionar número...',
+    areyouTraveling: '¿Vienes de fuera de la ciudad?',
+    travelingFrom: '¿De dónde vienes?',
+    travelingFromPlaceholder: 'Ciudad o ubicación',
+    travelArrangement: 'Verificación de Boleto de Viaje',
+    needsTransport: 'Necesito asistencia con transporte',
+    ownMeans: 'Organizaré mi propio transporte',
+    willBuyTicket: 'Viajaré y tendré un boleto',
+    noTicketNeeded: 'No necesito comprar un boleto',
+    uploadTicket: 'Subir Boleto de Viaje',
+    uploadTravelTicket: 'Sube tu boleto de viaje o itinerario (PDF o imagen)',
+    ticketUploaded: 'Boleto subido exitosamente',
+    removeTicket: 'Eliminar boleto',
+    uploadingTicket: 'Subiendo...',
+    ticketRequired: 'Por favor sube tu boleto de viaje o proporciona una razón',
+    maxFileSize: 'Tamaño máximo: 10MB. Formatos: PDF, JPG, PNG',
+    travelRequiredByOrganizer: 'Verificación de viaje requerida por el organizador',
+    noTicketReason: 'Por favor explica por qué no necesitas un boleto',
+    noTicketReasonPlaceholder: 'ej., Ya vivo en el destino, viajo en auto, etc.',
+    reasonRequired: 'Por favor proporciona una razón para no subir un boleto'
   },
 
   // Gallery Section

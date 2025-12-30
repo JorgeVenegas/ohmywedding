@@ -216,7 +216,26 @@ export const en: Translations = {
     codeSentTo: 'Code sent to',
     verificationRequired: 'Phone verification is required to submit your response',
     selectPhoneNumber: 'Select a phone number',
-    selectPhone: 'Select phone number...'
+    selectPhone: 'Select phone number...',
+    areyouTraveling: 'Are you traveling from outside the area?',
+    travelingFrom: 'Where are you traveling from?',
+    travelingFromPlaceholder: 'City or location',
+    travelArrangement: 'Travel Ticket Verification',
+    needsTransport: 'I need transportation assistance',
+    ownMeans: 'I will arrange my own transportation',
+    willBuyTicket: 'I will be traveling and have a ticket',
+    noTicketNeeded: 'I do not need to purchase a ticket',
+    uploadTicket: 'Upload Travel Ticket',
+    uploadTravelTicket: 'Upload your travel ticket or itinerary (PDF or image)',
+    ticketUploaded: 'Ticket uploaded successfully',
+    removeTicket: 'Remove ticket',
+    uploadingTicket: 'Uploading...',
+    ticketRequired: 'Please upload your travel ticket or provide a reason',
+    maxFileSize: 'Max file size: 10MB. Accepted formats: PDF, JPG, PNG',
+    travelRequiredByOrganizer: 'Travel verification required by organizer',
+    noTicketReason: 'Please explain why a ticket is not needed',
+    noTicketReasonPlaceholder: 'e.g., I already live at the destination, traveling by car, etc.',
+    reasonRequired: 'Please provide a reason for not uploading a ticket'
   },
 
   // Gallery Section

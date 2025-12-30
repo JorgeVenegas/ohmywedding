@@ -92,6 +92,9 @@ export async function POST(request: Request) {
         notes?: string
         guestGroupId?: string
         invitedBy?: string[]
+        isTraveling?: boolean
+        travelingFrom?: string
+        travelArrangement?: string
       }) => ({
         wedding_id: wedding.id,
         guest_group_id: guest.guestGroupId || null,
@@ -103,6 +106,9 @@ export async function POST(request: Request) {
         dietary_restrictions: guest.dietaryRestrictions || null,
         notes: guest.notes || null,
         invited_by: guest.invitedBy || [],
+        is_traveling: guest.isTraveling || false,
+        traveling_from: guest.travelingFrom || null,
+        travel_arrangement: guest.travelArrangement || null,
       }))
 
       const { data, error } = await supabase
@@ -149,6 +155,9 @@ export async function POST(request: Request) {
         dietary_restrictions: body.dietaryRestrictions || null,
         notes: body.notes || null,
         invited_by: body.invitedBy || [],
+        is_traveling: body.isTraveling || false,
+        traveling_from: body.travelingFrom || null,
+        travel_arrangement: body.travelArrangement || null,
       },
     ]).select().single()
 
@@ -181,6 +190,12 @@ export async function PUT(request: Request) {
         dietary_restrictions: body.dietaryRestrictions,
         notes: body.notes,
         invited_by: body.invitedBy || [],
+        is_traveling: body.isTraveling || false,
+        traveling_from: body.travelingFrom || null,
+        travel_arrangement: body.travelArrangement || null,
+        ticket_attachment_url: body.ticketAttachmentUrl || null,
+        no_ticket_reason: body.noTicketReason || null,
+        admin_set_travel: body.isTraveling === true, // Mark as admin-set when admin updates
         updated_at: new Date().toISOString(),
       })
       .eq("id", body.id)

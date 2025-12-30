@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { useI18n } from '@/components/contexts/i18n-context'
@@ -34,6 +34,13 @@ export function OTPVerificationDialog({
   const [error, setError] = useState('')
 
   const hasMultiplePhones = phoneNumbers.length > 1
+
+  // Auto-select if only one phone number
+  useEffect(() => {
+    if (phoneNumbers.length === 1 && !selectedPhone) {
+      setSelectedPhone(phoneNumbers[0])
+    }
+  }, [phoneNumbers, selectedPhone])
 
   // Get last 2 digits of phone for display
   const getPhoneHint = (phone: string) => {
@@ -189,13 +196,13 @@ export function OTPVerificationDialog({
                       className={`w-full px-4 py-4 rounded-lg border-2 text-center font-semibold transition-all duration-200 ${
                         selectedPhone === phone 
                           ? 'scale-[1.02] shadow-lg' 
-                          : 'hover:scale-[1.01] opacity-60 hover:opacity-80'
+                          : 'hover:scale-[1.01] hover:brightness-95'
                       }`}
                       style={{
-                        borderColor: selectedPhone === phone ? buttonColor : `${buttonColor}40`,
-                        color: selectedPhone === phone ? 'white' : `${textColor}99`,
-                        backgroundColor: selectedPhone === phone ? buttonColor : 'transparent',
-                        ...(selectedPhone === phone && { boxShadow: `0 4px 12px ${buttonColor}40, 0 0 0 3px white, 0 0 0 5px ${buttonColor}` })
+                        borderColor: selectedPhone === phone ? buttonColor : '#d1d5db',
+                        color: selectedPhone === phone ? 'white' : textColor,
+                        backgroundColor: selectedPhone === phone ? buttonColor : '#f3f4f6',
+                        ...(selectedPhone === phone && { boxShadow: `0 4px 12px ${buttonColor}40` })
                       }}
                     >
                       <span className="text-lg tracking-wider">**{getPhoneHint(phone)}</span>

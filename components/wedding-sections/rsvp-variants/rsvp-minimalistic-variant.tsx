@@ -5,6 +5,7 @@ import { SectionWrapper } from '../section-wrapper'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { OTPVerificationDialog } from '@/components/ui/otp-verification-dialog'
+import { TravelFields } from '@/components/ui/travel-fields'
 import { Check, X, Loader2 } from 'lucide-react'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { BaseRSVPProps, getColorScheme } from './types'
@@ -13,6 +14,12 @@ interface Guest {
   id: string
   name: string
   attending?: boolean
+  is_traveling?: boolean
+  traveling_from?: string
+  travel_arrangement?: 'will_buy_ticket' | 'no_ticket_needed' | null
+  ticket_attachment_url?: string | null
+  no_ticket_reason?: string
+  adminSetTravel?: boolean
 }
 
 interface GroupData {
@@ -69,16 +76,14 @@ export function RSVPMinimalisticVariant({
               id: g.id,
               name: g.name,
               attending: g.attending,
+              is_traveling: g.is_traveling || false,
+              traveling_from: g.traveling_from || '',
+              travel_arrangement: g.travel_arrangement || null,
+              ticket_attachment_url: g.ticket_attachment_url || null,
+              no_ticket_reason: g.no_ticket_reason || '',
+              adminSetTravel: g.admin_set_travel || false
             }))
           )
-          
-          // If all guests have responded, show submitted state
-          if (data.hasSubmitted) {
-            setSubmitted(true)
-            setIsEditing(false)
-          } else {
-            setIsEditing(true)
-          }
         }
       } catch (error) {
         console.error('Error fetching group:', error)
@@ -97,6 +102,21 @@ export function RSVPMinimalisticVariant({
   }
 
   const handleSubmitClick = () => {
+    // Validate travel requirements for confirmed guests
+    for (const guest of guests) {
+      if (guest.attending === true && guest.is_traveling) {
+        // If they selected "will buy ticket", must upload ticket
+        if (guest.travel_arrangement === 'will_buy_ticket' && !guest.ticket_attachment_url) {
+          setSubmitError(t('rsvp.ticketRequired'))
+          return
+        }
+        // If they selected "no ticket needed", must provide reason
+        if (guest.travel_arrangement === 'no_ticket_needed' && !guest.no_ticket_reason) {
+          setSubmitError(`${guest.name}: ${t('rsvp.ticketRequired')}`)
+          return
+        }
+      }
+    }
     setShowOTPDialog(true)
   }
 
@@ -118,6 +138,11 @@ export function RSVPMinimalisticVariant({
           guests: guests.map(g => ({
             guestId: g.id,
             attending: g.attending,
+            is_traveling: g.is_traveling,
+            traveling_from: g.traveling_from,
+            travel_arrangement: g.travel_arrangement,
+            ticket_attachment_url: g.ticket_attachment_url,
+            no_ticket_reason: g.no_ticket_reason
           })),
           message
         })
@@ -308,6 +333,29 @@ export function RSVPMinimalisticVariant({
                     </button>
                   </div>
 
+                  {/* Travel Fields - Only show if attending */}
+                  {guest.attending === true && (
+                    <div className="mt-4">
+                      <TravelFields
+                        guestId={guest.id}
+                        guestName={guest.name}
+                        weddingNameId={weddingNameId}
+                        isTraveling={guest.is_traveling || false}
+                        travelingFrom={guest.traveling_from || ''}
+                        travelArrangement={guest.travel_arrangement || null}
+                        ticketUrl={guest.ticket_attachment_url || null}
+                        noTicketReason={guest.no_ticket_reason || ''}
+                        adminSetTravel={guest.adminSetTravel || false}
+                        primaryColor={titleColor}
+                        textColor={textColor}
+                        onTravelChange={(isTraveling: boolean) => updateGuest(guest.id, 'is_traveling', isTraveling)}
+                        onTravelingFromChange={(from: string) => updateGuest(guest.id, 'traveling_from', from)}
+                        onTravelArrangementChange={(arrangement: 'will_buy_ticket' | 'no_ticket_needed' | null) => updateGuest(guest.id, 'travel_arrangement', arrangement)}
+                        onTicketUpload={(url: string) => updateGuest(guest.id, 'ticket_attachment_url', url)}
+                        onNoTicketReasonChange={(reason: string) => updateGuest(guest.id, 'no_ticket_reason', reason)}
+                      />
+                    </div>
+                  )}
 
                 </div>
               ))}

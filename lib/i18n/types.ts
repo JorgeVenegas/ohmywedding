@@ -219,6 +219,25 @@ export interface Translations {
     phoneDoesNotMatch: string
     invalidPhone: string
     phoneVerificationFailed: string
+    areyouTraveling: string
+    travelingFrom: string
+    travelingFromPlaceholder: string
+    travelArrangement: string
+    needsTransport: string
+    ownMeans: string
+    willBuyTicket: string
+    noTicketNeeded: string
+    uploadTicket: string
+    uploadTravelTicket: string
+    ticketUploaded: string
+    removeTicket: string
+    uploadingTicket: string
+    ticketRequired: string
+    maxFileSize: string
+    travelRequiredByOrganizer: string
+    noTicketReason: string
+    noTicketReasonPlaceholder: string
+    reasonRequired: string
   }
 
   // Gallery Section
