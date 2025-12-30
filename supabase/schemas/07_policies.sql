@@ -72,20 +72,15 @@ create policy "Owners and collaborators can view RSVPs" on rsvps
     )
   );
 
--- Guest groups policies (PRIVATE - only owners/collaborators can access)
-create policy "Owners and collaborators can view guest groups" on guest_groups
-  for select using (
-    wedding_id in (
-      select id from weddings 
-      where owner_id = auth.uid() 
-        or owner_id is null
-        or auth.email() = any(collaborator_emails)
-    )
-  );
+-- Guest groups policies
+-- Allow public read access for RSVP pages
+create policy "Anyone can view guest groups" on guest_groups
+  for select using (true);
 
 create policy "Wedding owners and collaborators can manage guest groups" on guest_groups
   for all 
   using (
+    auth.uid() is not null and
     wedding_id in (
       select id from weddings 
       where owner_id = auth.uid() 
@@ -94,6 +89,7 @@ create policy "Wedding owners and collaborators can manage guest groups" on gues
     )
   )
   with check (
+    auth.uid() is not null and
     wedding_id in (
       select id from weddings 
       where owner_id = auth.uid() 
@@ -102,20 +98,15 @@ create policy "Wedding owners and collaborators can manage guest groups" on gues
     )
   );
 
--- Guests policies (PRIVATE - only owners/collaborators can access)
-create policy "Owners and collaborators can view guests" on guests
-  for select using (
-    wedding_id in (
-      select id from weddings 
-      where owner_id = auth.uid() 
-        or owner_id is null
-        or auth.email() = any(collaborator_emails)
-    )
-  );
+-- Guests policies
+-- Allow public read access for RSVP pages
+create policy "Anyone can view guests" on guests
+  for select using (true);
 
 create policy "Wedding owners and collaborators can manage guests" on guests
   for all 
   using (
+    auth.uid() is not null and
     wedding_id in (
       select id from weddings 
       where owner_id = auth.uid() 
@@ -124,6 +115,7 @@ create policy "Wedding owners and collaborators can manage guests" on guests
     )
   )
   with check (
+    auth.uid() is not null and
     wedding_id in (
       select id from weddings 
       where owner_id = auth.uid() 

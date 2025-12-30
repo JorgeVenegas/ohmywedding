@@ -282,6 +282,17 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   // State for creating a new group from guest form
   const [newGroupNameForGuest, setNewGroupNameForGuest] = useState("")
   const [isCreatingNewGroup, setIsCreatingNewGroup] = useState(false)
+  
+  // State for group travel dialog
+  const [showGroupTravelDialog, setShowGroupTravelDialog] = useState(false)
+  const [groupTravelForm, setGroupTravelForm] = useState({
+    groupId: "",
+    groupName: "",
+    isTraveling: false,
+    travelingFrom: "",
+    travelArrangement: null as 'will_buy_ticket' | 'no_ticket_needed' | null,
+    noTicketReason: "",
+  })
 
   useEffect(() => {
     fetchGuestGroups()
@@ -975,6 +986,105 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     } catch (error) {
       console.error("Error updating group status:", error)
       setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error updating group. Please try again.' })
+    }
+  }
+
+  const openGroupTravelDialog = (group: GuestGroup) => {
+    setGroupTravelForm({
+      groupId: group.id,
+      groupName: group.name,
+      isTraveling: false,
+      travelingFrom: "",
+      travelArrangement: null,
+      noTicketReason: "",
+    })
+    setShowGroupTravelDialog(true)
+  }
+
+  const handleSetGroupTravel = async () => {
+    try {
+      // Check if it's a bulk action on selected guests or a group action
+      const isSelectedGuestsBulkAction = groupTravelForm.groupId === ''
+      
+      let guestsToUpdate: Guest[] = []
+      let count = 0
+      
+      if (isSelectedGuestsBulkAction) {
+        // Bulk action: Update all selected guests
+        guestsToUpdate = allGuests.filter(g => selectedGuestIds.has(g.id))
+        count = guestsToUpdate.length
+      } else {
+        // Group action: Update all guests in the group
+        const group = guestGroups.find(g => g.id === groupTravelForm.groupId)
+        if (!group || group.guests.length === 0) return
+        guestsToUpdate = group.guests
+        count = group.guests.length
+      }
+      
+      if (guestsToUpdate.length === 0) return
+      
+      // Build updates object
+      const updates: any = {
+        is_traveling: groupTravelForm.isTraveling,
+        admin_set_travel: true,
+      }
+      
+      if (groupTravelForm.isTraveling) {
+        updates.traveling_from = groupTravelForm.travelingFrom || null
+        updates.travel_arrangement = groupTravelForm.travelArrangement
+        updates.no_ticket_reason = groupTravelForm.travelArrangement === 'no_ticket_needed' 
+          ? groupTravelForm.noTicketReason 
+          : null
+      } else {
+        updates.traveling_from = null
+        updates.travel_arrangement = null
+        updates.no_ticket_reason = null
+        updates.ticket_attachment_url = null
+      }
+      
+      // Update all guests
+      const updatePromises = guestsToUpdate.map(async (guest) => {
+        return fetch("/api/guests", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: guest.id,
+            name: guest.name,
+            phoneNumber: guest.phone_number,
+            tags: guest.tags || [],
+            guestGroupId: guest.guest_group_id,
+            confirmationStatus: guest.confirmation_status,
+            dietaryRestrictions: guest.dietary_restrictions,
+            notes: guest.notes,
+            ...updates,
+          }),
+        })
+      })
+      
+      await Promise.all(updatePromises)
+      await fetchGuestGroups()
+      await fetchUngroupedGuests()
+      setShowGroupTravelDialog(false)
+      
+      // Clear selection if it was a bulk action
+      if (isSelectedGuestsBulkAction) {
+        setSelectedGuestIds(new Set())
+      }
+      
+      setNotification({ 
+        isOpen: true, 
+        type: 'success', 
+        title: 'Success', 
+        message: `Travel info set for ${count} guest(s)` 
+      })
+    } catch (error) {
+      console.error('Error setting group travel:', error)
+      setNotification({ 
+        isOpen: true, 
+        type: 'error', 
+        title: 'Error', 
+        message: 'Failed to set travel info' 
+      })
     }
   }
 
@@ -1918,6 +2028,28 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                 <Button
                   variant="outline"
                   size="sm"
+                  className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  onClick={() => {
+                    // Get first selected guest to pre-populate travel info if single selection
+                    const selectedGuests = allGuests.filter(g => selectedGuestIds.has(g.id))
+                    const firstGuest = selectedGuests[0]
+                    setGroupTravelForm({
+                      groupId: '', // Bulk action, not specific to a group
+                      groupName: `${selectedGuests.length} Selected Guest${selectedGuests.length !== 1 ? 's' : ''}`,
+                      isTraveling: firstGuest?.is_traveling || false,
+                      travelingFrom: firstGuest?.traveling_from || "",
+                      travelArrangement: firstGuest?.travel_arrangement || null,
+                      noTicketReason: firstGuest?.no_ticket_reason || "",
+                    })
+                    setShowGroupTravelDialog(true)
+                  }}
+                >
+                  <Plane className="w-3 h-3 mr-1" />
+                  Travel Info
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="h-7 text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
                   onClick={() => {
                     // Get the common invited_by values from all selected guests
@@ -2539,6 +2671,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                   >
                                     <XCircle className="w-4 h-4 mr-2" />
                                     Decline All
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => openGroupTravelDialog(group)}>
+                                    <Plane className="w-4 h-4 mr-2" />
+                                    Set Travel Info
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   {!allGuestsInvited && (
@@ -4027,6 +4164,138 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               >
                 <X className="w-4 h-4" />
               </button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Group Travel Info Dialog */}
+      {showGroupTravelDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <Plane className="w-5 h-5 text-primary" />
+                  <h2 className="text-xl font-semibold">Set Travel Info for Group</h2>
+                </div>
+                <button
+                  onClick={() => setShowGroupTravelDialog(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="mb-4 p-3 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  {groupTravelForm.groupId ? 'Group:' : 'Selected Guests:'}
+                </p>
+                <p className="font-medium">{groupTravelForm.groupName}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {groupTravelForm.groupId 
+                    ? `${guestGroups.find(g => g.id === groupTravelForm.groupId)?.guests.length || 0} guest(s) will be updated`
+                    : `${selectedGuestIds.size} guest(s) will be updated`
+                  }
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Guest(s) traveling?</label>
+                  <Switch
+                    checked={groupTravelForm.isTraveling}
+                    onCheckedChange={(checked) => setGroupTravelForm(prev => ({ ...prev, isTraveling: checked }))}
+                  />
+                </div>
+
+                {groupTravelForm.isTraveling && (
+                  <>
+                    <div>
+                      <label className="text-sm font-medium mb-1.5 block">Traveling from</label>
+                      <Input
+                        value={groupTravelForm.travelingFrom}
+                        onChange={(e) => setGroupTravelForm(prev => ({ ...prev, travelingFrom: e.target.value }))}
+                        placeholder="e.g., New York, USA"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Travel arrangement</label>
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => setGroupTravelForm(prev => ({ ...prev, travelArrangement: 'will_buy_ticket' }))}
+                          className={`w-full p-3 rounded-lg border-2 text-left transition-colors ${
+                            groupTravelForm.travelArrangement === 'will_buy_ticket'
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:border-primary/50'
+                          }`}
+                        >
+                          <div className="flex items-start gap-2">
+                            <Ticket className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="font-medium text-sm">Will purchase ticket</p>
+                              <p className="text-xs text-muted-foreground">Guest will need to upload proof of purchase</p>
+                            </div>
+                          </div>
+                        </button>
+
+                        <button
+                          onClick={() => setGroupTravelForm(prev => ({ ...prev, travelArrangement: 'no_ticket_needed' }))}
+                          className={`w-full p-3 rounded-lg border-2 text-left transition-colors ${
+                            groupTravelForm.travelArrangement === 'no_ticket_needed'
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:border-primary/50'
+                          }`}
+                        >
+                          <div className="flex items-start gap-2">
+                            <X className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="font-medium text-sm">Does not need ticket</p>
+                              <p className="text-xs text-muted-foreground">Guest must provide a reason</p>
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+
+                    {groupTravelForm.travelArrangement === 'no_ticket_needed' && (
+                      <div>
+                        <label className="text-sm font-medium mb-1.5 block">Reason</label>
+                        <textarea
+                          value={groupTravelForm.noTicketReason}
+                          onChange={(e) => setGroupTravelForm(prev => ({ ...prev, noTicketReason: e.target.value }))}
+                          placeholder="e.g., Driving, Already have ticket, etc."
+                          className="w-full px-3 py-2 border border-border rounded-lg resize-none"
+                          rows={2}
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowGroupTravelDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={handleSetGroupTravel}
+                  disabled={
+                    groupTravelForm.isTraveling && 
+                    (!groupTravelForm.travelArrangement || 
+                      (groupTravelForm.travelArrangement === 'no_ticket_needed' && !groupTravelForm.noTicketReason.trim()))
+                  }
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  Apply to Group
+                </Button>
+              </div>
             </div>
           </Card>
         </div>

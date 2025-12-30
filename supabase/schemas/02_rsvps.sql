@@ -30,6 +30,12 @@ create table "guests" (
   "invited_by" text[] default '{}',
   "invitation_sent" boolean default false,
   "invitation_sent_at" timestamp with time zone,
+  "is_traveling" boolean default false,
+  "traveling_from" text,
+  "travel_arrangement" text check ("travel_arrangement" in ('needs_transport', 'own_means', 'will_buy_ticket', 'no_ticket_needed')),
+  "ticket_attachment_url" text,
+  "no_ticket_reason" text,
+  "admin_set_travel" boolean default false,
   "created_at" timestamp with time zone default now(),
   "updated_at" timestamp with time zone default now()
 );

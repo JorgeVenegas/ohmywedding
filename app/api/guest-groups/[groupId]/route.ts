@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase-server"
+import { createClient } from "@/lib/supabase-client"
 
 export async function GET(
   request: NextRequest,
@@ -7,7 +7,8 @@ export async function GET(
 ) {
   try {
     const { groupId } = await params
-    const supabase = await createServerSupabaseClient()
+    // Use anonymous client for public RSVP pages - RLS policies allow public read
+    const supabase = createClient()
 
     // Fetch the guest group
     const { data: group, error: groupError } = await supabase

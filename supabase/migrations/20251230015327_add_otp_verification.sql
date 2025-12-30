@@ -1,8 +1,8 @@
 create extension if not exists "pg_net" with schema "extensions";
 
-drop policy "Anyone can view guest groups" on "public"."guest_groups";
+drop policy if exists "Anyone can view guest groups" on "public"."guest_groups";
 
-drop policy "Anyone can view guests" on "public"."guests";
+drop policy if exists "Anyone can view guests" on "public"."guests";
 
 drop policy "Wedding owners and collaborators can manage images" on "public"."images";
 
