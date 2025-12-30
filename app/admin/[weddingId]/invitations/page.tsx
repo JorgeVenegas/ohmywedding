@@ -44,12 +44,13 @@ import {
   Mail,
   MailCheck,
   UserCheck,
-  MoreVertical
+  MoreVertical,
+  Copy,
+  Link
 } from "lucide-react"
 
 interface Guest {
   id: string
-  wedding_name_id: string
   guest_group_id: string | null
   name: string
   phone_number: string | null
@@ -66,7 +67,6 @@ interface Guest {
 
 interface GuestGroup {
   id: string
-  wedding_name_id: string
   name: string
   phone_number: string | null
   tags: string[]
@@ -298,7 +298,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   const fetchGuestGroups = async () => {
     try {
-      const response = await fetch(`/api/guest-groups?weddingNameId=${encodeURIComponent(weddingId)}`)
+      const response = await fetch(`/api/guest-groups?weddingId=${encodeURIComponent(weddingId)}`)
       const result = await response.json()
       if (result.data) {
         setGuestGroups(result.data)
@@ -312,7 +312,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   const fetchUngroupedGuests = async () => {
     try {
-      const response = await fetch(`/api/guests?weddingNameId=${encodeURIComponent(weddingId)}&ungrouped=true`)
+      const response = await fetch(`/api/guests?weddingId=${encodeURIComponent(weddingId)}&ungrouped=true`)
       const result = await response.json()
       if (result.data) {
         setUngroupedGuests(result.data)
@@ -338,7 +338,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          weddingNameId: weddingId,
+          weddingId: weddingId,
           name: groupForm.name,
           phoneNumber: groupForm.phoneNumber || null,
           tags: groupForm.tags,
@@ -428,7 +428,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            weddingNameId: weddingId,
+            weddingId: weddingId,
             name: newGroupNameForGuest.trim(),
             tags: [],
             invitedBy: [],
@@ -450,7 +450,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            weddingNameId: weddingId,
+            weddingId: weddingId,
             name: guestForm.name.trim() || "New Group",
             tags: [],
             invitedBy: guestForm.invitedBy,
@@ -467,7 +467,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          weddingNameId: weddingId,
+          weddingId: weddingId,
           guestGroupId: groupIdToUse,
           name: guestForm.name,
           phoneNumber: guestForm.phoneNumber || null,
@@ -712,7 +712,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            weddingNameId: weddingId,
+            weddingId: weddingId,
             name: newGroupName.trim(),
             tags: [],
             notes: null,
@@ -937,6 +937,27 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       type: 'success', 
       title: 'Coming Soon', 
       message: `Invite sending for "${group.name}" will be available soon.` 
+    })
+  }
+
+  const handleCopyRSVPLink = (group: GuestGroup) => {
+    const baseUrl = window.location.origin
+    const rsvpUrl = `${baseUrl}/${weddingId}?groupId=${group.id}`
+    
+    navigator.clipboard.writeText(rsvpUrl).then(() => {
+      setNotification({
+        isOpen: true,
+        type: 'success',
+        title: 'Link Copied!',
+        message: `RSVP link for "${group.name}" copied to clipboard`
+      })
+    }).catch(() => {
+      setNotification({
+        isOpen: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to copy link to clipboard'
+      })
     })
   }
 
@@ -1179,7 +1200,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            weddingNameId: weddingId,
+            weddingId: weddingId,
             groups: groupsData,
           }),
         })
@@ -1239,7 +1260,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            weddingNameId: weddingId,
+            weddingId: weddingId,
             guests: guestsData,
           }),
         })
@@ -2203,13 +2224,15 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                               )}
                             </td>
                             <td className="px-3 py-2">
-                              <div className="font-medium text-foreground">{group.name}</div>
-                              {group.phone_number && (
-                                <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                                  <Phone className="w-3 h-3" />
-                                  {group.phone_number}
-                                </div>
-                              )}
+                              <div>
+                                <div className="font-medium text-foreground">{group.name}</div>
+                                {group.phone_number && (
+                                  <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                    <Phone className="w-3 h-3" />
+                                    {group.phone_number}
+                                  </div>
+                                )}
+                              </div>
                             </td>
                             <td className="px-3 py-2 text-center">
                               <span className="inline-flex items-center justify-center min-w-[24px] px-1.5 py-0.5 rounded-full bg-muted text-xs font-medium">
@@ -2282,23 +2305,67 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                               </td>
                             )}
                             {visibleColumns.inviteSent && (
-                              <td className="px-3 py-2 text-center">
-                                {allGuestsInvited ? (
-                                  <span className="inline-flex items-center gap-1 text-[10px] text-green-600">
-                                    <MailCheck className="w-3.5 h-3.5" />
-                                    All Sent
-                                  </span>
-                                ) : someGuestsInvited ? (
-                                  <span className="inline-flex items-center gap-1 text-[10px] text-amber-600">
-                                    <Mail className="w-3.5 h-3.5" />
-                                    Partial
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-                                    <Mail className="w-3.5 h-3.5" />
-                                    Not Sent
-                                  </span>
-                                )}
+                              <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                                <div className="flex items-center justify-center gap-2">
+                                  {/* Status Indicator */}
+                                  {allGuestsInvited ? (
+                                    <span title="All invites sent">
+                                      <MailCheck className="w-3.5 h-3.5 text-green-600" />
+                                    </span>
+                                  ) : someGuestsInvited ? (
+                                    <span title="Partial invites sent">
+                                      <Mail className="w-3.5 h-3.5 text-amber-600" />
+                                    </span>
+                                  ) : (
+                                    <span title="No invites sent">
+                                      <Mail className="w-3.5 h-3.5 text-gray-400" />
+                                    </span>
+                                  )}
+                                  
+                                  <div className="w-px h-4 bg-border" />
+                                  
+                                  {/* Action Buttons */}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      const baseUrl = window.location.origin
+                                      const rsvpUrl = `${baseUrl}/${weddingId}?groupId=${group.id}`
+                                      window.open(rsvpUrl, '_blank')
+                                    }}
+                                    title="Open RSVP page"
+                                  >
+                                    <Link className="w-3.5 h-3.5" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleCopyRSVPLink(group)
+                                    }}
+                                    title="Copy RSVP link"
+                                  >
+                                    <Copy className="w-3.5 h-3.5" />
+                                  </Button>
+                                  {!allGuestsInvited && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 w-6 p-0"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleSendGroupInvite(group)
+                                      }}
+                                      title="Send invite"
+                                    >
+                                      <Send className="w-3.5 h-3.5" />
+                                    </Button>
+                                  )}
+                                </div>
                               </td>
                             )}
                             <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
@@ -2309,6 +2376,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleCopyRSVPLink(group)}>
+                                    <Copy className="w-4 h-4 mr-2" />
+                                    Copy RSVP Link
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
                                   <DropdownMenuItem onClick={() => openAddGuestToGroup(group.id)}>
                                     <UserPlus className="w-4 h-4 mr-2" />
                                     Add Guest

@@ -6,24 +6,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
-import { usePageConfig } from '@/components/contexts/page-config-context'
 import { useI18n } from '@/components/contexts/i18n-context'
-import { Check, Plus, Trash2, ChevronDown, ChevronUp, ExternalLink, Gift } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, ExternalLink, Gift } from 'lucide-react'
 import { DEFAULT_PROVIDERS, RegistryProvider, CustomRegistryItem } from '@/components/wedding-sections/registry-variants/types'
-
-type BackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
-
-// Helper to create a light tint of a color
-function getLightTint(hex: string, tintAmount: number): string {
-  const num = parseInt(hex.replace('#', ''), 16)
-  const r = (num >> 16) & 255
-  const g = (num >> 8) & 255
-  const b = num & 255
-  const newR = Math.round(r + (255 - r) * tintAmount)
-  const newG = Math.round(g + (255 - g) * tintAmount)
-  const newB = Math.round(b + (255 - b) * tintAmount)
-  return `rgb(${newR}, ${newG}, ${newB})`
-}
+import { BackgroundColorPicker, type BackgroundColorChoice } from '@/components/ui/config-forms/shared'
 
 interface RegistryConfigFormProps {
   config: {
@@ -45,14 +31,6 @@ export function RegistryConfigForm({ config, onChange }: RegistryConfigFormProps
   const [expandedItem, setExpandedItem] = useState<number | null>(null)
   const [showProviderSelector, setShowProviderSelector] = useState(false)
   const { t } = useI18n()
-  
-  // Get colors from page config (theme settings)
-  const { config: pageConfig } = usePageConfig()
-  const themeColors = pageConfig.siteSettings.theme?.colors
-  
-  const primaryColor = themeColors?.primary || '#d4a574'
-  const secondaryColor = themeColors?.secondary || '#9ba082'
-  const accentColor = themeColors?.accent || '#e6b5a3'
 
   const registries = config.registries || []
   const customItems = config.customItems || []
@@ -113,46 +91,12 @@ export function RegistryConfigForm({ config, onChange }: RegistryConfigFormProps
     setExpandedItem(null)
   }
 
-  // Create color options with full, light, and lighter variants
-  const colorGroups: { label: string; colors: { value: BackgroundColorChoice; color: string | null }[] }[] = [
-    {
-      label: t('config.none'),
-      colors: [{ value: 'none', color: null }]
-    },
-    {
-      label: t('config.primary'),
-      colors: [
-        { value: 'primary', color: primaryColor },
-        { value: 'primary-light', color: getLightTint(primaryColor, 0.5) },
-        { value: 'primary-lighter', color: getLightTint(primaryColor, 0.88) },
-      ]
-    },
-    {
-      label: t('config.secondary'),
-      colors: [
-        { value: 'secondary', color: secondaryColor },
-        { value: 'secondary-light', color: getLightTint(secondaryColor, 0.5) },
-        { value: 'secondary-lighter', color: getLightTint(secondaryColor, 0.88) },
-      ]
-    },
-    {
-      label: t('config.accent'),
-      colors: [
-        { value: 'accent', color: accentColor },
-        { value: 'accent-light', color: getLightTint(accentColor, 0.5) },
-        { value: 'accent-lighter', color: getLightTint(accentColor, 0.88) },
-      ]
-    }
-  ]
-
   const variants = [
     { value: 'cards', label: 'Cards', description: 'Classic card-based layout' },
     { value: 'minimal', label: 'Minimal', description: 'Clean and simple list style' },
     { value: 'elegant', label: 'Elegant', description: 'Romantic style with decorations' },
     { value: 'grid', label: 'Grid', description: 'Compact grid for many items' }
   ]
-
-  const currentChoice = config.backgroundColorChoice || (config.useColorBackground ? 'primary' : 'none')
 
   // Filter out providers that are already added
   const availableProviders = DEFAULT_PROVIDERS.filter(
@@ -525,48 +469,12 @@ export function RegistryConfigForm({ config, onChange }: RegistryConfigFormProps
       </div>
 
       {/* Color Background Selection */}
-      <div className="space-y-3">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {t('config.backgroundColor')}
-          </label>
-          <div className="space-y-2">
-            {colorGroups.map((group) => (
-              <div key={group.label} className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 w-20 shrink-0">{group.label}</span>
-                <div className="flex gap-1">
-                  {group.colors.map(({ value, color }) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => {
-                        onChange('backgroundColorChoice', value)
-                        onChange('useColorBackground', value !== 'none')
-                      }}
-                      className={`w-8 h-8 rounded-lg border-2 transition-all flex items-center justify-center ${
-                        currentChoice === value 
-                          ? 'border-gray-900 scale-110' 
-                          : 'border-gray-200 hover:border-gray-400'
-                      }`}
-                      style={{ 
-                        backgroundColor: color || 'transparent',
-                        backgroundImage: !color ? 'linear-gradient(45deg, #f3f4f6 25%, transparent 25%, transparent 75%, #f3f4f6 75%, #f3f4f6), linear-gradient(45deg, #f3f4f6 25%, transparent 25%, transparent 75%, #f3f4f6 75%, #f3f4f6)' : undefined,
-                        backgroundSize: !color ? '8px 8px' : undefined,
-                        backgroundPosition: !color ? '0 0, 4px 4px' : undefined
-                      }}
-                      title={value}
-                    >
-                      {currentChoice === value && (
-                        <Check className="w-4 h-4" style={{ color: color ? (value.includes('lighter') ? '#374151' : '#ffffff') : '#374151' }} />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <BackgroundColorPicker
+        useColorBackground={config.useColorBackground}
+        backgroundColorChoice={config.backgroundColorChoice}
+        onUseColorBackgroundChange={(value) => onChange('useColorBackground', value)}
+        onBackgroundColorChoiceChange={(value) => onChange('backgroundColorChoice', value)}
+      />
     </div>
   )
 }

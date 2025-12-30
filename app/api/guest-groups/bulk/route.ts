@@ -9,9 +9,13 @@ export async function POST(request: Request) {
   try {
     const supabase = await createServerSupabaseClient()
     const body = await request.json()
+    const weddingId = body.weddingId
 
-    // Decode the weddingNameId in case it's URL encoded
-    const weddingNameId = decodeURIComponent(body.weddingNameId)
+    if (!weddingId) {
+      return NextResponse.json({ error: "weddingId is required" }, { status: 400 })
+    }
+
+    const decodedWeddingId = decodeURIComponent(weddingId)
 
     // Check if user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -20,19 +24,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
-    if (!body.groups || !Array.isArray(body.groups)) {
-      return NextResponse.json({ error: "Groups array is required" }, { status: 400 })
-    }
-
-    // Get wedding ID
+    // Get the wedding UUID from the wedding_name_id
     const { data: wedding, error: weddingError } = await supabase
       .from('weddings')
       .select('id')
-      .eq('wedding_name_id', weddingNameId)
+      .eq('wedding_name_id', decodedWeddingId)
       .single()
     
     if (weddingError || !wedding) {
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
+    }
+
+    if (!body.groups || !Array.isArray(body.groups)) {
+      return NextResponse.json({ error: "Groups array is required" }, { status: 400 })
     }
 
     let totalGroupsCreated = 0
@@ -59,7 +63,6 @@ export async function POST(request: Request) {
         .single()
 
       if (groupError) {
-        console.error('Error creating group:', groupError)
         continue
       }
 
@@ -87,7 +90,7 @@ export async function POST(request: Request) {
         .select()
 
       if (guestsError) {
-        console.error('Error creating guests for group:', guestsError)
+        // Failed to create guests for this group
       } else {
         totalGuestsCreated += guests.length
       }
@@ -99,7 +102,6 @@ export async function POST(request: Request) {
       guestCount: totalGuestsCreated
     })
   } catch (error) {
-    console.error('Bulk guest groups POST - Exception:', error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

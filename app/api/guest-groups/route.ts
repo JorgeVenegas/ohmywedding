@@ -8,16 +8,26 @@ export const runtime = 'nodejs'
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const rawWeddingNameId = searchParams.get('weddingNameId')
+    const weddingId = searchParams.get('weddingId')
 
-    if (!rawWeddingNameId) {
-      return NextResponse.json({ error: "weddingNameId is required" }, { status: 400 })
+    if (!weddingId) {
+      return NextResponse.json({ error: "weddingId is required" }, { status: 400 })
     }
 
-    // Decode the weddingNameId in case it's URL encoded
-    const weddingNameId = decodeURIComponent(rawWeddingNameId)
+    const decodedWeddingId = decodeURIComponent(weddingId)
 
     const supabase = await createServerSupabaseClient()
+    
+    // First, get the wedding UUID from the wedding_name_id
+    const { data: wedding, error: weddingError } = await supabase
+      .from('weddings')
+      .select('id')
+      .eq('wedding_name_id', decodedWeddingId)
+      .single()
+    
+    if (weddingError || !wedding) {
+      return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
+    }
     
     const { data, error } = await supabase
       .from("guest_groups")
@@ -25,7 +35,7 @@ export async function GET(request: Request) {
         *,
         guests (*)
       `)
-      .eq("wedding_name_id", weddingNameId)
+      .eq("wedding_id", wedding.id)
       .order("created_at", { ascending: true })
 
     if (error) {
@@ -43,19 +53,16 @@ export async function POST(request: Request) {
   try {
     const supabase = await createServerSupabaseClient()
     const body = await request.json()
+    const weddingId = body.weddingId
 
-    // Decode the weddingNameId in case it's URL encoded
-    const weddingNameId = decodeURIComponent(body.weddingNameId)
+    if (!weddingId) {
+      return NextResponse.json({ error: "weddingId is required" }, { status: 400 })
+    }
+
+    const decodedWeddingId = decodeURIComponent(weddingId)
 
     // Debug: Check if user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser()
-    console.log('Guest groups POST - Auth check:', { 
-      userId: user?.id, 
-      userEmail: user?.email,
-      authError: authError?.message,
-      weddingNameId,
-      originalWeddingNameId: body.weddingNameId
-    })
 
     if (!user) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
@@ -65,17 +72,14 @@ export async function POST(request: Request) {
     const { data: wedding, error: weddingError } = await supabase
       .from('weddings')
       .select('id, owner_id, collaborator_emails')
-      .eq('wedding_name_id', weddingNameId)
+      .eq('wedding_name_id', decodedWeddingId)
       .single()
     
-    console.log('Guest groups POST - Wedding check:', {
-      wedding,
-      weddingError: weddingError?.message,
-      isOwner: wedding?.owner_id === user.id,
-      isCollaborator: wedding?.collaborator_emails?.includes(user.email || ''),
-      isUnowned: wedding?.owner_id === null
-    })
-
+    if (weddingError) {
+      console.error('Wedding lookup error:', weddingError)
+      return NextResponse.json({ error: `Wedding lookup failed: ${weddingError.message}` }, { status: 500 })
+    }
+    
     if (!wedding) {
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
     }
@@ -92,14 +96,17 @@ export async function POST(request: Request) {
     ]).select().single()
 
     if (error) {
-      console.log('Guest groups POST - Insert error:', error)
+      console.error('Guest group insert error:', error)
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
     return NextResponse.json({ success: true, data })
   } catch (error) {
-    console.error('Guest groups POST - Exception:', error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error('Guest group POST error:', error)
+    return NextResponse.json({ 
+      error: "Internal server error",
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 })
   }
 }
 

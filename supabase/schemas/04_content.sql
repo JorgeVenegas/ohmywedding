@@ -2,7 +2,6 @@
 create table "wedding_faqs" (
   "id" uuid primary key default gen_random_uuid(),
   "wedding_id" uuid not null references weddings(id) on delete cascade,
-  "wedding_name_id" text,
   "question" text not null,
   "answer" text not null,
   "display_order" integer default 0,
@@ -14,7 +13,6 @@ create table "wedding_faqs" (
 create table "wedding_pages" (
   "id" uuid primary key default gen_random_uuid(),
   "wedding_id" uuid not null references weddings(id) on delete cascade,
-  "wedding_name_id" text,
   "page_type" text not null,
   "title" text not null,
   "content" text,

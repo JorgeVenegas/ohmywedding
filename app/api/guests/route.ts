@@ -8,23 +8,33 @@ export const runtime = 'nodejs'
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const rawWeddingNameId = searchParams.get('weddingNameId')
+    const weddingId = searchParams.get('weddingId')
     const groupId = searchParams.get('groupId')
     const ungrouped = searchParams.get('ungrouped')
 
-    if (!rawWeddingNameId) {
-      return NextResponse.json({ error: "weddingNameId is required" }, { status: 400 })
+    if (!weddingId) {
+      return NextResponse.json({ error: "weddingId is required" }, { status: 400 })
     }
 
-    // Decode the weddingNameId in case it's URL encoded
-    const weddingNameId = decodeURIComponent(rawWeddingNameId)
+    const decodedWeddingId = decodeURIComponent(weddingId)
 
     const supabase = await createServerSupabaseClient()
+    
+    // First, get the wedding UUID from the wedding_name_id
+    const { data: wedding, error: weddingError } = await supabase
+      .from('weddings')
+      .select('id')
+      .eq('wedding_name_id', decodedWeddingId)
+      .single()
+    
+    if (weddingError || !wedding) {
+      return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
+    }
     
     let query = supabase
       .from("guests")
       .select("*")
-      .eq("wedding_name_id", weddingNameId)
+      .eq("wedding_id", wedding.id)
       .order("created_at", { ascending: true })
 
     if (groupId) {
@@ -53,14 +63,19 @@ export async function POST(request: Request) {
 
     // Check if this is a bulk insert
     if (body.bulk && Array.isArray(body.guests)) {
-      // Decode the weddingNameId in case it's URL encoded
-      const weddingNameId = decodeURIComponent(body.weddingNameId)
+      const weddingId = body.weddingId
       
-      // Get wedding ID
+      if (!weddingId) {
+        return NextResponse.json({ error: "weddingId is required" }, { status: 400 })
+      }
+      
+      const decodedWeddingId = decodeURIComponent(weddingId)
+      
+      // Get the wedding UUID from the wedding_name_id
       const { data: wedding, error: weddingError } = await supabase
         .from('weddings')
         .select('id')
-        .eq('wedding_name_id', weddingNameId)
+        .eq('wedding_name_id', decodedWeddingId)
         .single()
       
       if (weddingError || !wedding) {
@@ -103,14 +118,19 @@ export async function POST(request: Request) {
     }
 
     // Single guest insert (original behavior)
-    // Decode the weddingNameId in case it's URL encoded
-    const weddingNameId = decodeURIComponent(body.weddingNameId)
+    const weddingId = body.weddingId
 
-    // Get wedding ID
+    if (!weddingId) {
+      return NextResponse.json({ error: "weddingId is required" }, { status: 400 })
+    }
+
+    const decodedWeddingId = decodeURIComponent(weddingId)
+
+    // Get the wedding UUID from the wedding_name_id
     const { data: wedding, error: weddingError } = await supabase
       .from('weddings')
       .select('id')
-      .eq('wedding_name_id', weddingNameId)
+      .eq('wedding_name_id', decodedWeddingId)
       .single()
     
     if (weddingError || !wedding) {
@@ -133,6 +153,7 @@ export async function POST(request: Request) {
     ]).select().single()
 
     if (error) {
+      console.error('Guest POST - Insert error:', error)
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 

@@ -28,7 +28,6 @@ create table "weddings" (
 create table "wedding_schedule" (
   "id" uuid primary key default gen_random_uuid(),
   "wedding_id" uuid not null references weddings(id) on delete cascade,
-  "wedding_name_id" text,
   "event_name" text not null,
   "event_time" time not null,
   "event_description" text,

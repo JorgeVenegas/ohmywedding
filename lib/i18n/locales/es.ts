@@ -135,7 +135,7 @@ export const es: Translations = {
 
   // RSVP Section
   rsvp: {
-    title: 'Confirmar Asistencia',
+    title: 'Estás Cordialmente Invitado',
     subtitle: 'Sería un honor contar con tu presencia',
     firstName: 'Nombre',
     lastName: 'Apellido',

@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import { Wedding } from '@/lib/wedding-data'
 import {
@@ -42,6 +43,8 @@ function ConfigBasedWeddingRendererContent({
   const { config, isLoading, updateComponents, updateSiteSettings, weddingDetails, setWeddingDetails } = usePageConfig()
   const siteConfigContext = useSiteConfigSafe()
   const editingContext = useEditingModeSafe()
+  const searchParams = useSearchParams()
+  const groupId = searchParams.get('groupId') ?? undefined
   
   // Check if user is authorized to access admin (owner or collaborator)
   const [isAuthorized, setIsAuthorized] = React.useState(false)
@@ -304,7 +307,8 @@ function ConfigBasedWeddingRendererContent({
       dateId: wedding.date_id,
       weddingNameId,
       theme: config.siteSettings.theme,
-      alignment: { text: 'center' }
+      alignment: { text: 'center' },
+      groupId: component.type === 'rsvp' ? groupId : undefined
     }
 
     let renderedComponent

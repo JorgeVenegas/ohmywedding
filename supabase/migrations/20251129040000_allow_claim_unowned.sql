@@ -5,5 +5,5 @@ create policy "Owners and collaborators can update weddings" on weddings
   for update using (
     owner_id = auth.uid() -- Owner can edit
     or owner_id is null -- Anyone logged in can claim/edit unowned weddings
-    or auth.jwt() ->> 'email' = any(collaborator_emails) -- Collaborators can edit
+    or (select email from auth.users where id = auth.uid()) = any(collaborator_emails) -- Collaborators can edit
   );

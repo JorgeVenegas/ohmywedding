@@ -138,6 +138,7 @@ export const defaultComponentConfigs: Record<ComponentType, Omit<ComponentConfig
     type: 'rsvp',
     enabled: true,
     props: {
+      variant: 'elegant',
       showMealPreferences: true,
       showCustomQuestions: true,
       customQuestions: [

@@ -2,7 +2,6 @@
 create table "gallery_albums" (
   "id" uuid primary key default gen_random_uuid(),
   "wedding_id" uuid not null references weddings(id) on delete cascade,
-  "wedding_name_id" text,
   "name" text not null,
   "description" text,
   "cover_photo_url" text,
@@ -16,7 +15,6 @@ create table "gallery_photos" (
   "id" uuid primary key default gen_random_uuid(),
   "album_id" uuid references gallery_albums(id) on delete cascade,
   "wedding_id" uuid not null references weddings(id) on delete cascade,
-  "wedding_name_id" text,
   "title" text,
   "description" text,
   "photo_url" text not null,
