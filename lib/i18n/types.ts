@@ -177,6 +177,21 @@ export interface Translations {
     adultsOnly: string
     error: string
     tryAgain: string
+    alreadySubmitted: string
+    responseRecorded: string
+    editResponse: string
+    willAttend: string
+    cannotAttend: string
+    accept: string
+    decline: string
+    messageToCouple: string
+    messageToCoupleOptional: string
+    messagePlaceholderShort: string
+    submittingResponse: string
+    submitResponse: string
+    partyOf: string
+    respondForAll: string
+    individualInvitationsMessage: string
   }
 
   // Gallery Section
