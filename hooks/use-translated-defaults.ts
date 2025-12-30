@@ -138,7 +138,13 @@ export function useLocalizedDate() {
   const formatDate = (dateString: string | null | undefined, options?: Intl.DateTimeFormatOptions) => {
     if (!dateString) return ''
     
-    const date = new Date(dateString)
+    // Parse date string manually to avoid timezone conversion
+    // Date strings from DB are in YYYY-MM-DD format
+    const [year, month, day] = dateString.split('-').map(Number)
+    if (!year || !month || !day) return ''
+    
+    // Create date in local timezone (month is 0-based)
+    const date = new Date(year, month - 1, day)
     const defaultOptions: Intl.DateTimeFormatOptions = {
       weekday: 'long',
       year: 'numeric',
