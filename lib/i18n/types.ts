@@ -287,6 +287,7 @@ export interface Translations {
       liverpool: string
       palacio: string
       target: string
+      ikea: string
       crateBarrel: string
       williamsSonoma: string
       zola: string

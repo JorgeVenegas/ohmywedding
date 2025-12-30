@@ -285,6 +285,7 @@ export const en: Translations = {
       liverpool: 'Premium department store registry in Mexico',
       palacio: 'Luxury department store registry',
       target: 'Affordable home essentials and more',
+      ikea: 'Affordable furniture and home accessories',
       crateBarrel: 'Modern furniture and housewares',
       williamsSonoma: 'Premium kitchen and home goods',
       zola: 'All-in-one wedding registry platform',

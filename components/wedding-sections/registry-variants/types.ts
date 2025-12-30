@@ -81,46 +81,11 @@ export const DEFAULT_PROVIDERS: DefaultProvider[] = [
     descriptionKey: 'registry.providers.target'
   },
   {
-    id: 'crate-barrel',
-    name: 'Crate & Barrel',
-    logoUrl: '/images/registries/crate-barrel.png',
-    websiteUrl: 'https://www.crateandbarrel.com/gift-registry',
-    descriptionKey: 'registry.providers.crateBarrel'
-  },
-  {
-    id: 'williams-sonoma',
-    name: 'Williams Sonoma',
-    logoUrl: '/images/registries/williams-sonoma.png',
-    websiteUrl: 'https://www.williams-sonoma.com/registry',
-    descriptionKey: 'registry.providers.williamsSonoma'
-  },
-  {
-    id: 'zola',
-    name: 'Zola',
-    logoUrl: '/images/registries/zola.png',
-    websiteUrl: 'https://www.zola.com',
-    descriptionKey: 'registry.providers.zola'
-  },
-  {
-    id: 'honeyfund',
-    name: 'Honeyfund',
-    logoUrl: '/images/registries/honeyfund.png',
-    websiteUrl: 'https://www.honeyfund.com',
-    descriptionKey: 'registry.providers.honeyfund'
-  },
-  {
-    id: 'bed-bath',
-    name: 'Bed Bath & Beyond',
-    logoUrl: '/images/registries/bed-bath.png',
-    websiteUrl: 'https://www.bedbathandbeyond.com/store/registry/wedding',
-    descriptionKey: 'registry.providers.bedBath'
-  },
-  {
-    id: 'custom',
-    name: 'Other',
-    logoUrl: '/images/registries/custom.png',
-    websiteUrl: '',
-    descriptionKey: 'registry.providers.custom'
+    id: 'ikea',
+    name: 'IKEA',
+    logoUrl: '/images/registries/ikea.png',
+    websiteUrl: 'https://www.ikea.com/us/en/customer-service/services/gift-registry/',
+    descriptionKey: 'registry.providers.ikea'
   }
 ]
 

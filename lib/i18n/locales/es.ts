@@ -285,6 +285,7 @@ export const es: Translations = {
       liverpool: 'Registro de tienda departamental premium en México',
       palacio: 'Registro de tienda departamental de lujo',
       target: 'Artículos esenciales para el hogar a precios accesibles',
+      ikea: 'Muebles y accesorios para el hogar a precios accesibles',
       crateBarrel: 'Muebles y artículos para el hogar modernos',
       williamsSonoma: 'Artículos premium para cocina y hogar',
       zola: 'Plataforma todo-en-uno de registro de bodas',

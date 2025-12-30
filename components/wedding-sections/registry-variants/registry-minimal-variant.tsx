@@ -140,7 +140,7 @@ export function RegistryMinimalVariant({
                       {registry.name}
                     </span>
                     {showDescription && registry.description && (
-                      <span 
+                      <span
                         className="text-xs block mt-0.5 line-clamp-1"
                         style={{ color: mutedTextColor }}
                       >
