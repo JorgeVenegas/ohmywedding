@@ -211,6 +211,7 @@ CREATE POLICY "Wedding owners and collaborators can manage registry contribution
 
 -- images (if it exists and has policies)
 DROP POLICY IF EXISTS "Wedding owners and collaborators can manage images" ON images;
+DROP POLICY IF EXISTS "Wedding owners can manage images" ON images;
 -- Only create the policy if the images table exists and has wedding_id
 DO $$
 BEGIN
