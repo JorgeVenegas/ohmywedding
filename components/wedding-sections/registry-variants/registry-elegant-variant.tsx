@@ -139,14 +139,14 @@ export function RegistryElegantVariant({
             </p>
           </div>
         ) : (
-          <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
             {registries.map((registry) => {
               const hasUrl = registry.url && registry.url.trim() !== ''
 
               return (
                 <div
                   key={registry.id}
-                  className="relative w-full md:w-[calc(50%-16px)] max-w-lg"
+                  className="relative w-full"
                 >
                   {/* Ornate outer border */}
                   <div 
@@ -281,7 +281,7 @@ export function RegistryElegantVariant({
 
             {/* Custom Registry Card */}
             {showCustomRegistry && weddingNameId && (
-              <div className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] max-w-sm">
+              <div className="relative w-full">
                 <Link
                   href={`/${weddingNameId}/registry`}
                   className="block relative rounded-2xl overflow-hidden shadow-md transition-shadow duration-300 hover:shadow-xl"
