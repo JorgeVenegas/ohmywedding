@@ -170,6 +170,7 @@ export function WeddingNav({
       'countdown': t('countdown.title'),
       'event-details': t('nav.eventDetails'),
       'gallery': t('nav.gallery'),
+      'registry': t('registry.title'),
       'rsvp': t('nav.rsvp'),
       'faq': t('nav.faq')
     }
@@ -269,7 +270,7 @@ export function WeddingNav({
   const initials = `${getInitial(person1Name)} & ${getInitial(person2Name)}`
 
   // Valid section ids that we support in navigation
-  const validSectionIds = ['hero', 'our-story', 'countdown', 'event-details', 'gallery', 'rsvp', 'faq']
+  const validSectionIds = ['hero', 'our-story', 'countdown', 'event-details', 'gallery', 'registry', 'rsvp', 'faq']
 
   // Generate section links from enabled sections (including hero as "Home")
   const sectionLinks: SectionLink[] = enabledSections

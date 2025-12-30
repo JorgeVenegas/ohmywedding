@@ -121,7 +121,7 @@ export function RegistryCardsVariant({
                 <CardWrapper
                   key={registry.id}
                   {...linkProps}
-                  className="group relative block rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 w-full sm:w-[calc(50%-12px)] lg:w-[calc(45%-12px)] max-w-lg"
+                  className="group relative block rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] max-w-lg"
                   style={{ 
                     backgroundColor: cardBg,
                     border: `2px solid ${cardBorder}`
@@ -187,7 +187,7 @@ export function RegistryCardsVariant({
             {showCustomRegistry && weddingNameId && (
               <Link
                 href={`/${weddingNameId}/registry`}
-                className="group relative block rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 w-full sm:w-[calc(50%-12px)] lg:w-[calc(45%-12px)] max-w-lg"
+                className="group relative block rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] max-w-lg"
                 style={{ 
                   backgroundColor: cardBg,
                   border: `2px solid ${cardBorder}`
