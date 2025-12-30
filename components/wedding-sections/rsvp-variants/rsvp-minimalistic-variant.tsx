@@ -120,7 +120,7 @@ export function RSVPMinimalisticVariant({
 
   if (loading) {
     return (
-      <SectionWrapper theme={theme} alignment={alignment} style={{ backgroundColor: bgColor }}>
+      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
         <div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="w-8 h-8 animate-spin" style={{ color: titleColor }} />
         </div>
@@ -130,7 +130,7 @@ export function RSVPMinimalisticVariant({
 
   if (submitted && !isEditing) {
     return (
-      <SectionWrapper theme={theme} alignment={alignment} style={{ backgroundColor: bgColor }}>
+      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
         <div className="max-w-2xl mx-auto px-6 py-24">
           <div 
             className="p-12 rounded-2xl border-2"
@@ -199,7 +199,7 @@ export function RSVPMinimalisticVariant({
   }
 
   return (
-    <SectionWrapper theme={theme} alignment={alignment} style={{ backgroundColor: bgColor }}>
+    <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
       <div className="max-w-3xl mx-auto px-6 py-16">
         {/* Header */}
         <div className="mb-12 text-center" style={{ textAlign: alignment?.text || 'center' }}>

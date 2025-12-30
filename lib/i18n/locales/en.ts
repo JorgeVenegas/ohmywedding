@@ -174,7 +174,22 @@ export const en: Translations = {
     children: 'Children',
     adultsOnly: 'Adults Only',
     error: 'Something went wrong. Please try again.',
-    tryAgain: 'Try Again'
+    tryAgain: 'Try Again',
+    alreadySubmitted: 'Response Already Submitted',
+    responseRecorded: 'Your response has been recorded. Thank you!',
+    editResponse: 'Edit Response',
+    willAttend: "Yes, I'll be there!",
+    cannotAttend: "Sorry, I can't make it",
+    accept: 'Accept',
+    decline: 'Decline',
+    messageToCouple: 'Message to the couple',
+    messageToCoupleOptional: 'optional',
+    messagePlaceholderShort: 'Share your excitement or well wishes...',
+    submittingResponse: 'Submitting',
+    submitResponse: 'Submit Response',
+    partyOf: 'Party of',
+    respondForAll: 'Please respond for all guests before submitting',
+    individualInvitationsMessage: 'Our invitations are personalized for each guest group. If you received an invitation link, please use that to RSVP. If you need assistance, please contact us directly.'
   },
 
   // Gallery Section

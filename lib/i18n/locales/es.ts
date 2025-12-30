@@ -174,7 +174,22 @@ export const es: Translations = {
     children: 'Niños',
     adultsOnly: 'Solo Adultos',
     error: 'Algo salió mal. Por favor intenta de nuevo.',
-    tryAgain: 'Intentar de Nuevo'
+    tryAgain: 'Intentar de Nuevo',
+    alreadySubmitted: 'Respuesta Ya Enviada',
+    responseRecorded: '¡Tu respuesta ha sido registrada. Gracias!',
+    editResponse: 'Editar Respuesta',
+    willAttend: '¡Sí, asistiré!',
+    cannotAttend: 'Lo siento, no podré asistir',
+    accept: 'Aceptar',
+    decline: 'Declinar',
+    messageToCouple: 'Mensaje para los novios',
+    messageToCoupleOptional: 'opcional',
+    messagePlaceholderShort: 'Comparte tu emoción o buenos deseos...',
+    submittingResponse: 'Enviando',
+    submitResponse: 'Enviar Respuesta',
+    partyOf: 'Grupo de',
+    respondForAll: 'Por favor responde por todos los invitados antes de enviar',
+    individualInvitationsMessage: 'Nuestras invitaciones son personalizadas para cada grupo de invitados. Si recibiste un enlace de invitación, por favor úsalo para confirmar tu asistencia. Si necesitas ayuda, contáctanos directamente.'
   },
 
   // Gallery Section

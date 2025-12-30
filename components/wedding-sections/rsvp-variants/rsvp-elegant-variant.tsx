@@ -143,7 +143,7 @@ export function RSVPElegantVariant({
 
   if (isLoading) {
     return (
-      <SectionWrapper theme={theme} alignment={alignment} style={{ backgroundColor: bgColor }}>
+      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
         <div className="container mx-auto px-4 py-20">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: titleColor }} />
@@ -155,7 +155,7 @@ export function RSVPElegantVariant({
 
   if (isSubmitted && !isEditing) {
     return (
-      <SectionWrapper theme={theme} alignment={alignment} style={{ backgroundColor: bgColor }}>
+      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
         <div className="container mx-auto px-4 py-20">
           <div className="max-w-3xl mx-auto">
             <div 
@@ -233,7 +233,7 @@ export function RSVPElegantVariant({
 
   if (!groupId) {
     return (
-      <SectionWrapper theme={theme} alignment={alignment} style={{ backgroundColor: bgColor }}>
+      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
         <div className="container mx-auto px-4 py-20">
           <div className="max-w-xl mx-auto">
             <div 
@@ -274,7 +274,7 @@ export function RSVPElegantVariant({
   }
 
   return (
-    <SectionWrapper theme={theme} alignment={alignment} style={{ backgroundColor: bgColor }}>
+    <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
       <div className="container mx-auto px-4 py-20">
         <div className="max-w-2xl mx-auto">
           {/* Main Invitation Card */}
@@ -339,7 +339,7 @@ export function RSVPElegantVariant({
                         {groupData.name}
                       </p>
                       <p className="text-xs tracking-[0.2em] uppercase mt-1 opacity-70" style={{ color: textColor }}>
-                        Party of {guests.length}
+                        {t('rsvp.partyOf')} {guests.length}
                       </p>
                     </div>
                   </div>
@@ -383,7 +383,7 @@ export function RSVPElegantVariant({
                           color: titleColor
                         }}
                       >
-                        Accept
+                        {t('rsvp.accept')}
                       </button>
                       <button
                         type="button"
@@ -401,7 +401,7 @@ export function RSVPElegantVariant({
                           opacity: 0.7
                         }}
                       >
-                        Decline
+                        {t('rsvp.decline')}
                       </button>
                     </div>
                   </div>
@@ -414,13 +414,13 @@ export function RSVPElegantVariant({
                   color: textColor,
                   opacity: 0.8
                 }}>
-                  Message to the couple
-                  <span className="text-xs ml-2 opacity-60">(optional)</span>
+                  {t('rsvp.messageToCouple')}
+                  <span className="text-xs ml-2 opacity-60">({t('rsvp.messageToCoupleOptional')})</span>
                 </label>
                 <Textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Share your excitement or well wishes..."
+                  placeholder={t('rsvp.messagePlaceholderShort')}
                   rows={4}
                   className="w-full px-5 py-4 rounded-2xl border-2 bg-transparent font-light resize-none transition-all duration-300 focus:shadow-lg"
                   style={{
@@ -446,15 +446,15 @@ export function RSVPElegantVariant({
                   {isSubmitting ? (
                     <span className="flex items-center justify-center gap-3">
                       <Sparkles className="w-4 h-4 animate-spin" />
-                      Submitting
+                      {t('rsvp.submittingResponse')}
                     </span>
                   ) : (
-                    'Submit Response'
+                    t('rsvp.submitResponse')
                   )}
                 </Button>
                 {!allGuestsResponded && (
                   <p className="mt-3 text-xs text-center font-light italic" style={{ color: textColor, opacity: 0.6 }}>
-                    Please respond for all guests before submitting
+                    {t('rsvp.respondForAll')}
                   </p>
                 )}
               </div>

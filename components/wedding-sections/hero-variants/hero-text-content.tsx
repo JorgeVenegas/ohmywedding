@@ -146,9 +146,15 @@ export function HeroTextContent({
               borderColor: theme?.colors?.primary || '#a86b8f'
             }}
           >
-            <Link href={`/${weddingNameId}/rsvp`}>
+            <a
+              href="#rsvp"
+              onClick={(e) => {
+                e.preventDefault()
+                document.querySelector('#rsvp')?.scrollIntoView({ behavior: 'smooth' })
+              }}
+            >
               {t('hero.rsvpNow')}
-            </Link>
+            </a>
           </Button>
         )}
       </div>
