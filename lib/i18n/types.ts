@@ -192,6 +192,22 @@ export interface Translations {
     partyOf: string
     respondForAll: string
     individualInvitationsMessage: string
+    verifyPhone: string
+    phoneVerification: string
+    phoneVerificationDescription: string
+    enterPhoneNumber: string
+    sendVerificationCode: string
+    enterVerificationCode: string
+    verificationCodeSent: string
+    verificationCodePlaceholder: string
+    verifyCode: string
+    resendCode: string
+    phoneVerified: string
+    invalidCode: string
+    codeSentTo: string
+    verificationRequired: string
+    selectPhoneNumber: string
+    selectPhone: string
   }
 
   // Gallery Section

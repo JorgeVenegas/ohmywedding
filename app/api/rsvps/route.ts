@@ -11,6 +11,42 @@ export async function POST(request: Request) {
 
     // Update each guest's confirmation status
     if (body.guests && Array.isArray(body.guests)) {
+      // REQUIRE OTP verification for group RSVPs
+      if (!body.verificationToken || !body.groupId) {
+        return NextResponse.json(
+          { error: "Phone verification required" },
+          { status: 403 }
+        )
+      }
+
+      // Verify the OTP token is valid and not expired
+      const { data: verification, error: verificationError } = await supabase
+        .from('rsvp_otp_verifications')
+        .select('*')
+        .eq('guest_group_id', body.groupId)
+        .eq('verification_token', body.verificationToken)
+        .eq('verified', true)
+        .single()
+
+      if (verificationError || !verification) {
+        return NextResponse.json(
+          { error: "Invalid or expired verification" },
+          { status: 403 }
+        )
+      }
+
+      // Check if verification has expired (valid for 1 hour after verification)
+      const verifiedAt = new Date(verification.verified_at)
+      const expirationTime = new Date(verifiedAt.getTime() + 60 * 60 * 1000) // 1 hour
+      
+      if (new Date() > expirationTime) {
+        return NextResponse.json(
+          { error: "Verification has expired. Please verify your phone number again." },
+          { status: 403 }
+        )
+      }
+
+      // Update each guest's confirmation status
       for (const guest of body.guests) {
         const confirmationStatus = 
           guest.attending === true ? 'confirmed' : 
@@ -29,6 +65,13 @@ export async function POST(request: Request) {
           )
         }
       }
+
+      // Optionally invalidate the verification token after use
+      // Uncomment if you want one-time use tokens:
+      // await supabase
+      //   .from('rsvp_otp_verifications')
+      //   .update({ verification_token: null })
+      //   .eq('id', verification.id)
 
       return NextResponse.json({ success: true })
     }

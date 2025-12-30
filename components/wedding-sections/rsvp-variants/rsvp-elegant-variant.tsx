@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { OTPVerificationDialog } from '@/components/ui/otp-verification-dialog'
 import { Heart, Sparkles } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseRSVPProps, getColorScheme } from './types'
@@ -18,6 +19,8 @@ interface GuestInfo {
 interface GroupData {
   id: string
   name: string
+  phone_number?: string
+  phone_numbers?: string[]
   guests: Array<{
     id: string
     name: string
@@ -46,6 +49,9 @@ export function RSVPElegantVariant({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
+  const [verificationToken, setVerificationToken] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState('')
+  const [showOTPDialog, setShowOTPDialog] = useState(false)
 
   const title = sectionTitle || t('rsvp.title')
   const subtitle = sectionSubtitle || t('rsvp.subtitle')
@@ -109,8 +115,21 @@ export function RSVPElegantVariant({
     ))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmitClick = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!allGuestsResponded) {
+      setSubmitError(t('rsvp.respondForAll'))
+      return
+    }
+
+    // Open OTP dialog
+    setShowOTPDialog(true)
+  }
+
+  const handleOTPVerified = async (token: string) => {
+    setVerificationToken(token)
+    setSubmitError('')
     setIsSubmitting(true)
     
     try {
@@ -120,6 +139,7 @@ export function RSVPElegantVariant({
         body: JSON.stringify({
           weddingNameId,
           groupId,
+          verificationToken: token,
           guests: guests.map(g => ({
             guestId: g.id,
             attending: g.attending,
@@ -128,12 +148,17 @@ export function RSVPElegantVariant({
         })
       })
 
+      const data = await response.json()
+
       if (response.ok) {
         setIsSubmitted(true)
         setIsEditing(false)
+        setShowOTPDialog(false)
+      } else {
+        setSubmitError(data.error || t('rsvp.error'))
       }
     } catch (error) {
-      // RSVP submission failed
+      setSubmitError(t('rsvp.error'))
     } finally {
       setIsSubmitting(false)
     }
@@ -286,7 +311,7 @@ export function RSVPElegantVariant({
               textAlign
             }}
           >
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmitClick} className="space-y-8">
               {/* Header */}
               <div className="space-y-5">
                 <div className="space-y-4">
@@ -432,6 +457,9 @@ export function RSVPElegantVariant({
 
               {/* Submit Button */}
               <div className="pt-4">
+                {submitError && (
+                  <p className="mb-3 text-sm text-red-600 text-center">{submitError}</p>
+                )}
                 <Button
                   type="submit"
                   disabled={isSubmitting || !allGuestsResponded}
@@ -459,6 +487,19 @@ export function RSVPElegantVariant({
                 )}
               </div>
             </form>
+
+            {/* OTP Verification Dialog */}
+            {groupId && groupData && (
+              <OTPVerificationDialog
+                isOpen={showOTPDialog}
+                onClose={() => setShowOTPDialog(false)}
+                onVerified={handleOTPVerified}
+                groupId={groupId}
+                phoneNumbers={groupData.phone_numbers || []}
+                buttonColor={theme?.colors?.accent || titleColor}
+                textColor={textColor}
+              />
+            )}
           </div>
         </div>
       </div>

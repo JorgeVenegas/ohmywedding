@@ -29,6 +29,7 @@ export async function GET(
       .select(`
         id,
         name,
+        phone_number,
         confirmation_status
       `)
       .eq("guest_group_id", groupId)
@@ -45,6 +46,7 @@ export async function GET(
     const guestsWithStatus = guests?.map(guest => ({
       id: guest.id,
       name: guest.name,
+      phone_number: guest.phone_number,
       attending: guest.confirmation_status === 'confirmed' ? true : 
                  guest.confirmation_status === 'declined' ? false : null
     })) || []
@@ -53,9 +55,22 @@ export async function GET(
     const allResponded = guestsWithStatus.length > 0 && 
                         guestsWithStatus.every(g => g.attending !== null)
 
+    // Collect all phone numbers from group and guests
+    const phoneNumbers: string[] = []
+    if (group.phone_number) {
+      phoneNumbers.push(group.phone_number)
+    }
+    guestsWithStatus.forEach(guest => {
+      if (guest.phone_number && !phoneNumbers.includes(guest.phone_number)) {
+        phoneNumbers.push(guest.phone_number)
+      }
+    })
+
     return NextResponse.json({
       id: group.id,
       name: group.name,
+      phone_number: group.phone_number,
+      phone_numbers: phoneNumbers,
       guests: guestsWithStatus,
       hasSubmitted: allResponded
     })

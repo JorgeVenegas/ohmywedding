@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { SectionWrapper } from '../section-wrapper'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { OTPVerificationDialog } from '@/components/ui/otp-verification-dialog'
 import { Check, X, Loader2 } from 'lucide-react'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { BaseRSVPProps, getColorScheme } from './types'
@@ -17,6 +18,8 @@ interface Guest {
 interface GroupData {
   id: string
   name: string
+  phone_number?: string
+  phone_numbers?: string[]
   guests: Guest[]
   hasSubmitted?: boolean
 }
@@ -39,6 +42,9 @@ export function RSVPCardsVariant({
   const [message, setMessage] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [verificationToken, setVerificationToken] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState('')
+  const [showOTPDialog, setShowOTPDialog] = useState(false)
 
   const { bgColor, textColor, titleColor, cardBg, isColored } = getColorScheme(
     theme,
@@ -90,7 +96,16 @@ export function RSVPCardsVariant({
     )
   }
 
-  const handleSubmit = async () => {
+  const handleSubmitClick = () => {
+    setShowOTPDialog(true)
+  }
+
+  const handleOTPVerified = async (token: string) => {
+    setVerificationToken(token)
+    setShowOTPDialog(false)
+    
+    // Proceed with submission
+    setSubmitError('')
     setSubmitting(true)
     try {
       const response = await fetch('/api/rsvps', {
@@ -99,6 +114,7 @@ export function RSVPCardsVariant({
         body: JSON.stringify({
           weddingNameId,
           groupId,
+          verificationToken: token,
           guests: guests.map(g => ({
             guestId: g.id,
             attending: g.attending,
@@ -107,12 +123,18 @@ export function RSVPCardsVariant({
         })
       })
 
+      const data = await response.json()
+
       if (response.ok) {
         setSubmitted(true)
         setIsEditing(false)
+        setShowOTPDialog(false)
+      } else {
+        setSubmitError(data.error || t('rsvp.error'))
+        setShowOTPDialog(false)
       }
     } catch (error) {
-      // RSVP submission failed
+      setSubmitError(t('rsvp.error'))
     } finally {
       setSubmitting(false)
     }
@@ -350,9 +372,12 @@ export function RSVPCardsVariant({
             </div>
 
             {/* Submit Button */}
+            {submitError && (
+              <p className="mb-3 text-sm text-red-600 text-center">{submitError}</p>
+            )}
             <button
               type="button"
-              onClick={handleSubmit}
+              onClick={handleSubmitClick}
               disabled={submitting || guests.every(g => g.attending === undefined)}
               className="w-full py-4 px-8 rounded-xl font-semibold text-base tracking-wide transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl hover:scale-[1.01]"
               style={{
@@ -373,6 +398,19 @@ export function RSVPCardsVariant({
           </>
         )}
       </div>
+
+      {/* OTP Verification Dialog */}
+      {groupId && groupData && (
+        <OTPVerificationDialog
+          isOpen={showOTPDialog}
+          onClose={() => setShowOTPDialog(false)}
+          groupId={groupId}
+          phoneNumbers={groupData.phone_numbers || []}
+          onVerified={handleOTPVerified}
+          buttonColor={theme?.colors?.accent || titleColor}
+          textColor={textColor}
+        />
+      )}
     </SectionWrapper>
   )
 }
