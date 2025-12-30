@@ -104,7 +104,7 @@ export function RegistryCardsVariant({
             </p>
           </div>
         ) : (
-          <div className="flex flex-wrap justify-center gap-5 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 max-w-6xl mx-auto">
             {registries.map((registry) => {
               const hasUrl = registry.url && registry.url.trim() !== ''
               const CardWrapper = hasUrl ? 'a' : 'div'
@@ -121,7 +121,7 @@ export function RegistryCardsVariant({
                 <CardWrapper
                   key={registry.id}
                   {...linkProps}
-                  className="group relative block rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] max-w-lg"
+                  className="group relative block rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 w-full"
                   style={{ 
                     backgroundColor: cardBg,
                     border: `2px solid ${cardBorder}`
@@ -187,7 +187,7 @@ export function RegistryCardsVariant({
             {showCustomRegistry && weddingNameId && (
               <Link
                 href={`/${weddingNameId}/registry`}
-                className="group relative block rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] max-w-lg"
+                className="group relative block rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 w-full"
                 style={{ 
                   backgroundColor: cardBg,
                   border: `2px solid ${cardBorder}`
