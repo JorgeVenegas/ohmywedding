@@ -86,13 +86,9 @@ export function RSVPElegantVariant({
         const data = await response.json()
         setGroupData(data)
         
-        console.log('[DEBUG] Guest data from API:', data.guests)
-        console.log('[DEBUG] hasSubmitted:', data.hasSubmitted)
-        
         // Set guests with their existing RSVP status
         setGuests(
           data.guests.map((g: any) => {
-            console.log('[DEBUG] Guest:', g.name, '| is_traveling:', g.is_traveling, '| hasSubmitted:', data.hasSubmitted, '| admin_set_travel:', g.admin_set_travel)
             return {
               id: g.id,
               name: g.name,

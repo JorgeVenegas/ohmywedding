@@ -14,10 +14,19 @@ ADD COLUMN IF NOT EXISTS "traveling_from" text;
 ALTER TABLE "public"."guests" 
 ADD COLUMN IF NOT EXISTS "travel_arrangement" text;
 
--- Add constraint to ensure travel_arrangement only has valid values
-ALTER TABLE "public"."guests" 
-ADD CONSTRAINT "guests_travel_arrangement_check" 
-CHECK (travel_arrangement IS NULL OR travel_arrangement IN ('needs_transport', 'own_means'));
+-- Add constraint to ensure travel_arrangement only has valid values (if it doesn't exist)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint 
+    WHERE conname = 'guests_travel_arrangement_check' 
+    AND conrelid = 'public.guests'::regclass
+  ) THEN
+    ALTER TABLE "public"."guests" 
+    ADD CONSTRAINT "guests_travel_arrangement_check" 
+    CHECK (travel_arrangement IS NULL OR travel_arrangement IN ('needs_transport', 'own_means'));
+  END IF;
+END$$;
 
 -- Add ticket_attachment_url column (stores URL to uploaded ticket in Supabase storage)
 ALTER TABLE "public"."guests" 

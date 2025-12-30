@@ -69,18 +69,6 @@ function ConfigBasedWeddingRendererContent({
         const isCollaborator = wedding.collaborator_emails?.includes(user.email || '') || false
         const isUnowned = wedding.owner_id === null || wedding.owner_id === undefined
         
-        // Debug logging
-        console.log('Auth check:', {
-          userId: user.id,
-          userEmail: user.email,
-          weddingOwnerId: wedding.owner_id,
-          collaboratorEmails: wedding.collaborator_emails,
-          isOwner,
-          isCollaborator,
-          isUnowned,
-          settingAuthorized: isOwner || isCollaborator || isUnowned
-        })
-        
         setIsAuthorized(isOwner || isCollaborator || isUnowned)
       } catch (error) {
         console.error('Auth check error:', error)
@@ -90,11 +78,6 @@ function ConfigBasedWeddingRendererContent({
     
     checkAuthorization()
   }, [wedding.owner_id, wedding.collaborator_emails])
-  
-  // Debug: log when isAuthorized changes
-  React.useEffect(() => {
-    console.log('isAuthorized state changed:', isAuthorized)
-  }, [isAuthorized])
   
   // Initialize wedding details from the wedding prop
   React.useEffect(() => {

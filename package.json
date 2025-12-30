@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "tsx scripts/setup-storage.ts local && next dev --hostname 127.0.0.1",
+    "dev": "next dev --hostname 127.0.0.1",
+    "dev:with-storage": "tsx scripts/setup-storage.ts local && next dev --hostname 127.0.0.1",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",

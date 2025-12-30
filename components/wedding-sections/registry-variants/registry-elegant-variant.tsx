@@ -139,14 +139,14 @@ export function RegistryElegantVariant({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto [&>*:last-child:nth-child(odd)]:md:col-span-2 [&>*:last-child:nth-child(odd)]:md:max-w-lg [&>*:last-child:nth-child(odd)]:md:mx-auto">
             {registries.map((registry) => {
               const hasUrl = registry.url && registry.url.trim() !== ''
 
               return (
                 <div
                   key={registry.id}
-                  className="relative w-full"
+                  className="relative w-full h-full"
                 >
                   {/* Ornate outer border */}
                   <div 
@@ -175,7 +175,7 @@ export function RegistryElegantVariant({
                   
                   {/* Main card */}
                   <div
-                    className="relative rounded-2xl overflow-hidden shadow-xl"
+                    className="relative rounded-2xl overflow-hidden shadow-xl h-full flex flex-col"
                     style={{ 
                       backgroundColor: cardBg,
                       border: `1px solid ${cardBorder}`
@@ -197,7 +197,7 @@ export function RegistryElegantVariant({
                       }}
                     />
                     
-                    <div className="relative p-8 sm:p-10 text-center">
+                    <div className="relative p-8 sm:p-10 text-center flex-1 flex flex-col justify-center">
                       {/* Provider Logo with decorative frame */}
                       <div className="mb-6 relative inline-block">
                         <div 
@@ -244,35 +244,37 @@ export function RegistryElegantVariant({
                         </p>
                       )}
                       
-                      {hasUrl ? (
-                        <a
-                          href={registry.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-light tracking-wide transition-all duration-300 hover:shadow-lg border"
-                          style={{ 
-                            backgroundColor: 'transparent',
-                            borderColor: primary,
-                            color: primary
-                          }}
-                        >
-                          {t('registry.visitRegistry')}
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
-                      ) : (
-                        <button
-                          onClick={() => setShowAlert(true)}
-                          className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-light tracking-wide transition-all duration-300 hover:shadow-lg border"
-                          style={{ 
-                            backgroundColor: 'transparent',
-                            borderColor: primary,
-                            color: primary
-                          }}
-                        >
-                          {t('registry.visitRegistry')}
-                          <ExternalLink className="w-4 h-4" />
-                        </button>
-                      )}
+                      <div className="flex justify-center">
+                        {hasUrl ? (
+                          <a
+                            href={registry.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-light tracking-wide transition-all duration-300 hover:shadow-lg border"
+                            style={{ 
+                              backgroundColor: 'transparent',
+                              borderColor: primary,
+                              color: primary
+                            }}
+                          >
+                            {t('registry.visitRegistry')}
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        ) : (
+                          <button
+                            onClick={() => setShowAlert(true)}
+                            className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-light tracking-wide transition-all duration-300 hover:shadow-lg border"
+                            style={{ 
+                              backgroundColor: 'transparent',
+                              borderColor: primary,
+                              color: primary
+                            }}
+                          >
+                            {t('registry.visitRegistry')}
+                            <ExternalLink className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -281,10 +283,35 @@ export function RegistryElegantVariant({
 
             {/* Custom Registry Card */}
             {showCustomRegistry && weddingNameId && (
-              <div className="relative w-full">
+              <div className="relative w-full h-full">
+                {/* Ornate outer border */}
+                <div 
+                  className="absolute -inset-3 rounded-3xl opacity-20"
+                  style={{ 
+                    border: `2px solid ${primary}`,
+                    background: `radial-gradient(circle at top left, ${primary}10, transparent 70%)`
+                  }}
+                />
+                
+                {/* Corner flourishes */}
+                <div 
+                  className="absolute -top-2 -left-2 w-8 h-8 rounded-full"
+                  style={{ 
+                    background: `radial-gradient(circle, ${primary}, transparent)`,
+                    opacity: 0.3
+                  }}
+                />
+                <div 
+                  className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full"
+                  style={{ 
+                    background: `radial-gradient(circle, ${secondary}, transparent)`,
+                    opacity: 0.3
+                  }}
+                />
+                
                 <Link
                   href={`/${weddingNameId}/registry`}
-                  className="block relative rounded-2xl overflow-hidden shadow-md transition-shadow duration-300 hover:shadow-xl"
+                  className="block relative rounded-2xl overflow-hidden shadow-xl transition-shadow duration-300 hover:shadow-2xl h-full"
                   style={{ 
                     backgroundColor: cardBg,
                     border: `1px solid ${cardBorder}`
@@ -348,16 +375,18 @@ export function RegistryElegantVariant({
                       </p>
                     )}
                     
-                    <div
-                      className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-light tracking-wide transition-all duration-300 hover:shadow-lg border"
-                      style={{ 
-                        backgroundColor: 'transparent',
-                        borderColor: primary,
-                        color: primary
-                      }}
-                    >
-                      {t('registry.visitRegistry')}
-                      <ExternalLink className="w-4 h-4" />
+                    <div className="flex justify-center">
+                      <div
+                        className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-light tracking-wide transition-all duration-300 hover:shadow-lg border"
+                        style={{ 
+                          backgroundColor: 'transparent',
+                          borderColor: primary,
+                          color: primary
+                        }}
+                      >
+                        {t('registry.visitRegistry')}
+                        <ExternalLink className="w-4 h-4" />
+                      </div>
                     </div>
                   </div>
                 </Link>

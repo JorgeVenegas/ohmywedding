@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   try {
     const supabase = await createServerSupabaseClient()
     const { phoneNumber, enteredPhone, groupId } = await request.json()
-
+    console.log('[OTP Verify] Verifying OTP for phone:', phoneNumber?.substring(0, 6) + '***', 'groupId:', groupId)
     if (!phoneNumber || !enteredPhone || !groupId) {
       return NextResponse.json(
         { error: "Phone number, entered phone, and group ID are required" },

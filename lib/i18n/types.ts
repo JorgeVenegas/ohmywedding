@@ -301,6 +301,27 @@ export interface Translations {
     showCustomRegistry: string
     customTitle: string
     customDescription: string
+    pageTitle: string
+    pageSubtitle: string
+    loadingRegistry: string
+    noItemsAvailable: string
+    progress: string
+    funded: string
+    goalReached: string
+    fullyFunded: string
+    contribute: string
+    contributeTo: string
+    everyContribution: string
+    contributionAmount: string
+    remaining: string
+    yourName: string
+    email: string
+    messageLabel: string
+    addPersonalMessage: string
+    proceedToPayment: string
+    processing: string
+    thankYou: string
+    confirmationEmail: string
     providers: {
       amazon: string
       liverpool: string

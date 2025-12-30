@@ -10,6 +10,8 @@ export async function POST(request: Request) {
     const supabase = await createServerSupabaseClient()
     const { phoneNumber, groupId } = await request.json()
 
+    console.log('[OTP Send] Request for phone:', phoneNumber?.substring(0, 6) + '***', 'groupId:', groupId)
+
     if (!phoneNumber || !groupId) {
       return NextResponse.json(
         { error: "Phone number and group ID are required" },
@@ -25,6 +27,7 @@ export async function POST(request: Request) {
       .single()
 
     if (groupError || !group) {
+      console.error('[OTP Send] Group not found:', groupError)
       return NextResponse.json(
         { error: "Guest group not found" },
         { status: 404 }

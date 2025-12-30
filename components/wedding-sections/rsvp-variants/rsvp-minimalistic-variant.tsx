@@ -71,19 +71,27 @@ export function RSVPMinimalisticVariant({
         if (response.ok) {
           const data = await response.json()
           setGroupData(data)
-          setGuests(
-            data.guests.map((g: any) => ({
-              id: g.id,
-              name: g.name,
-              attending: g.attending,
-              is_traveling: g.is_traveling || false,
-              traveling_from: g.traveling_from || '',
-              travel_arrangement: g.travel_arrangement || null,
-              ticket_attachment_url: g.ticket_attachment_url || null,
-              no_ticket_reason: g.no_ticket_reason || '',
-              adminSetTravel: g.admin_set_travel || false
-            }))
+          
+          // Map guests and check if any have responded
+          const mappedGuests = data.guests.map((g: any) => ({
+            id: g.id,
+            name: g.name,
+            attending: g.confirmation_status === 'confirmed' ? true : g.confirmation_status === 'declined' ? false : null,
+            is_traveling: g.is_traveling || false,
+            traveling_from: g.traveling_from || '',
+            travel_arrangement: g.travel_arrangement || null,
+            ticket_attachment_url: g.ticket_attachment_url || null,
+            no_ticket_reason: g.no_ticket_reason || '',
+            adminSetTravel: g.admin_set_travel || false
+          }))
+          
+          setGuests(mappedGuests)
+          
+          // Check if any guest has already submitted (confirmation_status is not 'pending')
+          const hasResponded = data.guests.some((g: any) => 
+            g.confirmation_status && g.confirmation_status !== 'pending'
           )
+          setSubmitted(hasResponded)
         }
       } catch (error) {
         console.error('Error fetching group:', error)
@@ -93,7 +101,7 @@ export function RSVPMinimalisticVariant({
     }
 
     fetchGroupData()
-  }, [groupId])
+  }, [groupId, isEditing])
 
   const updateGuest = (guestId: string, field: keyof Guest, value: any) => {
     setGuests(prev =>
@@ -215,6 +223,20 @@ export function RSVPMinimalisticVariant({
                   </span>
                 </div>
               ))}
+            </div>
+
+            {/* Edit Response Button */}
+            <div className="flex justify-center">
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-6 py-3 rounded-lg text-base font-medium transition-all hover:opacity-90"
+                style={{ 
+                  backgroundColor: titleColor,
+                  color: isColored ? 'white' : bgColor 
+                }}
+              >
+                {t('rsvp.editResponse')}
+              </button>
             </div>
           </div>
         </div>

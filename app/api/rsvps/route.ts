@@ -9,6 +9,9 @@ export async function POST(request: Request) {
     const supabase = await createServerSupabaseClient()
     const body = await request.json()
 
+    console.log('[RSVP Submit] Request for groupId:', body.groupId, 'guests:', body.guests?.length || 0)
+    console.log('[RSVP Submit] Has verification token:', !!body.verificationToken)
+
     // Update each guest's confirmation status
     if (body.guests && Array.isArray(body.guests)) {
       // REQUIRE OTP verification for group RSVPs
@@ -29,25 +32,45 @@ export async function POST(request: Request) {
         .single()
 
       if (verificationError || !verification) {
+        console.error('[RSVP Submit] Verification check failed:', verificationError)
         return NextResponse.json(
           { error: "Invalid or expired verification" },
           { status: 403 }
         )
       }
 
+      console.log('[RSVP Submit] Verification valid, updating guests')
+
       // Check if verification has expired (valid for 1 hour after verification)
       const verifiedAt = new Date(verification.verified_at)
       const expirationTime = new Date(verifiedAt.getTime() + 60 * 60 * 1000) // 1 hour
       
       if (new Date() > expirationTime) {
+        console.error('[RSVP Submit] Verification expired')
         return NextResponse.json(
           { error: "Verification has expired. Please verify your phone number again." },
           { status: 403 }
         )
       }
 
+      console.log('[RSVP Submit] Verification valid, updating', body.guests.length, 'guests')
+
+      // Use service role client to bypass RLS since we've verified the OTP
+      const { createClient } = await import('@supabase/supabase-js')
+      const supabaseAdmin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      )
+
       // Update each guest's confirmation status
       for (const guest of body.guests) {
+        console.log('[RSVP Submit] Updating guest:', guest.guestId, 'attending:', guest.attending)
         const confirmationStatus = 
           guest.attending === true ? 'confirmed' : 
           guest.attending === false ? 'declined' : 
@@ -77,7 +100,22 @@ export async function POST(request: Request) {
         
         console.log('[RSVP API] Updating guest:', guest.guestId, 'with data:', updateData)
         
-        const { error: updateError } = await supabase
+        // Verify this guest belongs to the verified group
+        const { data: guestData, error: guestError } = await supabaseAdmin
+          .from('guests')
+          .select('guest_group_id')
+          .eq('id', guest.guestId)
+          .single()
+        
+        if (guestError || !guestData || guestData.guest_group_id !== body.groupId) {
+          console.error('[RSVP API] Guest verification failed:', guestError)
+          return NextResponse.json(
+            { error: 'Guest does not belong to verified group' },
+            { status: 403 }
+          )
+        }
+        
+        const { error: updateError } = await supabaseAdmin
           .from('guests')
           .update(updateData)
           .eq('id', guest.guestId)
@@ -91,13 +129,7 @@ export async function POST(request: Request) {
         }
       }
 
-      // Optionally invalidate the verification token after use
-      // Uncomment if you want one-time use tokens:
-      // await supabase
-      //   .from('rsvp_otp_verifications')
-      //   .update({ verification_token: null })
-      //   .eq('id', verification.id)
-
+      console.log('[RSVP Submit] All guests updated successfully')
       return NextResponse.json({ success: true })
     }
 

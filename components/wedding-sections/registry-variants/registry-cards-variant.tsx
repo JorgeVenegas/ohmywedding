@@ -104,7 +104,7 @@ export function RegistryCardsVariant({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 max-w-6xl mx-auto [&>*:last-child:nth-child(3n+1)]:lg:col-start-2">
             {registries.map((registry) => {
               const hasUrl = registry.url && registry.url.trim() !== ''
               const CardWrapper = hasUrl ? 'a' : 'div'
@@ -121,7 +121,7 @@ export function RegistryCardsVariant({
                 <CardWrapper
                   key={registry.id}
                   {...linkProps}
-                  className="group relative block rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 w-full"
+                  className="group relative flex flex-col rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 w-full h-full"
                   style={{ 
                     backgroundColor: cardBg,
                     border: `2px solid ${cardBorder}`
@@ -135,7 +135,7 @@ export function RegistryCardsVariant({
                     }}
                   />
                   
-                  <div className="p-6 sm:p-8 text-center">
+                  <div className="p-6 sm:p-8 text-center flex-1 flex flex-col justify-center">
                     {/* Provider Logo - Larger */}
                     <div className="mb-5 h-20 sm:h-24 flex items-center justify-center">
                       <img 
@@ -187,7 +187,7 @@ export function RegistryCardsVariant({
             {showCustomRegistry && weddingNameId && (
               <Link
                 href={`/${weddingNameId}/registry`}
-                className="group relative block rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 w-full"
+                className="group relative flex flex-col rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 w-full h-full"
                 style={{ 
                   backgroundColor: cardBg,
                   border: `2px solid ${cardBorder}`
@@ -201,7 +201,7 @@ export function RegistryCardsVariant({
                   }}
                 />
                 
-                <div className="p-6 sm:p-8 text-center">
+                <div className="p-6 sm:p-8 text-center flex-1 flex flex-col justify-center">
                   {/* Heart Icon */}
                   <div className="mb-5 h-20 sm:h-24 flex items-center justify-center">
                     <Heart 
@@ -228,15 +228,17 @@ export function RegistryCardsVariant({
                   )}
                   
                   {/* Button Style CTA */}
-                  <div 
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold transition-all duration-300 group-hover:shadow-md"
-                    style={{ 
-                      backgroundColor: primary,
-                      color: '#ffffff'
-                    }}
-                  >
-                    {t('registry.viewRegistry')}
-                    <ExternalLink className="w-4 h-4" />
+                  <div className="flex justify-center">
+                    <div 
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold transition-all duration-300 group-hover:shadow-md"
+                      style={{ 
+                        backgroundColor: primary,
+                        color: '#ffffff'
+                      }}
+                    >
+                      {t('registry.viewRegistry')}
+                      <ExternalLink className="w-4 h-4" />
+                    </div>
                   </div>
                 </div>
               </Link>

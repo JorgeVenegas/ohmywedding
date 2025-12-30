@@ -71,9 +71,6 @@ export async function POST(request: Request) {
       data: { user },
     } = await supabase.auth.getUser()
 
-    console.log("POST /api/weddings - user:", user?.email || "no user")
-    console.log("POST /api/weddings - cookies:", request.headers.get('cookie')?.substring(0, 100))
-
     // Require authentication to create a wedding
     if (!user) {
       console.error("POST /api/weddings - No authenticated user found")

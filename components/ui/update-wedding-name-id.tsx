@@ -33,8 +33,6 @@ export function UpdateWeddingNameId({ currentWeddingNameId }: UpdateWeddingNameI
     setSuccess(false)
 
     try {
-      console.log("Updating wedding name ID from:", currentWeddingNameId, "to:", newNameId)
-      
       const response = await fetch(`/api/weddings/${encodeURIComponent(currentWeddingNameId)}/update-name-id`, {
         method: "PATCH",
         headers: {
@@ -43,9 +41,7 @@ export function UpdateWeddingNameId({ currentWeddingNameId }: UpdateWeddingNameI
         body: JSON.stringify({ newWeddingNameId: newNameId }),
       })
 
-      console.log("Response status:", response.status)
       const data = await response.json()
-      console.log("Response data:", data)
 
       if (!response.ok) {
         setError(data.error || "Failed to update wedding name ID")
@@ -53,12 +49,10 @@ export function UpdateWeddingNameId({ currentWeddingNameId }: UpdateWeddingNameI
         return
       }
 
-      console.log("Wedding name ID updated successfully!")
       setSuccess(true)
       
       // Redirect to the new wedding page
       const newUrl = `/${encodeURIComponent(newNameId)}`
-      console.log("Redirecting to:", newUrl)
       
       setTimeout(() => {
         router.push(newUrl)
