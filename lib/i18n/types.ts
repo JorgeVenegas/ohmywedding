@@ -207,7 +207,18 @@ export interface Translations {
     codeSentTo: string
     verificationRequired: string
     selectPhoneNumber: string
+    selectPhoneToVerify: string
     selectPhone: string
+    continue: string
+    enterCompletePhone: string
+    phoneEndsIn: string
+    completePhoneNumber: string
+    enterCompletePhoneNumber: string
+    verify: string
+    tryDifferentPhone: string
+    phoneDoesNotMatch: string
+    invalidPhone: string
+    phoneVerificationFailed: string
   }
 
   // Gallery Section
