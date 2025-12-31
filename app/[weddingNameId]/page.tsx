@@ -8,6 +8,21 @@ interface Props {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
+// Helper to ensure URL is absolute
+function ensureAbsoluteUrl(url: string): string {
+  if (!url) return url
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  // If it's a relative Supabase storage path, make it absolute
+  if (url.includes('storage/v1/object/public')) {
+    return url.startsWith('/') 
+      ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${url}`
+      : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/${url}`
+  }
+  return url
+}
+
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   try {
     const { weddingNameId } = await params
@@ -43,34 +58,50 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       })
     }
 
-    // Build title
-    const titleParts = []
-    if (coupleNames) titleParts.push(coupleNames)
-    if (dateString) titleParts.push(dateString)
-    const title = titleParts.length > 0 
-      ? titleParts.join(' - ')
-      : 'You\'re Invited to Our Wedding!'
-
-    // Build description
-    let description = ''
-    if (groupId && coupleNames) {
-      description = `You are invited to celebrate the wedding of ${coupleNames}${dateString ? ` on ${dateString}` : ''}!`
-    } else if (coupleNames) {
-      description = `Join us in celebrating the wedding of ${coupleNames}${dateString ? ` on ${dateString}` : ''}.`
-    } else {
-      description = `You're invited to celebrate our special day${dateString ? ` on ${dateString}` : ''}!`
+    // Use custom OG title or build from data
+    let title = wedding.og_title || ''
+    if (!title) {
+      const titleParts = []
+      if (coupleNames) titleParts.push(coupleNames)
+      if (dateString) titleParts.push(dateString)
+      title = titleParts.length > 0 
+        ? titleParts.join(' - ')
+        : 'You\'re Invited to Our Wedding!'
     }
 
-    // Extract hero image for Open Graph
-    let imageUrl = 'https://www.ohmy.wedding/og-image.jpg' // Default fallback
-    if (wedding.page_config?.sections) {
-      const heroSection = wedding.page_config.sections.find(
-        (section: any) => section.type === 'hero' && section.config?.backgroundImage
-      )
-      if (heroSection?.config?.backgroundImage) {
-        imageUrl = heroSection.config.backgroundImage
+    // Use custom OG description or build from data
+    let description = wedding.og_description || ''
+    if (!description) {
+      if (groupId && coupleNames) {
+        description = `You are invited to celebrate the wedding of ${coupleNames}${dateString ? ` on ${dateString}` : ''}!`
+      } else if (coupleNames) {
+        description = `Join us in celebrating the wedding of ${coupleNames}${dateString ? ` on ${dateString}` : ''}.`
+      } else {
+        description = `You're invited to celebrate our special day${dateString ? ` on ${dateString}` : ''}!`
       }
     }
+
+    // Use custom OG image or extract from hero section
+    let imageUrl = wedding.og_image_url || ''
+    if (!imageUrl) {
+      if (wedding.page_config?.sections) {
+        const heroSection = wedding.page_config.sections.find(
+          (section: any) => section.type === 'hero' && section.config?.backgroundImage
+        )
+        if (heroSection?.config?.backgroundImage) {
+          imageUrl = heroSection.config.backgroundImage
+        }
+      }
+      if (!imageUrl) {
+        imageUrl = 'https://www.ohmy.wedding/og-image.jpg' // Final fallback
+      }
+    }
+
+    console.log('[generateMetadata] OG Image URL:', imageUrl)
+
+    // Ensure image URL is absolute
+    imageUrl = ensureAbsoluteUrl(imageUrl)
+    console.log('[generateMetadata] Final OG Image URL:', imageUrl)
 
     // Build canonical URL
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ohmy.wedding'

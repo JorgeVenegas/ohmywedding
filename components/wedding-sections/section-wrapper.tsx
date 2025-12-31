@@ -63,7 +63,7 @@ export function SectionWrapper({
   return (
     <section 
       id={id}
-      className={`${theme?.spacing?.section || 'py-6 sm:py-8 md:py-10 px-4'} ${getBackgroundClass()} ${className}`}
+      className={`${theme?.spacing?.section || 'py-6 sm:py-8 md:py-10 px-4'} ${!style?.backgroundColor ? getBackgroundClass() : ''} ${className}`}
       style={{ ...sectionStyle, ...style }}
     >
       <div className={`${theme?.spacing?.container || 'max-w-4xl mx-auto'} ${getTextAlignClass()} ${getContentAlignClass()} flex flex-col`}>

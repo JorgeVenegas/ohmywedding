@@ -15,7 +15,7 @@ export async function GET(
 
     const { data: wedding, error } = await supabase
       .from('weddings')
-      .select('page_config, primary_color, secondary_color, accent_color')
+      .select('page_config, primary_color, secondary_color, accent_color, og_title, og_description, og_image_url')
       .eq('wedding_name_id', weddingNameId)
       .single()
 
@@ -43,7 +43,12 @@ export async function GET(
     }
 
     return NextResponse.json({
-      config: pageConfig
+      config: pageConfig,
+      wedding: {
+        og_title: wedding.og_title,
+        og_description: wedding.og_description,
+        og_image_url: wedding.og_image_url
+      }
     })
 
   } catch (error) {

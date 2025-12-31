@@ -21,6 +21,9 @@ export interface Wedding {
   page_config: Record<string, any>
   owner_id: string | null
   collaborator_emails: string[]
+  og_title: string | null
+  og_description: string | null
+  og_image_url: string | null
   created_at: string
   updated_at: string
 }

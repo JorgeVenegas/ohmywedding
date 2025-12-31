@@ -6,6 +6,7 @@ import { Button } from './button'
 import { Input } from './input'
 import { WeddingDetailsForm } from './config-forms/wedding-details-form'
 import { UpdateWeddingNameId } from './update-wedding-name-id'
+import { MetadataSettingsPanel } from './metadata-settings-panel'
 import { ColorPicker } from './color-picker'
 import { FONT_PAIRINGS, FONT_PAIRING_CATEGORIES, COLOR_THEMES, COLOR_THEME_CATEGORIES, AVAILABLE_FONTS } from '@/lib/theme-config'
 import { useCollaborators } from '@/hooks/use-auth'
@@ -111,6 +112,17 @@ export function SettingsPanel({
   const [collaboratorError, setCollaboratorError] = useState<string | null>(null)
   const [isAddingCollaborator, setIsAddingCollaborator] = useState(false)
   
+  // Metadata state
+  const [ogMetadata, setOgMetadata] = useState<{
+    ogTitle: string | null
+    ogDescription: string | null
+    ogImageUrl: string | null
+  }>({
+    ogTitle: null,
+    ogDescription: null,
+    ogImageUrl: null
+  })
+  
   // Get permissions from editing context
   const editingContext = useEditingModeSafe()
   const canManageCollaborators = editingContext?.permissions?.canManageCollaborators ?? false
@@ -197,6 +209,19 @@ export function SettingsPanel({
 
       const data = await response.json()
       setDetails(data.details)
+      
+      // Also fetch OG metadata if available
+      const metadataResponse = await fetch(`/api/weddings/${weddingNameId}/config`)
+      if (metadataResponse.ok) {
+        const configData = await metadataResponse.json()
+        if (configData.wedding) {
+          setOgMetadata({
+            ogTitle: configData.wedding.og_title || null,
+            ogDescription: configData.wedding.og_description || null,
+            ogImageUrl: configData.wedding.og_image_url || null
+          })
+        }
+      }
     } catch (err) {
       console.error('Error loading wedding details:', err)
       setError('Failed to load wedding details')
@@ -1102,6 +1127,31 @@ export function SettingsPanel({
           ) : activeTab === 'sharing' ? (
             // Sharing Tab
             <div className="space-y-6">
+              {/* Social Media Metadata Section */}
+              <MetadataSettingsPanel
+                weddingNameId={weddingNameId}
+                currentMetadata={ogMetadata}
+                onSave={async (metadata) => {
+                  const response = await fetch(`/api/weddings/${encodeURIComponent(weddingNameId)}/metadata`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(metadata)
+                  })
+                  if (!response.ok) {
+                    throw new Error('Failed to save metadata')
+                  }
+                  // Update local state
+                  setOgMetadata({
+                    ogTitle: metadata.ogTitle || null,
+                    ogDescription: metadata.ogDescription || null,
+                    ogImageUrl: metadata.ogImageUrl || null
+                  })
+                }}
+              />
+              
+              {/* Divider */}
+              <div className="border-t border-gray-200 pt-6"></div>
+              
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="text-sm font-medium text-blue-800 mb-1">Share Access</h3>
                 <p className="text-xs text-blue-700">
