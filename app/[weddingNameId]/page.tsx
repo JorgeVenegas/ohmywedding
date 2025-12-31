@@ -121,6 +121,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
             width: 1200,
             height: 630,
             alt: `${title} - Wedding Invitation`,
+            type: 'image/jpeg',
           },
         ],
         locale: 'en_US',

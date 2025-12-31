@@ -100,6 +100,9 @@ export function WeddingPreview({ formData, componentSections }: WeddingPreviewPr
     collaborator_emails: [],
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    og_title: null,
+    og_description: null,
+    og_image_url: null,
     page_config: {
       theme: {
         primaryColor: formData.primaryColor,
