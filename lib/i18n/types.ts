@@ -6,6 +6,9 @@ export interface Translations {
   // Common UI elements
   common: {
     loading: string
+    tapToOpen: string
+    from: string
+    to: string
     save: string
     cancel: string
     edit: string

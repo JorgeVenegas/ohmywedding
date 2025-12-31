@@ -12,3 +12,15 @@ never do supabase commands to the remote directly. Always test locally first.
 Never do psql
 
 Avoid doing supabase db reset, instead create new migrations and apply them with supabase migration up
+
+at the end of every chat, do the npm run build to verify no build errors exist
+
+you should aim to reduce the amount of code thorugh simplificaitons, reutilizations, standardizaiton and use of compoents. Avoid repeating yourself
+
+after the build, start the dev server again to coninue working
+
+When you make changes to the i18n files, always update both en.ts and es.ts to keep them in sync
+
+When you add new i18n keys, make sure to also update the types.ts file to include the new keys for type safety
+
+avoid running commands with 2>&1 | tail -50, i like to see full output to catch warnings and notices

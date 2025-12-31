@@ -32,7 +32,7 @@ export function I18nProvider({ children, initialLocale = defaultLocale }: I18nPr
         document.documentElement.lang = initialLocale
       }
     }
-  }, [initialLocale])
+  }, [initialLocale, locale])
   
   const setLocale = useCallback((newLocale: Locale) => {
     if (locales.includes(newLocale)) {

@@ -7,7 +7,6 @@ export async function GET(
 ) {
   try {
     const { groupId } = await params
-    console.log('[Guest Groups API] Fetching group:', groupId)
     // Use anonymous client for public RSVP pages - RLS policies allow public read
     const supabase = createClient()
 
@@ -26,7 +25,6 @@ export async function GET(
       )
     }
 
-    console.log('[Guest Groups API] Group found:', group.id, 'Name:', group.name)
     // Fetch guests in the group with their RSVP status
     const { data: guests, error: guestsError } = await supabase
       .from("guests")
@@ -53,7 +51,6 @@ export async function GET(
       )
     }
 
-    console.log('[Guest Groups API] Found', guests?.length || 0, 'guests')
     // Map confirmation_status to attending boolean for frontend compatibility
     const guestsWithStatus = guests?.map(guest => ({
       id: guest.id,

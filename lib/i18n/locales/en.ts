@@ -4,6 +4,9 @@ export const en: Translations = {
   // Common UI elements
   common: {
     loading: 'Loading...',
+    tapToOpen: 'Tap to open',
+    from: 'From',
+    to: 'To',
     save: 'Save',
     cancel: 'Cancel',
     edit: 'Edit',
