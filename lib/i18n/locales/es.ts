@@ -256,7 +256,26 @@ export const es: Translations = {
     share: 'Compartir',
     capturedMoments: 'Momentos Capturados',
     photosComingSoon: 'Fotos Próximamente',
-    checkBackSoon: 'Todavía estamos capturando nuestros hermosos momentos. ¡Vuelve pronto para ver nuestras fotos de compromiso y recuerdos!'
+    checkBackSoon: 'Todavía estamos capturando nuestros hermosos momentos. ¡Vuelve pronto para ver nuestras fotos de compromiso y recuerdos!',
+    // Variant labels
+    carousel: 'Carrusel',
+    banner: 'Banner',
+    masonry: 'Mosaico',
+    grid: 'Cuadrícula',
+    list: 'Lista',
+    // Variant descriptions
+    carouselDesc: 'Presentación con navegación - perfecta para contar historias',
+    bannerDesc: 'Banner de ancho completo con imagen destacada',
+    masonryDesc: 'Diseño estilo Pinterest - dinámico y visualmente interesante',
+    gridDesc: 'Diseño de cuadrícula uniforme - limpio y organizado',
+    listDesc: 'Lista vertical con detalles - excelente para leyendas',
+    // Config labels
+    uploadPhotos: 'Subir Fotos',
+    managePhotos: 'Administrar Fotos',
+    addPhotos: 'Agregar Fotos',
+    photoCaption: 'Leyenda de Foto',
+    noPhotosYet: 'No hay fotos todavía',
+    uploadYourFirst: 'Sube tu primera foto para comenzar'
   },
 
   // FAQ Section
@@ -474,8 +493,19 @@ export const es: Translations = {
     elegant: 'Elegante',
     // Event Details variant labels
     splitLayout: 'Dividido',
+    // Gallery variant labels
+    galleryCarousel: 'Carrusel',
+    galleryBanner: 'Banner',
+    galleryMasonry: 'Cuadrícula Mosaico',
+    galleryGrid: 'Cuadrícula Clásica',
+    galleryList: 'Vista de Lista',
     // Descriptions
     classicCardsDesc: 'Diseño de tarjetas tradicional con iconos',
+    galleryCarouselDesc: 'Presentación con navegación - perfecta para contar historias',
+    galleryBannerDesc: 'Banner de ancho completo con imagen destacada',
+    galleryMasonryDesc: 'Diseño estilo Pinterest - dinámico y visualmente interesante',
+    galleryGridDesc: 'Diseño de cuadrícula uniforme - limpio y organizado',
+    galleryListDesc: 'Lista vertical con detalles - excelente para leyendas',
     elegantScriptDesc: 'Estilo romántico con detalles ornamentales',
     timelineDesc: 'Línea de tiempo vertical con eventos conectados',
     minimalCleanDesc: 'Diseño minimalista limpio y moderno',
@@ -499,6 +529,10 @@ export const es: Translations = {
     secondaryLighter: 'Secundario Suave',
     accentLight: 'Acento Claro',
     accentLighter: 'Acento Suave',
+    // Bulk mode
+    bulkMode: 'Modo Masivo',
+    bulkUploadMode: 'Modo de Carga Masiva',
+    bulkUploadDesc: 'Sube múltiples imágenes rápidamente sin descripciones. Perfecto para galerías grandes.',
     // Hero config
     layoutStyle: 'Estilo de Diseño',
     heroImage: 'Imagen Principal',

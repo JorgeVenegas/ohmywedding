@@ -256,7 +256,26 @@ export const en: Translations = {
     share: 'Share',
     capturedMoments: 'Captured Moments',
     photosComingSoon: 'Photos Coming Soon',
-    checkBackSoon: "We're still capturing our beautiful moments. Check back soon to see our engagement photos and memories!"
+    checkBackSoon: "We're still capturing our beautiful moments. Check back soon to see our engagement photos and memories!",
+    // Variant labels
+    carousel: 'Carousel',
+    banner: 'Banner',
+    masonry: 'Masonry',
+    grid: 'Grid',
+    list: 'List',
+    // Variant descriptions
+    carouselDesc: 'Slideshow with navigation - perfect for storytelling',
+    bannerDesc: 'Full-width banner with featured image',
+    masonryDesc: 'Pinterest-style layout - dynamic and visually interesting',
+    gridDesc: 'Uniform grid layout - clean and organized',
+    listDesc: 'Vertical list with details - great for captions',
+    // Config labels
+    uploadPhotos: 'Upload Photos',
+    managePhotos: 'Manage Photos',
+    addPhotos: 'Add Photos',
+    photoCaption: 'Photo Caption',
+    noPhotosYet: 'No photos yet',
+    uploadYourFirst: 'Upload your first photo to get started'
   },
 
   // FAQ Section
@@ -474,8 +493,19 @@ export const en: Translations = {
     elegant: 'Elegant',
     // Event Details variant labels
     splitLayout: 'Split Layout',
+    // Gallery variant labels
+    galleryCarousel: 'Carousel',
+    galleryBanner: 'Banner',
+    galleryMasonry: 'Masonry Grid',
+    galleryGrid: 'Classic Grid',
+    galleryList: 'List View',
     // Descriptions
     classicCardsDesc: 'Traditional card layout with icons',
+    galleryCarouselDesc: 'Slideshow with navigation - perfect for storytelling',
+    galleryBannerDesc: 'Full-width banner with featured image',
+    galleryMasonryDesc: 'Pinterest-style layout - dynamic and visually interesting',
+    galleryGridDesc: 'Uniform grid layout - clean and organized',
+    galleryListDesc: 'Vertical list with details - great for captions',
     elegantScriptDesc: 'Romantic style with ornamental details',
     timelineDesc: 'Vertical timeline with connected events',
     minimalCleanDesc: 'Clean and modern minimalist design',
@@ -499,6 +529,10 @@ export const en: Translations = {
     secondaryLighter: 'Secondary Lighter',
     accentLight: 'Accent Light',
     accentLighter: 'Accent Lighter',
+    // Bulk mode
+    bulkMode: 'Bulk Mode',
+    bulkUploadMode: 'Bulk Upload Mode',
+    bulkUploadDesc: 'Upload multiple images quickly without captions. Perfect for large galleries.',
     // Hero config
     layoutStyle: 'Layout Style',
     heroImage: 'Hero Image',

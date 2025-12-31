@@ -259,6 +259,25 @@ export interface Translations {
     capturedMoments: string
     photosComingSoon: string
     checkBackSoon: string
+    // Variant labels
+    carousel: string
+    banner: string
+    masonry: string
+    grid: string
+    list: string
+    // Variant descriptions
+    carouselDesc: string
+    bannerDesc: string
+    masonryDesc: string
+    gridDesc: string
+    listDesc: string
+    // Config labels
+    uploadPhotos: string
+    managePhotos: string
+    addPhotos: string
+    photoCaption: string
+    noPhotosYet: string
+    uploadYourFirst: string
   }
 
   // FAQ Section
@@ -476,8 +495,19 @@ export interface Translations {
     elegant: string
     // Event Details variant labels
     splitLayout: string
+    // Gallery variant labels
+    galleryCarousel: string
+    galleryBanner: string
+    galleryMasonry: string
+    galleryGrid: string
+    galleryList: string
     // Descriptions
     classicCardsDesc: string
+    galleryCarouselDesc: string
+    galleryBannerDesc: string
+    galleryMasonryDesc: string
+    galleryGridDesc: string
+    galleryListDesc: string
     elegantScriptDesc: string
     timelineDesc: string
     minimalCleanDesc: string
@@ -501,6 +531,10 @@ export interface Translations {
     secondaryLighter: string
     accentLight: string
     accentLighter: string
+    // Bulk mode
+    bulkMode: string
+    bulkUploadMode: string
+    bulkUploadDesc: string
     // Hero config
     layoutStyle: string
     heroImage: string

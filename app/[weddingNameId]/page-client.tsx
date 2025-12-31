@@ -128,9 +128,17 @@ function EnvelopeContent({
             </div>
             
             <div className="mb-4 sm:mb-8">
-              <h1 className="font-serif text-6xl sm:text-8xl md:text-9xl mb-3 sm:mb-6 tracking-wider drop-shadow-lg" style={{ color: textColor }}>
-                {coupleInitials || "You're Invited"}
-              </h1>
+              {coupleInitials && coupleInitials.includes('<span') ? (
+                <h1 
+                  className="font-serif text-6xl sm:text-8xl md:text-9xl mb-3 sm:mb-6 drop-shadow-lg" 
+                  style={{ color: textColor }}
+                  dangerouslySetInnerHTML={{ __html: coupleInitials }}
+                />
+              ) : (
+                <h1 className="font-serif text-6xl sm:text-8xl md:text-9xl mb-3 sm:mb-6 drop-shadow-lg" style={{ color: textColor }}>
+                  {coupleInitials || "You're Invited"}
+                </h1>
+              )}
               {weddingDate && (
                 <p className="text-base sm:text-xl md:text-2xl font-light drop-shadow-md" style={{ color: textColor, opacity: 0.9 }}>{weddingDate}</p>
               )}
@@ -325,7 +333,11 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
   // Get initials for envelope display
   const partner1Initial = wedding.partner1_first_name?.charAt(0)?.toUpperCase() || ''
   const partner2Initial = wedding.partner2_first_name?.charAt(0)?.toUpperCase() || ''
-  const coupleInitials = [partner1Initial, partner2Initial].filter(Boolean).join(' & ')
+  const coupleInitials = partner1Initial && partner2Initial 
+    ? `${partner1Initial}${partner2Initial}`.split('').map((char, idx) => 
+        idx === 1 ? `<span class="text-[0.6em]">&</span>${char}` : char
+      ).join('')
+    : [partner1Initial, partner2Initial].filter(Boolean).join(' ')
   
   // Format wedding date using locale from wedding page_config and UTC to avoid timezone issues
   const locale = wedding.page_config?.siteSettings?.locale || 'en'

@@ -13,7 +13,8 @@ import {
   RSVPConfigForm,
   EventDetailsConfigForm,
   FAQConfigForm,
-  RegistryConfigForm
+  RegistryConfigForm,
+  GalleryConfigForm
 } from './config-forms'
 import { Button } from './button'
 
@@ -114,9 +115,10 @@ export function SectionCustomizer() {
         )
       case 'gallery':
         return (
-          <div className="text-center py-8 text-gray-500">
-            <p>{t('config.sectionComingSoon')}</p>
-          </div>
+          <GalleryConfigForm 
+            config={sectionConfig} 
+            onChange={updateConfig}
+          />
         )
       default:
         return (

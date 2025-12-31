@@ -267,7 +267,11 @@ export function WeddingNav({
     return name.trim().charAt(0).toUpperCase()
   }
 
-  const initials = `${getInitial(person1Name)} & ${getInitial(person2Name)}`
+  const person1Initial = getInitial(person1Name)
+  const person2Initial = getInitial(person2Name)
+  const initials = person1Initial && person2Initial
+    ? `${person1Initial}<span style="font-size: 0.7em; margin: 0 0.1em;">&</span>${person2Initial}`
+    : [person1Initial, person2Initial].filter(Boolean).join('')
 
   // Valid section ids that we support in navigation
   const validSectionIds = ['hero', 'our-story', 'countdown', 'event-details', 'gallery', 'registry', 'rsvp', 'faq']
@@ -377,13 +381,13 @@ export function WeddingNav({
             
             {/* Initials - centered */}
             <div 
-              className="text-xl tracking-wide"
+              className="text-xl"
               style={{ 
                 color: isColored ? textColor : accentColor,
                 fontFamily: 'var(--font-display, var(--font-heading, serif))'
               }}
             >
-              <span className="font-light">{initials}</span>
+              <span className="font-light" dangerouslySetInnerHTML={{ __html: initials }} />
             </div>
             
             {/* Mobile hamburger button - far right */}
@@ -412,13 +416,13 @@ export function WeddingNav({
           <div className="hidden sm:flex flex-col items-center py-3 relative">
             {/* Initials */}
             <div 
-              className="text-xl tracking-wide"
+              className="text-xl"
               style={{ 
                 color: isColored ? textColor : accentColor,
                 fontFamily: 'var(--font-display, var(--font-heading, serif))'
               }}
             >
-              <span className="font-light">{initials}</span>
+              <span className="font-light" dangerouslySetInnerHTML={{ __html: initials }} />
             </div>
             
             {/* Desktop Section Links - centered below initials */}
