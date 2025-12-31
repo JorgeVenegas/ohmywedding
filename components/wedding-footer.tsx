@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { Heart } from "lucide-react"
 import { createBrowserClient } from "@supabase/ssr"
 import { useEffect, useState } from "react"
@@ -51,12 +52,18 @@ export function WeddingFooter({ weddingNameId, ownerId, collaboratorEmails }: We
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span>Created with</span>
             <Link 
-              href="https://ohmywedding.com" 
+              href="https://ohmy.wedding" 
               className="flex items-center gap-1 hover:text-primary transition-colors font-medium"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Heart className="w-3.5 h-3.5 text-primary fill-primary" />
+              <Image
+                src="/images/logos/OMW Logo Gold.png"
+                alt="OhMyWedding Logo"
+                width={14}
+                height={14}
+                className="h-3.5 w-auto"
+              />
               <span>OhMyWedding</span>
             </Link>
           </div>
@@ -72,7 +79,7 @@ export function WeddingFooter({ weddingNameId, ownerId, collaboratorEmails }: We
               </Link>
             )}
             <Link 
-              href="https://ohmywedding.com/create" 
+              href="https://ohmy.wedding/create" 
               className="hover:text-primary transition-colors"
               target="_blank"
               rel="noopener noreferrer"

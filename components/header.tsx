@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { ArrowLeft, Heart } from "lucide-react"
 import type React from "react"
 
@@ -31,7 +32,14 @@ export function Header({
             </Link>
           )}
           <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <Heart className="w-6 h-6 text-primary fill-primary flex-shrink-0" />
+            <Image
+              src="/images/logos/OMW Logo Gold.png"
+              alt="OhMyWedding Logo"
+              width={24}
+              height={24}
+              className="h-6 w-auto flex-shrink-0"
+              priority
+            />
             {!hideLogoText && <span className="font-serif text-xl font-light text-foreground">OhMyWedding</span>}
           </Link>
         </div>

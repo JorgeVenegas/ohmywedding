@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import { Wedding } from '@/lib/wedding-data'
@@ -439,12 +440,18 @@ function ConfigBasedWeddingRendererContent({
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>Created with</span>
                 <a 
-                  href="https://ohmywedding.com" 
+                  href="https://ohmy.wedding" 
                   className="flex items-center gap-1 hover:text-primary transition-colors font-medium"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <span className="text-primary">♥</span>
+                  <Image
+                    src="/images/logos/OMW Logo Gold.png"
+                    alt="OhMyWedding Logo"
+                    width={14}
+                    height={14}
+                    className="h-3.5 w-auto"
+                  />
                   <span>OhMyWedding</span>
                 </a>
               </div>
@@ -458,7 +465,7 @@ function ConfigBasedWeddingRendererContent({
                   </Link>
                 )}
                 <a 
-                  href="https://ohmywedding.com/create" 
+                  href="https://ohmy.wedding/create" 
                   className="hover:text-primary transition-colors"
                   target="_blank"
                   rel="noopener noreferrer"
