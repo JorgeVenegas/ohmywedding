@@ -189,9 +189,9 @@ export function RSVPMinimalisticVariant({
     console.log('[RSVP Minimalistic] ✅ RENDERING SUBMITTED VIEW with button')
     return (
       <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
-        <div className="max-w-2xl mx-auto px-6 py-24">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
           <div 
-            className="p-12 rounded-2xl border-2"
+            className="p-6 sm:p-8 md:p-12 rounded-2xl border-2"
             style={{
               backgroundColor: cardBg,
               borderColor: titleColor,
@@ -275,7 +275,7 @@ export function RSVPMinimalisticVariant({
 
   return (
     <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
-      <div className="max-w-3xl mx-auto px-6 py-16">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         {/* Header */}
         <div className="mb-12 text-center" style={{ textAlign: alignment?.text || 'center' }}>
           <h2 
@@ -300,7 +300,7 @@ export function RSVPMinimalisticVariant({
 
         {groupData && (
           <div 
-            className="p-6 md:p-8 rounded-2xl border"
+            className="p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border"
             style={{
               backgroundColor: cardBg,
               borderColor: isColored ? `${titleColor}40` : '#e5e7eb',
@@ -332,11 +332,11 @@ export function RSVPMinimalisticVariant({
                   </div>
 
                   {/* Attending Buttons */}
-                  <div className="flex gap-3 mb-4">
+                  <div className="flex gap-2 sm:gap-3 mb-4">
                     <button
                       type="button"
                       onClick={() => updateGuest(guest.id, 'attending', true)}
-                      className="flex-1 py-4 px-6 rounded-xl border-2 transition-all hover:shadow-md font-light tracking-wider text-sm"
+                      className="flex-1 py-3 sm:py-4 px-4 sm:px-6 rounded-lg sm:rounded-xl border-2 transition-all hover:shadow-md font-light tracking-wide sm:tracking-wider text-xs sm:text-sm"
                       style={{
                         borderColor: guest.attending === true ? (theme?.colors?.accent || titleColor) : `${titleColor}30`,
                         backgroundColor: guest.attending === true ? `${theme?.colors?.accent || titleColor}15` : 'transparent',
@@ -349,7 +349,7 @@ export function RSVPMinimalisticVariant({
                     <button
                       type="button"
                       onClick={() => updateGuest(guest.id, 'attending', false)}
-                      className="flex-1 py-4 px-6 rounded-xl border-2 transition-all font-light tracking-wider text-sm"
+                        className="flex-1 py-3 sm:py-4 px-4 sm:px-6 rounded-lg sm:rounded-xl border-2 transition-all font-light tracking-wide sm:tracking-wider text-xs sm:text-sm"
                       style={{
                         borderColor: guest.attending === false ? `${textColor}60` : `${titleColor}30`,
                         backgroundColor: guest.attending === false ? `${textColor}10` : 'transparent',
@@ -420,7 +420,7 @@ export function RSVPMinimalisticVariant({
                 type="button"
                 onClick={handleSubmitClick}
                 disabled={submitting || guests.every(g => g.attending === undefined)}
-                className="w-full py-4 px-8 rounded-xl font-light tracking-widest text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl hover:scale-[1.02]"
+                className="w-full py-3 sm:py-4 px-6 sm:px-8 rounded-lg sm:rounded-xl font-light tracking-wider sm:tracking-widest text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl hover:scale-[1.02]"
                 style={{
                   backgroundColor: theme?.colors?.accent || titleColor,
                   color: '#ffffff',

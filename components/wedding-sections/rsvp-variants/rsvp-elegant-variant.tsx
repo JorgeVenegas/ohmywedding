@@ -283,7 +283,7 @@ export function RSVPElegantVariant({
         <div className="container mx-auto px-4 py-20">
           <div className="max-w-xl mx-auto">
             <div 
-              className="relative p-12 rounded-3xl border-4 shadow-2xl"
+              className="relative p-6 sm:p-8 md:p-10 lg:p-12 rounded-2xl sm:rounded-3xl border-2 sm:border-4 shadow-2xl"
               style={{ 
                 backgroundColor: cardBg || '#f5f1ed',
                 borderColor: isColored ? 'rgba(255, 255, 255, 0.3)' : titleColor || '#d4a574',
@@ -325,7 +325,7 @@ export function RSVPElegantVariant({
         <div className="max-w-2xl mx-auto">
           {/* Main Invitation Card */}
           <div 
-            className="relative p-12 md:p-16 rounded-3xl border-4 shadow-2xl"
+            className="relative p-6 sm:p-8 md:p-12 lg:p-16 rounded-2xl sm:rounded-3xl border-2 sm:border-4 shadow-2xl"
             style={{ 
               backgroundColor: cardBg || '#f5f1ed',
               borderColor: isColored ? 'rgba(255, 255, 255, 0.3)' : titleColor || '#d4a574',
@@ -336,7 +336,7 @@ export function RSVPElegantVariant({
               {/* Header */}
               <div className="space-y-5">
                 <div className="space-y-4">
-                  <h2 className="text-3xl md:text-4xl font-serif tracking-wide leading-tight" style={{ color: titleColor }}>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif tracking-wide leading-tight" style={{ color: titleColor }}>
                     {title}
                   </h2>
                   
@@ -381,7 +381,7 @@ export function RSVPElegantVariant({
                         backgroundColor: `${theme?.colors?.accent || titleColor}08`
                       }}
                     >
-                      <p className="text-xl md:text-2xl font-serif italic tracking-wide" style={{ color: titleColor }}>
+                      <p className="text-lg sm:text-xl md:text-2xl font-serif italic tracking-wide" style={{ color: titleColor }}>
                         {groupData.name}
                       </p>
                       <p className="text-xs tracking-[0.2em] uppercase mt-1 opacity-70" style={{ color: textColor }}>
@@ -408,16 +408,16 @@ export function RSVPElegantVariant({
                       >
                         {index + 1}
                       </div>
-                      <p className="text-xl md:text-2xl font-serif font-light" style={{ color: titleColor }}>
+                      <p className="text-lg sm:text-xl md:text-2xl font-serif font-light" style={{ color: titleColor }}>
                         {guest.name}
                       </p>
                     </div>
                     
-                    <div className="flex gap-3 pl-14">
+                    <div className="flex gap-2 sm:gap-3 pl-0 sm:pl-14">
                       <button
                         type="button"
                         onClick={() => handleAttendingChange(guest.id, true)}
-                        className="flex-1 px-6 py-3 rounded-full border-2 transition-all duration-300 hover:scale-[1.02] font-light tracking-wide text-sm shadow-sm hover:shadow-lg"
+                        className="flex-1 px-4 sm:px-6 py-3 sm:py-3 rounded-full border-2 transition-all duration-300 hover:scale-[1.02] font-light tracking-wide text-xs sm:text-sm shadow-sm hover:shadow-lg"
                         style={guest.attending === true ? {
                           borderColor: theme?.colors?.accent || titleColor,
                           backgroundColor: theme?.colors?.accent || titleColor,
@@ -434,7 +434,7 @@ export function RSVPElegantVariant({
                       <button
                         type="button"
                         onClick={() => handleAttendingChange(guest.id, false)}
-                        className="flex-1 px-6 py-3 rounded-full border-2 transition-all duration-300 hover:scale-[1.02] font-light tracking-wide text-sm shadow-sm hover:shadow-lg"
+                        className="flex-1 px-4 sm:px-6 py-3 sm:py-3 rounded-full border-2 transition-all duration-300 hover:scale-[1.02] font-light tracking-wide text-xs sm:text-sm shadow-sm hover:shadow-lg"
                         style={guest.attending === false ? {
                           borderColor: '#9ca3af',
                           backgroundColor: '#9ca3af',
@@ -453,7 +453,7 @@ export function RSVPElegantVariant({
                     
                     {/* Travel Fields - only show if attending */}
                     {guest.attending === true && (
-                      <div className="pl-14 pt-2">
+                      <div className="pl-0 sm:pl-14 pt-2">
                         <TravelFields
                           guestId={guest.id}
                           guestName={guest.name}

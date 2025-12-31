@@ -163,9 +163,9 @@ export function RSVPCardsVariant({
   if (submitted && !isEditing) {
     return (
       <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
-        <div className="max-w-4xl mx-auto px-6 py-24">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
           <div 
-            className="p-12 rounded-3xl border-2 shadow-xl"
+            className="p-6 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl border-2 shadow-xl"
             style={{
               backgroundColor: cardBg,
               borderColor: titleColor,
@@ -232,11 +232,11 @@ export function RSVPCardsVariant({
 
   return (
     <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
-      <div className="max-w-4xl mx-auto px-6 py-16">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         {/* Header */}
         <div className="mb-12 text-center" style={{ textAlign: alignment?.text || 'center' }}>
           <h2 
-            className="text-3xl md:text-4xl font-semibold tracking-tight mb-3"
+            className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight mb-3"
             style={{ color: titleColor }}
           >
             {sectionTitle || t('rsvp.title')}
@@ -263,7 +263,7 @@ export function RSVPCardsVariant({
             {/* Group Header */}
             <div className="mb-8 text-center">
               <div 
-                className="inline-flex items-center justify-center px-6 py-2.5 rounded-full mb-3"
+                className="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-2.5 rounded-full mb-3 text-sm sm:text-base"
                 style={{ 
                   backgroundColor: `${theme?.colors?.accent || titleColor}15`,
                   border: `2px solid ${theme?.colors?.accent || titleColor}30`
@@ -311,7 +311,7 @@ export function RSVPCardsVariant({
                     <button
                       type="button"
                       onClick={() => updateGuest(guest.id, 'attending', true)}
-                      className="flex-1 py-2.5 px-3 rounded-lg border-2 transition-all hover:shadow-md font-medium text-sm"
+                      className="flex-1 py-2 sm:py-2.5 px-2 sm:px-3 rounded-lg border-2 transition-all hover:shadow-md font-medium text-xs sm:text-sm"
                       style={{
                         borderColor: guest.attending === true ? (theme?.colors?.accent || titleColor) : `${titleColor}25`,
                         backgroundColor: guest.attending === true ? (theme?.colors?.accent || titleColor) : 'transparent',
@@ -324,7 +324,7 @@ export function RSVPCardsVariant({
                     <button
                       type="button"
                       onClick={() => updateGuest(guest.id, 'attending', false)}
-                      className="flex-1 py-2.5 px-3 rounded-lg border-2 transition-all hover:shadow-md font-medium text-sm"
+                      className="flex-1 py-2 sm:py-2.5 px-2 sm:px-3 rounded-lg border-2 transition-all hover:shadow-md font-medium text-xs sm:text-sm"
                       style={{
                         borderColor: guest.attending === false ? `${textColor}50` : `${titleColor}25`,
                         backgroundColor: guest.attending === false ? `${textColor}15` : 'transparent',
@@ -404,7 +404,7 @@ export function RSVPCardsVariant({
               type="button"
               onClick={handleSubmitClick}
               disabled={submitting || guests.every(g => g.attending === undefined)}
-              className="w-full py-4 px-8 rounded-xl font-semibold text-base tracking-wide transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl hover:scale-[1.01]"
+              className="w-full py-3 sm:py-4 px-6 sm:px-8 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base tracking-wide transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl hover:scale-[1.01]"
               style={{
                 backgroundColor: theme?.colors?.accent || titleColor,
                 color: '#ffffff',
