@@ -70,7 +70,7 @@ interface SiteControlPanelProps {
   onStyleChange: (style: string) => void
   onColorsChange: (colors: { primary: string; secondary: string; accent: string }) => void
   onComponentToggle: (componentId: string, enabled: boolean) => void
-  onCustomColorChange: (colorType: 'primary' | 'secondary' | 'accent', color: string) => void
+  onCustomColorChange: (colorType: 'primary' | 'secondary' | 'accent' | 'envelope', color: string) => void
 }
 
 export function SiteControlPanel({

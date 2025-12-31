@@ -80,7 +80,7 @@ interface PageConfigContextType {
   updateFonts: (fonts: { display: string; heading: string; body: string; displayFamily: string; headingFamily: string; bodyFamily: string; googleFonts: string }) => void
   updateCustomFont: (fontType: 'display' | 'heading' | 'body', font: string, fontFamily: string) => void
   updateColors: (colors: { primary: string; secondary: string; accent: string }) => void
-  updateCustomColor: (colorType: 'primary' | 'secondary' | 'accent', color: string) => void
+  updateCustomColor: (colorType: 'primary' | 'secondary' | 'accent' | 'envelope', color: string) => void
   updateNavigation: (navigation: { showNavLinks?: boolean; useColorBackground?: boolean; backgroundColorChoice?: 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter' }) => void
   updateLocale: (locale: 'en' | 'es') => void
   
@@ -230,7 +230,7 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
     }))
   }
 
-  const updateCustomColor = (colorType: 'primary' | 'secondary' | 'accent', color: string) => {
+  const updateCustomColor = (colorType: 'primary' | 'secondary' | 'accent' | 'envelope', color: string) => {
     setConfig(prev => ({
       ...prev,
       siteSettings: {

@@ -31,6 +31,7 @@ interface EnvelopeContentProps {
   handleEnvelopeClick: () => void
   primaryColor: string
   flapColor: string
+  textColor: string
   coupleNames: string
   coupleInitials: string
   weddingDate: string
@@ -44,6 +45,7 @@ function EnvelopeContent({
   handleEnvelopeClick,
   primaryColor,
   flapColor,
+  textColor,
   coupleNames,
   coupleInitials,
   weddingDate,
@@ -120,23 +122,23 @@ function EnvelopeContent({
             {/* From/To Tags - Elegant styling */}
             <div className="mb-12 sm:mb-16">
               <div className="inline-block border-t border-b border-white/30 py-4 px-8">
-                <p className="text-white/70 text-xs sm:text-sm font-light tracking-widest uppercase mb-2">{t('common.from')}: {coupleNames || "The Couple"}</p>
-                <p className="text-white text-sm sm:text-base font-light tracking-wider">{t('common.to')}: {guestGroup?.name || "Guest"}</p>
+                <p className="text-xs sm:text-sm font-light tracking-widest uppercase mb-2" style={{ color: textColor, opacity: 0.7 }}>{t('common.from')}: {coupleNames || "The Couple"}</p>
+                <p className="text-sm sm:text-base font-light tracking-wider" style={{ color: textColor }}>{t('common.to')}: {guestGroup?.name || "Guest"}</p>
               </div>
             </div>
             
             <div className="mb-4 sm:mb-8">
-              <h1 className="font-serif text-6xl sm:text-8xl md:text-9xl mb-3 sm:mb-6 text-white tracking-wider drop-shadow-lg">
+              <h1 className="font-serif text-6xl sm:text-8xl md:text-9xl mb-3 sm:mb-6 tracking-wider drop-shadow-lg" style={{ color: textColor }}>
                 {coupleInitials || "You're Invited"}
               </h1>
               {weddingDate && (
-                <p className="text-base sm:text-xl md:text-2xl text-white/90 font-light drop-shadow-md">{weddingDate}</p>
+                <p className="text-base sm:text-xl md:text-2xl font-light drop-shadow-md" style={{ color: textColor, opacity: 0.9 }}>{weddingDate}</p>
               )}
             </div>
 
             <div className="mt-6 sm:mt-12" style={{ minHeight: '2rem' }}>
               {!envelopeOpening && (
-                <p className="text-xs sm:text-sm text-white/70 animate-pulse font-light tracking-wide drop-shadow">
+                <p className="text-xs sm:text-sm animate-pulse font-light tracking-wide drop-shadow" style={{ color: textColor, opacity: 0.7 }}>
                   {t('common.tapToOpen')}
                 </p>
               )}
@@ -149,14 +151,52 @@ function EnvelopeContent({
 }
 
 // Wrapper to get locale and colors from page config (same pattern as ConfigBasedWeddingRenderer)
-function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'flapColor'>) {
+function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'flapColor' | 'textColor'>) {
   const { config } = usePageConfig()
   const locale = config.siteSettings.locale || 'en'
   
-  // Get colors from page config
-  const primaryColor = config.siteSettings.theme?.colors?.primary || '#c9a961'
+  // Get envelope color choice from config, default to 'primary'
+  const envelopeColorChoice = config.siteSettings.envelope?.colorChoice || 'primary'
   
-  // Calculate a lighter shade of primary color for the flap
+  // Helper to create a light tint
+  const getLightTint = (hex: string, tintAmount: number): string => {
+    const num = parseInt(hex.replace('#', ''), 16)
+    const r = (num >> 16) & 255
+    const g = (num >> 8) & 255
+    const b = num & 255
+    const newR = Math.round(r + (255 - r) * tintAmount)
+    const newG = Math.round(g + (255 - g) * tintAmount)
+    const newB = Math.round(b + (255 - b) * tintAmount)
+    return `#${((1 << 24) + (newR << 16) + (newG << 8) + newB).toString(16).slice(1)}`
+  }
+  
+  // Helper to calculate luminance and determine text color
+  const getContrastTextColor = (hex: string): string => {
+    const num = parseInt(hex.replace('#', ''), 16)
+    const r = (num >> 16) & 255
+    const g = (num >> 8) & 255
+    const b = num & 255
+    // Calculate relative luminance using sRGB coefficients
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    // Return dark text for light backgrounds, light text for dark backgrounds
+    return luminance > 0.6 ? '#1a1a1a' : '#ffffff'
+  }
+  
+  // Get the base color (primary, secondary, or accent)
+  const colors = config.siteSettings.theme?.colors || {}
+  const baseColorType = envelopeColorChoice.includes('primary') ? 'primary' 
+    : envelopeColorChoice.includes('secondary') ? 'secondary' 
+    : 'accent'
+  const baseColor = colors[baseColorType] || colors.primary || '#c9a961'
+  
+  // Apply tint based on choice
+  const envelopeColor = envelopeColorChoice.endsWith('-lighter') 
+    ? getLightTint(baseColor, 0.88)
+    : envelopeColorChoice.endsWith('-light') 
+      ? getLightTint(baseColor, 0.7)
+      : baseColor
+  
+  // Calculate a lighter shade for the flap
   const lightenColor = (color: string, percent: number) => {
     const num = parseInt(color.replace("#",""), 16)
     const amt = Math.round(2.55 * percent)
@@ -165,11 +205,14 @@ function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'fl
     const B = (num & 0x0000FF) + amt
     return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255)).toString(16).slice(1)
   }
-  const flapColor = lightenColor(primaryColor, 20)
+  const flapColor = lightenColor(envelopeColor, 20)
+  
+  // Calculate text color for contrast
+  const textColor = getContrastTextColor(envelopeColor)
   
   return (
     <I18nProvider initialLocale={locale}>
-      <EnvelopeContent {...props} primaryColor={primaryColor} flapColor={flapColor} />
+      <EnvelopeContent {...props} primaryColor={envelopeColor} flapColor={flapColor} textColor={textColor} />
     </I18nProvider>
   )
 }

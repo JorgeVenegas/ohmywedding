@@ -13,6 +13,7 @@ import { useCollaborators } from '@/hooks/use-auth'
 import { useEditingModeSafe } from '@/components/contexts/editing-mode-context'
 
 type NavBackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
+type EnvelopeColorChoice = 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
 
 // Helper to create a light tint of a color for palette display
 function getLightTint(hex: string, tintAmount: number): string {
@@ -35,7 +36,7 @@ interface SettingsPanelProps {
   currentColors: { primary: string; secondary: string; accent: string }
   onFontsChange: (fonts: { display: string; heading: string; body: string; displayFamily: string; headingFamily: string; bodyFamily: string; googleFonts: string }) => void
   onColorsChange: (colors: { primary: string; secondary: string; accent: string }) => void
-  onCustomColorChange: (colorType: 'primary' | 'secondary' | 'accent', color: string) => void
+  onCustomColorChange: (colorType: 'primary' | 'secondary' | 'accent' | 'envelope', color: string) => void
   onCustomFontChange?: (fontType: 'display' | 'heading' | 'body', font: string, fontFamily: string) => void
   // Navigation settings
   showNavLinks?: boolean
@@ -43,6 +44,9 @@ interface SettingsPanelProps {
   navUseColorBackground?: boolean
   navBackgroundColorChoice?: NavBackgroundColorChoice
   onNavColorBackgroundChange?: (useColor: boolean, colorChoice: NavBackgroundColorChoice) => void
+  // Envelope settings
+  envelopeColorChoice?: EnvelopeColorChoice
+  onEnvelopeColorChange?: (colorChoice: EnvelopeColorChoice) => void
   // Language settings
   currentLocale?: 'en' | 'es'
   onLocaleChange?: (locale: 'en' | 'es') => void
@@ -79,6 +83,8 @@ export function SettingsPanel({
   navUseColorBackground: navUseColorBackgroundProp = false,
   navBackgroundColorChoice: navBackgroundColorChoiceProp = 'none',
   onNavColorBackgroundChange,
+  envelopeColorChoice: envelopeColorChoiceProp = 'primary',
+  onEnvelopeColorChange,
   currentLocale = 'en',
   onLocaleChange
 }: SettingsPanelProps) {
@@ -89,6 +95,7 @@ export function SettingsPanel({
   const [showNavLinks, setShowNavLinks] = useState(showNavLinksProp)
   const [navUseColorBackground, setNavUseColorBackground] = useState(navUseColorBackgroundProp)
   const [navBackgroundColorChoice, setNavBackgroundColorChoice] = useState<NavBackgroundColorChoice>(navBackgroundColorChoiceProp)
+  const [envelopeColorChoice, setEnvelopeColorChoice] = useState<EnvelopeColorChoice>(envelopeColorChoiceProp)
   const [locale, setLocale] = useState<'en' | 'es'>(currentLocale)
   
   // Sync showNavLinks state when prop changes
@@ -951,6 +958,120 @@ export function SettingsPanel({
                     />
                   </div>
                 )}
+              </div>
+              
+              {/* Envelope Settings */}
+              <div className="border-t border-gray-200 pt-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Palette className="w-4 h-4 text-gray-600" />
+                  <label className="text-sm font-medium text-gray-700">Envelope Color</label>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500 mb-3">Select envelope color from your theme palette</p>
+                  <div className="space-y-2">
+                    {/* Primary row */}
+                    <div className="flex gap-1">
+                      <span className="text-xs text-gray-500 w-16 flex items-center">Primary</span>
+                      <div className="flex gap-1 flex-1">
+                        {(['primary', 'primary-light', 'primary-lighter'] as const).map((colorChoice) => {
+                          const baseColor = currentColors.primary
+                          const bgColor = colorChoice === 'primary' 
+                            ? baseColor 
+                            : colorChoice === 'primary-light' 
+                              ? getLightTint(baseColor, 0.7) 
+                              : getLightTint(baseColor, 0.88)
+                          return (
+                            <button
+                              key={colorChoice}
+                              onClick={() => {
+                                setEnvelopeColorChoice(colorChoice)
+                                onEnvelopeColorChange?.(colorChoice)
+                              }}
+                              className={`flex-1 py-2 rounded-md text-xs font-medium transition-all ${
+                                envelopeColorChoice === colorChoice
+                                  ? 'ring-2 ring-blue-500 ring-offset-1'
+                                  : 'hover:opacity-80'
+                              }`}
+                              style={{
+                                backgroundColor: bgColor,
+                                color: colorChoice === 'primary' ? '#fff' : '#333',
+                                textShadow: colorChoice === 'primary' ? '0 1px 2px rgba(0,0,0,0.3)' : 'none'
+                              }}
+                              title={colorChoice === 'primary' ? 'Primary' : colorChoice === 'primary-light' ? 'Primary Light' : 'Primary Lighter'}
+                            />
+                          )
+                        })}
+                      </div>
+                    </div>
+                    {/* Secondary row */}
+                    <div className="flex gap-1">
+                      <span className="text-xs text-gray-500 w-16 flex items-center">Secondary</span>
+                      <div className="flex gap-1 flex-1">
+                        {(['secondary', 'secondary-light', 'secondary-lighter'] as const).map((colorChoice) => {
+                          const baseColor = currentColors.secondary
+                          const bgColor = colorChoice === 'secondary' 
+                            ? baseColor 
+                            : colorChoice === 'secondary-light' 
+                              ? getLightTint(baseColor, 0.7) 
+                              : getLightTint(baseColor, 0.88)
+                          return (
+                            <button
+                              key={colorChoice}
+                              onClick={() => {
+                                setEnvelopeColorChoice(colorChoice)
+                                onEnvelopeColorChange?.(colorChoice)
+                              }}
+                              className={`flex-1 py-2 rounded-md text-xs font-medium transition-all ${
+                                envelopeColorChoice === colorChoice
+                                  ? 'ring-2 ring-blue-500 ring-offset-1'
+                                  : 'hover:opacity-80'
+                              }`}
+                              style={{
+                                backgroundColor: bgColor,
+                                color: '#333',
+                              }}
+                              title={colorChoice === 'secondary' ? 'Secondary' : colorChoice === 'secondary-light' ? 'Secondary Light' : 'Secondary Lighter'}
+                            />
+                          )
+                        })}
+                      </div>
+                    </div>
+                    {/* Accent row */}
+                    <div className="flex gap-1">
+                      <span className="text-xs text-gray-500 w-16 flex items-center">Accent</span>
+                      <div className="flex gap-1 flex-1">
+                        {(['accent', 'accent-light', 'accent-lighter'] as const).map((colorChoice) => {
+                          const baseColor = currentColors.accent
+                          const bgColor = colorChoice === 'accent' 
+                            ? baseColor 
+                            : colorChoice === 'accent-light' 
+                              ? getLightTint(baseColor, 0.7) 
+                              : getLightTint(baseColor, 0.88)
+                          return (
+                            <button
+                              key={colorChoice}
+                              onClick={() => {
+                                setEnvelopeColorChoice(colorChoice)
+                                onEnvelopeColorChange?.(colorChoice)
+                              }}
+                              className={`flex-1 py-2 rounded-md text-xs font-medium transition-all ${
+                                envelopeColorChoice === colorChoice
+                                  ? 'ring-2 ring-blue-500 ring-offset-1'
+                                  : 'hover:opacity-80'
+                              }`}
+                              style={{
+                                backgroundColor: bgColor,
+                                color: colorChoice === 'accent' ? '#fff' : '#333',
+                                textShadow: colorChoice === 'accent' ? '0 1px 2px rgba(0,0,0,0.3)' : 'none'
+                              }}
+                              title={colorChoice === 'accent' ? 'Accent' : colorChoice === 'accent-light' ? 'Accent Light' : 'Accent Lighter'}
+                            />
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
               
               {/* Navigation Settings */}

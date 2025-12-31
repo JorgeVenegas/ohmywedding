@@ -44,6 +44,9 @@ export interface PageConfiguration {
       useColorBackground?: boolean
       backgroundColorChoice?: 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
     }
+    envelope?: {
+      colorChoice?: 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
+    }
   }
   
   // All components - single source of truth for ordering, visibility, and configuration

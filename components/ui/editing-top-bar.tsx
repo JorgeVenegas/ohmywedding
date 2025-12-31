@@ -286,6 +286,10 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
           useColorBackground: useColor, 
           backgroundColorChoice: colorChoice 
         })}
+        envelopeColorChoice={pageConfigContext.config.siteSettings.envelope?.colorChoice || 'primary'}
+        onEnvelopeColorChange={(colorChoice) => pageConfigContext.updateSiteSettings({
+          envelope: { colorChoice }
+        })}
         currentLocale={pageConfigContext.config.siteSettings.locale || 'en'}
         onLocaleChange={pageConfigContext.updateLocale}
       />
