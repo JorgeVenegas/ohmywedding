@@ -327,12 +327,19 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
   const partner2Initial = wedding.partner2_first_name?.charAt(0)?.toUpperCase() || ''
   const coupleInitials = [partner1Initial, partner2Initial].filter(Boolean).join(' & ')
   
-  // Format wedding date
-  const weddingDate = wedding.wedding_date ? new Date(wedding.wedding_date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }) : ''
+  // Format wedding date using locale from wedding page_config and UTC to avoid timezone issues
+  const locale = wedding.page_config?.siteSettings?.locale || 'en'
+  const weddingDate = wedding.wedding_date ? (() => {
+    // Parse as UTC to avoid timezone shift
+    const [year, month, day] = wedding.wedding_date.split('-').map(Number)
+    const date = new Date(Date.UTC(year, month - 1, day))
+    return new Intl.DateTimeFormat(locale === 'es' ? 'es-ES' : 'en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      timeZone: 'UTC'
+    }).format(date)
+  })() : ''
 
   return (
     <>
