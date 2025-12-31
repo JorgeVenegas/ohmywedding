@@ -99,6 +99,7 @@ export function RSVPSection({
   }
 
   const renderRSVPContent = (activeVariant: string) => {
+    console.log('[RSVP Section] Rendering variant:', activeVariant, 'variant prop:', variant)
     switch (activeVariant) {
       case 'minimalistic':
         return <RSVPMinimalisticVariant {...commonProps} />

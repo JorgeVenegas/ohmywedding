@@ -45,6 +45,33 @@ export async function getWeddingByDateAndNameId(dateId: string, weddingNameId: s
   return data as Wedding
 }
 
+// Get wedding by wedding_name_id only (for server-side metadata generation)
+export async function getWeddingByNameId(weddingNameId: string): Promise<Wedding | null> {
+  const supabase = await createServerSupabaseClient()
+  
+  // Decode the wedding name ID in case it's URL encoded
+  const decodedWeddingNameId = decodeURIComponent(weddingNameId)
+  
+  // Check if it's a UUID or wedding_name_id
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedWeddingNameId)
+  
+  let query = supabase.from('weddings').select('*')
+  
+  if (isUuid) {
+    query = query.eq('id', decodedWeddingNameId)
+  } else {
+    query = query.eq('wedding_name_id', decodedWeddingNameId)
+  }
+  
+  const { data, error } = await query.single()
+
+  if (error || !data) {
+    return null
+  }
+
+  return data as Wedding
+}
+
 // Legacy function for backward compatibility
 export async function getWeddingByWeddingId(weddingId: string): Promise<Wedding | null> {
   const [dateId, weddingNameId] = weddingId.split('/')

@@ -59,17 +59,29 @@ export function RSVPMinimalisticVariant({
     useColorBackground
   )
 
+  // Debug logging
+  console.log('[RSVP Minimalistic] Render state:', {
+    groupId,
+    submitted,
+    isEditing,
+    guestsCount: guests.length,
+    loading,
+  })
+
   useEffect(() => {
     const fetchGroupData = async () => {
       if (!groupId) {
+        console.log('[RSVP Minimalistic] No groupId, skipping fetch')
         setLoading(false)
         return
       }
 
+      console.log('[RSVP Minimalistic] Fetching group data for:', groupId)
       try {
         const response = await fetch(`/api/guest-groups/${groupId}`)
         if (response.ok) {
           const data = await response.json()
+          console.log('[RSVP Minimalistic] Group data received:', data)
           setGroupData(data)
           
           // Map guests and check if any have responded
@@ -85,16 +97,18 @@ export function RSVPMinimalisticVariant({
             adminSetTravel: g.admin_set_travel || false
           }))
           
+          console.log('[RSVP Minimalistic] Mapped guests:', mappedGuests)
           setGuests(mappedGuests)
           
           // Check if any guest has already submitted (confirmation_status is not 'pending')
           const hasResponded = data.guests.some((g: any) => 
             g.confirmation_status && g.confirmation_status !== 'pending'
           )
+          console.log('[RSVP Minimalistic] Has responded:', hasResponded, 'Setting submitted to:', hasResponded)
           setSubmitted(hasResponded)
         }
       } catch (error) {
-        console.error('Error fetching group:', error)
+        console.error('[RSVP Minimalistic] Error fetching group:', error)
       } finally {
         setLoading(false)
       }
@@ -159,6 +173,7 @@ export function RSVPMinimalisticVariant({
   }
 
   if (loading) {
+    console.log('[RSVP Minimalistic] Rendering loading state')
     return (
       <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -168,7 +183,10 @@ export function RSVPMinimalisticVariant({
     )
   }
 
+  console.log('[RSVP Minimalistic] Checking submitted state:', { submitted, isEditing })
+  
   if (submitted && !isEditing) {
+    console.log('[RSVP Minimalistic] ✅ RENDERING SUBMITTED VIEW with button')
     return (
       <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
         <div className="max-w-2xl mx-auto px-6 py-24">
@@ -226,23 +244,34 @@ export function RSVPMinimalisticVariant({
             </div>
 
             {/* Edit Response Button */}
-            <div className="flex justify-center">
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-6 py-3 rounded-lg text-base font-medium transition-all hover:opacity-90"
-                style={{ 
-                  backgroundColor: titleColor,
-                  color: isColored ? 'white' : bgColor 
-                }}
-              >
-                {t('rsvp.editResponse')}
-              </button>
+            <button
+              onClick={() => {
+                console.log('[RSVP Minimalistic] Edit button clicked!')
+                setIsEditing(true)
+              }}
+              className="w-full px-6 py-4 rounded-lg text-lg font-medium transition-all hover:opacity-90 shadow-lg"
+              style={{ 
+                backgroundColor: titleColor,
+                color: 'white'
+              }}
+            >
+              {t('rsvp.editResponse')}
+            </button>
+            
+            {/* Debug info */}
+            <div className="mt-4 p-2 bg-black/10 rounded text-xs">
+              <div>Guests: {guests.length}</div>
+              <div>Submitted: {submitted ? 'YES' : 'NO'}</div>
+              <div>Editing: {isEditing ? 'YES' : 'NO'}</div>
+              <div>Button visible: YES</div>
             </div>
           </div>
         </div>
       </SectionWrapper>
     )
   }
+  
+  console.log('[RSVP Minimalistic] Rendering form (not submitted or editing)')
 
   return (
     <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>

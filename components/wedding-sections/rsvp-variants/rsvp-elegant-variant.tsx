@@ -230,7 +230,7 @@ export function RSVPElegantVariant({
                 </div>
 
                 {/* Show guest responses */}
-                <div className="space-y-4 text-left">
+                <div className="space-y-4 text-left mb-8">
                   {guests.map((guest) => (
                     <div 
                       key={guest.id}
@@ -257,6 +257,18 @@ export function RSVPElegantVariant({
                     </div>
                   ))}
                 </div>
+                
+                {/* Edit Response Button */}
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="w-full py-4 px-6 rounded-lg text-lg font-serif transition-all hover:opacity-90 shadow-lg"
+                  style={{ 
+                    backgroundColor: titleColor,
+                    color: 'white'
+                  }}
+                >
+                  {t('rsvp.editResponse')}
+                </button>
               </div>
             </div>
           </div>
