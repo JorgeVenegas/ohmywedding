@@ -148,14 +148,28 @@ function EnvelopeContent({
   )
 }
 
-// Wrapper to get locale from page config (same pattern as ConfigBasedWeddingRenderer)
-function EnvelopeWithI18n(props: EnvelopeContentProps) {
+// Wrapper to get locale and colors from page config (same pattern as ConfigBasedWeddingRenderer)
+function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'flapColor'>) {
   const { config } = usePageConfig()
   const locale = config.siteSettings.locale || 'en'
   
+  // Get colors from page config
+  const primaryColor = config.siteSettings.theme?.colors?.primary || '#c9a961'
+  
+  // Calculate a lighter shade of primary color for the flap
+  const lightenColor = (color: string, percent: number) => {
+    const num = parseInt(color.replace("#",""), 16)
+    const amt = Math.round(2.55 * percent)
+    const R = (num >> 16) + amt
+    const G = (num >> 8 & 0x00FF) + amt
+    const B = (num & 0x0000FF) + amt
+    return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255)).toString(16).slice(1)
+  }
+  const flapColor = lightenColor(primaryColor, 20)
+  
   return (
     <I18nProvider initialLocale={locale}>
-      <EnvelopeContent {...props} />
+      <EnvelopeContent {...props} primaryColor={primaryColor} flapColor={flapColor} />
     </I18nProvider>
   )
 }
@@ -258,21 +272,6 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
   // Enable variant switchers based on demo mode or default to editing enabled
   const showVariantSwitchers = isDemoMode || true
 
-  // Get wedding colors from page_config
-  const primaryColor = wedding.primary_color || wedding.page_config?.colors?.primary || '#c9a961'
-  const secondaryColor = wedding.secondary_color || wedding.page_config?.colors?.secondary || '#8b7355'
-  
-  // Calculate a lighter shade of primary color for the flap
-  const lightenColor = (color: string, percent: number) => {
-    const num = parseInt(color.replace("#",""), 16)
-    const amt = Math.round(2.55 * percent)
-    const R = (num >> 16) + amt
-    const G = (num >> 8 & 0x00FF) + amt
-    const B = (num & 0x0000FF) + amt
-    return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255)).toString(16).slice(1)
-  }
-  const flapColor = lightenColor(primaryColor, 20)
-  
   // Build couple names for envelope
   const partner1Names = [wedding.partner1_first_name, wedding.partner1_last_name].filter(Boolean)
   const partner2Names = [wedding.partner2_first_name, wedding.partner2_last_name].filter(Boolean)
@@ -322,8 +321,6 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
             envelopeFalling={envelopeFalling}
             envelopeOpening={envelopeOpening}
             handleEnvelopeClick={handleEnvelopeClick}
-            primaryColor={primaryColor}
-            flapColor={flapColor}
             coupleNames={coupleNames}
             coupleInitials={coupleInitials}
             weddingDate={weddingDate}
