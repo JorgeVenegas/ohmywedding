@@ -404,9 +404,36 @@ function WeddingContentWithCurtain({
   weddingDate: string
   guestGroup: GuestGroup | null
 }) {
-  const { isLoading: configLoading } = usePageConfig()
+  const { isLoading: configLoading, config } = usePageConfig()
   const [curtainFalling, setCurtainFalling] = useState(false)
   const [curtainComplete, setCurtainComplete] = useState(false)
+
+  // Get envelope color from config
+  const envelopeColorChoice = config.siteSettings.envelope?.colorChoice || 'primary'
+  const colors = config.siteSettings.theme?.colors || {}
+  const baseColorType = envelopeColorChoice.includes('primary') ? 'primary' 
+    : envelopeColorChoice.includes('secondary') ? 'secondary' 
+    : 'accent'
+  const baseColor = colors[baseColorType] || colors.primary || '#c9a961'
+  
+  // Helper to create a light tint
+  const getLightTint = (hex: string, tintAmount: number): string => {
+    const num = parseInt(hex.replace('#', ''), 16)
+    const r = (num >> 16) & 255
+    const g = (num >> 8) & 255
+    const b = num & 255
+    const newR = Math.round(r + (255 - r) * tintAmount)
+    const newG = Math.round(g + (255 - g) * tintAmount)
+    const newB = Math.round(b + (255 - b) * tintAmount)
+    return `#${((1 << 24) + (newR << 16) + (newG << 8) + newB).toString(16).slice(1)}`
+  }
+  
+  // Apply tint based on choice to get final curtain color
+  const curtainColor = envelopeColorChoice.endsWith('-lighter') 
+    ? getLightTint(baseColor, 0.88)
+    : envelopeColorChoice.endsWith('-light') 
+      ? getLightTint(baseColor, 0.7)
+      : baseColor
 
   // Wait for config to finish loading before falling curtain
   useEffect(() => {
@@ -424,13 +451,14 @@ function WeddingContentWithCurtain({
 
   return (
     <>
-      {/* Gold curtain overlay - starts covering screen, then falls */}
+      {/* Curtain overlay - starts covering screen, then falls */}
       {!curtainComplete && (
         <div className="fixed inset-0 z-50 pointer-events-none">
           <div 
-            className="absolute inset-0 bg-[#c9a961] transition-transform duration-800 ease-in-out flex items-center justify-center"
+            className="absolute inset-0 transition-transform duration-800 ease-in-out flex items-center justify-center"
             style={{
               transform: curtainFalling ? 'translateY(100%)' : 'translateY(0)',
+              backgroundColor: curtainColor,
             }}
           >
             <Image
