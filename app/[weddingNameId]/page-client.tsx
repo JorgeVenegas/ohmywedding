@@ -232,6 +232,7 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
   const [showEnvelope, setShowEnvelope] = useState(false)
   const [envelopeFalling, setEnvelopeFalling] = useState(false)
   const [envelopeOpening, setEnvelopeOpening] = useState(false)
+  const [envelopeComplete, setEnvelopeComplete] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [guestGroup, setGuestGroup] = useState<GuestGroup | null>(null)
   
@@ -289,6 +290,10 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
   const handleEnvelopeClick = () => {
     setEnvelopeOpening(true)
     setEnvelopeFalling(true)
+    // Remove from DOM after animation completes (1200ms)
+    setTimeout(() => {
+      setEnvelopeComplete(true)
+    }, 1200)
   }
 
   if (!wedding && weddingDataLoading) {
@@ -359,6 +364,7 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
           isMobile={isMobile}
           envelopeFalling={envelopeFalling}
           envelopeOpening={envelopeOpening}
+          envelopeComplete={envelopeComplete}
           handleEnvelopeClick={handleEnvelopeClick}
           coupleNames={coupleNames}
           coupleInitials={coupleInitials}
@@ -378,6 +384,7 @@ function WeddingContentWithCurtain({
   isMobile,
   envelopeFalling,
   envelopeOpening,
+  envelopeComplete,
   handleEnvelopeClick,
   coupleNames,
   coupleInitials,
@@ -390,6 +397,7 @@ function WeddingContentWithCurtain({
   isMobile: boolean
   envelopeFalling: boolean
   envelopeOpening: boolean
+  envelopeComplete: boolean
   handleEnvelopeClick: () => void
   coupleNames: string
   coupleInitials: string
@@ -398,6 +406,7 @@ function WeddingContentWithCurtain({
 }) {
   const { isLoading: configLoading } = usePageConfig()
   const [curtainFalling, setCurtainFalling] = useState(false)
+  const [curtainComplete, setCurtainComplete] = useState(false)
 
   // Wait for config to finish loading before falling curtain
   useEffect(() => {
@@ -405,6 +414,10 @@ function WeddingContentWithCurtain({
       // Wait a brief moment then trigger curtain fall
       setTimeout(() => {
         setCurtainFalling(true)
+        // Remove from DOM after animation completes (800ms)
+        setTimeout(() => {
+          setCurtainComplete(true)
+        }, 800)
       }, 100)
     }
   }, [configLoading])
@@ -412,27 +425,29 @@ function WeddingContentWithCurtain({
   return (
     <>
       {/* Gold curtain overlay - starts covering screen, then falls */}
-      <div className="fixed inset-0 z-50 pointer-events-none">
-        <div 
-          className="absolute inset-0 bg-[#c9a961] transition-transform duration-800 ease-in-out flex items-center justify-center"
-          style={{
-            transform: curtainFalling ? 'translateY(100%)' : 'translateY(0)',
-          }}
-        >
-          <Image
-            src="/images/logos/OMW Logo White.png"
-            alt="OhMyWedding"
-            width={120}
-            height={120}
-            className="w-32 h-auto"
-            priority
-            unoptimized
-          />
+      {!curtainComplete && (
+        <div className="fixed inset-0 z-50 pointer-events-none">
+          <div 
+            className="absolute inset-0 bg-[#c9a961] transition-transform duration-800 ease-in-out flex items-center justify-center"
+            style={{
+              transform: curtainFalling ? 'translateY(100%)' : 'translateY(0)',
+            }}
+          >
+            <Image
+              src="/images/logos/OMW Logo White.png"
+              alt="OhMyWedding"
+              width={120}
+              height={120}
+              className="w-32 h-auto"
+              priority
+              unoptimized
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Envelope screen with parallel animations */}
-      {showEnvelope && (
+      {showEnvelope && !envelopeComplete && (
         <EnvelopeWithI18n 
           isMobile={isMobile}
           envelopeFalling={envelopeFalling}
