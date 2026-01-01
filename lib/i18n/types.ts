@@ -22,6 +22,8 @@ export interface Translations {
     change: string
     select: string
     upload: string
+    uploading: string
+    view: string
     search: string
     noResults: string
     required: string
@@ -148,6 +150,7 @@ export interface Translations {
     phone: string
     attending: string
     notAttending: string
+    noResponse: string
     willYouAttend: string
     numberOfGuests: string
     guestNames: string
@@ -194,6 +197,7 @@ export interface Translations {
     submitResponse: string
     partyOf: string
     respondForAll: string
+    respondForAtLeastOne: string
     individualInvitationsMessage: string
     verifyPhone: string
     phoneVerification: string
@@ -226,21 +230,22 @@ export interface Translations {
     travelingFrom: string
     travelingFromPlaceholder: string
     travelArrangement: string
-    needsTransport: string
-    ownMeans: string
-    willBuyTicket: string
-    noTicketNeeded: string
-    uploadTicket: string
-    uploadTravelTicket: string
+    uploadTicketProof: string
     ticketUploaded: string
-    removeTicket: string
-    uploadingTicket: string
+    clickToUploadTicket: string
+    acceptedFormats: string
     ticketRequired: string
-    maxFileSize: string
+    alreadyBookedTransportation: string
+    noTicketNeeded: string
+    willNotNeedTransportation: string
     travelRequiredByOrganizer: string
-    noTicketReason: string
-    noTicketReasonPlaceholder: string
-    reasonRequired: string
+    applyToAllGuests: string
+    applyToAllDescription: string
+    travelSummary: string
+    traveling: string
+    notTraveling: string
+    from: string
+    travelDetails: string
   }
 
   // Gallery Section

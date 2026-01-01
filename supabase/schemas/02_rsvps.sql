@@ -32,7 +32,7 @@ create table "guests" (
   "invitation_sent_at" timestamp with time zone,
   "is_traveling" boolean default false,
   "traveling_from" text,
-  "travel_arrangement" text check ("travel_arrangement" in ('needs_transport', 'own_means', 'will_buy_ticket', 'no_ticket_needed')),
+  "travel_arrangement" text check ("travel_arrangement" in ('already_booked', 'no_transport', 'needs_transport', 'own_means', 'will_buy_ticket', 'no_ticket_needed')),
   "ticket_attachment_url" text,
   "no_ticket_reason" text,
   "admin_set_travel" boolean default false,

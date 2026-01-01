@@ -77,8 +77,8 @@ export function HeroTextContent({
             : 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl text-slate-800'
         }`}
         style={{ 
-          fontFamily: theme?.fonts?.heading === 'script' ? 'cursive' : 
-                      theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif',
+          ...(theme?.fonts?.heading === 'script' ? { fontFamily: 'cursive' } : 
+              theme?.fonts?.heading === 'sans-serif' ? { fontFamily: 'sans-serif' } : {}),
           color: isOverlay ? 'white' : (theme?.colors?.foreground || '#1f2937')
         }}
       >
@@ -102,29 +102,36 @@ export function HeroTextContent({
         </p>
       )}
 
-      {/* Date & Location */}
-      <div className={`flex flex-col gap-2 sm:gap-3 sm:flex-row sm:gap-4 mb-6 sm:mb-8 md:mb-10 text-sm sm:text-base md:text-lg lg:text-xl ${
+      {/* Wedding Date */}
+      <div 
+        className={`font-serif mb-5 sm:mb-6 md:mb-8 leading-tight ${
+          isOverlay 
+            ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-white drop-shadow-lg' 
+            : 'text-xl sm:text-2xl md:text-3xl lg:text-4xl text-slate-800'
+        } ${textAlign === 'left' ? 'text-left' : textAlign === 'right' ? 'text-right' : 'text-center'}`}
+        style={{ 
+          ...(theme?.fonts?.heading === 'script' ? { fontFamily: 'cursive' } : 
+              theme?.fonts?.heading === 'sans-serif' ? { fontFamily: 'sans-serif' } : {}),
+          color: isOverlay ? 'white' : (theme?.colors?.foreground || '#1f2937')
+        }}
+      >
+        {formattedDate}
+      </div>
+
+      {/* Time & Location */}
+      <div className={`flex flex-col gap-2 sm:gap-3 sm:flex-row sm:gap-4 mb-6 sm:mb-8 md:mb-10 text-base sm:text-lg md:text-xl ${
         textAlign === 'center' ? 'items-center sm:justify-center' : 
         textAlign === 'right' ? 'items-end sm:justify-end' : 'items-start sm:justify-start'
       }`}>
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <Calendar className={`w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 flex-shrink-0 ${isOverlay ? 'text-white/80' : ''}`} 
-            style={{ color: isOverlay ? 'rgba(255,255,255,0.8)' : theme?.colors?.accent }} />
-          <span className={isOverlay ? 'text-white/90 drop-shadow-sm' : ''} 
-            style={{ color: isOverlay ? 'rgba(255,255,255,0.9)' : theme?.colors?.foreground }}>
-            {formattedDate}
-          </span>
-        </div>
-        <span className={`hidden sm:inline ${isOverlay ? 'text-white/60' : 'text-gray-400'}`}>•</span>
-        <div className={isOverlay ? 'text-white/90 drop-shadow-sm' : ''} 
-          style={{ color: isOverlay ? 'rgba(255,255,255,0.9)' : theme?.colors?.foreground }}>
+        <div className={isOverlay ? 'text-white/90 drop-shadow-sm' : 'text-gray-700'} 
+          style={{ color: isOverlay ? 'rgba(255,255,255,0.9)' : theme?.colors?.muted }}>
           {formattedTime}
         </div>
         {(wedding.ceremony_venue_name || wedding.reception_venue_name) && (
           <>
             <span className={`hidden sm:inline ${isOverlay ? 'text-white/60' : 'text-gray-400'}`}>•</span>
-            <div className={isOverlay ? 'text-white/90 drop-shadow-sm' : ''} 
-              style={{ color: isOverlay ? 'rgba(255,255,255,0.9)' : theme?.colors?.foreground }}>
+            <div className={isOverlay ? 'text-white/90 drop-shadow-sm' : 'text-gray-700'} 
+              style={{ color: isOverlay ? 'rgba(255,255,255,0.9)' : theme?.colors?.muted }}>
               {wedding.ceremony_venue_name || wedding.reception_venue_name}
             </div>
           </>

@@ -227,7 +227,7 @@ function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'fl
 
 function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
   const [wedding, setWedding] = useState<Wedding | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [weddingDataLoading, setWeddingDataLoading] = useState(true)
   const [curtainFalling, setCurtainFalling] = useState(false)
   const [showEnvelope, setShowEnvelope] = useState(false)
   const [envelopeFalling, setEnvelopeFalling] = useState(false)
@@ -275,16 +275,12 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
           }
         }
         
-        setLoading(false)
+        setWeddingDataLoading(false)
         // Only show envelope if group_id is provided
         setShowEnvelope(!!groupId)
-        // Wait a brief moment then trigger curtain fall
-        setTimeout(() => {
-          setCurtainFalling(true)
-        }, 100)
       } catch (error) {
         console.error('Error loading wedding:', error)
-        setLoading(false)
+        setWeddingDataLoading(false)
       }
     }
     loadWedding()
@@ -295,7 +291,7 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
     setEnvelopeFalling(true)
   }
 
-  if (!wedding && loading) {
+  if (!wedding && weddingDataLoading) {
     return (
       <div className="fixed inset-0 z-50 bg-[#c9a961] flex items-center justify-center">
         <Image
@@ -355,6 +351,66 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
 
   return (
     <>
+      <PageConfigProvider weddingNameId={weddingNameId}>
+        <WeddingContentWithCurtain
+          wedding={wedding}
+          weddingNameId={weddingNameId}
+          showEnvelope={showEnvelope}
+          isMobile={isMobile}
+          envelopeFalling={envelopeFalling}
+          envelopeOpening={envelopeOpening}
+          handleEnvelopeClick={handleEnvelopeClick}
+          coupleNames={coupleNames}
+          coupleInitials={coupleInitials}
+          weddingDate={weddingDate}
+          guestGroup={guestGroup}
+        />
+      </PageConfigProvider>
+    </>
+  )
+}
+
+// Component that waits for config to load before falling curtain
+function WeddingContentWithCurtain({
+  wedding,
+  weddingNameId,
+  showEnvelope,
+  isMobile,
+  envelopeFalling,
+  envelopeOpening,
+  handleEnvelopeClick,
+  coupleNames,
+  coupleInitials,
+  weddingDate,
+  guestGroup
+}: {
+  wedding: Wedding
+  weddingNameId: string
+  showEnvelope: boolean
+  isMobile: boolean
+  envelopeFalling: boolean
+  envelopeOpening: boolean
+  handleEnvelopeClick: () => void
+  coupleNames: string
+  coupleInitials: string
+  weddingDate: string
+  guestGroup: GuestGroup | null
+}) {
+  const { isLoading: configLoading } = usePageConfig()
+  const [curtainFalling, setCurtainFalling] = useState(false)
+
+  // Wait for config to finish loading before falling curtain
+  useEffect(() => {
+    if (!configLoading) {
+      // Wait a brief moment then trigger curtain fall
+      setTimeout(() => {
+        setCurtainFalling(true)
+      }, 100)
+    }
+  }, [configLoading])
+
+  return (
+    <>
       {/* Gold curtain overlay - starts covering screen, then falls */}
       <div className="fixed inset-0 z-50 pointer-events-none">
         <div 
@@ -375,26 +431,24 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
         </div>
       </div>
 
-      <PageConfigProvider weddingNameId={weddingNameId}>
-        {/* Envelope screen with parallel animations */}
-        {showEnvelope && (
-          <EnvelopeWithI18n 
-            isMobile={isMobile}
-            envelopeFalling={envelopeFalling}
-            envelopeOpening={envelopeOpening}
-            handleEnvelopeClick={handleEnvelopeClick}
-            coupleNames={coupleNames}
-            coupleInitials={coupleInitials}
-            weddingDate={weddingDate}
-            guestGroup={guestGroup}
-          />
-        )}
-        
-        <ConfigBasedWeddingRenderer 
-          wedding={wedding}
-          weddingNameId={weddingNameId}
+      {/* Envelope screen with parallel animations */}
+      {showEnvelope && (
+        <EnvelopeWithI18n 
+          isMobile={isMobile}
+          envelopeFalling={envelopeFalling}
+          envelopeOpening={envelopeOpening}
+          handleEnvelopeClick={handleEnvelopeClick}
+          coupleNames={coupleNames}
+          coupleInitials={coupleInitials}
+          weddingDate={weddingDate}
+          guestGroup={guestGroup}
         />
-      </PageConfigProvider>
+      )}
+      
+      <ConfigBasedWeddingRenderer 
+        wedding={wedding}
+        weddingNameId={weddingNameId}
+      />
     </>
   )
 }

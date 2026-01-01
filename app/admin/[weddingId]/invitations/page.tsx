@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, use, useMemo } from "react"
+import React, { useState, useEffect, use, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -55,7 +55,11 @@ import {
   Link,
   FileText,
   Plane,
-  Ticket
+  Ticket,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Settings
 } from "lucide-react"
 
 interface Guest {
@@ -138,6 +142,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const [groupFilter, setGroupFilter] = useState<string>('all')
   const [invitedByFilter, setInvitedByFilter] = useState<string>('all')
   
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState<'name' | 'group' | 'status' | null>(null)
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+  
   // Wedding/Partner info
   const [partnerNames, setPartnerNames] = useState<{ partner1: string; partner2: string }>({ partner1: '', partner2: '' })
   
@@ -190,6 +198,258 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     onlyConfirmed: false,
     onlyPending: false,
   })
+  
+  // Invitation template settings
+  const [showInviteTemplateModal, setShowInviteTemplateModal] = useState(false)
+  const [inviteTemplate, setInviteTemplate] = useState(
+    "Dear {{groupname}},\n\nWe are delighted to invite you to celebrate our wedding on {{weddingdate}}!\n\nView your personalized invitation here: {{groupinvitationurl}}\n\nWith love,\n{{partner1}} & {{partner2}}"
+  )
+  const [weddingNameId, setWeddingNameId] = useState<string>('')
+  const [weddingDetails, setWeddingDetails] = useState<any>(null)
+  const [dynamicContentSearch, setDynamicContentSearch] = useState('')
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
+  const editorRef = useRef<HTMLDivElement>(null)
+  const isUpdatingRef = useRef(false)
+  const [showReplaceMenu, setShowReplaceMenu] = useState<string | null>(null)
+  const replaceMenuRef = useRef<HTMLDivElement>(null)
+  
+  // Helper function to get friendly display name for variables
+  const getVariableDisplayName = (variable: string): string => {
+    const variableMap: Record<string, string> = {
+      '{{groupname}}': 'The Smith Family',
+      '{{guestname}}': 'John Smith',
+      '{{groupinvitationurl}}': 'https://yourwedding.com/invite/abc123',
+      '{{partner1}}': weddingDetails?.partner1_first_name || 'Alex',
+      '{{partner2}}': weddingDetails?.partner2_first_name || 'Jordan',
+      '{{weddingdate}}': weddingDetails?.wedding_date ? new Date(weddingDetails.wedding_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'June 15, 2026',
+      '{{ceremonyplace}}': weddingDetails?.ceremony_venue_name || 'Grand Oak Chapel',
+      '{{ceremonyaddress}}': '123 Main St, City',
+      '{{receptionplace}}': weddingDetails?.reception_venue_name || 'Garden Pavilion',
+      '{{receptionaddress}}': '456 Park Ave, City'
+    }
+    return variableMap[variable] || variable
+  }
+  
+  // Sync template formatting whenever inviteTemplate changes
+  useEffect(() => {
+    if (!editorRef.current) return
+    
+    const editor = editorRef.current
+    
+    // Skip if we're in the middle of user input to prevent cursor jump
+    if (isUpdatingRef.current) {
+      console.log('=== RENDER: Skipping (isUpdatingRef) ===')
+      isUpdatingRef.current = false
+      return
+    }
+    
+    console.log('=== RENDER START ===')
+    console.log('Template to render:', JSON.stringify(inviteTemplate))
+    
+    const selection = window.getSelection()
+    let cursorOffset = 0
+    let hadFocus = document.activeElement === editor
+    
+    // Save cursor position
+    if (selection && selection.rangeCount > 0 && editor.contains(selection.anchorNode)) {
+      const range = selection.getRangeAt(0)
+      const preCaretRange = range.cloneRange()
+      preCaretRange.selectNodeContents(editor)
+      preCaretRange.setEnd(range.endContainer, range.endOffset)
+      cursorOffset = preCaretRange.toString().length
+    }
+    
+    // Render formatted HTML with friendly names and action buttons
+    const parts = inviteTemplate.split(/(\{\{[^}]+\}\})/g)
+    console.log('Split parts:', parts.map((p, i) => `[${i}] ${JSON.stringify(p)}`))
+    const zwsp = '\u200B' // zero-width space for cursor positioning
+    editor.innerHTML = parts.map((part, index) => {
+      if (part.match(/^\{\{[^}]+\}\}$/)) {
+        const displayName = getVariableDisplayName(part)
+        // Add zero-width spaces before and after badge for easier cursor positioning
+        return `${zwsp}<span 
+          contenteditable="false" 
+          class="inline-flex items-center gap-1 px-2 py-1 mx-0.5 bg-primary/10 text-primary rounded-full text-xs font-medium border border-primary/20 hover:bg-primary/20 transition-colors group cursor-pointer relative" 
+          data-variable="${part}"
+          data-index="${index}"
+          style="user-select: none;"
+        >
+          <span class="pointer-events-none">${displayName}</span>
+          <button 
+            class="hidden group-hover:inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-primary/30" 
+            data-action="replace"
+            data-variable="${part}"
+            title="Replace"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+          </button>
+          <button 
+            class="hidden group-hover:inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-primary/30" 
+            data-action="delete"
+            data-variable="${part}"
+            title="Delete"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </span>${zwsp}`
+      }
+      // Escape HTML and convert newlines to BR tags for display
+      return part.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
+    }).join('')
+    
+    console.log('Rendered innerHTML:', editor.innerHTML)
+    console.log('=== RENDER END ===')
+    
+    // Add event listeners for badge actions
+    editor.querySelectorAll('[data-action="delete"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const badgeSpan = (e.currentTarget as HTMLElement).closest('[data-index]') as HTMLElement
+        if (badgeSpan) {
+          const index = parseInt(badgeSpan.getAttribute('data-index') || '0')
+          // Split template and remove the specific occurrence at this index
+          const parts = inviteTemplate.split(/(\{\{[^}]+\}\})/g)
+          parts.splice(index, 1)
+          const newTemplate = parts.join('')
+          setInviteTemplate(newTemplate)
+        }
+      })
+    })
+    
+    editor.querySelectorAll('[data-action="replace"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const badgeSpan = (e.currentTarget as HTMLElement).closest('[data-index]') as HTMLElement
+        if (badgeSpan) {
+          const variable = badgeSpan.getAttribute('data-variable')
+          const index = parseInt(badgeSpan.getAttribute('data-index') || '0')
+          if (variable) {
+            setShowReplaceMenu(variable)
+            // Store the index for replacement
+            ;(badgeSpan as any).__replaceIndex = index
+          }
+        }
+      })
+    })
+    
+    // Restore cursor position
+    if (cursorOffset > 0 && hadFocus) {
+      const textNodes: Text[] = []
+      const walk = (node: Node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          textNodes.push(node as Text)
+        } else {
+          node.childNodes.forEach(walk)
+        }
+      }
+      walk(editor)
+      
+      let charCount = 0
+      for (const node of textNodes) {
+        const nodeLength = node.textContent?.length || 0
+        if (charCount + nodeLength >= cursorOffset) {
+          const offset = cursorOffset - charCount
+          try {
+            const range = document.createRange()
+            range.setStart(node, Math.min(offset, nodeLength))
+            range.collapse(true)
+            selection?.removeAllRanges()
+            selection?.addRange(range)
+          } catch (e) {
+            // Ignore range errors
+          }
+          break
+        }
+        charCount += nodeLength
+      }
+    }
+    
+    // Restore focus if editor had it
+    if (hadFocus) {
+      editor.focus()
+    }
+  }, [inviteTemplate, weddingDetails])
+  
+  // Initial render - ensure template shows when modal opens
+  useEffect(() => {
+    if (showInviteTemplateModal && editorRef.current && !editorRef.current.textContent) {
+      // Trigger a re-render to show initial content
+      const editor = editorRef.current
+      const parts = inviteTemplate.split(/(\{\{[^}]+\}\})/g)
+      editor.innerHTML = parts.map((part) => {
+        if (part.match(/^\{\{[^}]+\}\}$/)) {
+          const displayName = getVariableDisplayName(part)
+          return `<span 
+            contenteditable="false" 
+            class="inline-flex items-center gap-1 px-2 py-1 mx-0.5 bg-primary/10 text-primary rounded-full text-xs font-medium border border-primary/20 hover:bg-primary/20 transition-colors group cursor-pointer relative" 
+            data-variable="${part}"
+            style="user-select: none;"
+          >
+            <span class="pointer-events-none">${displayName}</span>
+            <button 
+              class="hidden group-hover:inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-primary/30" 
+              data-action="replace"
+              data-variable="${part}"
+              title="Replace"
+            >
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+            </button>
+            <button 
+              class="hidden group-hover:inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-primary/30" 
+              data-action="delete"
+              data-variable="${part}"
+              title="Delete"
+            >
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </span>`
+        }
+        return part.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      }).join('')
+      
+      // Attach event listeners
+      editor.querySelectorAll('[data-action="delete"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation()
+          const variable = (e.currentTarget as HTMLElement).getAttribute('data-variable')
+          if (variable) {
+            setInviteTemplate(inviteTemplate.replace(variable, ''))
+          }
+        })
+      })
+      
+      editor.querySelectorAll('[data-action="replace"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation()
+          const variable = (e.currentTarget as HTMLElement).getAttribute('data-variable')
+          if (variable) {
+            setShowReplaceMenu(variable)
+          }
+        })
+      })
+    }
+  }, [showInviteTemplateModal, inviteTemplate, weddingDetails])
+  
+  // Close replace menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (replaceMenuRef.current && !replaceMenuRef.current.contains(e.target as Node)) {
+        setShowReplaceMenu(null)
+      }
+    }
+    if (showReplaceMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showReplaceMenu])
   
   // Save column visibility to localStorage when it changes
   useEffect(() => {
@@ -320,6 +580,12 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           partner1: result.details.partner1_first_name || '',
           partner2: result.details.partner2_first_name || '',
         })
+        setWeddingNameId(result.details.wedding_name_id || '')
+        setWeddingDetails(result.details)
+        // Load invitation template if it exists in page_config
+        if (result.details.page_config?.invitationTemplate) {
+          setInviteTemplate(result.details.page_config.invitationTemplate)
+        }
       }
     } catch (error) {
       console.error("Error fetching wedding data:", error)
@@ -1090,14 +1356,69 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     }
   }
 
+  // Utility function to replace template variables with actual values
+  const replaceTemplateVariables = (
+    template: string, 
+    data: { 
+      groupName?: string
+      guestName?: string
+      groupId?: string
+    },
+    weddingData?: any
+  ): string => {
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+    const invitationUrl = data.groupId 
+      ? `${baseUrl}/${weddingNameId || weddingId}?groupId=${data.groupId}`
+      : `${baseUrl}/${weddingNameId || weddingId}`
+    
+    // Fetch wedding data from fetchWeddingData if available
+    const partner1 = partnerNames.partner1 || 'Partner 1'
+    const partner2 = partnerNames.partner2 || 'Partner 2'
+    
+    // Format wedding date if available
+    let formattedDate = 'TBD'
+    if (weddingData?.wedding_date) {
+      const date = new Date(weddingData.wedding_date)
+      formattedDate = date.toLocaleDateString('en-US', { 
+        weekday: 'long',
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      })
+    }
+    
+    return template
+      .replace(/\{\{groupname\}\}/gi, data.groupName || '')
+      .replace(/\{\{groupinvitationurl\}\}/gi, invitationUrl)
+      .replace(/\{\{guestname\}\}/gi, data.guestName || '')
+      .replace(/\{\{partner1\}\}/gi, partner1)
+      .replace(/\{\{partner2\}\}/gi, partner2)
+      .replace(/\{\{weddingdate\}\}/gi, formattedDate)
+      .replace(/\{\{ceremonyplace\}\}/gi, weddingData?.ceremony_venue_name || 'TBD')
+      .replace(/\{\{receptionplace\}\}/gi, weddingData?.reception_venue_name || 'TBD')
+      .replace(/\{\{ceremonyaddress\}\}/gi, weddingData?.ceremony_venue_address || 'TBD')
+      .replace(/\{\{receptionaddress\}\}/gi, weddingData?.reception_venue_address || 'TBD')
+  }
+
   // Send invite placeholder functions (functionality to be added later)
   const handleSendGroupInvite = (group: GuestGroup) => {
-    // TODO: Implement actual sending logic
+    // Generate personalized message using template
+    const personalizedMessage = replaceTemplateVariables(
+      inviteTemplate,
+      {
+        groupName: group.name,
+        groupId: group.id
+      },
+      weddingDetails
+    )
+    
+    // TODO: Implement actual sending logic (SMS/Email/WhatsApp)
+    // For now, show the message that would be sent
     setNotification({ 
       isOpen: true, 
       type: 'success', 
-      title: 'Coming Soon', 
-      message: `Invite sending for "${group.name}" will be available soon.` 
+      title: 'Preview', 
+      message: `Message preview: \"${personalizedMessage}\"` 
     })
   }
 
@@ -1123,12 +1444,27 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   }
 
   const handleSendGuestInvite = (guest: Guest) => {
-    // TODO: Implement actual sending logic
+    // Find the group for this guest to generate proper invitation URL
+    const guestGroup = guestGroups.find(g => g.id === guest.guest_group_id)
+    
+    // Generate personalized message using template
+    const personalizedMessage = replaceTemplateVariables(
+      inviteTemplate,
+      {
+        guestName: guest.name,
+        groupName: guestGroup?.name,
+        groupId: guestGroup?.id
+      },
+      weddingDetails
+    )
+    
+    // TODO: Implement actual sending logic (SMS/Email/WhatsApp)
+    // For now, show the message that would be sent
     setNotification({ 
       isOpen: true, 
       type: 'success', 
-      title: 'Coming Soon', 
-      message: `Invite sending for "${guest.name}" will be available soon.` 
+      title: 'Preview', 
+      message: `Message preview: \"${personalizedMessage}\"` 
     })
   }
 
@@ -1569,29 +1905,21 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     return TAG_COLORS[tag.toLowerCase()] || TAG_COLORS.default
   }
 
-  // Calculate stats (including ungrouped guests)
+  // Calculate stats (including ungrouped guests) - TOTAL counts (unfiltered)
   const groupedGuestsCount = guestGroups.reduce((acc, group) => acc + group.guests.length, 0)
   const totalGuests = groupedGuestsCount + ungroupedGuests.length
-  const confirmedGuests = guestGroups.reduce(
+  const totalConfirmedGuests = guestGroups.reduce(
     (acc, group) => acc + group.guests.filter(g => g.confirmation_status === "confirmed").length,
     0
   ) + ungroupedGuests.filter(g => g.confirmation_status === "confirmed").length
-  const declinedGuests = guestGroups.reduce(
+  const totalDeclinedGuests = guestGroups.reduce(
     (acc, group) => acc + group.guests.filter(g => g.confirmation_status === "declined").length,
     0
   ) + ungroupedGuests.filter(g => g.confirmation_status === "declined").length
-  const pendingGuests = guestGroups.reduce(
+  const totalPendingGuests = guestGroups.reduce(
     (acc, group) => acc + group.guests.filter(g => g.confirmation_status === "pending").length,
     0
   ) + ungroupedGuests.filter(g => g.confirmation_status === "pending").length
-
-  const stats = [
-    { label: "Total Groups", value: guestGroups.length.toString(), color: "primary" },
-    { label: "Total Guests", value: totalGuests.toString(), color: "primary" },
-    { label: "Confirmed", value: confirmedGuests.toString(), color: "secondary" },
-    { label: "Declined", value: declinedGuests.toString(), color: "destructive" },
-    { label: "Pending", value: pendingGuests.toString(), color: "muted" },
-  ]
 
   // Get all unique tags from groups AND individual guests
   const allTags = useMemo(() => {
@@ -1641,9 +1969,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     return guests
   }, [guestGroups, ungroupedGuests])
 
-  // Filter guests based on current filters
+  // Filter and sort guests based on current filters
   const filteredGuests = useMemo(() => {
-    return allGuests.filter(guest => {
+    let filtered = allGuests.filter(guest => {
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase()
@@ -1679,15 +2007,44 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       
       return true
     })
-  }, [allGuests, searchQuery, statusFilter, tagFilter, groupFilter, invitedByFilter])
+    
+    // Apply sorting
+    if (sortColumn) {
+      filtered = [...filtered].sort((a, b) => {
+        let aValue: string
+        let bValue: string
+        
+        if (sortColumn === 'name') {
+          aValue = a.name.toLowerCase()
+          bValue = b.name.toLowerCase()
+        } else if (sortColumn === 'group') {
+          aValue = (a.groupName || '').toLowerCase()
+          bValue = (b.groupName || '').toLowerCase()
+        } else if (sortColumn === 'status') {
+          aValue = a.confirmation_status
+          bValue = b.confirmation_status
+        } else {
+          return 0
+        }
+        
+        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+        return 0
+      })
+    }
+    
+    return filtered
+  }, [allGuests, searchQuery, statusFilter, tagFilter, groupFilter, invitedByFilter, sortColumn, sortDirection])
 
-  // Filter groups based on current filters (for groups view)
+  // Filter and sort groups based on current filters (for groups view)
   const filteredGroups = useMemo(() => {
-    return guestGroups.filter(group => {
-      // Search filter - search in group name
+    let filtered = guestGroups.filter(group => {
+      // Search filter - search in group name and guest names
       if (searchQuery) {
         const query = searchQuery.toLowerCase()
-        if (!group.name.toLowerCase().includes(query)) return false
+        const matchesGroupName = group.name.toLowerCase().includes(query)
+        const matchesGuestName = group.guests.some(g => g.name.toLowerCase().includes(query))
+        if (!matchesGroupName && !matchesGuestName) return false
       }
       
       // Status filter - check if any guest in group matches status
@@ -1712,8 +2069,46 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       
       return true
     })
-  }, [guestGroups, searchQuery, statusFilter, tagFilter, invitedByFilter])
+    
+    // Apply sorting
+    if (sortColumn === 'name') {
+      filtered = [...filtered].sort((a, b) => {
+        const aValue = a.name.toLowerCase()
+        const bValue = b.name.toLowerCase()
+        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+        return 0
+      })
+    }
+    
+    return filtered
+  }, [guestGroups, searchQuery, statusFilter, tagFilter, invitedByFilter, sortColumn, sortDirection])
+  
+  // Calculate filtered statistics based on filtered guests
+  const filteredGuestCount = filteredGuests.length
+  const filteredConfirmedGuests = filteredGuests.filter(g => g.confirmation_status === 'confirmed').length
+  const filteredDeclinedGuests = filteredGuests.filter(g => g.confirmation_status === 'declined').length
+  const filteredPendingGuests = filteredGuests.filter(g => g.confirmation_status === 'pending').length
+  
+  // Use filtered stats if any filters are active
+  const hasActiveFilters = searchQuery || statusFilter !== 'all' || tagFilter !== 'all' || groupFilter !== 'all' || invitedByFilter !== 'all'
+  const displayedGuestCount = hasActiveFilters ? filteredGuestCount : totalGuests
+  const confirmedGuests = hasActiveFilters ? filteredConfirmedGuests : totalConfirmedGuests
+  const declinedGuests = hasActiveFilters ? filteredDeclinedGuests : totalDeclinedGuests
+  const pendingGuests = hasActiveFilters ? filteredPendingGuests : totalPendingGuests
 
+  // Sort handler
+  const handleSort = (column: 'name' | 'group' | 'status') => {
+    if (sortColumn === column) {
+      // Toggle direction if same column
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      // New column, start with ascending
+      setSortColumn(column)
+      setSortDirection('asc')
+    }
+  }
+  
   if (loading) {
     return (
       <main className="min-h-screen bg-background">
@@ -1750,11 +2145,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
                 <Users className="w-3 h-3 text-muted-foreground" />
-                <span className="text-muted-foreground">{guestGroups.length} groups</span>
+                <span className="text-muted-foreground">
+                  {hasActiveFilters ? `${filteredGroups.length}/` : ''}{guestGroups.length} groups
+                </span>
               </div>
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
-                <span className="text-foreground font-semibold">{totalGuests}</span>
-                <span className="text-muted-foreground">guests</span>
+                <span className="text-foreground font-semibold">{displayedGuestCount}</span>
+                <span className="text-muted-foreground">guests{hasActiveFilters && totalGuests !== displayedGuestCount ? ` of ${totalGuests}` : ''}</span>
               </div>
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 text-xs font-medium">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
@@ -1824,6 +2221,15 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                 className="hidden"
                 onChange={handleCsvFileSelect}
               />
+              <Button 
+                variant="outline"
+                size="sm" 
+                className="h-8" 
+                onClick={() => setShowInviteTemplateModal(true)}
+              >
+                <Settings className="w-3.5 h-3.5 mr-1.5" />
+                Invite Settings
+              </Button>
               <Button 
                 size="sm" 
                 className="h-8 bg-blue-600 hover:bg-blue-700" 
@@ -1960,7 +2366,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               </Button>
               {showColumnMenu && (
                 <div className="absolute top-full left-0 mt-1 bg-background border border-border rounded-md shadow-lg z-10 min-w-[140px]">
-                  {(['phone', 'group', 'tags', 'status', 'dietary', 'invitedBy', 'inviteSent', 'travelInfo'] as const).map((key) => (
+                  {(['phone', 'group', 'tags', 'status', 'invitedBy', 'inviteSent', 'travelInfo'] as const).map((key) => (
                     <button
                       key={key}
                       className="w-full px-3 py-1.5 text-left text-xs hover:bg-muted flex items-center gap-2"
@@ -2131,8 +2537,18 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                           )}
                         </button>
                       </th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                        Name
+                      <th className="px-3 py-2 text-left">
+                        <button
+                          onClick={() => handleSort('name')}
+                          className="flex items-center gap-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors"
+                        >
+                          Name
+                          {sortColumn === 'name' ? (
+                            sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 opacity-30" />
+                          )}
+                        </button>
                       </th>
                       {visibleColumns.phone && (
                         <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -2140,8 +2556,18 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                         </th>
                       )}
                       {visibleColumns.group && (
-                        <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                          Group
+                        <th className="px-3 py-2 text-left">
+                          <button
+                            onClick={() => handleSort('group')}
+                            className="flex items-center gap-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors"
+                          >
+                            Group
+                            {sortColumn === 'group' ? (
+                              sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                            ) : (
+                              <ArrowUpDown className="w-3 h-3 opacity-30" />
+                            )}
+                          </button>
                         </th>
                       )}
                       {visibleColumns.tags && (
@@ -2150,8 +2576,18 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                         </th>
                       )}
                       {visibleColumns.status && (
-                        <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                          Status
+                        <th className="px-3 py-2 text-left">
+                          <button
+                            onClick={() => handleSort('status')}
+                            className="flex items-center gap-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors"
+                          >
+                            Status
+                            {sortColumn === 'status' ? (
+                              sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                            ) : (
+                              <ArrowUpDown className="w-3 h-3 opacity-30" />
+                            )}
+                          </button>
                         </th>
                       )}
                       {visibleColumns.dietary && (
@@ -2384,8 +2820,18 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                     <tr>
                       <th className="px-2 py-2 w-8"></th>
                       <th className="px-2 py-2 w-8"></th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                        Group Name
+                      <th className="px-3 py-2 text-left">
+                        <button
+                          onClick={() => handleSort('name')}
+                          className="flex items-center gap-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors"
+                        >
+                          Group Name
+                          {sortColumn === 'name' ? (
+                            sortDirection === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 opacity-30" />
+                          )}
+                        </button>
                       </th>
                       <th className="px-3 py-2 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                         Guests
@@ -4430,6 +4876,622 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                   Apply to Group
                 </Button>
               </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Invitation Template Settings Modal */}
+      {showInviteTemplateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 pb-4 border-b">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">Invitation Message Settings</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Configure the message template for sending invitations to guests
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowInviteTemplateModal(false)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-6 space-y-6">
+                {/* Message Template and Preview - Side by Side */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Left: Message Template */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-foreground">
+                        Message Template
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 text-xs"
+                            >
+                              <Plus className="w-3 h-3 mr-1" />
+                              Add Dynamic Content
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-96 max-h-96 overflow-y-auto">
+                            <div className="px-2 py-1.5 text-xs font-semibold">Dynamic Content</div>
+                            <div className="px-2 pb-2">
+                              <Input
+                                value={dynamicContentSearch}
+                                onChange={(e) => setDynamicContentSearch(e.target.value)}
+                                placeholder="Search variables..."
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                            <DropdownMenuSeparator />
+                            
+                            {/* Guest Information */}
+                            <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Guest Information</div>
+                            {[
+                              { var: '{{groupname}}', label: 'Group Name', desc: 'Name of the guest group' },
+                              { var: '{{guestname}}', label: 'Guest Name', desc: 'Individual guest name' },
+                              { var: '{{groupinvitationurl}}', label: 'Invitation URL', desc: 'Direct link to invitation' },
+                            ].filter(item => 
+                              !dynamicContentSearch || 
+                              item.label.toLowerCase().includes(dynamicContentSearch.toLowerCase()) ||
+                              item.desc.toLowerCase().includes(dynamicContentSearch.toLowerCase()) ||
+                              item.var.toLowerCase().includes(dynamicContentSearch.toLowerCase())
+                            ).map((item) => (
+                              <DropdownMenuItem
+                                key={item.var}
+                                className="text-xs cursor-pointer flex-col items-start py-2"
+                                onClick={() => {
+                                  const editor = editorRef.current
+                                  if (editor) {
+                                    const selection = window.getSelection()
+                                    let cursorPos = inviteTemplate.length
+                                    
+                                    // Find cursor position in template string by counting actual characters
+                                    if (selection && selection.rangeCount > 0 && editor.contains(selection.anchorNode)) {
+                                      const range = selection.getRangeAt(0)
+                                      const preCaretRange = range.cloneRange()
+                                      preCaretRange.selectNodeContents(editor)
+                                      preCaretRange.setEnd(range.endContainer, range.endOffset)
+                                      
+                                      // Walk through nodes and count template string characters
+                                      let charCount = 0
+                                      const walker = (node: Node, parentIsEditor: boolean = false, indexInParent: number = 0): boolean => {
+                                        if (node === range.endContainer) {
+                                          if (node.nodeType === Node.TEXT_NODE) {
+                                            // Filter out zero-width spaces when calculating offset
+                                            const textBeforeCursor = (node.textContent || '').substring(0, range.endOffset)
+                                            charCount += textBeforeCursor.replace(/\u200B/g, '').length
+                                          }
+                                          return true
+                                        }
+                                        if (node.nodeType === Node.TEXT_NODE) {
+                                          // Filter out zero-width spaces
+                                          charCount += (node.textContent || '').replace(/\u200B/g, '').length
+                                        } else if (node.nodeType === Node.ELEMENT_NODE) {
+                                          const element = node as HTMLElement
+                                          if (element.hasAttribute('data-variable')) {
+                                            charCount += (element.getAttribute('data-variable') || '').length
+                                            return false // Don't walk children of badge
+                                          }
+                                          // Handle BR tags as newlines
+                                          if (element.tagName === 'BR') {
+                                            charCount += 1 // \n is 1 character
+                                            return false
+                                          }
+                                          // Handle DIV tags that are direct children of the editor (contentEditable line breaks)
+                                          if (element.tagName === 'DIV' && parentIsEditor && indexInParent > 0) {
+                                            // Only add newline if div doesn't start with BR (to avoid double counting)
+                                            const firstChild = element.firstChild
+                                            const startsWithBR = firstChild?.nodeType === Node.ELEMENT_NODE && 
+                                                               (firstChild as HTMLElement).tagName === 'BR'
+                                            if (!startsWithBR) {
+                                              charCount += 1 // Add \n before div content (except first div)
+                                            }
+                                          }
+                                        }
+                                        const isEditor = node === editor
+                                        for (let i = 0; i < node.childNodes.length; i++) {
+                                          if (walker(node.childNodes[i], isEditor, i)) return true
+                                        }
+                                        return false
+                                      }
+                                      walker(editor, true, 0)
+                                      cursorPos = charCount
+                                    }
+                                    
+                                    // Insert variable into template string
+                                    const newTemplate = inviteTemplate.slice(0, cursorPos) + item.var + inviteTemplate.slice(cursorPos)
+                                    setInviteTemplate(newTemplate)
+                                    
+                                    // Focus editor after update
+                                    setTimeout(() => editor.focus(), 0)
+                                  }
+                                }}
+                              >
+                                <div className="font-medium">{item.label}</div>
+                                <div className="text-muted-foreground">{item.desc}</div>
+                              </DropdownMenuItem>
+                            ))}
+                            
+                            <DropdownMenuSeparator />
+                            
+                            {/* Wedding Details */}
+                            <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Wedding Details</div>
+                            {[
+                              { var: '{{partner1}}', label: 'Partner 1', desc: partnerNames.partner1 || 'First partner name' },
+                              { var: '{{partner2}}', label: 'Partner 2', desc: partnerNames.partner2 || 'Second partner name' },
+                              { var: '{{weddingdate}}', label: 'Wedding Date', desc: weddingDetails?.wedding_date ? new Date(weddingDetails.wedding_date).toLocaleDateString() : 'Wedding date' },
+                            ].filter(item => 
+                              !dynamicContentSearch || 
+                              item.label.toLowerCase().includes(dynamicContentSearch.toLowerCase()) ||
+                              item.desc.toLowerCase().includes(dynamicContentSearch.toLowerCase()) ||
+                              item.var.toLowerCase().includes(dynamicContentSearch.toLowerCase())
+                            ).map((item) => (
+                              <DropdownMenuItem
+                                key={item.var}
+                                className="text-xs cursor-pointer flex-col items-start py-2"
+                                onClick={() => {
+                                  const editor = editorRef.current
+                                  if (editor) {
+                                    const selection = window.getSelection()
+                                    let cursorPos = inviteTemplate.length
+                                    
+                                    // Find cursor position in template string by counting actual characters
+                                    if (selection && selection.rangeCount > 0 && editor.contains(selection.anchorNode)) {
+                                      const range = selection.getRangeAt(0)
+                                      const preCaretRange = range.cloneRange()
+                                      preCaretRange.selectNodeContents(editor)
+                                      preCaretRange.setEnd(range.endContainer, range.endOffset)
+                                      
+                                      // Walk through nodes and count template string characters
+                                      let charCount = 0
+                                      const walker = (node: Node, parentIsEditor: boolean = false, indexInParent: number = 0): boolean => {
+                                        if (node === range.endContainer) {
+                                          if (node.nodeType === Node.TEXT_NODE) {
+                                            // Filter out zero-width spaces when calculating offset
+                                            const textBeforeCursor = (node.textContent || '').substring(0, range.endOffset)
+                                            charCount += textBeforeCursor.replace(/\u200B/g, '').length
+                                          }
+                                          return true
+                                        }
+                                        if (node.nodeType === Node.TEXT_NODE) {
+                                          // Filter out zero-width spaces
+                                          charCount += (node.textContent || '').replace(/\u200B/g, '').length
+                                        } else if (node.nodeType === Node.ELEMENT_NODE) {
+                                          const element = node as HTMLElement
+                                          if (element.hasAttribute('data-variable')) {
+                                            charCount += (element.getAttribute('data-variable') || '').length
+                                            return false // Don't walk children of badge
+                                          }
+                                          // Handle BR tags as newlines
+                                          if (element.tagName === 'BR') {
+                                            charCount += 1 // \n is 1 character
+                                            return false
+                                          }
+                                          // Handle DIV tags that are direct children of the editor (contentEditable line breaks)
+                                          if (element.tagName === 'DIV' && parentIsEditor && indexInParent > 0) {
+                                            // Only add newline if div doesn't start with BR (to avoid double counting)
+                                            const firstChild = element.firstChild
+                                            const startsWithBR = firstChild?.nodeType === Node.ELEMENT_NODE && 
+                                                               (firstChild as HTMLElement).tagName === 'BR'
+                                            if (!startsWithBR) {
+                                              charCount += 1 // Add \n before div content (except first div)
+                                            }
+                                          }
+                                        }
+                                        const isEditor = node === editor
+                                        for (let i = 0; i < node.childNodes.length; i++) {
+                                          if (walker(node.childNodes[i], isEditor, i)) return true
+                                        }
+                                        return false
+                                      }
+                                      walker(editor, true, 0)
+                                      cursorPos = charCount
+                                    }
+                                    
+                                    // Insert variable into template string
+                                    const newTemplate = inviteTemplate.slice(0, cursorPos) + item.var + inviteTemplate.slice(cursorPos)
+                                    setInviteTemplate(newTemplate)
+                                    
+                                    // Focus editor after update
+                                    setTimeout(() => editor.focus(), 0)
+                                  }
+                                }}
+                              >
+                                <div className="font-medium">{item.label}</div>
+                                <div className="text-muted-foreground">{item.desc}</div>
+                              </DropdownMenuItem>
+                            ))}
+                            
+                            <DropdownMenuSeparator />
+                            
+                            {/* Venue Information */}
+                            <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Venue Information</div>
+                            {[
+                              { var: '{{ceremonyplace}}', label: 'Ceremony Venue', desc: weddingDetails?.ceremony_venue_name || 'Ceremony venue name' },
+                              { var: '{{ceremonyaddress}}', label: 'Ceremony Address', desc: 'Full ceremony address' },
+                              { var: '{{receptionplace}}', label: 'Reception Venue', desc: weddingDetails?.reception_venue_name || 'Reception venue name' },
+                              { var: '{{receptionaddress}}', label: 'Reception Address', desc: 'Full reception address' },
+                            ].filter(item => 
+                              !dynamicContentSearch || 
+                              item.label.toLowerCase().includes(dynamicContentSearch.toLowerCase()) ||
+                              item.desc.toLowerCase().includes(dynamicContentSearch.toLowerCase()) ||
+                              item.var.toLowerCase().includes(dynamicContentSearch.toLowerCase())
+                            ).map((item) => (
+                              <DropdownMenuItem
+                                key={item.var}
+                                className="text-xs cursor-pointer flex-col items-start py-2"
+                                onClick={() => {
+                                  const editor = editorRef.current
+                                  if (editor) {
+                                    const selection = window.getSelection()
+                                    let cursorPos = inviteTemplate.length
+                                    
+                                    // Find cursor position in template string by counting actual characters
+                                    if (selection && selection.rangeCount > 0 && editor.contains(selection.anchorNode)) {
+                                      const range = selection.getRangeAt(0)
+                                      const preCaretRange = range.cloneRange()
+                                      preCaretRange.selectNodeContents(editor)
+                                      preCaretRange.setEnd(range.endContainer, range.endOffset)
+                                      
+                                      // Walk through nodes and count template string characters
+                                      let charCount = 0
+                                      const walker = (node: Node, parentIsEditor: boolean = false, indexInParent: number = 0): boolean => {
+                                        if (node === range.endContainer) {
+                                          if (node.nodeType === Node.TEXT_NODE) {
+                                            // Filter out zero-width spaces when calculating offset
+                                            const textBeforeCursor = (node.textContent || '').substring(0, range.endOffset)
+                                            charCount += textBeforeCursor.replace(/\u200B/g, '').length
+                                          }
+                                          return true
+                                        }
+                                        if (node.nodeType === Node.TEXT_NODE) {
+                                          // Filter out zero-width spaces
+                                          charCount += (node.textContent || '').replace(/\u200B/g, '').length
+                                        } else if (node.nodeType === Node.ELEMENT_NODE) {
+                                          const element = node as HTMLElement
+                                          if (element.hasAttribute('data-variable')) {
+                                            charCount += (element.getAttribute('data-variable') || '').length
+                                            return false // Don't walk children of badge
+                                          }
+                                          // Handle BR tags as newlines
+                                          if (element.tagName === 'BR') {
+                                            charCount += 1 // \n is 1 character
+                                            return false
+                                          }
+                                          // Handle DIV tags that are direct children of the editor (contentEditable line breaks)
+                                          if (element.tagName === 'DIV' && parentIsEditor && indexInParent > 0) {
+                                            // Only add newline if div doesn't start with BR (to avoid double counting)
+                                            const firstChild = element.firstChild
+                                            const startsWithBR = firstChild?.nodeType === Node.ELEMENT_NODE && 
+                                                               (firstChild as HTMLElement).tagName === 'BR'
+                                            if (!startsWithBR) {
+                                              charCount += 1 // Add \n before div content (except first div)
+                                            }
+                                          }
+                                        }
+                                        const isEditor = node === editor
+                                        for (let i = 0; i < node.childNodes.length; i++) {
+                                          if (walker(node.childNodes[i], isEditor, i)) return true
+                                        }
+                                        return false
+                                      }
+                                      walker(editor, true, 0)
+                                      cursorPos = charCount
+                                    }
+                                    
+                                    // Insert variable into template string
+                                    const newTemplate = inviteTemplate.slice(0, cursorPos) + item.var + inviteTemplate.slice(cursorPos)
+                                    setInviteTemplate(newTemplate)
+                                    
+                                    // Focus editor after update
+                                    setTimeout(() => editor.focus(), 0)
+                                  }
+                                }}
+                              >
+                                <div className="font-medium">{item.label}</div>
+                                <div className="text-muted-foreground">{item.desc}</div>
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 text-xs">
+                              Examples
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-80">
+                            <div className="px-2 py-1.5 text-xs font-semibold">Template Examples</div>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-xs cursor-pointer"
+                              onClick={() => setInviteTemplate("Dear {{groupname}},\n\nWe are delighted to invite you to celebrate our wedding on {{weddingdate}}!\n\nView your personalized invitation here: {{groupinvitationurl}}\n\nWith love,\n{{partner1}} & {{partner2}}")}
+                            >
+                              <div className="flex flex-col gap-1">
+                                <span className="font-medium">Formal Invitation</span>
+                                <span className="text-muted-foreground">Classic wedding invitation template</span>
+                              </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-xs cursor-pointer"
+                              onClick={() => setInviteTemplate("Hey {{groupname}}! 👋\n\n{{partner1}} and {{partner2}} are getting married on {{weddingdate}}! 🎉\n\nCheck out your invite: {{groupinvitationurl}}\n\nCan't wait to celebrate with you!")}
+                            >
+                              <div className="flex flex-col gap-1">
+                                <span className="font-medium">Casual & Fun</span>
+                                <span className="text-muted-foreground">Friendly and relaxed invitation</span>
+                              </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-xs cursor-pointer"
+                              onClick={() => setInviteTemplate("Hello {{guestname}},\n\nYou're invited to our wedding at {{ceremonyplace}} on {{weddingdate}}.\n\nCeremony: {{ceremonyplace}}\nReception: {{receptionplace}}\n\nRSVP here: {{groupinvitationurl}}")}
+                            >
+                              <div className="flex flex-col gap-1">
+                                <span className="font-medium">Detailed Info</span>
+                                <span className="text-muted-foreground">Includes venue details</span>
+                              </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-xs cursor-pointer"
+                              onClick={() => setInviteTemplate("Hi {{groupname}}! Your invitation is ready: {{groupinvitationurl}}")}
+                            >
+                              <div className="flex flex-col gap-1">
+                                <span className="font-medium">Short & Simple</span>
+                                <span className="text-muted-foreground">Quick message with link</span>
+                              </div>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                    <div
+                      ref={editorRef}
+                      contentEditable
+                      onInput={(e) => {
+                        const target = e.target as HTMLDivElement
+                        // Extract template by walking through nodes
+                        const extractTemplate = (node: Node, parentIsEditor: boolean = false, indexInParent: number = 0, depth: number = 0): string => {
+                          const indent = '  '.repeat(depth)
+                          if (node.nodeType === Node.TEXT_NODE) {
+                            // Filter out zero-width spaces used for cursor positioning
+                            const text = (node.textContent || '').replace(/\u200B/g, '')
+                            console.log(`${indent}TEXT_NODE: "${text}"`)
+                            return text
+                          } else if (node.nodeType === Node.ELEMENT_NODE) {
+                            const element = node as HTMLElement
+                            console.log(`${indent}ELEMENT: ${element.tagName}, parentIsEditor: ${parentIsEditor}, indexInParent: ${indexInParent}`)
+                            
+                            // If it's a badge span, return the variable
+                            if (element.hasAttribute('data-variable')) {
+                              const variable = element.getAttribute('data-variable') || ''
+                              console.log(`${indent}  -> BADGE: ${variable}`)
+                              return variable
+                            }
+                            // Handle line breaks
+                            if (element.tagName === 'BR') {
+                              console.log(`${indent}  -> BR tag, adding \\n`)
+                              return '\n'
+                            }
+                            
+                            // Check if this is a wrapper DIV (contentEditable often wraps all content in a single DIV)
+                            // A wrapper DIV is: direct child of editor (indexInParent=0, parentIsEditor=true) with DIV children
+                            const isWrapperDiv = element.tagName === 'DIV' && parentIsEditor && indexInParent === 0 &&
+                                               Array.from(node.childNodes).some(child => 
+                                                 child.nodeType === Node.ELEMENT_NODE && 
+                                                 (child as HTMLElement).tagName === 'DIV'
+                                               )
+                            
+                            console.log(`${indent}  -> isWrapperDiv: ${isWrapperDiv}`)
+                            
+                            // Handle DIV elements (contentEditable creates these on Enter)
+                            if (element.tagName === 'DIV' && (parentIsEditor || isWrapperDiv)) {
+                              const treatChildrenAsTopLevel = isWrapperDiv
+                              const content = Array.from(node.childNodes)
+                                .map((child, idx) => extractTemplate(child, treatChildrenAsTopLevel, idx, depth + 1))
+                                .join('')
+                              
+                              // If this is the wrapper div, don't add any newlines - just return the content
+                              if (isWrapperDiv) {
+                                console.log(`${indent}  -> WRAPPER DIV, returning content as-is`)
+                                return content
+                              }
+                              
+                              // Add newline before each div except the first one
+                              // But only if the div doesn't start with a BR (to avoid double newlines)
+                              const firstChild = node.firstChild
+                              const startsWithBR = firstChild?.nodeType === Node.ELEMENT_NODE && 
+                                                   (firstChild as HTMLElement).tagName === 'BR'
+                              const shouldAddNewline = indexInParent > 0 && !startsWithBR
+                              console.log(`${indent}  -> DIV: indexInParent=${indexInParent}, startsWithBR=${startsWithBR}, shouldAddNewline=${shouldAddNewline}`)
+                              console.log(`${indent}  -> DIV content: "${content}"`)
+                              return (shouldAddNewline ? '\n' : '') + content
+                            }
+                            // Otherwise, recursively process children
+                            const isEditor = element === target
+                            console.log(`${indent}  -> Processing children, isEditor: ${isEditor}`)
+                            return Array.from(node.childNodes)
+                              .map((child, idx) => extractTemplate(child, isEditor, idx, depth + 1))
+                              .join('')
+                          }
+                          return ''
+                        }
+                        
+                        console.log('=== EXTRACTION START ===')
+                        console.log('Editor innerHTML:', target.innerHTML)
+                        const newText = extractTemplate(target, true, 0, 0)
+                        console.log('=== EXTRACTION END ===')
+                        console.log('Extracted template:', JSON.stringify(newText))
+                        console.log('Current template:', JSON.stringify(inviteTemplate))
+                        
+                        if (newText !== inviteTemplate) {
+                          console.log('Templates differ, updating...')
+                          isUpdatingRef.current = true
+                          setInviteTemplate(newText)
+                        } else {
+                          console.log('Templates are the same, no update needed')
+                        }
+                      }}
+                      onPaste={(e) => {
+                        // Preserve plain text pasting only
+                        e.preventDefault()
+                        const text = e.clipboardData?.getData('text/plain') || ''
+                        document.execCommand('insertText', false, text)
+                      }}
+                      className="w-full min-h-[300px] max-h-[400px] px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm overflow-y-auto whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
+                      style={{ lineHeight: '1.5' }}
+                      data-placeholder="Type your message here..."
+                      suppressContentEditableWarning
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Variables appear as badges with example values. Hover to edit or delete.
+                    </p>
+                  </div>
+
+                  {/* Right: Preview */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium text-foreground block">
+                      Preview
+                    </label>
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg p-4 border border-blue-200 dark:border-blue-900 min-h-[300px] max-h-[400px] overflow-y-auto">
+                      <div className="flex items-center gap-2 mb-3 pb-3 border-b border-blue-200 dark:border-blue-800">
+                        <Mail className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-xs font-semibold text-blue-900 dark:text-blue-100">Message Preview</span>
+                      </div>
+                      <div className="text-sm text-blue-800 dark:text-blue-200 whitespace-pre-wrap">
+                        {replaceTemplateVariables(
+                          inviteTemplate,
+                          {
+                            groupName: 'The Smith Family',
+                            guestName: 'John Smith',
+                            groupId: 'abc123'
+                          },
+                          weddingDetails
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                  {/* Replace Variable Dropdown */}
+                  {showReplaceMenu && (
+                    <div 
+                      ref={replaceMenuRef}
+                      className="fixed bg-background border border-border rounded-lg shadow-lg p-2 z-[60] w-64"
+                      style={{
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)'
+                      }}
+                    >
+                      <div className="px-2 py-1.5 text-xs font-semibold border-b mb-2">
+                        Replace with:
+                      </div>
+                      <div className="max-h-64 overflow-y-auto space-y-1">
+                        {[
+                          { var: '{{groupname}}', label: 'Group Name' },
+                          { var: '{{guestname}}', label: 'Guest Name' },
+                          { var: '{{groupinvitationurl}}', label: 'Invitation URL' },
+                          { var: '{{partner1}}', label: 'Partner 1' },
+                          { var: '{{partner2}}', label: 'Partner 2' },
+                          { var: '{{weddingdate}}', label: 'Wedding Date' },
+                          { var: '{{ceremonyplace}}', label: 'Ceremony Venue' },
+                          { var: '{{ceremonyaddress}}', label: 'Ceremony Address' },
+                          { var: '{{receptionplace}}', label: 'Reception Venue' },
+                          { var: '{{receptionaddress}}', label: 'Reception Address' },
+                        ].filter(v => v.var !== showReplaceMenu).map((variable) => (
+                          <button
+                            key={variable.var}
+                            onClick={() => {
+                              const newTemplate = inviteTemplate.replace(showReplaceMenu!, variable.var)
+                              setInviteTemplate(newTemplate)
+                              setShowReplaceMenu(null)
+                            }}
+                            className="w-full text-left px-3 py-2 rounded-md hover:bg-accent text-sm transition-colors"
+                          >
+                            <div className="font-medium">{variable.label}</div>
+                            <div className="text-xs text-muted-foreground font-mono">{variable.var}</div>
+                          </button>
+                        ))}
+                      </div>
+                      <div className="border-t mt-2 pt-2">
+                        <button
+                          onClick={() => setShowReplaceMenu(null)}
+                          className="w-full text-center px-3 py-1.5 rounded-md hover:bg-accent text-xs text-muted-foreground transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+              </div>
+            </div>
+
+            {/* Footer with action buttons */}
+            <div className="flex gap-3 p-6 border-t">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setShowInviteTemplateModal(false)
+                  // Reset to saved template if needed
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={async () => {
+                  try {
+                    // Save template to page_config
+                    const response = await fetch(`/api/weddings/${encodeURIComponent(weddingId)}/details`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        page_config: {
+                          invitationTemplate: inviteTemplate
+                        }
+                      })
+                    })
+
+                    if (response.ok) {
+                      setNotification({
+                        isOpen: true,
+                        type: 'success',
+                        title: 'Settings Saved',
+                        message: 'Invitation template has been saved successfully.'
+                      })
+                      setShowInviteTemplateModal(false)
+                    } else {
+                      setNotification({
+                        isOpen: true,
+                        type: 'error',
+                        title: 'Error',
+                        message: 'Failed to save invitation template. Please try again.'
+                      })
+                    }
+                  } catch (error) {
+                    setNotification({
+                      isOpen: true,
+                      type: 'error',
+                      title: 'Error',
+                      message: 'An error occurred while saving. Please try again.'
+                    })
+                  }
+                }}
+              >
+                <Check className="w-4 h-4 mr-2" />
+                Save Template
+              </Button>
             </div>
           </Card>
         </div>

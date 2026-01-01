@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect } from 'react'
 import { SectionWrapper } from '../section-wrapper'
+import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { OTPVerificationDialog } from '@/components/ui/otp-verification-dialog'
 import { TravelFields } from '@/components/ui/travel-fields'
-import { Check, X, Loader2 } from 'lucide-react'
+import { Check, X, Loader2, CheckCircle2 } from 'lucide-react'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { BaseRSVPProps, getColorScheme } from './types'
 
@@ -16,9 +18,8 @@ interface Guest {
   attending?: boolean
   is_traveling?: boolean
   traveling_from?: string
-  travel_arrangement?: 'will_buy_ticket' | 'no_ticket_needed' | null
+  travel_arrangement?: 'already_booked' | 'no_ticket_needed' | null
   ticket_attachment_url?: string | null
-  no_ticket_reason?: string
   adminSetTravel?: boolean
 }
 
@@ -30,7 +31,15 @@ interface GroupData {
   guests: Guest[]
   hasSubmitted?: boolean
 }
-
+// Map old travel arrangement values to new ones for backwards compatibility
+const mapTravelArrangement = (value: string | null): 'already_booked' | 'no_ticket_needed' | null => {
+  if (!value) return null
+  // Map old values to new ones
+  if (value === 'will_buy_ticket' || value === 'own_means' || value === 'have_ticket') return 'already_booked'
+  if (value === 'no_transport' || value === 'needs_transport') return 'no_ticket_needed'
+  // Return as-is if already correct format
+  return value as 'already_booked' | 'no_ticket_needed' | null
+}
 export function RSVPMinimalisticVariant({
   weddingNameId,
   theme,
@@ -52,6 +61,8 @@ export function RSVPMinimalisticVariant({
   const [verificationToken, setVerificationToken] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState('')
   const [showOTPDialog, setShowOTPDialog] = useState(false)
+  const [applyToAllEnabled, setApplyToAllEnabled] = useState<{ [guestId: string]: boolean }>({})
+  const [editingGuestId, setEditingGuestId] = useState<string | null>(null)
 
   const { bgColor, textColor, titleColor, cardBg, isColored } = getColorScheme(
     theme,
@@ -91,9 +102,8 @@ export function RSVPMinimalisticVariant({
             attending: g.confirmation_status === 'confirmed' ? true : g.confirmation_status === 'declined' ? false : null,
             is_traveling: g.is_traveling || false,
             traveling_from: g.traveling_from || '',
-            travel_arrangement: g.travel_arrangement || null,
+            travel_arrangement: mapTravelArrangement(g.travel_arrangement),
             ticket_attachment_url: g.ticket_attachment_url || null,
-            no_ticket_reason: g.no_ticket_reason || '',
             adminSetTravel: g.admin_set_travel || false
           }))
           
@@ -118,12 +128,73 @@ export function RSVPMinimalisticVariant({
   }, [groupId, isEditing])
 
   const updateGuest = (guestId: string, field: keyof Guest, value: any) => {
-    setGuests(prev =>
-      prev.map(g => (g.id === guestId ? { ...g, [field]: value } : g))
-    )
+    // Set editing guest when attending field is changed
+    if (field === 'attending') {
+      setEditingGuestId(guestId)
+    }
+    
+    const updatedGuests = guests.map(g => {
+      if (g.id === guestId) {
+        const updated = { ...g, [field]: value }
+        // Clear travel info when declining
+        if (field === 'attending' && value === false) {
+          updated.is_traveling = false
+          updated.traveling_from = ''
+          updated.travel_arrangement = null
+          updated.ticket_attachment_url = null
+        }
+        // Clear ticket URL when switching to no_ticket_needed or disabling travel
+        if (field === 'travel_arrangement' && value === 'no_ticket_needed') {
+          updated.ticket_attachment_url = null
+        }
+        if (field === 'is_traveling' && value === false) {
+          updated.traveling_from = ''
+          updated.travel_arrangement = null
+          updated.ticket_attachment_url = null
+        }
+        return updated
+      }
+      return g
+    })
+    setGuests(updatedGuests)
+    
+    // If "Apply to All" is enabled for this guest, apply to all other guests
+    if (applyToAllEnabled[guestId] && guests.length > 1) {
+      const sourceGuest = updatedGuests.find(g => g.id === guestId)
+      if (sourceGuest) {
+        applyGuestDataToAll(guestId, sourceGuest)
+      }
+    }
+  }
+
+  const applyGuestDataToAll = (sourceGuestId: string, sourceGuest: Guest) => {
+    setGuests(prev => prev.map(g => {
+      if (g.id === sourceGuestId) return g
+      
+      return {
+        ...g,
+        attending: sourceGuest.attending,
+        is_traveling: sourceGuest.is_traveling,
+        traveling_from: sourceGuest.traveling_from,
+        travel_arrangement: sourceGuest.travel_arrangement
+      }
+    }))
   }
 
   const handleSubmitClick = () => {
+    // Validate: Check if any guest has selected 'already_booked' but hasn't uploaded a ticket
+    const guestsNeedingTicket = guests.filter(g => 
+      g.attending === true && 
+      g.is_traveling && 
+      g.travel_arrangement === 'already_booked' && 
+      !g.ticket_attachment_url
+    )
+    
+    if (guestsNeedingTicket.length > 0) {
+      setSubmitError(t('rsvp.ticketRequired'))
+      return
+    }
+    
     setShowOTPDialog(true)
   }
 
@@ -145,11 +216,10 @@ export function RSVPMinimalisticVariant({
           guests: guests.map(g => ({
             guestId: g.id,
             attending: g.attending,
-            is_traveling: g.is_traveling,
-            traveling_from: g.traveling_from,
-            travel_arrangement: g.travel_arrangement,
-            ticket_attachment_url: g.ticket_attachment_url,
-            no_ticket_reason: g.no_ticket_reason
+            is_traveling: g.attending === false ? false : g.is_traveling,
+            traveling_from: g.attending === false ? null : g.traveling_from,
+            travel_arrangement: g.attending === false ? null : g.travel_arrangement,
+            ticket_attachment_url: g.attending === false ? null : g.ticket_attachment_url
           })),
           message
         })
@@ -221,24 +291,63 @@ export function RSVPMinimalisticVariant({
               {guests.map((guest) => (
                 <div 
                   key={guest.id}
-                  className="p-4 rounded-lg flex items-center justify-between"
+                  className="p-4 rounded-lg"
                   style={{ 
                     backgroundColor: isColored ? 'rgba(255, 255, 255, 0.5)' : 'white',
                     border: `1px solid ${isColored ? 'rgba(255, 255, 255, 0.3)' : '#e5e7eb'}`
                   }}
                 >
-                  <span className="font-medium" style={{ color: titleColor }}>
-                    {guest.name}
-                  </span>
-                  <span 
-                    className={`px-3 py-1 rounded-full text-sm ${
-                      guest.attending 
-                        ? 'bg-green-100 text-green-700' 
-                        : 'bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    {guest.attending ? t('rsvp.attending') : t('rsvp.notAttending')}
-                  </span>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium" style={{ color: titleColor }}>
+                      {guest.name}
+                    </span>
+                    <span 
+                      className={`px-3 py-1 rounded-full text-sm ${
+                        guest.attending === true
+                          ? 'bg-green-100 text-green-700' 
+                          : guest.attending === false
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      {guest.attending === true ? t('rsvp.attending') : guest.attending === false ? t('rsvp.notAttending') : t('rsvp.noResponse')}
+                    </span>
+                  </div>
+                  
+                  {/* Travel Details */}
+                  {guest.attending === true && guest.is_traveling && (
+                    <div className="mt-3 pt-3 border-t" style={{ borderColor: `${titleColor}20` }}>
+                      <p className="text-xs font-semibold mb-2" style={{ color: titleColor }}>
+                        {t('rsvp.travelDetails')}
+                      </p>
+                      <div className="space-y-1 text-sm" style={{ color: textColor }}>
+                        <p className="text-xs">
+                          <CheckCircle2 className="w-3 h-3 inline mr-1.5 text-green-600" />
+                          {t('rsvp.traveling')}
+                          {guest.traveling_from && (
+                            <span className="ml-1">
+                              {t('rsvp.from')}: <span className="font-medium">{guest.traveling_from}</span>
+                            </span>
+                          )}
+                        </p>
+                        {guest.travel_arrangement === 'already_booked' && (
+                          <p className="text-xs">
+                            {t('rsvp.alreadyBookedTransportation')}
+                          </p>
+                        )}
+                        {guest.travel_arrangement === 'no_ticket_needed' && (
+                          <p className="text-xs">
+                            {t('rsvp.noTicketNeeded')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {guest.attending === true && !guest.is_traveling && (
+                    <p className="mt-2 text-xs text-gray-500">
+                      {t('rsvp.notTraveling')}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -361,6 +470,37 @@ export function RSVPMinimalisticVariant({
                     </button>
                   </div>
 
+                  {/* Apply to All Switch - only show for guest being edited */}
+                  {guests.length > 1 && guest.attending !== undefined && editingGuestId === guest.id && (
+                    <div className="mb-4">
+                      <div 
+                        className="flex items-center gap-3 p-3 rounded-lg border-2"
+                        style={{
+                          borderColor: `${theme?.colors?.accent || titleColor}30`,
+                          backgroundColor: `${theme?.colors?.accent || titleColor}05`
+                        }}
+                      >
+                        <Switch
+                          checked={applyToAllEnabled[guest.id] || false}
+                          onCheckedChange={(checked) => {
+                            setApplyToAllEnabled(prev => ({ ...prev, [guest.id]: checked }))
+                            if (checked) {
+                              applyGuestDataToAll(guest.id, guest)
+                            }
+                          }}
+                        />
+                        <div className="flex-1">
+                          <p className="text-xs font-medium" style={{ color: titleColor }}>
+                            {t('rsvp.applyToAllGuests')}
+                          </p>
+                          <p className="text-xs opacity-70" style={{ color: textColor }}>
+                            {t('rsvp.applyToAllDescription')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Travel Fields - Only show if attending */}
                   {guest.attending === true && (
                     <div className="mt-4">
@@ -371,16 +511,14 @@ export function RSVPMinimalisticVariant({
                         isTraveling={guest.is_traveling || false}
                         travelingFrom={guest.traveling_from || ''}
                         travelArrangement={guest.travel_arrangement || null}
-                        ticketUrl={guest.ticket_attachment_url || null}
-                        noTicketReason={guest.no_ticket_reason || ''}
+                        ticketAttachmentUrl={guest.ticket_attachment_url}
                         adminSetTravel={guest.adminSetTravel || false}
                         primaryColor={titleColor}
                         textColor={textColor}
                         onTravelChange={(isTraveling: boolean) => updateGuest(guest.id, 'is_traveling', isTraveling)}
                         onTravelingFromChange={(from: string) => updateGuest(guest.id, 'traveling_from', from)}
-                        onTravelArrangementChange={(arrangement: 'will_buy_ticket' | 'no_ticket_needed' | null) => updateGuest(guest.id, 'travel_arrangement', arrangement)}
+                        onTravelArrangementChange={(arrangement: 'already_booked' | 'no_ticket_needed' | null) => updateGuest(guest.id, 'travel_arrangement', arrangement)}
                         onTicketUpload={(url: string) => updateGuest(guest.id, 'ticket_attachment_url', url)}
-                        onNoTicketReasonChange={(reason: string) => updateGuest(guest.id, 'no_ticket_reason', reason)}
                       />
                     </div>
                   )}
@@ -419,7 +557,7 @@ export function RSVPMinimalisticVariant({
               <button
                 type="button"
                 onClick={handleSubmitClick}
-                disabled={submitting || guests.every(g => g.attending === undefined)}
+                disabled={submitting || !guests.some(g => g.attending !== undefined)}
                 className="w-full py-3 sm:py-4 px-6 sm:px-8 rounded-lg sm:rounded-xl font-light tracking-wider sm:tracking-widest text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl hover:scale-[1.02]"
                 style={{
                   backgroundColor: theme?.colors?.accent || titleColor,

@@ -3,8 +3,9 @@
 import React, { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
+import { Button } from '@/components/ui/button'
 import { useI18n } from '@/components/contexts/i18n-context'
-import { Upload, X, FileText } from 'lucide-react'
+import { Upload, FileText, X, Loader2, CheckCircle2 } from 'lucide-react'
 
 interface TravelFieldsProps {
   guestId: string
@@ -12,15 +13,13 @@ interface TravelFieldsProps {
   weddingNameId: string
   isTraveling: boolean
   travelingFrom: string
-  travelArrangement: 'will_buy_ticket' | 'no_ticket_needed' | null
-  ticketUrl: string | null
-  noTicketReason: string
+  travelArrangement: 'already_booked' | 'no_ticket_needed' | null
+  ticketAttachmentUrl?: string | null
   adminSetTravel?: boolean // If true, travel status was set by admin and can't be changed
   onTravelChange: (isTraveling: boolean) => void
   onTravelingFromChange: (location: string) => void
-  onTravelArrangementChange: (arrangement: 'will_buy_ticket' | 'no_ticket_needed' | null) => void
-  onTicketUpload: (url: string) => void
-  onNoTicketReasonChange: (reason: string) => void
+  onTravelArrangementChange: (arrangement: 'already_booked' | 'no_ticket_needed' | null) => void
+  onTicketUpload?: (url: string) => void
   primaryColor?: string
   textColor?: string
 }
@@ -32,40 +31,23 @@ export function TravelFields({
   isTraveling,
   travelingFrom,
   travelArrangement,
-  ticketUrl,
-  noTicketReason,
+  ticketAttachmentUrl,
   adminSetTravel = false,
   onTravelChange,
   onTravelingFromChange,
   onTravelArrangementChange,
   onTicketUpload,
-  onNoTicketReasonChange,
   primaryColor = '#d4a574',
   textColor = '#333'
 }: TravelFieldsProps) {
   const { t } = useI18n()
-  const [isUploading, setIsUploading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
-  const [noTicketNeeded, setNoTicketNeeded] = useState(!!noTicketReason)
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const handleTicketUpload = async (file: File) => {
+    if (!file || !onTicketUpload) return
 
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf']
-    if (!allowedTypes.includes(file.type)) {
-      setUploadError('Invalid file type')
-      return
-    }
-
-    // Validate file size (10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError('File size exceeds 10MB')
-      return
-    }
-
-    setIsUploading(true)
+    setUploading(true)
     setUploadError('')
 
     try {
@@ -81,32 +63,29 @@ export function TravelFields({
 
       const data = await response.json()
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Upload failed')
+      if (response.ok) {
+        onTicketUpload(data.url)
+      } else {
+        setUploadError(data.error || 'Upload failed')
       }
-
-      onTicketUpload(data.url)
     } catch (error) {
-      console.error('Upload error:', error)
-      setUploadError(error instanceof Error ? error.message : 'Upload failed')
+      console.error('Ticket upload error:', error)
+      setUploadError('Upload failed')
     } finally {
-      setIsUploading(false)
+      setUploading(false)
     }
   }
 
   const handleRemoveTicket = async () => {
-    if (!ticketUrl) return
+    if (!ticketAttachmentUrl || !onTicketUpload) return
 
     try {
-      const response = await fetch(`/api/travel-ticket?guestId=${guestId}`, {
+      await fetch(`/api/travel-ticket?guestId=${guestId}`, {
         method: 'DELETE'
       })
-
-      if (response.ok) {
-        onTicketUpload('')
-      }
+      onTicketUpload('')
     } catch (error) {
-      console.error('Delete error:', error)
+      console.error('Error removing ticket:', error)
     }
   }
 
@@ -147,35 +126,32 @@ export function TravelFields({
             />
           </div>
 
-          {/* Travel Arrangement - Ticket Options */}
+          {/* Travel Arrangement - 2 Options */}
           <div>
             <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>
               {t('rsvp.travelArrangement')}
             </label>
             <div className="space-y-2">
+              {/* Already Booked (Requires Upload) */}
               <button
                 type="button"
-                onClick={() => {
-                  onTravelArrangementChange('will_buy_ticket')
-                  setNoTicketNeeded(false)
-                }}
+                onClick={() => onTravelArrangementChange('already_booked')}
                 className={`w-full p-3 rounded-lg border-2 text-left transition-all ${
-                  travelArrangement === 'will_buy_ticket' ? 'font-semibold' : ''
+                  travelArrangement === 'already_booked' ? 'font-semibold' : ''
                 }`}
                 style={{
-                  borderColor: travelArrangement === 'will_buy_ticket' ? primaryColor : '#e5e7eb',
-                  backgroundColor: travelArrangement === 'will_buy_ticket' ? `${primaryColor}10` : 'transparent',
+                  borderColor: travelArrangement === 'already_booked' ? primaryColor : '#e5e7eb',
+                  backgroundColor: travelArrangement === 'already_booked' ? `${primaryColor}10` : 'transparent',
                   color: textColor
                 }}
               >
-                {t('rsvp.willBuyTicket')}
+                {t('rsvp.alreadyBookedTransportation')}
               </button>
+
+              {/* No Ticket Needed */}
               <button
                 type="button"
-                onClick={() => {
-                  onTravelArrangementChange('no_ticket_needed')
-                  setNoTicketNeeded(true)
-                }}
+                onClick={() => onTravelArrangementChange('no_ticket_needed')}
                 className={`w-full p-3 rounded-lg border-2 text-left transition-all ${
                   travelArrangement === 'no_ticket_needed' ? 'font-semibold' : ''
                 }`}
@@ -190,92 +166,86 @@ export function TravelFields({
             </div>
           </div>
 
-          {/* Ticket Upload (only if will_buy_ticket selected) */}
-          {travelArrangement === 'will_buy_ticket' && (
-            <div className="space-y-3">
+          {/* Ticket Upload - Required if already_booked is selected */}
+          {travelArrangement === 'already_booked' && (
+            <div className="space-y-2">
               <label className="block text-sm font-medium" style={{ color: textColor }}>
-                {t('rsvp.uploadTicket')} <span className="text-red-500">*</span>
+                {t('rsvp.uploadTicketProof')} <span className="text-red-500">*</span>
               </label>
               
-              {!ticketUrl ? (
-                <div>
-                  <label
-                    className="flex flex-col items-center justify-center w-full p-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors hover:bg-gray-50"
-                    style={{ borderColor: `${primaryColor}50` }}
-                  >
-                    <Upload className="w-8 h-8 mb-2" style={{ color: primaryColor }} />
-                    <span className="text-sm text-center" style={{ color: textColor }}>
-                      {isUploading ? t('rsvp.uploadingTicket') : t('rsvp.uploadTravelTicket')}
-                    </span>
-                    <span className="text-xs text-gray-500 mt-1">
-                      {t('rsvp.maxFileSize')}
-                    </span>
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept=".pdf,.jpg,.jpeg,.png,.webp"
-                      onChange={handleFileUpload}
-                      disabled={isUploading}
-                    />
-                  </label>
-                  {uploadError && (
-                    <p className="text-sm text-red-600 mt-2">{uploadError}</p>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 border rounded-lg" style={{ borderColor: `${primaryColor}30`, backgroundColor: `${primaryColor}05` }}>
+              {ticketAttachmentUrl ? (
+                <div className="p-3 rounded-lg border-2" style={{ borderColor: primaryColor, backgroundColor: `${primaryColor}05` }}>
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <FileText className="w-5 h-5" style={{ color: primaryColor }} />
-                      <span className="text-sm" style={{ color: textColor }}>
+                      <CheckCircle2 className="w-4 h-4" style={{ color: primaryColor }} />
+                      <span className="text-sm font-medium" style={{ color: textColor }}>
                         {t('rsvp.ticketUploaded')}
                       </span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleRemoveTicket}
-                      className="p-1 hover:bg-gray-100 rounded"
-                    >
-                      <X className="w-4 h-4 text-gray-600" />
-                    </button>
-                  </div>
-                  {/* Inline Preview */}
-                  <div className="border rounded-lg overflow-hidden" style={{ borderColor: `${primaryColor}30` }}>
-                    {ticketUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                      <img 
-                        src={ticketUrl} 
-                        alt="Ticket preview" 
-                        className="w-full h-auto max-h-96 object-contain bg-gray-50"
-                      />
-                    ) : (
-                      <iframe 
-                        src={ticketUrl} 
-                        className="w-full h-96 bg-gray-50"
-                        title="Ticket preview"
-                      />
-                    )}
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(ticketAttachmentUrl, '_blank')}
+                        className="h-7 px-2 text-xs"
+                      >
+                        <FileText className="w-3 h-3 mr-1" />
+                        {t('common.view')}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleRemoveTicket}
+                        className="h-7 px-2 text-xs"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* Reason for no ticket (only if no_ticket_needed selected) */}
-          {travelArrangement === 'no_ticket_needed' && (
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: textColor }}>
-                {t('rsvp.noTicketReason')} <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={noTicketReason}
-                onChange={(e) => onNoTicketReasonChange(e.target.value)}
-                placeholder={t('rsvp.noTicketReasonPlaceholder')}
-                rows={3}
-                className="w-full p-3 rounded-lg border-2 bg-transparent resize-none"
-                style={{ borderColor: `${primaryColor}50`, color: textColor }}
-              />
-              {!noTicketReason && (
-                <p className="text-xs text-red-500 mt-1">{t('rsvp.reasonRequired')}</p>
+              ) : (
+                <>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) handleTicketUpload(file)
+                      }}
+                      disabled={uploading}
+                      className="hidden"
+                      id={`ticket-upload-${guestId}`}
+                    />
+                    <label
+                      htmlFor={`ticket-upload-${guestId}`}
+                      className={`flex items-center justify-center gap-2 w-full p-3 rounded-lg border-2 border-dashed cursor-pointer transition-colors ${
+                        uploading ? 'opacity-50 cursor-not-allowed' : 'hover:border-gray-400'
+                      }`}
+                      style={{ borderColor: '#e5e7eb' }}
+                    >
+                      {uploading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="text-sm" style={{ color: textColor }}>{t('common.uploading')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4" />
+                          <span className="text-sm" style={{ color: textColor }}>{t('rsvp.clickToUploadTicket')}</span>
+                        </>
+                      )}
+                    </label>
+                  </div>
+                  {uploadError && (
+                    <p className="text-xs text-red-500">{uploadError}</p>
+                  )}
+                  <p className="text-xs" style={{ color: `${textColor}80` }}>
+                    {t('rsvp.acceptedFormats')} PDF, JPG, PNG
+                  </p>
+                </>
               )}
             </div>
           )}

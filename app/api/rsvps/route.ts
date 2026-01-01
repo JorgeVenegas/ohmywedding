@@ -71,6 +71,15 @@ export async function POST(request: Request) {
       // Update each guest's confirmation status
       for (const guest of body.guests) {
         console.log('[RSVP Submit] Updating guest:', guest.guestId, 'attending:', guest.attending)
+        
+        // Validate: if travel arrangement is 'already_booked', ticket_attachment_url must be present
+        if (guest.travel_arrangement === 'already_booked' && !guest.ticket_attachment_url) {
+          return NextResponse.json(
+            { error: 'Ticket upload is required when you have already booked transportation' },
+            { status: 400 }
+          )
+        }
+        
         const confirmationStatus = 
           guest.attending === true ? 'confirmed' : 
           guest.attending === false ? 'declined' : 
@@ -93,9 +102,6 @@ export async function POST(request: Request) {
         }
         if (guest.ticket_attachment_url !== undefined) {
           updateData.ticket_attachment_url = guest.ticket_attachment_url
-        }
-        if (guest.no_ticket_reason !== undefined) {
-          updateData.no_ticket_reason = guest.no_ticket_reason
         }
         
         console.log('[RSVP API] Updating guest:', guest.guestId, 'with data:', updateData)
