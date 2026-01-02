@@ -1412,14 +1412,31 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       weddingDetails
     )
     
-    // TODO: Implement actual sending logic (SMS/Email/WhatsApp)
-    // For now, show the message that would be sent
-    setNotification({ 
-      isOpen: true, 
-      type: 'success', 
-      title: 'Preview', 
-      message: `Message preview: \"${personalizedMessage}\"` 
-    })
+    // Open WhatsApp with personalized message
+    if (group.phone_number) {
+      let phoneNumber = group.phone_number.replace(/[^0-9]/g, '')
+      // Add +52 country code if not present
+      if (!phoneNumber.startsWith('52')) {
+        phoneNumber = '52' + phoneNumber
+      }
+      const encodedMessage = encodeURIComponent(personalizedMessage)
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`
+      window.open(whatsappUrl, '_blank')
+      
+      setNotification({ 
+        isOpen: true, 
+        type: 'success', 
+        title: 'WhatsApp Opened', 
+        message: `Opening WhatsApp to send invitation to ${group.name}` 
+      })
+    } else {
+      setNotification({ 
+        isOpen: true, 
+        type: 'error', 
+        title: 'No Phone Number', 
+        message: `${group.name} does not have a phone number set` 
+      })
+    }
   }
 
   const handleCopyRSVPLink = (group: GuestGroup) => {
@@ -1458,14 +1475,34 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       weddingDetails
     )
     
-    // TODO: Implement actual sending logic (SMS/Email/WhatsApp)
-    // For now, show the message that would be sent
-    setNotification({ 
-      isOpen: true, 
-      type: 'success', 
-      title: 'Preview', 
-      message: `Message preview: \"${personalizedMessage}\"` 
-    })
+    // Open WhatsApp with personalized message
+    // Try guest phone first, then group phone
+    const phoneNumber = guest.phone_number || guestGroup?.phone_number
+    
+    if (phoneNumber) {
+      let cleanPhone = phoneNumber.replace(/[^0-9]/g, '')
+      // Add +52 country code if not present
+      if (!cleanPhone.startsWith('52')) {
+        cleanPhone = '52' + cleanPhone
+      }
+      const encodedMessage = encodeURIComponent(personalizedMessage)
+      const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`
+      window.open(whatsappUrl, '_blank')
+      
+      setNotification({ 
+        isOpen: true, 
+        type: 'success', 
+        title: 'WhatsApp Opened', 
+        message: `Opening WhatsApp to send invitation to ${guest.name}` 
+      })
+    } else {
+      setNotification({ 
+        isOpen: true, 
+        type: 'error', 
+        title: 'No Phone Number', 
+        message: `${guest.name} does not have a phone number set` 
+      })
+    }
   }
 
   const handleSendAllInvites = () => {
