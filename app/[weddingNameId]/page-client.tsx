@@ -426,37 +426,42 @@ function WeddingContentWithCurtain({
   const { isLoading: configLoading, config } = usePageConfig()
   const [curtainFalling, setCurtainFalling] = useState(false)
   const [curtainComplete, setCurtainComplete] = useState(false)
+  const [curtainColor, setCurtainColor] = useState('#c9a961') // Start with golden
 
-  // Use wedding data directly to ensure color consistency with initial loading
-  const envelopeColorChoice = wedding.page_config?.siteSettings?.envelope?.colorChoice || 'primary'
-  const colors = wedding.page_config?.siteSettings?.theme?.colors || {}
-  const baseColorType = envelopeColorChoice.includes('primary') ? 'primary' 
-    : envelopeColorChoice.includes('secondary') ? 'secondary' 
-    : 'accent'
-  const baseColor = colors[baseColorType] || colors.primary || '#c9a961'
-  
-  // Helper to create a light tint
-  const getLightTint = (hex: string, tintAmount: number): string => {
-    const num = parseInt(hex.replace('#', ''), 16)
-    const r = (num >> 16) & 255
-    const g = (num >> 8) & 255
-    const b = num & 255
-    const newR = Math.round(r + (255 - r) * tintAmount)
-    const newG = Math.round(g + (255 - g) * tintAmount)
-    const newB = Math.round(b + (255 - b) * tintAmount)
-    return `#${((1 << 24) + (newR << 16) + (newG << 8) + newB).toString(16).slice(1)}`
+  // Calculate envelope color
+  const getEnvelopeColor = (): string => {
+    const envelopeColorChoice = wedding.page_config?.siteSettings?.envelope?.colorChoice || 'primary'
+    const colors = wedding.page_config?.siteSettings?.theme?.colors || {}
+    const baseColorType = envelopeColorChoice.includes('primary') ? 'primary' 
+      : envelopeColorChoice.includes('secondary') ? 'secondary' 
+      : 'accent'
+    const baseColor = colors[baseColorType] || colors.primary || '#c9a961'
+    
+    // Helper to create a light tint
+    const getLightTint = (hex: string, tintAmount: number): string => {
+      const num = parseInt(hex.replace('#', ''), 16)
+      const r = (num >> 16) & 255
+      const g = (num >> 8) & 255
+      const b = num & 255
+      const newR = Math.round(r + (255 - r) * tintAmount)
+      const newG = Math.round(g + (255 - g) * tintAmount)
+      const newB = Math.round(b + (255 - b) * tintAmount)
+      return `#${((1 << 24) + (newR << 16) + (newG << 8) + newB).toString(16).slice(1)}`
+    }
+    
+    // Apply tint based on choice to get final color
+    return envelopeColorChoice.endsWith('-lighter') 
+      ? getLightTint(baseColor, 0.88)
+      : envelopeColorChoice.endsWith('-light') 
+        ? getLightTint(baseColor, 0.7)
+        : baseColor
   }
-  
-  // Apply tint based on choice to get final curtain color
-  const curtainColor = envelopeColorChoice.endsWith('-lighter') 
-    ? getLightTint(baseColor, 0.88)
-    : envelopeColorChoice.endsWith('-light') 
-      ? getLightTint(baseColor, 0.7)
-      : baseColor
 
-  // Wait for config to finish loading before falling curtain
+  // Once config loads, transition to envelope color, then fall curtain
   useEffect(() => {
     if (!configLoading) {
+      // Transition to envelope color
+      setCurtainColor(getEnvelopeColor())
       // Wait a brief moment then trigger curtain fall
       setTimeout(() => {
         setCurtainFalling(true)
