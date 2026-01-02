@@ -50,6 +50,17 @@ export function RSVPCardsVariant({
   useColorBackground,
   backgroundColorChoice,
 }: BaseRSVPProps) {
+  // Ensure defaults are set
+  const effectiveUseColorBackground = useColorBackground ?? false
+  const effectiveBackgroundColorChoice = backgroundColorChoice ?? 'none'
+  
+  console.log('[RSVP Cards] Props received:', {
+    useColorBackground,
+    backgroundColorChoice,
+    effectiveUseColorBackground,
+    effectiveBackgroundColorChoice
+  })
+  
   const { t } = useI18n()
   const [groupData, setGroupData] = useState<GroupData | null>(null)
   const [guests, setGuests] = useState<Guest[]>([])
@@ -66,9 +77,15 @@ export function RSVPCardsVariant({
 
   const { bgColor, textColor, titleColor, cardBg, isColored } = getColorScheme(
     theme,
-    backgroundColorChoice,
-    useColorBackground
+    effectiveBackgroundColorChoice,
+    effectiveUseColorBackground
   )
+  
+  console.log('[RSVP Cards] Color scheme:', {
+    bgColor,
+    isColored,
+    willApplyStyle: isColored
+  })
 
   useEffect(() => {
     const fetchGroupData = async () => {
@@ -222,7 +239,7 @@ export function RSVPCardsVariant({
 
   if (loading) {
     return (
-      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
+      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
         <div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="w-8 h-8 animate-spin" style={{ color: titleColor }} />
         </div>
@@ -232,7 +249,7 @@ export function RSVPCardsVariant({
 
   if (submitted && !isEditing) {
     return (
-      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
+      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
           <div 
             className="p-6 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl border-2 shadow-xl"
@@ -338,7 +355,7 @@ export function RSVPCardsVariant({
   }
 
   return (
-    <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
+    <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         {/* Header */}
         <div className="mb-12 text-center" style={{ textAlign: alignment?.text || 'center' }}>

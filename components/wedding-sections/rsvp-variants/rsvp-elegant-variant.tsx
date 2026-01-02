@@ -54,10 +54,21 @@ export function RSVPElegantVariant({
   sectionSubtitle,
   showCustomQuestions = false,
   customQuestions = [],
-  useColorBackground = false,
-  backgroundColorChoice = 'none',
+  useColorBackground,
+  backgroundColorChoice,
   groupId
 }: BaseRSVPProps) {
+  // Ensure defaults are set
+  const effectiveUseColorBackground = useColorBackground ?? false
+  const effectiveBackgroundColorChoice = backgroundColorChoice ?? 'none'
+  
+  console.log('[RSVP Elegant] Props received:', {
+    useColorBackground,
+    backgroundColorChoice,
+    effectiveUseColorBackground,
+    effectiveBackgroundColorChoice
+  })
+  
   const { t } = useI18n()
   const [groupData, setGroupData] = useState<GroupData | null>(null)
   const [guests, setGuests] = useState<GuestInfo[]>([])
@@ -77,9 +88,15 @@ export function RSVPElegantVariant({
   
   const { bgColor, titleColor, subtitleColor, textColor, cardBg, isColored } = getColorScheme(
     theme,
-    backgroundColorChoice,
-    useColorBackground
+    effectiveBackgroundColorChoice,
+    effectiveUseColorBackground
   )
+  
+  console.log('[RSVP Elegant] Color scheme:', {
+    bgColor,
+    isColored,
+    willApplyStyle: isColored
+  })
 
   const textAlign = alignment?.text || 'center'
 
@@ -276,7 +293,7 @@ export function RSVPElegantVariant({
 
   if (isLoading) {
     return (
-      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
+      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
         <div className="container mx-auto px-4 py-20">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: titleColor }} />
@@ -288,7 +305,7 @@ export function RSVPElegantVariant({
 
   if (isSubmitted && !isEditing) {
     return (
-      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
+      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
         <div className="container mx-auto px-4 py-20">
           <div className="max-w-3xl mx-auto">
             <div 
@@ -404,7 +421,7 @@ export function RSVPElegantVariant({
 
   if (!groupId) {
     return (
-      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
+      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
         <div className="container mx-auto px-4 py-20">
           <div className="max-w-xl mx-auto">
             <div 
@@ -445,7 +462,7 @@ export function RSVPElegantVariant({
   }
 
   return (
-    <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
+    <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
       <div className="container mx-auto px-4 py-20">
         <div className="max-w-2xl mx-auto">
           {/* Main Invitation Card */}

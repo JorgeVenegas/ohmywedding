@@ -50,6 +50,17 @@ export function RSVPMinimalisticVariant({
   useColorBackground,
   backgroundColorChoice,
 }: BaseRSVPProps) {
+  // Ensure defaults are set
+  const effectiveUseColorBackground = useColorBackground ?? false
+  const effectiveBackgroundColorChoice = backgroundColorChoice ?? 'none'
+  
+  console.log('[RSVP Minimalistic] Props received:', {
+    useColorBackground,
+    backgroundColorChoice,
+    effectiveUseColorBackground,
+    effectiveBackgroundColorChoice
+  })
+  
   const { t } = useI18n()
   const [groupData, setGroupData] = useState<GroupData | null>(null)
   const [guests, setGuests] = useState<Guest[]>([])
@@ -66,9 +77,15 @@ export function RSVPMinimalisticVariant({
 
   const { bgColor, textColor, titleColor, cardBg, isColored } = getColorScheme(
     theme,
-    backgroundColorChoice,
-    useColorBackground
+    effectiveBackgroundColorChoice,
+    effectiveUseColorBackground
   )
+  
+  console.log('[RSVP Minimalistic] Color scheme:', {
+    bgColor,
+    isColored,
+    willApplyStyle: isColored
+  })
 
   // Debug logging
   console.log('[RSVP Minimalistic] Render state:', {
@@ -245,7 +262,7 @@ export function RSVPMinimalisticVariant({
   if (loading) {
     console.log('[RSVP Minimalistic] Rendering loading state')
     return (
-      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
+      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
         <div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="w-8 h-8 animate-spin" style={{ color: titleColor }} />
         </div>
@@ -258,8 +275,8 @@ export function RSVPMinimalisticVariant({
   if (submitted && !isEditing) {
     console.log('[RSVP Minimalistic] ✅ RENDERING SUBMITTED VIEW with button')
     return (
-      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
+      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
           <div 
             className="p-6 sm:p-8 md:p-12 rounded-2xl border-2"
             style={{
@@ -366,14 +383,6 @@ export function RSVPMinimalisticVariant({
             >
               {t('rsvp.editResponse')}
             </button>
-            
-            {/* Debug info */}
-            <div className="mt-4 p-2 bg-black/10 rounded text-xs">
-              <div>Guests: {guests.length}</div>
-              <div>Submitted: {submitted ? 'YES' : 'NO'}</div>
-              <div>Editing: {isEditing ? 'YES' : 'NO'}</div>
-              <div>Button visible: YES</div>
-            </div>
           </div>
         </div>
       </SectionWrapper>
@@ -383,7 +392,7 @@ export function RSVPMinimalisticVariant({
   console.log('[RSVP Minimalistic] Rendering form (not submitted or editing)')
 
   return (
-    <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={{ backgroundColor: bgColor }}>
+    <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         {/* Header */}
         <div className="mb-12 text-center" style={{ textAlign: alignment?.text || 'center' }}>

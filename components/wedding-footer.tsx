@@ -45,7 +45,7 @@ export function WeddingFooter({ weddingNameId, ownerId, collaboratorEmails }: We
   }, [weddingNameId, ownerId, collaboratorEmails])
 
   return (
-    <footer className="border-t border-border/30 bg-background/80 backdrop-blur-sm mt-12">
+    <footer className="border-t border-border/30 bg-background/80 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           {/* Left: Created with text */}

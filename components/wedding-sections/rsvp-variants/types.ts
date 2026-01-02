@@ -35,6 +35,18 @@ function withOpacity(hex: string, opacity: number): string {
   return `rgba(${r}, ${g}, ${b}, ${opacity})`
 }
 
+// Helper to create a light tint by mixing with white
+function getLightTint(hex: string, tintAmount: number): string {
+  const num = parseInt(hex.replace('#', ''), 16)
+  const r = (num >> 16) & 255
+  const g = (num >> 8) & 255
+  const b = num & 255
+  const newR = Math.round(r + (255 - r) * tintAmount)
+  const newG = Math.round(g + (255 - g) * tintAmount)
+  const newB = Math.round(b + (255 - b) * tintAmount)
+  return `#${((1 << 24) + (newR << 16) + (newG << 8) + newB).toString(16).slice(1)}`
+}
+
 // Helper to get color scheme based on background choice
 export function getColorScheme(
   theme: Partial<ThemeConfig> | undefined,
@@ -59,12 +71,12 @@ export function getColorScheme(
       'primary': primaryColor,
       'secondary': secondaryColor,
       'accent': accentColor,
-      'primary-light': withOpacity(primaryColor, 0.15),
-      'secondary-light': withOpacity(secondaryColor, 0.15),
-      'accent-light': withOpacity(accentColor, 0.15),
-      'primary-lighter': withOpacity(primaryColor, 0.05),
-      'secondary-lighter': withOpacity(secondaryColor, 0.05),
-      'accent-lighter': withOpacity(accentColor, 0.05),
+      'primary-light': getLightTint(primaryColor, 0.5),
+      'secondary-light': getLightTint(secondaryColor, 0.5),
+      'accent-light': getLightTint(accentColor, 0.5),
+      'primary-lighter': getLightTint(primaryColor, 0.88),
+      'secondary-lighter': getLightTint(secondaryColor, 0.88),
+      'accent-lighter': getLightTint(accentColor, 0.88),
     }
     
     bgColor = colorMap[backgroundColorChoice] || 'transparent'
