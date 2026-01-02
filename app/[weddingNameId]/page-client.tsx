@@ -457,6 +457,18 @@ function WeddingContentWithCurtain({
         : baseColor
   }
 
+  // Set body background color to match curtain color
+  useEffect(() => {
+    document.body.style.backgroundColor = curtainColor
+    document.body.style.transition = 'background-color 800ms ease-in-out'
+    
+    // Reset body background on cleanup
+    return () => {
+      document.body.style.backgroundColor = ''
+      document.body.style.transition = ''
+    }
+  }, [curtainColor])
+
   // Once config loads, transition to envelope color, then fall curtain
   useEffect(() => {
     if (!configLoading) {
