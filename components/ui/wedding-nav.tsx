@@ -489,7 +489,7 @@ export function WeddingNav({
                 fontFamily: 'var(--font-display, var(--font-heading, serif))'
               }}
             >
-              <span className="font-light">{initials}</span>
+              <span className="font-light" dangerouslySetInnerHTML={{ __html: initials }} />
             </div>
             
             {/* Menu items */}

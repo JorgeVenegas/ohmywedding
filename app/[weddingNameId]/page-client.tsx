@@ -296,20 +296,39 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
     }, 1200)
   }
 
+  // Helper to get curtain color from wedding config
+  const getCurtainColor = (wedding: Wedding | null): string => {
+    if (!wedding?.page_config) return '#c9a961'
+    
+    const envelopeColorChoice = wedding.page_config.siteSettings?.envelope?.colorChoice || 'primary'
+    const colors = wedding.page_config.siteSettings?.theme?.colors || {}
+    const baseColorType = envelopeColorChoice.includes('primary') ? 'primary' 
+      : envelopeColorChoice.includes('secondary') ? 'secondary' 
+      : 'accent'
+    const baseColor = colors[baseColorType] || colors.primary || '#c9a961'
+    
+    // Helper to create a light tint
+    const getLightTint = (hex: string, tintAmount: number): string => {
+      const num = parseInt(hex.replace('#', ''), 16)
+      const r = (num >> 16) & 255
+      const g = (num >> 8) & 255
+      const b = num & 255
+      const newR = Math.round(r + (255 - r) * tintAmount)
+      const newG = Math.round(g + (255 - g) * tintAmount)
+      const newB = Math.round(b + (255 - b) * tintAmount)
+      return `#${((1 << 24) + (newR << 16) + (newG << 8) + newB).toString(16).slice(1)}`
+    }
+    
+    // Apply tint based on choice to get final curtain color
+    return envelopeColorChoice.endsWith('-lighter') 
+      ? getLightTint(baseColor, 0.88)
+      : envelopeColorChoice.endsWith('-light') 
+        ? getLightTint(baseColor, 0.7)
+        : baseColor
+  }
+
   if (!wedding && weddingDataLoading) {
-    return (
-      <div className="fixed inset-0 z-50 bg-[#c9a961] flex items-center justify-center">
-        <Image
-          src="/images/logos/OMW Logo White.png"
-          alt="OhMyWedding"
-          width={120}
-          height={120}
-          className="w-32 h-auto"
-          priority
-          unoptimized
-        />
-      </div>
-    )
+    return null // Don't show anything while loading - WeddingContentWithCurtain will show the curtain
   }
 
   if (!wedding) {
@@ -408,9 +427,9 @@ function WeddingContentWithCurtain({
   const [curtainFalling, setCurtainFalling] = useState(false)
   const [curtainComplete, setCurtainComplete] = useState(false)
 
-  // Get envelope color from config
-  const envelopeColorChoice = config.siteSettings.envelope?.colorChoice || 'primary'
-  const colors = config.siteSettings.theme?.colors || {}
+  // Use wedding data directly to ensure color consistency with initial loading
+  const envelopeColorChoice = wedding.page_config?.siteSettings?.envelope?.colorChoice || 'primary'
+  const colors = wedding.page_config?.siteSettings?.theme?.colors || {}
   const baseColorType = envelopeColorChoice.includes('primary') ? 'primary' 
     : envelopeColorChoice.includes('secondary') ? 'secondary' 
     : 'accent'
@@ -455,7 +474,7 @@ function WeddingContentWithCurtain({
       {!curtainComplete && (
         <div className="fixed inset-0 z-50 pointer-events-none">
           <div 
-            className="absolute inset-0 transition-transform duration-800 ease-in-out flex items-center justify-center"
+            className="absolute inset-0 transition-all duration-800 ease-in-out flex items-center justify-center"
             style={{
               transform: curtainFalling ? 'translateY(100%)' : 'translateY(0)',
               backgroundColor: curtainColor,
@@ -466,7 +485,8 @@ function WeddingContentWithCurtain({
               alt="OhMyWedding"
               width={120}
               height={120}
-              className="w-32 h-auto"
+              className="w-32 h-auto will-change-auto"
+              style={{ pointerEvents: 'none' }}
               priority
               unoptimized
             />
