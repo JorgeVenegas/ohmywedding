@@ -262,13 +262,13 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
     }
   }, [])
 
-  // Transition body background to envelope color when wedding loads
+  // Transition body background to envelope color when envelope appears
   useEffect(() => {
-    if (wedding) {
+    if (showEnvelope && wedding) {
       const envelopeColor = getCurtainColor(wedding)
       document.body.style.backgroundColor = envelopeColor
     }
-  }, [wedding])
+  }, [showEnvelope, wedding])
 
   useEffect(() => {
     async function loadWedding() {
