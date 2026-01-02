@@ -68,6 +68,21 @@ export async function POST(request: Request) {
         }
       )
 
+      // Update the guest group with the message and submission timestamp
+      if (body.message) {
+        const { error: groupUpdateError } = await supabaseAdmin
+          .from('guest_groups')
+          .update({
+            message: body.message,
+            rsvp_submitted_at: new Date().toISOString()
+          })
+          .eq('id', body.groupId)
+
+        if (groupUpdateError) {
+          console.error('[RSVP Submit] Error updating group message:', groupUpdateError)
+        }
+      }
+
       // Update each guest's confirmation status
       for (const guest of body.guests) {
         console.log('[RSVP Submit] Updating guest:', guest.guestId, 'attending:', guest.attending)

@@ -116,16 +116,26 @@ export async function PUT(request: Request) {
     const supabase = await createServerSupabaseClient()
     const body = await request.json()
 
+    const updateData: Record<string, any> = {
+      name: body.name,
+      phone_number: body.phoneNumber,
+      tags: body.tags,
+      notes: body.notes,
+      invited_by: body.invitedBy || [],
+      updated_at: new Date().toISOString(),
+    }
+
+    // Handle invitation status
+    if (body.invitationSent !== undefined) {
+      updateData.invitation_sent = body.invitationSent
+      if (body.invitationSent) {
+        updateData.invitation_sent_at = new Date().toISOString()
+      }
+    }
+
     const { data, error } = await supabase
       .from("guest_groups")
-      .update({
-        name: body.name,
-        phone_number: body.phoneNumber,
-        tags: body.tags,
-        notes: body.notes,
-        invited_by: body.invitedBy || [],
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("id", body.id)
       .select()
       .single()

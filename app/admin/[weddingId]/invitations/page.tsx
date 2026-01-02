@@ -94,6 +94,8 @@ interface GuestGroup {
   invited_by: string[]
   invitation_sent: boolean
   invitation_sent_at: string | null
+  message: string | null
+  rsvp_submitted_at: string | null
   created_at: string
   guests: Guest[]
 }
@@ -212,6 +214,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const isUpdatingRef = useRef(false)
   const [showReplaceMenu, setShowReplaceMenu] = useState<string | null>(null)
   const replaceMenuRef = useRef<HTMLDivElement>(null)
+  
+  // Message viewing
+  const [showMessageModal, setShowMessageModal] = useState(false)
+  const [selectedGroupForMessage, setSelectedGroupForMessage] = useState<GuestGroup | null>(null)
   
   // Helper function to get friendly display name for variables
   const getVariableDisplayName = (variable: string): string => {
@@ -1400,8 +1406,76 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       .replace(/\{\{receptionaddress\}\}/gi, weddingData?.reception_venue_address || 'TBD')
   }
 
+  // Update guest invitation status
+  const updateGuestInvitationStatus = async (guestId: string, sent: boolean) => {
+    try {
+      const response = await fetch("/api/guests", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: guestId,
+          invitationSent: sent,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update invitation status")
+      }
+
+      await fetchGuestGroups()
+      await fetchUngroupedGuests()
+    } catch (error) {
+      console.error("Error updating invitation status:", error)
+      setNotification({
+        isOpen: true,
+        type: "error",
+        title: "Error",
+        message: "Failed to update invitation status"
+      })
+    }
+  }
+
+  // Update group invitation status
+  const updateGroupInvitationStatus = async (groupId: string, sent: boolean) => {
+    try {
+      const response = await fetch("/api/guest-groups", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: groupId,
+          invitationSent: sent,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update group invitation status")
+      }
+
+      await fetchGuestGroups()
+    } catch (error) {
+      console.error("Error updating group invitation status:", error)
+      setNotification({
+        isOpen: true,
+        type: "error",
+        title: "Error",
+        message: "Failed to update group invitation status"
+      })
+    }
+  }
+
+  // Check if all guests in a group are sent and update group status
+  const checkAndUpdateGroupStatus = async (groupId: string) => {
+    const group = guestGroups.find(g => g.id === groupId)
+    if (!group) return
+
+    const allGuestsSent = group.guests.length > 0 && group.guests.every(g => g.invitation_sent)
+    if (allGuestsSent && !group.invitation_sent) {
+      await updateGroupInvitationStatus(groupId, true)
+    }
+  }
+
   // Send invite placeholder functions (functionality to be added later)
-  const handleSendGroupInvite = (group: GuestGroup) => {
+  const handleSendGroupInvite = async (group: GuestGroup) => {
     // Generate personalized message using template
     const personalizedMessage = replaceTemplateVariables(
       inviteTemplate,
@@ -1422,6 +1496,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       const encodedMessage = encodeURIComponent(personalizedMessage)
       const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`
       window.open(whatsappUrl, '_blank')
+      
+      // Mark group as sent
+      await updateGroupInvitationStatus(group.id, true)
       
       setNotification({ 
         isOpen: true, 
@@ -1460,7 +1537,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     })
   }
 
-  const handleSendGuestInvite = (guest: Guest) => {
+  const handleSendGuestInvite = async (guest: Guest) => {
     // Find the group for this guest to generate proper invitation URL
     const guestGroup = guestGroups.find(g => g.id === guest.guest_group_id)
     
@@ -1488,6 +1565,14 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       const encodedMessage = encodeURIComponent(personalizedMessage)
       const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`
       window.open(whatsappUrl, '_blank')
+      
+      // Mark guest as sent
+      await updateGuestInvitationStatus(guest.id, true)
+      
+      // Check if all guests in group are now sent
+      if (guestGroup) {
+        await checkAndUpdateGroupStatus(guestGroup.id)
+      }
       
       setNotification({ 
         isOpen: true, 
@@ -2733,10 +2818,17 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                         {visibleColumns.inviteSent && (
                           <td className="px-3 py-2 text-center">
                             {guest.invitation_sent ? (
-                              <span className="inline-flex items-center gap-1 text-[10px] text-green-600">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  updateGuestInvitationStatus(guest.id, false)
+                                }}
+                                className="inline-flex items-center gap-1 text-[10px] text-green-600 hover:text-green-700 cursor-pointer transition-colors"
+                                title="Click to mark as not sent"
+                              >
                                 <MailCheck className="w-3.5 h-3.5" />
                                 Sent
-                              </span>
+                              </button>
                             ) : (
                               <Button
                                 variant="ghost"
@@ -2966,7 +3058,30 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                             </td>
                             <td className="px-3 py-2">
                               <div>
-                                <div className="font-medium text-foreground">{group.name}</div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-foreground">{group.name}</span>
+                                  {group.message && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation()
+                                              setSelectedGroupForMessage(group)
+                                              setShowMessageModal(true)
+                                            }}
+                                            className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 hover:bg-blue-200 border border-blue-200 cursor-pointer transition-colors"
+                                          >
+                                            <Mail className="w-3 h-3 text-blue-700" />
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Has message - click to view</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
+                                </div>
                                 {group.phone_number && (
                                   <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                                     <Phone className="w-3 h-3" />
@@ -3048,15 +3163,23 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                             {visibleColumns.inviteSent && (
                               <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                                 <div className="flex items-center justify-center gap-2">
-                                  {/* Status Indicator */}
+                                  {/* Status Indicator - Clickable to toggle */}
                                   {allGuestsInvited ? (
-                                    <span title="All invites sent">
+                                    <button
+                                      onClick={() => updateGroupInvitationStatus(group.id, false)}
+                                      className="hover:opacity-70 transition-opacity"
+                                      title="Click to mark as not sent"
+                                    >
                                       <MailCheck className="w-3.5 h-3.5 text-green-600" />
-                                    </span>
+                                    </button>
                                   ) : someGuestsInvited ? (
-                                    <span title="Partial invites sent">
+                                    <button
+                                      onClick={() => updateGroupInvitationStatus(group.id, true)}
+                                      className="hover:opacity-70 transition-opacity"
+                                      title="Click to mark as sent"
+                                    >
                                       <Mail className="w-3.5 h-3.5 text-amber-600" />
-                                    </span>
+                                    </button>
                                   ) : (
                                     <span title="No invites sent">
                                       <Mail className="w-3.5 h-3.5 text-gray-400" />
@@ -3188,6 +3311,15 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                     <Copy className="w-4 h-4 mr-2" />
                                     Copy RSVP Link
                                   </DropdownMenuItem>
+                                  {group.message && (
+                                    <DropdownMenuItem onClick={() => {
+                                      setSelectedGroupForMessage(group)
+                                      setShowMessageModal(true)
+                                    }}>
+                                      <Mail className="w-4 h-4 mr-2" />
+                                      View Message
+                                    </DropdownMenuItem>
+                                  )}
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem onClick={() => openAddGuestToGroup(group.id)}>
                                     <UserPlus className="w-4 h-4 mr-2" />
@@ -3336,9 +3468,16 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                     {visibleColumns.inviteSent && (
                                       <td className="px-3 py-2 text-center">
                                         {guest.invitation_sent ? (
-                                          <span className="inline-flex items-center gap-1 text-[10px] text-green-600">
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation()
+                                              updateGuestInvitationStatus(guest.id, false)
+                                            }}
+                                            className="inline-flex items-center gap-1 text-[10px] text-green-600 hover:text-green-700 cursor-pointer transition-colors"
+                                            title="Click to mark as not sent"
+                                          >
                                             <MailCheck className="w-3.5 h-3.5" />
-                                          </span>
+                                          </button>
                                         ) : (
                                           <Button
                                             variant="ghost"
@@ -5528,6 +5667,69 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               >
                 <Check className="w-4 h-4 mr-2" />
                 Save Template
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Message Viewing Modal */}
+      {showMessageModal && selectedGroupForMessage && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 pb-4 border-b">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">Message from {selectedGroupForMessage.name}</h2>
+                {selectedGroupForMessage.rsvp_submitted_at && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Submitted on {new Date(selectedGroupForMessage.rsvp_submitted_at).toLocaleString()}
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowMessageModal(false)
+                  setSelectedGroupForMessage(null)
+                }}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="bg-muted/30 rounded-lg p-4 border border-border">
+                <p className="text-foreground whitespace-pre-wrap">
+                  {selectedGroupForMessage.message || 'No message provided'}
+                </p>
+              </div>
+
+              {/* Guest List */}
+              <div className="mt-6">
+                <h3 className="text-sm font-semibold text-foreground mb-3">Guests in this group:</h3>
+                <div className="space-y-2">
+                  {selectedGroupForMessage.guests.map(guest => (
+                    <div key={guest.id} className="flex items-center justify-between px-3 py-2 bg-muted/20 rounded-md">
+                      <span className="text-sm text-foreground">{guest.name}</span>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusBadgeClass(guest.confirmation_status)}`}>
+                        {guest.confirmation_status === 'confirmed' ? 'Attending' : guest.confirmation_status === 'declined' ? 'Not Attending' : 'Pending'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 p-6 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowMessageModal(false)
+                  setSelectedGroupForMessage(null)
+                }}
+              >
+                Close
               </Button>
             </div>
           </Card>

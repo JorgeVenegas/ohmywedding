@@ -218,26 +218,36 @@ export async function PUT(request: Request) {
       console.log('[Guests PUT] User matches owner:', user?.id === wedding.owner_id)
     }
 
+    const updateData: Record<string, any> = {
+      name: body.name,
+      phone_number: body.phoneNumber,
+      email: body.email,
+      tags: body.tags || [],
+      guest_group_id: body.guestGroupId,
+      confirmation_status: body.confirmationStatus,
+      dietary_restrictions: body.dietaryRestrictions,
+      notes: body.notes,
+      invited_by: body.invitedBy || [],
+      is_traveling: body.isTraveling || false,
+      traveling_from: body.travelingFrom || null,
+      travel_arrangement: body.travelArrangement || null,
+      ticket_attachment_url: body.ticketAttachmentUrl || null,
+      no_ticket_reason: body.noTicketReason || null,
+      admin_set_travel: body.adminSetTravel !== undefined ? body.adminSetTravel : (body.isTraveling === true),
+      updated_at: new Date().toISOString(),
+    }
+
+    // Handle invitation status
+    if (body.invitationSent !== undefined) {
+      updateData.invitation_sent = body.invitationSent
+      if (body.invitationSent) {
+        updateData.invitation_sent_at = new Date().toISOString()
+      }
+    }
+
     const { data, error } = await supabase
       .from("guests")
-      .update({
-        name: body.name,
-        phone_number: body.phoneNumber,
-        email: body.email,
-        tags: body.tags || [],
-        guest_group_id: body.guestGroupId,
-        confirmation_status: body.confirmationStatus,
-        dietary_restrictions: body.dietaryRestrictions,
-        notes: body.notes,
-        invited_by: body.invitedBy || [],
-        is_traveling: body.isTraveling || false,
-        traveling_from: body.travelingFrom || null,
-        travel_arrangement: body.travelArrangement || null,
-        ticket_attachment_url: body.ticketAttachmentUrl || null,
-        no_ticket_reason: body.noTicketReason || null,
-        admin_set_travel: body.adminSetTravel !== undefined ? body.adminSetTravel : (body.isTraveling === true),
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("id", body.id)
       .select()
       .single()

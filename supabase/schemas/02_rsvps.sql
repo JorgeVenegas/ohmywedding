@@ -11,6 +11,8 @@ create table "guest_groups" (
   "invited_by" text[] default '{}',
   "invitation_sent" boolean default false,
   "invitation_sent_at" timestamp with time zone,
+  "message" text,
+  "rsvp_submitted_at" timestamp with time zone,
   "created_at" timestamp with time zone default now(),
   "updated_at" timestamp with time zone default now()
 );
