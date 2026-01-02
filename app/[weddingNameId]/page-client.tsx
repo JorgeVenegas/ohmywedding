@@ -251,6 +251,25 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
+  // Set initial body background to golden on mount
+  useEffect(() => {
+    document.body.style.backgroundColor = '#c9a961'
+    document.body.style.transition = 'background-color 800ms ease-in-out'
+    
+    return () => {
+      document.body.style.backgroundColor = ''
+      document.body.style.transition = ''
+    }
+  }, [])
+
+  // Transition body background to envelope color when wedding loads
+  useEffect(() => {
+    if (wedding) {
+      const envelopeColor = getCurtainColor(wedding)
+      document.body.style.backgroundColor = envelopeColor
+    }
+  }, [wedding])
+
   useEffect(() => {
     async function loadWedding() {
       try {
@@ -456,18 +475,6 @@ function WeddingContentWithCurtain({
         ? getLightTint(baseColor, 0.7)
         : baseColor
   }
-
-  // Set body background color to match curtain color
-  useEffect(() => {
-    document.body.style.backgroundColor = curtainColor
-    document.body.style.transition = 'background-color 800ms ease-in-out'
-    
-    // Reset body background on cleanup
-    return () => {
-      document.body.style.backgroundColor = ''
-      document.body.style.transition = ''
-    }
-  }, [curtainColor])
 
   // Once config loads, transition to envelope color, then fall curtain
   useEffect(() => {
