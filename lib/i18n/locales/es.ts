@@ -231,6 +231,7 @@ export const es: Translations = {
     clickToUploadTicket: 'Haz clic para subir tu boleto',
     acceptedFormats: 'Formatos aceptados:',
     ticketRequired: 'Se requiere subir el boleto',
+    travelInfoRequired: 'Por favor proporciona información de viaje para todos los invitados',
     alreadyBookedTransportation: 'Ya he reservado mi transporte',
     noTicketNeeded: 'No necesito boleto',
     willNotNeedTransportation: 'No necesitaré transporte',

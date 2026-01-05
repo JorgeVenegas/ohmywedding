@@ -233,6 +233,7 @@ export const en: Translations = {
     clickToUploadTicket: 'Click to upload your ticket',
     acceptedFormats: 'Accepted formats:',
     ticketRequired: 'Ticket upload is required',
+    travelInfoRequired: 'Please provide travel information for all guests',
     alreadyBookedTransportation: 'I have already booked my transportation',
     noTicketNeeded: 'I don\'t need a ticket',
     willNotNeedTransportation: 'I will not need transportation',

@@ -26,3 +26,9 @@ When you make changes to the i18n files, always update both en.ts and es.ts to k
 When you add new i18n keys, make sure to also update the types.ts file to include the new keys for type safety
 
 avoid running commands with 2>&1 | tail -50, i like to see full output to catch warnings and notices
+
+You need to take into account responsiveness and mobile design for every change you do to the wedding site. Always verify the result in mobile viewports
+
+You should always aim to improve performance and reduce bundle size with every change you do
+
+aim for security a dn integrity of data, avoid data loss or leaks with every change you do. Ensure only people with the right roles can access sensitive data or perform critical actions.

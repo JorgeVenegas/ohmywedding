@@ -235,6 +235,7 @@ export interface Translations {
     clickToUploadTicket: string
     acceptedFormats: string
     ticketRequired: string
+    travelInfoRequired: string
     alreadyBookedTransportation: string
     noTicketNeeded: string
     willNotNeedTransportation: string

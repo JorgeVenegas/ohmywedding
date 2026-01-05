@@ -199,6 +199,18 @@ export function RSVPMinimalisticVariant({
   }
 
   const handleSubmitClick = () => {
+    // Validate: Check if admin requires travel info but guest hasn't provided it
+    const guestsNeedingTravelInfo = guests.filter(g => 
+      g.attending === true && 
+      g.adminSetTravel && 
+      (!g.is_traveling || !g.travel_arrangement)
+    )
+    
+    if (guestsNeedingTravelInfo.length > 0) {
+      setSubmitError(t('rsvp.travelInfoRequired'))
+      return
+    }
+    
     // Validate: Check if any guest has selected 'already_booked' but hasn't uploaded a ticket
     const guestsNeedingTicket = guests.filter(g => 
       g.attending === true && 

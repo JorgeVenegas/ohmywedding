@@ -143,6 +143,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
     }
 
+    // Inherit tags from group if assigned to one
+    let tagsToUse = body.tags || []
+    if (body.guestGroupId) {
+      const { data: group } = await supabase
+        .from('guest_groups')
+        .select('tags')
+        .eq('id', body.guestGroupId)
+        .single()
+      
+      if (group && group.tags) {
+        // Merge guest tags with group tags (group tags first, then unique guest tags)
+        const groupTags = group.tags || []
+        const guestOnlyTags = (body.tags || []).filter((t: string) => !groupTags.includes(t))
+        tagsToUse = [...groupTags, ...guestOnlyTags]
+      }
+    }
+
     const { data, error } = await supabase.from("guests").insert([
       {
         wedding_id: wedding.id,
@@ -150,7 +167,7 @@ export async function POST(request: Request) {
         name: body.name,
         phone_number: body.phoneNumber || null,
         email: body.email || null,
-        tags: body.tags || [],
+        tags: tagsToUse,
         confirmation_status: body.confirmationStatus || 'pending',
         dietary_restrictions: body.dietaryRestrictions || null,
         notes: body.notes || null,
@@ -218,11 +235,28 @@ export async function PUT(request: Request) {
       console.log('[Guests PUT] User matches owner:', user?.id === wedding.owner_id)
     }
 
+    // Inherit tags from new group if group assignment changed
+    let tagsToUse = body.tags || []
+    if (body.guestGroupId) {
+      const { data: group } = await supabase
+        .from('guest_groups')
+        .select('tags')
+        .eq('id', body.guestGroupId)
+        .single()
+      
+      if (group && group.tags) {
+        // Merge guest tags with group tags (group tags first, then unique guest tags)
+        const groupTags = group.tags || []
+        const guestOnlyTags = (body.tags || []).filter((t: string) => !groupTags.includes(t))
+        tagsToUse = [...groupTags, ...guestOnlyTags]
+      }
+    }
+
     const updateData: Record<string, any> = {
       name: body.name,
       phone_number: body.phoneNumber,
       email: body.email,
-      tags: body.tags || [],
+      tags: tagsToUse,
       guest_group_id: body.guestGroupId,
       confirmation_status: body.confirmationStatus,
       dietary_restrictions: body.dietaryRestrictions,
