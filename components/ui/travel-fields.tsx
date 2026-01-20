@@ -16,6 +16,8 @@ interface TravelFieldsProps {
   travelArrangement: 'already_booked' | 'no_ticket_needed' | null
   ticketAttachmentUrl?: string | null
   adminSetTravel?: boolean // If true, travel status was set by admin and can't be changed
+  requireTicketAttachment?: boolean // If true, ticket upload is required for 'already_booked'
+  requireNoTicketReason?: boolean // If true, reason is required for 'no_ticket_needed'
   onTravelChange: (isTraveling: boolean) => void
   onTravelingFromChange: (location: string) => void
   onTravelArrangementChange: (arrangement: 'already_booked' | 'no_ticket_needed' | null) => void
@@ -33,6 +35,8 @@ export function TravelFields({
   travelArrangement,
   ticketAttachmentUrl,
   adminSetTravel = false,
+  requireTicketAttachment = false,
+  requireNoTicketReason = false,
   onTravelChange,
   onTravelingFromChange,
   onTravelArrangementChange,
@@ -166,11 +170,11 @@ export function TravelFields({
             </div>
           </div>
 
-          {/* Ticket Upload - Required if already_booked is selected */}
+          {/* Ticket Upload - Show if already_booked is selected */}
           {travelArrangement === 'already_booked' && (
             <div className="space-y-2">
               <label className="block text-sm font-medium" style={{ color: textColor }}>
-                {t('rsvp.uploadTicketProof')} <span className="text-red-500">*</span>
+                {t('rsvp.uploadTicketProof')} {requireTicketAttachment && <span className="text-red-500">*</span>}
               </label>
               
               {ticketAttachmentUrl ? (

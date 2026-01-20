@@ -20,6 +20,9 @@ create table "weddings" (
   "page_config" jsonb default '{}'::jsonb,
   "owner_id" uuid references auth.users(id) on delete set null,
   "collaborator_emails" text[] default '{}', -- Array of email addresses with edit access
+  "og_title" text,
+  "og_description" text,
+  "og_image_url" text,
   "created_at" timestamp with time zone default now(),
   "updated_at" timestamp with time zone default now()
 );

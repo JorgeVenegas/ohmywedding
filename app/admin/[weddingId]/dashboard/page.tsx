@@ -3,7 +3,7 @@ import { use } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { LogOut, ArrowRight, Mail, Gift } from "lucide-react"
+import { LogOut, ArrowRight, Mail, Gift, Settings } from "lucide-react"
 import { Header } from "@/components/header"
 import { UpdateWeddingNameId } from "@/components/ui/update-wedding-name-id"
 
@@ -29,6 +29,13 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       icon: Gift,
       href: `/admin/${weddingId}/registry`,
       color: "accent",
+    },
+    {
+      title: "Settings",
+      description: "Configure features, RSVP options, invitations, and general preferences",
+      icon: Settings,
+      href: `/admin/${weddingId}/settings`,
+      color: "secondary",
     },
   ]
 

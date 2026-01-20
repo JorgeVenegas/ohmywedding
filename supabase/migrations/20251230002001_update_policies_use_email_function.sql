@@ -1,4 +1,3 @@
--- Update all RLS policies to use the get_current_user_email() function
 -- instead of directly accessing auth.users
 
 -- wedding_schedule

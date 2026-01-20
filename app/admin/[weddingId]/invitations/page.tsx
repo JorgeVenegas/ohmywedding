@@ -530,6 +530,28 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     invitedBy: [] as string[],
   })
   
+  // State for guests to add within the group modal
+  const [guestsInGroupModal, setGuestsInGroupModal] = useState<Array<{
+    id: string
+    name: string
+    phoneNumber: string
+    tags: string[]
+    confirmationStatus: 'pending' | 'confirmed' | 'declined'
+    dietaryRestrictions: string
+    notes: string
+  }>>([])
+  
+  const [tempGuestForm, setTempGuestForm] = useState({
+    name: "",
+    phoneNumber: "",
+    tags: [] as string[],
+    confirmationStatus: "pending" as 'pending' | 'confirmed' | 'declined',
+    dietaryRestrictions: "",
+    notes: "",
+  })
+  
+  const [isAddingGuestInModal, setIsAddingGuestInModal] = useState(false)
+  
   const [guestForm, setGuestForm] = useState({
     name: "",
     phoneNumber: "",
@@ -669,10 +691,43 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         return
       }
       
+      // If there are guests to add, create them for this group
+      if (guestsInGroupModal.length > 0 && result.data?.id) {
+        const groupId = result.data.id
+        
+        for (const guest of guestsInGroupModal) {
+          try {
+            await fetch("/api/guests", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                weddingId: weddingId,
+                groupId: groupId,
+                name: guest.name,
+                phoneNumber: guest.phoneNumber || null,
+                tags: guest.tags,
+                confirmationStatus: guest.confirmationStatus,
+                dietaryRestrictions: guest.dietaryRestrictions || null,
+                notes: guest.notes || null,
+              }),
+            })
+          } catch (error) {
+            console.error("Error adding guest:", error)
+          }
+        }
+      }
+      
       await fetchGuestGroups()
       setShowAddGroupModal(false)
       resetGroupForm()
-      setNotification({ isOpen: true, type: 'success', title: 'Success', message: 'Group added successfully!' })
+      setNotification({ 
+        isOpen: true, 
+        type: 'success', 
+        title: 'Success', 
+        message: guestsInGroupModal.length > 0 
+          ? `Group and ${guestsInGroupModal.length} guest${guestsInGroupModal.length > 1 ? 's' : ''} added successfully!` 
+          : 'Group added successfully!' 
+      })
     } catch (error) {
       console.error("Error adding group:", error)
       setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error adding group. Please try again.' })
@@ -902,6 +957,16 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   const resetGroupForm = () => {
     setGroupForm({ name: "", phoneNumber: "", tags: [], notes: "", invitedBy: [] })
+    setGuestsInGroupModal([])
+    setTempGuestForm({
+      name: "",
+      phoneNumber: "",
+      tags: [],
+      confirmationStatus: "pending",
+      dietaryRestrictions: "",
+      notes: "",
+    })
+    setIsAddingGuestInModal(false)
   }
 
   const resetGuestForm = () => {
@@ -974,6 +1039,40 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         ? prev.tags.filter(t => t !== tag)
         : [...prev.tags, tag],
     }))
+  }
+  
+  // Helpers for managing guests in the group modal
+  const toggleTempGuestTag = (tag: string) => {
+    setTempGuestForm(prev => ({
+      ...prev,
+      tags: prev.tags.includes(tag)
+        ? prev.tags.filter(t => t !== tag)
+        : [...prev.tags, tag],
+    }))
+  }
+  
+  const addGuestToGroupModal = () => {
+    if (!tempGuestForm.name.trim()) return
+    
+    const newGuest = {
+      id: Date.now().toString(),
+      ...tempGuestForm,
+    }
+    
+    setGuestsInGroupModal(prev => [...prev, newGuest])
+    setTempGuestForm({
+      name: "",
+      phoneNumber: "",
+      tags: [],
+      confirmationStatus: "pending",
+      dietaryRestrictions: "",
+      notes: "",
+    })
+    setIsAddingGuestInModal(false)
+  }
+  
+  const removeGuestFromGroupModal = (guestId: string) => {
+    setGuestsInGroupModal(prev => prev.filter(g => g.id !== guestId))
   }
 
   // Multi-select handlers
@@ -3845,8 +3944,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       {/* Add/Edit Group Modal */}
       {(showAddGroupModal || editingGroup) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-6">
+          <Card className="w-full max-w-md max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 pb-4 border-b">
               <h2 className="text-xl font-semibold text-foreground">
                 {editingGroup ? "Edit Group" : "Add Guest Group"}
               </h2>
@@ -3863,7 +3962,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               </Button>
             </div>
 
-            <div className="space-y-4">
+            <div className="flex-1 overflow-y-auto p-6 pt-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Group Name *
@@ -3964,26 +4063,201 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => {
-                    setShowAddGroupModal(false)
-                    setEditingGroup(null)
-                    resetGroupForm()
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="flex-1"
-                  onClick={editingGroup ? handleUpdateGroup : handleAddGroup}
-                  disabled={!groupForm.name}
-                >
-                  {editingGroup ? "Update" : "Add"} Group
-                </Button>
-              </div>
+              {/* Guests Section - Only show when creating a new group */}
+              {!editingGroup && (
+                <div className="border-t pt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm font-medium text-foreground">
+                      Guests ({guestsInGroupModal.length})
+                    </label>
+                    {!isAddingGuestInModal && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsAddingGuestInModal(true)}
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        Add Guest
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* List of added guests */}
+                  {guestsInGroupModal.length > 0 && (
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {guestsInGroupModal.map((guest) => (
+                        <div
+                          key={guest.id}
+                          className="flex items-center justify-between p-2 bg-muted/50 rounded-md text-sm"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-foreground truncate">
+                              {guest.name}
+                            </div>
+                            {guest.phoneNumber && (
+                              <div className="text-xs text-muted-foreground">
+                                {guest.phoneNumber}
+                              </div>
+                            )}
+                            {guest.tags.length > 0 && (
+                              <div className="flex gap-1 mt-1">
+                                {guest.tags.map((tag) => (
+                                  <span
+                                    key={tag}
+                                    className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 ml-2"
+                            onClick={() => removeGuestFromGroupModal(guest.id)}
+                          >
+                            <X className="w-3 h-3 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add guest form */}
+                  {isAddingGuestInModal && (
+                    <div className="space-y-3 p-3 bg-muted/30 rounded-md border border-border">
+                      <div>
+                        <Input
+                          value={tempGuestForm.name}
+                          onChange={(e) =>
+                            setTempGuestForm({ ...tempGuestForm, name: e.target.value })
+                          }
+                          placeholder="Guest name *"
+                          autoFocus
+                        />
+                      </div>
+
+                      <div>
+                        <Input
+                          value={tempGuestForm.phoneNumber}
+                          onChange={(e) =>
+                            setTempGuestForm({ ...tempGuestForm, phoneNumber: e.target.value })
+                          }
+                          placeholder="Phone number (optional)"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">Tags</label>
+                        <div className="flex flex-wrap gap-1">
+                          {PREDEFINED_TAGS.map((tag) => (
+                            <button
+                              key={tag}
+                              type="button"
+                              onClick={() => toggleTempGuestTag(tag)}
+                              className={`px-2 py-0.5 rounded-full text-xs border transition-colors ${
+                                tempGuestForm.tags.includes(tag)
+                                  ? getTagColor(tag)
+                                  : "bg-background text-muted-foreground border-border hover:border-primary/50"
+                              }`}
+                            >
+                              {tag}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <select
+                          value={tempGuestForm.confirmationStatus}
+                          onChange={(e) =>
+                            setTempGuestForm({
+                              ...tempGuestForm,
+                              confirmationStatus: e.target.value as 'pending' | 'confirmed' | 'declined',
+                            })
+                          }
+                          className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs"
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="confirmed">Confirmed</option>
+                          <option value="declined">Declined</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Input
+                          value={tempGuestForm.dietaryRestrictions}
+                          onChange={(e) =>
+                            setTempGuestForm({
+                              ...tempGuestForm,
+                              dietaryRestrictions: e.target.value,
+                            })
+                          }
+                          placeholder="Dietary restrictions (optional)"
+                          className="text-xs"
+                        />
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => {
+                            setIsAddingGuestInModal(false)
+                            setTempGuestForm({
+                              name: "",
+                              phoneNumber: "",
+                              tags: [],
+                              confirmationStatus: "pending",
+                              dietaryRestrictions: "",
+                              notes: "",
+                            })
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="flex-1"
+                          onClick={addGuestToGroupModal}
+                          disabled={!tempGuestForm.name.trim()}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            </div>
+
+            <div className="flex gap-2 p-6 pt-4 border-t">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setShowAddGroupModal(false)
+                  setEditingGroup(null)
+                  resetGroupForm()
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={editingGroup ? handleUpdateGroup : handleAddGroup}
+                disabled={!groupForm.name}
+              >
+                {editingGroup ? "Update" : "Add"} Group
+              </Button>
             </div>
           </Card>
         </div>

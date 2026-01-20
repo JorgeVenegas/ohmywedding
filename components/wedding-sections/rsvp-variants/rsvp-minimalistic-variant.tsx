@@ -10,6 +10,7 @@ import { OTPVerificationDialog } from '@/components/ui/otp-verification-dialog'
 import { TravelFields } from '@/components/ui/travel-fields'
 import { Check, X, Loader2, CheckCircle2 } from 'lucide-react'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { useWeddingSettings } from '@/hooks/use-wedding-settings'
 import { BaseRSVPProps, getColorScheme } from './types'
 
 interface Guest {
@@ -62,6 +63,7 @@ export function RSVPMinimalisticVariant({
   })
   
   const { t } = useI18n()
+  const { settings: weddingSettings } = useWeddingSettings({ weddingNameId })
   const [groupData, setGroupData] = useState<GroupData | null>(null)
   const [guests, setGuests] = useState<Guest[]>([])
   const [loading, setLoading] = useState(true)
@@ -81,6 +83,9 @@ export function RSVPMinimalisticVariant({
     effectiveUseColorBackground
   )
   
+  // Determine if travel features should be shown
+  const showTravelInfo = weddingSettings?.rsvp_travel_confirmation_enabled ?? true
+  
   console.log('[RSVP Minimalistic] Color scheme:', {
     bgColor,
     isColored,
@@ -94,6 +99,7 @@ export function RSVPMinimalisticVariant({
     isEditing,
     guestsCount: guests.length,
     loading,
+    showTravelInfo,
   })
 
   useEffect(() => {
@@ -199,29 +205,34 @@ export function RSVPMinimalisticVariant({
   }
 
   const handleSubmitClick = () => {
-    // Validate: Check if admin requires travel info but guest hasn't provided it
-    const guestsNeedingTravelInfo = guests.filter(g => 
-      g.attending === true && 
-      g.adminSetTravel && 
-      (!g.is_traveling || !g.travel_arrangement)
-    )
-    
-    if (guestsNeedingTravelInfo.length > 0) {
-      setSubmitError(t('rsvp.travelInfoRequired'))
-      return
-    }
-    
-    // Validate: Check if any guest has selected 'already_booked' but hasn't uploaded a ticket
-    const guestsNeedingTicket = guests.filter(g => 
-      g.attending === true && 
-      g.is_traveling && 
-      g.travel_arrangement === 'already_booked' && 
-      !g.ticket_attachment_url
-    )
-    
-    if (guestsNeedingTicket.length > 0) {
-      setSubmitError(t('rsvp.ticketRequired'))
-      return
+    // Only validate travel info if the feature is enabled
+    if (showTravelInfo) {
+      // Validate: Check if admin requires travel info but guest hasn't provided it
+      const guestsNeedingTravelInfo = guests.filter(g => 
+        g.attending === true && 
+        g.adminSetTravel && 
+        (!g.is_traveling || !g.travel_arrangement)
+      )
+      
+      if (guestsNeedingTravelInfo.length > 0) {
+        setSubmitError(t('rsvp.travelInfoRequired'))
+        return
+      }
+      
+      // Validate: Check if settings require ticket attachment
+      if (weddingSettings?.rsvp_require_ticket_attachment) {
+        const guestsNeedingTicket = guests.filter(g => 
+          g.attending === true && 
+          g.is_traveling && 
+          g.travel_arrangement === 'already_booked' && 
+          !g.ticket_attachment_url
+        )
+        
+        if (guestsNeedingTicket.length > 0) {
+          setSubmitError(t('rsvp.ticketRequired'))
+          return
+        }
+      }
     }
     
     setShowOTPDialog(true)
@@ -344,7 +355,7 @@ export function RSVPMinimalisticVariant({
                   </div>
                   
                   {/* Travel Details */}
-                  {guest.attending === true && guest.is_traveling && (
+                  {showTravelInfo && guest.attending === true && guest.is_traveling && (
                     <div className="mt-3 pt-3 border-t" style={{ borderColor: `${titleColor}20` }}>
                       <p className="text-xs font-semibold mb-2" style={{ color: titleColor }}>
                         {t('rsvp.travelDetails')}
@@ -372,7 +383,7 @@ export function RSVPMinimalisticVariant({
                       </div>
                     </div>
                   )}
-                  {guest.attending === true && !guest.is_traveling && (
+                  {showTravelInfo && guest.attending === true && !guest.is_traveling && (
                     <p className="mt-2 text-xs text-gray-500">
                       {t('rsvp.notTraveling')}
                     </p>
@@ -522,8 +533,8 @@ export function RSVPMinimalisticVariant({
                     </div>
                   )}
 
-                  {/* Travel Fields - Only show if attending */}
-                  {guest.attending === true && (
+                  {/* Travel Fields - Only show if attending and travel info is enabled */}
+                  {showTravelInfo && guest.attending === true && (
                     <div className="mt-4">
                       <TravelFields
                         guestId={guest.id}
@@ -536,6 +547,8 @@ export function RSVPMinimalisticVariant({
                         adminSetTravel={guest.adminSetTravel || false}
                         primaryColor={titleColor}
                         textColor={textColor}
+                        requireTicketAttachment={weddingSettings?.rsvp_require_ticket_attachment ?? false}
+                        requireNoTicketReason={weddingSettings?.rsvp_require_no_ticket_reason ?? false}
                         onTravelChange={(isTraveling: boolean) => updateGuest(guest.id, 'is_traveling', isTraveling)}
                         onTravelingFromChange={(from: string) => updateGuest(guest.id, 'traveling_from', from)}
                         onTravelArrangementChange={(arrangement: 'already_booked' | 'no_ticket_needed' | null) => updateGuest(guest.id, 'travel_arrangement', arrangement)}
