@@ -116,6 +116,15 @@ export function FAQCardsVariant({
                   >
                     {item.question}
                   </h3>
+                  {item.image_url && (
+                    <div className="mb-3 rounded-lg overflow-hidden">
+                      <img 
+                        src={item.image_url} 
+                        alt={item.question}
+                        className="w-full h-auto object-cover max-h-48"
+                      />
+                    </div>
+                  )}
                   <p 
                     className="text-sm sm:text-base leading-relaxed"
                     style={{ 

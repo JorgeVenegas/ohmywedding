@@ -121,8 +121,17 @@ export function FAQMinimalVariant({
                 </button>
                 
                 <div 
-                  className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-96 mt-3' : 'max-h-0'}`}
+                  className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-[800px] mt-3' : 'max-h-0'}`}
                 >
+                  {item.image_url && (
+                    <div className="mb-3 rounded overflow-hidden">
+                      <img 
+                        src={item.image_url} 
+                        alt={item.question}
+                        className="w-full h-auto object-cover max-h-60"
+                      />
+                    </div>
+                  )}
                   <p 
                     className="text-sm leading-relaxed"
                     style={{ 

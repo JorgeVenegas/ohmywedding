@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -22,21 +22,38 @@ export function GalleryCarouselVariant({
 }: BaseGalleryProps) {
   const { t } = useI18n()
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [isTransitioning, setIsTransitioning] = useState(false)
 
   const { bgColor, textColor, mutedTextColor, isColored } = getGalleryColorScheme(
     theme,
     backgroundColorChoice || 'none'
   )
 
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % photos.length)
-  }
+  const validPhotos = photos.filter(p => p.url)
 
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length)
-  }
+  const goToSlide = useCallback((index: number) => {
+    if (isTransitioning) return
+    setIsTransitioning(true)
+    setCurrentIndex(index)
+    setTimeout(() => setIsTransitioning(false), 500)
+  }, [isTransitioning])
 
-  if (photos.length === 0) {
+  const nextSlide = useCallback(() => {
+    goToSlide((currentIndex + 1) % validPhotos.length)
+  }, [currentIndex, validPhotos.length, goToSlide])
+
+  const prevSlide = useCallback(() => {
+    goToSlide((currentIndex - 1 + validPhotos.length) % validPhotos.length)
+  }, [currentIndex, validPhotos.length, goToSlide])
+
+  // Auto-advance every 5 seconds
+  useEffect(() => {
+    if (validPhotos.length <= 1) return
+    const interval = setInterval(nextSlide, 5000)
+    return () => clearInterval(interval)
+  }, [validPhotos.length, nextSlide])
+
+  if (validPhotos.length === 0) {
     return (
       <SectionWrapper
         theme={isColored ? undefined : theme}
@@ -57,7 +74,7 @@ export function GalleryCarouselVariant({
     )
   }
 
-  const currentPhoto = photos[currentIndex]
+  const currentPhoto = validPhotos[currentIndex]
 
   return (
     <SectionWrapper
@@ -68,7 +85,7 @@ export function GalleryCarouselVariant({
       style={isColored ? { backgroundColor: bgColor } : undefined}
     >
       {/* Section Header */}
-      <div className={`mb-12 text-${titleAlignment}`}>
+      <div className={`mb-8 md:mb-12 text-${titleAlignment}`}>
         <h2
           className="text-3xl md:text-5xl font-bold mb-4"
           style={{
@@ -92,67 +109,80 @@ export function GalleryCarouselVariant({
 
       {/* Carousel */}
       <div className="relative max-w-5xl mx-auto">
-        {/* Main Image */}
-        {currentPhoto.url ? (
-          <div className="relative aspect-[16/9] md:h-[500px] lg:h-[600px] rounded-lg overflow-hidden bg-gray-100">
-            <Image
-              src={currentPhoto.url}
-              alt={currentPhoto.alt || `Photo ${currentIndex + 1}`}
-              fill
-              className="object-contain"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-            />
-          </div>
-        ) : (
-          <div className="relative aspect-[16/9] md:h-[500px] lg:h-[600px] rounded-lg overflow-hidden bg-gray-200 flex items-center justify-center">
-            <p className="text-gray-500">{t('config.uploadImage')}</p>
-          </div>
-        )}
+        {/* Main Image Container */}
+        <div className="relative aspect-[4/3] md:aspect-[16/10] rounded-xl overflow-hidden shadow-2xl bg-gray-100">
+          {validPhotos.map((photo, index) => (
+            <div
+              key={photo.id}
+              className={`absolute inset-0 transition-all duration-500 ease-in-out ${
+                index === currentIndex 
+                  ? 'opacity-100 scale-100' 
+                  : 'opacity-0 scale-105'
+              }`}
+            >
+              <Image
+                src={photo.url}
+                alt={photo.alt || `Photo ${index + 1}`}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+                priority={index === 0}
+                unoptimized
+              />
+            </div>
+          ))}
+          
+          {/* Gradient overlay for better contrast */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+        </div>
 
         {/* Navigation Buttons */}
-        {photos.length > 1 && (
+        {validPhotos.length > 1 && (
           <>
-            <Button
-              variant="outline"
-              size="icon"
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white"
+            <button
+              className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-lg flex items-center justify-center transition-all hover:scale-110"
               onClick={prevSlide}
+              disabled={isTransitioning}
             >
-              <ChevronLeft className="h-6 w-6" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white"
+              <ChevronLeft className="h-5 w-5 md:h-6 md:w-6 text-gray-800" />
+            </button>
+            <button
+              className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-lg flex items-center justify-center transition-all hover:scale-110"
               onClick={nextSlide}
+              disabled={isTransitioning}
             >
-              <ChevronRight className="h-6 w-6" />
-            </Button>
+              <ChevronRight className="h-5 w-5 md:h-6 md:w-6 text-gray-800" />
+            </button>
           </>
         )}
 
         {/* Caption */}
         {currentPhoto.caption && (
           <div className="mt-6 text-center">
-            <p className="text-lg text-muted-foreground italic">{currentPhoto.caption}</p>
+            <p 
+              className="text-lg md:text-xl italic"
+              style={{ color: mutedTextColor }}
+            >
+              "{currentPhoto.caption}"
+            </p>
           </div>
         )}
 
-        {/* Indicators */}
-        {photos.length > 1 && (
+        {/* Dot Indicators */}
+        {validPhotos.length > 1 && (
           <div className="flex justify-center gap-2 mt-6">
-            {photos.map((_, index) => (
+            {validPhotos.map((_, index) => (
               <button
                 key={index}
-                className={`w-2 h-2 rounded-full transition-all ${
+                className={`h-2 rounded-full transition-all duration-300 ${
                   index === currentIndex
-                    ? 'w-8 opacity-100'
-                    : 'opacity-50'
+                    ? 'w-8'
+                    : 'w-2 opacity-50 hover:opacity-75'
                 }`}
                 style={{
                   backgroundColor: theme?.colors?.accent || '#e8a76a'
                 }}
-                onClick={() => setCurrentIndex(index)}
+                onClick={() => goToSlide(index)}
               />
             ))}
           </div>
@@ -160,7 +190,7 @@ export function GalleryCarouselVariant({
 
         {/* Counter */}
         <div className="text-center mt-4 text-sm" style={{ color: mutedTextColor }}>
-          {currentIndex + 1} {t('gallery.of')} {photos.length}
+          {currentIndex + 1} / {validPhotos.length}
         </div>
       </div>
     </SectionWrapper>

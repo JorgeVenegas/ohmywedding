@@ -60,6 +60,9 @@ interface GalleryConfigFormProps {
     backgroundColorChoice?: BackgroundColorChoice
     titleAlignment?: 'left' | 'center' | 'right'
     subtitleAlignment?: 'left' | 'center' | 'right'
+    gridColumns?: 2 | 3 | 4 | 5 | 6
+    bannerHeight?: 'small' | 'medium' | 'large' | 'full'
+    masonryColumns?: 2 | 3 | 4 | 5
   }
   onChange: (key: string, value: any) => void
 }
@@ -247,6 +250,77 @@ export function GalleryConfigForm({ config, onChange }: GalleryConfigFormProps) 
         </div>
       </div>
 
+      {/* Grid Columns - Only show for grid variant */}
+      {config.variant === 'grid' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {t('config.gridColumns')}
+          </label>
+          <div className="flex gap-2">
+            {[2, 3, 4, 5, 6].map((cols) => (
+              <Button
+                key={cols}
+                variant={(config.gridColumns || 4) === cols ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onChange('gridColumns', cols)}
+                className="flex-1"
+              >
+                {cols}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Masonry Columns - Only show for masonry variant */}
+      {config.variant === 'masonry' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {t('config.masonryColumns')}
+          </label>
+          <div className="flex gap-2">
+            {[2, 3, 4, 5].map((cols) => (
+              <Button
+                key={cols}
+                variant={(config.masonryColumns || 4) === cols ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onChange('masonryColumns', cols)}
+                className="flex-1"
+              >
+                {cols}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Banner Height - Only show for banner variant */}
+      {config.variant === 'banner' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {t('config.bannerHeight')}
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { value: 'small', label: t('config.small') },
+              { value: 'medium', label: t('config.medium') },
+              { value: 'large', label: t('config.large') },
+              { value: 'full', label: t('config.fullScreen') }
+            ].map((option) => (
+              <Button
+                key={option.value}
+                variant={(config.bannerHeight || 'large') === option.value ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onChange('bannerHeight', option.value as any)}
+                className="w-full text-xs"
+              >
+                {option.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Background Color */}
       <div className="space-y-3">
         <label className="text-sm font-medium text-gray-700">{t('config.backgroundColor')}</label>
@@ -301,6 +375,8 @@ export function GalleryConfigForm({ config, onChange }: GalleryConfigFormProps) 
               input.multiple = true
               input.onchange = async (e: any) => {
                 const files = Array.from(e.target.files || []) as File[]
+                const newPhotos: Photo[] = []
+                
                 for (const file of files) {
                   const formData = new FormData()
                   formData.append('file', file)
@@ -311,11 +387,21 @@ export function GalleryConfigForm({ config, onChange }: GalleryConfigFormProps) 
                     })
                     const result = await response.json()
                     if (result.success) {
-                      handleAddPhotos(result.url)
+                      newPhotos.push({
+                        id: `photo-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+                        url: result.url,
+                        caption: '',
+                        alt: ''
+                      })
                     }
                   } catch (error) {
                     console.error('Upload error:', error)
                   }
+                }
+                
+                // Add all uploaded photos at once
+                if (newPhotos.length > 0) {
+                  onChange('photos', [...photos, ...newPhotos])
                 }
               }
               input.click()
@@ -334,10 +420,19 @@ export function GalleryConfigForm({ config, onChange }: GalleryConfigFormProps) 
             <p className="text-xs text-gray-500">{t('gallery.uploadYourFirst')}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-3">
-            {photos.map((photo, index) => (
-              <div key={photo.id} className="relative group">
-                <div className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-gray-300 transition-colors">
+          <>
+            {/* Photo Grid Preview */}
+            <div className="grid grid-cols-3 gap-2">
+              {photos.map((photo, index) => (
+                <div 
+                  key={photo.id} 
+                  className={`relative aspect-square rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
+                    expandedPhoto === index 
+                      ? 'border-blue-500 ring-2 ring-blue-200' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => toggleExpanded(index)}
+                >
                   {photo.url ? (
                     <img
                       src={photo.url}
@@ -346,71 +441,101 @@ export function GalleryConfigForm({ config, onChange }: GalleryConfigFormProps) 
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                      <ImageIcon className="w-8 h-8 text-gray-400" />
+                      <ImageIcon className="w-6 h-6 text-gray-400" />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleExpanded(index)}
-                        className="bg-white hover:bg-gray-100 text-gray-900 h-8 px-3"
-                      >
-                        {expandedPhoto === index ? t('common.close') : t('common.edit')}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemovePhoto(index)}
-                        className="bg-red-500 hover:bg-red-600 text-white h-8 w-8 p-0"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                  {/* Number Badge */}
+                  <div className="absolute top-1 left-1 w-5 h-5 rounded-full bg-black/60 text-white text-xs flex items-center justify-center">
+                    {index + 1}
+                  </div>
+                  {/* Delete Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleRemovePhoto(index)
+                    }}
+                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Expanded Edit Panel - Shows below grid */}
+            {expandedPhoto !== null && photos[expandedPhoto] && (
+              <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-gray-900 text-sm">
+                    {t('gallery.editPhoto')} #{expandedPhoto + 1}
+                  </h4>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setExpandedPhoto(null)}
+                    className="h-7 px-2 text-gray-500"
+                  >
+                    {t('common.close')}
+                  </Button>
+                </div>
+
+                {/* Photo Preview */}
+                <div className="flex gap-4">
+                  <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200">
+                    {photos[expandedPhoto].url ? (
+                      <img
+                        src={photos[expandedPhoto].url}
+                        alt={photos[expandedPhoto].alt || 'Photo'}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                        <ImageIcon className="w-8 h-8 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        {t('gallery.photoCaption')}
+                      </label>
+                      <Textarea
+                        value={photos[expandedPhoto].caption || ''}
+                        onChange={(e) => handlePhotoChange(expandedPhoto, 'caption', e.target.value)}
+                        placeholder={t('gallery.noCaption')}
+                        rows={3}
+                        className="text-sm"
+                      />
                     </div>
                   </div>
                 </div>
 
-                {expandedPhoto === index && (
-                  <div className="mt-3 p-4 bg-white border-2 border-gray-300 rounded-lg space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {t('config.uploadImage')}
-                      </label>
-                      <ImageUpload
-                        currentImageUrl={photo.url}
-                        onUpload={(url) => handlePhotoChange(index, 'url', url)}
-                        placeholder={t('config.selectImage')}
-                      />
-                    </div>
+                {/* Replace Image */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    {t('config.changeImage')}
+                  </label>
+                  <ImageUpload
+                    currentImageUrl={photos[expandedPhoto].url}
+                    onUpload={(url) => handlePhotoChange(expandedPhoto, 'url', url)}
+                    placeholder={t('config.selectImage')}
+                  />
+                </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {t('gallery.photoCaption')}
-                      </label>
-                      <Textarea
-                        value={photo.caption || ''}
-                        onChange={(e) => handlePhotoChange(index, 'caption', e.target.value)}
-                        placeholder={t('config.enterDescription')}
-                        rows={2}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Alt Text
-                      </label>
-                      <Input
-                        value={photo.alt || ''}
-                        onChange={(e) => handlePhotoChange(index, 'alt', e.target.value)}
-                        placeholder="Description for accessibility"
-                      />
-                    </div>
-                  </div>
-                )}
+                {/* Delete Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleRemovePhoto(expandedPhoto)}
+                  className="w-full text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  {t('config.removePhoto')}
+                </Button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -284,6 +284,8 @@ export interface Translations {
     photoCaption: string
     noPhotosYet: string
     uploadYourFirst: string
+    noCaption: string
+    editPhoto: string
   }
 
   // FAQ Section
@@ -445,6 +447,9 @@ export interface Translations {
     left: string
     center: string
     right: string
+    gridColumns: string
+    masonryColumns: string
+    bannerHeight: string
     show: string
     hide: string
     enabled: string
@@ -466,6 +471,7 @@ export interface Translations {
     selectImage: string
     changeImage: string
     uploadImage: string
+    image: string
     // Form labels
     sectionTitle: string
     sectionSubtitle: string
@@ -575,6 +581,7 @@ export interface Translations {
     medium: string
     large: string
     full: string
+    fullScreen: string
     imageHeight: string
     imageWidth: string
     centered: string

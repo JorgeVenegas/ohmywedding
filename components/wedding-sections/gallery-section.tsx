@@ -28,6 +28,9 @@ interface GallerySectionProps extends Omit<BaseGalleryProps, 'backgroundColorCho
   sectionSubtitle?: string
   titleAlignment?: 'left' | 'center' | 'right'
   subtitleAlignment?: 'left' | 'center' | 'right'
+  gridColumns?: 2 | 3 | 4 | 5 | 6
+  bannerHeight?: 'small' | 'medium' | 'large' | 'full'
+  masonryColumns?: 2 | 3 | 4 | 5
 }
 
 export function GallerySection({
@@ -41,7 +44,10 @@ export function GallerySection({
   showVariantSwitcher = true,
   backgroundColorChoice = 'none',
   titleAlignment = 'center',
-  subtitleAlignment = 'center'
+  subtitleAlignment = 'center',
+  gridColumns = 4,
+  bannerHeight = 'large',
+  masonryColumns = 4
 }: GallerySectionProps) {
   const { t } = useI18n()
   
@@ -90,7 +96,10 @@ export function GallerySection({
     photos,
     backgroundColorChoice,
     titleAlignment,
-    subtitleAlignment
+    subtitleAlignment,
+    gridColumns,
+    bannerHeight,
+    masonryColumns
   })
 
   const commonProps = {
@@ -102,7 +111,10 @@ export function GallerySection({
     photos: config.photos || photos,
     backgroundColorChoice: config.backgroundColorChoice || backgroundColorChoice,
     titleAlignment: config.titleAlignment || titleAlignment,
-    subtitleAlignment: config.subtitleAlignment || subtitleAlignment
+    subtitleAlignment: config.subtitleAlignment || subtitleAlignment,
+    gridColumns: config.gridColumns || gridColumns,
+    bannerHeight: config.bannerHeight || bannerHeight,
+    masonryColumns: config.masonryColumns || masonryColumns
   }
 
   const renderGalleryContent = (activeVariant: string) => {
@@ -128,7 +140,10 @@ export function GallerySection({
       photos: config.photos || photos,
       backgroundColorChoice: config.backgroundColorChoice || backgroundColorChoice,
       titleAlignment: config.titleAlignment || titleAlignment,
-      subtitleAlignment: config.subtitleAlignment || subtitleAlignment
+      subtitleAlignment: config.subtitleAlignment || subtitleAlignment,
+      gridColumns: config.gridColumns || gridColumns,
+      bannerHeight: config.bannerHeight || bannerHeight,
+      masonryColumns: config.masonryColumns || masonryColumns
     })
   }
 

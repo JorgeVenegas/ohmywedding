@@ -16,7 +16,8 @@ export function GalleryBannerVariant({
   photos = [],
   backgroundColorChoice = 'none',
   titleAlignment = 'center',
-  subtitleAlignment = 'center'
+  subtitleAlignment = 'center',
+  bannerHeight = 'large'
 }: BaseGalleryProps) {
   const { t } = useI18n()
 
@@ -49,33 +50,33 @@ export function GalleryBannerVariant({
   }
 
   return (
-    <SectionWrapper
-      theme={isColored ? undefined : theme}
-      alignment={alignment}
-      background={isColored ? 'default' : 'muted'}
+    <section 
       id="gallery"
-      className="!px-0 !py-0"
+      className="relative w-full"
       style={isColored ? { backgroundColor: bgColor } : undefined}
     >
-      {/* Full-Width Banner */}
-      <div className="relative w-full">
-        {/* Banner Image */}
-        <div className="relative w-full h-[50vh] md:h-[60vh] lg:h-[75vh] bg-black">
-          <Image
-            src={featuredPhoto.url}
-            alt={featuredPhoto.alt || 'Gallery banner'}
-            fill
-            className="object-contain"
-            priority
-            sizes="100vw"
-          />
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-black/20" />
-        </div>
+      {/* Full-Width Banner - Single Featured Photo */}
+      <div className={`relative w-full ${
+        bannerHeight === 'small' ? 'h-[40vh] md:h-[50vh]' :
+        bannerHeight === 'medium' ? 'h-[50vh] md:h-[60vh]' :
+        bannerHeight === 'large' ? 'h-[60vh] md:h-[70vh] lg:h-[80vh]' :
+        'h-screen'
+      }`}>
+        <Image
+          src={featuredPhoto.url}
+          alt={featuredPhoto.alt || 'Gallery banner'}
+          fill
+          className="object-cover"
+          priority
+          sizes="100vw"
+          unoptimized
+        />
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50" />
 
         {/* Centered Content Overlay */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className={`text-white text-center px-6 text-${titleAlignment}`}>
+          <div className="text-white text-center px-6 max-w-4xl">
             <h2
               className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 drop-shadow-lg"
               style={{
@@ -86,42 +87,18 @@ export function GalleryBannerVariant({
               {sectionTitle || t('gallery.title')}
             </h2>
             {sectionSubtitle && (
-              <p className={`text-xl md:text-2xl lg:text-3xl drop-shadow-lg text-${subtitleAlignment}`}>
+              <p className="text-xl md:text-2xl lg:text-3xl drop-shadow-lg opacity-90">
                 {sectionSubtitle}
               </p>
             )}
             {featuredPhoto.caption && (
-              <p className="mt-6 text-lg md:text-xl italic opacity-90">
-                {featuredPhoto.caption}
+              <p className="mt-8 text-lg md:text-xl italic opacity-80">
+                "{featuredPhoto.caption}"
               </p>
             )}
           </div>
         </div>
       </div>
-
-      {/* Additional Photos Grid (if more than 1 photo) */}
-      {photos.length > 1 && (
-        <div className="container mx-auto px-6 py-16">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {photos.slice(1).map((photo) => photo.url ? (
-              <div key={photo.id} className="relative aspect-square rounded-lg overflow-hidden group">
-                <Image
-                  src={photo.url}
-                  alt={photo.alt || 'Gallery photo'}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                />
-                {photo.caption && (
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-4">
-                    <p className="text-white text-center text-sm">{photo.caption}</p>
-                  </div>
-                )}
-              </div>
-            ) : null)}
-          </div>
-        </div>
-      )}
-    </SectionWrapper>
+    </section>
   )
 }

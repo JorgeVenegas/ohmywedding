@@ -5,7 +5,6 @@ import Image from 'next/image'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseGalleryProps } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
-import { Camera } from 'lucide-react'
 import { getGalleryColorScheme } from './color-utils'
 
 export function GalleryListVariant({
@@ -26,7 +25,9 @@ export function GalleryListVariant({
     backgroundColorChoice || 'none'
   )
 
-  if (photos.length === 0) {
+  const validPhotos = photos.filter(photo => photo.url)
+
+  if (validPhotos.length === 0) {
     return (
       <SectionWrapper
         theme={isColored ? undefined : theme}
@@ -78,61 +79,56 @@ export function GalleryListVariant({
         )}
       </div>
 
-      {/* Vertical List */}
-      <div className="max-w-4xl mx-auto space-y-12">
-        {photos.filter(photo => photo.url).map((photo, index) => (
+      {/* Elegant Vertical List */}
+      <div className="max-w-4xl mx-auto space-y-16 w-full">
+        {validPhotos.map((photo, index) => (
           <div 
             key={photo.id}
-            className="group"
+            className={`flex flex-col ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} gap-8 items-center`}
           >
-            <div className="flex flex-col md:flex-row gap-6 items-start">
-              {/* Photo Number/Icon */}
-              <div className="flex-shrink-0">
-                <div 
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
-                  style={{ backgroundColor: theme?.colors?.accent || '#e8a76a' }}
-                >
-                  <Camera className="w-5 h-5" />
-                </div>
-              </div>
-
-              {/* Photo and Content */}
-              <div className="flex-1">
-                <div className="relative aspect-[16/10] rounded-lg overflow-hidden shadow-lg mb-4 group-hover:shadow-xl transition-shadow duration-300 bg-gray-100">
-                  <Image
-                    src={photo.url}
-                    alt={photo.alt || `Photo ${index + 1}`}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    sizes="(max-width: 768px) 100vw, 800px"
-                    unoptimized={photo.url.includes('blob:')}
-                  />
-                </div>
-                
-                {/* Caption */}
-                {photo.caption && (
-                  <div className="pl-4 border-l-4" style={{ borderColor: theme?.colors?.accent || '#e8a76a' }}>
-                    <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-                      {photo.caption}
-                    </p>
-                  </div>
-                )}
+            {/* Photo */}
+            <div className="flex-1 w-full">
+              <div className="relative aspect-[4/3] rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-500 [&:hover_img]:scale-105">
+                <Image
+                  src={photo.url}
+                  alt={photo.alt || `Photo ${index + 1}`}
+                  fill
+                  className="object-cover transition-transform duration-700 ease-out"
+                  sizes="(max-width: 768px) 100vw, 600px"
+                  unoptimized
+                />
               </div>
             </div>
 
-            {/* Divider (not for last item) */}
-            {index < photos.filter(p => p.url).length - 1 && (
-              <div className="mt-12 w-full h-px bg-gray-200" />
-            )}
+            {/* Caption Area */}
+            <div className={`flex-1 w-full ${index % 2 === 0 ? 'md:pl-4' : 'md:pr-4'}`}>
+              <div className="flex items-center gap-4 mb-4">
+                <div 
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-white font-medium text-lg"
+                  style={{ backgroundColor: theme?.colors?.accent || '#e8a76a' }}
+                >
+                  {index + 1}
+                </div>
+                <div 
+                  className="flex-1 h-px"
+                  style={{ backgroundColor: `${theme?.colors?.accent || '#e8a76a'}40` }}
+                />
+              </div>
+              
+              {photo.caption && (
+                <p 
+                  className="text-lg md:text-xl leading-relaxed"
+                  style={{ 
+                    color: theme?.colors?.foreground || '#1f2937',
+                    fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                  }}
+                >
+                  {photo.caption}
+                </p>
+              )}
+            </div>
           </div>
         ))}
-      </div>
-
-      {/* Photo Count */}
-      <div className="text-center mt-12">
-        <p className="text-sm" style={{ color: mutedTextColor }}>
-          {photos.filter(p => p.url).length} {photos.filter(p => p.url).length === 1 ? t('gallery.photo') : t('gallery.photos')}
-        </p>
       </div>
     </SectionWrapper>
   )

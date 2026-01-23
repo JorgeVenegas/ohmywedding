@@ -91,6 +91,15 @@ export function FAQSimpleVariant({
                 <span>{item.question}</span>
               </h3>
               <div className="sm:pl-10">
+                {item.image_url && (
+                  <div className="mb-3 rounded-lg overflow-hidden">
+                    <img 
+                      src={item.image_url} 
+                      alt={item.question}
+                      className="w-full h-auto object-cover max-h-64"
+                    />
+                  </div>
+                )}
                 <p 
                   className="text-sm sm:text-base leading-relaxed"
                   style={{ 

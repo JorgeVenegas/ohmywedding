@@ -6,6 +6,7 @@ export interface FAQItem {
   id?: string
   question: string
   answer: string
+  image_url?: string
 }
 
 export interface BaseFAQProps {

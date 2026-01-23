@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
+import { ImageUpload } from '@/components/ui/image-upload'
 import { usePageConfig } from '@/components/contexts/page-config-context'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { Check, Plus, Trash2, ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
@@ -49,6 +50,7 @@ interface FAQItem {
   id?: string
   question: string
   answer: string
+  image_url?: string
 }
 
 interface FAQConfigFormProps {
@@ -388,6 +390,20 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
                           onChange={(e) => updateQuestion(index, 'answer', e.target.value)}
                           placeholder={t('config.enterAnswer')}
                           rows={3}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-2">
+                          {t('config.image')} ({t('config.optional')})
+                        </label>
+                        <ImageUpload
+                          onUpload={(url) => {
+                            const updated = [...questions]
+                            updated[index] = { ...updated[index], image_url: url || undefined }
+                            onChange('questions', updated)
+                          }}
+                          currentImageUrl={item.image_url}
+                          placeholder={t('config.uploadImage')}
                         />
                       </div>
                     </div>

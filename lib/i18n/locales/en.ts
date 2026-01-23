@@ -281,7 +281,9 @@ export const en: Translations = {
     addPhotos: 'Add Photos',
     photoCaption: 'Photo Caption',
     noPhotosYet: 'No photos yet',
-    uploadYourFirst: 'Upload your first photo to get started'
+    uploadYourFirst: 'Upload your first photo to get started',
+    noCaption: 'Add a caption...',
+    editPhoto: 'Edit photo'
   },
 
   // FAQ Section
@@ -443,6 +445,9 @@ export const en: Translations = {
     left: 'Left',
     center: 'Center',
     right: 'Right',
+    gridColumns: 'Grid Columns',
+    masonryColumns: 'Masonry Columns',
+    bannerHeight: 'Banner Height',
     show: 'Show',
     hide: 'Hide',
     enabled: 'Enabled',
@@ -464,6 +469,7 @@ export const en: Translations = {
     selectImage: 'Select Image',
     changeImage: 'Change Image',
     uploadImage: 'Upload Image',
+    image: 'Image',
     // Form labels
     sectionTitle: 'Section Title',
     sectionSubtitle: 'Section Subtitle',
@@ -573,6 +579,7 @@ export const en: Translations = {
     medium: 'Medium',
     large: 'Large',
     full: 'Full',
+    fullScreen: 'Full Screen',
     imageHeight: 'Image Height',
     imageWidth: 'Image Width',
     centered: 'Centered',

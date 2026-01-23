@@ -153,13 +153,22 @@ export function FAQAccordionVariant({
                 </button>
                 
                 <div 
-                  className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-96' : 'max-h-0'}`}
+                  className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-[800px]' : 'max-h-0'}`}
                 >
                   <div className="px-4 sm:px-6 pb-3 sm:pb-4">
                     <div 
                       className="w-full h-px mb-3 sm:mb-4"
                       style={{ backgroundColor: cardBorder }}
                     />
+                    {item.image_url && (
+                      <div className="mb-4 rounded-lg overflow-hidden">
+                        <img 
+                          src={item.image_url} 
+                          alt={item.question}
+                          className="w-full h-auto object-cover max-h-64 sm:max-h-80"
+                        />
+                      </div>
+                    )}
                     <p 
                       className="text-sm sm:text-base leading-relaxed"
                       style={{ 

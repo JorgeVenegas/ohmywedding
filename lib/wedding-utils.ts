@@ -142,6 +142,7 @@ export interface WeddingFAQ {
   wedding_id: string
   question: string
   answer: string
+  image_url?: string | null
   display_order: number
   is_visible: boolean
   created_at: string

@@ -18,4 +18,7 @@ export interface BaseGalleryProps {
   backgroundColorChoice?: 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
   titleAlignment?: 'left' | 'center' | 'right'
   subtitleAlignment?: 'left' | 'center' | 'right'
+  gridColumns?: 2 | 3 | 4 | 5 | 6
+  bannerHeight?: 'small' | 'medium' | 'large' | 'full'
+  masonryColumns?: 2 | 3 | 4 | 5
 }

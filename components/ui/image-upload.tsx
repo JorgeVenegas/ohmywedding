@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Upload, X, Image as ImageIcon } from 'lucide-react'
@@ -17,6 +17,11 @@ export function ImageUpload({ onUpload, currentImageUrl, placeholder = "Upload a
   const [dragOver, setDragOver] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentImageUrl || null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Sync previewUrl with currentImageUrl when it changes (e.g., when editing different photos)
+  useEffect(() => {
+    setPreviewUrl(currentImageUrl || null)
+  }, [currentImageUrl])
 
   const handleFileSelect = async (file: File) => {
     if (!file) return
@@ -93,68 +98,57 @@ export function ImageUpload({ onUpload, currentImageUrl, placeholder = "Upload a
 
   return (
     <div className={`space-y-4 ${className}`}>
-      <div
-        className={`relative border-2 border-dashed rounded-lg p-6 transition-all duration-200 ${
-          dragOver 
-            ? 'border-primary bg-primary/5' 
-            : 'border-gray-300 hover:border-gray-400'
-        } ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-      >
-        {previewUrl ? (
-          <div className="relative">
-            <img
-              src={previewUrl}
-              alt="Preview"
-              className="w-full h-48 object-cover rounded-lg"
-            />
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              className="absolute top-2 right-2"
-              onClick={clearImage}
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-        ) : (
-          <div className="text-center">
-            <ImageIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <div className="space-y-2">
-              <p className="text-sm text-gray-600">
-                {uploading ? 'Uploading...' : placeholder}
-              </p>
-              <p className="text-xs text-gray-500">
-                Drag & drop or click to select • PNG, JPG, WEBP up to 50MB
-              </p>
+      {previewUrl ? (
+        <div className="relative border-2 border-gray-200 rounded-lg overflow-hidden">
+          <img
+            src={previewUrl}
+            alt="Preview"
+            className="w-full h-48 object-cover"
+          />
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            className="absolute top-2 right-2"
+            onClick={clearImage}
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      ) : (
+        <div className="relative">
+          <div
+            className={`border-2 border-dashed rounded-lg p-4 transition-all duration-200 ${
+              dragOver 
+                ? 'border-primary bg-primary/5' 
+                : 'border-gray-300 hover:border-gray-400'
+            } ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+          >
+            <div className="text-center">
+              <ImageIcon className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+              <div className="space-y-1">
+                <p className="text-sm text-gray-600">
+                  {uploading ? 'Uploading...' : placeholder}
+                </p>
+                <p className="text-xs text-gray-400">
+                  Click or drag to add • Optional
+                </p>
+              </div>
             </div>
+            
+            <Input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileInput}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              disabled={uploading}
+            />
           </div>
-        )}
-        
-        <Input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileInput}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          disabled={uploading}
-        />
-      </div>
-
-      {!previewUrl && (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          className="w-full"
-        >
-          <Upload className="w-4 h-4 mr-2" />
-          {uploading ? 'Uploading...' : 'Choose Image'}
-        </Button>
+        </div>
       )}
     </div>
   )

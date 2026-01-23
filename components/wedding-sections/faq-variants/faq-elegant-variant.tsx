@@ -150,9 +150,18 @@ export function FAQElegantVariant({
                 </button>
                 
                 <div 
-                  className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96' : 'max-h-0'}`}
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[800px]' : 'max-h-0'}`}
                 >
                   <div className="px-5 sm:px-7 pb-5 sm:pb-6">
+                    {item.image_url && (
+                      <div className="mb-4 rounded-lg overflow-hidden">
+                        <img 
+                          src={item.image_url} 
+                          alt={item.question}
+                          className="w-full h-auto object-cover max-h-64"
+                        />
+                      </div>
+                    )}
                     <p 
                       className="text-sm sm:text-base leading-relaxed"
                       style={{ 

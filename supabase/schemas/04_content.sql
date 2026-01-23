@@ -4,6 +4,7 @@ create table "wedding_faqs" (
   "wedding_id" uuid not null references weddings(id) on delete cascade,
   "question" text not null,
   "answer" text not null,
+  "image_url" text,
   "display_order" integer default 0,
   "is_visible" boolean default true,
   "created_at" timestamp with time zone default now()

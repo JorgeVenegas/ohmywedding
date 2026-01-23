@@ -279,7 +279,9 @@ export const es: Translations = {
     addPhotos: 'Agregar Fotos',
     photoCaption: 'Leyenda de Foto',
     noPhotosYet: 'No hay fotos todavía',
-    uploadYourFirst: 'Sube tu primera foto para comenzar'
+    uploadYourFirst: 'Sube tu primera foto para comenzar',
+    noCaption: 'Agrega una leyenda...',
+    editPhoto: 'Editar foto'
   },
 
   // FAQ Section
@@ -441,6 +443,9 @@ export const es: Translations = {
     left: 'Izquierda',
     center: 'Centro',
     right: 'Derecha',
+    gridColumns: 'Columnas de Cuadrícula',
+    masonryColumns: 'Columnas de Mosaico',
+    bannerHeight: 'Altura del Banner',
     show: 'Mostrar',
     hide: 'Ocultar',
     enabled: 'Habilitado',
@@ -462,6 +467,7 @@ export const es: Translations = {
     selectImage: 'Seleccionar Imagen',
     changeImage: 'Cambiar Imagen',
     uploadImage: 'Subir Imagen',
+    image: 'Imagen',
     // Form labels
     sectionTitle: 'Título de Sección',
     sectionSubtitle: 'Subtítulo de Sección',
@@ -571,6 +577,7 @@ export const es: Translations = {
     medium: 'Mediano',
     large: 'Grande',
     full: 'Completo',
+    fullScreen: 'Pantalla Completa',
     imageHeight: 'Altura de Imagen',
     imageWidth: 'Ancho de Imagen',
     centered: 'Centrado',
