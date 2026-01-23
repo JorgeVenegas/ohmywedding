@@ -18,7 +18,7 @@ interface Image {
 interface ImageGalleryDialogProps {
   isOpen: boolean
   onClose: () => void
-  onSelectImage?: (url: string) => void
+  onSelectImage?: (urls: string[]) => void
   weddingNameId: string
   mode?: 'select' | 'upload' | 'both'
 }
@@ -33,9 +33,10 @@ export function ImageGalleryDialog({
   const [images, setImages] = useState<Image[]>([])
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
-  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null)
+  const [selectedImageUrls, setSelectedImageUrls] = useState<string[]>([])
   const [mounted, setMounted] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [dragOver, setDragOver] = useState(false)
   const supabase = createClientComponentClient()
   const { t } = useI18n()
 
@@ -159,16 +160,49 @@ export function ImageGalleryDialog({
   }
 
   const handleSelectImage = (url: string) => {
-    setSelectedImageUrl(url)
-    if (onSelectImage && mode === 'select') {
-      onSelectImage(url)
-      onClose()
-    }
+    setSelectedImageUrls(prev => {
+      if (prev.includes(url)) {
+        // Deselect if already selected
+        return prev.filter(u => u !== url)
+      } else {
+        // Add to selection
+        return [...prev, url]
+      }
+    })
+  }
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setDragOver(false)
+
+    const files = e.dataTransfer.files
+    if (!files || files.length === 0) return
+
+    // Create a synthetic event to reuse handleFileUpload logic
+    const syntheticEvent = {
+      target: {
+        files,
+        value: ''
+      }
+    } as React.ChangeEvent<HTMLInputElement>
+
+    await handleFileUpload(syntheticEvent)
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setDragOver(false)
   }
 
   const handleConfirmSelection = () => {
-    if (selectedImageUrl && onSelectImage) {
-      onSelectImage(selectedImageUrl)
+    if (selectedImageUrls.length > 0 && onSelectImage) {
+      onSelectImage(selectedImageUrls)
+      setSelectedImageUrls([])
       onClose()
     }
   }
@@ -230,7 +264,16 @@ export function ImageGalleryDialog({
           {showUpload && (
             <div className="mb-6">
               <label className="block">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer">
+                <div 
+                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 cursor-pointer ${
+                    dragOver 
+                      ? 'border-primary bg-primary/5 border-primary' 
+                      : 'border-gray-300 hover:border-gray-400'
+                  } ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                >
                   <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                   <p className="text-gray-700 font-medium mb-2">
                     {t('imageGallery.clickToUpload')}
@@ -278,7 +321,7 @@ export function ImageGalleryDialog({
                       key={image.id}
                       onClick={() => showSelect && handleSelectImage(image.url)}
                       className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
-                        selectedImageUrl === image.url
+                        selectedImageUrls.includes(image.url)
                           ? 'border-gray-800 ring-2 ring-gray-300'
                           : 'border-transparent hover:border-gray-300'
                       }`}
@@ -289,7 +332,7 @@ export function ImageGalleryDialog({
                           alt={image.filename}
                           className="w-full h-full object-cover"
                         />
-                        {selectedImageUrl === image.url && (
+                        {selectedImageUrls.includes(image.url) && (
                           <div className="absolute inset-0 bg-gray-500/20 flex items-center justify-center">
                             <div className="bg-gray-800 rounded-full p-2">
                               <Check className="w-5 h-5 text-white" />
@@ -316,9 +359,11 @@ export function ImageGalleryDialog({
             </Button>
             <Button
               onClick={handleConfirmSelection}
-              disabled={!selectedImageUrl}
+              disabled={selectedImageUrls.length === 0}
             >
-              {t('imageGallery.select')}
+              {selectedImageUrls.length > 0 
+                ? `${t('imageGallery.select')} (${selectedImageUrls.length})` 
+                : t('imageGallery.select')}
             </Button>
           </div>
         )}

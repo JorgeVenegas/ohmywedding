@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { ImageUpload } from '@/components/ui/image-upload'
+import { ImageGalleryDialog } from '@/components/ui/image-gallery-dialog'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
 import { usePageConfig } from '@/components/contexts/page-config-context'
 import { useI18n } from '@/components/contexts/i18n-context'
@@ -65,11 +66,13 @@ interface GalleryConfigFormProps {
     masonryColumns?: 2 | 3 | 4 | 5
   }
   onChange: (key: string, value: any) => void
+  weddingNameId?: string
 }
 
-export function GalleryConfigForm({ config, onChange }: GalleryConfigFormProps) {
+export function GalleryConfigForm({ config, onChange, weddingNameId }: GalleryConfigFormProps) {
   const { t } = useI18n()
   const [expandedPhoto, setExpandedPhoto] = useState<number | null>(null)
+  const [showImageDialog, setShowImageDialog] = useState(false)
   
   // Get colors from page config
   const { config: pageConfig } = usePageConfig()
@@ -121,11 +124,6 @@ export function GalleryConfigForm({ config, onChange }: GalleryConfigFormProps) 
       value: 'carousel',
       label: t('config.galleryCarousel'),
       description: t('config.galleryCarouselDesc')
-    },
-    {
-      value: 'banner',
-      label: t('config.galleryBanner'),
-      description: t('config.galleryBannerDesc')
     },
     {
       value: 'masonry',
@@ -294,33 +292,6 @@ export function GalleryConfigForm({ config, onChange }: GalleryConfigFormProps) 
         </div>
       )}
 
-      {/* Banner Height - Only show for banner variant */}
-      {config.variant === 'banner' && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {t('config.bannerHeight')}
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { value: 'small', label: t('config.small') },
-              { value: 'medium', label: t('config.medium') },
-              { value: 'large', label: t('config.large') },
-              { value: 'full', label: t('config.fullScreen') }
-            ].map((option) => (
-              <Button
-                key={option.value}
-                variant={(config.bannerHeight || 'large') === option.value ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => onChange('bannerHeight', option.value as any)}
-                className="w-full text-xs"
-              >
-                {option.label}
-              </Button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Background Color */}
       <div className="space-y-3">
         <label className="text-sm font-medium text-gray-700">{t('config.backgroundColor')}</label>
@@ -368,50 +339,31 @@ export function GalleryConfigForm({ config, onChange }: GalleryConfigFormProps) 
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => {
-              const input = document.createElement('input')
-              input.type = 'file'
-              input.accept = 'image/*'
-              input.multiple = true
-              input.onchange = async (e: any) => {
-                const files = Array.from(e.target.files || []) as File[]
-                const newPhotos: Photo[] = []
-                
-                for (const file of files) {
-                  const formData = new FormData()
-                  formData.append('file', file)
-                  try {
-                    const response = await fetch('/api/upload', {
-                      method: 'POST',
-                      body: formData
-                    })
-                    const result = await response.json()
-                    if (result.success) {
-                      newPhotos.push({
-                        id: `photo-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-                        url: result.url,
-                        caption: '',
-                        alt: ''
-                      })
-                    }
-                  } catch (error) {
-                    console.error('Upload error:', error)
-                  }
-                }
-                
-                // Add all uploaded photos at once
-                if (newPhotos.length > 0) {
-                  onChange('photos', [...photos, ...newPhotos])
-                }
-              }
-              input.click()
-            }}
+            onClick={() => setShowImageDialog(true)}
             className="gap-2"
           >
             <Upload className="w-4 h-4" />
             {t('gallery.addPhotos')}
           </Button>
         </div>
+
+        <ImageGalleryDialog
+          isOpen={showImageDialog}
+          onClose={() => setShowImageDialog(false)}
+          onSelectImage={(urls) => {
+            // Add all selected images as new photos
+            const newPhotos: Photo[] = urls.map(url => ({
+              id: `photo-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+              url,
+              caption: '',
+              alt: ''
+            }))
+            onChange('photos', [...photos, ...newPhotos])
+            setShowImageDialog(false)
+          }}
+          weddingNameId={weddingNameId || ''}
+          mode="both"
+        />
 
         {photos.length === 0 ? (
           <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">

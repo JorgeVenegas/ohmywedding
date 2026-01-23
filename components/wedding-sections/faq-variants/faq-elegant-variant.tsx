@@ -153,13 +153,21 @@ export function FAQElegantVariant({
                   className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[800px]' : 'max-h-0'}`}
                 >
                   <div className="px-5 sm:px-7 pb-5 sm:pb-6">
-                    {item.image_url && (
-                      <div className="mb-4 rounded-lg overflow-hidden">
-                        <img 
-                          src={item.image_url} 
-                          alt={item.question}
-                          className="w-full h-auto object-cover max-h-64"
-                        />
+                    {item.images && item.images.length > 0 && (
+                      <div className={`mb-4 grid gap-2 ${
+                        item.images.length === 1 ? 'grid-cols-1' :
+                        item.images.length === 2 ? 'grid-cols-2' :
+                        'grid-cols-2 sm:grid-cols-3'
+                      }`}>
+                        {item.images.map((imageUrl, imgIndex) => (
+                          <div key={imgIndex} className="rounded-lg overflow-hidden">
+                            <img 
+                              src={imageUrl} 
+                              alt={`${item.question} - Image ${imgIndex + 1}`}
+                              className="w-full h-auto object-contain"
+                            />
+                          </div>
+                        ))}
                       </div>
                     )}
                     <p 

@@ -265,13 +265,11 @@ export const en: Translations = {
     checkBackSoon: "We're still capturing our beautiful moments. Check back soon to see our engagement photos and memories!",
     // Variant labels
     carousel: 'Carousel',
-    banner: 'Banner',
     masonry: 'Masonry',
     grid: 'Grid',
     list: 'List',
     // Variant descriptions
     carouselDesc: 'Slideshow with navigation - perfect for storytelling',
-    bannerDesc: 'Full-width banner with featured image',
     masonryDesc: 'Pinterest-style layout - dynamic and visually interesting',
     gridDesc: 'Uniform grid layout - clean and organized',
     listDesc: 'Vertical list with details - great for captions',
@@ -455,6 +453,7 @@ export const en: Translations = {
     photo: 'Photo',
     // Section names for config panels
     sectionMainBanner: 'Main Banner',
+    sectionBanner: 'Banner',
     sectionCountdown: 'Countdown Timer',
     sectionOurStory: 'Our Story',
     sectionRsvp: 'RSVP',
@@ -470,6 +469,12 @@ export const en: Translations = {
     changeImage: 'Change Image',
     uploadImage: 'Upload Image',
     image: 'Image',
+    images: 'Images',
+    bannerImage: 'Banner Image',
+    showText: 'Show Text',
+    title: 'Title',
+    subtitle: 'Subtitle',
+    overlayOpacity: 'Overlay Opacity',
     // Form labels
     sectionTitle: 'Section Title',
     sectionSubtitle: 'Section Subtitle',
@@ -553,7 +558,6 @@ export const en: Translations = {
     framedPhoto: 'Framed Photo',
     minimal: 'Minimal',
     stacked: 'Stacked',
-    overlayOpacity: 'Overlay Opacity',
     imageBrightness: 'Image Brightness',
     useGradientOverlay: 'Use Gradient Overlay',
     gradientColor1: 'Gradient Color 1',

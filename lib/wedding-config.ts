@@ -42,6 +42,7 @@ export interface ComponentConfig {
 
 export type ComponentType = 
   | 'hero'
+  | 'banner'
   | 'our-story'
   | 'event-details'
   | 'rsvp'
@@ -109,6 +110,22 @@ export const defaultComponentConfigs: Record<ComponentType, Omit<ComponentConfig
       vertical: 'center',
       horizontal: 'center',
       imagePosition: 'background' // Options: 'background' | 'fullscreen' | 'overlay' | 'split-left' | 'split-right' | 'featured' | 'left' | 'right' | 'top' | 'bottom'
+    }
+  },
+  banner: {
+    type: 'banner',
+    enabled: false,
+    props: {
+      imageUrl: '',
+      bannerHeight: 'large',
+      showText: true,
+      title: '',
+      subtitle: '',
+      overlayOpacity: 40,
+      backgroundGradient: false,
+      gradientColor1: 'palette:primary',
+      gradientColor2: 'palette:accent',
+      imageBrightness: 100
     }
   },
   'our-story': {

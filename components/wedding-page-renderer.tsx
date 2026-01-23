@@ -10,6 +10,7 @@ import {
   FAQSection,
   CountdownSection
 } from './wedding-sections'
+import { BannerSection } from './wedding-sections/banner-section'
 import { ClientWeddingPageRenderer } from './client-wedding-page-renderer'
 import { WeddingNav } from './ui/wedding-nav'
 
@@ -56,6 +57,15 @@ export function WeddingPageRenderer({
             backgroundColor={component.props.backgroundColor}
             showDecorations={component.props.showDecorations !== false}
             showVariantSwitcher={showVariantSwitchers}
+          />
+        )
+
+      case 'banner':
+        return (
+          <BannerSection
+            key={component.id}
+            {...commonProps}
+            {...component.props}
           />
         )
 

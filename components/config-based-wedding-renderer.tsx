@@ -16,6 +16,7 @@ import {
   CountdownSection,
   RegistrySection
 } from './wedding-sections'
+import { BannerSection } from './wedding-sections/banner-section'
 import { VariantProvider } from './contexts/variant-context'
 import { SiteConfigProvider } from './contexts/site-config-context'
 import { EditingModeProvider } from './contexts/editing-mode-context'
@@ -26,6 +27,7 @@ import { SectionCustomizer } from './ui/section-customizer'
 import { EditingTopBar } from './ui/editing-top-bar'
 import { AddSectionButton } from './ui/add-section-button'
 import { DeleteSectionButton } from './ui/delete-section-button'
+import { EditableSectionWrapper } from './ui/editable-section-wrapper'
 import { ViewportWrapper } from './ui/viewport-wrapper'
 import { WeddingNav } from './ui/wedding-nav'
 import { usePageConfig } from './contexts/page-config-context'
@@ -219,6 +221,19 @@ function ConfigBasedWeddingRendererContent({
           showCountdown: true,
           showRSVPButton: true
         }
+      case 'banner':
+        return {
+          imageUrl: '',
+          bannerHeight: 'large',
+          showText: true,
+          title: '',
+          subtitle: '',
+          overlayOpacity: 40,
+          backgroundGradient: false,
+          gradientColor1: 'palette:primary',
+          gradientColor2: 'palette:accent',
+          imageBrightness: 100
+        }
       case 'our-story':
         return {
           variant: 'cards',
@@ -296,6 +311,15 @@ function ConfigBasedWeddingRendererContent({
           <HeroSection
             key={component.id}
             {...commonProps}
+            {...component.props}
+          />
+        )
+        break
+      case 'banner':
+        renderedComponent = (
+          <BannerSection
+            key={component.id}
+            theme={config.siteSettings.theme}
             {...component.props}
           />
         )

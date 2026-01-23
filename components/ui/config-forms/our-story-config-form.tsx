@@ -348,7 +348,7 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
       <ImageGalleryDialog
         isOpen={showHowWeMetImageDialog}
         onClose={() => setShowHowWeMetImageDialog(false)}
-        onSelectImage={(url) => onChange('howWeMetPhoto', url)}
+        onSelectImage={(urls) => onChange('howWeMetPhoto', urls[0])}
         weddingNameId={weddingNameId || ''}
         mode="both"
       />
@@ -453,7 +453,7 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
       <ImageGalleryDialog
         isOpen={showProposalImageDialog}
         onClose={() => setShowProposalImageDialog(false)}
-        onSelectImage={(url) => onChange('proposalPhoto', url)}
+        onSelectImage={(urls) => onChange('proposalPhoto', urls[0])}
         weddingNameId={weddingNameId || ''}
         mode="both"
       />

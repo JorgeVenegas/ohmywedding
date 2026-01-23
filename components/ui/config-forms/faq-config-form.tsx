@@ -50,7 +50,7 @@ interface FAQItem {
   id?: string
   question: string
   answer: string
-  image_url?: string
+  images?: string[]
 }
 
 interface FAQConfigFormProps {
@@ -394,15 +394,47 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-600 mb-2">
-                          {t('config.image')} ({t('config.optional')})
+                          {t('config.images')} ({t('config.optional')})
                         </label>
+                        
+                        {/* Images Grid */}
+                        {item.images && item.images.length > 0 && (
+                          <div className="grid grid-cols-3 gap-2 mb-2">
+                            {item.images.map((imageUrl, imgIndex) => (
+                              <div key={imgIndex} className="relative aspect-square rounded border border-gray-200 overflow-hidden group">
+                                <img
+                                  src={imageUrl}
+                                  alt={`Image ${imgIndex + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = [...questions]
+                                    const newImages = [...(updated[index].images || [])]
+                                    newImages.splice(imgIndex, 1)
+                                    updated[index] = { ...updated[index], images: newImages }
+                                    onChange('questions', updated)
+                                  }}
+                                  className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Add Image Button */}
                         <ImageUpload
+                          key={`upload-${index}-${item.images?.length || 0}`}
                           onUpload={(url) => {
                             const updated = [...questions]
-                            updated[index] = { ...updated[index], image_url: url || undefined }
+                            const currentImages = updated[index].images || []
+                            updated[index] = { ...updated[index], images: [...currentImages, url] }
                             onChange('questions', updated)
                           }}
-                          currentImageUrl={item.image_url}
+                          currentImageUrl={undefined}
                           placeholder={t('config.uploadImage')}
                         />
                       </div>

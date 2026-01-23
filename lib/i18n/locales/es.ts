@@ -263,13 +263,11 @@ export const es: Translations = {
     checkBackSoon: 'Todavía estamos capturando nuestros hermosos momentos. ¡Vuelve pronto para ver nuestras fotos de compromiso y recuerdos!',
     // Variant labels
     carousel: 'Carrusel',
-    banner: 'Banner',
     masonry: 'Mosaico',
     grid: 'Cuadrícula',
     list: 'Lista',
     // Variant descriptions
     carouselDesc: 'Presentación con navegación - perfecta para contar historias',
-    bannerDesc: 'Banner de ancho completo con imagen destacada',
     masonryDesc: 'Diseño estilo Pinterest - dinámico y visualmente interesante',
     gridDesc: 'Diseño de cuadrícula uniforme - limpio y organizado',
     listDesc: 'Lista vertical con detalles - excelente para leyendas',
@@ -453,6 +451,7 @@ export const es: Translations = {
     photo: 'Foto',
     // Section names for config panels
     sectionMainBanner: 'Banner Principal',
+    sectionBanner: 'Banner',
     sectionCountdown: 'Cuenta Regresiva',
     sectionOurStory: 'Nuestra Historia',
     sectionRsvp: 'RSVP',
@@ -468,6 +467,12 @@ export const es: Translations = {
     changeImage: 'Cambiar Imagen',
     uploadImage: 'Subir Imagen',
     image: 'Imagen',
+    images: 'Imágenes',
+    bannerImage: 'Imagen de Banner',
+    showText: 'Mostrar Texto',
+    title: 'Título',
+    subtitle: 'Subtítulo',
+    overlayOpacity: 'Opacidad de Superposición',
     // Form labels
     sectionTitle: 'Título de Sección',
     sectionSubtitle: 'Subtítulo de Sección',
@@ -551,7 +556,6 @@ export const es: Translations = {
     framedPhoto: 'Foto Enmarcada',
     minimal: 'Minimalista',
     stacked: 'Apilado',
-    overlayOpacity: 'Opacidad de Capa',
     imageBrightness: 'Brillo de Imagen',
     useGradientOverlay: 'Usar Degradado',
     gradientColor1: 'Color de Degradado 1',

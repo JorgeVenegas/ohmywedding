@@ -16,6 +16,7 @@ import {
   RegistryConfigForm,
   GalleryConfigForm
 } from './config-forms'
+import { BannerConfigForm } from './config-forms/banner-config-form'
 import { Button } from './button'
 
 // Gold color for elegant icons
@@ -23,6 +24,7 @@ const GOLD_COLOR = '#B8860B'
 
 const SECTION_ICONS: Record<string, React.ReactNode> = {
   hero: <Crown className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
+  banner: <Image className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
   countdown: <Clock className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
   'our-story': <Heart className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
   rsvp: <Mail className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
@@ -47,6 +49,7 @@ export function SectionCustomizer() {
     if (!type) return t('config.unknownSection')
     const sectionNameMap: Record<string, string> = {
       hero: t('config.sectionMainBanner'),
+      banner: t('config.sectionBanner'),
       countdown: t('config.sectionCountdown'),
       'our-story': t('config.sectionOurStory'),
       rsvp: t('config.sectionRsvp'),
@@ -66,6 +69,14 @@ export function SectionCustomizer() {
             config={sectionConfig} 
             onChange={updateConfig}
             hasWeddingDate={!!customizeContext.weddingDate}
+            weddingNameId={customizeContext.weddingNameId}
+          />
+        )
+      case 'banner':
+        return (
+          <BannerConfigForm 
+            config={sectionConfig} 
+            onChange={updateConfig}
             weddingNameId={customizeContext.weddingNameId}
           />
         )
@@ -118,6 +129,7 @@ export function SectionCustomizer() {
           <GalleryConfigForm 
             config={sectionConfig} 
             onChange={updateConfig}
+            weddingNameId={customizeContext.weddingNameId}
           />
         )
       default:

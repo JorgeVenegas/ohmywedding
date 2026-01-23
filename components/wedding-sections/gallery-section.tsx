@@ -3,7 +3,6 @@
 import React from 'react'
 import {
   GalleryCarouselVariant,
-  GalleryBannerVariant,
   GalleryMasonryVariant,
   GalleryGridVariant,
   GalleryListVariant,
@@ -20,7 +19,7 @@ import { useI18n } from '@/components/contexts/i18n-context'
 type BackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
 
 interface GallerySectionProps extends Omit<BaseGalleryProps, 'backgroundColorChoice'> {
-  variant?: 'carousel' | 'banner' | 'masonry' | 'grid' | 'list'
+  variant?: 'carousel' | 'masonry' | 'grid' | 'list'
   showVariantSwitcher?: boolean
   dateId?: string
   backgroundColorChoice?: BackgroundColorChoice
@@ -29,7 +28,6 @@ interface GallerySectionProps extends Omit<BaseGalleryProps, 'backgroundColorCho
   titleAlignment?: 'left' | 'center' | 'right'
   subtitleAlignment?: 'left' | 'center' | 'right'
   gridColumns?: 2 | 3 | 4 | 5 | 6
-  bannerHeight?: 'small' | 'medium' | 'large' | 'full'
   masonryColumns?: 2 | 3 | 4 | 5
 }
 
@@ -46,7 +44,6 @@ export function GallerySection({
   titleAlignment = 'center',
   subtitleAlignment = 'center',
   gridColumns = 4,
-  bannerHeight = 'large',
   masonryColumns = 4
 }: GallerySectionProps) {
   const { t } = useI18n()
@@ -66,11 +63,6 @@ export function GallerySection({
       value: 'carousel',
       label: t('gallery.carousel'),
       description: t('gallery.carouselDesc')
-    },
-    {
-      value: 'banner',
-      label: t('gallery.banner'),
-      description: t('gallery.bannerDesc')
     },
     {
       value: 'masonry',
@@ -98,7 +90,6 @@ export function GallerySection({
     titleAlignment,
     subtitleAlignment,
     gridColumns,
-    bannerHeight,
     masonryColumns
   })
 
@@ -113,7 +104,6 @@ export function GallerySection({
     titleAlignment: config.titleAlignment || titleAlignment,
     subtitleAlignment: config.subtitleAlignment || subtitleAlignment,
     gridColumns: config.gridColumns || gridColumns,
-    bannerHeight: config.bannerHeight || bannerHeight,
     masonryColumns: config.masonryColumns || masonryColumns
   }
 
@@ -121,8 +111,6 @@ export function GallerySection({
     switch (activeVariant) {
       case 'carousel':
         return <GalleryCarouselVariant {...commonProps} />
-      case 'banner':
-        return <GalleryBannerVariant {...commonProps} />
       case 'masonry':
         return <GalleryMasonryVariant {...commonProps} />
       case 'list':
@@ -142,7 +130,6 @@ export function GallerySection({
       titleAlignment: config.titleAlignment || titleAlignment,
       subtitleAlignment: config.subtitleAlignment || subtitleAlignment,
       gridColumns: config.gridColumns || gridColumns,
-      bannerHeight: config.bannerHeight || bannerHeight,
       masonryColumns: config.masonryColumns || masonryColumns
     })
   }

@@ -224,7 +224,8 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
       <ImageGalleryDialog
         isOpen={showImageDialog}
         onClose={() => setShowImageDialog(false)}
-        onSelectImage={(url) => {
+        onSelectImage={(urls) => {
+          const url = urls[0]
           // If currently on minimal variant and adding an image, switch to background
           // We need to call these in sequence to avoid state batching issues
           const shouldSwitchToBackground = config.variant === 'minimal' && !hasHeroImage && url

@@ -267,13 +267,11 @@ export interface Translations {
     checkBackSoon: string
     // Variant labels
     carousel: string
-    banner: string
     masonry: string
     grid: string
     list: string
     // Variant descriptions
     carouselDesc: string
-    bannerDesc: string
     masonryDesc: string
     gridDesc: string
     listDesc: string
@@ -457,6 +455,7 @@ export interface Translations {
     photo: string
     // Section names for config panels
     sectionMainBanner: string
+    sectionBanner: string
     sectionCountdown: string
     sectionOurStory: string
     sectionRsvp: string
@@ -472,6 +471,12 @@ export interface Translations {
     changeImage: string
     uploadImage: string
     image: string
+    images: string
+    bannerImage: string
+    showText: string
+    title: string
+    subtitle: string
+    overlayOpacity: string
     // Form labels
     sectionTitle: string
     sectionSubtitle: string
@@ -555,7 +560,6 @@ export interface Translations {
     framedPhoto: string
     minimal: string
     stacked: string
-    overlayOpacity: string
     imageBrightness: string
     useGradientOverlay: string
     gradientColor1: string

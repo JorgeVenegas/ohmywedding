@@ -22,6 +22,12 @@ const AVAILABLE_SECTIONS: SectionType[] = [
     icon: <Crown className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
   },
   {
+    id: 'banner',
+    name: 'Banner',
+    description: 'Full-width banner image with optional text overlay',
+    icon: <Image className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
+  },
+  {
     id: 'our-story',
     name: 'Our Story',
     description: 'Share your love story and journey together',
