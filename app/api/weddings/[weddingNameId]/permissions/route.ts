@@ -23,8 +23,6 @@ export async function GET(
     const supabase = await createServerSupabaseClient()
     const { weddingNameId: rawWeddingNameId } = await params
     const weddingNameId = decodeURIComponent(rawWeddingNameId)
-    
-    console.log('[Permissions API] Checking permissions for wedding:', weddingNameId)
 
     // Try to get user from cookies first
     let { data: { user } } = await supabase.auth.getUser()
@@ -45,8 +43,6 @@ export async function GET(
       .select('owner_id')
       .eq('wedding_name_id', weddingNameId)
       .single()
-
-    console.log('[Permissions API] Wedding lookup result:', { found: !!wedding, error: weddingError })
 
     if (weddingError || !wedding) {
       return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
@@ -70,7 +66,6 @@ export async function GET(
 
     // No user logged in - guests cannot edit
     if (!user) {
-      console.log('[Permissions API] No authenticated user - returning guest permissions')
       const permissions: WeddingPermissions = {
         canEdit: false,
         canDelete: false,
@@ -85,8 +80,6 @@ export async function GET(
 
     // User is logged in
     const isOwner = wedding.owner_id === user.id
-    
-    console.log('[Permissions API] User:', user.id, 'Wedding owner:', wedding.owner_id, 'Is owner:', isOwner)
     
     // Check if user is a collaborator by email
     const isCollaborator = user.email ? collaboratorEmails.includes(user.email.toLowerCase()) : false

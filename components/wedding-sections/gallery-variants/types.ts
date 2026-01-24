@@ -6,6 +6,8 @@ export interface Photo {
   caption?: string
   alt?: string
   thumbnail?: string
+  focalPoint?: { x: number; y: number }
+  zoom?: number // 1 = 100%, 1.5 = 150%, 2 = 200% etc.
 }
 
 export interface BaseGalleryProps {

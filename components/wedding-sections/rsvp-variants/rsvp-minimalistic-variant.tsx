@@ -55,13 +55,6 @@ export function RSVPMinimalisticVariant({
   const effectiveUseColorBackground = useColorBackground ?? false
   const effectiveBackgroundColorChoice = backgroundColorChoice ?? 'none'
   
-  console.log('[RSVP Minimalistic] Props received:', {
-    useColorBackground,
-    backgroundColorChoice,
-    effectiveUseColorBackground,
-    effectiveBackgroundColorChoice
-  })
-  
   const { t } = useI18n()
   const { settings: weddingSettings } = useWeddingSettings({ weddingNameId })
   const [groupData, setGroupData] = useState<GroupData | null>(null)
@@ -85,37 +78,18 @@ export function RSVPMinimalisticVariant({
   
   // Determine if travel features should be shown
   const showTravelInfo = weddingSettings?.rsvp_travel_confirmation_enabled ?? true
-  
-  console.log('[RSVP Minimalistic] Color scheme:', {
-    bgColor,
-    isColored,
-    willApplyStyle: isColored
-  })
-
-  // Debug logging
-  console.log('[RSVP Minimalistic] Render state:', {
-    groupId,
-    submitted,
-    isEditing,
-    guestsCount: guests.length,
-    loading,
-    showTravelInfo,
-  })
 
   useEffect(() => {
     const fetchGroupData = async () => {
       if (!groupId) {
-        console.log('[RSVP Minimalistic] No groupId, skipping fetch')
         setLoading(false)
         return
       }
 
-      console.log('[RSVP Minimalistic] Fetching group data for:', groupId)
       try {
         const response = await fetch(`/api/guest-groups/${groupId}`)
         if (response.ok) {
           const data = await response.json()
-          console.log('[RSVP Minimalistic] Group data received:', data)
           setGroupData(data)
           
           // Map guests and check if any have responded
@@ -130,14 +104,12 @@ export function RSVPMinimalisticVariant({
             adminSetTravel: g.admin_set_travel || false
           }))
           
-          console.log('[RSVP Minimalistic] Mapped guests:', mappedGuests)
           setGuests(mappedGuests)
           
           // Check if any guest has already submitted (confirmation_status is not 'pending')
           const hasResponded = data.guests.some((g: any) => 
             g.confirmation_status && g.confirmation_status !== 'pending'
           )
-          console.log('[RSVP Minimalistic] Has responded:', hasResponded, 'Setting submitted to:', hasResponded)
           setSubmitted(hasResponded)
         }
       } catch (error) {
@@ -283,7 +255,6 @@ export function RSVPMinimalisticVariant({
   }
 
   if (loading) {
-    console.log('[RSVP Minimalistic] Rendering loading state')
     return (
       <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -292,11 +263,8 @@ export function RSVPMinimalisticVariant({
       </SectionWrapper>
     )
   }
-
-  console.log('[RSVP Minimalistic] Checking submitted state:', { submitted, isEditing })
   
   if (submitted && !isEditing) {
-    console.log('[RSVP Minimalistic] ✅ RENDERING SUBMITTED VIEW with button')
     return (
       <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
@@ -395,7 +363,6 @@ export function RSVPMinimalisticVariant({
             {/* Edit Response Button */}
             <button
               onClick={() => {
-                console.log('[RSVP Minimalistic] Edit button clicked!')
                 setIsEditing(true)
               }}
               className="w-full px-6 py-4 rounded-lg text-lg font-medium transition-all hover:opacity-90 shadow-lg"
@@ -411,8 +378,6 @@ export function RSVPMinimalisticVariant({
       </SectionWrapper>
     )
   }
-  
-  console.log('[RSVP Minimalistic] Rendering form (not submitted or editing)')
 
   return (
     <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>

@@ -79,10 +79,25 @@ export function getGalleryColorScheme(
   const textColor = isLightBg ? '#1f2937' : '#ffffff'
   const mutedTextColor = isLightBg ? '#6b7280' : 'rgba(255, 255, 255, 0.8)'
   
+  // Divider color: use a contrasting palette color
+  // Pick a different color from the palette that contrasts with the background
+  let dividerColor = accentColor // default
+  if (backgroundColorChoice.startsWith('primary')) {
+    // Background is primary-based, use secondary or accent
+    dividerColor = secondaryColor
+  } else if (backgroundColorChoice.startsWith('secondary')) {
+    // Background is secondary-based, use primary or accent
+    dividerColor = primaryColor
+  } else if (backgroundColorChoice.startsWith('accent')) {
+    // Background is accent-based, use primary or secondary
+    dividerColor = primaryColor
+  }
+  
   return {
     bgColor,
     textColor,
     mutedTextColor,
+    dividerColor,
     isColored,
     isLightBg
   }

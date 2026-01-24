@@ -19,8 +19,6 @@ export async function GET(
     // Check if it's a UUID or wedding_name_id
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(weddingNameId)
     
-    console.log('Fetching wedding details:', { weddingNameId, isUuid })
-    
     let query = supabase
       .from('weddings')
       .select(`
@@ -47,8 +45,6 @@ export async function GET(
     }
     
     const { data: wedding, error } = await query.single()
-
-    console.log('Wedding query result:', { wedding, error: error?.message })
 
     if (error) {
       console.error('Error fetching wedding details:', error)

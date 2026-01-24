@@ -10,8 +10,6 @@ export async function POST(request: Request) {
     const supabase = await createServerSupabaseClient()
     const { phoneNumber, groupId } = await request.json()
 
-    console.log('[OTP Send] Request for phone:', phoneNumber?.substring(0, 6) + '***', 'groupId:', groupId)
-
     if (!phoneNumber || !groupId) {
       return NextResponse.json(
         { error: "Phone number and group ID are required" },
@@ -78,12 +76,6 @@ export async function POST(request: Request) {
     const expiresAt = new Date()
     expiresAt.setMinutes(expiresAt.getMinutes() + 30) // 30 minute expiration for phone verification
 
-    console.log('Creating verification record:', {
-      guest_group_id: groupId,
-      phone_number: phoneNumber,
-      expires_at: expiresAt.toISOString(),
-    })
-
     const { data: insertData, error: insertError } = await supabase
       .from('rsvp_otp_verifications')
       .insert({
@@ -101,8 +93,6 @@ export async function POST(request: Request) {
         { status: 500 }
       )
     }
-
-    console.log('Verification record created:', insertData)
 
     return NextResponse.json({
       success: true,

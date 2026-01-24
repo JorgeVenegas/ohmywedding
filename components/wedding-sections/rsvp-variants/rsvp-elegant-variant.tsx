@@ -62,13 +62,6 @@ export function RSVPElegantVariant({
   const effectiveUseColorBackground = useColorBackground ?? false
   const effectiveBackgroundColorChoice = backgroundColorChoice ?? 'none'
   
-  console.log('[RSVP Elegant] Props received:', {
-    useColorBackground,
-    backgroundColorChoice,
-    effectiveUseColorBackground,
-    effectiveBackgroundColorChoice
-  })
-  
   const { t } = useI18n()
   const [groupData, setGroupData] = useState<GroupData | null>(null)
   const [guests, setGuests] = useState<GuestInfo[]>([])
@@ -91,12 +84,6 @@ export function RSVPElegantVariant({
     effectiveBackgroundColorChoice,
     effectiveUseColorBackground
   )
-  
-  console.log('[RSVP Elegant] Color scheme:', {
-    bgColor,
-    isColored,
-    willApplyStyle: isColored
-  })
 
   const textAlign = alignment?.text || 'center'
 

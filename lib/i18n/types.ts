@@ -563,6 +563,9 @@ export interface Translations {
     bottomCenter: string
     bottomRight: string
     imagePosition: string
+    imageZoom: string
+    fitImage: string
+    zoomIn: string
     // Bulk mode
     bulkMode: string
     bulkUploadMode: string

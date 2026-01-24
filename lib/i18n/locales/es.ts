@@ -557,6 +557,9 @@ export const es: Translations = {
     bottomCenter: 'Inferior Centro',
     bottomRight: 'Inferior Derecha',
     imagePosition: 'Posición de Imagen',
+    imageZoom: 'Zoom de Imagen',
+    fitImage: 'Ajustar',
+    zoomIn: 'Acercar',
     // Bulk mode
     bulkMode: 'Modo Masivo',
     bulkUploadMode: 'Modo de Carga Masiva',

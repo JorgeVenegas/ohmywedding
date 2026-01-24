@@ -9,19 +9,13 @@ export async function POST(request: Request) {
   try {
     const supabase = await createServerSupabaseClient()
     const { phoneNumber, enteredPhone, groupId } = await request.json()
-    console.log('[OTP Verify] Verifying OTP for phone:', phoneNumber?.substring(0, 6) + '***', 'groupId:', groupId)
+
     if (!phoneNumber || !enteredPhone || !groupId) {
       return NextResponse.json(
         { error: "Phone number, entered phone, and group ID are required" },
         { status: 400 }
       )
     }
-
-    console.log('Looking for verification:', {
-      guest_group_id: groupId,
-      phone_number: phoneNumber,
-      verified: false
-    })
 
     // Check if there's a pending verification for this group (get most recent)
     const { data: verifications, error: verificationError } = await supabase
@@ -32,8 +26,6 @@ export async function POST(request: Request) {
       .eq('verified', false)
       .order('created_at', { ascending: false })
       .limit(1)
-
-    console.log('Verification lookup result:', { verifications, verificationError })
 
     const verification = verifications?.[0]
 

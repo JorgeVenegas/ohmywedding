@@ -561,6 +561,9 @@ export const en: Translations = {
     bottomCenter: 'Bottom Center',
     bottomRight: 'Bottom Right',
     imagePosition: 'Image Position',
+    imageZoom: 'Image Zoom',
+    fitImage: 'Fit',
+    zoomIn: 'Zoom In',
     // Bulk mode
     bulkMode: 'Bulk Mode',
     bulkUploadMode: 'Bulk Upload Mode',

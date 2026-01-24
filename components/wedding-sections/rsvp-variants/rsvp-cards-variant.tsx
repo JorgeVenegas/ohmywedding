@@ -54,13 +54,6 @@ export function RSVPCardsVariant({
   const effectiveUseColorBackground = useColorBackground ?? false
   const effectiveBackgroundColorChoice = backgroundColorChoice ?? 'none'
   
-  console.log('[RSVP Cards] Props received:', {
-    useColorBackground,
-    backgroundColorChoice,
-    effectiveUseColorBackground,
-    effectiveBackgroundColorChoice
-  })
-  
   const { t } = useI18n()
   const [groupData, setGroupData] = useState<GroupData | null>(null)
   const [guests, setGuests] = useState<Guest[]>([])
@@ -80,12 +73,6 @@ export function RSVPCardsVariant({
     effectiveBackgroundColorChoice,
     effectiveUseColorBackground
   )
-  
-  console.log('[RSVP Cards] Color scheme:', {
-    bgColor,
-    isColored,
-    willApplyStyle: isColored
-  })
 
   useEffect(() => {
     const fetchGroupData = async () => {

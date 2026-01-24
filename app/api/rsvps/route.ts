@@ -9,9 +9,6 @@ export async function POST(request: Request) {
     const supabase = await createServerSupabaseClient()
     const body = await request.json()
 
-    console.log('[RSVP Submit] Request for groupId:', body.groupId, 'guests:', body.guests?.length || 0)
-    console.log('[RSVP Submit] Has verification token:', !!body.verificationToken)
-
     // Update each guest's confirmation status
     if (body.guests && Array.isArray(body.guests)) {
       // REQUIRE OTP verification for group RSVPs
@@ -39,8 +36,6 @@ export async function POST(request: Request) {
         )
       }
 
-      console.log('[RSVP Submit] Verification valid, updating guests')
-
       // Check if verification has expired (valid for 1 hour after verification)
       const verifiedAt = new Date(verification.verified_at)
       const expirationTime = new Date(verifiedAt.getTime() + 60 * 60 * 1000) // 1 hour
@@ -52,8 +47,6 @@ export async function POST(request: Request) {
           { status: 403 }
         )
       }
-
-      console.log('[RSVP Submit] Verification valid, updating', body.guests.length, 'guests')
 
       // Use service role client to bypass RLS since we've verified the OTP
       const { createClient } = await import('@supabase/supabase-js')
@@ -85,8 +78,6 @@ export async function POST(request: Request) {
 
       // Update each guest's confirmation status
       for (const guest of body.guests) {
-        console.log('[RSVP Submit] Updating guest:', guest.guestId, 'attending:', guest.attending)
-        
         // Validate: if travel arrangement is 'already_booked', ticket_attachment_url must be present
         if (guest.travel_arrangement === 'already_booked' && !guest.ticket_attachment_url) {
           return NextResponse.json(
@@ -119,8 +110,6 @@ export async function POST(request: Request) {
           updateData.ticket_attachment_url = guest.ticket_attachment_url
         }
         
-        console.log('[RSVP API] Updating guest:', guest.guestId, 'with data:', updateData)
-        
         // Verify this guest belongs to the verified group
         const { data: guestData, error: guestError } = await supabaseAdmin
           .from('guests')
@@ -150,7 +139,6 @@ export async function POST(request: Request) {
         }
       }
 
-      console.log('[RSVP Submit] All guests updated successfully')
       return NextResponse.json({ success: true })
     }
 

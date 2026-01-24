@@ -99,18 +99,8 @@ export function RSVPSection({
     useColorBackground: config.useColorBackground ?? useColorBackground,
     backgroundColorChoice: config.backgroundColorChoice ?? backgroundColorChoice
   }
-  
-  console.log('[RSVP Section] Config and props:', {
-    'config.useColorBackground': config.useColorBackground,
-    'config.backgroundColorChoice': config.backgroundColorChoice,
-    'prop.useColorBackground': useColorBackground,
-    'prop.backgroundColorChoice': backgroundColorChoice,
-    'commonProps.useColorBackground': commonProps.useColorBackground,
-    'commonProps.backgroundColorChoice': commonProps.backgroundColorChoice
-  })
 
   const renderRSVPContent = (activeVariant: string) => {
-    console.log('[RSVP Section] Rendering variant:', activeVariant, 'variant prop:', variant)
     switch (activeVariant) {
       case 'minimalistic':
         return <RSVPMinimalisticVariant {...commonProps} />

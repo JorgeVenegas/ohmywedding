@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { ImageUpload } from '@/components/ui/image-upload'
 import { ImageGalleryDialog } from '@/components/ui/image-gallery-dialog'
+import { ImagePositionSelector } from '@/components/ui/image-position-selector'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
 import { usePageConfig } from '@/components/contexts/page-config-context'
 import { useI18n } from '@/components/contexts/i18n-context'
@@ -19,6 +20,8 @@ interface Photo {
   url: string
   caption?: string
   alt?: string
+  focalPoint?: { x: number; y: number }
+  zoom?: number // 1 = 100%, 1.5 = 150%, 2 = 200% etc.
 }
 
 // Helper functions
@@ -653,6 +656,37 @@ export function GalleryConfigForm({ config, onChange, weddingNameId }: GalleryCo
                     placeholder={t('config.selectImage')}
                   />
                 </div>
+
+                {/* Focal Point Selector */}
+                {photos[expandedPhoto].url && (
+                  <ImagePositionSelector
+                    imageUrl={photos[expandedPhoto].url}
+                    position={photos[expandedPhoto].focalPoint || { x: 50, y: 50 }}
+                    onChange={(position) => handlePhotoChange(expandedPhoto, 'focalPoint', position)}
+                  />
+                )}
+
+                {/* Zoom/Crop Control */}
+                {photos[expandedPhoto].url && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t('config.imageZoom')}: {Math.round((photos[expandedPhoto].zoom || 1) * 100)}%
+                    </label>
+                    <input
+                      type="range"
+                      min="100"
+                      max="200"
+                      step="5"
+                      value={(photos[expandedPhoto].zoom || 1) * 100}
+                      onChange={(e) => handlePhotoChange(expandedPhoto, 'zoom', parseInt(e.target.value) / 100)}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>{t('config.fitImage')}</span>
+                      <span>{t('config.zoomIn')}</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Delete Button */}
                 <Button

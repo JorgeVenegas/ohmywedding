@@ -282,10 +282,8 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
             const response = await fetch(`/api/guest-groups/${groupId}`)
             if (response.ok) {
               const data = await response.json()
-              console.log('Group API Response:', data)
               // Check if data.group exists or if it's structured differently
               const group = data.group || data
-              console.log('Setting Guest Group:', group)
               setGuestGroup(group)
             } else {
               console.error('Group API error:', response.status, response.statusText)

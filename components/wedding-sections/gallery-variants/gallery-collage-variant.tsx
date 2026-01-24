@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { X } from 'lucide-react'
 import { BaseGalleryProps } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { getGalleryColorScheme } from './color-utils'
 
 interface GalleryCollageVariantProps extends BaseGalleryProps {
   overlayOpacity?: number
@@ -102,6 +103,9 @@ export function GalleryCollageVariant({
 
   const backgroundColor = getBackgroundColor()
 
+  // Get text colors that contrast with background
+  const { textColor, mutedTextColor, dividerColor, isColored } = getGalleryColorScheme(theme, backgroundColorChoice)
+
   if (validPhotos.length === 0) {
     return (
       <section id="gallery" className="w-full py-16 bg-gray-50">
@@ -136,7 +140,7 @@ export function GalleryCollageVariant({
                   style={{
                     fontFamily: theme?.fonts?.heading === 'script' ? 'cursive' : 
                                 theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif',
-                    color: theme?.colors?.foreground || '#1f2937'
+                    color: textColor
                   }}
                 >
                   {sectionTitle}
@@ -145,11 +149,11 @@ export function GalleryCollageVariant({
               {sectionTitle && (
                 <div 
                   className={`w-24 h-1 rounded mb-6 ${titleAlignment === 'center' ? 'mx-auto' : titleAlignment === 'right' ? 'ml-auto' : ''}`}
-                  style={{ backgroundColor: theme?.colors?.accent || '#e8a76a' }}
+                  style={{ backgroundColor: isColored ? dividerColor : (theme?.colors?.accent || '#e8a76a') }}
                 />
               )}
               {sectionSubtitle && (
-                <p className={`text-lg md:text-xl text-muted-foreground text-${subtitleAlignment}`}>
+                <p className={`text-lg md:text-xl text-${subtitleAlignment}`} style={{ color: mutedTextColor }}>
                   {sectionSubtitle}
                 </p>
               )}
@@ -211,6 +215,11 @@ export function GalleryCollageVariant({
                     alt={photo.alt || 'Gallery photo'}
                     fill
                     className="object-cover"
+                    style={{
+                      objectPosition: photo.focalPoint ? `${photo.focalPoint.x}% ${photo.focalPoint.y}%` : 'center',
+                      transform: photo.zoom && photo.zoom > 1 ? `scale(${photo.zoom})` : undefined,
+                      transformOrigin: photo.focalPoint ? `${photo.focalPoint.x}% ${photo.focalPoint.y}%` : 'center'
+                    }}
                     sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                     unoptimized
                   />

@@ -97,11 +97,8 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       }
     }
 
-    console.log('[generateMetadata] OG Image URL:', imageUrl)
-
     // Ensure image URL is absolute
     imageUrl = ensureAbsoluteUrl(imageUrl)
-    console.log('[generateMetadata] Final OG Image URL:', imageUrl)
 
     // Build canonical URL
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ohmy.wedding'

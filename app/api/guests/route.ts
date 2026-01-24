@@ -195,9 +195,6 @@ export async function PUT(request: Request) {
     const supabase = await createServerSupabaseClient()
     const body = await request.json()
 
-    console.log('[Guests PUT] Updating guest:', body.id)
-    console.log('[Guests PUT] Body:', JSON.stringify(body, null, 2))
-
     if (!body.id) {
       console.error('[Guests PUT] No guest ID provided')
       return NextResponse.json({ error: "Guest ID is required" }, { status: 400 })
@@ -205,7 +202,6 @@ export async function PUT(request: Request) {
 
     // Check current user auth
     const { data: { user } } = await supabase.auth.getUser()
-    console.log('[Guests PUT] Current user:', user?.id)
 
     // First, check if the guest exists and get its wedding_id
     const { data: existingGuest, error: fetchError } = await supabase
@@ -219,8 +215,6 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Guest not found" }, { status: 404 })
     }
 
-    console.log('[Guests PUT] Guest wedding_id:', existingGuest.wedding_id)
-
     // Check wedding ownership
     const { data: wedding, error: weddingError } = await supabase
       .from("weddings")
@@ -230,9 +224,6 @@ export async function PUT(request: Request) {
 
     if (weddingError) {
       console.error('[Guests PUT] Error fetching wedding:', weddingError)
-    } else {
-      console.log('[Guests PUT] Wedding owner_id:', wedding.owner_id)
-      console.log('[Guests PUT] User matches owner:', user?.id === wedding.owner_id)
     }
 
     // Inherit tags from new group if group assignment changed
@@ -291,7 +282,6 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    console.log('[Guests PUT] Successfully updated guest:', data.id)
     return NextResponse.json({ success: true, data })
   } catch (error) {
     console.error('[Guests PUT] Exception:', error)
