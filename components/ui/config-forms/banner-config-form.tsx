@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { ImageGalleryDialog } from '@/components/ui/image-gallery-dialog'
+import { ImagePositionSelector } from '@/components/ui/image-position-selector'
 import { usePageConfig } from '@/components/contexts/page-config-context'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { Image as ImageIcon, X, Check } from 'lucide-react'
@@ -45,6 +46,7 @@ function getLightTint(hex: string, tintAmount: number): string {
 interface BannerConfigFormProps {
   config: {
     imageUrl?: string
+    imagePosition?: { x: number; y: number }
     bannerHeight?: 'small' | 'medium' | 'large' | 'full'
     showText?: boolean
     title?: string
@@ -140,6 +142,15 @@ export function BannerConfigForm({ config, onChange, weddingNameId }: BannerConf
         mode="both"
       />
 
+      {/* Image Position Selector */}
+      {config.imageUrl && (
+        <ImagePositionSelector
+          imageUrl={config.imageUrl}
+          position={config.imagePosition || { x: 50, y: 50 }}
+          onChange={(position) => onChange('imagePosition', position)}
+        />
+      )}
+
       {/* Banner Height */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -201,6 +212,26 @@ export function BannerConfigForm({ config, onChange, weddingNameId }: BannerConf
         <div className="flex justify-between text-xs text-gray-500 mt-1">
           <span>{t('config.darker')}</span>
           <span>{t('config.bright')}</span>
+        </div>
+      </div>
+
+      {/* Overlay Opacity - Moved here to be near brightness */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {t('config.overlayOpacity')}: {overlayOpacity}%
+        </label>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          step="5"
+          value={overlayOpacity}
+          onChange={(e) => onChange('overlayOpacity', parseInt(e.target.value))}
+          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+        />
+        <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <span>{t('config.transparent')}</span>
+          <span>{t('config.opaque')}</span>
         </div>
       </div>
 
@@ -297,7 +328,7 @@ export function BannerConfigForm({ config, onChange, weddingNameId }: BannerConf
       )}
 
       {/* Show Text Toggle */}
-      <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+      <div className="flex items-center justify-between">
         <label className="text-sm font-medium text-gray-700">
           {t('config.showText')}
         </label>
@@ -331,22 +362,6 @@ export function BannerConfigForm({ config, onChange, weddingNameId }: BannerConf
               onChange={(e) => onChange('subtitle', e.target.value)}
               placeholder={t('config.enterSubtitle')}
               rows={2}
-            />
-          </div>
-
-          {/* Overlay Opacity */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('config.overlayOpacity')}: {overlayOpacity}%
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              step="5"
-              value={overlayOpacity}
-              onChange={(e) => onChange('overlayOpacity', parseInt(e.target.value))}
-              className="w-full"
             />
           </div>
         </>

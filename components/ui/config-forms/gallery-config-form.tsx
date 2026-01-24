@@ -64,6 +64,11 @@ interface GalleryConfigFormProps {
     gridColumns?: 2 | 3 | 4 | 5 | 6
     bannerHeight?: 'small' | 'medium' | 'large' | 'full'
     masonryColumns?: 2 | 3 | 4 | 5
+    overlayOpacity?: number
+    imageBrightness?: number
+    useGradientOverlay?: boolean
+    gradientColor1?: string
+    gradientColor2?: string
   }
   onChange: (key: string, value: any) => void
   weddingNameId?: string
@@ -81,6 +86,19 @@ export function GalleryConfigForm({ config, onChange, weddingNameId }: GalleryCo
   const primaryColor = themeColors?.primary || '#d4a574'
   const secondaryColor = themeColors?.secondary || '#9ba082'
   const accentColor = themeColors?.accent || '#e6b5a3'
+
+  // Create gradient color options
+  const gradientColors = React.useMemo(() => [
+    { value: 'palette:primary', displayColor: primaryColor, label: t('config.primary') },
+    { value: 'palette:primary-light', displayColor: getLightTint(primaryColor, 0.5), label: t('config.primaryLight') },
+    { value: 'palette:primary-lighter', displayColor: getLightTint(primaryColor, 0.88), label: t('config.primaryLighter') },
+    { value: 'palette:secondary', displayColor: secondaryColor, label: t('config.secondary') },
+    { value: 'palette:secondary-light', displayColor: getLightTint(secondaryColor, 0.5), label: t('config.secondaryLight') },
+    { value: 'palette:secondary-lighter', displayColor: getLightTint(secondaryColor, 0.88), label: t('config.secondaryLighter') },
+    { value: 'palette:accent', displayColor: accentColor, label: t('config.accent') },
+    { value: 'palette:accent-light', displayColor: getLightTint(accentColor, 0.5), label: t('config.accentLight') },
+    { value: 'palette:accent-lighter', displayColor: getLightTint(accentColor, 0.88), label: t('config.accentLighter') },
+  ], [primaryColor, secondaryColor, accentColor, t])
 
   const photos = config.photos || []
 
@@ -139,6 +157,11 @@ export function GalleryConfigForm({ config, onChange, weddingNameId }: GalleryCo
       value: 'list',
       label: t('config.galleryList'),
       description: t('config.galleryListDesc')
+    },
+    {
+      value: 'collage',
+      label: t('config.galleryCollage'),
+      description: t('config.galleryCollageDesc')
     }
   ]
 
@@ -290,6 +313,162 @@ export function GalleryConfigForm({ config, onChange, weddingNameId }: GalleryCo
             ))}
           </div>
         </div>
+      )}
+
+      {/* Collage Options - Only show for collage variant */}
+      {config.variant === 'collage' && (
+        <>
+          {/* Grid Columns */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('config.gridColumns')}
+            </label>
+            <div className="flex gap-2">
+              {[2, 3, 4, 5, 6].map((cols) => (
+                <Button
+                  key={cols}
+                  variant={(config.gridColumns || 4) === cols ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => onChange('gridColumns', cols)}
+                  className="flex-1"
+                >
+                  {cols}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Overlay Opacity */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('config.overlayOpacity')}: {config.overlayOpacity ?? 0}%
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={config.overlayOpacity ?? 0}
+              onChange={(e) => onChange('overlayOpacity', parseInt(e.target.value))}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>{t('config.transparent')}</span>
+              <span>{t('config.dark')}</span>
+            </div>
+          </div>
+
+          {/* Image Brightness */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('config.imageBrightness')}: {config.imageBrightness ?? 100}%
+            </label>
+            <input
+              type="range"
+              min="30"
+              max="100"
+              value={config.imageBrightness ?? 100}
+              onChange={(e) => onChange('imageBrightness', parseInt(e.target.value))}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>{t('config.darker')}</span>
+              <span>{t('config.bright')}</span>
+            </div>
+          </div>
+
+          {/* Use Gradient Overlay */}
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-gray-700">
+              {t('config.useGradientOverlay')}
+            </label>
+            <Switch
+              checked={config.useGradientOverlay || false}
+              onCheckedChange={(checked) => onChange('useGradientOverlay', checked)}
+            />
+          </div>
+
+          {/* Gradient Colors */}
+          {config.useGradientOverlay && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('config.gradientColor')} 1
+                </label>
+                <div className="space-y-2">
+                  {[
+                    { label: t('config.primary'), colors: gradientColors.filter(c => c.value.includes('primary')) },
+                    { label: t('config.secondary'), colors: gradientColors.filter(c => c.value.includes('secondary')) },
+                    { label: t('config.accent'), colors: gradientColors.filter(c => c.value.includes('accent')) },
+                  ].map((group) => (
+                    <div key={group.label} className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 w-20">{group.label}</span>
+                      <div className="flex gap-1">
+                        {group.colors.map((color) => (
+                          <button
+                            key={color.value}
+                            onClick={() => onChange('gradientColor1', color.value)}
+                            className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${
+                              config.gradientColor1 === color.value 
+                                ? 'border-blue-500 ring-2 ring-blue-200' 
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                            style={{ backgroundColor: color.displayColor }}
+                            title={color.label}
+                          >
+                            {config.gradientColor1 === color.value && (
+                              <Check 
+                                className="w-4 h-4" 
+                                style={{ color: !isLightColor(color.displayColor) ? 'white' : '#1f2937' }} 
+                              />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('config.gradientColor')} 2
+                </label>
+                <div className="space-y-2">
+                  {[
+                    { label: t('config.primary'), colors: gradientColors.filter(c => c.value.includes('primary')) },
+                    { label: t('config.secondary'), colors: gradientColors.filter(c => c.value.includes('secondary')) },
+                    { label: t('config.accent'), colors: gradientColors.filter(c => c.value.includes('accent')) },
+                  ].map((group) => (
+                    <div key={group.label} className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 w-20">{group.label}</span>
+                      <div className="flex gap-1">
+                        {group.colors.map((color) => (
+                          <button
+                            key={color.value}
+                            onClick={() => onChange('gradientColor2', color.value)}
+                            className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${
+                              config.gradientColor2 === color.value 
+                                ? 'border-blue-500 ring-2 ring-blue-200' 
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                            style={{ backgroundColor: color.displayColor }}
+                            title={color.label}
+                          >
+                            {config.gradientColor2 === color.value && (
+                              <Check 
+                                className="w-4 h-4" 
+                                style={{ color: !isLightColor(color.displayColor) ? 'white' : '#1f2937' }} 
+                              />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Background Color */}

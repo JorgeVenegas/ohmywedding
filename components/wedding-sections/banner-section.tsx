@@ -10,6 +10,7 @@ export interface BannerSectionProps {
   theme?: Partial<ThemeConfig>
   alignment?: Partial<AlignmentConfig>
   imageUrl?: string
+  imagePosition?: { x: number; y: number }
   bannerHeight?: 'small' | 'medium' | 'large' | 'full'
   showText?: boolean
   title?: string
@@ -24,6 +25,7 @@ export interface BannerSectionProps {
 export function BannerSection({
   theme,
   imageUrl,
+  imagePosition = { x: 50, y: 50 },
   bannerHeight = 'large',
   showText = true,
   title,
@@ -41,6 +43,7 @@ export function BannerSection({
 
   // Use custom config values if available, otherwise fall back to props
   const effectiveImageUrl = customConfig.imageUrl ?? imageUrl
+  const effectiveImagePosition = customConfig.imagePosition ?? imagePosition
   const effectiveBannerHeight = customConfig.bannerHeight ?? bannerHeight
   const effectiveShowText = customConfig.showText ?? showText
   const effectiveTitle = customConfig.title ?? title
@@ -86,6 +89,7 @@ export function BannerSection({
     if (customizeContext) {
       const configToPass = {
         imageUrl: effectiveImageUrl,
+        imagePosition: effectiveImagePosition,
         bannerHeight: effectiveBannerHeight,
         showText: effectiveShowText,
         title: effectiveTitle,
@@ -127,7 +131,8 @@ export function BannerSection({
           sizes="100vw"
           unoptimized
           style={{
-            filter: `brightness(${effectiveImageBrightness}%)`
+            filter: `brightness(${effectiveImageBrightness}%)`,
+            objectPosition: `${effectiveImagePosition.x}% ${effectiveImagePosition.y}%`
           }}
         />
         

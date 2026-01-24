@@ -46,6 +46,27 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Keyframe animations for image preview modals */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 /* Hide scrollbar globally */
 * {
   scrollbar-width: none; /* Firefox */

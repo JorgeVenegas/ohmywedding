@@ -270,11 +270,13 @@ export interface Translations {
     masonry: string
     grid: string
     list: string
+    collage: string
     // Variant descriptions
     carouselDesc: string
     masonryDesc: string
     gridDesc: string
     listDesc: string
+    collageDesc: string
     // Config labels
     uploadPhotos: string
     managePhotos: string
@@ -518,6 +520,7 @@ export interface Translations {
     galleryMasonry: string
     galleryGrid: string
     galleryList: string
+    galleryCollage: string
     // Descriptions
     classicCardsDesc: string
     galleryCarouselDesc: string
@@ -525,6 +528,7 @@ export interface Translations {
     galleryMasonryDesc: string
     galleryGridDesc: string
     galleryListDesc: string
+    galleryCollageDesc: string
     elegantScriptDesc: string
     timelineDesc: string
     minimalCleanDesc: string
@@ -548,6 +552,17 @@ export interface Translations {
     secondaryLighter: string
     accentLight: string
     accentLighter: string
+    // Image position
+    imageFocalPoint: string
+    topLeft: string
+    topCenter: string
+    topRight: string
+    centerLeft: string
+    centerRight: string
+    bottomLeft: string
+    bottomCenter: string
+    bottomRight: string
+    imagePosition: string
     // Bulk mode
     bulkMode: string
     bulkUploadMode: string
@@ -564,9 +579,9 @@ export interface Translations {
     useGradientOverlay: string
     gradientColor1: string
     gradientColor2: string
-    imagePosition: string
     useColorBackground: string
     transparent: string
+    opaque: string
     dark: string
     darker: string
     bright: string
