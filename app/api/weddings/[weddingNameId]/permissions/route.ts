@@ -40,7 +40,7 @@ export async function GET(
     // Get wedding info
     const { data: wedding, error: weddingError } = await supabase
       .from('weddings')
-      .select('owner_id')
+      .select('owner_id, is_demo')
       .eq('wedding_name_id', weddingNameId)
       .single()
 
@@ -81,18 +81,31 @@ export async function GET(
     // User is logged in
     const isOwner = wedding.owner_id === user.id
     
+    // Check if user is a superuser (has all permissions)
+    let isSuperuser = false
+    if (user.email) {
+      const { data: superuserCheck } = await supabase
+        .from('superusers')
+        .select('id')
+        .eq('email', user.email.toLowerCase())
+        .eq('is_active', true)
+        .single()
+      isSuperuser = !!superuserCheck
+    }
+    
     // Check if user is a collaborator by email
     const isCollaborator = user.email ? collaboratorEmails.includes(user.email.toLowerCase()) : false
 
+    // Superusers have all permissions, including editing demo weddings
     let role: WeddingPermissions['role'] = 'guest'
-    if (isOwner) role = 'owner'
+    if (isOwner || isSuperuser) role = 'owner'
     else if (isCollaborator) role = 'editor'
 
     const permissions: WeddingPermissions = {
-      canEdit: isOwner || isCollaborator,
-      canDelete: isOwner,
-      canManageCollaborators: isOwner,
-      isOwner,
+      canEdit: isOwner || isCollaborator || isSuperuser,
+      canDelete: isOwner || isSuperuser,
+      canManageCollaborators: isOwner || isSuperuser,
+      isOwner: isOwner || isSuperuser,
       isCollaborator,
       role,
       userId: user.id

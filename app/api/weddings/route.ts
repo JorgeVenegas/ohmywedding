@@ -107,12 +107,21 @@ export async function POST(request: Request) {
     // Create page configuration from user selections
     const defaultPageConfig = createDefaultPageConfig()
     
+    // Debug logging
+    console.log('=== API CREATE WEDDING DEBUG ===')
+    console.log('Received sectionConfigs:', JSON.stringify(body.sectionConfigs, null, 2))
+    console.log('Received components:', JSON.stringify(body.components, null, 2))
+    
     // Use components from the form if provided, otherwise use defaults
     const pageConfig = {
       ...defaultPageConfig,
       components: body.components || defaultPageConfig.components,
+      // Include sectionConfigs from the form - this contains variant settings, content, etc.
+      sectionConfigs: body.sectionConfigs || defaultPageConfig.sectionConfigs,
       siteSettings: {
         ...defaultPageConfig.siteSettings,
+        locale: body.locale || defaultPageConfig.siteSettings?.locale,
+        showLanguageSwitcher: true,
         theme: {
           ...defaultPageConfig.siteSettings?.theme,
           colors: {
@@ -125,8 +134,13 @@ export async function POST(request: Request) {
           },
           fonts: body.fontPairing || defaultPageConfig.siteSettings?.theme?.fonts
         }
-      }
+      },
+      version: '1.0',
+      lastModified: new Date().toISOString()
     }
+    
+    console.log('Final pageConfig.sectionConfigs:', JSON.stringify(pageConfig.sectionConfigs, null, 2))
+    console.log('Final pageConfig.components:', JSON.stringify(pageConfig.components, null, 2))
 
     // Create wedding record
     const weddingData = {

@@ -3,6 +3,47 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react'
 import { PageConfiguration, createDefaultPageConfig, loadPageConfiguration, savePageConfiguration } from '@/lib/page-config'
 
+// Helper to convert kebab-case to camelCase for sectionConfig keys
+// e.g., "event-details" -> "eventDetails", "our-story" -> "ourStory"
+function normalizeConfigKey(key: string): string {
+  return key.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())
+}
+
+// Check if a key is in kebab-case
+function isKebabCase(key: string): boolean {
+  return key.includes('-')
+}
+
+// Normalize all sectionConfig keys to camelCase and merge duplicates
+// When both camelCase and kebab-case exist, merge them with kebab-case values taking precedence
+// (kebab-case is typically the newer update from the customize panel)
+function normalizeSectionConfigs(sectionConfigs: Record<string, any>): Record<string, any> {
+  const normalized: Record<string, any> = {}
+  const keys = Object.keys(sectionConfigs)
+  
+  // First pass: collect all camelCase keys (original values)
+  for (const key of keys) {
+    if (!isKebabCase(key)) {
+      // This is already camelCase, add it
+      normalized[key] = { ...sectionConfigs[key] }
+    }
+  }
+  
+  // Second pass: process kebab-case keys, which should override camelCase
+  for (const key of keys) {
+    if (isKebabCase(key)) {
+      const normalizedKey = normalizeConfigKey(key)
+      // Merge with any existing camelCase config, kebab-case takes precedence
+      normalized[normalizedKey] = { 
+        ...normalized[normalizedKey], 
+        ...sectionConfigs[key] 
+      }
+    }
+  }
+  
+  return normalized
+}
+
 // Wedding details type for real-time updates
 export interface WeddingDetails {
   partner1_first_name: string
@@ -125,8 +166,15 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
     setIsLoading(true)
     try {
       const loadedConfig = await loadPageConfiguration(weddingNameId)
-      setConfig(loadedConfig)
-      setOriginalConfig(JSON.parse(JSON.stringify(loadedConfig))) // Deep copy
+      
+      // Normalize sectionConfigs keys to camelCase and merge any duplicates
+      const normalizedConfig = {
+        ...loadedConfig,
+        sectionConfigs: normalizeSectionConfigs(loadedConfig.sectionConfigs || {})
+      }
+      
+      setConfig(normalizedConfig)
+      setOriginalConfig(JSON.parse(JSON.stringify(normalizedConfig))) // Deep copy
     } catch (error) {
       console.error('Failed to load configuration:', error)
     } finally {
@@ -135,12 +183,15 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
   }
 
   const updateSectionConfig = (sectionId: string, sectionConfig: Record<string, any>) => {
+    // Normalize the key to camelCase to ensure consistency
+    const normalizedKey = normalizeConfigKey(sectionId)
+    
     setConfig(prev => {
       const newConfig = {
         ...prev,
         sectionConfigs: {
           ...prev.sectionConfigs,
-          [sectionId]: { ...sectionConfig }
+          [normalizedKey]: { ...sectionConfig }
         }
       }
       return newConfig
@@ -148,7 +199,9 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
   }
 
   const getSectionConfig = (sectionId: string): Record<string, any> => {
-    const sectionConfig = config.sectionConfigs[sectionId] || {}
+    // Try normalized key first, then original key for backwards compatibility
+    const normalizedKey = normalizeConfigKey(sectionId)
+    const sectionConfig = config.sectionConfigs[normalizedKey] || config.sectionConfigs[sectionId] || {}
     return sectionConfig
   }
 

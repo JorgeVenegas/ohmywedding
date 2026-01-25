@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
+import { PremiumUpgradePrompt } from "@/components/ui/premium-gate"
+import { useSubscriptionContext } from "@/components/contexts/subscription-context"
 import {
   Tooltip,
   TooltipContent,
@@ -118,6 +120,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const { weddingId } = use(params)
   const searchParams = useSearchParams()
   const router = useRouter()
+  
+  // Premium feature check
+  const { canAccessFeature, loading: subscriptionLoading } = useSubscriptionContext()
   
   const [guestGroups, setGuestGroups] = useState<GuestGroup[]>([])
   const [ungroupedGuests, setUngroupedGuests] = useState<Guest[]>([])
@@ -2330,7 +2335,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     }
   }
   
-  if (loading) {
+  if (loading || subscriptionLoading) {
     return (
       <main className="min-h-screen bg-background">
         <Header
@@ -2340,6 +2345,26 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         />
         <div className="flex items-center justify-center py-20">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </main>
+    )
+  }
+
+  // Check if user has access to invitations feature
+  if (!canAccessFeature('invitations_panel_enabled')) {
+    return (
+      <main className="min-h-screen bg-background">
+        <Header
+          showBackButton
+          backHref={`/admin/${weddingId}/dashboard`}
+          title="Invitations"
+        />
+        <div className="max-w-2xl mx-auto px-4 py-20">
+          <PremiumUpgradePrompt 
+            feature="invitations_panel_enabled"
+            title="Upgrade to Manage Guests & Invitations"
+            description="Guest management, invitations, and RSVP tracking are premium features. Upgrade to Premium to manage your guest list, send invitations, and track RSVPs."
+          />
         </div>
       </main>
     )

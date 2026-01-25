@@ -46,7 +46,19 @@ export async function PATCH(
     const isOwner = wedding.owner_id === user.id
     const isCollaborator = userEmail && wedding.collaborator_emails?.includes(userEmail)
     
-    if (!isOwner && !isCollaborator) {
+    // Check if user is a superuser
+    let isSuperuser = false
+    if (userEmail) {
+      const { data: superuserCheck } = await supabase
+        .from('superusers')
+        .select('id')
+        .eq('email', userEmail.toLowerCase())
+        .eq('is_active', true)
+        .single()
+      isSuperuser = !!superuserCheck
+    }
+    
+    if (!isOwner && !isCollaborator && !isSuperuser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 

@@ -1,6 +1,7 @@
 "use client"
 
 import React from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar, Heart } from 'lucide-react'
@@ -117,8 +118,8 @@ export function EventDetailsElegantVariant(props: BaseEventDetailsProps) {
                   boxShadow: '0 4px 24px rgba(0,0,0,0.08)'
                 } : undefined}
               >
-                {/* Event Image */}
-                {showPhotos && event.imageUrl && (
+                {/* Event Image - show if imageUrl exists */}
+                {event.imageUrl && (
                   <div className="aspect-[3/1] overflow-hidden">
                     <img 
                       src={event.imageUrl} 

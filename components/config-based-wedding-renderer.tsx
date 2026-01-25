@@ -158,10 +158,46 @@ function ConfigBasedWeddingRendererContent({
     config.siteSettings.theme?.fonts?.bodyFamily
   ])
   
+  // Helper to get section config key from component type (event-details -> eventDetails)
+  // Also removes any timestamp or numeric suffix for backwards compatibility
+  const getSectionConfigKey = (componentType: string): string => {
+    // Remove timestamp suffix if present (for backwards compatibility)
+    const baseType = componentType.replace(/-\d+$/, '')
+    // Convert kebab-case to camelCase
+    return baseType.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())
+  }
+  
+  // Merge component.props with sectionConfigs to get full configuration
+  // sectionConfigs takes precedence as it's the source of truth for variants, etc.
+  const getMergedProps = (component: any): Record<string, any> => {
+    const configKey = getSectionConfigKey(component.type)
+    const sectionConfig = config.sectionConfigs?.[configKey] || {}
+    const componentProps = component.props || {}
+    const merged = { ...componentProps, ...sectionConfig }
+    
+    // Debug logging
+    console.log(`=== RENDER ${component.type} ===`)
+    console.log(`configKey: ${configKey}`)
+    console.log(`sectionConfig:`, sectionConfig)
+    console.log(`component.props:`, componentProps)
+    console.log(`merged:`, merged)
+    
+    return merged
+  }
+  
   // Only render enabled components from the page configuration
   const allComponents = config.components
     .filter(component => component.enabled)
     .sort((a, b) => a.order - b.order)
+  
+  // Debug: Log loaded config
+  React.useEffect(() => {
+    if (!isLoading) {
+      console.log('=== LOADED PAGE CONFIG ===')
+      console.log('sectionConfigs:', JSON.stringify(config.sectionConfigs, null, 2))
+      console.log('components:', JSON.stringify(config.components, null, 2))
+    }
+  }, [isLoading, config])
 
   if (isLoading) {
     return null
@@ -180,8 +216,12 @@ function ConfigBasedWeddingRendererContent({
       newEnabledComponents.splice(position, 0, { ...existingComponent, enabled: true })
     } else if (!existingComponent) {
       // Component doesn't exist, create a new one and insert at position
+      // For multiple instances of the same type, add a simple counter suffix
+      const existingOfType = config.components.filter(c => c.type === sectionType || c.id.startsWith(`${sectionType}-`))
+      const componentId = existingOfType.length > 0 ? `${sectionType}-${existingOfType.length + 1}` : sectionType
+      
       const newComponent = {
-        id: `${sectionType}-${Date.now()}`,
+        id: componentId,
         type: sectionType,
         enabled: true,
         order: 0, // Will be set below
@@ -294,24 +334,31 @@ function ConfigBasedWeddingRendererContent({
   }
 
   const renderComponent = (component: any, index: number) => {
+    // Get merged props (component.props + sectionConfigs)
+    const mergedProps = getMergedProps(component)
+    
+    // Extract base component type (remove numeric suffix for backwards compatibility)
+    // e.g., 'banner-1769236752509' -> 'banner', 'banner-2' -> 'banner'
+    const baseType = component.type.replace(/-\d+$/, '')
+    
     const commonProps = {
       wedding: effectiveWedding,
       dateId: wedding.date_id,
       weddingNameId,
-      theme: config.siteSettings.theme,
-      alignment: { text: 'center' },
-      groupId: component.type === 'rsvp' ? groupId : undefined
+      theme: config.siteSettings.theme as any,
+      alignment: { text: 'center' as const },
+      groupId: baseType === 'rsvp' ? groupId : undefined
     }
 
     let renderedComponent
 
-    switch (component.type) {
+    switch (baseType) {
       case 'hero':
         renderedComponent = (
           <HeroSection
             key={component.id}
             {...commonProps}
-            {...component.props}
+            {...mergedProps}
           />
         )
         break
@@ -319,8 +366,9 @@ function ConfigBasedWeddingRendererContent({
         renderedComponent = (
           <BannerSection
             key={component.id}
-            theme={config.siteSettings.theme}
-            {...component.props}
+            sectionId={component.id}
+            theme={config.siteSettings.theme as any}
+            {...mergedProps}
           />
         )
         break
@@ -329,8 +377,8 @@ function ConfigBasedWeddingRendererContent({
           <OurStorySection
             key={component.id}
             {...commonProps}
-            {...component.props}
-            howWeMetText={component.props?.howWeMetText || undefined}
+            {...mergedProps}
+            howWeMetText={mergedProps?.howWeMetText || undefined}
           />
         )
         break
@@ -339,7 +387,7 @@ function ConfigBasedWeddingRendererContent({
           <EventDetailsSection
             key={component.id}
             {...commonProps}
-            {...component.props}
+            {...mergedProps}
           />
         )
         break
@@ -348,8 +396,8 @@ function ConfigBasedWeddingRendererContent({
           <CountdownSection
             key={component.id}
             {...commonProps}
-            {...component.props}
-            weddingDate={effectiveWedding.wedding_date}
+            {...mergedProps}
+            weddingDate={effectiveWedding.wedding_date || ''}
           />
         )
         break
@@ -358,7 +406,7 @@ function ConfigBasedWeddingRendererContent({
           <GallerySection
             key={component.id}
             {...commonProps}
-            {...component.props}
+            {...mergedProps}
           />
         )
         break
@@ -367,7 +415,7 @@ function ConfigBasedWeddingRendererContent({
           <RSVPSection
             key={component.id}
             {...commonProps}
-            {...component.props}
+            {...mergedProps}
           />
         )
         break
@@ -376,7 +424,7 @@ function ConfigBasedWeddingRendererContent({
           <FAQSection
             key={component.id}
             {...commonProps}
-            {...component.props}
+            {...mergedProps}
           />
         )
         break
@@ -385,7 +433,7 @@ function ConfigBasedWeddingRendererContent({
           <RegistrySection
             key={component.id}
             {...commonProps}
-            {...component.props}
+            {...mergedProps}
             weddingNameId={weddingNameId}
           />
         )

@@ -1,6 +1,7 @@
 "use client"
 
 import React from 'react'
+import Image from 'next/image'
 import { Card } from '@/components/ui/card'
 import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar, ArrowRight } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
@@ -90,13 +91,17 @@ export function EventDetailsMinimalVariant(props: BaseEventDetailsProps) {
           <div className={`grid gap-6 sm:gap-8 ${events.length === 1 ? 'max-w-md mx-auto' : 'md:grid-cols-2'}`}>
             {events.map((event, index) => (
               <div key={event.id} className="relative">
-                {/* Event Image */}
-                {showPhotos && event.imageUrl && (
-                  <div className="aspect-[4/3] mb-6 overflow-hidden rounded-lg">
-                    <img 
-                      src={event.imageUrl} 
+                {/* Event Image - show if imageUrl exists */}
+                {event.imageUrl && (
+                  <div className="aspect-[4/3] mb-6 overflow-hidden rounded-lg bg-gray-100">
+                    <Image
+                      src={event.imageUrl}
                       alt={`${event.venue} venue`}
+                      width={600}
+                      height={450}
                       className="w-full h-full object-cover"
+                      loading="lazy"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 45vw, 600px"
                     />
                   </div>
                 )}

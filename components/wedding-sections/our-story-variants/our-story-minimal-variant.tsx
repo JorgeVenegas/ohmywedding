@@ -72,7 +72,7 @@ export function OurStoryMinimalVariant({
                   </div>
                 )}
                 <div className="prose prose-lg mx-auto">
-                  <h3 className="text-2xl font-semibold mb-6" 
+                  <h3 className="text-2xl mb-6" 
                       style={{ color: headingColor }}>
                     {t('ourStory.howWeMet')}
                   </h3>
@@ -100,7 +100,7 @@ export function OurStoryMinimalVariant({
                   </div>
                 )}
                 <div className="prose prose-lg mx-auto">
-                  <h3 className="text-2xl font-semibold mb-6" 
+                  <h3 className="text-2xl mb-6" 
                       style={{ color: headingColor }}>
                     {t('ourStory.theProposal')}
                   </h3>

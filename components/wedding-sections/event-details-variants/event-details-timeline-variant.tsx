@@ -1,6 +1,7 @@
 "use client"
 
 import React from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar } from 'lucide-react'
@@ -115,7 +116,7 @@ export function EventDetailsTimelineVariant(props: BaseEventDetailsProps) {
               <div className="w-16 md:hidden" />
 
               {/* Content */}
-              <div className={`flex-1 md:w-[calc(50%-3rem)] ${index % 2 === 0 ? 'md:text-right md:pr-12' : 'md:text-left md:pl-12'}`}>
+              <div className={`flex-1 md:w-[calc(50%-3rem)] ${index % 2 === 0 ? 'md:text-right justify-end md:pr-12' : 'md:text-left md:pl-12'}`}>
                 <div 
                   className={`rounded-xl overflow-hidden ${isColored ? '' : 'bg-white shadow-lg'}`}
                   style={isColored ? { 
@@ -123,13 +124,17 @@ export function EventDetailsTimelineVariant(props: BaseEventDetailsProps) {
                     boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
                   } : undefined}
                 >
-                  {/* Event Image */}
-                  {showPhotos && event.imageUrl && (
-                    <div className="aspect-[16/9] overflow-hidden">
-                      <img 
-                        src={event.imageUrl} 
+                  {/* Event Image - show if imageUrl exists */}
+                  {event.imageUrl && (
+                    <div className="aspect-[16/9] overflow-hidden bg-gray-100">
+                      <Image
+                        src={event.imageUrl}
                         alt={`${event.title} venue`}
+                        width={800}
+                        height={450}
                         className="w-full h-full object-cover"
+                        loading="lazy"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 800px"
                       />
                     </div>
                   )}
@@ -138,7 +143,7 @@ export function EventDetailsTimelineVariant(props: BaseEventDetailsProps) {
                     {/* Time badge */}
                     {event.time && (
                       <div 
-                        className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm mb-3"
+                        className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm mb-3 ${index % 2 === 0 ? 'md:float-right' : ''}`}
                         style={{ 
                           backgroundColor: isColored ? `${titleColor}15` : `${theme?.colors?.primary}10`,
                           color: cardTitleColor
@@ -151,7 +156,7 @@ export function EventDetailsTimelineVariant(props: BaseEventDetailsProps) {
 
                     {/* Title */}
                     <h3 
-                      className="text-2xl font-bold mb-3"
+                      className={`text-2xl font-bold mb-3 ${index % 2 === 0 ? 'md:text-right' : 'md:text-left'}`}
                       style={{ 
                         color: cardTitleColor,
                         fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
@@ -163,7 +168,7 @@ export function EventDetailsTimelineVariant(props: BaseEventDetailsProps) {
                     {/* Venue - Show if different from title */}
                     {event.venue && event.venue !== event.title && (
                       <p 
-                        className="text-lg font-semibold mb-2 flex items-center gap-2"
+                        className={`text-lg font-semibold mb-2 flex items-center gap-2 ${index % 2 === 0 ? 'md:justify-end' : 'md:justify-start'}`}
                         style={{ color: cardTextColor }}
                       >
                         <MapPin className="w-4 h-4" />

@@ -92,7 +92,7 @@ export function OurStoryCardsVariant({
                   </div>
                 )}
                 <div className="p-8">
-                  <h3 className="text-2xl font-bold mb-4" 
+                  <h3 className="text-2xl  mb-4" 
                       style={{ color: cardTitleColor }}>
                     {story.title}
                   </h3>

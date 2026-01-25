@@ -1,6 +1,7 @@
 "use client"
 
 import React from 'react'
+import Image from 'next/image'
 import { Card } from '@/components/ui/card'
 import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
@@ -108,13 +109,17 @@ export function EventDetailsClassicVariant(props: BaseEventDetailsProps) {
               boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
             } : undefined}
           >
-            {/* Event Image */}
-            {showPhotos && event.imageUrl && (
-              <div className="aspect-[16/10] overflow-hidden">
-                <img 
-                  src={event.imageUrl} 
+            {/* Event Image - show if imageUrl exists */}
+            {event.imageUrl && (
+              <div className="aspect-[16/10] overflow-hidden bg-gray-100">
+                <Image
+                  src={event.imageUrl}
                   alt={`${event.venue} venue`}
+                  width={800}
+                  height={500}
                   className="w-full h-full object-cover"
+                  loading="lazy"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 800px"
                 />
               </div>
             )}
@@ -134,7 +139,7 @@ export function EventDetailsClassicVariant(props: BaseEventDetailsProps) {
 
               {/* Event Title - use custom title if provided, fallback to type label */}
               <h3 
-                className="text-xl sm:text-2xl font-bold mb-2"
+                className="text-xl sm:text-2xl mb-2"
                 style={{ 
                   color: cardTitleColor,
                   fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'

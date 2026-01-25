@@ -133,7 +133,7 @@ export function GalleryMasonryVariant({
                     transformOrigin: photo.focalPoint ? `${photo.focalPoint.x}% ${photo.focalPoint.y}%` : 'center'
                   }}
                   sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                  unoptimized
+                  loading="lazy"
                 />
                 {/* Gradient overlay on hover */}
                 <div className="overlay absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300">
@@ -172,7 +172,6 @@ export function GalleryMasonryVariant({
               fill
               className="object-contain"
               sizes="100vw"
-              unoptimized
             />
           </div>
         </div>

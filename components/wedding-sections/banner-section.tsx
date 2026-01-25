@@ -7,6 +7,7 @@ import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper
 import { useCustomize } from '@/components/contexts/customize-context'
 
 export interface BannerSectionProps {
+  sectionId?: string
   theme?: Partial<ThemeConfig>
   alignment?: Partial<AlignmentConfig>
   imageUrl?: string
@@ -23,6 +24,7 @@ export interface BannerSectionProps {
 }
 
 export function BannerSection({
+  sectionId = 'banner',
   theme,
   imageUrl,
   imagePosition = { x: 50, y: 50 },
@@ -38,8 +40,11 @@ export function BannerSection({
 }: BannerSectionProps) {
   const customizeContext = useCustomize()
 
+  // Extract base type from sectionId (remove numeric suffix) for config lookup
+  const configKey = sectionId.replace(/-\d+$/, '')
+  
   // Get customized configuration if available
-  const customConfig = customizeContext?.getSectionConfig('banner') || {}
+  const customConfig = customizeContext?.getSectionConfig(sectionId) || {}
 
   // Use custom config values if available, otherwise fall back to props
   const effectiveImageUrl = customConfig.imageUrl ?? imageUrl
@@ -186,7 +191,7 @@ export function BannerSection({
 
   return (
     <EditableSectionWrapper
-      sectionId="banner"
+      sectionId={sectionId} 
       sectionType="banner"
       onEditClick={onEditClick}
     >

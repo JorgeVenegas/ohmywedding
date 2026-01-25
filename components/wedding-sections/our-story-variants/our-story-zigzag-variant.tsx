@@ -163,7 +163,7 @@ export function OurStoryZigzagVariant({
                         </div>
                         
                         <h3 
-                          className="text-2xl md:text-3xl font-bold mb-4 leading-tight"
+                          className="text-2xl md:text-3xl mb-4 leading-tight"
                           style={{ color: cardTitleColor }}
                         >
                           {event.title}

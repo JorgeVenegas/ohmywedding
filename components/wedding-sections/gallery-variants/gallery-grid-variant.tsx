@@ -130,7 +130,7 @@ export function GalleryGridVariant({
                   transformOrigin: photo.focalPoint ? `${photo.focalPoint.x}% ${photo.focalPoint.y}%` : 'center'
                 }}
                 sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                unoptimized
+                loading="lazy"
               />
               {/* Hover Overlay with Caption */}
               <div className="overlay absolute inset-0 bg-black/0 transition-all duration-300 flex items-center justify-center">

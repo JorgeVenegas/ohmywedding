@@ -63,8 +63,20 @@ export async function GET(
     const isOwner = wedding.owner_id === user.id
     const collaboratorEmails = wedding.collaborator_emails || []
     const isCollaborator = collaboratorEmails.includes(user.email || '')
+    
+    // Check if user is a superuser
+    let isSuperuser = false
+    if (user.email) {
+      const { data: superuserCheck } = await supabase
+        .from('superusers')
+        .select('id')
+        .eq('email', user.email.toLowerCase())
+        .eq('is_active', true)
+        .single()
+      isSuperuser = !!superuserCheck
+    }
 
-    if (!isOwner && !isCollaborator) {
+    if (!isOwner && !isCollaborator && !isSuperuser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -117,7 +129,19 @@ export async function POST(
       return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
     }
 
-    if (weddingData.owner_id !== user.id) {
+    // Check if user is a superuser
+    let isSuperuser = false
+    if (user.email) {
+      const { data: superuserCheck } = await supabase
+        .from('superusers')
+        .select('id')
+        .eq('email', user.email.toLowerCase())
+        .eq('is_active', true)
+        .single()
+      isSuperuser = !!superuserCheck
+    }
+
+    if (weddingData.owner_id !== user.id && !isSuperuser) {
       return NextResponse.json({ error: 'Only the owner can add collaborators' }, { status: 403 })
     }
 
@@ -231,11 +255,23 @@ export async function DELETE(
       return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
     }
 
-    // Allow removal if owner or if removing yourself
+    // Check if user is a superuser
+    let isSuperuser = false
+    if (user.email) {
+      const { data: superuserCheck } = await supabase
+        .from('superusers')
+        .select('id')
+        .eq('email', user.email.toLowerCase())
+        .eq('is_active', true)
+        .single()
+      isSuperuser = !!superuserCheck
+    }
+
+    // Allow removal if owner, superuser, or if removing yourself
     const isOwner = weddingData.owner_id === user.id
     const isSelf = user.email?.toLowerCase() === trimmedEmail
 
-    if (!isOwner && !isSelf) {
+    if (!isOwner && !isSelf && !isSuperuser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 

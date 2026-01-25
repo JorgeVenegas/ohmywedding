@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createBrowserClient } from "@supabase/ssr"
+import { SubscriptionProvider } from "@/components/contexts/subscription-context"
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -12,6 +13,7 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children, params }: AdminLayoutProps) {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [weddingId, setWeddingId] = useState<string>('')
   const router = useRouter()
 
   useEffect(() => {
@@ -19,7 +21,8 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
       try {
         const resolvedParams = await params
         // Decode the weddingId in case it's URL encoded
-        const weddingId = decodeURIComponent(resolvedParams.weddingId)
+        const decodedWeddingId = decodeURIComponent(resolvedParams.weddingId)
+        setWeddingId(decodedWeddingId)
         
         const supabase = createBrowserClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,7 +34,7 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
         
         if (userError || !user) {
           // Not logged in - redirect to login
-          router.push(`/login?redirect=/admin/${encodeURIComponent(weddingId)}/dashboard`)
+          router.push(`/login?redirect=/admin/${encodeURIComponent(decodedWeddingId)}/dashboard`)
           return
         }
 
@@ -39,7 +42,7 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
         const { data: wedding, error: weddingError } = await supabase
           .from('weddings')
           .select('owner_id, collaborator_emails')
-          .eq('wedding_name_id', weddingId)
+          .eq('wedding_name_id', decodedWeddingId)
           .single()
 
         if (weddingError || !wedding) {
@@ -100,5 +103,9 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
     )
   }
 
-  return <>{children}</>
+  return (
+    <SubscriptionProvider weddingId={weddingId}>
+      {children}
+    </SubscriptionProvider>
+  )
 }

@@ -87,6 +87,18 @@ export async function PUT(
     
     const isOwner = existingWedding.owner_id === user.id
     
+    // Check if user is a superuser
+    let isSuperuser = false
+    if (user.email) {
+      const { data: superuserCheck } = await supabase
+        .from('superusers')
+        .select('id')
+        .eq('email', user.email.toLowerCase())
+        .eq('is_active', true)
+        .single()
+      isSuperuser = !!superuserCheck
+    }
+    
     // Check if user is a collaborator
     let isCollaborator = false
     try {
@@ -103,7 +115,7 @@ export async function PUT(
       // Column doesn't exist yet
     }
     
-    if (!isOwner && !isCollaborator) {
+    if (!isOwner && !isCollaborator && !isSuperuser) {
       return NextResponse.json({ error: 'Forbidden - you do not have permission to edit this wedding' }, { status: 403 })
     }
     

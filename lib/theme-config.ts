@@ -479,7 +479,16 @@ export const FONT_PAIRING_CATEGORIES: FontPairingCategory[] = [
 ]
 
 // Flatten all font pairings for backward compatibility
-export const FONT_PAIRINGS: FontPairing[] = FONT_PAIRING_CATEGORIES.flatMap(cat => cat.pairings)
+// Create unique IDs by combining category and pairing id
+export const FONT_PAIRINGS: FontPairing[] = FONT_PAIRING_CATEGORIES.flatMap(cat => 
+  cat.pairings.map(pairing => ({
+    ...pairing,
+    // Make ID unique by prefixing with category if not already unique globally
+    id: FONT_PAIRING_CATEGORIES.filter(c => c.pairings.some(p => p.id === pairing.id)).length > 1 
+      ? `${cat.id}-${pairing.id}`
+      : pairing.id
+  }))
+)
 
 // Available fonts list for individual selection
 export const AVAILABLE_FONTS: AvailableFont[] = [

@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter, Playfair_Display } from "next/font/google"
 import "./globals.css"
 import { ScrollProgressBar } from "@/components/ui/scroll-progress-bar"
+import { Toaster } from "sonner"
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -32,6 +33,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <body className="font-sans antialiased">
         <ScrollProgressBar />
+        <Toaster position="bottom-right" richColors />
         {children}
       </body>
     </html>

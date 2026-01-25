@@ -221,7 +221,7 @@ export function GalleryCollageVariant({
                       transformOrigin: photo.focalPoint ? `${photo.focalPoint.x}% ${photo.focalPoint.y}%` : 'center'
                     }}
                     sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                    unoptimized
+                    loading="lazy"
                   />
                   
                   {/* Caption on hover */}

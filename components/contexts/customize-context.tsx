@@ -3,6 +3,12 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react'
 import { usePageConfigSafe } from './page-config-context'
 
+// Helper to convert kebab-case to camelCase for sectionConfig keys
+// e.g., "event-details" -> "eventDetails", "our-story" -> "ourStory"
+function normalizeConfigKey(key: string): string {
+  return key.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())
+}
+
 interface CustomizeState {
   isOpen: boolean
   sectionId: string | null
@@ -123,9 +129,12 @@ export function CustomizeProvider({ children, weddingDate, weddingNameId }: Cust
     
     // Update persistent configs and schedule page config update
     if (currentSectionId) {
+      // Normalize key for storage consistency
+      const normalizedSectionId = normalizeConfigKey(currentSectionId)
+      
       setSectionConfigs(prevConfigs => {
         const updatedConfig = {
-          ...prevConfigs[currentSectionId],
+          ...prevConfigs[normalizedSectionId],
           [key]: value 
         }
         
@@ -134,7 +143,7 @@ export function CustomizeProvider({ children, weddingDate, weddingNameId }: Cust
         
         return {
           ...prevConfigs,
-          [currentSectionId]: updatedConfig
+          [normalizedSectionId]: updatedConfig
         }
       })
     }
@@ -144,9 +153,10 @@ export function CustomizeProvider({ children, weddingDate, weddingNameId }: Cust
     setState(prev => {
       // Apply reset immediately to persistent config (live updates)
       if (prev.sectionId) {
+        const normalizedSectionId = normalizeConfigKey(prev.sectionId)
         setSectionConfigs(prevConfigs => ({
           ...prevConfigs,
-          [prev.sectionId!]: {}
+          [normalizedSectionId]: {}
         }))
       }
       
@@ -159,17 +169,21 @@ export function CustomizeProvider({ children, weddingDate, weddingNameId }: Cust
 
   const applySectionConfig = () => {
     if (state.sectionId) {
+      const normalizedSectionId = normalizeConfigKey(state.sectionId)
       setSectionConfigs(prev => ({
         ...prev,
-        [state.sectionId!]: { ...state.sectionConfig }
+        [normalizedSectionId]: { ...state.sectionConfig }
       }))
     }
   }
 
   const getSectionConfig = (sectionId: string): Record<string, any> | null => {
+    // Normalize key to camelCase for consistent lookups
+    const normalizedKey = normalizeConfigKey(sectionId)
+    
     // Merge page config with local config, with current editing state taking highest precedence
     const pageConfigData = pageConfig?.getSectionConfig(sectionId) || {}
-    const localConfig = sectionConfigs[sectionId] || {}
+    const localConfig = sectionConfigs[normalizedKey] || sectionConfigs[sectionId] || {}
     
     // If we're currently editing this section, include the live editing state
     const currentEditingConfig = state.sectionId === sectionId ? state.sectionConfig : {}

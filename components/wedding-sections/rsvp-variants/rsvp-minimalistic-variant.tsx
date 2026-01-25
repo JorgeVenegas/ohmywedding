@@ -268,6 +268,28 @@ export function RSVPMinimalisticVariant({
     return (
       <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
+          {/* Header with generic text */}
+          <div className="mb-12 text-center" style={{ textAlign: alignment?.text || 'center' }}>
+            <h2 
+              className="text-3xl md:text-4xl font-light tracking-wide mb-3"
+              style={{ color: titleColor }}
+            >
+              {sectionTitle || t('rsvp.title')}
+            </h2>
+            {(sectionSubtitle || t('rsvp.subtitle')) && (
+              <>
+                <div className="flex items-center justify-center gap-4 my-4">
+                  <div className="h-px w-16" style={{ backgroundColor: theme?.colors?.accent || titleColor, opacity: 0.4 }} />
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: theme?.colors?.accent || titleColor }} />
+                  <div className="h-px w-16" style={{ backgroundColor: theme?.colors?.accent || titleColor, opacity: 0.4 }} />
+                </div>
+                <p className="text-base font-light tracking-wide" style={{ color: textColor }}>
+                  {sectionSubtitle || t('rsvp.subtitle')}
+                </p>
+              </>
+            )}
+          </div>
+
           <div 
             className="p-6 sm:p-8 md:p-12 rounded-2xl border-2"
             style={{
@@ -373,6 +395,48 @@ export function RSVPMinimalisticVariant({
             >
               {t('rsvp.editResponse')}
             </button>
+          </div>
+        </div>
+      </SectionWrapper>
+    )
+  }
+
+  if (!groupId) {
+    return (
+      <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+          {/* Header with generic text */}
+          <div className="mb-12 text-center" style={{ textAlign: alignment?.text || 'center' }}>
+            <h2 
+              className="text-3xl md:text-4xl font-light tracking-wide mb-3"
+              style={{ color: titleColor }}
+            >
+              {sectionTitle || t('rsvp.title')}
+            </h2>
+            {(sectionSubtitle || t('rsvp.subtitle')) && (
+              <>
+                <div className="flex items-center justify-center gap-4 my-4">
+                  <div className="h-px w-16" style={{ backgroundColor: theme?.colors?.accent || titleColor, opacity: 0.4 }} />
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: theme?.colors?.accent || titleColor }} />
+                  <div className="h-px w-16" style={{ backgroundColor: theme?.colors?.accent || titleColor, opacity: 0.4 }} />
+                </div>
+                <p className="text-base font-light tracking-wide" style={{ color: textColor }}>
+                  {sectionSubtitle || t('rsvp.subtitle')}
+                </p>
+              </>
+            )}
+          </div>
+
+          <div 
+            className="p-6 sm:p-8 md:p-10 rounded-xl sm:rounded-2xl border"
+            style={{
+              backgroundColor: cardBg,
+              borderColor: isColored ? `${titleColor}40` : '#e5e7eb',
+            }}
+          >
+            <p className="text-center text-sm" style={{ color: textColor }}>
+              {t('rsvp.individualInvitationsMessage')}
+            </p>
           </div>
         </div>
       </SectionWrapper>

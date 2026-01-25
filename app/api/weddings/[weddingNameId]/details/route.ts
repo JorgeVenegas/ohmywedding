@@ -100,7 +100,19 @@ export async function PATCH(
     const isOwner = existingWedding.owner_id === user.id
     const isCollaborator = existingWedding.collaborator_emails?.includes(user.email?.toLowerCase() || '')
     
-    if (!isOwner && !isCollaborator) {
+    // Check if user is a superuser
+    let isSuperuser = false
+    if (user.email) {
+      const { data: superuserCheck } = await supabase
+        .from('superusers')
+        .select('id')
+        .eq('email', user.email.toLowerCase())
+        .eq('is_active', true)
+        .single()
+      isSuperuser = !!superuserCheck
+    }
+    
+    if (!isOwner && !isCollaborator && !isSuperuser) {
       return NextResponse.json({ error: 'Forbidden - you do not have permission to edit this wedding' }, { status: 403 })
     }
     
@@ -197,7 +209,19 @@ export async function PUT(
       // Column doesn't exist yet
     }
     
-    if (!isOwner && !isCollaborator) {
+    // Check if user is a superuser
+    let isSuperuser = false
+    if (user.email) {
+      const { data: superuserCheck } = await supabase
+        .from('superusers')
+        .select('id')
+        .eq('email', user.email.toLowerCase())
+        .eq('is_active', true)
+        .single()
+      isSuperuser = !!superuserCheck
+    }
+    
+    if (!isOwner && !isCollaborator && !isSuperuser) {
       return NextResponse.json({ error: 'Forbidden - you do not have permission to edit this wedding' }, { status: 403 })
     }
     

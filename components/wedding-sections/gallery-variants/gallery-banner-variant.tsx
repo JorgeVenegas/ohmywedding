@@ -69,7 +69,6 @@ export function GalleryBannerVariant({
           className="object-cover"
           priority
           sizes="100vw"
-          unoptimized
         />
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50" />

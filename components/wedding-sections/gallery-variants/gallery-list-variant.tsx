@@ -100,7 +100,7 @@ export function GalleryListVariant({
                     transformOrigin: photo.focalPoint ? `${photo.focalPoint.x}% ${photo.focalPoint.y}%` : 'center'
                   }}
                   sizes="(max-width: 768px) 100vw, 600px"
-                  unoptimized
+                  loading="lazy"
                 />
               </div>
             </div>

@@ -156,7 +156,7 @@ export function OurStoryTimelineVariant({
                         <div className="text-sm font-semibold mb-2" style={{ color: dateColor }}>
                           {event.date}
                         </div>
-                        <h3 className="text-xl font-bold mb-3" style={{ color: cardTitleColor }}>
+                        <h3 className="text-xl mb-3" style={{ color: cardTitleColor }}>
                           {event.title}
                         </h3>
                         <p className="leading-relaxed text-gray-600"

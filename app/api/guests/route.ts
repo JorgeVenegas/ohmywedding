@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { NextResponse } from "next/server"
+import { requireFeature } from "@/lib/subscription-api"
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -17,6 +18,12 @@ export async function GET(request: Request) {
     }
 
     const decodedWeddingId = decodeURIComponent(weddingId)
+    
+    // Check premium access for guest management
+    const featureCheck = await requireFeature('invitations_panel_enabled', decodedWeddingId)
+    if (!featureCheck.allowed) {
+      return featureCheck.response
+    }
 
     const supabase = await createServerSupabaseClient()
     
@@ -70,6 +77,12 @@ export async function POST(request: Request) {
       }
       
       const decodedWeddingId = decodeURIComponent(weddingId)
+      
+      // Check premium access for guest management
+      const featureCheck = await requireFeature('invitations_panel_enabled', decodedWeddingId)
+      if (!featureCheck.allowed) {
+        return featureCheck.response
+      }
       
       // Get the wedding UUID from the wedding_name_id
       const { data: wedding, error: weddingError } = await supabase
@@ -131,6 +144,12 @@ export async function POST(request: Request) {
     }
 
     const decodedWeddingId = decodeURIComponent(weddingId)
+    
+    // Check premium access for guest management
+    const featureCheck = await requireFeature('invitations_panel_enabled', decodedWeddingId)
+    if (!featureCheck.allowed) {
+      return featureCheck.response
+    }
 
     // Get the wedding UUID from the wedding_name_id
     const { data: wedding, error: weddingError } = await supabase

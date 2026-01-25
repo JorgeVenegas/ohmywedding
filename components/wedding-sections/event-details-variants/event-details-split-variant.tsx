@@ -1,6 +1,7 @@
 "use client"
 
 import React from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar, Navigation, Heart } from 'lucide-react'
 import { BaseEventDetailsProps, buildEventList, getMapUrl, getColorScheme, getEventIconType, formatWeddingTime } from './types'
@@ -134,9 +135,9 @@ export function EventDetailsSplitVariant(props: BaseEventDetailsProps) {
         </p>
       </div>
 
-      {/* Check if any photos are visible */}
+      {/* Check if any events have photos */}
       {(() => {
-        const hasVisiblePhotos = showPhotos && events.some(e => e.imageUrl)
+        const hasVisiblePhotos = events.some(e => e.imageUrl)
         
         if (!hasVisiblePhotos) {
           // Side-by-side text layout when no photos
@@ -268,22 +269,27 @@ export function EventDetailsSplitVariant(props: BaseEventDetailsProps) {
             >
               <div className={`flex flex-col lg:flex-row ${isImageRight ? 'lg:flex-row-reverse' : ''}`}>
                 {/* Image Side */}
-                <div className="w-full lg:w-1/2 min-h-[350px] lg:min-h-[550px] relative overflow-hidden">
-                  <img 
-                    src={event.imageUrl} 
-                    alt={`${event.venue} venue`}
-                    className="w-full h-full object-cover absolute inset-0 transition-transform duration-700 hover:scale-105"
-                  />
-                  {/* Subtle gradient overlay for elegance */}
-                  <div 
-                    className="absolute inset-0"
-                    style={{
-                      background: isImageRight 
-                        ? 'linear-gradient(to left, rgba(0,0,0,0.02), transparent 30%)'
-                        : 'linear-gradient(to right, rgba(0,0,0,0.02), transparent 30%)'
-                    }}
-                  />
-                </div>
+                {event.imageUrl && (
+                  <div className="w-full lg:w-1/2 min-h-[350px] lg:min-h-[550px] relative overflow-hidden bg-gray-100">
+                    <Image
+                      src={event.imageUrl}
+                      alt={`${event.venue} venue`}
+                      fill
+                      className="object-cover transition-transform duration-700 hover:scale-105"
+                      loading="lazy"
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                    />
+                    {/* Subtle gradient overlay for elegance */}
+                    <div 
+                      className="absolute inset-0"
+                      style={{
+                        background: isImageRight 
+                          ? 'linear-gradient(to left, rgba(0,0,0,0.02), transparent 30%)'
+                          : 'linear-gradient(to right, rgba(0,0,0,0.02), transparent 30%)'
+                      }}
+                    />
+                  </div>
+                )}
 
                 {/* Content Side */}
                 <div className="w-full lg:w-1/2 flex items-center">

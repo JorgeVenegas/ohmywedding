@@ -23,6 +23,7 @@ create table "weddings" (
   "og_title" text,
   "og_description" text,
   "og_image_url" text,
+  "is_demo" boolean default false, -- Flag for demo/template weddings
   "created_at" timestamp with time zone default now(),
   "updated_at" timestamp with time zone default now()
 );
