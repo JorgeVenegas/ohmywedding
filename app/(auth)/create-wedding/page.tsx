@@ -258,6 +258,20 @@ export default function CreateWeddingPage() {
       }
     },
     {
+      id: 'registry',
+      name: 'Registry',
+      icon: Gift,
+      description: 'Gift registry and wish list',
+      enabled: false,
+      expanded: false,
+      props: {
+        variant: 'cards',
+        registries: [],
+        customItems: [],
+        showCustomRegistry: false
+      }
+    },
+    {
       id: 'faq',
       name: 'FAQ',
       icon: HelpCircle,

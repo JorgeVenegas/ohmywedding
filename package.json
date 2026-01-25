@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "eslint .",
     "setup:storage": "tsx scripts/setup-storage.ts local",
-    "setup:storage:prod": "tsx scripts/setup-storage.ts prod"
+    "setup:storage:prod": "tsx scripts/setup-storage.ts prod",
+    "export:demos": "tsx scripts/export-demos.ts",
+    "upload:demo-images": "tsx scripts/upload-demo-images.ts --prod"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
