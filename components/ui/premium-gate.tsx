@@ -6,7 +6,6 @@ import { Lock, Sparkles, Crown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useSubscription, useWeddingFeatures, type WeddingFeatures } from '@/hooks/use-subscription'
-import { getMainDomainUrl } from '@/lib/admin-url'
 
 interface PremiumGateProps {
   children: React.ReactNode
@@ -95,7 +94,7 @@ export function PremiumUpgradePrompt({
             {title || defaultTitle}
           </p>
         </div>
-        <Link href={getMainDomainUrl('/upgrade')}>
+        <Link href="/upgrade">
           <Button size="sm" className="bg-gradient-to-r from-[#B8860B] to-[#D4AF37] hover:from-[#A67807] hover:to-[#C9A226] text-white shadow-lg shadow-[#B8860B]/20">
             <Sparkles className="w-4 h-4 mr-1" />
             Upgrade
@@ -114,7 +113,7 @@ export function PremiumUpgradePrompt({
           <p className="text-muted-foreground text-sm mb-4 max-w-md mx-auto">
             {description || defaultDescription}
           </p>
-          <Link href={getMainDomainUrl('/upgrade')}>
+          <Link href="/upgrade">
             <Button className="bg-gradient-to-r from-[#B8860B] to-[#D4AF37] hover:from-[#A67807] hover:to-[#C9A226] text-white shadow-lg shadow-[#B8860B]/20">
               <Sparkles className="w-4 h-4 mr-2" />
               Upgrade to Premium
@@ -138,13 +137,13 @@ export function PremiumUpgradePrompt({
           {description || defaultDescription}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link href={getMainDomainUrl('/upgrade')}>
-            <Button size="lg" className="bg-gradient-to-r from-[#B8860B] to-[#D4AF37] hover:from-[#A67807] hover:to-[#C9A226] text-white shadow-lg shadow-[#B8860B]/20">
-              <Sparkles className="w-5 h-5 mr-2" />
+          <Link href="/upgrade">
+            <Button className="bg-gradient-to-r from-[#B8860B] to-[#D4AF37] hover:from-[#A67807] hover:to-[#C9A226] text-white shadow-lg shadow-[#B8860B]/20">
+              <Sparkles className="w-4 h-4 mr-2" />
               Upgrade to Premium
             </Button>
           </Link>
-          <Link href={getMainDomainUrl('/pricing')}>
+          <Link href="/pricing">
             <Button size="lg" variant="outline">
               View Pricing
             </Button>

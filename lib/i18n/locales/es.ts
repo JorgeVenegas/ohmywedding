@@ -30,6 +30,7 @@ export const es: Translations = {
     no: 'No',
     or: 'o',
     and: 'y',
+    move: 'Mover',
     deleteSection: 'Eliminar Sección',
     deleteConfirmTitle: 'Eliminar Sección',
     deleteConfirmMessage: '¿Estás seguro de que quieres eliminar esta sección? Esta acción no se puede deshacer.',
@@ -297,6 +298,11 @@ export const es: Translations = {
     answer: 'Respuesta',
     addQuestion: 'Agregar Pregunta',
     editQuestion: 'Editar Pregunta'
+  },
+
+  // Banner Section
+  banner: {
+    title: 'Banner'
   },
 
   // Registry Section
@@ -710,6 +716,11 @@ export const es: Translations = {
     removeSection: 'Eliminar Sección',
     moveUp: 'Mover Arriba',
     moveDown: 'Mover Abajo',
+    moveUpDisabled: 'No se puede mover arriba (primera sección)',
+    moveDownDisabled: 'No se puede mover abajo (última sección)',
+    moveTo: 'Mover a...',
+    moveBefore: 'Antes de',
+    moveAfter: 'Después de',
     customize: 'Personalizar',
     weddingSettings: 'Configuración de la Boda',
     collaborators: 'Colaboradores',

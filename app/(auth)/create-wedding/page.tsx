@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ImageUpload } from "@/components/ui/image-upload"
 import { WeddingPreview } from "@/components/wedding-preview"
 import { Header } from "@/components/header"
-import { Heart, ChevronDown, ChevronRight, Settings, Calendar, Users, Camera, MessageSquare, HelpCircle, MapPin, Palette, Type, Sparkles, LayoutTemplate, Wand2, Check, Clock, Eye, ExternalLink, X, Upload, Gift } from "lucide-react"
+import { Heart, ChevronDown, ChevronRight, ChevronUp, Settings, Calendar, Users, Camera, MessageSquare, HelpCircle, MapPin, Palette, Type, Sparkles, LayoutTemplate, Wand2, Check, Clock, Eye, ExternalLink, X, Upload, Gift, GripVertical, Lock } from "lucide-react"
 import Link from "next/link"
 import { FONT_PAIRINGS, FONT_PAIRING_CATEGORIES, COLOR_THEMES, COLOR_THEME_CATEGORIES, DEFAULT_FONT_PAIRING, DEFAULT_COLOR_THEME } from "@/lib/theme-config"
 import { PAGE_TEMPLATES, TEMPLATE_CATEGORIES, type PageTemplate } from "@/lib/page-templates"
@@ -354,6 +354,27 @@ export default function CreateWeddingPage() {
           : section
       )
     )
+  }
+
+  // Move section up or down in the list
+  const moveSection = (id: string, direction: 'up' | 'down') => {
+    setComponentSections(prev => {
+      const index = prev.findIndex(section => section.id === id)
+      if (index === -1) return prev
+      
+      // Hero (index 0) cannot be moved, and nothing can move to index 0 (before hero)
+      if (id === 'hero') return prev
+      if (direction === 'up' && index <= 1) return prev // Can't move to index 0 (before hero)
+      if (direction === 'down' && index >= prev.length - 1) return prev
+      
+      const newSections = [...prev]
+      const targetIndex = direction === 'up' ? index - 1 : index + 1
+      
+      // Swap
+      ;[newSections[index], newSections[targetIndex]] = [newSections[targetIndex], newSections[index]]
+      
+      return newSections
+    })
   }
 
   // Default props for each section type - used to ensure all required fields exist
@@ -1711,20 +1732,58 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
           {/* Component Sections */}
           {showAdvancedSettings && (
             <Card className="p-6 border border-border shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-200">
+              <div className="mb-4">
+                <p className="text-sm text-muted-foreground">
+                  Drag sections to reorder. Hero section is always first and cannot be moved.
+                </p>
+              </div>
               <div className="space-y-3">
-                {componentSections.map((section) => {
+                {componentSections.map((section, index) => {
                   const IconComponent = section.icon
                   const isCountdown = section.id.replace(/-\d+$/, '') === 'countdown'
+                  const isHero = section.id === 'hero'
                   const canEnable = !isCountdown || (formData.hasExistingWedding && formData.weddingDate)
+                  const canMoveUp = !isHero && index > 1 // Can't move before hero (index 0)
+                  const canMoveDown = !isHero && index < componentSections.length - 1
                   
                   return (
                     <div 
                       key={section.id} 
-                      className="border border-border rounded-lg overflow-hidden"
+                      className={`border border-border rounded-lg overflow-hidden transition-all duration-200 ${section.enabled ? 'ring-1 ring-primary/20' : ''}`}
                     >
                       {/* Section Header */}
                       <div className={`flex items-center justify-between p-4 ${section.enabled ? 'bg-muted/30' : 'bg-background'}`}>
                         <div className="flex items-center gap-3">
+                          {/* Reorder Controls */}
+                          <div className="flex flex-col gap-0.5">
+                            {isHero ? (
+                              <div className="flex items-center justify-center w-6 h-6" title="Hero is always first">
+                                <Lock className="w-4 h-4 text-muted-foreground" />
+                              </div>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => moveSection(section.id, 'up')}
+                                  disabled={!canMoveUp}
+                                  className={`p-0.5 rounded transition-colors ${canMoveUp ? 'hover:bg-primary/10 text-muted-foreground hover:text-primary' : 'text-muted-foreground/30 cursor-not-allowed'}`}
+                                  title="Move up"
+                                >
+                                  <ChevronUp className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => moveSection(section.id, 'down')}
+                                  disabled={!canMoveDown}
+                                  className={`p-0.5 rounded transition-colors ${canMoveDown ? 'hover:bg-primary/10 text-muted-foreground hover:text-primary' : 'text-muted-foreground/30 cursor-not-allowed'}`}
+                                  title="Move down"
+                                >
+                                  <ChevronDown className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                          
                           <Switch
                             checked={!!(section.enabled && canEnable)}
                             onCheckedChange={() => canEnable && toggleComponent(section.id)}
@@ -1732,7 +1791,12 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
                           />
                           <IconComponent className={`w-5 h-5 ${section.enabled ? 'text-primary' : 'text-muted-foreground'}`} />
                           <div>
-                            <h4 className="font-medium text-foreground">{section.name}</h4>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium text-foreground">{section.name}</h4>
+                              {isHero && (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-muted rounded text-muted-foreground">Always first</span>
+                              )}
+                            </div>
                             <p className="text-xs text-muted-foreground">{section.description}</p>
                           </div>
                         </div>

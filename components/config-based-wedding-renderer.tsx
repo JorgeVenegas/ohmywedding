@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
 import { Wedding } from '@/lib/wedding-data'
 import { getCleanAdminUrl } from '@/lib/admin-url'
 import {
@@ -27,13 +28,14 @@ import { I18nProvider } from './contexts/i18n-context'
 import { SectionCustomizer } from './ui/section-customizer'
 import { EditingTopBar } from './ui/editing-top-bar'
 import { AddSectionButton } from './ui/add-section-button'
-import { DeleteSectionButton } from './ui/delete-section-button'
+import { SectionControls } from './ui/section-controls'
 import { EditableSectionWrapper } from './ui/editable-section-wrapper'
 import { ViewportWrapper } from './ui/viewport-wrapper'
 import { WeddingNav } from './ui/wedding-nav'
 import { usePageConfig } from './contexts/page-config-context'
 import { useSiteConfigSafe } from './contexts/site-config-context'
 import { useEditingModeSafe } from './contexts/editing-mode-context'
+import { useCustomize } from './contexts/customize-context'
 
 interface ConfigBasedWeddingRendererProps {
   wedding: Wedding
@@ -47,11 +49,23 @@ function ConfigBasedWeddingRendererContent({
   const { config, isLoading, updateComponents, updateSiteSettings, weddingDetails, setWeddingDetails } = usePageConfig()
   const siteConfigContext = useSiteConfigSafe()
   const editingContext = useEditingModeSafe()
+  const customizeContext = useCustomize()
   const searchParams = useSearchParams()
   const groupId = searchParams.get('groupId') ?? undefined
   
   // Check if user is authorized to access admin (owner or collaborator)
   const [isAuthorized, setIsAuthorized] = React.useState(false)
+
+  // Preserve scroll position while reordering to avoid jump
+  const preserveScrollAndUpdate = React.useCallback((updateFn: () => void) => {
+    const prevY = typeof window !== 'undefined' ? window.scrollY : 0
+    updateFn()
+    if (typeof window !== 'undefined') {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: prevY, behavior: 'auto' })
+      })
+    }
+  }, [])
   
   React.useEffect(() => {
     async function checkAuthorization() {
@@ -323,6 +337,77 @@ function ConfigBasedWeddingRendererContent({
     updateComponents(updatedComponents)
   }
 
+  // Handler for moving sections up or down
+  const handleMoveSection = (componentId: string, direction: 'up' | 'down') => {
+    const currentIndex = allComponents.findIndex(comp => comp.id === componentId)
+    
+    if (currentIndex === -1) return
+    
+    // Check boundaries
+    if (direction === 'up' && currentIndex === 0) return
+    if (direction === 'down' && currentIndex === allComponents.length - 1) return
+    
+    // Create new array with reordered items
+    const newComponents = [...allComponents]
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+    
+    // Swap items
+    ;[newComponents[currentIndex], newComponents[newIndex]] = [newComponents[newIndex], newComponents[currentIndex]]
+    
+    // Reassign orders sequentially
+    const reorderedEnabled = newComponents.map((comp, idx) => ({
+      ...comp,
+      enabled: true,
+      order: idx
+    }))
+    
+    // Merge with disabled components
+    const disabledComponents = config.components.filter(comp => !comp.enabled)
+    const updatedComponents = [...reorderedEnabled, ...disabledComponents]
+    
+    preserveScrollAndUpdate(() => updateComponents(updatedComponents))
+  }
+
+  // Handler for moving a section to a specific index
+  const handleMoveToIndex = (componentId: string, targetIndex: number) => {
+    const currentIndex = allComponents.findIndex(comp => comp.id === componentId)
+    
+    if (currentIndex === -1 || currentIndex === targetIndex) return
+    
+    // Create new array with reordered items
+    const newComponents = [...allComponents]
+    const [movedItem] = newComponents.splice(currentIndex, 1)
+    
+    // Adjust target index if moving down
+    const adjustedTargetIndex = currentIndex < targetIndex ? targetIndex : targetIndex
+    newComponents.splice(adjustedTargetIndex, 0, movedItem)
+    
+    // Reassign orders sequentially
+    const reorderedEnabled = newComponents.map((comp, idx) => ({
+      ...comp,
+      enabled: true,
+      order: idx
+    }))
+    
+    // Merge with disabled components
+    const disabledComponents = config.components.filter(comp => !comp.enabled)
+    const updatedComponents = [...reorderedEnabled, ...disabledComponents]
+    
+    preserveScrollAndUpdate(() => updateComponents(updatedComponents))
+  }
+
+  // Handler for editing a section
+  const handleEditSection = (componentId: string, componentType: string) => {
+    const component = allComponents.find(comp => comp.id === componentId)
+    if (!component || !customizeContext) return
+    
+    // Get merged props for this section
+    const mergedProps = getMergedProps(component)
+    
+    // Open the customizer with the section config
+    customizeContext.openCustomizer(componentId, componentType, mergedProps)
+  }
+
   const renderComponent = (component: any, index: number) => {
     // Get merged props (component.props + sectionConfigs)
     const mergedProps = getMergedProps(component)
@@ -433,12 +518,41 @@ function ConfigBasedWeddingRendererContent({
     }
 
     return (
-      <React.Fragment key={component.id}>
-        <div className="relative group">
-          <DeleteSectionButton 
+      <motion.div 
+        key={component.id}
+        layout
+        layoutId={component.id}
+        initial={false}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{
+          layout: {
+            type: "spring",
+            stiffness: 200,
+            damping: 32,
+          },
+          opacity: { duration: 0.25 }
+        }}
+        className="relative group" 
+        data-section-id={component.id}
+      >
+        <div>
+          <SectionControls
             componentId={component.id}
             componentType={component.type}
+            canMoveUp={index > 1 && component.type !== 'hero'}
+            canMoveDown={index < allComponents.length - 1 && component.type !== 'hero'}
+            allSections={allComponents.map(comp => ({
+              id: comp.id,
+              type: comp.type,
+              label: comp.type
+            }))}
+            currentIndex={index}
             onDelete={handleDeleteSection}
+            onMoveUp={() => handleMoveSection(component.id, 'up')}
+            onMoveDown={() => handleMoveSection(component.id, 'down')}
+            onMoveTo={(id, targetIdx) => handleMoveToIndex(id, targetIdx)}
+            onEdit={handleEditSection}
           />
           {renderedComponent}
           <AddSectionButton 
@@ -448,7 +562,7 @@ function ConfigBasedWeddingRendererContent({
             hasWeddingDate={!!effectiveWedding.wedding_date}
           />
         </div>
-      </React.Fragment>
+      </motion.div>
     )
   }
 
@@ -483,9 +597,11 @@ function ConfigBasedWeddingRendererContent({
             </div>
           </div>
         ) : (
-          <>
-            {allComponents.map((component, index) => renderComponent(component, index))}
-          </>
+          <LayoutGroup id="wedding-sections">
+            <AnimatePresence mode="popLayout">
+              {allComponents.map((component, index) => renderComponent(component, index))}
+            </AnimatePresence>
+          </LayoutGroup>
         )}
         
         {/* Footer inside viewport */}

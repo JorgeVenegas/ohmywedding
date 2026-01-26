@@ -1,17 +1,27 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Allow subdomain requests in development
+  // Disable React Strict Mode to prevent double rendering in development
+  reactStrictMode: false,
+  // Disable onDemandEntries watching to prevent excessive rebuilds
+  onDemandEntries: {
+    maxInactiveAge: 60 * 60 * 1000, // 1 hour
+    pagesBufferLength: 5,
+  },
+  // Turbopack experimental options for development
+  experimental: {
+    // Reduce file watching sensitivity
+    optimizePackageImports: ["@radix-ui/primitives"],
+  },
+  // Allow subdomain and cross-origin requests in development
+  // This prevents HMR issues that can cause page reloads
+  // Format: hostnames only (no protocol or port)
   allowedDevOrigins: [
-    'http://ohmy.local:3000',
-    'http://jorgeandyuli.ohmy.local:3000',
-    'http://jorge-yuls-4.ohmy.local:3000',
-    'http://demo-luxury-noir.ohmy.local:3000',
-    'http://demo-modern-minimal.ohmy.local:3000',
-    'http://demo-romantic-garden.ohmy.local:3000',
-    'http://demo-classic-elegance.ohmy.local:3000',
-    'http://demo-rustic-charm.ohmy.local:3000',
-    'http://demo-simple-love.ohmy.local:3000',
+    'localhost',
+    '127.0.0.1',
+    '0.0.0.0',
+    'ohmy.local',
+    '*.ohmy.local',
   ],
   images: {
     remotePatterns: [

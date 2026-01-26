@@ -1,0 +1,14 @@
+.git
+.next
+.turbo
+dist
+build
+node_modules
+*.tsbuildinfo
+.DS_Store
+.vscode
+.idea
+coverage
+.env
+.env.local
+.env.*.local

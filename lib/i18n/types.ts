@@ -32,6 +32,7 @@ export interface Translations {
     no: string
     or: string
     and: string
+    move: string
     deleteSection: string
     deleteConfirmTitle: string
     deleteConfirmMessage: string
@@ -301,6 +302,11 @@ export interface Translations {
     answer: string
     addQuestion: string
     editQuestion: string
+  }
+
+  // Banner Section
+  banner: {
+    title: string
   }
 
   // Registry Section
@@ -716,6 +722,11 @@ export interface Translations {
     removeSection: string
     moveUp: string
     moveDown: string
+    moveUpDisabled: string
+    moveDownDisabled: string
+    moveTo: string
+    moveBefore: string
+    moveAfter: string
     customize: string
     weddingSettings: string
     collaborators: string

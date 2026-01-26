@@ -31,7 +31,6 @@ import { Header } from "@/components/header"
 import { useAuth } from "@/hooks/use-auth"
 import { createClient } from "@/lib/supabase-client"
 import { getWeddingUrl } from "@/lib/wedding-url"
-import { getMainDomainUrl } from "@/lib/admin-url"
 import { Suspense } from "react"
 
 // Component to handle auth code in URL (fallback for OAuth flows that redirect to root)
@@ -712,7 +711,7 @@ export default function LandingPage() {
                 description="Everything for your big day"
                 isPopular
                 ctaText="Upgrade to Premium"
-                ctaHref={getMainDomainUrl('/upgrade')}
+                ctaHref="/upgrade"
                 features={[
                   { text: 'Everything in Free', included: true },
                   { text: 'Unlimited guests', included: true },

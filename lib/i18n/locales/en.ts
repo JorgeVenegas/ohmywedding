@@ -30,6 +30,7 @@ export const en: Translations = {
     no: 'No',
     or: 'or',
     and: 'and',
+    move: 'Move',
     deleteSection: 'Delete Section',
     deleteConfirmTitle: 'Delete Section',
     deleteConfirmMessage: 'Are you sure you want to delete this section? This action cannot be undone.',
@@ -299,6 +300,11 @@ export const en: Translations = {
     answer: 'Answer',
     addQuestion: 'Add Question',
     editQuestion: 'Edit Question'
+  },
+
+  // Banner Section
+  banner: {
+    title: 'Banner'
   },
 
   // Registry Section
@@ -714,6 +720,11 @@ export const en: Translations = {
     removeSection: 'Remove Section',
     moveUp: 'Move Up',
     moveDown: 'Move Down',
+    moveUpDisabled: 'Cannot move up (first section)',
+    moveDownDisabled: 'Cannot move down (last section)',
+    moveTo: 'Move to...',
+    moveBefore: 'Before',
+    moveAfter: 'After',
     customize: 'Customize',
     weddingSettings: 'Wedding Settings',
     collaborators: 'Collaborators',

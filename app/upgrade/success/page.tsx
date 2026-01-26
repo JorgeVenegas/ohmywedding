@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Header } from "@/components/header"
-import { getMainDomainUrl } from "@/lib/admin-url"
+
 import {
   CheckCircle,
   Sparkles,
@@ -74,7 +74,7 @@ function UpgradeSuccessContent() {
           We couldn&apos;t verify your payment. If you were charged, please contact support.
         </p>
         <div className="flex gap-4 justify-center">
-          <Link href={getMainDomainUrl('/upgrade')}>
+          <Link href="/upgrade">
             <Button variant="outline">Try Again</Button>
           </Link>
           <Link href="mailto:support@ohmywedding.app">

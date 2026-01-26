@@ -90,9 +90,12 @@ export function useWeddingPermissions(weddingNameId: string | null) {
       setAuthReady(true)
     })
     
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      setAuthReady(true)
+    // Listen for auth changes - but only trigger on actual sign in/out, not token refresh
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      // Only respond to actual auth changes, not token refreshes
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        setAuthReady(true)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -154,12 +157,17 @@ export function useWeddingPermissions(weddingNameId: string | null) {
     }
   }, [authReady, refetch])
 
-  // Also refetch when auth state changes
+  // Also refetch when user signs in/out (not on every auth event like token refresh)
   useEffect(() => {
     const supabase = createClient()
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      refetch()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      // Only refetch on actual sign in/out, not token refreshes
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        // Reset the fetch key so we actually refetch
+        lastFetchKey.current = null
+        refetch()
+      }
     })
 
     return () => subscription.unsubscribe()
