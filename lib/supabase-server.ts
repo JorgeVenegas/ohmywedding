@@ -16,7 +16,7 @@ function getCookieDomain(host: string): string | undefined {
     return '.ohmy.local'
   }
   
-  // For ohmy.wedding and subdomains
+  // For ohmy.wedding and subdomains (including www)
   if (hostname === 'ohmy.wedding' || hostname.endsWith('.ohmy.wedding')) {
     return '.ohmy.wedding'
   }
@@ -29,6 +29,7 @@ export async function createServerSupabaseClient() {
   const headersList = await headers()
   const host = headersList.get('host') || ''
   const cookieDomain = getCookieDomain(host)
+  const isProduction = process.env.NODE_ENV === 'production'
 
   return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     cookies: {
@@ -38,9 +39,13 @@ export async function createServerSupabaseClient() {
       setAll(cookiesToSet) {
         try {
           cookiesToSet.forEach(({ name, value, options }) => {
-            const cookieOptions = cookieDomain 
-              ? { ...options, domain: cookieDomain, path: '/' }
-              : options
+            const cookieOptions = {
+              ...options,
+              path: '/',
+              sameSite: 'lax' as const,
+              secure: isProduction,
+              ...(cookieDomain ? { domain: cookieDomain } : {}),
+            }
             cookieStore.set(name, value, cookieOptions)
           })
         } catch {

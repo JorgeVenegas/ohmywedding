@@ -22,6 +22,27 @@ const defaultPermissions: WeddingPermissions = {
   userId: null
 }
 
+// Clear all Supabase auth cookies across all domains
+function clearAllAuthCookies() {
+  if (typeof document === 'undefined') return
+  
+  const cookiesToClear = document.cookie.split(';').map(c => c.trim().split('=')[0])
+  const domains = ['', '.ohmy.local', '.ohmy.wedding', window.location.hostname]
+  const paths = ['/', '']
+  
+  cookiesToClear.forEach(name => {
+    if (name.includes('sb-') || name.includes('supabase')) {
+      domains.forEach(domain => {
+        paths.forEach(path => {
+          const domainPart = domain ? `; domain=${domain}` : ''
+          const pathPart = path ? `; path=${path}` : '; path=/'
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT${domainPart}${pathPart}`
+        })
+      })
+    }
+  })
+}
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -30,15 +51,31 @@ export function useAuth() {
     const supabase = createClient()
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        // Handle refresh token errors by clearing all cookies and session
+        if (error.message?.includes('Refresh Token') || (error as any).code === 'refresh_token_not_found') {
+          console.warn('Refresh token error, clearing all auth cookies')
+          clearAllAuthCookies()
+          supabase.auth.signOut().catch(() => {})
+          setUser(null)
+        }
+      } else {
+        setUser(session?.user ?? null)
+      }
       setLoading(false)
     })
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null)
+      (event, session) => {
+        if (event === 'TOKEN_REFRESHED' && !session) {
+          // Token refresh failed, clear all cookies
+          clearAllAuthCookies()
+          setUser(null)
+        } else {
+          setUser(session?.user ?? null)
+        }
         setLoading(false)
       }
     )
@@ -56,23 +93,8 @@ export function useAuth() {
       console.error('Error during signout:', err)
     }
     
-    // Clear all Supabase auth cookies manually to handle domain mismatch issues
-    // This ensures cookies set with different domains are also cleared
-    const cookiesToClear = document.cookie.split(';').map(c => c.trim().split('=')[0])
-    const domains = ['', '.ohmy.local', '.ohmy.wedding', window.location.hostname]
-    const paths = ['/', '']
-    
-    cookiesToClear.forEach(name => {
-      if (name.includes('sb-') || name.includes('supabase')) {
-        domains.forEach(domain => {
-          paths.forEach(path => {
-            const domainPart = domain ? `; domain=${domain}` : ''
-            const pathPart = path ? `; path=${path}` : '; path=/'
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT${domainPart}${pathPart}`
-          })
-        })
-      }
-    })
+    // Clear all Supabase auth cookies to handle domain mismatch issues
+    clearAllAuthCookies()
     
     window.location.href = '/'
   }, [])

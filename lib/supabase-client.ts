@@ -35,8 +35,8 @@ export function createClient() {
       cookieOptions: {
         domain: cookieDomain,
         path: '/',
-        // Use 'none' for Safari compatibility when using HTTPS, but require secure flag
-        sameSite: isSecure ? 'none' : 'lax',
+        // Use 'lax' for Safari compatibility - 'none' can cause ITP issues
+        sameSite: 'lax',
         secure: isSecure,
         maxAge: 60 * 60 * 24 * 365 // 1 year in seconds
       }
