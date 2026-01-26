@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import React, { useState, useEffect, use } from "react"
 import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
@@ -8,6 +9,7 @@ import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { getCleanAdminUrl } from "@/lib/admin-url"
 import {
   Settings,
   Users,
@@ -176,11 +178,16 @@ export default function SettingsPage({ params }: SettingsPageProps) {
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
-          <p className="text-muted-foreground">
-            Manage your subscription, features, and wedding site preferences
-          </p>
+        <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
+            <p className="text-muted-foreground">
+              Manage your subscription, features, and wedding site preferences
+            </p>
+          </div>
+          <Button size="sm" variant="outline" asChild>
+            <Link href={getCleanAdminUrl(weddingId, "dashboard")}>Back to dashboard</Link>
+          </Button>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">

@@ -70,7 +70,7 @@ export function WeddingFooter({ weddingNameId, ownerId, collaboratorEmails }: We
           </div>
 
           {/* Right: Additional links or content */}
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
             {isAuthorized && weddingNameId && (
               <Link
                 href={getCleanAdminUrl(weddingNameId, 'dashboard')}
@@ -86,6 +86,18 @@ export function WeddingFooter({ weddingNameId, ownerId, collaboratorEmails }: We
               rel="noopener noreferrer"
             >
               Create your wedding site
+            </Link>
+            <Link
+              href="/privacy"
+              className="hover:text-primary transition-colors"
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              href="/terms"
+              className="hover:text-primary transition-colors"
+            >
+              Terms of Service
             </Link>
           </div>
         </div>

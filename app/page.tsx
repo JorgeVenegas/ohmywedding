@@ -903,9 +903,17 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-foreground mb-4">Support</h4>
               <ul className="space-y-3 text-muted-foreground">
-                <li><Link href="#" className="hover:text-foreground transition-colors">Help Center</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">Contact Us</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
+                <li><Link href="#faq" className="hover:text-foreground transition-colors">FAQ</Link></li>
+                <li>
+                  <a
+                    href="mailto:support@ohmy.wedding"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    Contact Us
+                  </a>
+                </li>
+                <li><Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link></li>
               </ul>
             </div>
           </div>
