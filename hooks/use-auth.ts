@@ -90,12 +90,11 @@ export function useWeddingPermissions(weddingNameId: string | null) {
       setAuthReady(true)
     })
     
-    // Listen for auth changes - but only trigger on actual sign in/out, not token refresh
+    // Listen for auth changes - respond to signed in/out only
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      // Only respond to actual auth changes, not token refreshes
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        setAuthReady(true)
-      }
+      // Set auth ready on any event (including token refresh)
+      // But only refetch on actual sign in/out to avoid excessive API calls
+      setAuthReady(true)
     })
 
     return () => subscription.unsubscribe()
