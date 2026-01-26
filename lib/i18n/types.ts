@@ -782,6 +782,60 @@ export interface Translations {
     invalidEmail: string
     invalidPhone: string
   }
+
+  // Activity & Invitation Tracking
+  activity: {
+    // Activity types
+    invitationOpened: string
+    rsvpConfirmed: string
+    rsvpDeclined: string
+    rsvpUpdated: string
+    guestAdded: string
+    guestRemoved: string
+    groupCreated: string
+    groupUpdated: string
+    // Activity feed
+    recentActivity: string
+    noRecentActivity: string
+    noActivityYet: string
+    refreshActivity: string
+    viewAllActivity: string
+    loadingActivity: string
+    justNow: string
+    minutesAgo: string
+    hoursAgo: string
+    daysAgo: string
+    // Invitation stats
+    invitationStats: string
+    openRate: string
+    totalOpens: string
+    uniqueOpens: string
+    opened: string
+    notOpened: string
+    openedInvitations: string
+    unopenedInvitations: string
+    firstOpened: string
+    lastOpened: string
+    timesOpened: string
+    // Device types
+    mobile: string
+    tablet: string
+    desktop: string
+    deviceBreakdown: string
+    // Filters
+    filterByOpened: string
+    allInvitations: string
+    showOpened: string
+    showNotOpened: string
+    // Stats labels
+    guests: string
+    groups: string
+    invitations: string
+    responses: string
+    attending: string
+    notAttending: string
+    pending: string
+  }
 }
 
 // Type for translation function

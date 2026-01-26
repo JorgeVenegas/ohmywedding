@@ -235,11 +235,32 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
   const [envelopeComplete, setEnvelopeComplete] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [guestGroup, setGuestGroup] = useState<GuestGroup | null>(null)
+  const [hasTrackedOpen, setHasTrackedOpen] = useState(false)
   
   // Check for demo mode and groupId in search params
   const urlSearchParams = useSearchParams()
   const isDemoMode = urlSearchParams.get('demo') === 'true'
   const groupId = urlSearchParams.get('groupId')
+  const isOwnerPreview = urlSearchParams.get('preview') === 'true'
+
+  // Track invitation open when page loads with groupId
+  useEffect(() => {
+    if (groupId && weddingNameId && !hasTrackedOpen && !isDemoMode) {
+      setHasTrackedOpen(true)
+      // Track the invitation open
+      fetch('/api/invitation-tracking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          weddingId: weddingNameId,
+          groupId,
+          isOwnerView: isOwnerPreview,
+        }),
+      }).catch(() => {
+        // Silently fail - tracking should not affect user experience
+      })
+    }
+  }, [groupId, weddingNameId, hasTrackedOpen, isDemoMode, isOwnerPreview])
 
   // Detect mobile screen size
   useEffect(() => {

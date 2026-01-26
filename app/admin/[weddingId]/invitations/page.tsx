@@ -62,7 +62,9 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Settings
+  Settings,
+  Eye,
+  EyeOff
 } from "lucide-react"
 
 interface Guest {
@@ -101,6 +103,8 @@ interface GuestGroup {
   rsvp_submitted_at: string | null
   created_at: string
   guests: Guest[]
+  first_opened_at: string | null
+  open_count: number
 }
 
 interface InvitationsPageProps {
@@ -149,6 +153,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const [tagFilter, setTagFilter] = useState<string>('all')
   const [groupFilter, setGroupFilter] = useState<string>('all')
   const [invitedByFilter, setInvitedByFilter] = useState<string>('all')
+  const [openedFilter, setOpenedFilter] = useState<'all' | 'opened' | 'not-opened'>('all')
   
   // Sorting state
   const [sortColumn, setSortColumn] = useState<'name' | 'group' | 'status' | null>(null)
@@ -2286,6 +2291,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         if (!groupHasInvitedBy && !guestsHaveInvitedBy) return false
       }
       
+      // Opened filter - check if group has been opened
+      if (openedFilter !== 'all') {
+        const isOpened = group.open_count > 0
+        if (openedFilter === 'opened' && !isOpened) return false
+        if (openedFilter === 'not-opened' && isOpened) return false
+      }
+      
       return true
     })
     
@@ -2301,7 +2313,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     }
     
     return filtered
-  }, [guestGroups, searchQuery, statusFilter, tagFilter, invitedByFilter, sortColumn, sortDirection])
+  }, [guestGroups, searchQuery, statusFilter, tagFilter, invitedByFilter, openedFilter, sortColumn, sortDirection])
   
   // Calculate filtered statistics based on filtered guests
   const filteredGuestCount = filteredGuests.length
@@ -2310,7 +2322,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const filteredPendingGuests = filteredGuests.filter(g => g.confirmation_status === 'pending').length
   
   // Use filtered stats if any filters are active
-  const hasActiveFilters = searchQuery || statusFilter !== 'all' || tagFilter !== 'all' || groupFilter !== 'all' || invitedByFilter !== 'all'
+  const hasActiveFilters = searchQuery || statusFilter !== 'all' || tagFilter !== 'all' || groupFilter !== 'all' || invitedByFilter !== 'all' || openedFilter !== 'all'
   const displayedGuestCount = hasActiveFilters ? filteredGuestCount : totalGuests
   const confirmedGuests = hasActiveFilters ? filteredConfirmedGuests : totalConfirmedGuests
   const declinedGuests = hasActiveFilters ? filteredDeclinedGuests : totalDeclinedGuests
@@ -2567,7 +2579,16 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                     <option key={name} value={name}>{name}</option>
                   ))}
                 </select>
-                {(searchQuery || statusFilter !== 'all' || tagFilter !== 'all' || groupFilter !== 'all' || invitedByFilter !== 'all') && (
+                <select
+                  value={openedFilter}
+                  onChange={(e) => setOpenedFilter(e.target.value as typeof openedFilter)}
+                  className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+                >
+                  <option value="all">All Opens</option>
+                  <option value="opened">Opened</option>
+                  <option value="not-opened">Not Opened</option>
+                </select>
+                {(searchQuery || statusFilter !== 'all' || tagFilter !== 'all' || groupFilter !== 'all' || invitedByFilter !== 'all' || openedFilter !== 'all') && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -2578,6 +2599,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                       setTagFilter('all')
                       setGroupFilter('all')
                       setInvitedByFilter('all')
+                      setOpenedFilter('all')
                     }}
                   >
                     <X className="w-3 h-3 mr-1" />
@@ -3177,6 +3199,38 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                               <div>
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium text-foreground">{group.name}</span>
+                                  {/* Opened indicator */}
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div className={`inline-flex items-center justify-center w-5 h-5 rounded-full ${
+                                          group.open_count > 0 
+                                            ? 'bg-blue-100 border border-blue-200' 
+                                            : 'bg-gray-100 border border-gray-200'
+                                        }`}>
+                                          {group.open_count > 0 ? (
+                                            <Eye className="w-3 h-3 text-blue-600" />
+                                          ) : (
+                                            <EyeOff className="w-3 h-3 text-gray-400" />
+                                          )}
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        {group.open_count > 0 ? (
+                                          <>
+                                            <p>Opened {group.open_count} time{group.open_count > 1 ? 's' : ''}</p>
+                                            {group.first_opened_at && (
+                                              <p className="text-xs opacity-80">
+                                                First opened: {new Date(group.first_opened_at).toLocaleDateString()}
+                                              </p>
+                                            )}
+                                          </>
+                                        ) : (
+                                          <p>Not opened yet</p>
+                                        )}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
                                   {group.message && (
                                     <TooltipProvider>
                                       <Tooltip>

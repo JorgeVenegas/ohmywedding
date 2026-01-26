@@ -779,5 +779,59 @@ export const en: Translations = {
     requiredField: 'This field is required',
     invalidEmail: 'Please enter a valid email address',
     invalidPhone: 'Please enter a valid phone number'
+  },
+
+  // Activity & Invitation Tracking
+  activity: {
+    // Activity types
+    invitationOpened: 'Invitation opened',
+    rsvpConfirmed: 'RSVP confirmed',
+    rsvpDeclined: 'RSVP declined',
+    rsvpUpdated: 'RSVP updated',
+    guestAdded: 'Guest added',
+    guestRemoved: 'Guest removed',
+    groupCreated: 'Group created',
+    groupUpdated: 'Group updated',
+    // Activity feed
+    recentActivity: 'Recent Activity',
+    noRecentActivity: 'No recent activity',
+    noActivityYet: 'No activity yet. Activity will appear here when guests interact with your wedding page.',
+    refreshActivity: 'Refresh activity',
+    viewAllActivity: 'View all activity',
+    loadingActivity: 'Loading activity...',
+    justNow: 'Just now',
+    minutesAgo: '{count} minutes ago',
+    hoursAgo: '{count} hours ago',
+    daysAgo: '{count} days ago',
+    // Invitation stats
+    invitationStats: 'Invitation Stats',
+    openRate: 'Open Rate',
+    totalOpens: 'Total Opens',
+    uniqueOpens: 'Unique Opens',
+    opened: 'Opened',
+    notOpened: 'Not Opened',
+    openedInvitations: 'Opened Invitations',
+    unopenedInvitations: 'Unopened Invitations',
+    firstOpened: 'First opened',
+    lastOpened: 'Last opened',
+    timesOpened: 'times opened',
+    // Device types
+    mobile: 'Mobile',
+    tablet: 'Tablet',
+    desktop: 'Desktop',
+    deviceBreakdown: 'Device Breakdown',
+    // Filters
+    filterByOpened: 'Filter by opened',
+    allInvitations: 'All Invitations',
+    showOpened: 'Opened',
+    showNotOpened: 'Not Opened',
+    // Stats labels
+    guests: 'Guests',
+    groups: 'Groups',
+    invitations: 'Invitations',
+    responses: 'Responses',
+    attending: 'Attending',
+    notAttending: 'Not Attending',
+    pending: 'Pending'
   }
 }

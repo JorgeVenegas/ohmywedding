@@ -775,5 +775,59 @@ export const es: Translations = {
     requiredField: 'Este campo es requerido',
     invalidEmail: 'Por favor ingresa un correo electrónico válido',
     invalidPhone: 'Por favor ingresa un número de teléfono válido'
+  },
+
+  // Activity & Invitation Tracking
+  activity: {
+    // Activity types
+    invitationOpened: 'Invitación abierta',
+    rsvpConfirmed: 'RSVP confirmado',
+    rsvpDeclined: 'RSVP rechazado',
+    rsvpUpdated: 'RSVP actualizado',
+    guestAdded: 'Invitado agregado',
+    guestRemoved: 'Invitado eliminado',
+    groupCreated: 'Grupo creado',
+    groupUpdated: 'Grupo actualizado',
+    // Activity feed
+    recentActivity: 'Actividad Reciente',
+    noRecentActivity: 'Sin actividad reciente',
+    noActivityYet: 'Aún no hay actividad. La actividad aparecerá aquí cuando los invitados interactúen con tu página de boda.',
+    refreshActivity: 'Actualizar actividad',
+    viewAllActivity: 'Ver toda la actividad',
+    loadingActivity: 'Cargando actividad...',
+    justNow: 'Justo ahora',
+    minutesAgo: 'hace {count} minutos',
+    hoursAgo: 'hace {count} horas',
+    daysAgo: 'hace {count} días',
+    // Invitation stats
+    invitationStats: 'Estadísticas de Invitaciones',
+    openRate: 'Tasa de Apertura',
+    totalOpens: 'Aperturas Totales',
+    uniqueOpens: 'Aperturas Únicas',
+    opened: 'Abierta',
+    notOpened: 'No Abierta',
+    openedInvitations: 'Invitaciones Abiertas',
+    unopenedInvitations: 'Invitaciones Sin Abrir',
+    firstOpened: 'Primera apertura',
+    lastOpened: 'Última apertura',
+    timesOpened: 'veces abierta',
+    // Device types
+    mobile: 'Móvil',
+    tablet: 'Tableta',
+    desktop: 'Escritorio',
+    deviceBreakdown: 'Desglose por Dispositivo',
+    // Filters
+    filterByOpened: 'Filtrar por apertura',
+    allInvitations: 'Todas las Invitaciones',
+    showOpened: 'Abiertas',
+    showNotOpened: 'No Abiertas',
+    // Stats labels
+    guests: 'Invitados',
+    groups: 'Grupos',
+    invitations: 'Invitaciones',
+    responses: 'Respuestas',
+    attending: 'Asistirán',
+    notAttending: 'No Asistirán',
+    pending: 'Pendientes'
   }
 }

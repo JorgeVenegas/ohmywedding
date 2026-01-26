@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Heart, Home } from "lucide-react"
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://ohmy.wedding'
+
 export default function NotFound() {
   return (
     <main className="min-h-screen bg-background flex items-center justify-center">
@@ -25,17 +27,17 @@ export default function NotFound() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/">
+              <a href={BASE_URL}>
                 <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
                   <Home className="w-4 h-4 mr-2" />
                   Go Home
                 </Button>
-              </Link>
-              <Link href="/create-wedding">
+              </a>
+              <a href={`${BASE_URL}/create-wedding`}>
                 <Button size="lg" variant="outline" className="border-2 border-primary/20 hover:bg-primary/5">
                   Create Wedding
                 </Button>
-              </Link>
+              </a>
             </div>
           </div>
         </Card>

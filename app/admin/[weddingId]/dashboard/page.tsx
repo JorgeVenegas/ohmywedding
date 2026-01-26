@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card"
 import { LogOut, ArrowRight, Mail, Gift, Settings } from "lucide-react"
 import { Header } from "@/components/header"
 import { UpdateWeddingNameId } from "@/components/ui/update-wedding-name-id"
+import { ActivityFeed } from "@/components/ui/activity-feed"
+import { InvitationStatsCard } from "@/components/ui/invitation-stats-card"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { getWeddingPath } from "@/lib/wedding-url"
 
@@ -113,6 +115,15 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
               )
             })}
           </div>
+        </div>
+
+        {/* Activity & Stats Section */}
+        <div className="mt-12 grid md:grid-cols-2 gap-6">
+          {/* Invitation Stats */}
+          <InvitationStatsCard weddingId={decodedWeddingId} />
+          
+          {/* Recent Activity */}
+          <ActivityFeed weddingId={decodedWeddingId} limit={8} />
         </div>
 
         {/* Settings Section */}
