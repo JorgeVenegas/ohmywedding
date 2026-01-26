@@ -53,9 +53,14 @@ export async function GET(request: NextRequest) {
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
               // Add cookie domain for cross-subdomain sharing
-              const cookieOptions = cookieDomain 
-                ? { ...options, domain: cookieDomain, path: '/' }
-                : options
+              // Use sameSite: 'lax' for server-side auth callbacks for best Safari compatibility
+              const cookieOptions = {
+                ...options,
+                path: '/',
+                sameSite: 'lax' as const,
+                secure: process.env.NODE_ENV === 'production',
+                ...(cookieDomain ? { domain: cookieDomain } : {}),
+              }
               cookieStore.set(name, value, cookieOptions)
             })
           } catch {

@@ -48,7 +48,13 @@ export function useAuth() {
 
   const signOut = useCallback(async () => {
     const supabase = createClient()
-    await supabase.auth.signOut()
+    
+    // First attempt normal signout
+    try {
+      await supabase.auth.signOut()
+    } catch (err) {
+      console.error('Error during signout:', err)
+    }
     
     // Clear all Supabase auth cookies manually to handle domain mismatch issues
     // This ensures cookies set with different domains are also cleared

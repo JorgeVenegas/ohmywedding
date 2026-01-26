@@ -26,17 +26,20 @@ function getCookieDomain(): string | undefined {
 
 export function createClient() {
   const cookieDomain = getCookieDomain()
+  const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:'
   
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!, 
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookieOptions: cookieDomain ? {
+      cookieOptions: {
         domain: cookieDomain,
         path: '/',
-        sameSite: 'lax',
-        secure: window.location.protocol === 'https:'
-      } : undefined
+        // Use 'none' for Safari compatibility when using HTTPS, but require secure flag
+        sameSite: isSecure ? 'none' : 'lax',
+        secure: isSecure,
+        maxAge: 60 * 60 * 24 * 365 // 1 year in seconds
+      }
     }
   )
 }

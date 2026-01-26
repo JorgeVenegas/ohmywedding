@@ -41,12 +41,10 @@ function AuthCodeHandler() {
   
   useEffect(() => {
     if (code) {
-      const supabase = createClient()
-      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-        if (error) {
-        }
-        router.replace('/')
-      })
+      // Redirect to the proper server-side callback handler
+      // This ensures cookies are set correctly on the server, especially for Safari
+      const callbackUrl = `/auth/callback?code=${code}&redirect=/`
+      window.location.href = callbackUrl
     }
   }, [code, router])
   
