@@ -3,15 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --hostname 127.0.0.1",
-    "dev:with-storage": "tsx scripts/setup-storage.ts local && next dev --hostname 127.0.0.1",
+    "dev": "next dev --hostname 0.0.0.0",
+    "dev:with-storage": "tsx scripts/setup-storage.ts local && next dev --hostname 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
     "setup:storage": "tsx scripts/setup-storage.ts local",
     "setup:storage:prod": "tsx scripts/setup-storage.ts prod",
     "export:demos": "tsx scripts/export-demos.ts",
-    "upload:demo-images": "tsx scripts/upload-demo-images.ts --prod"
+    "upload:demo-images": "tsx scripts/upload-demo-images.ts --prod",
+    "test:navigation": "tsx tests/navigation.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

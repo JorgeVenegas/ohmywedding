@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { CheckCircle2 } from "lucide-react"
 import { WeddingFooter } from "@/components/wedding-footer"
+import { getWeddingPath } from "@/lib/wedding-url"
 
 interface RSVPPageProps {
   params: Promise<{ dateId: string; weddingNameId: string }>
@@ -164,7 +165,7 @@ function RSVPPageClient({ dateId, weddingNameId }: { dateId: string; weddingName
             </div>
             <h2 className="text-3xl font-bold text-foreground mb-2">Thank You!</h2>
             <p className="text-muted-foreground mb-8">We've received your RSVP. We can't wait to celebrate with you!</p>
-            <Link href={`/${weddingNameId}`}>
+            <Link href={getWeddingPath(weddingNameId)}>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Back to Wedding</Button>
             </Link>
           </Card>

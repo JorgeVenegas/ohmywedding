@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { ExternalLink, Gift, Heart, Sparkles } from 'lucide-react'
 import { BaseRegistryProps, getColorScheme, getProviderLogoUrl } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { getWeddingPath } from '@/lib/wedding-url'
 
 import Link from 'next/link'
 
@@ -310,7 +311,7 @@ export function RegistryElegantVariant({
                 />
                 
                 <Link
-                  href={`/${weddingNameId}/registry`}
+                  href={getWeddingPath(weddingNameId, '/registry')}
                   className="block relative rounded-2xl overflow-hidden shadow-xl transition-shadow duration-300 hover:shadow-2xl h-full"
                   style={{ 
                     backgroundColor: cardBg,

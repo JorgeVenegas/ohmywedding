@@ -66,12 +66,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Get base URL from request headers (works in all environments)
-    const host = request.headers.get('host')
+    const host = request.headers.get('host') || ''
     const protocol = request.headers.get('x-forwarded-proto') || 'http'
-    const baseUrl = `${protocol}://${host}`
+
+    // Detect subdomain to avoid duplicating the wedding id in the path
+    const hostnameOnly = host.split(':')[0]
+    const isSubdomain = hostnameOnly.endsWith('.ohmy.local') || hostnameOnly.endsWith('.ohmy.wedding')
+    const port = host.includes(':') ? `:${host.split(':')[1]}` : ''
+    const pathPrefix = isSubdomain ? '' : `/${encodeURIComponent(wedding.wedding_name_id)}`
+    const baseUrl = `${protocol}://${hostnameOnly}${port}`
     
-    const successUrl = `${baseUrl}/${encodeURIComponent(wedding.wedding_name_id)}/registry?success=true`
-    const cancelUrl = `${baseUrl}/${encodeURIComponent(wedding.wedding_name_id)}/registry?canceled=true`
+    const successUrl = `${baseUrl}${pathPrefix}/registry?success=true`
+    const cancelUrl = `${baseUrl}${pathPrefix}/registry?canceled=true`
 
     console.log("Success URL:", successUrl)
     console.log("Cancel URL:", cancelUrl)

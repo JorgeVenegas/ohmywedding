@@ -30,6 +30,8 @@ import {
 import { Header } from "@/components/header"
 import { useAuth } from "@/hooks/use-auth"
 import { createClient } from "@/lib/supabase-client"
+import { getWeddingUrl } from "@/lib/wedding-url"
+import { getMainDomainUrl } from "@/lib/admin-url"
 import { Suspense } from "react"
 
 // Component to handle auth code in URL (fallback for OAuth flows that redirect to root)
@@ -122,14 +124,14 @@ function AuthButtons() {
                   <div className="border-b border-gray-100">
                     <p className="px-4 py-1 text-xs text-gray-500">Your Weddings</p>
                     {userWeddings.map(wedding => (
-                      <Link
+                      <a
                         key={wedding.id}
-                        href={`/${wedding.wedding_name_id}`}
+                        href={getWeddingUrl(wedding.wedding_name_id)}
                         onClick={() => setShowUserMenu(false)}
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       >
                         {wedding.partner1_first_name} & {wedding.partner2_first_name}
-                      </Link>
+                      </a>
                     ))}
                   </div>
                 )}
@@ -149,12 +151,12 @@ function AuthButtons() {
         {weddingsLoading ? (
           <div className="h-10 w-32 bg-muted animate-pulse rounded-md" />
         ) : hasWedding ? (
-          <Link href={`/${firstWedding.wedding_name_id}`}>
+          <a href={getWeddingUrl(firstWedding.wedding_name_id)}>
             <Button className="bg-gradient-to-r from-[#B8860B] to-[#D4AF37] hover:from-[#A67807] hover:to-[#C9A226] text-white shadow-lg shadow-[#B8860B]/20">
               <Edit3 className="w-4 h-4 mr-2" />
               Edit Wedding
             </Button>
-          </Link>
+          </a>
         ) : (
           <Link href="/create-wedding">
             <Button className="bg-gradient-to-r from-[#B8860B] to-[#D4AF37] hover:from-[#A67807] hover:to-[#C9A226] text-white shadow-lg shadow-[#B8860B]/20">Create Wedding</Button>
@@ -712,7 +714,7 @@ export default function LandingPage() {
                 description="Everything for your big day"
                 isPopular
                 ctaText="Upgrade to Premium"
-                ctaHref="/upgrade"
+                ctaHref={getMainDomainUrl('/upgrade')}
                 features={[
                   { text: 'Everything in Free', included: true },
                   { text: 'Unlimited guests', included: true },

@@ -5,6 +5,7 @@ import Image from "next/image"
 import { Heart } from "lucide-react"
 import { createBrowserClient } from "@supabase/ssr"
 import { useEffect, useState } from "react"
+import { getCleanAdminUrl } from "@/lib/admin-url"
 
 interface WeddingFooterProps {
   weddingNameId?: string
@@ -14,33 +15,33 @@ interface WeddingFooterProps {
 
 export function WeddingFooter({ weddingNameId, ownerId, collaboratorEmails }: WeddingFooterProps) {
   const [isAuthorized, setIsAuthorized] = useState(false)
-  
-  useEffect(() => {
+
+  useEffect(function checkAuth() {
     async function checkAuthorization() {
       if (!weddingNameId) return
-      
+
       try {
         const supabase = createBrowserClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         )
-        
+
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
           setIsAuthorized(false)
           return
         }
-        
+
         const isOwner = ownerId === user.id
         const isCollaborator = collaboratorEmails?.includes(user.email || '')
         const isUnowned = ownerId === null
-        
+
         setIsAuthorized(isOwner || isCollaborator || isUnowned)
       } catch (error) {
         setIsAuthorized(false)
       }
     }
-    
+
     checkAuthorization()
   }, [weddingNameId, ownerId, collaboratorEmails])
 
@@ -51,8 +52,8 @@ export function WeddingFooter({ weddingNameId, ownerId, collaboratorEmails }: We
           {/* Left: Created with text */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span>Created with</span>
-            <Link 
-              href="https://ohmy.wedding" 
+            <Link
+              href="https://ohmy.wedding"
               className="flex items-center gap-1 hover:text-primary transition-colors font-medium"
               target="_blank"
               rel="noopener noreferrer"
@@ -71,15 +72,15 @@ export function WeddingFooter({ weddingNameId, ownerId, collaboratorEmails }: We
           {/* Right: Additional links or content */}
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             {isAuthorized && weddingNameId && (
-              <Link 
-                href={`/admin/${weddingNameId}/dashboard`}
+              <Link
+                href={getCleanAdminUrl(weddingNameId, 'dashboard')}
                 className="hover:text-primary transition-colors font-medium"
               >
                 Manage Wedding
               </Link>
             )}
-            <Link 
-              href="https://ohmy.wedding/create" 
+            <Link
+              href="https://ohmy.wedding/create"
               className="hover:text-primary transition-colors"
               target="_blank"
               rel="noopener noreferrer"

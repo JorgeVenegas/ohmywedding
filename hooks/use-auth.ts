@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase-client'
 import type { User } from '@supabase/supabase-js'
 
@@ -49,6 +49,25 @@ export function useAuth() {
   const signOut = useCallback(async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
+    
+    // Clear all Supabase auth cookies manually to handle domain mismatch issues
+    // This ensures cookies set with different domains are also cleared
+    const cookiesToClear = document.cookie.split(';').map(c => c.trim().split('=')[0])
+    const domains = ['', '.ohmy.local', '.ohmy.wedding', window.location.hostname]
+    const paths = ['/', '']
+    
+    cookiesToClear.forEach(name => {
+      if (name.includes('sb-') || name.includes('supabase')) {
+        domains.forEach(domain => {
+          paths.forEach(path => {
+            const domainPart = domain ? `; domain=${domain}` : ''
+            const pathPart = path ? `; path=${path}` : '; path=/'
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT${domainPart}${pathPart}`
+          })
+        })
+      }
+    })
+    
     window.location.href = '/'
   }, [])
 
@@ -60,6 +79,7 @@ export function useWeddingPermissions(weddingNameId: string | null) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [authReady, setAuthReady] = useState(false)
+  const lastFetchKey = useRef<string | null>(null)
 
   // Wait for auth to be ready before fetching permissions
   useEffect(() => {
@@ -87,7 +107,6 @@ export function useWeddingPermissions(weddingNameId: string | null) {
 
     try {
       setLoading(true)
-      
       // Get current session to pass auth token
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
@@ -100,6 +119,13 @@ export function useWeddingPermissions(weddingNameId: string | null) {
       if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`
       }
+      const fetchKey = `${weddingNameId}:${session?.access_token || 'noauth'}`
+      if (lastFetchKey.current === fetchKey) {
+        setLoading(false)
+        return
+      }
+
+      lastFetchKey.current = fetchKey
       
       const response = await fetch(`/api/weddings/${weddingNameId}/permissions`, {
         cache: 'no-store',

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, Edit, Trash2, DollarSign, X, AlertCircle } from "lucide-react"
 import { Header } from "@/components/header"
+import { getCleanAdminUrl } from "@/lib/admin-url"
 import { createBrowserClient } from "@supabase/ssr"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { useImageUpload } from "@/hooks/use-image-upload"
@@ -217,7 +218,7 @@ export default function RegistryPage({ params }: RegistryPageProps) {
     <main className="min-h-screen bg-background">
       <Header
         showBackButton
-        backHref={`/admin/${weddingId}/dashboard`}
+        backHref={getCleanAdminUrl(weddingId, 'dashboard')}
         title="Registry Manager"
         rightContent={
           <Button

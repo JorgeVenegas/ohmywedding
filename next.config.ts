@@ -1,6 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Allow subdomain requests in development
+  allowedDevOrigins: [
+    'http://ohmy.local:3000',
+    'http://jorgeandyuli.ohmy.local:3000',
+    'http://jorge-yuls-4.ohmy.local:3000',
+    'http://demo-luxury-noir.ohmy.local:3000',
+    'http://demo-modern-minimal.ohmy.local:3000',
+    'http://demo-romantic-garden.ohmy.local:3000',
+    'http://demo-classic-elegance.ohmy.local:3000',
+    'http://demo-rustic-charm.ohmy.local:3000',
+    'http://demo-simple-love.ohmy.local:3000',
+  ],
   images: {
     remotePatterns: [
       {

@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { SaveConfigButton } from './save-config-button'
 import { SettingsPanel } from './settings-panel'
 import Link from 'next/link'
+import { getCleanAdminUrl } from '@/lib/admin-url'
 
 interface EditingTopBarProps {
   className?: string
@@ -234,7 +235,7 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
                 </div>
                 {weddingNameId && canEdit && (
                   <Link
-                    href={`/admin/${weddingNameId}/dashboard`}
+                    href={getCleanAdminUrl(weddingNameId, 'dashboard')}
                     onClick={() => setShowUserMenu(false)}
                     className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                   >

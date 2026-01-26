@@ -38,7 +38,8 @@ export async function generateWeddingIds(
   }
 
   // Create base name (first names only, lowercase, no spaces)
-  const baseName = `${partner1.toLowerCase().replace(/\s+/g, "")}&${partner2.toLowerCase().replace(/\s+/g, "")}`
+  // Use hyphen instead of & for subdomain compatibility (hostnames can only contain a-z, 0-9, and -)
+  const baseName = `${partner1.toLowerCase().replace(/\s+/g, "")}-${partner2.toLowerCase().replace(/\s+/g, "")}`
   let weddingNameId = baseName
 
   // Check for existing weddings with the same wedding_name_id (globally unique now)
@@ -54,7 +55,7 @@ export async function generateWeddingIds(
       // Try with last name initials
       const initial1 = lastName1 ? lastName1[0].toLowerCase() : ''
       const initial2 = lastName2 ? lastName2[0].toLowerCase() : ''
-      const nameWithInitials = `${partner1.toLowerCase().replace(/\s+/g, "")}${initial1}&${partner2.toLowerCase().replace(/\s+/g, "")}${initial2}`
+      const nameWithInitials = `${partner1.toLowerCase().replace(/\s+/g, "")}${initial1}-${partner2.toLowerCase().replace(/\s+/g, "")}${initial2}`
       
       if (!existingNames.includes(nameWithInitials)) {
         weddingNameId = nameWithInitials

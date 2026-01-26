@@ -15,6 +15,7 @@ import { Heart, ChevronDown, ChevronRight, Settings, Calendar, Users, Camera, Me
 import Link from "next/link"
 import { FONT_PAIRINGS, FONT_PAIRING_CATEGORIES, COLOR_THEMES, COLOR_THEME_CATEGORIES, DEFAULT_FONT_PAIRING, DEFAULT_COLOR_THEME } from "@/lib/theme-config"
 import { PAGE_TEMPLATES, TEMPLATE_CATEGORIES, type PageTemplate } from "@/lib/page-templates"
+import { getWeddingPath, getWeddingUrl } from "@/lib/wedding-url"
 import { toast } from "sonner"
 
 // Helper to create a light tint of a color for palette display
@@ -781,7 +782,7 @@ export default function CreateWeddingPage() {
       }
 
       const result = await response.json()
-      window.location.href = `/${result.weddingNameId}`
+      window.location.href = getWeddingUrl(result.weddingNameId)
     } catch (error) {
       console.error('Error creating wedding:', error)
       setSubmitError(error instanceof Error ? error.message : 'An unexpected error occurred')
@@ -1309,14 +1310,14 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
                                   'Use Template'
                                 )}
                               </button>
-                              <Link 
-                                href={(template as any).weddingNameId ? `/${(template as any).weddingNameId}` : `/demo/${template.id}`}
+                              <a 
+                                href={(template as any).weddingNameId ? getWeddingUrl((template as any).weddingNameId) : `/demo/${template.id}`}
                                 target="_blank"
                                 className="py-2 px-3 text-sm font-medium rounded-lg bg-muted text-foreground hover:bg-muted/80 transition-all flex items-center gap-1"
                               >
                                 <Eye className="w-4 h-4" />
                                 Demo
-                              </Link>
+                              </a>
                             </div>
                           </div>
                         </div>

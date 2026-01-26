@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createBrowserClient } from "@supabase/ssr"
 import { SubscriptionProvider } from "@/components/contexts/subscription-context"
+import { getCleanAdminUrl } from "@/lib/admin-url"
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -33,8 +34,21 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
         const { data: { user }, error: userError } = await supabase.auth.getUser()
         
         if (userError || !user) {
-          // Not logged in - redirect to login
-          router.push(`/login?redirect=/admin/${encodeURIComponent(decodedWeddingId)}/dashboard`)
+          // Not logged in - redirect to login on main domain
+          const hostname = window.location.hostname
+          const isSubdomain = hostname.includes('ohmy.local') || hostname.includes('ohmy.wedding')
+          
+          if (isSubdomain) {
+            // On subdomain, redirect to main domain with full URL as redirect
+            const mainDomain = hostname.includes('ohmy.local') 
+              ? `http://ohmy.local:${window.location.port || '3000'}`
+              : 'https://ohmy.wedding'
+            
+            window.location.href = `${mainDomain}/login?redirect=${encodeURIComponent(window.location.href)}`
+          } else {
+            // On main domain, use relative URL
+            router.push(`/login?redirect=${encodeURIComponent(getCleanAdminUrl(decodedWeddingId, 'dashboard'))}`)
+          }
           return
         }
 

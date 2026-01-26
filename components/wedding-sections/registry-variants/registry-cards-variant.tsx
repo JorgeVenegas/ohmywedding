@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { ExternalLink, Gift, Heart } from 'lucide-react'
 import { BaseRegistryProps, getColorScheme, getProviderLogoUrl } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { getWeddingPath } from '@/lib/wedding-url'
 import Link from 'next/link'
 
 export function RegistryCardsVariant({
@@ -186,7 +187,7 @@ export function RegistryCardsVariant({
             {/* Custom Registry Card */}
             {showCustomRegistry && weddingNameId && (
               <Link
-                href={`/${weddingNameId}/registry`}
+                href={getWeddingPath(weddingNameId, '/registry')}
                 className="group relative flex flex-col rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 w-full h-full"
                 style={{ 
                   backgroundColor: cardBg,

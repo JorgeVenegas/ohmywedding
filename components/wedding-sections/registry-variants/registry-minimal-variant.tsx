@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { ExternalLink, Gift, Heart, ArrowRight } from 'lucide-react'
 import { BaseRegistryProps, getColorScheme, getProviderLogoUrl } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { getWeddingPath } from '@/lib/wedding-url'
 import Link from 'next/link'
 
 export function RegistryMinimalVariant({
@@ -160,7 +161,7 @@ export function RegistryMinimalVariant({
           {/* Custom Registry Item */}
           {showCustomRegistry && weddingNameId && (
             <Link
-              href={`/${weddingNameId}/registry`}
+              href={getWeddingPath(weddingNameId, '/registry')}
               className="flex items-center justify-between p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-md group cursor-pointer"
               style={{ 
                 borderColor: cardBorder,

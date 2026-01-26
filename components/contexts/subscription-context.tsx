@@ -31,11 +31,13 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
   const [planType, setPlanType] = useState<PlanType>('free')
   const [features, setFeatures] = useState<WeddingFeatures>(getDefaultFeatures('free'))
   const [loading, setLoading] = useState(true)
+  const [isSuperuser, setIsSuperuser] = useState(false)
 
   const fetchSubscriptionAndFeatures = useCallback(async () => {
     if (!user || !weddingId) {
       setPlanType('free')
       setFeatures(getDefaultFeatures('free'))
+      setIsSuperuser(false)
       setLoading(false)
       return
     }
@@ -43,6 +45,30 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
     try {
       setLoading(true)
       const supabase = createClient()
+
+      // Check if user is a superuser first
+      const { data: superuserData } = await supabase
+        .from('superusers')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single()
+
+      const isSuperuserUser = !!superuserData
+      setIsSuperuser(isSuperuserUser)
+
+      // If superuser, grant all features
+      if (isSuperuserUser) {
+        setPlanType('premium')
+        setFeatures({
+          rsvp_enabled: true,
+          invitations_panel_enabled: true,
+          gallery_enabled: true,
+          registry_enabled: true,
+          schedule_enabled: true,
+        })
+        return
+      }
 
       // Fetch user subscription
       const { data: subscription } = await supabase
@@ -94,6 +120,7 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
       console.error('Error fetching subscription:', error)
       setPlanType('free')
       setFeatures(getDefaultFeatures('free'))
+      setIsSuperuser(false)
     } finally {
       setLoading(false)
     }

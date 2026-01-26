@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import { Wedding } from '@/lib/wedding-data'
+import { getCleanAdminUrl } from '@/lib/admin-url'
 import {
   HeroSection,
   OurStorySection,
@@ -523,7 +524,7 @@ function ConfigBasedWeddingRendererContent({
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 {isAuthorized && (
                   <Link 
-                    href={`/admin/${weddingNameId}/dashboard`}
+                    href={getCleanAdminUrl(weddingNameId, 'dashboard')}
                     className="hover:text-primary transition-colors font-medium"
                   >
                     Manage Wedding

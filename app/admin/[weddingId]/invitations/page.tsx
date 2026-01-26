@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { PremiumUpgradePrompt } from "@/components/ui/premium-gate"
 import { useSubscriptionContext } from "@/components/contexts/subscription-context"
+import { getCleanAdminUrl } from "@/lib/admin-url"
 import {
   Tooltip,
   TooltipContent,
@@ -1466,6 +1467,31 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     }
   }
 
+  // Helper to get invitation URL - strips weddingNameId if on subdomain
+  const getInvitationUrl = (groupId?: string): string => {
+    if (typeof window === 'undefined') {
+      return groupId 
+        ? `/${weddingNameId || weddingId}?groupId=${groupId}`
+        : `/${weddingNameId || weddingId}`
+    }
+    
+    const baseUrl = window.location.origin
+    const hostname = window.location.hostname
+    
+    // Check if we're on a subdomain (e.g., jorgeandyuli.ohmy.local or jorgeandyuli.ohmy.wedding)
+    const isSubdomain = hostname.includes('ohmy.local') || hostname.includes('ohmy.wedding')
+    
+    if (isSubdomain) {
+      // On a subdomain, just use root path
+      return groupId ? `${baseUrl}/?groupId=${groupId}` : baseUrl
+    }
+    
+    // On main domain, include the weddingNameId in the path
+    return groupId 
+      ? `${baseUrl}/${weddingNameId || weddingId}?groupId=${groupId}`
+      : `${baseUrl}/${weddingNameId || weddingId}`
+  }
+
   // Utility function to replace template variables with actual values
   const replaceTemplateVariables = (
     template: string, 
@@ -1476,10 +1502,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     },
     weddingData?: any
   ): string => {
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
-    const invitationUrl = data.groupId 
-      ? `${baseUrl}/${weddingNameId || weddingId}?groupId=${data.groupId}`
-      : `${baseUrl}/${weddingNameId || weddingId}`
+    const invitationUrl = getInvitationUrl(data.groupId)
     
     // Fetch wedding data from fetchWeddingData if available
     const partner1 = partnerNames.partner1 || 'Partner 1'
@@ -1621,8 +1644,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   }
 
   const handleCopyRSVPLink = (group: GuestGroup) => {
-    const baseUrl = window.location.origin
-    const rsvpUrl = `${baseUrl}/${weddingId}?groupId=${group.id}`
+    const rsvpUrl = getInvitationUrl(group.id)
     
     navigator.clipboard.writeText(rsvpUrl).then(() => {
       setNotification({
@@ -2340,7 +2362,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       <main className="min-h-screen bg-background">
         <Header
           showBackButton
-          backHref={`/admin/${weddingId}/dashboard`}
+          backHref={getCleanAdminUrl(weddingId, 'dashboard')}
           title="Invitations"
         />
         <div className="flex items-center justify-center py-20">
@@ -2356,7 +2378,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       <main className="min-h-screen bg-background">
         <Header
           showBackButton
-          backHref={`/admin/${weddingId}/dashboard`}
+          backHref={getCleanAdminUrl(weddingId, 'dashboard')}
           title="Invitations"
         />
         <div className="max-w-2xl mx-auto px-4 py-20">
@@ -2374,7 +2396,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     <main className="min-h-screen bg-background">
       <Header
         showBackButton
-        backHref={`/admin/${weddingId}/dashboard`}
+        backHref={getCleanAdminUrl(weddingId, 'dashboard')}
         title="Invitations"
       />
 
@@ -3319,8 +3341,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                     className="h-6 w-6 p-0"
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      const baseUrl = window.location.origin
-                                      const rsvpUrl = `${baseUrl}/${weddingId}?groupId=${group.id}`
+                                      const rsvpUrl = getInvitationUrl(group.id)
                                       window.open(rsvpUrl, '_blank')
                                     }}
                                     title="Open RSVP page"

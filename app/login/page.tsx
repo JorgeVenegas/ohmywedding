@@ -21,9 +21,13 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const rawRedirect = searchParams.get("redirect") || "/"
-  // Decode the redirect URL in case it's encoded (e.g., /jorge%26yuli -> /jorge&yuli)
+  // Decode the redirect URL - could be a full URL (from subdomain) or a path (from main domain)
   const redirectTo = decodeURIComponent(rawRedirect)
   const errorParam = searchParams.get("error")
+  
+  // Check if redirectTo is a full URL or just a path
+  const isFullUrl = redirectTo.startsWith('http://') || redirectTo.startsWith('https://')
+  const finalRedirectUrl = isFullUrl ? redirectTo : redirectTo
 
   // Show error from URL params (e.g., OAuth callback errors)
   useEffect(() => {
@@ -41,7 +45,7 @@ function LoginForm() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
+        redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(finalRedirectUrl)}`,
       },
     })
 
@@ -65,7 +69,7 @@ function LoginForm() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(finalRedirectUrl)}`,
         },
       })
 
@@ -85,7 +89,7 @@ function LoginForm() {
         setError(error.message)
       } else if (data.session) {
         // Use full page navigation to ensure cookies are sent to server
-        window.location.href = redirectTo
+        window.location.href = finalRedirectUrl
         return
       }
     }

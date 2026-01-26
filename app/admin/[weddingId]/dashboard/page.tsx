@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card"
 import { LogOut, ArrowRight, Mail, Gift, Settings } from "lucide-react"
 import { Header } from "@/components/header"
 import { UpdateWeddingNameId } from "@/components/ui/update-wedding-name-id"
+import { getCleanAdminUrl } from "@/lib/admin-url"
+import { getWeddingPath } from "@/lib/wedding-url"
 
 interface AdminDashboardProps {
   params: Promise<{ weddingId: string }>
@@ -20,21 +22,21 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       title: "Invitations & Guests",
       description: "Manage guest groups, invitations, RSVPs, and track confirmations",
       icon: Mail,
-      href: `/admin/${weddingId}/invitations`,
+      href: getCleanAdminUrl(weddingId, 'invitations'),
       color: "primary",
     },
     {
       title: "Gift Registry",
       description: "Manage your wedding gift registries and wishlists",
       icon: Gift,
-      href: `/admin/${weddingId}/registry`,
+      href: getCleanAdminUrl(weddingId, 'registry'),
       color: "accent",
     },
     {
       title: "Settings",
       description: "Configure features, RSVP options, invitations, and general preferences",
       icon: Settings,
-      href: `/admin/${weddingId}/settings`,
+      href: getCleanAdminUrl(weddingId, 'settings'),
       color: "secondary",
     },
   ]
@@ -44,7 +46,7 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       <Header
         rightContent={
           <div className="flex gap-2">
-            <Link href={`/${weddingId}`}>
+            <Link href={getWeddingPath(weddingId)}>
               <Button variant="ghost" size="sm" className="text-foreground hover:bg-muted">
                 View Website
               </Button>
