@@ -37,8 +37,6 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (settingsError && settingsError.code !== "PGRST116") {
-      // PGRST116 = no rows returned, which is OK - we'll return defaults
-      console.error("Error fetching settings:", settingsError)
     }
 
     // If no settings exist, return defaults
@@ -57,7 +55,6 @@ export async function GET(request: NextRequest) {
       settings: settings || defaultSettings,
     })
   } catch (error) {
-    console.error("Error fetching public settings:", error)
     return NextResponse.json(
       { error: "Failed to fetch settings" },
       { status: 500 }

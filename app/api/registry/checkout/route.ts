@@ -18,8 +18,6 @@ export async function POST(request: NextRequest) {
   try {
     const { itemId, amount, contributorName, contributorEmail, message } = await request.json()
 
-    console.log("Checkout request:", { itemId, amount, contributorName, contributorEmail })
-
     if (!itemId || !amount) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -32,7 +30,6 @@ export async function POST(request: NextRequest) {
 
     // Get the registry item details
     const supabase = await createServerSupabaseClient()
-    console.log("Fetching item with id:", itemId)
     
     const { data: item, error } = await supabase
       .from("custom_registry_items")
@@ -41,14 +38,11 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error || !item) {
-      console.error("Error fetching registry item:", error)
       return NextResponse.json(
         { error: "Registry item not found" },
         { status: 404 }
       )
     }
-
-    console.log("Found item:", item)
 
     // Get the current wedding_name_id from the weddings table
     const { data: wedding, error: weddingError } = await supabase
@@ -58,7 +52,6 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (weddingError || !wedding) {
-      console.error("Error fetching wedding:", weddingError)
       return NextResponse.json(
         { error: "Wedding not found" },
         { status: 404 }
@@ -78,9 +71,6 @@ export async function POST(request: NextRequest) {
     
     const successUrl = `${baseUrl}${pathPrefix}/registry?success=true`
     const cancelUrl = `${baseUrl}${pathPrefix}/registry?canceled=true`
-
-    console.log("Success URL:", successUrl)
-    console.log("Cancel URL:", cancelUrl)
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
@@ -109,16 +99,6 @@ export async function POST(request: NextRequest) {
         weddingNameId: wedding.wedding_name_id,
       },
     })
-
-    console.log("Created checkout session:", session.id)
-
-    // Create a pending contribution record
-    console.log("Creating contribution record with:", {
-      custom_registry_item_id: itemId,
-      wedding_id: item.wedding_id,
-      amount,
-      session_id: session.id
-    })
     
     const { error: contributionError } = await supabase
       .from("registry_contributions")
@@ -134,19 +114,15 @@ export async function POST(request: NextRequest) {
       })
 
     if (contributionError) {
-      console.error("Error creating contribution record:", contributionError)
       // Continue anyway, as the payment session was created
     } else {
-      console.log("Successfully created contribution record")
     }
 
     if (contributionError) {
-      console.error("Error creating contribution record:", contributionError)
     }
 
     return NextResponse.json({ sessionId: session.id, url: session.url })
   } catch (error) {
-    console.error("Error creating checkout session:", error)
     return NextResponse.json(
       { error: "Failed to create checkout session" },
       { status: 500 }

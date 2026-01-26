@@ -54,7 +54,6 @@ export default function RegistryPage({ params }: RegistryPageProps) {
   )
 
   useEffect(() => {
-    console.log("Wedding ID:", weddingId)
     fetchWeddingUuid()
   }, [weddingId])
 
@@ -72,7 +71,6 @@ export default function RegistryPage({ params }: RegistryPageProps) {
         fetchItems(data.id)
       }
     } catch (error) {
-      console.error("Error fetching wedding UUID:", error)
       setIsLoading(false)
     }
   }
@@ -91,7 +89,6 @@ export default function RegistryPage({ params }: RegistryPageProps) {
       if (error) throw error
       setItems(data || [])
     } catch (error) {
-      console.error("Error fetching registry items:", error)
     } finally {
       setIsLoading(false)
     }
@@ -115,24 +112,18 @@ export default function RegistryPage({ params }: RegistryPageProps) {
         display_order: editingItem ? editingItem.display_order : items.length,
       }
 
-      console.log("Saving item data:", itemData)
-
       if (editingItem) {
         const { data, error } = await supabase
           .from("custom_registry_items")
           .update(itemData)
           .eq("id", editingItem.id)
           .select()
-
-        console.log("Update response:", { data, error })
         if (error) throw error
       } else {
         const { data, error } = await supabase
           .from("custom_registry_items")
           .insert([itemData])
           .select()
-
-        console.log("Insert response:", { data, error })
         if (error) throw error
       }
 
@@ -141,7 +132,6 @@ export default function RegistryPage({ params }: RegistryPageProps) {
       setEditingItem(null)
       fetchItems()
     } catch (error) {
-      console.error("Error saving registry item:", error)
       const errorMessage = error instanceof Error ? error.message : JSON.stringify(error)
       setErrorDialog({ show: true, message: errorMessage })
     }
@@ -190,7 +180,6 @@ export default function RegistryPage({ params }: RegistryPageProps) {
       if (error) throw error
       fetchItems()
     } catch (error) {
-      console.error("Error deleting registry item:", error)
       const errorMessage = error instanceof Error ? error.message : "Failed to delete item"
       setErrorDialog({ show: true, message: errorMessage })
     }
@@ -206,7 +195,6 @@ export default function RegistryPage({ params }: RegistryPageProps) {
       if (error) throw error
       fetchItems()
     } catch (error) {
-      console.error("Error toggling item status:", error)
     }
   }
 

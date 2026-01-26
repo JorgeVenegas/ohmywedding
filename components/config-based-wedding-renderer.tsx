@@ -75,7 +75,6 @@ function ConfigBasedWeddingRendererContent({
         
         setIsAuthorized(isOwner || isCollaborator || isUnowned)
       } catch (error) {
-        console.error('Auth check error:', error)
         setIsAuthorized(false)
       }
     }
@@ -176,13 +175,6 @@ function ConfigBasedWeddingRendererContent({
     const componentProps = component.props || {}
     const merged = { ...componentProps, ...sectionConfig }
     
-    // Debug logging
-    console.log(`=== RENDER ${component.type} ===`)
-    console.log(`configKey: ${configKey}`)
-    console.log(`sectionConfig:`, sectionConfig)
-    console.log(`component.props:`, componentProps)
-    console.log(`merged:`, merged)
-    
     return merged
   }
   
@@ -194,9 +186,6 @@ function ConfigBasedWeddingRendererContent({
   // Debug: Log loaded config
   React.useEffect(() => {
     if (!isLoading) {
-      console.log('=== LOADED PAGE CONFIG ===')
-      console.log('sectionConfigs:', JSON.stringify(config.sectionConfigs, null, 2))
-      console.log('components:', JSON.stringify(config.components, null, 2))
     }
   }, [isLoading, config])
 

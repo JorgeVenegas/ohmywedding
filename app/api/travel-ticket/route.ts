@@ -58,7 +58,6 @@ export async function POST(request: NextRequest) {
       })
 
     if (uploadError) {
-      console.error('Upload error:', uploadError)
       return NextResponse.json(
         { error: 'Failed to upload file', details: uploadError.message },
         { status: 500 }
@@ -77,7 +76,6 @@ export async function POST(request: NextRequest) {
       .eq('id', guestId)
 
     if (updateError) {
-      console.error('Database update error:', updateError)
       // File was uploaded but DB update failed - consider cleanup
       return NextResponse.json(
         { error: 'File uploaded but failed to update guest record', details: updateError.message },
@@ -93,7 +91,6 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Travel ticket upload error:', error)
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
@@ -161,7 +158,6 @@ export async function DELETE(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Travel ticket deletion error:', error)
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

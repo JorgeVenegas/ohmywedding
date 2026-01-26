@@ -71,7 +71,6 @@ export async function POST(request: Request) {
       .eq('id', verification.id)
 
     if (updateError) {
-      console.error('Failed to update verification:', updateError)
       return NextResponse.json(
         { error: "Failed to complete verification" },
         { status: 500 }
@@ -84,7 +83,6 @@ export async function POST(request: Request) {
       message: "Phone number verified successfully"
     })
   } catch (error) {
-    console.error('OTP verification error:', error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

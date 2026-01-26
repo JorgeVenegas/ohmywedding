@@ -198,7 +198,6 @@ export async function POST(request: Request) {
     ]).select().single()
 
     if (error) {
-      console.error('Guest POST - Insert error:', error)
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
@@ -215,7 +214,6 @@ export async function PUT(request: Request) {
     const body = await request.json()
 
     if (!body.id) {
-      console.error('[Guests PUT] No guest ID provided')
       return NextResponse.json({ error: "Guest ID is required" }, { status: 400 })
     }
 
@@ -230,7 +228,6 @@ export async function PUT(request: Request) {
       .single()
 
     if (fetchError) {
-      console.error('[Guests PUT] Error fetching guest:', fetchError)
       return NextResponse.json({ error: "Guest not found" }, { status: 404 })
     }
 
@@ -242,7 +239,6 @@ export async function PUT(request: Request) {
       .single()
 
     if (weddingError) {
-      console.error('[Guests PUT] Error fetching wedding:', weddingError)
     }
 
     // Inherit tags from new group if group assignment changed
@@ -297,13 +293,11 @@ export async function PUT(request: Request) {
       .single()
 
     if (error) {
-      console.error('[Guests PUT] Update error:', error)
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
     return NextResponse.json({ success: true, data })
   } catch (error) {
-    console.error('[Guests PUT] Exception:', error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

@@ -45,7 +45,6 @@ function UpgradeSuccessContent() {
           setStatus('error')
         }
       } catch (error) {
-        console.error('Verification error:', error)
         // Still show success since webhook might have processed it
         setStatus('success')
       }

@@ -78,7 +78,6 @@ export function ImageGalleryDialog({
       if (error) throw error
       setImages(data || [])
     } catch (error) {
-      console.error('Error fetching images:', error)
     } finally {
       setLoading(false)
     }
@@ -118,7 +117,6 @@ export function ImageGalleryDialog({
           .upload(filePath, file)
 
         if (uploadError) {
-          console.error('Storage upload error:', uploadError)
           throw new Error(`Failed to upload file: ${uploadError.message}`)
         }
 
@@ -140,7 +138,6 @@ export function ImageGalleryDialog({
           })
 
         if (dbError) {
-          console.error('Database insert error:', dbError)
           throw new Error(`Failed to save image data: ${dbError.message}`)
         }
         
@@ -150,7 +147,6 @@ export function ImageGalleryDialog({
       // Refresh images list
       await fetchImages()
     } catch (error: any) {
-      console.error('Error uploading images:', error)
       setErrorMessage(error?.message || 'Failed to upload images. Please try again.')
     } finally {
       setUploading(false)

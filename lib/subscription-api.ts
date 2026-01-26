@@ -47,6 +47,23 @@ export async function checkSubscription(weddingNameId?: string): Promise<Subscri
       error: 'Not authenticated',
     }
   }
+
+  // Check if user is a superuser first
+  const { data: superuserData } = await supabase
+    .from('superusers')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .single()
+
+  if (superuserData) {
+    return {
+      isAuthenticated: true,
+      userId: user.id,
+      planType: 'premium',
+      features: getDefaultFeatures('premium'),
+    }
+  }
   
   // Get user subscription
   const { data: subscription } = await supabase

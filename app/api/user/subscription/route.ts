@@ -33,7 +33,6 @@ export async function GET(request: NextRequest) {
     )
 
     if (featuresError) {
-      console.error('Error fetching plan features:', featuresError)
     }
 
     // Convert features array to object
@@ -54,7 +53,6 @@ export async function GET(request: NextRequest) {
       features: features,
     })
   } catch (error) {
-    console.error('Error fetching subscription:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

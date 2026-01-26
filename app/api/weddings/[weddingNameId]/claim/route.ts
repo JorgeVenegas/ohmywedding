@@ -57,11 +57,9 @@ export async function POST(
         .is('owner_id', null)
 
       if (directUpdateError) {
-        console.error('Error claiming wedding:', directUpdateError)
         return NextResponse.json({ error: 'Failed to claim wedding' }, { status: 500 })
       }
     } else if (updateError) {
-      console.error('Error claiming wedding:', updateError)
       return NextResponse.json({ error: 'Failed to claim wedding' }, { status: 500 })
     }
 
@@ -71,7 +69,6 @@ export async function POST(
     })
 
   } catch (error) {
-    console.error('Error in POST /api/weddings/claim:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

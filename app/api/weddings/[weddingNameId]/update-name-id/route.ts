@@ -45,7 +45,6 @@ export async function PATCH(
       .single()
 
     if (fetchError || !wedding) {
-      console.error("Wedding fetch error:", fetchError)
       return NextResponse.json(
         { error: "Wedding not found" },
         { status: 404 }
@@ -83,14 +82,11 @@ export async function PATCH(
       .single()
 
     if (updateError || !updatedWedding) {
-      console.error("Error updating wedding name ID:", updateError)
       return NextResponse.json(
         { error: "Failed to update wedding name ID", details: updateError?.message },
         { status: 500 }
       )
     }
-
-    console.log(`Successfully updated wedding_name_id from "${wedding.wedding_name_id}" to "${updatedWedding.wedding_name_id}"`)
 
     return NextResponse.json({
       success: true,
@@ -99,7 +95,6 @@ export async function PATCH(
     })
 
   } catch (error) {
-    console.error("Error in update-name-id:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

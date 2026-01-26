@@ -73,7 +73,6 @@ export function TravelFields({
         setUploadError(data.error || 'Upload failed')
       }
     } catch (error) {
-      console.error('Ticket upload error:', error)
       setUploadError('Upload failed')
     } finally {
       setUploading(false)
@@ -89,7 +88,6 @@ export function TravelFields({
       })
       onTicketUpload('')
     } catch (error) {
-      console.error('Error removing ticket:', error)
     }
   }
 

@@ -64,7 +64,6 @@ export function useSubscription(): UseSubscriptionReturn {
       
       setError(null)
     } catch (err) {
-      console.error('Error fetching subscription:', err)
       setError('Failed to fetch subscription')
       setPlanType('free')
     } finally {
@@ -158,7 +157,6 @@ export function useWeddingFeatures(weddingId: string | null): UseWeddingFeatures
       
       setError(null)
     } catch (err) {
-      console.error('Error fetching wedding features:', err)
       setError('Failed to fetch features')
       setFeatures(getDefaultFeatures('free'))
     } finally {

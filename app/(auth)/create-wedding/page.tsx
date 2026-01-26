@@ -431,11 +431,6 @@ export default function CreateWeddingPage() {
         accentColor: colors.accent || prev.accentColor
       }))
       
-      console.log('=== APPLYING DB TEMPLATE ===')
-      console.log('Template ID:', template.id)
-      console.log('Page config components:', JSON.stringify(pageConfig.components, null, 2))
-      console.log('Page config sectionConfigs:', JSON.stringify(pageConfig.sectionConfigs, null, 2))
-      
       // Convert page config to component sections
       const newSections = (pageConfig.components || []).map((comp: any) => {
         // Extract base type from component ID (strip numeric suffixes)
@@ -464,11 +459,9 @@ export default function CreateWeddingPage() {
           order: comp.order
         }
         
-        console.log(`Section ${comp.id} props:`, JSON.stringify(mergedSection.props, null, 2))
         return mergedSection
       })
       
-      console.log('New sections created from DB:', newSections.length)
       setComponentSections(newSections)
     } else {
       // Original PageTemplate from file
@@ -483,9 +476,7 @@ export default function CreateWeddingPage() {
       }))
       
       // Debug: Log template being applied
-      console.log('=== APPLYING FILE TEMPLATE ===')
-      console.log('Template ID:', template.id)
-      console.log('Template components:', JSON.stringify(template.components, null, 2))
+
       
       // Map template components to component sections, preserving template structure
       // Merge default props with template props to ensure all required fields exist
@@ -511,11 +502,9 @@ export default function CreateWeddingPage() {
           order: templateComp.order
         }
         
-        console.log(`Section ${templateComp.id} props:`, JSON.stringify(mergedSection.props, null, 2))
         return mergedSection
       })
       
-      console.log('New sections created from file:', newSections.length)
       setComponentSections(newSections)
     }
   }
@@ -528,10 +517,8 @@ export default function CreateWeddingPage() {
         if (response.ok) {
           const data = await response.json()
           setDbTemplates(data.templates || [])
-          console.log('Loaded templates from database:', data.templates?.length || 0)
         }
       } catch (error) {
-        console.error('Error fetching templates:', error)
       } finally {
         setIsLoadingTemplates(false)
       }
@@ -546,12 +533,10 @@ export default function CreateWeddingPage() {
     // Prefer DB template if available, otherwise fall back to file template
     const dbTemplate = dbTemplates.find(t => t.id === 'classic-elegance')
     if (dbTemplate) {
-      console.log('Applying DB template on init:', dbTemplate.id)
       applyTemplate(dbTemplate)
     } else {
       const defaultTemplate = PAGE_TEMPLATES.find(t => t.id === 'classic-elegance')
       if (defaultTemplate) {
-        console.log('Applying file template on init (no DB template found):', defaultTemplate.id)
         applyTemplate(defaultTemplate)
       }
     }
@@ -746,13 +731,6 @@ export default function CreateWeddingPage() {
         sectionConfigs[configKey] = { ...section.props }
       })
 
-      // Debug logging
-      console.log('=== CREATE WEDDING DEBUG ===')
-      console.log('Selected template:', selectedTemplateId)
-      console.log('Component sections:', JSON.stringify(componentSections.map(s => ({ id: s.id, enabled: s.enabled, order: s.order, props: s.props })), null, 2))
-      console.log('Section configs being sent:', JSON.stringify(sectionConfigs, null, 2))
-      console.log('Components being sent:', JSON.stringify(enabledComponents, null, 2))
-
       const selectedFontPairing = FONT_PAIRINGS.find(p => p.id === formData.selectedFontPairingId) || DEFAULT_FONT_PAIRING
 
       const weddingData = {
@@ -784,7 +762,6 @@ export default function CreateWeddingPage() {
       const result = await response.json()
       window.location.href = getWeddingUrl(result.weddingNameId)
     } catch (error) {
-      console.error('Error creating wedding:', error)
       setSubmitError(error instanceof Error ? error.message : 'An unexpected error occurred')
     } finally {
       setIsSubmitting(false)
@@ -1384,7 +1361,6 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
                                 }
                               }
                             } catch (error) {
-                              console.error(`Error uploading ${file.name}:`, error)
                             }
                             
                             uploadedCount++
@@ -2276,7 +2252,6 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
                                               }
                                             }
                                           } catch (error) {
-                                            console.error(`Error uploading ${file.name}:`, error)
                                           }
                                         }
                                         

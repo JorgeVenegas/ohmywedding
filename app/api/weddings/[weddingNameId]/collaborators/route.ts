@@ -87,7 +87,6 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Error in GET /api/weddings/collaborators:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -194,7 +193,6 @@ export async function POST(
       .eq('wedding_name_id', weddingNameId)
 
     if (updateError) {
-      console.error('Error adding collaborator:', updateError)
       return NextResponse.json({ error: 'Failed to add collaborator' }, { status: 500 })
     }
 
@@ -204,7 +202,6 @@ export async function POST(
     })
 
   } catch (error) {
-    console.error('Error in POST /api/weddings/collaborators:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -304,7 +301,6 @@ export async function DELETE(
       .eq('wedding_name_id', weddingNameId)
 
     if (updateError) {
-      console.error('Error removing collaborator:', updateError)
       return NextResponse.json({ error: 'Failed to remove collaborator' }, { status: 500 })
     }
 
@@ -314,7 +310,6 @@ export async function DELETE(
     })
 
   } catch (error) {
-    console.error('Error in DELETE /api/weddings/collaborators:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

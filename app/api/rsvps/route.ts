@@ -29,7 +29,6 @@ export async function POST(request: Request) {
         .single()
 
       if (verificationError || !verification) {
-        console.error('[RSVP Submit] Verification check failed:', verificationError)
         return NextResponse.json(
           { error: "Invalid or expired verification" },
           { status: 403 }
@@ -41,7 +40,6 @@ export async function POST(request: Request) {
       const expirationTime = new Date(verifiedAt.getTime() + 60 * 60 * 1000) // 1 hour
       
       if (new Date() > expirationTime) {
-        console.error('[RSVP Submit] Verification expired')
         return NextResponse.json(
           { error: "Verification has expired. Please verify your phone number again." },
           { status: 403 }
@@ -72,7 +70,6 @@ export async function POST(request: Request) {
           .eq('id', body.groupId)
 
         if (groupUpdateError) {
-          console.error('[RSVP Submit] Error updating group message:', groupUpdateError)
         }
       }
 
@@ -118,7 +115,6 @@ export async function POST(request: Request) {
           .single()
         
         if (guestError || !guestData || guestData.guest_group_id !== body.groupId) {
-          console.error('[RSVP API] Guest verification failed:', guestError)
           return NextResponse.json(
             { error: 'Guest does not belong to verified group' },
             { status: 403 }
@@ -131,7 +127,6 @@ export async function POST(request: Request) {
           .eq('id', guest.guestId)
 
         if (updateError) {
-          console.error('[RSVP API] Update error:', updateError)
           return NextResponse.json(
             { error: `Failed to update guest: ${updateError.message}` },
             { status: 500 }
@@ -171,7 +166,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data })
   } catch (error) {
-    console.error('[RSVP API] Unexpected error:', error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

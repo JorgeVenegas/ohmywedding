@@ -76,7 +76,6 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
           setIsAuthorized(false)
         }
       } catch (error) {
-        console.error('Authorization check failed:', error)
         setIsAuthorized(false)
       } finally {
         setIsLoading(false)

@@ -53,8 +53,6 @@ export function createTranslator(locale: Locale) {
     }
     
     if (value === undefined) {
-      // Return key as fallback
-      console.warn(`Translation key not found: ${key}`)
       return key
     }
     

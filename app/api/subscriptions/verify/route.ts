@@ -74,7 +74,6 @@ export async function POST(request: Request) {
       message: 'Payment verified, subscription being activated' 
     })
   } catch (error) {
-    console.error('Verification error:', error)
     return NextResponse.json(
       { error: 'Verification failed' },
       { status: 500 }

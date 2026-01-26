@@ -13,22 +13,16 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createServerSupabaseClient()
     
-    console.log('Testing RPC with:', { itemId, amount })
-    
     const { data, error } = await supabase.rpc('update_registry_item_amount', {
       p_item_id: itemId,
       p_amount_to_add: parseFloat(amount)
     })
     
     if (error) {
-      console.error('RPC Error:', error)
       return NextResponse.json({ error: error.message, details: error }, { status: 500 })
     }
-    
-    console.log('RPC Success:', data)
     return NextResponse.json({ success: true, data })
   } catch (error) {
-    console.error('Test endpoint error:', error)
     return NextResponse.json({ error: String(error) }, { status: 500 })
   }
 }

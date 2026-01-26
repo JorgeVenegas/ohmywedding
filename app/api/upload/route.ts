@@ -53,11 +53,6 @@ export async function POST(request: NextRequest) {
       })
 
     if (error) {
-      console.error('Storage upload error:', {
-        message: error.message,
-        cause: error.cause,
-        error
-      })
       return NextResponse.json(
         { error: `Failed to upload image: ${error.message}` },
         { status: 500 }
@@ -77,7 +72,6 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Upload error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

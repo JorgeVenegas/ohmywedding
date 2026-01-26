@@ -23,7 +23,6 @@ export default async function GuestRegistryPage({ params }: RegistryPageProps) {
       .single()
     
     if (error) {
-      console.error("Error fetching wedding locale:", error)
     }
     
     // Extract locale from page_config.siteSettings.locale
@@ -35,7 +34,6 @@ export default async function GuestRegistryPage({ params }: RegistryPageProps) {
       }
     }
   } catch (error) {
-    console.error("Error fetching wedding locale:", error)
   }
 
   return (

@@ -46,7 +46,6 @@ export async function POST(request: Request) {
       .eq("wedding_id", wedding.id)
 
     if (groupsError) {
-      console.error('Error fetching existing groups:', groupsError)
       return NextResponse.json({ error: "Failed to fetch existing groups" }, { status: 500 })
     }
 
@@ -84,7 +83,6 @@ export async function POST(request: Request) {
         .single()
 
       if (createError) {
-        console.error('Error creating group:', createError)
         continue
       }
 
@@ -133,7 +131,6 @@ export async function POST(request: Request) {
       .select()
 
     if (insertError) {
-      console.error('Error inserting guests:', insertError)
       return NextResponse.json({ error: insertError.message }, { status: 400 })
     }
 
@@ -147,7 +144,6 @@ export async function POST(request: Request) {
       newGroupsCreated
     })
   } catch (error) {
-    console.error('Bulk guests with groups POST - Exception:', error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

@@ -86,7 +86,6 @@ export function WeddingDetailsForm({ weddingNameId, initialDetails, onSave }: We
       onSave?.(details)
       setHasChanges(false)
     } catch (error) {
-      console.error('Error saving wedding details:', error)
       setSaveMessage({ 
         type: 'error', 
         text: error instanceof Error ? error.message : t('config.failedToSave') 

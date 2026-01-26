@@ -17,7 +17,6 @@ export async function GET() {
       .order('created_at', { ascending: true })
     
     if (error) {
-      console.error('Error fetching demo weddings:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
     
@@ -42,7 +41,6 @@ export async function GET() {
     
     return NextResponse.json({ templates })
   } catch (error) {
-    console.error('Error in GET /api/weddings/demos:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

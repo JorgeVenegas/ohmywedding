@@ -42,7 +42,6 @@ if (SUPABASE_URL && !SUPABASE_URL.includes('supabase.co') && !SUPABASE_URL.inclu
       const payload = JSON.parse(Buffer.from(anonKey.split('.')[1], 'base64').toString())
       if (payload.ref) {
         SUPABASE_URL = `https://${payload.ref}.supabase.co`
-        console.log(`ℹ️  Detected custom domain, using Supabase project URL: ${SUPABASE_URL}`)
       }
     } catch (e) {
       // Could not parse, continue with original URL
@@ -51,22 +50,10 @@ if (SUPABASE_URL && !SUPABASE_URL.includes('supabase.co') && !SUPABASE_URL.inclu
 }
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  console.error('❌ Missing environment variables')
-  console.error('   Please set SUPABASE_PROJECT_URL (or NEXT_PUBLIC_SUPABASE_URL) and SUPABASE_SERVICE_ROLE_KEY')
-  console.error(`   Looking in: ${envFile}`)
-  console.error('')
-  console.error('   Or pass the Supabase URL directly:')
-  console.error('   npx tsx scripts/upload-demo-images.ts --prod --supabase-url https://xxx.supabase.co')
   process.exit(1)
 }
 
 if (!SUPABASE_URL.includes('supabase.co') && !SUPABASE_URL.includes('127.0.0.1')) {
-  console.error('❌ Invalid Supabase URL for storage operations')
-  console.error(`   Got: ${SUPABASE_URL}`)
-  console.error('   Storage operations require the actual Supabase project URL (xxx.supabase.co)')
-  console.error('')
-  console.error('   Add SUPABASE_PROJECT_URL to .env.production or pass --supabase-url:')
-  console.error('   npx tsx scripts/upload-demo-images.ts --prod --supabase-url https://xxx.supabase.co')
   process.exit(1)
 }
 
@@ -83,15 +70,10 @@ const MIME_TYPES: Record<string, string> = {
 }
 
 async function uploadDemoImages() {
-  console.log('🔄 Starting image upload to production...\n')
-  console.log(`   Target: ${SUPABASE_URL}`)
-  console.log('')
   
   const imagesDir = path.join(process.cwd(), 'scripts', 'demo-images')
   
   if (!fs.existsSync(imagesDir)) {
-    console.error('❌ No demo-images directory found')
-    console.error('   Run `npx tsx scripts/export-demos.ts` first')
     process.exit(1)
   }
   
@@ -109,11 +91,8 @@ async function uploadDemoImages() {
   )
   
   if (files.length === 0) {
-    console.log('⚠️  No images found to upload')
     process.exit(0)
   }
-  
-  console.log(`📤 Uploading ${files.length} image(s)...\n`)
   
   let successCount = 0
   let failCount = 0
@@ -149,29 +128,18 @@ async function uploadDemoImages() {
       })
     
     if (error) {
-      console.log(`   ✗ ${filename}: ${error.message}`)
       failCount++
     } else {
-      console.log(`   ✓ ${storagePath}`)
       successCount++
     }
   }
   
-  console.log('')
-  console.log('═'.repeat(50))
-  console.log(`✅ Upload complete: ${successCount} succeeded, ${failCount} failed`)
-  console.log('═'.repeat(50))
-  
   if (failCount > 0) {
-    console.log('')
-    console.log('⚠️  Some uploads failed. Check the errors above.')
   }
-  
-  console.log('')
-  console.log('📋 Next steps:')
-  console.log('   1. Apply the migration: supabase db push --linked')
-  console.log('   2. Verify demo pages work on production')
-  console.log('')
 }
 
-uploadDemoImages().catch(console.error)
+uploadDemoImages().catch(error => {
+  const message = error instanceof Error ? error.message : String(error)
+  process.stderr.write(`uploadDemoImages failed: ${message}\n`)
+  process.exitCode = 1
+})

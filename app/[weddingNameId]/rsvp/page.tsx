@@ -61,7 +61,6 @@ function RSVPPageClient({ dateId, weddingNameId }: { dateId: string; weddingName
 
       setSubmitted(true)
     } catch (error) {
-      console.error('Error submitting RSVP:', error)
       // TODO: Show error message to user
     }
   }

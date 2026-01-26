@@ -60,7 +60,6 @@ export function UpdateWeddingNameId({ currentWeddingNameId }: UpdateWeddingNameI
       }, 1500)
 
     } catch (err) {
-      console.error("Error updating wedding name ID:", err)
       setError("An unexpected error occurred")
       setIsUpdating(false)
     }

@@ -132,7 +132,6 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       },
     }
   } catch (error) {
-    console.error('Error generating metadata:', error)
     return {
       title: 'OhMyWedding',
       description: 'Create your perfect wedding website',

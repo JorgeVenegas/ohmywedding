@@ -47,14 +47,12 @@ export async function GET(
     const { data: wedding, error } = await query.single()
 
     if (error) {
-      console.error('Error fetching wedding details:', error)
       return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
     }
 
     return NextResponse.json({ details: wedding })
 
   } catch (error) {
-    console.error('Error in GET /api/weddings/details:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -148,7 +146,6 @@ export async function PATCH(
       .single()
 
     if (error) {
-      console.error('Error updating page_config:', error)
       return NextResponse.json({ error: 'Failed to save page_config' }, { status: 500 })
     }
 
@@ -158,7 +155,6 @@ export async function PATCH(
     })
 
   } catch (error) {
-    console.error('Error in PATCH /api/weddings/details:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -265,7 +261,6 @@ export async function PUT(
       .single()
 
     if (error) {
-      console.error('Error updating wedding details:', error)
       return NextResponse.json({ error: 'Failed to save wedding details' }, { status: 500 })
     }
 
@@ -275,7 +270,6 @@ export async function PUT(
     })
 
   } catch (error) {
-    console.error('Error in PUT /api/weddings/details:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

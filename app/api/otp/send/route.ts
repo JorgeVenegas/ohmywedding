@@ -25,7 +25,6 @@ export async function POST(request: Request) {
       .single()
 
     if (groupError || !group) {
-      console.error('[OTP Send] Group not found:', groupError)
       return NextResponse.json(
         { error: "Guest group not found" },
         { status: 404 }
@@ -87,7 +86,6 @@ export async function POST(request: Request) {
       .select()
 
     if (insertError) {
-      console.error('Failed to create verification record:', insertError)
       return NextResponse.json(
         { error: "Failed to create verification record" },
         { status: 500 }
@@ -100,7 +98,6 @@ export async function POST(request: Request) {
       expiresIn: 1800 // 30 minutes in seconds
     })
   } catch (error) {
-    console.error('OTP send error:', error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

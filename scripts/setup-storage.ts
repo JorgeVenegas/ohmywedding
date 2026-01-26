@@ -16,29 +16,14 @@ config({ path: envFile, override: true })
 async function main() {
   const envLabel = env === 'prod' ? 'PRODUCTION' : 'LOCAL'
   
-  console.log('🚀 Setting up Supabase storage bucket...')
-  console.log(`📋 Environment: ${envLabel}`)
-  console.log(`📄 Using: ${envFile}`)
-  console.log(`🔗 Supabase URL: ${process.env.NEXT_PUBLIC_SUPABASE_URL}`)
-  console.log('')
-  
   const result = await initializeStorageBucket()
   
   if (result.success) {
-    console.log('✅ Storage bucket setup complete!')
-    console.log('📁 Bucket: wedding-images')
-    console.log('🔗 Public access: enabled') 
-    console.log('📏 File size limit: 50MB')
-    console.log('🖼️  Allowed types: JPEG, JPG, PNG, WEBP, GIF')
-    console.log('')
-    console.log(`💡 ${envLabel} storage is now ready for image uploads!`)
   } else {
-    console.error('❌ Failed to setup storage bucket:', result.error)
     process.exit(1)
   }
 }
 
 main().catch((error) => {
-  console.error('❌ Setup failed:', error)
   process.exit(1)
 })

@@ -11,7 +11,6 @@ export async function initializeStorageBucket() {
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
   
   if (!supabaseUrl || !supabaseServiceKey) {
-    console.error('❌ Missing Supabase environment variables')
     return { success: false, error: 'Missing environment variables' }
   }
 
@@ -32,14 +31,12 @@ export async function initializeStorageBucket() {
 
     // Bucket already exists is not an error for us
     if (bucketError && !bucketError.message.includes('already exists')) {
-      console.error('Error creating storage bucket:', bucketError)
       return { success: false, error: bucketError }
     }
 
     return { success: true, bucket: bucketData }
 
   } catch (error) {
-    console.error('Error setting up storage bucket:', error)
     return { success: false, error }
   }
 }

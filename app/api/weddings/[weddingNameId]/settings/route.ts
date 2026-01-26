@@ -58,7 +58,6 @@ export async function GET(
 
     return NextResponse.json({ settings })
   } catch (error) {
-    console.error("Error fetching wedding settings:", error)
     return NextResponse.json(
       { error: "Failed to fetch wedding settings" },
       { status: 500 }
@@ -105,7 +104,6 @@ export async function PUT(
 
     return NextResponse.json({ settings: data })
   } catch (error) {
-    console.error("Error updating wedding settings:", error)
     return NextResponse.json(
       { error: "Failed to update wedding settings" },
       { status: 500 }

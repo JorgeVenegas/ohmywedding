@@ -230,7 +230,6 @@ export function SettingsPanel({
         }
       }
     } catch (err) {
-      console.error('Error loading wedding details:', err)
       setError('Failed to load wedding details')
     } finally {
       setIsLoading(false)

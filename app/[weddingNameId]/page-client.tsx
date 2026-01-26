@@ -286,10 +286,8 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
               const group = data.group || data
               setGuestGroup(group)
             } else {
-              console.error('Group API error:', response.status, response.statusText)
             }
           } catch (error) {
-            console.error('Error loading group:', error)
           }
         }
         
@@ -297,7 +295,6 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
         // Only show envelope if group_id is provided
         setShowEnvelope(!!groupId)
       } catch (error) {
-        console.error('Error loading wedding:', error)
         setWeddingDataLoading(false)
       }
     }

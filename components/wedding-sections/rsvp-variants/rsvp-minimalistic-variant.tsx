@@ -113,7 +113,6 @@ export function RSVPMinimalisticVariant({
           setSubmitted(hasResponded)
         }
       } catch (error) {
-        console.error('[RSVP Minimalistic] Error fetching group:', error)
       } finally {
         setLoading(false)
       }

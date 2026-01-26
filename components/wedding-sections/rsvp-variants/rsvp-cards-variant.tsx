@@ -100,7 +100,6 @@ export function RSVPCardsVariant({
           )
         }
       } catch (error) {
-        console.error('Error fetching group:', error)
       } finally {
         setLoading(false)
       }

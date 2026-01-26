@@ -55,7 +55,6 @@ export async function GET(
 
     return NextResponse.json({ features })
   } catch (error) {
-    console.error("Error fetching wedding features:", error)
     return NextResponse.json(
       { error: "Failed to fetch wedding features" },
       { status: 500 }
@@ -102,7 +101,6 @@ export async function PUT(
 
     return NextResponse.json({ features: data })
   } catch (error) {
-    console.error("Error updating wedding features:", error)
     return NextResponse.json(
       { error: "Failed to update wedding features" },
       { status: 500 }

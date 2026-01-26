@@ -41,12 +41,9 @@ export function MetadataSettingsPanel({
         const fullUrl = result.url.startsWith('http') 
           ? result.url 
           : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/wedding-images/${result.path}`
-        
-        console.log('[Metadata] Uploaded image URL:', fullUrl)
         setOgImageUrl(fullUrl)
       }
     } catch (error) {
-      console.error('Error uploading OG image:', error)
       setSaveMessage('Failed to upload image')
       setTimeout(() => setSaveMessage(''), 3000)
     }
@@ -65,7 +62,6 @@ export function MetadataSettingsPanel({
       setSaveMessage('Metadata saved successfully!')
       setTimeout(() => setSaveMessage(''), 3000)
     } catch (error) {
-      console.error('Error saving metadata:', error)
       setSaveMessage('Failed to save metadata')
       setTimeout(() => setSaveMessage(''), 3000)
     } finally {

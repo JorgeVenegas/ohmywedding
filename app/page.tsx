@@ -45,7 +45,6 @@ function AuthCodeHandler() {
       const supabase = createClient()
       supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
         if (error) {
-          console.error('Error exchanging code:', error)
         }
         router.replace('/')
       })
@@ -77,7 +76,6 @@ function AuthButtons() {
         .then(data => {
           setUserWeddings(data.weddings || [])
         })
-        .catch(console.error)
         .finally(() => setWeddingsLoading(false))
     } else {
       setUserWeddings([])

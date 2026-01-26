@@ -72,12 +72,10 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
         .single()
 
       if (error) {
-        console.error("Error fetching wedding UUID:", error)
         throw error
       }
       setWeddingUuid(data?.id || null)
     } catch (error) {
-      console.error("Error fetching wedding UUID:", error)
       setIsLoading(false)
     }
   }
@@ -97,12 +95,10 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
         .order("display_order", { ascending: true })
 
       if (error) {
-        console.error("Supabase error:", error)
         throw error
       }
       setItems(data || [])
     } catch (error) {
-      console.error("Error fetching registry items:", error)
     } finally {
       setIsLoading(false)
     }
@@ -156,7 +152,6 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
         window.location.href = url
       }
     } catch (error) {
-      console.error("Error processing contribution:", error)
       alert("Failed to process contribution. Please try again.")
       setIsProcessing(false)
     }

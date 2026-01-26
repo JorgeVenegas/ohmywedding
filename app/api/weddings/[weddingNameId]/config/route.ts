@@ -20,7 +20,6 @@ export async function GET(
       .single()
 
     if (error) {
-      console.error('Error fetching wedding config:', error)
       return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
     }
 
@@ -52,7 +51,6 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Error in GET /api/weddings/config:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -136,12 +134,10 @@ export async function PUT(
       .select('id, page_config')
 
     if (error) {
-      console.error('Error updating wedding config:', error)
       return NextResponse.json({ error: 'Failed to save configuration' }, { status: 500 })
     }
 
     if (!updatedWeddings || updatedWeddings.length === 0) {
-      console.error('No rows updated - wedding might not exist')
       return NextResponse.json({ error: 'Wedding not found or update failed' }, { status: 404 })
     }
 
@@ -154,7 +150,6 @@ export async function PUT(
     })
 
   } catch (error) {
-    console.error('Error in PUT /api/weddings/config:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

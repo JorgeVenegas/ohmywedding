@@ -140,7 +140,6 @@ export function useWeddingPermissions(weddingNameId: string | null) {
       setPermissions(data.permissions)
       setError(null)
     } catch (err) {
-      console.error('Error fetching permissions:', err)
       setError(err instanceof Error ? err.message : 'Unknown error')
       setPermissions(defaultPermissions)
     } finally {
@@ -221,7 +220,6 @@ export function useCollaborators(weddingNameId: string | null) {
       setOwnerId(data.ownerId || null)
       setError(null)
     } catch (err) {
-      console.error('Error fetching collaborators:', err)
       setError(err instanceof Error ? err.message : 'Unknown error')
       setCollaboratorEmails([])
     } finally {

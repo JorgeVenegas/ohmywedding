@@ -250,13 +250,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     
     // Skip if we're in the middle of user input to prevent cursor jump
     if (isUpdatingRef.current) {
-      console.log('=== RENDER: Skipping (isUpdatingRef) ===')
       isUpdatingRef.current = false
       return
     }
-    
-    console.log('=== RENDER START ===')
-    console.log('Template to render:', JSON.stringify(inviteTemplate))
     
     const selection = window.getSelection()
     let cursorOffset = 0
@@ -273,7 +269,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     
     // Render formatted HTML with friendly names and action buttons
     const parts = inviteTemplate.split(/(\{\{[^}]+\}\})/g)
-    console.log('Split parts:', parts.map((p, i) => `[${i}] ${JSON.stringify(p)}`))
     const zwsp = '\u200B' // zero-width space for cursor positioning
     editor.innerHTML = parts.map((part, index) => {
       if (part.match(/^\{\{[^}]+\}\}$/)) {
@@ -312,9 +307,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       // Escape HTML and convert newlines to BR tags for display
       return part.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
     }).join('')
-    
-    console.log('Rendered innerHTML:', editor.innerHTML)
-    console.log('=== RENDER END ===')
     
     // Add event listeners for badge actions
     editor.querySelectorAll('[data-action="delete"]').forEach(btn => {
@@ -608,7 +600,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     try {
       const response = await fetch(`/api/weddings/${encodeURIComponent(weddingId)}/details`)
       const result = await response.json()
-      console.log('Wedding data response:', result)
       if (result.details) {
         setPartnerNames({
           partner1: result.details.partner1_first_name || '',
@@ -622,7 +613,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         }
       }
     } catch (error) {
-      console.error("Error fetching wedding data:", error)
     }
   }
   
@@ -646,7 +636,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         setGuestGroups(result.data)
       }
     } catch (error) {
-      console.error("Error fetching guest groups:", error)
     } finally {
       setLoading(false)
     }
@@ -660,7 +649,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         setUngroupedGuests(result.data)
       }
     } catch (error) {
-      console.error("Error fetching ungrouped guests:", error)
     }
   }
 
@@ -692,7 +680,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       const result = await response.json()
       
       if (!response.ok) {
-        console.error("Error adding group:", result.error)
         setNotification({ isOpen: true, type: 'error', title: 'Error', message: `Error adding group: ${result.error}` })
         return
       }
@@ -718,7 +705,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               }),
             })
           } catch (error) {
-            console.error("Error adding guest:", error)
           }
         }
       }
@@ -735,7 +721,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           : 'Group added successfully!' 
       })
     } catch (error) {
-      console.error("Error adding group:", error)
       setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error adding group. Please try again.' })
     }
   }
@@ -763,7 +748,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         resetGroupForm()
       }
     } catch (error) {
-      console.error("Error updating group:", error)
     }
   }
 
@@ -786,7 +770,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             setNotification({ isOpen: true, type: 'success', title: 'Deleted', message: 'Group deleted successfully.' })
           }
         } catch (error) {
-          console.error("Error deleting group:", error)
           setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error deleting group. Please try again.' })
         }
       }
@@ -867,7 +850,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         resetGuestForm()
       }
     } catch (error) {
-      console.error("Error adding guest:", error)
     }
   }
 
@@ -904,7 +886,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         resetGuestForm()
       }
     } catch (error) {
-      console.error("Error updating guest:", error)
     }
   }
 
@@ -928,7 +909,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             setNotification({ isOpen: true, type: 'success', title: 'Deleted', message: 'Guest deleted successfully.' })
           }
         } catch (error) {
-          console.error("Error deleting guest:", error)
           setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error deleting guest. Please try again.' })
         }
       }
@@ -957,7 +937,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         await fetchUngroupedGuests()
       }
     } catch (error) {
-      console.error("Error updating guest status:", error)
     }
   }
 
@@ -1198,7 +1177,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       setAssignToGroupId('new')
       setNotification({ isOpen: true, type: 'success', title: 'Success', message: 'Guests assigned to group successfully!' })
     } catch (error) {
-      console.error("Error assigning guests to group:", error)
       setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error assigning guests. Please try again.' })
     }
   }
@@ -1238,7 +1216,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       setSelectedGuestIds(new Set())
       setNotification({ isOpen: true, type: 'success', title: 'Updated', message: `${selectedGuestIds.size} guest(s) updated successfully!` })
     } catch (error) {
-      console.error("Error updating guest statuses:", error)
       setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error updating guests. Please try again.' })
     }
   }
@@ -1273,7 +1250,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           setSelectedGuestIds(new Set())
           setNotification({ isOpen: true, type: 'success', title: 'Deleted', message: `${count} guest(s) deleted successfully.` })
         } catch (error) {
-          console.error("Error deleting guests:", error)
           setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error deleting guests. Please try again.' })
         }
       }
@@ -1324,7 +1300,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         message: `Updated "Invited By" for ${count} guest(s)!` 
       })
     } catch (error) {
-      console.error("Error updating invited by:", error)
       setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error updating guests. Please try again.' })
     }
   }
@@ -1361,7 +1336,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         message: `All guests in "${group.name}" marked as ${newStatus}.` 
       })
     } catch (error) {
-      console.error("Error updating group status:", error)
       setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error updating group. Please try again.' })
     }
   }
@@ -1457,7 +1431,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         message: `Travel info set for ${count} guest(s)` 
       })
     } catch (error) {
-      console.error('Error setting group travel:', error)
       setNotification({ 
         isOpen: true, 
         type: 'error', 
@@ -1552,7 +1525,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       await fetchGuestGroups()
       await fetchUngroupedGuests()
     } catch (error) {
-      console.error("Error updating invitation status:", error)
       setNotification({
         isOpen: true,
         type: "error",
@@ -1580,7 +1552,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
       await fetchGuestGroups()
     } catch (error) {
-      console.error("Error updating group invitation status:", error)
       setNotification({
         isOpen: true,
         type: "error",
@@ -5778,21 +5749,17 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                           if (node.nodeType === Node.TEXT_NODE) {
                             // Filter out zero-width spaces used for cursor positioning
                             const text = (node.textContent || '').replace(/\u200B/g, '')
-                            console.log(`${indent}TEXT_NODE: "${text}"`)
                             return text
                           } else if (node.nodeType === Node.ELEMENT_NODE) {
                             const element = node as HTMLElement
-                            console.log(`${indent}ELEMENT: ${element.tagName}, parentIsEditor: ${parentIsEditor}, indexInParent: ${indexInParent}`)
                             
                             // If it's a badge span, return the variable
                             if (element.hasAttribute('data-variable')) {
                               const variable = element.getAttribute('data-variable') || ''
-                              console.log(`${indent}  -> BADGE: ${variable}`)
                               return variable
                             }
                             // Handle line breaks
                             if (element.tagName === 'BR') {
-                              console.log(`${indent}  -> BR tag, adding \\n`)
                               return '\n'
                             }
                             
@@ -5804,8 +5771,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                                  (child as HTMLElement).tagName === 'DIV'
                                                )
                             
-                            console.log(`${indent}  -> isWrapperDiv: ${isWrapperDiv}`)
-                            
                             // Handle DIV elements (contentEditable creates these on Enter)
                             if (element.tagName === 'DIV' && (parentIsEditor || isWrapperDiv)) {
                               const treatChildrenAsTopLevel = isWrapperDiv
@@ -5815,7 +5780,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                               
                               // If this is the wrapper div, don't add any newlines - just return the content
                               if (isWrapperDiv) {
-                                console.log(`${indent}  -> WRAPPER DIV, returning content as-is`)
                                 return content
                               }
                               
@@ -5825,33 +5789,22 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                               const startsWithBR = firstChild?.nodeType === Node.ELEMENT_NODE && 
                                                    (firstChild as HTMLElement).tagName === 'BR'
                               const shouldAddNewline = indexInParent > 0 && !startsWithBR
-                              console.log(`${indent}  -> DIV: indexInParent=${indexInParent}, startsWithBR=${startsWithBR}, shouldAddNewline=${shouldAddNewline}`)
-                              console.log(`${indent}  -> DIV content: "${content}"`)
                               return (shouldAddNewline ? '\n' : '') + content
                             }
                             // Otherwise, recursively process children
                             const isEditor = element === target
-                            console.log(`${indent}  -> Processing children, isEditor: ${isEditor}`)
                             return Array.from(node.childNodes)
                               .map((child, idx) => extractTemplate(child, isEditor, idx, depth + 1))
                               .join('')
                           }
                           return ''
                         }
-                        
-                        console.log('=== EXTRACTION START ===')
-                        console.log('Editor innerHTML:', target.innerHTML)
                         const newText = extractTemplate(target, true, 0, 0)
-                        console.log('=== EXTRACTION END ===')
-                        console.log('Extracted template:', JSON.stringify(newText))
-                        console.log('Current template:', JSON.stringify(inviteTemplate))
                         
                         if (newText !== inviteTemplate) {
-                          console.log('Templates differ, updating...')
                           isUpdatingRef.current = true
                           setInviteTemplate(newText)
                         } else {
-                          console.log('Templates are the same, no update needed')
                         }
                       }}
                       onPaste={(e) => {

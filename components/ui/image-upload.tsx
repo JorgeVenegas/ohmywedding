@@ -47,12 +47,10 @@ export function ImageUpload({ onUpload, currentImageUrl, placeholder = "Upload a
         setPreviewUrl(result.url)
         onUpload(result.url)
       } else {
-        console.error('Upload failed:', result.error)
         setPreviewUrl(currentImageUrl || null)
         // You might want to show a toast or error message here
       }
     } catch (error) {
-      console.error('Upload error:', error)
       setPreviewUrl(currentImageUrl || null)
       // You might want to show a toast or error message here
     } finally {

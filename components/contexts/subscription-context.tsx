@@ -46,15 +46,24 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
       setLoading(true)
       const supabase = createClient()
 
-      // Check if user is a superuser first
-      const { data: superuserData } = await supabase
-        .from('superusers')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .single()
+      // Check if user is a superuser first via API route (avoids RLS issues)
+      let isSuperuserUser = false
+      try {
+        const response = await fetch('/api/user/is-superuser', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        if (response.ok) {
+          const { isSuperuser } = await response.json()
+          isSuperuserUser = isSuperuser
+        }
+      } catch (err) {
+        // Silently fail superuser check - not critical
+        isSuperuserUser = false
+      }
 
-      const isSuperuserUser = !!superuserData
       setIsSuperuser(isSuperuserUser)
 
       // If superuser, grant all features
@@ -67,6 +76,7 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
           registry_enabled: true,
           schedule_enabled: true,
         })
+        setLoading(false)
         return
       }
 
@@ -117,7 +127,6 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
         setFeatures(getDefaultFeatures(userPlanType))
       }
     } catch (error) {
-      console.error('Error fetching subscription:', error)
       setPlanType('free')
       setFeatures(getDefaultFeatures('free'))
       setIsSuperuser(false)

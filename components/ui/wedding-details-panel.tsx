@@ -59,7 +59,6 @@ export function WeddingDetailsPanel({ isOpen, onClose, weddingNameId }: WeddingD
       const data = await response.json()
       setDetails(data.details)
     } catch (err) {
-      console.error('Error loading wedding details:', err)
       setError('Failed to load wedding details')
     } finally {
       setIsLoading(false)

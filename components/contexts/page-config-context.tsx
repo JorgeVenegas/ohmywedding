@@ -176,7 +176,6 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
       setConfig(normalizedConfig)
       setOriginalConfig(JSON.parse(JSON.stringify(normalizedConfig))) // Deep copy
     } catch (error) {
-      console.error('Failed to load configuration:', error)
     } finally {
       setIsLoading(false)
     }

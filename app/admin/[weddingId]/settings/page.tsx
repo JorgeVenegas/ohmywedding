@@ -112,7 +112,6 @@ export default function SettingsPage({ params }: SettingsPageProps) {
         setPlanFeatures(data.features)
       }
     } catch (error) {
-      console.error("Error fetching settings:", error)
     } finally {
       setLoading(false)
     }
@@ -138,7 +137,6 @@ export default function SettingsPage({ params }: SettingsPageProps) {
         setHasChanges(false)
       }
     } catch (error) {
-      console.error("Error saving settings:", error)
     } finally {
       setSaving(false)
     }

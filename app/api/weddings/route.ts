@@ -25,7 +25,6 @@ export async function GET() {
       .order('created_at', { ascending: false })
     
     if (ownedError) {
-      console.error('Error fetching owned weddings:', ownedError)
       return NextResponse.json({ weddings: [] })
     }
     
@@ -57,7 +56,6 @@ export async function GET() {
     
     return NextResponse.json({ weddings: allWeddings })
   } catch (error) {
-    console.error('Error in GET /api/weddings:', error)
     return NextResponse.json({ weddings: [] })
   }
 }
@@ -73,7 +71,6 @@ export async function POST(request: Request) {
 
     // Require authentication to create a wedding
     if (!user) {
-      console.error("POST /api/weddings - No authenticated user found")
       return NextResponse.json({ error: "Unauthorized - please log in to create a wedding" }, { status: 401 })
     }
 
@@ -86,7 +83,6 @@ export async function POST(request: Request) {
       }
       body = JSON.parse(text)
     } catch (parseError) {
-      console.error("JSON parse error:", parseError)
       return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 })
     }
 
@@ -106,11 +102,6 @@ export async function POST(request: Request) {
 
     // Create page configuration from user selections
     const defaultPageConfig = createDefaultPageConfig()
-    
-    // Debug logging
-    console.log('=== API CREATE WEDDING DEBUG ===')
-    console.log('Received sectionConfigs:', JSON.stringify(body.sectionConfigs, null, 2))
-    console.log('Received components:', JSON.stringify(body.components, null, 2))
     
     // Use components from the form if provided, otherwise use defaults
     const pageConfig = {
@@ -138,9 +129,6 @@ export async function POST(request: Request) {
       version: '1.0',
       lastModified: new Date().toISOString()
     }
-    
-    console.log('Final pageConfig.sectionConfigs:', JSON.stringify(pageConfig.sectionConfigs, null, 2))
-    console.log('Final pageConfig.components:', JSON.stringify(pageConfig.components, null, 2))
 
     // Create wedding record
     const weddingData = {
@@ -167,13 +155,11 @@ export async function POST(request: Request) {
     const { data, error } = await supabase.from("weddings").insert([weddingData])
 
     if (error) {
-      console.error("Database error:", error)
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
     return NextResponse.json({ dateId, weddingNameId, data })
   } catch (error) {
-    console.error("API error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

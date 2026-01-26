@@ -177,7 +177,6 @@ export const loadPageConfiguration = async (weddingNameId: string): Promise<Page
     const mergedConfig = mergeWithDefaultConfig(data.config || {})
     return mergedConfig
   } catch (error) {
-    console.error('Error loading page configuration:', error)
     return createDefaultPageConfig()
   }
 }
@@ -207,7 +206,6 @@ export const savePageConfiguration = async (
     const data = await response.json()
     return { success: true, message: data.message }
   } catch (error) {
-    console.error('Error saving page configuration:', error)
     return { success: false, message: 'Failed to save configuration' }
   }
 }

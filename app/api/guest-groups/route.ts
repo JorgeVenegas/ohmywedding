@@ -89,7 +89,6 @@ export async function POST(request: Request) {
       .single()
     
     if (weddingError) {
-      console.error('Wedding lookup error:', weddingError)
       return NextResponse.json({ error: `Wedding lookup failed: ${weddingError.message}` }, { status: 500 })
     }
     
@@ -109,13 +108,11 @@ export async function POST(request: Request) {
     ]).select().single()
 
     if (error) {
-      console.error('Guest group insert error:', error)
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
     return NextResponse.json({ success: true, data })
   } catch (error) {
-    console.error('Guest group POST error:', error)
     return NextResponse.json({ 
       error: "Internal server error",
       details: error instanceof Error ? error.message : String(error)

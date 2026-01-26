@@ -78,13 +78,11 @@ export async function PATCH(
       .eq('id', wedding.id)
 
     if (updateError) {
-      console.error('Error updating metadata:', updateError)
       return NextResponse.json({ error: 'Failed to update metadata' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error in metadata PATCH:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

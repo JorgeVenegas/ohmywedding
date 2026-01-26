@@ -33,16 +33,6 @@ const LOCAL_SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3M
 const PROD_SUPABASE_URL = process.argv[2] || process.env.PROD_SUPABASE_URL || ''
 
 if (!PROD_SUPABASE_URL) {
-  console.error('❌ Production Supabase URL is required!')
-  console.error('')
-  console.error('Usage:')
-  console.error('  npx tsx scripts/export-demos.ts <PRODUCTION_SUPABASE_URL>')
-  console.error('')
-  console.error('Example:')
-  console.error('  npx tsx scripts/export-demos.ts https://myproject.supabase.co')
-  console.error('')
-  console.error('Or set environment variable:')
-  console.error('  PROD_SUPABASE_URL=https://myproject.supabase.co npx tsx scripts/export-demos.ts')
   process.exit(1)
 }
 
@@ -164,10 +154,6 @@ async function downloadImage(url: string, destPath: string): Promise<boolean> {
 }
 
 async function exportDemos() {
-  console.log('🔄 Starting demo export...\n')
-  
-  // 1. Fetch all demo weddings
-  console.log('📋 Fetching demo weddings...')
   const { data: weddings, error: weddingsError } = await supabase
     .from('weddings')
     .select('*')
@@ -175,59 +161,41 @@ async function exportDemos() {
     .order('wedding_name_id')
   
   if (weddingsError) {
-    console.error('❌ Error fetching weddings:', weddingsError)
     process.exit(1)
   }
   
   if (!weddings || weddings.length === 0) {
-    console.log('⚠️  No demo weddings found in local database')
     process.exit(0)
   }
-  
-  console.log(`   Found ${weddings.length} demo wedding(s):`)
   weddings.forEach(w => {
-    console.log(`   - ${w.wedding_name_id} (${w.partner1_first_name} & ${w.partner2_first_name})`)
   })
-  console.log('')
   
   // Get wedding IDs for related data
   const weddingIds = weddings.map(w => w.id)
-  
-  // 2. Fetch related data
-  console.log('📋 Fetching related data...')
   
   // Wedding schedule
   const { data: schedules } = await supabase
     .from('wedding_schedule')
     .select('*')
     .in('wedding_id', weddingIds)
-  console.log(`   - ${schedules?.length || 0} schedule events`)
   
   // Gallery images
   const { data: galleryImages } = await supabase
     .from('gallery_images')
     .select('*')
     .in('wedding_id', weddingIds)
-  console.log(`   - ${galleryImages?.length || 0} gallery images`)
   
   // Wedding settings
   const { data: settings } = await supabase
     .from('wedding_settings')
     .select('*')
     .in('wedding_id', weddingIds)
-  console.log(`   - ${settings?.length || 0} wedding settings`)
   
   // Registry items
   const { data: registryItems } = await supabase
     .from('registry_items')
     .select('*')
     .in('wedding_id', weddingIds)
-  console.log(`   - ${registryItems?.length || 0} registry items`)
-  
-  console.log('')
-  
-  // 3. Collect all image URLs
-  console.log('🖼️  Collecting image URLs...')
   const allImageUrls = new Set<string>()
   
   weddings.forEach(w => {
@@ -249,17 +217,12 @@ async function exportDemos() {
     url.includes('127.0.0.1:54321') || url.includes('localhost:54321')
   )
   
-  console.log(`   Found ${localImageUrls.length} local image(s) to export`)
-  console.log('')
-  
   // 4. Download images
   if (localImageUrls.length > 0) {
     const imagesDir = path.join(process.cwd(), 'scripts', 'demo-images')
     if (!fs.existsSync(imagesDir)) {
       fs.mkdirSync(imagesDir, { recursive: true })
     }
-    
-    console.log('⬇️  Downloading images...')
     const imageMapping: { localUrl: string; filename: string }[] = []
     
     for (const url of localImageUrls) {
@@ -270,22 +233,15 @@ async function exportDemos() {
       
       const success = await downloadImage(url, destPath)
       if (success) {
-        console.log(`   ✓ ${filename}`)
         imageMapping.push({ localUrl: url, filename })
       } else {
-        console.log(`   ✗ ${filename} (failed to download)`)
       }
     }
     
     // Save image mapping for reference
     const mappingPath = path.join(imagesDir, 'image-mapping.json')
     fs.writeFileSync(mappingPath, JSON.stringify(imageMapping, null, 2))
-    console.log(`\n   Image mapping saved to: ${mappingPath}`)
-    console.log('')
   }
-  
-  // 5. Generate SQL migration
-  console.log('📝 Generating SQL migration...')
   
   const timestamp = generateMigrationTimestamp()
   const migrationFilename = `${timestamp}_seed_demo_weddings.sql`
@@ -496,39 +452,13 @@ END $$;
 
   // Write migration file
   fs.writeFileSync(migrationPath, sql)
-  console.log(`   ✓ Migration created: ${migrationFilename}`)
-  console.log('')
-  
-  // 6. Print summary and next steps
-  console.log('═'.repeat(60))
-  console.log('✅ Export Complete!')
-  console.log('═'.repeat(60))
-  console.log('')
-  console.log('📁 Generated files:')
-  console.log(`   - supabase/migrations/${migrationFilename}`)
   if (localImageUrls.length > 0) {
-    console.log('   - scripts/demo-images/ (downloaded images)')
   }
-  console.log('')
-  console.log('📋 Next steps to deploy to production:')
-  console.log('')
-  console.log('1. Upload images to production storage:')
-  console.log('   - Go to Supabase Dashboard > Storage > wedding-assets')
-  console.log('   - Upload all files from scripts/demo-images/')
-  console.log('   - Ensure they have the same folder structure/paths')
-  console.log('')
-  console.log('2. Update PROD_SUPABASE_URL in the migration if needed:')
-  console.log(`   - Current: ${PROD_SUPABASE_URL}`)
-  console.log('   - Edit the migration file to replace placeholder URLs')
-  console.log('')
-  console.log('3. Apply the migration to production:')
-  console.log('   supabase db push --linked')
-  console.log('')
-  console.log('4. Verify the demos are visible:')
-  console.log('   - Visit your production site')
-  console.log('   - Check the demo pages at /demo-*')
-  console.log('')
 }
 
 // Run the export
-exportDemos().catch(console.error)
+exportDemos().catch(error => {
+  const message = error instanceof Error ? error.stack || error.message : String(error)
+  process.stderr.write(`exportDemos failed: ${message}\n`)
+  process.exitCode = 1
+})

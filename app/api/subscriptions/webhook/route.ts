@@ -41,7 +41,6 @@ export async function POST(request: Request) {
       process.env.STRIPE_WEBHOOK_SECRET!
     )
   } catch (err) {
-    console.error('Webhook signature verification failed:', err)
     return NextResponse.json(
       { error: 'Webhook signature verification failed' },
       { status: 400 }
@@ -58,7 +57,6 @@ export async function POST(request: Request) {
         const planType = session.metadata?.plan_type
 
         if (!userId || planType !== 'premium') {
-          console.error('Missing user_id or invalid plan_type in session metadata')
           break
         }
 
@@ -82,7 +80,6 @@ export async function POST(request: Request) {
           )
 
         if (subscriptionError) {
-          console.error('Error updating subscription:', subscriptionError)
           throw subscriptionError
         }
 
@@ -93,7 +90,6 @@ export async function POST(request: Request) {
           .eq('user_id', userId)
 
         if (weddingsError) {
-          console.error('Error fetching user weddings:', weddingsError)
         } else if (userWeddings && userWeddings.length > 0) {
           const premiumFeatures = getDefaultFeatures('premium')
 
@@ -112,29 +108,24 @@ export async function POST(request: Request) {
               )
 
             if (featuresError) {
-              console.error(`Error updating features for wedding ${wedding.id}:`, featuresError)
             }
           }
         }
 
-        console.log(`Successfully activated premium for user ${userId}`)
         break
       }
 
       case 'payment_intent.payment_failed': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent
-        console.error('Payment failed:', paymentIntent.id)
         // Could send email notification here
         break
       }
 
       default:
-        console.log(`Unhandled event type: ${event.type}`)
     }
 
     return NextResponse.json({ received: true })
   } catch (error) {
-    console.error('Webhook processing error:', error)
     return NextResponse.json(
       { error: 'Webhook processing failed' },
       { status: 500 }

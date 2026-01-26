@@ -32,5 +32,3 @@ setWindow('localhost', '3000')
 assert.strictEqual(getWeddingPath('jorgeandyuli'), '/jorgeandyuli')
 assert.strictEqual(getWeddingPath('jorgeandyuli', '/gallery'), '/jorgeandyuli/gallery')
 clearWindow()
-
-console.log('navigation tests passed')

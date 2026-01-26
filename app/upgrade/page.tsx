@@ -94,7 +94,6 @@ export default function UpgradePage() {
         throw new Error('No checkout URL received')
       }
     } catch (err) {
-      console.error('Checkout error:', err)
       setError(err instanceof Error ? err.message : 'Something went wrong')
       setIsProcessing(false)
     }

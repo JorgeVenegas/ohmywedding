@@ -18,7 +18,6 @@ export async function GET(
       .single()
 
     if (groupError) {
-      console.error('[Guest Groups API] Error fetching group:', groupError)
       return NextResponse.json(
         { error: "Guest group not found" },
         { status: 404 }
@@ -44,7 +43,6 @@ export async function GET(
       .order("name")
 
     if (guestsError) {
-      console.error('[Guest Groups API] Error fetching guests:', guestsError)
       return NextResponse.json(
         { error: "Failed to fetch guests" },
         { status: 500 }
