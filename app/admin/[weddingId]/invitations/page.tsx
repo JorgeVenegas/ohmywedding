@@ -10,6 +10,13 @@ import { PremiumUpgradePrompt } from "@/components/ui/premium-gate"
 import { useSubscriptionContext } from "@/components/contexts/subscription-context"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import {
+  ChartCard,
+  StatCard,
+  InteractiveAreaChart,
+  StackedBarChart,
+  DonutChart,
+} from "@/components/ui/charts"
+import {
   BarChart,
   Bar,
   XAxis,
@@ -142,20 +149,20 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const { weddingId } = use(params)
   const searchParams = useSearchParams()
   const router = useRouter()
-  
+
   // Premium feature check
   const { canAccessFeature, loading: subscriptionLoading } = useSubscriptionContext()
-  
+
   const [guestGroups, setGuestGroups] = useState<GuestGroup[]>([])
   const [ungroupedGuests, setUngroupedGuests] = useState<Guest[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [showUngroupedExpanded, setShowUngroupedExpanded] = useState(true)
-  
+
   // View mode: 'flat' or 'groups' - initialized from URL param
   const initialViewMode = searchParams.get('view') === 'flat' ? 'flat' : 'groups'
   const [viewMode, setViewModeState] = useState<'flat' | 'groups'>(initialViewMode)
-  
+
   // Update URL when view mode changes
   const setViewMode = (mode: 'flat' | 'groups') => {
     setViewModeState(mode)
@@ -163,7 +170,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     params.set('view', mode)
     router.replace(`?${params.toString()}`, { scroll: false })
   }
-  
+
   // Filter states
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'confirmed' | 'declined'>('all')
@@ -171,10 +178,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const [groupFilter, setGroupFilter] = useState<string>('all')
   const [invitedByFilter, setInvitedByFilter] = useState<string>('all')
   const [openedFilter, setOpenedFilter] = useState<'all' | 'opened' | 'not-opened'>('all')
-  
+
   // Timeline chart state
   const [timelineRange, setTimelineRange] = useState<'all' | '90d' | '30d' | '14d' | '7d'>('30d')
-  const [timelineData, setTimelineData] = useState<{
+  const [allTimelineData, setAllTimelineData] = useState<{
     chartData: Array<{
       date: string
       confirmed: number
@@ -183,6 +190,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       cumulativeConfirmed: number
       cumulativeDeclined: number
       cumulativeOpens: number
+      groupId?: string
     }>
     confirmationEvents: Array<{
       id: string
@@ -194,6 +202,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       guestName?: string
       description: string
     }>
+    openEvents: Array<{
+      id: string
+      timestamp: string
+      groupId: string
+      groupName: string
+      deviceType: string
+    }>
     summary: {
       totalConfirmed: number
       totalDeclined: number
@@ -202,14 +217,14 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   } | null>(null)
   const [timelineLoading, setTimelineLoading] = useState(false)
   const [timelineGroupFilter, setTimelineGroupFilter] = useState<string>('all')
-  
+
   // Sorting state
   const [sortColumn, setSortColumn] = useState<'name' | 'group' | 'status' | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
-  
+
   // Wedding/Partner info
   const [partnerNames, setPartnerNames] = useState<{ partner1: string; partner2: string }>({ partner1: '', partner2: '' })
-  
+
   // Multi-select states
   const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set())
   const [showAssignGroupModal, setShowAssignGroupModal] = useState(false)
@@ -217,7 +232,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const [bulkInvitedBy, setBulkInvitedBy] = useState<string[]>([])
   const [newGroupName, setNewGroupName] = useState('')
   const [assignToGroupId, setAssignToGroupId] = useState<string | 'new'>('new')
-  
+
   // Column visibility state - initialized from localStorage
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const defaultColumns = {
@@ -230,7 +245,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       inviteSent: true,
       travelInfo: true,
     }
-    
+
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(`invitations-columns-${weddingId}`)
       if (saved) {
@@ -251,7 +266,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     return defaultColumns
   })
   const [showColumnMenu, setShowColumnMenu] = useState(false)
-  
+
   // Send invites modal state
   const [showSendInvitesModal, setShowSendInvitesModal] = useState(false)
   const [sendInvitesConfig, setSendInvitesConfig] = useState({
@@ -259,7 +274,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     onlyConfirmed: false,
     onlyPending: false,
   })
-  
+
   // Invitation template settings
   const [showInviteTemplateModal, setShowInviteTemplateModal] = useState(false)
   const [inviteTemplate, setInviteTemplate] = useState(
@@ -268,16 +283,17 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const [weddingNameId, setWeddingNameId] = useState<string>('')
   const [weddingDetails, setWeddingDetails] = useState<any>(null)
   const [dynamicContentSearch, setDynamicContentSearch] = useState('')
+  const [chartsExpanded, setChartsExpanded] = useState(true)
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
   const editorRef = useRef<HTMLDivElement>(null)
   const isUpdatingRef = useRef(false)
   const [showReplaceMenu, setShowReplaceMenu] = useState<string | null>(null)
   const replaceMenuRef = useRef<HTMLDivElement>(null)
-  
+
   // Message viewing
   const [showMessageModal, setShowMessageModal] = useState(false)
   const [selectedGroupForMessage, setSelectedGroupForMessage] = useState<GuestGroup | null>(null)
-  
+
   // Helper function to get friendly display name for variables
   const getVariableDisplayName = (variable: string): string => {
     const variableMap: Record<string, string> = {
@@ -294,23 +310,23 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     }
     return variableMap[variable] || variable
   }
-  
+
   // Sync template formatting whenever inviteTemplate changes
   useEffect(() => {
     if (!editorRef.current) return
-    
+
     const editor = editorRef.current
-    
+
     // Skip if we're in the middle of user input to prevent cursor jump
     if (isUpdatingRef.current) {
       isUpdatingRef.current = false
       return
     }
-    
+
     const selection = window.getSelection()
     let cursorOffset = 0
     let hadFocus = document.activeElement === editor
-    
+
     // Save cursor position
     if (selection && selection.rangeCount > 0 && editor.contains(selection.anchorNode)) {
       const range = selection.getRangeAt(0)
@@ -319,7 +335,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       preCaretRange.setEnd(range.endContainer, range.endOffset)
       cursorOffset = preCaretRange.toString().length
     }
-    
+
     // Render formatted HTML with friendly names and action buttons
     const parts = inviteTemplate.split(/(\{\{[^}]+\}\})/g)
     const zwsp = '\u200B' // zero-width space for cursor positioning
@@ -360,7 +376,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       // Escape HTML and convert newlines to BR tags for display
       return part.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
     }).join('')
-    
+
     // Add event listeners for badge actions
     editor.querySelectorAll('[data-action="delete"]').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -376,7 +392,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         }
       })
     })
-    
+
     editor.querySelectorAll('[data-action="replace"]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation()
@@ -386,13 +402,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           const index = parseInt(badgeSpan.getAttribute('data-index') || '0')
           if (variable) {
             setShowReplaceMenu(variable)
-            // Store the index for replacement
-            ;(badgeSpan as any).__replaceIndex = index
+              // Store the index for replacement
+              ; (badgeSpan as any).__replaceIndex = index
           }
         }
       })
     })
-    
+
     // Restore cursor position
     if (cursorOffset > 0 && hadFocus) {
       const textNodes: Text[] = []
@@ -404,7 +420,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         }
       }
       walk(editor)
-      
+
       let charCount = 0
       for (const node of textNodes) {
         const nodeLength = node.textContent?.length || 0
@@ -424,13 +440,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         charCount += nodeLength
       }
     }
-    
+
     // Restore focus if editor had it
     if (hadFocus) {
       editor.focus()
     }
   }, [inviteTemplate, weddingDetails])
-  
+
   // Initial render - ensure template shows when modal opens
   useEffect(() => {
     if (showInviteTemplateModal && editorRef.current && !editorRef.current.textContent) {
@@ -471,7 +487,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         }
         return part.replace(/</g, '&lt;').replace(/>/g, '&gt;')
       }).join('')
-      
+
       // Attach event listeners
       editor.querySelectorAll('[data-action="delete"]').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -482,7 +498,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           }
         })
       })
-      
+
       editor.querySelectorAll('[data-action="replace"]').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation()
@@ -494,7 +510,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       })
     }
   }, [showInviteTemplateModal, inviteTemplate, weddingDetails])
-  
+
   // Close replace menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -507,12 +523,12 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [showReplaceMenu])
-  
+
   // Save column visibility to localStorage when it changes
   useEffect(() => {
     localStorage.setItem(`invitations-columns-${weddingId}`, JSON.stringify(visibleColumns))
   }, [visibleColumns, weddingId])
-  
+
   // Modal states
   const [showAddGroupModal, setShowAddGroupModal] = useState(false)
   const [showAddGuestModal, setShowAddGuestModal] = useState(false)
@@ -520,7 +536,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null)
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
   const [addDropdownOpen, setAddDropdownOpen] = useState(false)
-  
+
   // Confirmation/Notification dialog states
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean
@@ -529,15 +545,15 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     confirmLabel: string
     confirmVariant: 'default' | 'destructive' | 'success'
     onConfirm: () => void
-  }>({ isOpen: false, title: '', message: '', confirmLabel: 'Confirm', confirmVariant: 'default', onConfirm: () => {} })
-  
+  }>({ isOpen: false, title: '', message: '', confirmLabel: 'Confirm', confirmVariant: 'default', onConfirm: () => { } })
+
   const [notification, setNotification] = useState<{
     isOpen: boolean
     type: 'success' | 'error'
     title: string
     message: string
   }>({ isOpen: false, type: 'success', title: '', message: '' })
-  
+
   // CSV Import states
   const [showCsvImportModal, setShowCsvImportModal] = useState(false)
   const [csvImportMode, setCsvImportMode] = useState<'guests' | 'groups'>('guests')
@@ -546,7 +562,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({})
   const [csvImportError, setCsvImportError] = useState<string | null>(null)
   const [csvImporting, setCsvImporting] = useState(false)
-  
+
   // Database fields for CSV mapping - Guests mode
   const GUEST_DB_FIELDS = [
     { key: 'name', label: 'Guest Name', required: true },
@@ -558,7 +574,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     { key: 'invitedBy', label: 'Invited By (comma-separated)', required: false },
     { key: 'notes', label: 'Notes', required: false },
   ]
-  
+
   // Database fields for CSV mapping - Groups mode
   const GROUP_DB_FIELDS = [
     { key: 'groupName', label: 'Group Name', required: true },
@@ -568,10 +584,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     { key: 'invitedBy', label: 'Invited By (comma-separated)', required: false },
     { key: 'notes', label: 'Notes', required: false },
   ]
-  
+
   // Get current DB fields based on import mode
   const DB_FIELDS = csvImportMode === 'groups' ? GROUP_DB_FIELDS : GUEST_DB_FIELDS
-  
+
   // Form states
   const [groupForm, setGroupForm] = useState({
     name: "",
@@ -580,7 +596,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     notes: "",
     invitedBy: [] as string[],
   })
-  
+
   // State for guests to add within the group modal
   const [guestsInGroupModal, setGuestsInGroupModal] = useState<Array<{
     id: string
@@ -591,7 +607,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     dietaryRestrictions: string
     notes: string
   }>>([])
-  
+
   const [tempGuestForm, setTempGuestForm] = useState({
     name: "",
     phoneNumber: "",
@@ -600,9 +616,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     dietaryRestrictions: "",
     notes: "",
   })
-  
+
   const [isAddingGuestInModal, setIsAddingGuestInModal] = useState(false)
-  
+
   const [guestForm, setGuestForm] = useState({
     name: "",
     phoneNumber: "",
@@ -617,11 +633,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     ticketAttachmentUrl: null as string | null,
     noTicketReason: "",
   })
-  
+
   // State for creating a new group from guest form
   const [newGroupNameForGuest, setNewGroupNameForGuest] = useState("")
   const [isCreatingNewGroup, setIsCreatingNewGroup] = useState(false)
-  
+
   // State for group travel dialog
   const [showGroupTravelDialog, setShowGroupTravelDialog] = useState(false)
   const [groupTravelForm, setGroupTravelForm] = useState({
@@ -637,24 +653,19 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     fetchGuestGroups()
     fetchUngroupedGuests()
     fetchWeddingData()
+    fetchAllTimelineData() // Fetch all timeline data once
   }, [weddingId])
 
-  // Fetch timeline data when range or group filter changes
-  useEffect(() => {
-    fetchTimelineData()
-  }, [weddingId, timelineRange, timelineGroupFilter])
-
-  const fetchTimelineData = async () => {
+  // Fetch ALL timeline data once (no filtering on server)
+  const fetchAllTimelineData = async () => {
     setTimelineLoading(true)
     try {
-      let url = `/api/invitation-tracking/timeline?weddingId=${encodeURIComponent(weddingId)}&range=${timelineRange}`
-      if (timelineGroupFilter !== 'all') {
-        url += `&groupId=${timelineGroupFilter}`
-      }
+      // Always fetch all data, we'll filter client-side
+      const url = `/api/invitation-tracking/timeline?weddingId=${encodeURIComponent(weddingId)}&range=all`
       const response = await fetch(url)
       const result = await response.json()
       if (response.ok) {
-        setTimelineData(result)
+        setAllTimelineData(result)
       }
     } catch (error) {
       console.error('Error fetching timeline data:', error)
@@ -662,6 +673,126 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       setTimelineLoading(false)
     }
   }
+
+  // Client-side filtered timeline data based on range and group filter
+  const timelineData = useMemo(() => {
+    if (!allTimelineData) return null
+
+    const now = new Date()
+    let startDate: Date | null = null
+
+    switch (timelineRange) {
+      case '7d':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        break
+      case '14d':
+        startDate = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
+        break
+      case '30d':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+        break
+      case '90d':
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+        break
+      default:
+        startDate = null
+    }
+
+    // Filter confirmation events
+    let filteredConfirmationEvents = allTimelineData.confirmationEvents.filter(event => {
+      const eventDate = new Date(event.timestamp)
+      const passesDateFilter = !startDate || eventDate >= startDate
+      const passesGroupFilter = timelineGroupFilter === 'all' || event.groupId === timelineGroupFilter
+      return passesDateFilter && passesGroupFilter
+    })
+
+    // Filter open events  
+    let filteredOpenEvents = (allTimelineData.openEvents || []).filter(event => {
+      const eventDate = new Date(event.timestamp)
+      const passesDateFilter = !startDate || eventDate >= startDate
+      const passesGroupFilter = timelineGroupFilter === 'all' || event.groupId === timelineGroupFilter
+      return passesDateFilter && passesGroupFilter
+    })
+
+    // Rebuild chart data from filtered events
+    const dailyData: Record<string, {
+      date: string
+      confirmed: number
+      declined: number
+      opens: number
+    }> = {}
+
+    filteredConfirmationEvents.forEach(event => {
+      const date = new Date(event.timestamp).toISOString().split('T')[0]
+      if (!dailyData[date]) {
+        dailyData[date] = { date, confirmed: 0, declined: 0, opens: 0 }
+      }
+      if (event.type === 'confirmed') dailyData[date].confirmed++
+      else if (event.type === 'declined') dailyData[date].declined++
+    })
+
+    filteredOpenEvents.forEach(event => {
+      const date = new Date(event.timestamp).toISOString().split('T')[0]
+      if (!dailyData[date]) {
+        dailyData[date] = { date, confirmed: 0, declined: 0, opens: 0 }
+      }
+      dailyData[date].opens++
+    })
+
+    // Build full date range
+    const allDates = Object.keys(dailyData).map(d => new Date(d).getTime())
+    const earliestDate = allDates.length > 0 ? Math.min(...allDates) : now.getTime()
+    const chartStartDate = startDate ? startDate.getTime() : earliestDate
+
+    const dateRange: Date[] = []
+    const currentDate = new Date(chartStartDate)
+    currentDate.setHours(0, 0, 0, 0)
+    const endDate = new Date()
+    endDate.setHours(0, 0, 0, 0)
+
+    while (currentDate <= endDate) {
+      dateRange.push(new Date(currentDate))
+      currentDate.setDate(currentDate.getDate() + 1)
+    }
+
+    // Initialize all dates
+    const fullDailyData: Record<string, typeof dailyData[string]> = {}
+    dateRange.forEach(date => {
+      const dateStr = date.toISOString().split('T')[0]
+      fullDailyData[dateStr] = { date: dateStr, confirmed: 0, declined: 0, opens: 0 }
+    })
+
+    // Merge actual data
+    Object.assign(fullDailyData, dailyData)
+
+    // Build cumulative chart data
+    const chartData = Object.values(fullDailyData)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .reduce((acc, day, index) => {
+        const prev = acc[index - 1]
+        acc.push({
+          ...day,
+          cumulativeConfirmed: (prev?.cumulativeConfirmed || 0) + day.confirmed,
+          cumulativeDeclined: (prev?.cumulativeDeclined || 0) + day.declined,
+          cumulativeOpens: (prev?.cumulativeOpens || 0) + day.opens,
+        })
+        return acc
+      }, [] as Array<typeof dailyData[string] & {
+        cumulativeConfirmed: number
+        cumulativeDeclined: number
+        cumulativeOpens: number
+      }>)
+
+    return {
+      chartData,
+      confirmationEvents: filteredConfirmationEvents,
+      summary: {
+        totalConfirmed: filteredConfirmationEvents.filter(e => e.type === 'confirmed').length,
+        totalDeclined: filteredConfirmationEvents.filter(e => e.type === 'declined').length,
+        totalOpens: filteredOpenEvents.length,
+      }
+    }
+  }, [allTimelineData, timelineRange, timelineGroupFilter])
 
   // Auto-dismiss notification after 4 seconds
   useEffect(() => {
@@ -692,7 +823,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     } catch (error) {
     }
   }
-  
+
   // Get partner options for display - use fetched names or fallback to generic labels
   const partnerOptions = useMemo(() => {
     const options: string[] = []
@@ -753,18 +884,18 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           invitedBy: groupForm.invitedBy,
         }),
       })
-      
+
       const result = await response.json()
-      
+
       if (!response.ok) {
         setNotification({ isOpen: true, type: 'error', title: 'Error', message: `Error adding group: ${result.error}` })
         return
       }
-      
+
       // If there are guests to add, create them for this group
       if (guestsInGroupModal.length > 0 && result.data?.id) {
         const groupId = result.data.id
-        
+
         for (const guest of guestsInGroupModal) {
           try {
             await fetch("/api/guests", {
@@ -785,17 +916,17 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           }
         }
       }
-      
+
       await fetchGuestGroups()
       setShowAddGroupModal(false)
       resetGroupForm()
-      setNotification({ 
-        isOpen: true, 
-        type: 'success', 
-        title: 'Success', 
-        message: guestsInGroupModal.length > 0 
-          ? `Group and ${guestsInGroupModal.length} guest${guestsInGroupModal.length > 1 ? 's' : ''} added successfully!` 
-          : 'Group added successfully!' 
+      setNotification({
+        isOpen: true,
+        type: 'success',
+        title: 'Success',
+        message: guestsInGroupModal.length > 0
+          ? `Group and ${guestsInGroupModal.length} guest${guestsInGroupModal.length > 1 ? 's' : ''} added successfully!`
+          : 'Group added successfully!'
       })
     } catch (error) {
       setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error adding group. Please try again.' })
@@ -804,7 +935,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   const handleUpdateGroup = async () => {
     if (!editingGroup) return
-    
+
     try {
       const response = await fetch("/api/guest-groups", {
         method: "PUT",
@@ -818,7 +949,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           invitedBy: groupForm.invitedBy,
         }),
       })
-      
+
       if (response.ok) {
         await fetchGuestGroups()
         setEditingGroup(null)
@@ -841,7 +972,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           const response = await fetch(`/api/guest-groups?id=${groupId}`, {
             method: "DELETE",
           })
-          
+
           if (response.ok) {
             await fetchGuestGroups()
             setNotification({ isOpen: true, type: 'success', title: 'Deleted', message: 'Group deleted successfully.' })
@@ -856,7 +987,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const handleAddGuest = async () => {
     try {
       let groupIdToUse = selectedGroupId
-      
+
       // If creating a new group, create it first
       if (isCreatingNewGroup && newGroupNameForGuest.trim()) {
         const groupResponse = await fetch("/api/guest-groups", {
@@ -869,7 +1000,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             invitedBy: [],
           }),
         })
-        
+
         if (groupResponse.ok) {
           const { data: newGroup } = await groupResponse.json()
           groupIdToUse = newGroup.id
@@ -878,7 +1009,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           return
         }
       }
-      
+
       // If no group selected and not creating new, create a group with the guest's name
       if (!groupIdToUse && !isCreatingNewGroup) {
         const groupResponse = await fetch("/api/guest-groups", {
@@ -891,13 +1022,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             invitedBy: guestForm.invitedBy,
           }),
         })
-        
+
         if (groupResponse.ok) {
           const { data: newGroup } = await groupResponse.json()
           groupIdToUse = newGroup.id
         }
       }
-      
+
       const response = await fetch("/api/guests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -916,7 +1047,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           travelArrangement: guestForm.travelArrangement || null,
         }),
       })
-      
+
       if (response.ok) {
         await fetchGuestGroups()
         await fetchUngroupedGuests()
@@ -932,7 +1063,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   const handleUpdateGuest = async () => {
     if (!editingGuest) return
-    
+
     try {
       const response = await fetch("/api/guests", {
         method: "PUT",
@@ -954,7 +1085,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           noTicketReason: guestForm.noTicketReason || null,
         }),
       })
-      
+
       if (response.ok) {
         await fetchGuestGroups()
         await fetchUngroupedGuests()
@@ -979,7 +1110,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           const response = await fetch(`/api/guests?id=${guestId}`, {
             method: "DELETE",
           })
-          
+
           if (response.ok) {
             await fetchGuestGroups()
             await fetchUngroupedGuests()
@@ -1008,10 +1139,12 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           notes: guest.notes,
         }),
       })
-      
+
       if (response.ok) {
         await fetchGuestGroups()
         await fetchUngroupedGuests()
+        // Refresh timeline data to show the new status change in real-time
+        await fetchAllTimelineData()
       }
     } catch (error) {
     }
@@ -1102,7 +1235,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         : [...prev.tags, tag],
     }))
   }
-  
+
   // Helpers for managing guests in the group modal
   const toggleTempGuestTag = (tag: string) => {
     setTempGuestForm(prev => ({
@@ -1112,15 +1245,15 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         : [...prev.tags, tag],
     }))
   }
-  
+
   const addGuestToGroupModal = () => {
     if (!tempGuestForm.name.trim()) return
-    
+
     const newGuest = {
       id: Date.now().toString(),
       ...tempGuestForm,
     }
-    
+
     setGuestsInGroupModal(prev => [...prev, newGuest])
     setTempGuestForm({
       name: "",
@@ -1132,7 +1265,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     })
     setIsAddingGuestInModal(false)
   }
-  
+
   const removeGuestFromGroupModal = (guestId: string) => {
     setGuestsInGroupModal(prev => prev.filter(g => g.id !== guestId))
   }
@@ -1162,7 +1295,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const toggleSelectGroup = (groupGuests: Guest[]) => {
     const groupGuestIds = groupGuests.map(g => g.id)
     const allSelected = groupGuestIds.every(id => selectedGuestIds.has(id))
-    
+
     setSelectedGuestIds(prev => {
       const newSet = new Set(prev)
       if (allSelected) {
@@ -1195,10 +1328,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   const handleAssignToGroup = async () => {
     if (selectedGuestIds.size === 0) return
-    
+
     try {
       let targetGroupId = assignToGroupId
-      
+
       // Create new group if needed
       if (assignToGroupId === 'new' && newGroupName.trim()) {
         const response = await fetch("/api/guest-groups", {
@@ -1211,7 +1344,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             notes: null,
           }),
         })
-        
+
         const result = await response.json()
         if (!response.ok) {
           setNotification({ isOpen: true, type: 'error', title: 'Error', message: `Error creating group: ${result.error}` })
@@ -1219,12 +1352,12 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         }
         targetGroupId = result.data.id
       }
-      
+
       // Update all selected guests
       const updatePromises = Array.from(selectedGuestIds).map(async (guestId) => {
         const guest = allGuests.find(g => g.id === guestId)
         if (!guest) return
-        
+
         return fetch("/api/guests", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -1240,13 +1373,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           }),
         })
       })
-      
+
       await Promise.all(updatePromises)
-      
+
       // Refresh data
       await fetchGuestGroups()
       await fetchUngroupedGuests()
-      
+
       // Reset state
       setSelectedGuestIds(new Set())
       setShowAssignGroupModal(false)
@@ -1261,12 +1394,12 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   // Bulk status update handler
   const handleBulkStatusUpdate = async (newStatus: 'pending' | 'confirmed' | 'declined') => {
     if (selectedGuestIds.size === 0) return
-    
+
     try {
       const updatePromises = Array.from(selectedGuestIds).map(async (guestId) => {
         const guest = allGuests.find(g => g.id === guestId)
         if (!guest) return
-        
+
         return fetch("/api/guests", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -1282,13 +1415,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           }),
         })
       })
-      
+
       await Promise.all(updatePromises)
-      
+
       // Refresh data
       await fetchGuestGroups()
       await fetchUngroupedGuests()
-      
+
       // Reset selection
       setSelectedGuestIds(new Set())
       setNotification({ isOpen: true, type: 'success', title: 'Updated', message: `${selectedGuestIds.size} guest(s) updated successfully!` })
@@ -1300,7 +1433,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   // Bulk delete handler
   const handleBulkDelete = () => {
     if (selectedGuestIds.size === 0) return
-    
+
     const count = selectedGuestIds.size
     setConfirmDialog({
       isOpen: true,
@@ -1316,13 +1449,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               method: "DELETE",
             })
           })
-          
+
           await Promise.all(deletePromises)
-          
+
           // Refresh data
           await fetchGuestGroups()
           await fetchUngroupedGuests()
-          
+
           // Reset selection
           setSelectedGuestIds(new Set())
           setNotification({ isOpen: true, type: 'success', title: 'Deleted', message: `${count} guest(s) deleted successfully.` })
@@ -1336,12 +1469,12 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   // Bulk invited by update handler
   const handleBulkInvitedByUpdate = async () => {
     if (selectedGuestIds.size === 0) return
-    
+
     try {
       const updatePromises = Array.from(selectedGuestIds).map(async (guestId) => {
         const guest = allGuests.find(g => g.id === guestId)
         if (!guest) return
-        
+
         return fetch("/api/guests", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -1358,23 +1491,23 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           }),
         })
       })
-      
+
       await Promise.all(updatePromises)
-      
+
       // Refresh data
       await fetchGuestGroups()
       await fetchUngroupedGuests()
-      
+
       // Reset state
       const count = selectedGuestIds.size
       setSelectedGuestIds(new Set())
       setShowBulkInvitedByModal(false)
       setBulkInvitedBy([])
-      setNotification({ 
-        isOpen: true, 
-        type: 'success', 
-        title: 'Updated', 
-        message: `Updated "Invited By" for ${count} guest(s)!` 
+      setNotification({
+        isOpen: true,
+        type: 'success',
+        title: 'Updated',
+        message: `Updated "Invited By" for ${count} guest(s)!`
       })
     } catch (error) {
       setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error updating guests. Please try again.' })
@@ -1384,7 +1517,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   // Update all guests in a group to a specific status
   const handleGroupStatusUpdate = async (group: GuestGroup, newStatus: 'pending' | 'confirmed' | 'declined') => {
     if (group.guests.length === 0) return
-    
+
     try {
       const updatePromises = group.guests.map(async (guest) => {
         return fetch("/api/guests", {
@@ -1402,15 +1535,15 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           }),
         })
       })
-      
+
       await Promise.all(updatePromises)
       await fetchGuestGroups()
       await fetchUngroupedGuests()
-      setNotification({ 
-        isOpen: true, 
-        type: 'success', 
-        title: 'Updated', 
-        message: `All guests in "${group.name}" marked as ${newStatus}.` 
+      setNotification({
+        isOpen: true,
+        type: 'success',
+        title: 'Updated',
+        message: `All guests in "${group.name}" marked as ${newStatus}.`
       })
     } catch (error) {
       setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error updating group. Please try again.' })
@@ -1433,10 +1566,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     try {
       // Check if it's a bulk action on selected guests or a group action
       const isSelectedGuestsBulkAction = groupTravelForm.groupId === ''
-      
+
       let guestsToUpdate: Guest[] = []
       let count = 0
-      
+
       if (isSelectedGuestsBulkAction) {
         // Bulk action: Update all selected guests
         guestsToUpdate = allGuests.filter(g => selectedGuestIds.has(g.id))
@@ -1448,20 +1581,20 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         guestsToUpdate = group.guests
         count = group.guests.length
       }
-      
+
       if (guestsToUpdate.length === 0) return
-      
+
       // Build updates object - use camelCase for API
       const updates: any = {
         isTraveling: groupTravelForm.isTraveling,
         adminSetTravel: true,
       }
-      
+
       if (groupTravelForm.isTraveling) {
         updates.travelingFrom = groupTravelForm.travelingFrom || null
         updates.travelArrangement = groupTravelForm.travelArrangement || null
-        updates.noTicketReason = groupTravelForm.travelArrangement === 'no_ticket_needed' 
-          ? groupTravelForm.noTicketReason 
+        updates.noTicketReason = groupTravelForm.travelArrangement === 'no_ticket_needed'
+          ? groupTravelForm.noTicketReason
           : null
       } else {
         updates.travelingFrom = null
@@ -1469,7 +1602,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         updates.noTicketReason = null
         updates.ticketAttachmentUrl = null
       }
-      
+
       // Update all guests
       const updatePromises = guestsToUpdate.map(async (guest) => {
         return fetch("/api/guests", {
@@ -1490,29 +1623,29 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           }),
         })
       })
-      
+
       await Promise.all(updatePromises)
       await fetchGuestGroups()
       await fetchUngroupedGuests()
       setShowGroupTravelDialog(false)
-      
+
       // Clear selection if it was a bulk action
       if (isSelectedGuestsBulkAction) {
         setSelectedGuestIds(new Set())
       }
-      
-      setNotification({ 
-        isOpen: true, 
-        type: 'success', 
-        title: 'Success', 
-        message: `Travel info set for ${count} guest(s)` 
+
+      setNotification({
+        isOpen: true,
+        type: 'success',
+        title: 'Success',
+        message: `Travel info set for ${count} guest(s)`
       })
     } catch (error) {
-      setNotification({ 
-        isOpen: true, 
-        type: 'error', 
-        title: 'Error', 
-        message: 'Failed to set travel info' 
+      setNotification({
+        isOpen: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to set travel info'
       })
     }
   }
@@ -1520,32 +1653,32 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   // Helper to get invitation URL - strips weddingNameId if on subdomain
   const getInvitationUrl = (groupId?: string): string => {
     if (typeof window === 'undefined') {
-      return groupId 
+      return groupId
         ? `/${weddingNameId || weddingId}?groupId=${groupId}`
         : `/${weddingNameId || weddingId}`
     }
-    
+
     const baseUrl = window.location.origin
     const hostname = window.location.hostname
-    
+
     // Check if we're on a subdomain (e.g., jorgeandyuli.ohmy.local or jorgeandyuli.ohmy.wedding)
     const isSubdomain = hostname.includes('ohmy.local') || hostname.includes('ohmy.wedding')
-    
+
     if (isSubdomain) {
       // On a subdomain, just use root path
       return groupId ? `${baseUrl}/?groupId=${groupId}` : baseUrl
     }
-    
+
     // On main domain, include the weddingNameId in the path
-    return groupId 
+    return groupId
       ? `${baseUrl}/${weddingNameId || weddingId}?groupId=${groupId}`
       : `${baseUrl}/${weddingNameId || weddingId}`
   }
 
   // Utility function to replace template variables with actual values
   const replaceTemplateVariables = (
-    template: string, 
-    data: { 
+    template: string,
+    data: {
       groupName?: string
       guestName?: string
       groupId?: string
@@ -1553,23 +1686,23 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     weddingData?: any
   ): string => {
     const invitationUrl = getInvitationUrl(data.groupId)
-    
+
     // Fetch wedding data from fetchWeddingData if available
     const partner1 = partnerNames.partner1 || 'Partner 1'
     const partner2 = partnerNames.partner2 || 'Partner 2'
-    
+
     // Format wedding date if available
     let formattedDate = 'TBD'
     if (weddingData?.wedding_date) {
       const date = new Date(weddingData.wedding_date)
-      formattedDate = date.toLocaleDateString('en-US', { 
+      formattedDate = date.toLocaleDateString('en-US', {
         weekday: 'long',
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
       })
     }
-    
+
     return template
       .replace(/\{\{groupname\}\}/gi, data.groupName || '')
       .replace(/\{\{groupinvitationurl\}\}/gi, invitationUrl)
@@ -1660,7 +1793,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       },
       weddingDetails
     )
-    
+
     // Open WhatsApp with personalized message
     if (group.phone_number) {
       let phoneNumber = group.phone_number.replace(/[^0-9]/g, '')
@@ -1671,29 +1804,29 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       const encodedMessage = encodeURIComponent(personalizedMessage)
       const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`
       window.open(whatsappUrl, '_blank')
-      
+
       // Mark group as sent
       await updateGroupInvitationStatus(group.id, true)
-      
-      setNotification({ 
-        isOpen: true, 
-        type: 'success', 
-        title: 'WhatsApp Opened', 
-        message: `Opening WhatsApp to send invitation to ${group.name}` 
+
+      setNotification({
+        isOpen: true,
+        type: 'success',
+        title: 'WhatsApp Opened',
+        message: `Opening WhatsApp to send invitation to ${group.name}`
       })
     } else {
-      setNotification({ 
-        isOpen: true, 
-        type: 'error', 
-        title: 'No Phone Number', 
-        message: `${group.name} does not have a phone number set` 
+      setNotification({
+        isOpen: true,
+        type: 'error',
+        title: 'No Phone Number',
+        message: `${group.name} does not have a phone number set`
       })
     }
   }
 
   const handleCopyRSVPLink = (group: GuestGroup) => {
     const rsvpUrl = getInvitationUrl(group.id)
-    
+
     navigator.clipboard.writeText(rsvpUrl).then(() => {
       setNotification({
         isOpen: true,
@@ -1714,7 +1847,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const handleSendGuestInvite = async (guest: Guest) => {
     // Find the group for this guest to generate proper invitation URL
     const guestGroup = guestGroups.find(g => g.id === guest.guest_group_id)
-    
+
     // Generate personalized message using template
     const personalizedMessage = replaceTemplateVariables(
       inviteTemplate,
@@ -1725,11 +1858,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       },
       weddingDetails
     )
-    
+
     // Open WhatsApp with personalized message
     // Try guest phone first, then group phone
     const phoneNumber = guest.phone_number || guestGroup?.phone_number
-    
+
     if (phoneNumber) {
       let cleanPhone = phoneNumber.replace(/[^0-9]/g, '')
       // Add +52 country code if not present
@@ -1739,27 +1872,27 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       const encodedMessage = encodeURIComponent(personalizedMessage)
       const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`
       window.open(whatsappUrl, '_blank')
-      
+
       // Mark guest as sent
       await updateGuestInvitationStatus(guest.id, true)
-      
+
       // Check if all guests in group are now sent
       if (guestGroup) {
         await checkAndUpdateGroupStatus(guestGroup.id)
       }
-      
-      setNotification({ 
-        isOpen: true, 
-        type: 'success', 
-        title: 'WhatsApp Opened', 
-        message: `Opening WhatsApp to send invitation to ${guest.name}` 
+
+      setNotification({
+        isOpen: true,
+        type: 'success',
+        title: 'WhatsApp Opened',
+        message: `Opening WhatsApp to send invitation to ${guest.name}`
       })
     } else {
-      setNotification({ 
-        isOpen: true, 
-        type: 'error', 
-        title: 'No Phone Number', 
-        message: `${guest.name} does not have a phone number set` 
+      setNotification({
+        isOpen: true,
+        type: 'error',
+        title: 'No Phone Number',
+        message: `${guest.name} does not have a phone number set`
       })
     }
   }
@@ -1768,11 +1901,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     // TODO: Implement actual sending logic
     const notSentCount = allGuests.filter(g => !g.invitation_sent).length
     setShowSendInvitesModal(false)
-    setNotification({ 
-      isOpen: true, 
-      type: 'success', 
-      title: 'Coming Soon', 
-      message: `Sending invites to ${sendInvitesConfig.skipAlreadySent ? notSentCount : totalGuests} guests will be available soon.` 
+    setNotification({
+      isOpen: true,
+      type: 'success',
+      title: 'Coming Soon',
+      message: `Sending invites to ${sendInvitesConfig.skipAlreadySent ? notSentCount : totalGuests} guests will be available soon.`
     })
   }
 
@@ -1789,36 +1922,36 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     if (!file) return
 
     setCsvImportError(null)
-    
+
     const reader = new FileReader()
     reader.onload = (e) => {
       try {
         const text = e.target?.result as string
         const rows = parseCSV(text)
-        
+
         if (rows.length < 2) {
           setCsvImportError("CSV file must have at least a header row and one data row")
           return
         }
-        
+
         const headers = rows[0]
         const data = rows.slice(1).filter(row => row.some(cell => cell.trim()))
-        
+
         setCsvHeaders(headers)
         setCsvData(data)
-        
+
         // Detect import mode based on headers
         const headersLower = headers.map(h => h.toLowerCase().trim())
         const hasGuestCount = headersLower.some(h => h.includes('count') || h.includes('guests') || h.includes('number'))
         const hasGuestName = headersLower.some(h => (h.includes('name') && (h.includes('guest') || h.includes('person'))) || h === 'name')
-        
+
         // If we have guest count but no individual guest names, assume groups mode
         if (hasGuestCount && !hasGuestName) {
           setCsvImportMode('groups')
         } else {
           setCsvImportMode('guests')
         }
-        
+
         // Auto-map columns based on header names
         const autoMapping: Record<string, string> = {}
         headers.forEach((header, index) => {
@@ -1851,7 +1984,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       }
     }
     reader.readAsText(file)
-    
+
     // Reset file input
     event.target.value = ''
   }
@@ -1861,11 +1994,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     let currentRow: string[] = []
     let currentCell = ''
     let inQuotes = false
-    
+
     for (let i = 0; i < text.length; i++) {
       const char = text[i]
       const nextChar = text[i + 1]
-      
+
       if (inQuotes) {
         if (char === '"' && nextChar === '"') {
           currentCell += '"'
@@ -1892,20 +2025,20 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         }
       }
     }
-    
+
     // Push last cell and row
     if (currentCell || currentRow.length > 0) {
       currentRow.push(currentCell.trim())
       rows.push(currentRow)
     }
-    
+
     return rows
   }
 
   const updateColumnMapping = (csvIndex: string, dbField: string) => {
     setColumnMapping(prev => {
       const newMapping = { ...prev }
-      
+
       // Remove any existing mapping to this dbField
       if (dbField !== '') {
         Object.keys(newMapping).forEach(key => {
@@ -1914,13 +2047,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           }
         })
       }
-      
+
       if (dbField === '') {
         delete newMapping[csvIndex]
       } else {
         newMapping[csvIndex] = dbField
       }
-      
+
       return newMapping
     })
   }
@@ -1957,19 +2090,19 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   const handleCsvImport = async () => {
     if (!validateCsvMapping()) return
-    
+
     setCsvImporting(true)
     setCsvImportError(null)
-    
+
     try {
       if (csvImportMode === 'groups') {
         // Groups mode: Create groups with auto-generated guests
         const groupsData = csvData.map(row => {
           const group: Record<string, string | string[] | number> = {}
-          
+
           Object.entries(columnMapping).forEach(([csvIndex, dbField]) => {
             const value = row[parseInt(csvIndex)] || ''
-            
+
             if (dbField === 'guestCount') {
               group[dbField] = parseInt(value) || 1
             } else if (dbField === 'tags' || dbField === 'invitedBy') {
@@ -1978,16 +2111,16 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               group[dbField] = value
             }
           })
-          
+
           return group
         }).filter(group => group.groupName && (group.groupName as string).trim())
-        
+
         if (groupsData.length === 0) {
           setCsvImportError("No valid groups found in CSV. Make sure the Group Name column has values.")
           setCsvImporting(false)
           return
         }
-        
+
         // Create groups with guests via API
         const response = await fetch("/api/guest-groups/bulk", {
           method: "POST",
@@ -1997,19 +2130,19 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             groups: groupsData,
           }),
         })
-        
+
         const result = await response.json()
-        
+
         if (!response.ok) {
           setCsvImportError(result.error || "Failed to import groups")
           setCsvImporting(false)
           return
         }
-        
+
         // Success
         await fetchGuestGroups()
         await fetchUngroupedGuests()
-        
+
         setShowCsvImportModal(false)
         setCsvData([])
         setCsvHeaders([])
@@ -2019,10 +2152,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         // Guests mode: Create guests and auto-create groups as needed
         const guestsData = csvData.map(row => {
           const guest: Record<string, string | string[]> = {}
-          
+
           Object.entries(columnMapping).forEach(([csvIndex, dbField]) => {
             const value = row[parseInt(csvIndex)] || ''
-            
+
             if (dbField === 'tags' || dbField === 'invitedBy') {
               guest[dbField] = value.split(',').map(t => t.trim()).filter(t => t)
             } else if (dbField === 'confirmationStatus') {
@@ -2038,16 +2171,16 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               guest[dbField] = value
             }
           })
-          
+
           return guest
         }).filter(guest => guest.name && (guest.name as string).trim() && guest.groupName && (guest.groupName as string).trim())
-        
+
         if (guestsData.length === 0) {
           setCsvImportError("No valid guests found in CSV. Make sure both Name and Group Name columns have values.")
           setCsvImporting(false)
           return
         }
-        
+
         // Create guests with auto-group creation via API
         const response = await fetch("/api/guests/bulk-with-groups", {
           method: "POST",
@@ -2057,19 +2190,19 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             guests: guestsData,
           }),
         })
-        
+
         const result = await response.json()
-        
+
         if (!response.ok) {
           setCsvImportError(result.error || "Failed to import guests")
           setCsvImporting(false)
           return
         }
-        
+
         // Success
         await fetchGuestGroups()
         await fetchUngroupedGuests()
-        
+
         setShowCsvImportModal(false)
         setCsvData([])
         setCsvHeaders([])
@@ -2237,13 +2370,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   // Chart data: Status by Invited By
   const statusByInvitedByData = useMemo(() => {
     const dataMap: Record<string, { name: string; confirmed: number; pending: number; declined: number }> = {}
-    
+
     // Process all guests from groups
     guestGroups.forEach(group => {
       group.guests.forEach(guest => {
         // Use guest's invited_by, or group's invited_by if guest doesn't have one
         const invitedByList = (guest.invited_by?.length > 0 ? guest.invited_by : group.invited_by) || []
-        
+
         if (invitedByList.length === 0) {
           // Track as "Not specified"
           if (!dataMap['Not specified']) {
@@ -2264,11 +2397,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         }
       })
     })
-    
+
     // Process ungrouped guests
     ungroupedGuests.forEach(guest => {
       const invitedByList = guest.invited_by || []
-      
+
       if (invitedByList.length === 0) {
         if (!dataMap['Not specified']) {
           dataMap['Not specified'] = { name: 'Not specified', confirmed: 0, pending: 0, declined: 0 }
@@ -2287,20 +2420,20 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         })
       }
     })
-    
+
     return Object.values(dataMap)
   }, [guestGroups, ungroupedGuests])
 
   // Chart data: Tags by Invited By (for pie chart)
   const tagsByInvitedByData = useMemo(() => {
     const dataMap: Record<string, number> = {}
-    
+
     // Process all guests from groups
     guestGroups.forEach(group => {
       group.guests.forEach(guest => {
         // Merge group tags with guest tags
         const allGuestTags = [...new Set([...(group.tags || []), ...(guest.tags || [])])]
-        
+
         allGuestTags.forEach(tag => {
           if (!dataMap[tag]) {
             dataMap[tag] = 0
@@ -2309,7 +2442,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         })
       })
     })
-    
+
     // Process ungrouped guests
     ungroupedGuests.forEach(guest => {
       const guestTags = guest.tags || []
@@ -2320,7 +2453,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         dataMap[tag]++
       })
     })
-    
+
     return Object.entries(dataMap).map(([name, value]) => ({ name, value }))
   }, [guestGroups, ungroupedGuests])
 
@@ -2330,7 +2463,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   // Create a flat list of all guests with their group info and merged tags
   const allGuests = useMemo(() => {
     const guests: (Guest & { groupName?: string; groupTags?: string[]; allTags: string[] })[] = []
-    
+
     // Add guests from groups
     guestGroups.forEach(group => {
       group.guests.forEach(guest => {
@@ -2344,7 +2477,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         })
       })
     })
-    
+
     // Add ungrouped guests
     ungroupedGuests.forEach(guest => {
       guests.push({
@@ -2354,7 +2487,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         allTags: guest.tags || []
       })
     })
-    
+
     return guests
   }, [guestGroups, ungroupedGuests])
 
@@ -2369,17 +2502,17 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         const matchesGroup = guest.groupName?.toLowerCase().includes(query)
         if (!matchesName && !matchesPhone && !matchesGroup) return false
       }
-      
+
       // Status filter
       if (statusFilter !== 'all' && guest.confirmation_status !== statusFilter) {
         return false
       }
-      
+
       // Tag filter - check merged tags (group + guest tags)
       if (tagFilter !== 'all') {
         if (!guest.allTags?.includes(tagFilter)) return false
       }
-      
+
       // Group filter
       if (groupFilter !== 'all') {
         if (groupFilter === 'ungrouped') {
@@ -2388,21 +2521,21 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           if (guest.guest_group_id !== groupFilter) return false
         }
       }
-      
+
       // Invited by filter
       if (invitedByFilter !== 'all') {
         if (!guest.invited_by?.includes(invitedByFilter)) return false
       }
-      
+
       return true
     })
-    
+
     // Apply sorting
     if (sortColumn) {
       filtered = [...filtered].sort((a, b) => {
         let aValue: string
         let bValue: string
-        
+
         if (sortColumn === 'name') {
           aValue = a.name.toLowerCase()
           bValue = b.name.toLowerCase()
@@ -2415,13 +2548,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         } else {
           return 0
         }
-        
+
         if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
         if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
         return 0
       })
     }
-    
+
     return filtered
   }, [allGuests, searchQuery, statusFilter, tagFilter, groupFilter, invitedByFilter, sortColumn, sortDirection])
 
@@ -2435,37 +2568,37 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         const matchesGuestName = group.guests.some(g => g.name.toLowerCase().includes(query))
         if (!matchesGroupName && !matchesGuestName) return false
       }
-      
+
       // Status filter - check if any guest in group matches status
       if (statusFilter !== 'all') {
         const hasMatchingStatus = group.guests.some(g => g.confirmation_status === statusFilter)
         if (!hasMatchingStatus) return false
       }
-      
+
       // Tag filter - check group tags or any guest tags
       if (tagFilter !== 'all') {
         const groupHasTag = group.tags?.includes(tagFilter)
         const guestsHaveTag = group.guests.some(g => g.tags?.includes(tagFilter))
         if (!groupHasTag && !guestsHaveTag) return false
       }
-      
+
       // Invited by filter - check group invited_by or any guest invited_by
       if (invitedByFilter !== 'all') {
         const groupHasInvitedBy = group.invited_by?.includes(invitedByFilter)
         const guestsHaveInvitedBy = group.guests.some(g => g.invited_by?.includes(invitedByFilter))
         if (!groupHasInvitedBy && !guestsHaveInvitedBy) return false
       }
-      
+
       // Opened filter - check if group has been opened
       if (openedFilter !== 'all') {
         const isOpened = group.open_count > 0
         if (openedFilter === 'opened' && !isOpened) return false
         if (openedFilter === 'not-opened' && isOpened) return false
       }
-      
+
       return true
     })
-    
+
     // Apply sorting
     if (sortColumn === 'name') {
       filtered = [...filtered].sort((a, b) => {
@@ -2476,16 +2609,16 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         return 0
       })
     }
-    
+
     return filtered
   }, [guestGroups, searchQuery, statusFilter, tagFilter, invitedByFilter, openedFilter, sortColumn, sortDirection])
-  
+
   // Calculate filtered statistics based on filtered guests
   const filteredGuestCount = filteredGuests.length
   const filteredConfirmedGuests = filteredGuests.filter(g => g.confirmation_status === 'confirmed').length
   const filteredDeclinedGuests = filteredGuests.filter(g => g.confirmation_status === 'declined').length
   const filteredPendingGuests = filteredGuests.filter(g => g.confirmation_status === 'pending').length
-  
+
   // Use filtered stats if any filters are active
   const hasActiveFilters = searchQuery || statusFilter !== 'all' || tagFilter !== 'all' || groupFilter !== 'all' || invitedByFilter !== 'all' || openedFilter !== 'all'
   const displayedGuestCount = hasActiveFilters ? filteredGuestCount : totalGuests
@@ -2504,7 +2637,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       setSortDirection('asc')
     }
   }
-  
+
   if (loading || subscriptionLoading) {
     return (
       <main className="min-h-screen bg-background">
@@ -2530,7 +2663,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           title="Invitations"
         />
         <div className="max-w-2xl mx-auto px-4 py-20">
-          <PremiumUpgradePrompt 
+          <PremiumUpgradePrompt
             feature="invitations_panel_enabled"
             title="Upgrade to Manage Guests & Invitations"
             description="Guest management, invitations, and RSVP tracking are premium features. Upgrade to Premium to manage your guest list, send invitations, and track RSVPs."
@@ -2548,414 +2681,381 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         title="Invitations"
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Compact Header with Stats */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Invitations & Guests</h1>
-            <p className="text-sm text-muted-foreground">Manage your guest groups and track confirmations</p>
-          </div>
-          {/* Stats and Action Buttons */}
-          <div className="flex items-center gap-4">
-            {/* Stats Pills */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
-                <Users className="w-3 h-3 text-muted-foreground" />
-                <span className="text-muted-foreground">
-                  {hasActiveFilters ? `${filteredGroups.length}/` : ''}{guestGroups.length} groups
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
-                <span className="text-foreground font-semibold">{displayedGuestCount}</span>
-                <span className="text-muted-foreground">guests{hasActiveFilters && totalGuests !== displayedGuestCount ? ` of ${totalGuests}` : ''}</span>
-              </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 text-xs font-medium">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                <span className="text-green-600">{confirmedGuests}</span>
-              </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-xs font-medium">
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                <span className="text-amber-600">{pendingGuests}</span>
-              </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 text-xs font-medium">
-                <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                <span className="text-red-600">{declinedGuests}</span>
-              </div>
+      {/* Sticky Header with Controls - positioned below the top bar */}
+      <div className="sticky top-[57px] z-20 bg-background/95 backdrop-blur border-b border-border/40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          {/* Compact Header with Stats */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Invitations & Guests</h1>
+              <p className="text-sm text-muted-foreground">Manage your guest groups and track confirmations</p>
             </div>
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2">
-              {/* Add Actions Dropdown */}
-              <DropdownMenu open={addDropdownOpen} onOpenChange={setAddDropdownOpen}>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8">
-                    <Plus className="w-3.5 h-3.5 mr-1.5" />
-                    Add
-                    <ChevronDown className="w-3.5 h-3.5 ml-1.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => {
-                    setSelectedGroupId(null)
-                    setShowAddGuestModal(true)
-                    setAddDropdownOpen(false)
-                  }}>
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Add Guest
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => {
-                    setShowAddGroupModal(true)
-                    setAddDropdownOpen(false)
-                  }}>
-                    <FolderPlus className="w-4 h-4 mr-2" />
-                    Add Group
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onSelect={(e) => {
-                      e.preventDefault()
+            {/* Stats and Action Buttons */}
+            <div className="flex items-center gap-4">
+              {/* Stats Pills */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
+                  <Users className="w-3 h-3 text-muted-foreground" />
+                  <span className="text-muted-foreground">
+                    {hasActiveFilters ? `${filteredGroups.length}/` : ''}{guestGroups.length} groups
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
+                  <span className="text-foreground font-semibold">{displayedGuestCount}</span>
+                  <span className="text-muted-foreground">guests{hasActiveFilters && totalGuests !== displayedGuestCount ? ` of ${totalGuests}` : ''}</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 text-xs font-medium">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                  <span className="text-green-600">{confirmedGuests}</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-xs font-medium">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  <span className="text-amber-600">{pendingGuests}</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 text-xs font-medium">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                  <span className="text-red-600">{declinedGuests}</span>
+                </div>
+              </div>
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                {/* Add Actions Dropdown */}
+                <DropdownMenu open={addDropdownOpen} onOpenChange={setAddDropdownOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8">
+                      <Plus className="w-3.5 h-3.5 mr-1.5" />
+                      Add
+                      <ChevronDown className="w-3.5 h-3.5 ml-1.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => {
+                      setSelectedGroupId(null)
+                      setShowAddGuestModal(true)
                       setAddDropdownOpen(false)
-                      // Small delay to ensure dropdown closes before file picker opens
-                      setTimeout(() => {
-                        document.getElementById('csv-import-input')?.click()
-                      }, 100)
-                    }}
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Import CSV
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleExportCsv}>
-                    <Download className="w-4 h-4 mr-2" />
-                    Export CSV
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              {/* Hidden file input for CSV import */}
-              <input
-                id="csv-import-input"
-                type="file"
-                accept=".csv"
-                className="hidden"
-                onChange={handleCsvFileSelect}
-              />
-              <Button 
-                variant="outline"
-                size="sm" 
-                className="h-8" 
-                onClick={() => setShowInviteTemplateModal(true)}
-              >
-                <Settings className="w-3.5 h-3.5 mr-1.5" />
-                Invite Settings
-              </Button>
-              <Button 
-                size="sm" 
-                className="h-8 bg-blue-600 hover:bg-blue-700" 
-                onClick={() => setShowSendInvitesModal(true)}
-              >
-                <Send className="w-3.5 h-3.5 mr-1.5" />
-                Send Invites
-              </Button>
+                    }}>
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Add Guest
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                      setShowAddGroupModal(true)
+                      setAddDropdownOpen(false)
+                    }}>
+                      <FolderPlus className="w-4 h-4 mr-2" />
+                      Add Group
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault()
+                        setAddDropdownOpen(false)
+                        // Small delay to ensure dropdown closes before file picker opens
+                        setTimeout(() => {
+                          document.getElementById('csv-import-input')?.click()
+                        }, 100)
+                      }}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Import CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleExportCsv}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Export CSV
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                {/* Hidden file input for CSV import */}
+                <input
+                  id="csv-import-input"
+                  type="file"
+                  accept=".csv"
+                  className="hidden"
+                  onChange={handleCsvFileSelect}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => setShowInviteTemplateModal(true)}
+                >
+                  <Settings className="w-3.5 h-3.5 mr-1.5" />
+                  Invite Settings
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-8 bg-blue-600 hover:bg-blue-700"
+                  onClick={() => setShowSendInvitesModal(true)}
+                >
+                  <Send className="w-3.5 h-3.5 mr-1.5" />
+                  Send Invites
+                </Button>
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Charts Section */}
-        {(statusByInvitedByData.length > 0 || tagsByInvitedByData.length > 0) && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-            {/* Status by Invited By - Stacked Bar Chart */}
-            {statusByInvitedByData.length > 0 && (
-              <Card className="p-4">
-                <h3 className="text-sm font-medium text-foreground mb-3">Guest Status by Invited By</h3>
-                <div className="h-[250px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={statusByInvitedByData} layout="vertical" margin={{ left: 20, right: 20 }}>
-                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                      <XAxis type="number" tick={{ fontSize: 11 }} />
-                      <YAxis 
-                        dataKey="name" 
-                        type="category" 
-                        width={80} 
-                        tick={{ fontSize: 11 }} 
-                        tickLine={false}
-                      />
-                      <RechartsTooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--background))', 
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px',
-                          fontSize: '12px'
-                        }} 
-                      />
-                      <Legend 
-                        wrapperStyle={{ fontSize: '11px' }}
-                        iconSize={10}
-                      />
-                      <Bar dataKey="confirmed" stackId="a" fill="#22c55e" name="Confirmed" radius={[0, 0, 0, 0]} />
-                      <Bar dataKey="pending" stackId="a" fill="#f59e0b" name="Pending" radius={[0, 0, 0, 0]} />
-                      <Bar dataKey="declined" stackId="a" fill="#ef4444" name="Declined" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card>
-            )}
-
-            {/* Tags Distribution - Pie Chart */}
-            {tagsByInvitedByData.length > 0 && (
-              <Card className="p-4">
-                <h3 className="text-sm font-medium text-foreground mb-3">Guest Distribution by Tag</h3>
-                <div className="h-[250px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={tagsByInvitedByData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                        outerRadius={80}
-                        innerRadius={40}
-                        fill="#8884d8"
-                        dataKey="value"
-                        paddingAngle={2}
-                      >
-                        {tagsByInvitedByData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--background))', 
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px',
-                          fontSize: '12px'
-                        }}
-                        formatter={(value: number) => [`${value} guests`, 'Count']}
-                      />
-                      <Legend 
-                        wrapperStyle={{ fontSize: '11px' }}
-                        iconSize={10}
-                        layout="vertical"
-                        align="right"
-                        verticalAlign="middle"
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {/* Confirmation Timeline Chart */}
-        <Card className="p-4 mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <h3 className="text-sm font-medium text-foreground">Confirmation Timeline</h3>
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* Time Range Filter */}
-              <div className="flex items-center border rounded-lg bg-muted/30 p-0.5">
-                {(['7d', '14d', '30d', '90d', 'all'] as const).map((range) => (
-                  <button
-                    key={range}
-                    onClick={() => setTimelineRange(range)}
-                    className={`px-2 py-1 rounded-md text-xs transition-colors ${
-                      timelineRange === range
-                        ? 'bg-background text-primary shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Charts & Analytics Collapsible Section */}
+        {(statusByInvitedByData.length > 0 || tagsByInvitedByData.length > 0 || !timelineLoading) && (
+          <div>
+            <button
+              onClick={() => setChartsExpanded(!chartsExpanded)}
+              aria-expanded={chartsExpanded}
+              className="flex items-center gap-2 mb-4 px-2 sm:px-3 py-2 rounded-lg hover:bg-muted/50 transition-all duration-200"
+            >
+              <ChevronDown className={`w-4 h-4 transition-transform duration-300 flex-shrink-0 ${chartsExpanded ? 'rotate-0' : '-rotate-90'}`} />
+              <span className="text-sm font-semibold text-foreground">Charts & Analytics</span>
+            </button>
+            <div
+              className={`space-y-6 overflow-hidden transition-all duration-300 ease-out ${chartsExpanded
+                ? 'max-h-[4000px] opacity-100 translate-y-0'
+                : 'max-h-0 opacity-0 -translate-y-2 pointer-events-none'
+              }`}
+              aria-hidden={!chartsExpanded}
+            >
+                {/* Status by Invited By - Stacked Bar Chart */}
+                {statusByInvitedByData.length > 0 && (
+                  <ChartCard
+                    title="Guest Status by Inviter"
+                    description="Distribution of confirmations, pending, and declines"
                   >
-                    {range === 'all' ? 'All' : range === '7d' ? '7 Days' : range === '14d' ? '2 Weeks' : range === '30d' ? '30 Days' : '90 Days'}
-                  </button>
-                ))}
-              </div>
-              {/* Group Filter */}
-              <select
-                value={timelineGroupFilter}
-                onChange={(e) => setTimelineGroupFilter(e.target.value)}
-                className="h-7 px-2 text-xs border rounded-md bg-background"
-              >
-                <option value="all">All Groups</option>
-                {guestGroups.map((group) => (
-                  <option key={group.id} value={group.id}>{group.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
+                    <StackedBarChart
+                      data={statusByInvitedByData}
+                      categoryKey="name"
+                      bars={[
+                        { dataKey: "confirmed", name: "Confirmed", color: "emerald" },
+                        { dataKey: "pending", name: "Pending", color: "amber" },
+                        { dataKey: "declined", name: "Declined", color: "red" },
+                      ]}
+                      height={Math.max(250, statusByInvitedByData.length * 45 + 60)}
+                    />
+                  </ChartCard>
+                )}
+                {tagsByInvitedByData.length > 0 && (
+                  <ChartCard
+                    title="Guest Distribution by Tag"
+                    description="Breakdown of guests by their assigned categories"
+                  >
+                    {(() => {
+                      const TAG_PIE_COLORS: Record<string, string> = {
+                        family: "hsl(221 83% 53%)", // blue
+                        friends: "hsl(142 76% 36%)", // green
+                        work: "hsl(258 90% 66%)", // purple
+                        neighbors: "hsl(32 95% 44%)", // orange
+                        default: "hsl(215 16% 47%)", // gray
+                      }
+                      const pieData = tagsByInvitedByData.map((item) => ({
+                        name: item.name,
+                        value: item.value,
+                        color: TAG_PIE_COLORS[item.name.toLowerCase()] || TAG_PIE_COLORS.default,
+                      }))
+                      return (
+                        <DonutChart
+                          data={pieData}
+                          height={280}
+                          innerRadius={50}
+                          outerRadius={90}
+                        />
+                      )
+                    })()}
+                  </ChartCard>
+                )}
+                {/* Confirmation Timeline Chart */}
+                {!timelineLoading && (
+                  <Card className="p-4 sm:p-6 border">
+                    <h3 className="text-sm font-semibold text-foreground mb-4">Confirmation Timeline</h3>
+                    <div className="flex flex-col gap-3 sm:gap-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
+                        {/* Time Range Filter */}
+                        <div className="flex items-center border border-border rounded-lg bg-muted/30 p-0.5 sm:p-1 gap-0.5 overflow-x-auto">
+                          {(['7d', '14d', '30d', '90d', 'all'] as const).map((range) => (
+                            <button
+                              key={range}
+                              onClick={() => setTimelineRange(range)}
+                              className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap ${timelineRange === range
+                                  ? 'bg-primary text-primary-foreground shadow-sm'
+                                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                                }`}
+                            >
+                              {range === 'all' ? 'All' : range === '7d' ? '7d' : range === '14d' ? '14d' : range === '30d' ? '30d' : '90d'}
+                            </button>
+                          ))}</div>
+                        {/* Group Filter */}
+                        <select
+                          value={timelineGroupFilter}
+                          onChange={(e) => setTimelineGroupFilter(e.target.value)}
+                          className="h-8 px-2 sm:px-3 text-xs border border-border rounded-md bg-background hover:bg-muted/50 transition-colors flex-1 sm:flex-none"
+                        >
+                          <option value="all">All Groups</option>
+                          {guestGroups.map((group) => (
+                            <option key={group.id} value={group.id}>{group.name}</option>
+                          ))}
+                        </select>
+                      </div>
 
-          {timelineLoading ? (
-            <div className="h-[250px] flex items-center justify-center">
-              <div className="animate-pulse text-muted-foreground">Loading timeline...</div>
-            </div>
-          ) : timelineData && timelineData.chartData.length > 0 ? (
-            <div className="space-y-4">
-              {/* Timeline Chart */}
-              <div className="h-[250px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={timelineData.chartData} margin={{ left: 0, right: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis 
-                      dataKey="date" 
-                      tick={{ fontSize: 10 }}
-                      tickFormatter={(value) => {
-                        const date = new Date(value)
-                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                      }}
-                    />
-                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                    <RechartsTooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--background))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                      }}
-                      labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                    />
-                    <Legend wrapperStyle={{ fontSize: '11px' }} iconSize={10} />
-                    <Area
-                      type="monotone"
-                      dataKey="cumulativeConfirmed"
-                      stroke="#22c55e"
-                      fill="#22c55e"
-                      fillOpacity={0.2}
-                      name="Total Confirmed"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="cumulativeDeclined"
-                      stroke="#ef4444"
-                      fill="#ef4444"
-                      fillOpacity={0.1}
-                      name="Total Declined"
-                    />
-                    <Scatter
-                      dataKey="confirmed"
-                      fill="#22c55e"
-                      name="Confirmations"
-                    />
-                    <Scatter
-                      dataKey="declined"
-                      fill="#ef4444"
-                      name="Declines"
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
+                      {timelineData && timelineData.chartData.length > 0 && (
+                        <div className="space-y-4 sm:space-y-6">
+                          {/* Timeline Chart */}
+                          <InteractiveAreaChart
+                            data={timelineData.chartData}
+                            xAxisKey="date"
+                            areas={[
+                              { dataKey: "cumulativeConfirmed", name: "Confirmed", color: "emerald" },
+                              { dataKey: "cumulativeDeclined", name: "Declined", color: "red" },
+                              { dataKey: "cumulativeOpens", name: "Opened", color: "blue" },
+                            ]}
+                            height={280}
+                            className="mb-4"
+                            xAxisFormatter={(value) => {
+                              const date = new Date(value)
+                              return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                            }}
+                            labelFormatter={(value) =>
+                              new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                            }
+                          />
 
-              {/* Summary Stats */}
-              <div className="flex items-center gap-4 text-xs border-t pt-3">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-green-500" />
-                  <span className="text-muted-foreground">Confirmed:</span>
-                  <span className="font-medium text-green-600">{timelineData.summary.totalConfirmed}</span>
+                          {/* Recent Events */}
+                          {timelineData.confirmationEvents.length > 0 && (
+                            <div className="border-t pt-3 sm:pt-4">
+                              <h4 className="text-xs font-medium text-muted-foreground mb-2">Recent Confirmations</h4>
+                              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                                {timelineData.confirmationEvents.slice(0, 8).map((event) => (
+                                  <button
+                                    key={event.id}
+                                    onClick={() => router.push(getCleanAdminUrl(weddingId, `groups/${event.groupId}`))}
+                                    className={`inline-flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-1 rounded-full text-xs border transition-colors hover:bg-muted/50 ${event.type === 'confirmed'
+                                        ? 'bg-green-50 border-green-200 text-green-700'
+                                        : event.type === 'declined'
+                                          ? 'bg-red-50 border-red-200 text-red-700'
+                                          : 'bg-purple-50 border-purple-200 text-purple-700'
+                                      }`}
+                                  >
+                                    {event.type === 'confirmed' ? (
+                                      <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
+                                    ) : event.type === 'declined' ? (
+                                      <XCircle className="w-3 h-3 flex-shrink-0" />
+                                    ) : (
+                                      <Clock className="w-3 h-3 flex-shrink-0" />
+                                    )}
+                                    <span className="font-medium hidden sm:inline">{event.groupName}</span>
+                                    <span className="text-muted-foreground text-xs">
+                                      {new Date(event.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                    </span>
+                                  </button>
+                                ))}
+                                {timelineData.confirmationEvents.length > 8 && (
+                                  <span className="text-xs text-muted-foreground py-1">
+                                    +{timelineData.confirmationEvents.length - 8} more
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                )}
+                {timelineLoading && (
+                  <Card className="p-4 sm:p-6 border shadow-sm">
+                    <div className="h-[200px] flex items-center justify-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+                        <p className="text-xs text-muted-foreground">Loading timeline...</p>
+                      </div>
+                    </div>
+                  </Card>
+                )}
+                {!timelineLoading && (!timelineData || timelineData.chartData.length === 0) && (
+                  <Card className="p-4 sm:p-6 border shadow-sm">
+                    <div className="h-[200px] flex flex-col items-center justify-center text-muted-foreground">
+                      <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+                        <Clock className="w-6 h-6 text-muted-foreground/60" />
+                      </div>
+                      <p className="text-sm font-medium">No confirmations yet</p>
+                      <p className="text-xs mt-1">RSVPs will appear here when guests respond to invitations</p>
+                    </div>
+                  </Card>
+                )}
+                {/* Summary Stats */}
+                {timelineData && timelineData.chartData.length > 0 && (
+                  <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+                    <StatCard
+                      label="Confirmations"
+                      value={timelineData.summary.totalConfirmed}
+                      color="emerald"
+                      subtitle="guests confirmed attendance"
+                    />
+                    <StatCard
+                      label="Declines"
+                      value={timelineData.summary.totalDeclined}
+                      color="red"
+                      subtitle="guests declined"
+                    />
+                    <StatCard
+                      label="Opens"
+                      value={timelineData.summary.totalOpens}
+                      color="blue"
+                      subtitle="invitation views"
+                    />
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-red-500" />
-                  <span className="text-muted-foreground">Declined:</span>
-                  <span className="font-medium text-red-600">{timelineData.summary.totalDeclined}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-blue-500" />
-                  <span className="text-muted-foreground">Opens:</span>
-                  <span className="font-medium text-blue-600">{timelineData.summary.totalOpens}</span>
-                </div>
+              </div>
+            )}
+
+        {/* Toolbar: View Toggle, Filters, and Actions - sticky below header */}
+        <div className="sticky top-[165px] md:top-[130px] z-10 bg-background py-3 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 border-b border-border/30">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+            {/* Left: View Toggle and Filters */}
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* View Mode Toggle - 2 options */}
+              <div className="flex items-center border rounded-lg bg-muted/30 p-0.5">
+                <button
+                  onClick={() => setViewMode('groups')}
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-colors ${viewMode === 'groups'
+                      ? 'bg-background text-primary shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  title="Groups table"
+                >
+                  <Users2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Groups</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('flat')}
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-colors ${viewMode === 'flat'
+                      ? 'bg-background text-primary shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  title="Flat guest list"
+                >
+                  <LayoutList className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Guests</span>
+                </button>
               </div>
 
-              {/* Recent Events */}
-              {timelineData.confirmationEvents.length > 0 && (
-                <div className="border-t pt-3">
-                  <h4 className="text-xs font-medium text-muted-foreground mb-2">Recent Confirmations</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {timelineData.confirmationEvents.slice(0, 8).map((event) => (
-                      <button
-                        key={event.id}
-                        onClick={() => router.push(getCleanAdminUrl(weddingId, `groups/${event.groupId}`))}
-                        className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs border transition-colors hover:bg-muted/50 ${
-                          event.type === 'confirmed'
-                            ? 'bg-green-50 border-green-200 text-green-700'
-                            : event.type === 'declined'
-                            ? 'bg-red-50 border-red-200 text-red-700'
-                            : 'bg-purple-50 border-purple-200 text-purple-700'
-                        }`}
-                      >
-                        {event.type === 'confirmed' ? (
-                          <CheckCircle2 className="w-3 h-3" />
-                        ) : event.type === 'declined' ? (
-                          <XCircle className="w-3 h-3" />
-                        ) : (
-                          <Clock className="w-3 h-3" />
-                        )}
-                        <span className="font-medium">{event.groupName}</span>
-                        <span className="text-muted-foreground">
-                          {new Date(event.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </span>
-                      </button>
-                    ))}
-                    {timelineData.confirmationEvents.length > 8 && (
-                      <span className="text-xs text-muted-foreground py-1">
-                        +{timelineData.confirmationEvents.length - 8} more
-                      </span>
-                    )}
-                  </div>
+              {/* Inline Filters */}
+              <>
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-7 h-8 w-36 text-sm"
+                  />
                 </div>
-              )}
-            </div>
-          ) : (
-            <div className="h-[100px] flex items-center justify-center text-muted-foreground text-sm">
-              No confirmation activity yet in this time range
-            </div>
-          )}
-        </Card>
-
-        {/* Toolbar: View Toggle, Filters, and Actions */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-4">
-          {/* Left: View Toggle and Filters */}
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* View Mode Toggle - 2 options */}
-            <div className="flex items-center border rounded-lg bg-muted/30 p-0.5">
-              <button
-                onClick={() => setViewMode('groups')}
-                className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-colors ${
-                  viewMode === 'groups' 
-                    ? 'bg-background text-primary shadow-sm' 
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-                title="Groups table"
-              >
-                <Users2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Groups</span>
-              </button>
-              <button
-                onClick={() => setViewMode('flat')}
-                className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-colors ${
-                  viewMode === 'flat' 
-                    ? 'bg-background text-primary shadow-sm' 
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-                title="Flat guest list"
-              >
-                <LayoutList className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Guests</span>
-              </button>
-            </div>
-
-            {/* Inline Filters */}
-            <>
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                <Input
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-7 h-8 w-36 text-sm"
-                />
-              </div>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                className="h-8 rounded-md border border-border bg-background px-2 text-xs"
-              >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="confirmed">Confirmed</option>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                  className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
                   <option value="declined">Declined</option>
                 </select>
                 <select
@@ -3019,159 +3119,160 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                   </Button>
                 )}
                 <span className="text-xs text-muted-foreground">
-                  {viewMode === 'groups' 
+                  {viewMode === 'groups'
                     ? `${filteredGroups.length}/${guestGroups.length} groups`
                     : `${filteredGuests.length}/${totalGuests} guests`
                   }
                 </span>
               </>
 
-            {/* Column Visibility Menu - Available in both views */}
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 text-xs px-2"
-                onClick={() => setShowColumnMenu(!showColumnMenu)}
-              >
-                <Columns className="w-3.5 h-3.5 mr-1" />
-                Columns
-              </Button>
-              {showColumnMenu && (
-                <div className="absolute top-full left-0 mt-1 bg-background border border-border rounded-md shadow-lg z-10 min-w-[140px]">
-                  {(['phone', 'group', 'tags', 'status', 'invitedBy', 'inviteSent', 'travelInfo'] as const).map((key) => (
-                    <button
-                      key={key}
-                      className="w-full px-3 py-1.5 text-left text-xs hover:bg-muted flex items-center gap-2"
-                      onClick={() => toggleColumn(key)}
-                    >
-                      <div className={`w-3.5 h-3.5 border rounded flex items-center justify-center ${visibleColumns[key] ? 'bg-primary border-primary' : 'border-border'}`}>
-                        {visibleColumns[key] && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
-                      </div>
-                      <span className="capitalize">
-                        {key === 'inviteSent' ? 'Invite Sent' : 
-                         key === 'invitedBy' ? 'Invited By' : 
-                         key === 'travelInfo' ? 'Travel Info' :
-                         key}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+              {/* Column Visibility Menu - Available in both views */}
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs px-2"
+                  onClick={() => setShowColumnMenu(!showColumnMenu)}
+                >
+                  <Columns className="w-3.5 h-3.5 mr-1" />
+                  Columns
+                </Button>
+                {showColumnMenu && (
+                  <div className="absolute top-full left-0 mt-1 bg-background border border-border rounded-md shadow-lg z-10 min-w-[140px]">
+                    {(['phone', 'group', 'tags', 'status', 'invitedBy', 'inviteSent', 'travelInfo'] as const).map((key) => (
+                      <button
+                        key={key}
+                        className="w-full px-3 py-1.5 text-left text-xs hover:bg-muted flex items-center gap-2"
+                        onClick={() => toggleColumn(key)}
+                      >
+                        <div className={`w-3.5 h-3.5 border rounded flex items-center justify-center ${visibleColumns[key] ? 'bg-primary border-primary' : 'border-border'}`}>
+                          {visibleColumns[key] && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                        </div>
+                        <span className="capitalize">
+                          {key === 'inviteSent' ? 'Invite Sent' :
+                            key === 'invitedBy' ? 'Invited By' :
+                              key === 'travelInfo' ? 'Travel Info' :
+                                key}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-            {/* Selection Actions - Show when guests are selected in either view */}
-            {selectedGuestIds.size > 0 && (
-              <>
-                <div className="h-5 w-px bg-border mx-1" />
-                <span className="text-xs font-medium text-foreground">
-                  {selectedGuestIds.size} selected
-                </span>
-                <div className="flex items-center gap-1">
+              {/* Selection Actions - Show when guests are selected in either view */}
+              {selectedGuestIds.size > 0 && (
+                <>
+                  <div className="h-5 w-px bg-border mx-1" />
+                  <span className="text-xs font-medium text-foreground">
+                    {selectedGuestIds.size} selected
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                      onClick={() => handleBulkStatusUpdate('confirmed')}
+                    >
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      Confirm
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                      onClick={() => handleBulkStatusUpdate('pending')}
+                    >
+                      <Clock className="w-3 h-3 mr-1" />
+                      Pending
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => handleBulkStatusUpdate('declined')}
+                    >
+                      <XCircle className="w-3 h-3 mr-1" />
+                      Decline
+                    </Button>
+                  </div>
+                  <div className="h-5 w-px bg-border mx-1" />
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-7 text-xs px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
-                    onClick={() => handleBulkStatusUpdate('confirmed')}
+                    className="h-7 text-xs"
+                    onClick={() => setShowAssignGroupModal(true)}
                   >
-                    <CheckCircle2 className="w-3 h-3 mr-1" />
-                    Confirm
+                    <FolderPlus className="w-3 h-3 mr-1" />
+                    Assign Group
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-7 text-xs px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                    onClick={() => handleBulkStatusUpdate('pending')}
+                    className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    onClick={() => {
+                      // Get first selected guest to pre-populate travel info if single selection
+                      const selectedGuests = allGuests.filter(g => selectedGuestIds.has(g.id))
+                      const firstGuest = selectedGuests[0]
+                      setGroupTravelForm({
+                        groupId: '', // Bulk action, not specific to a group
+                        groupName: `${selectedGuests.length} Selected Guest${selectedGuests.length !== 1 ? 's' : ''}`,
+                        isTraveling: firstGuest?.is_traveling || false,
+                        travelingFrom: firstGuest?.traveling_from || "",
+                        travelArrangement: firstGuest?.travel_arrangement || null,
+                        noTicketReason: firstGuest?.no_ticket_reason || "",
+                      })
+                      setShowGroupTravelDialog(true)
+                    }}
                   >
-                    <Clock className="w-3 h-3 mr-1" />
-                    Pending
+                    <Plane className="w-3 h-3 mr-1" />
+                    Travel Info
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                    onClick={() => {
+                      // Get the common invited_by values from all selected guests
+                      const selectedGuests = allGuests.filter(g => selectedGuestIds.has(g.id))
+                      if (selectedGuests.length === 1) {
+                        // Single guest: pre-populate with their current invited_by
+                        setBulkInvitedBy(selectedGuests[0].invited_by || [])
+                      } else if (selectedGuests.length > 1) {
+                        // Multiple guests: find common invited_by values
+                        const firstInvitedBy = new Set(selectedGuests[0].invited_by || [])
+                        const commonInvitedBy = [...firstInvitedBy].filter(name =>
+                          selectedGuests.every(g => (g.invited_by || []).includes(name))
+                        )
+                        setBulkInvitedBy(commonInvitedBy)
+                      } else {
+                        setBulkInvitedBy([])
+                      }
+                      setShowBulkInvitedByModal(true)
+                    }}
+                  >
+                    <UserCheck className="w-3 h-3 mr-1" />
+                    Invited By
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     className="h-7 text-xs px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                    onClick={() => handleBulkStatusUpdate('declined')}
+                    onClick={handleBulkDelete}
                   >
-                    <XCircle className="w-3 h-3 mr-1" />
-                    Decline
+                    <Trash2 className="w-3 h-3" />
                   </Button>
-                </div>
-                <div className="h-5 w-px bg-border mx-1" />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={() => setShowAssignGroupModal(true)}
-                >
-                  <FolderPlus className="w-3 h-3 mr-1" />
-                  Assign Group
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                  onClick={() => {
-                    // Get first selected guest to pre-populate travel info if single selection
-                    const selectedGuests = allGuests.filter(g => selectedGuestIds.has(g.id))
-                    const firstGuest = selectedGuests[0]
-                    setGroupTravelForm({
-                      groupId: '', // Bulk action, not specific to a group
-                      groupName: `${selectedGuests.length} Selected Guest${selectedGuests.length !== 1 ? 's' : ''}`,
-                      isTraveling: firstGuest?.is_traveling || false,
-                      travelingFrom: firstGuest?.traveling_from || "",
-                      travelArrangement: firstGuest?.travel_arrangement || null,
-                      noTicketReason: firstGuest?.no_ticket_reason || "",
-                    })
-                    setShowGroupTravelDialog(true)
-                  }}
-                >
-                  <Plane className="w-3 h-3 mr-1" />
-                  Travel Info
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
-                  onClick={() => {
-                    // Get the common invited_by values from all selected guests
-                    const selectedGuests = allGuests.filter(g => selectedGuestIds.has(g.id))
-                    if (selectedGuests.length === 1) {
-                      // Single guest: pre-populate with their current invited_by
-                      setBulkInvitedBy(selectedGuests[0].invited_by || [])
-                    } else if (selectedGuests.length > 1) {
-                      // Multiple guests: find common invited_by values
-                      const firstInvitedBy = new Set(selectedGuests[0].invited_by || [])
-                      const commonInvitedBy = [...firstInvitedBy].filter(name =>
-                        selectedGuests.every(g => (g.invited_by || []).includes(name))
-                      )
-                      setBulkInvitedBy(commonInvitedBy)
-                    } else {
-                      setBulkInvitedBy([])
-                    }
-                    setShowBulkInvitedByModal(true)
-                  }}
-                >
-                  <UserCheck className="w-3 h-3 mr-1" />
-                  Invited By
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                  onClick={handleBulkDelete}
-                >
-                  <Trash2 className="w-3 h-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs px-2"
-                  onClick={clearSelection}
-                >
-                  <X className="w-3 h-3" />
-                </Button>
-              </>
-            )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs px-2"
+                    onClick={clearSelection}
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
@@ -3194,13 +3295,12 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                       <th className="px-2 py-2 text-left w-8">
                         <button
                           onClick={toggleSelectAll}
-                          className={`w-4 h-4 border rounded flex items-center justify-center ${
-                            selectedGuestIds.size === filteredGuests.length && filteredGuests.length > 0
-                              ? 'bg-primary border-primary' 
+                          className={`w-4 h-4 border rounded flex items-center justify-center ${selectedGuestIds.size === filteredGuests.length && filteredGuests.length > 0
+                              ? 'bg-primary border-primary'
                               : selectedGuestIds.size > 0
-                              ? 'bg-primary/50 border-primary'
-                              : 'border-border'
-                          }`}
+                                ? 'bg-primary/50 border-primary'
+                                : 'border-border'
+                            }`}
                         >
                           {selectedGuestIds.size === filteredGuests.length && filteredGuests.length > 0 && (
                             <Check className="w-3 h-3 text-primary-foreground" />
@@ -3292,16 +3392,14 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                     {filteredGuests.map((guest, index) => (
                       <tr
                         key={guest.id}
-                        className={`border-b border-border hover:bg-muted/30 transition-colors ${
-                          index % 2 === 0 ? "bg-background" : "bg-muted/10"
-                        } ${selectedGuestIds.has(guest.id) ? "bg-primary/5" : ""}`}
+                        className={`border-b border-border hover:bg-muted/30 transition-colors ${index % 2 === 0 ? "bg-background" : "bg-muted/10"
+                          } ${selectedGuestIds.has(guest.id) ? "bg-primary/5" : ""}`}
                       >
                         <td className="px-2 py-2">
                           <button
                             onClick={() => toggleGuestSelection(guest.id)}
-                            className={`w-4 h-4 border rounded flex items-center justify-center ${
-                              selectedGuestIds.has(guest.id) ? 'bg-primary border-primary' : 'border-border'
-                            }`}
+                            className={`w-4 h-4 border rounded flex items-center justify-center ${selectedGuestIds.has(guest.id) ? 'bg-primary border-primary' : 'border-border'
+                              }`}
                           >
                             {selectedGuestIds.has(guest.id) && <Check className="w-3 h-3 text-primary-foreground" />}
                           </button>
@@ -3580,21 +3678,19 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                         <React.Fragment key={group.id}>
                           {/* Group Row */}
                           <tr
-                            className={`border-b border-border hover:bg-muted/30 transition-colors cursor-pointer ${
-                              index % 2 === 0 ? "bg-background" : "bg-muted/10"
-                            } ${isExpanded ? "bg-muted/40" : ""} ${isGroupFullySelected(group.guests) ? "bg-primary/5" : ""}`}
+                            className={`border-b border-border hover:bg-muted/30 transition-colors cursor-pointer ${index % 2 === 0 ? "bg-background" : "bg-muted/10"
+                              } ${isExpanded ? "bg-muted/40" : ""} ${isGroupFullySelected(group.guests) ? "bg-primary/5" : ""}`}
                             onClick={() => toggleGroupExpansion(group.id)}
                           >
                             <td className="px-2 py-2 text-center" onClick={(e) => e.stopPropagation()}>
                               <button
                                 onClick={() => toggleSelectGroup(group.guests)}
-                                className={`w-4 h-4 border rounded flex items-center justify-center ${
-                                  isGroupFullySelected(group.guests)
+                                className={`w-4 h-4 border rounded flex items-center justify-center ${isGroupFullySelected(group.guests)
                                     ? 'bg-primary border-primary'
                                     : isGroupPartiallySelected(group.guests)
                                       ? 'bg-primary/50 border-primary'
                                       : 'border-border'
-                                }`}
+                                  }`}
                               >
                                 {isGroupFullySelected(group.guests) && <Check className="w-3 h-3 text-primary-foreground" />}
                                 {isGroupPartiallySelected(group.guests) && <div className="w-2 h-0.5 bg-primary-foreground" />}
@@ -3615,11 +3711,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                   <TooltipProvider>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
-                                        <div className={`inline-flex items-center justify-center w-5 h-5 rounded-full ${
-                                          group.open_count > 0 
-                                            ? 'bg-blue-100 border border-blue-200' 
+                                        <div className={`inline-flex items-center justify-center w-5 h-5 rounded-full ${group.open_count > 0
+                                            ? 'bg-blue-100 border border-blue-200'
                                             : 'bg-gray-100 border border-gray-200'
-                                        }`}>
+                                          }`}>
                                           {group.open_count > 0 ? (
                                             <Eye className="w-3 h-3 text-blue-600" />
                                           ) : (
@@ -3768,9 +3863,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                       <Mail className="w-3.5 h-3.5 text-gray-400" />
                                     </span>
                                   )}
-                                  
+
                                   <div className="w-px h-4 bg-border" />
-                                  
+
                                   {/* Action Buttons */}
                                   <Button
                                     variant="ghost"
@@ -3821,11 +3916,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                   if (travelingGuests.length === 0) {
                                     return <span className="text-muted-foreground text-[10px]">-</span>
                                   }
-                                  
+
                                   const willBuyTicket = travelingGuests.some(g => g.travel_arrangement === 'will_buy_ticket')
                                   const noTicketNeeded = travelingGuests.some(g => g.travel_arrangement === 'no_ticket_needed')
                                   const hasTicketUploaded = travelingGuests.some(g => g.ticket_attachment_url)
-                                  
+
                                   return (
                                     <TooltipProvider>
                                       <div className="flex items-center gap-1">
@@ -3916,21 +4011,21 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                     Edit Group
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem 
+                                  <DropdownMenuItem
                                     onClick={() => handleGroupStatusUpdate(group, 'confirmed')}
                                     className="text-green-600"
                                   >
                                     <CheckCircle2 className="w-4 h-4 mr-2" />
                                     Confirm All
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem 
+                                  <DropdownMenuItem
                                     onClick={() => handleGroupStatusUpdate(group, 'pending')}
                                     className="text-amber-600"
                                   >
                                     <Clock className="w-4 h-4 mr-2" />
                                     Set All Pending
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem 
+                                  <DropdownMenuItem
                                     onClick={() => handleGroupStatusUpdate(group, 'declined')}
                                     className="text-red-600"
                                   >
@@ -3949,7 +4044,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                       Send Invites
                                     </DropdownMenuItem>
                                   )}
-                                  <DropdownMenuItem 
+                                  <DropdownMenuItem
                                     onClick={() => handleDeleteGroup(group.id)}
                                     className="text-destructive"
                                   >
@@ -3985,16 +4080,14 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                 group.guests.map((guest) => (
                                   <tr
                                     key={guest.id}
-                                    className={`border-b border-border bg-muted/20 hover:bg-muted/40 transition-colors ${
-                                      selectedGuestIds.has(guest.id) ? "bg-primary/5" : ""
-                                    }`}
+                                    className={`border-b border-border bg-muted/20 hover:bg-muted/40 transition-colors ${selectedGuestIds.has(guest.id) ? "bg-primary/5" : ""
+                                      }`}
                                   >
                                     <td className="px-2 py-2 text-center">
                                       <button
                                         onClick={() => toggleGuestSelection(guest.id)}
-                                        className={`w-4 h-4 border rounded flex items-center justify-center ${
-                                          selectedGuestIds.has(guest.id) ? 'bg-primary border-primary' : 'border-border'
-                                        }`}
+                                        className={`w-4 h-4 border rounded flex items-center justify-center ${selectedGuestIds.has(guest.id) ? 'bg-primary border-primary' : 'border-border'
+                                          }`}
                                       >
                                         {selectedGuestIds.has(guest.id) && <Check className="w-3 h-3 text-primary-foreground" />}
                                       </button>
@@ -4184,13 +4277,12 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                           <td className="px-2 py-2 text-center" onClick={(e) => e.stopPropagation()}>
                             <button
                               onClick={() => toggleSelectGroup(ungroupedGuests)}
-                              className={`w-4 h-4 border rounded flex items-center justify-center ${
-                                isGroupFullySelected(ungroupedGuests)
+                              className={`w-4 h-4 border rounded flex items-center justify-center ${isGroupFullySelected(ungroupedGuests)
                                   ? 'bg-primary border-primary'
                                   : isGroupPartiallySelected(ungroupedGuests)
                                     ? 'bg-primary/50 border-primary'
                                     : 'border-amber-400'
-                              }`}
+                                }`}
                             >
                               {isGroupFullySelected(ungroupedGuests) && <Check className="w-3 h-3 text-primary-foreground" />}
                               {isGroupPartiallySelected(ungroupedGuests) && <div className="w-2 h-0.5 bg-primary-foreground" />}
@@ -4253,16 +4345,14 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                         {showUngroupedExpanded && ungroupedGuests.map((guest) => (
                           <tr
                             key={guest.id}
-                            className={`border-b border-amber-200 bg-amber-50/30 hover:bg-amber-100/30 transition-colors ${
-                              selectedGuestIds.has(guest.id) ? "bg-primary/5" : ""
-                            }`}
+                            className={`border-b border-amber-200 bg-amber-50/30 hover:bg-amber-100/30 transition-colors ${selectedGuestIds.has(guest.id) ? "bg-primary/5" : ""
+                              }`}
                           >
                             <td className="px-2 py-2 text-center">
                               <button
                                 onClick={() => toggleGuestSelection(guest.id)}
-                                className={`w-4 h-4 border rounded flex items-center justify-center ${
-                                  selectedGuestIds.has(guest.id) ? 'bg-primary border-primary' : 'border-border'
-                                }`}
+                                className={`w-4 h-4 border rounded flex items-center justify-center ${selectedGuestIds.has(guest.id) ? 'bg-primary border-primary' : 'border-border'
+                                  }`}
                               >
                                 {selectedGuestIds.has(guest.id) && <Check className="w-3 h-3 text-primary-foreground" />}
                               </button>
@@ -4499,11 +4589,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                       key={tag}
                       type="button"
                       onClick={() => toggleTag(tag)}
-                      className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-                        groupForm.tags.includes(tag)
+                      className={`px-3 py-1 rounded-full text-sm border transition-colors ${groupForm.tags.includes(tag)
                           ? getTagColor(tag)
                           : "bg-muted text-muted-foreground border-border hover:border-primary/50"
-                      }`}
+                        }`}
                     >
                       <Tag className="w-3 h-3 inline mr-1" />
                       {tag}
@@ -4538,11 +4627,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                           ? prev.invitedBy.filter(n => n !== name)
                           : [...prev.invitedBy, name]
                       }))}
-                      className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-                        groupForm.invitedBy.includes(name)
+                      className={`px-3 py-1 rounded-full text-sm border transition-colors ${groupForm.invitedBy.includes(name)
                           ? "bg-indigo-100 text-indigo-700 border-indigo-200"
                           : "bg-muted text-muted-foreground border-border hover:border-primary/50"
-                      }`}
+                        }`}
                     >
                       {name}
                     </button>
@@ -4646,11 +4734,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                               key={tag}
                               type="button"
                               onClick={() => toggleTempGuestTag(tag)}
-                              className={`px-2 py-0.5 rounded-full text-xs border transition-colors ${
-                                tempGuestForm.tags.includes(tag)
+                              className={`px-2 py-0.5 rounded-full text-xs border transition-colors ${tempGuestForm.tags.includes(tag)
                                   ? getTagColor(tag)
                                   : "bg-background text-muted-foreground border-border hover:border-primary/50"
-                              }`}
+                                }`}
                             >
                               {tag}
                             </button>
@@ -4862,11 +4949,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                       key={tag}
                       type="button"
                       onClick={() => toggleGuestTag(tag)}
-                      className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${
-                        guestForm.tags.includes(tag)
+                      className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${guestForm.tags.includes(tag)
                           ? getTagColor(tag)
                           : "bg-muted text-muted-foreground border-border hover:border-primary/50"
-                      }`}
+                        }`}
                     >
                       <Tag className="w-3 h-3 inline mr-1" />
                       {tag}
@@ -4927,11 +5013,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                           ? prev.invitedBy.filter(n => n !== name)
                           : [...prev.invitedBy, name]
                       }))}
-                      className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-                        guestForm.invitedBy.includes(name)
+                      className={`px-3 py-1 rounded-full text-sm border transition-colors ${guestForm.invitedBy.includes(name)
                           ? "bg-indigo-100 text-indigo-700 border-indigo-200"
                           : "bg-muted text-muted-foreground border-border hover:border-primary/50"
-                      }`}
+                        }`}
                     >
                       {name}
                     </button>
@@ -4942,7 +5027,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               {/* Travel Information Section - Always visible for admin to pre-configure */}
               <div className="border-t pt-4 space-y-4">
                 <h3 className="text-sm font-semibold text-foreground">Travel Information</h3>
-                
+
                 <div className="flex items-center gap-2">
                   <Switch
                     checked={guestForm.isTraveling}
@@ -4953,83 +5038,81 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                   </label>
                 </div>
 
-                  {guestForm.isTraveling && (
-                    <>
+                {guestForm.isTraveling && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Traveling From
+                      </label>
+                      <Input
+                        value={guestForm.travelingFrom}
+                        onChange={(e) => setGuestForm({ ...guestForm, travelingFrom: e.target.value })}
+                        placeholder="City or location"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Travel Arrangement
+                      </label>
+                      <div className="space-y-2">
+                        <button
+                          type="button"
+                          onClick={() => setGuestForm({ ...guestForm, travelArrangement: 'will_buy_ticket' })}
+                          className={`w-full px-3 py-2 rounded-lg border-2 transition-colors text-sm text-left ${guestForm.travelArrangement === 'will_buy_ticket'
+                              ? 'border-blue-500 bg-blue-50 text-blue-700'
+                              : 'border-border bg-background text-foreground hover:border-primary/50'
+                            }`}
+                        >
+                          Will purchase ticket (requires verification)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setGuestForm({ ...guestForm, travelArrangement: 'no_ticket_needed' })}
+                          className={`w-full px-3 py-2 rounded-lg border-2 transition-colors text-sm text-left ${guestForm.travelArrangement === 'no_ticket_needed'
+                              ? 'border-purple-500 bg-purple-50 text-purple-700'
+                              : 'border-border bg-background text-foreground hover:border-primary/50'
+                            }`}
+                        >
+                          Does not need ticket (requires reason)
+                        </button>
+                      </div>
+                    </div>
+
+                    {guestForm.travelArrangement === 'no_ticket_needed' && (
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">
-                          Traveling From
+                          Reason for No Ticket
                         </label>
                         <Input
-                          value={guestForm.travelingFrom}
-                          onChange={(e) => setGuestForm({ ...guestForm, travelingFrom: e.target.value })}
-                          placeholder="City or location"
+                          value={guestForm.noTicketReason}
+                          onChange={(e) => setGuestForm({ ...guestForm, noTicketReason: e.target.value })}
+                          placeholder="e.g., Lives at destination, traveling by car, etc."
                         />
                       </div>
+                    )}
 
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                          Travel Arrangement
-                        </label>
-                        <div className="space-y-2">
-                          <button
-                            type="button"
-                            onClick={() => setGuestForm({ ...guestForm, travelArrangement: 'will_buy_ticket' })}
-                            className={`w-full px-3 py-2 rounded-lg border-2 transition-colors text-sm text-left ${
-                              guestForm.travelArrangement === 'will_buy_ticket'
-                                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                : 'border-border bg-background text-foreground hover:border-primary/50'
-                            }`}
+                    {guestForm.ticketAttachmentUrl && (
+                      <div className="p-3 bg-muted rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm text-foreground">Ticket uploaded</span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-[10px]"
+                            onClick={() => window.open(guestForm.ticketAttachmentUrl!, '_blank')}
                           >
-                            Will purchase ticket (requires verification)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setGuestForm({ ...guestForm, travelArrangement: 'no_ticket_needed' })}
-                            className={`w-full px-3 py-2 rounded-lg border-2 transition-colors text-sm text-left ${
-                              guestForm.travelArrangement === 'no_ticket_needed'
-                                ? 'border-purple-500 bg-purple-50 text-purple-700'
-                                : 'border-border bg-background text-foreground hover:border-primary/50'
-                            }`}
-                          >
-                            Does not need ticket (requires reason)
-                          </button>
+                            View
+                          </Button>
                         </div>
                       </div>
-
-                      {guestForm.travelArrangement === 'no_ticket_needed' && (
-                        <div>
-                          <label className="block text-sm font-medium text-foreground mb-2">
-                            Reason for No Ticket
-                          </label>
-                          <Input
-                            value={guestForm.noTicketReason}
-                            onChange={(e) => setGuestForm({ ...guestForm, noTicketReason: e.target.value })}
-                            placeholder="e.g., Lives at destination, traveling by car, etc."
-                          />
-                        </div>
-                      )}
-
-                      {guestForm.ticketAttachmentUrl && (
-                        <div className="p-3 bg-muted rounded-lg">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <FileText className="w-4 h-4 text-muted-foreground" />
-                              <span className="text-sm text-foreground">Ticket uploaded</span>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-2 text-[10px]"
-                              onClick={() => window.open(guestForm.ticketAttachmentUrl!, '_blank')}
-                            >
-                              View
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
+                    )}
+                  </>
+                )}
+              </div>
 
             </div>
 
@@ -5185,16 +5268,15 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                     <button
                       key={name}
                       type="button"
-                      onClick={() => setBulkInvitedBy(prev => 
+                      onClick={() => setBulkInvitedBy(prev =>
                         prev.includes(name)
                           ? prev.filter(n => n !== name)
                           : [...prev, name]
                       )}
-                      className={`px-4 py-2 rounded-full text-sm border transition-colors ${
-                        bulkInvitedBy.includes(name)
+                      className={`px-4 py-2 rounded-full text-sm border transition-colors ${bulkInvitedBy.includes(name)
                           ? "bg-indigo-100 text-indigo-700 border-indigo-200"
                           : "bg-muted text-muted-foreground border-border hover:border-primary/50"
-                      }`}
+                        }`}
                     >
                       {name}
                     </button>
@@ -5263,7 +5345,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                 </Button>
               </div>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto p-6">
               {/* Import Mode Selector */}
               <div className="mb-6">
@@ -5275,11 +5357,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                       setCsvImportMode('guests')
                       setColumnMapping({})
                     }}
-                    className={`flex-1 p-4 rounded-lg border-2 transition-colors text-left ${
-                      csvImportMode === 'guests'
+                    className={`flex-1 p-4 rounded-lg border-2 transition-colors text-left ${csvImportMode === 'guests'
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover:border-primary/50'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <UserPlus className="w-4 h-4" />
@@ -5295,11 +5376,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                       setCsvImportMode('groups')
                       setColumnMapping({})
                     }}
-                    className={`flex-1 p-4 rounded-lg border-2 transition-colors text-left ${
-                      csvImportMode === 'groups'
+                    className={`flex-1 p-4 rounded-lg border-2 transition-colors text-left ${csvImportMode === 'groups'
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover:border-primary/50'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <Users className="w-4 h-4" />
@@ -5324,12 +5404,12 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               <div className="mb-6">
                 <h3 className="text-sm font-medium text-foreground mb-3">Column Mapping</h3>
                 <p className="text-xs text-muted-foreground mb-4">
-                  {csvImportMode === 'groups' 
+                  {csvImportMode === 'groups'
                     ? 'Map columns. Group Name and Number of Guests are required.'
                     : 'Map columns. Guest Name and Group Name are required.'
                   }
                 </p>
-                
+
                 <div className="border rounded-lg overflow-hidden">
                   <table className="w-full text-sm">
                     <thead className="bg-muted/50">
@@ -5353,13 +5433,12 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                             <select
                               value={columnMapping[index.toString()] || ''}
                               onChange={(e) => updateColumnMapping(index.toString(), e.target.value)}
-                              className={`w-full px-3 py-2 text-sm border rounded-md bg-background ${
-                                columnMapping[index.toString()] === 'name' || columnMapping[index.toString()] === 'groupName' || columnMapping[index.toString()] === 'guestCount'
-                                  ? 'border-green-300 bg-green-50/50' 
-                                  : columnMapping[index.toString()] 
-                                    ? 'border-primary/30 bg-primary/5' 
+                              className={`w-full px-3 py-2 text-sm border rounded-md bg-background ${columnMapping[index.toString()] === 'name' || columnMapping[index.toString()] === 'groupName' || columnMapping[index.toString()] === 'guestCount'
+                                  ? 'border-green-300 bg-green-50/50'
+                                  : columnMapping[index.toString()]
+                                    ? 'border-primary/30 bg-primary/5'
                                     : ''
-                              }`}
+                                }`}
                             >
                               <option value="">-- Don&apos;t import --</option>
                               {DB_FIELDS.map(field => {
@@ -5367,8 +5446,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                   ([key, val]) => val === field.key && key !== index.toString()
                                 )
                                 return (
-                                  <option 
-                                    key={field.key} 
+                                  <option
+                                    key={field.key}
                                     value={field.key}
                                     disabled={isMapped}
                                   >
@@ -5464,7 +5543,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             <div className="p-6 border-t bg-muted/20">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  {csvImportMode === 'groups' 
+                  {csvImportMode === 'groups'
                     ? `${csvData.length} groups will be created with auto-generated guests`
                     : `${csvData.length} guests will be imported into groups`
                   }
@@ -5473,9 +5552,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                   <Button variant="outline" onClick={resetCsvImport}>
                     Cancel
                   </Button>
-                  <Button 
+                  <Button
                     onClick={handleCsvImport}
-                    disabled={csvImporting || (csvImportMode === 'groups' 
+                    disabled={csvImporting || (csvImportMode === 'groups'
                       ? !Object.values(columnMapping).includes('groupName') || !Object.values(columnMapping).includes('guestCount')
                       : !Object.values(columnMapping).includes('name') || !Object.values(columnMapping).includes('groupName')
                     )}
@@ -5488,7 +5567,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                     ) : (
                       <>
                         <Upload className="w-4 h-4 mr-2" />
-                        {csvImportMode === 'groups' 
+                        {csvImportMode === 'groups'
                           ? `Import ${csvData.length} Groups`
                           : `Import ${csvData.length} Guests`
                         }
@@ -5508,9 +5587,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           <Card className="w-full max-w-md">
             <div className="p-6">
               <div className="flex items-start gap-4">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  confirmDialog.confirmVariant === 'destructive' ? 'bg-red-100' : 'bg-primary/10'
-                }`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${confirmDialog.confirmVariant === 'destructive' ? 'bg-red-100' : 'bg-primary/10'
+                  }`}>
                   {confirmDialog.confirmVariant === 'destructive' ? (
                     <Trash2 className="w-5 h-5 text-red-600" />
                   ) : (
@@ -5581,10 +5659,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                   <input
                     type="checkbox"
                     checked={sendInvitesConfig.onlyConfirmed}
-                    onChange={(e) => setSendInvitesConfig(prev => ({ 
-                      ...prev, 
+                    onChange={(e) => setSendInvitesConfig(prev => ({
+                      ...prev,
                       onlyConfirmed: e.target.checked,
-                      onlyPending: e.target.checked ? false : prev.onlyPending 
+                      onlyPending: e.target.checked ? false : prev.onlyPending
                     }))}
                     className="w-4 h-4 rounded border-border"
                   />
@@ -5598,10 +5676,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                   <input
                     type="checkbox"
                     checked={sendInvitesConfig.onlyPending}
-                    onChange={(e) => setSendInvitesConfig(prev => ({ 
-                      ...prev, 
+                    onChange={(e) => setSendInvitesConfig(prev => ({
+                      ...prev,
                       onlyPending: e.target.checked,
-                      onlyConfirmed: e.target.checked ? false : prev.onlyConfirmed 
+                      onlyConfirmed: e.target.checked ? false : prev.onlyConfirmed
                     }))}
                     className="w-4 h-4 rounded border-border"
                   />
@@ -5656,13 +5734,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       {/* Notification Toast */}
       {notification.isOpen && (
         <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
-          <Card className={`p-4 shadow-lg border ${
-            notification.type === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
-          }`}>
+          <Card className={`p-4 shadow-lg border ${notification.type === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
+            }`}>
             <div className="flex items-start gap-3">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                notification.type === 'success' ? 'bg-green-100' : 'bg-red-100'
-              }`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notification.type === 'success' ? 'bg-green-100' : 'bg-red-100'
+                }`}>
                 {notification.type === 'success' ? (
                   <CheckCircle2 className="w-4 h-4 text-green-600" />
                 ) : (
@@ -5670,22 +5746,19 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className={`text-sm font-medium ${
-                  notification.type === 'success' ? 'text-green-800' : 'text-red-800'
-                }`}>
+                <h4 className={`text-sm font-medium ${notification.type === 'success' ? 'text-green-800' : 'text-red-800'
+                  }`}>
                   {notification.title}
                 </h4>
-                <p className={`text-sm mt-0.5 ${
-                  notification.type === 'success' ? 'text-green-700' : 'text-red-700'
-                }`}>
+                <p className={`text-sm mt-0.5 ${notification.type === 'success' ? 'text-green-700' : 'text-red-700'
+                  }`}>
                   {notification.message}
                 </p>
               </div>
               <button
                 onClick={() => setNotification(prev => ({ ...prev, isOpen: false }))}
-                className={`flex-shrink-0 ${
-                  notification.type === 'success' ? 'text-green-500 hover:text-green-700' : 'text-red-500 hover:text-red-700'
-                }`}
+                className={`flex-shrink-0 ${notification.type === 'success' ? 'text-green-500 hover:text-green-700' : 'text-red-500 hover:text-red-700'
+                  }`}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -5718,7 +5791,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                 </p>
                 <p className="font-medium">{groupTravelForm.groupName}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {groupTravelForm.groupId 
+                  {groupTravelForm.groupId
                     ? `${guestGroups.find(g => g.id === groupTravelForm.groupId)?.guests.length || 0} guest(s) will be updated`
                     : `${selectedGuestIds.size} guest(s) will be updated`
                   }
@@ -5750,11 +5823,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                       <div className="space-y-2">
                         <button
                           onClick={() => setGroupTravelForm(prev => ({ ...prev, travelArrangement: 'will_buy_ticket' }))}
-                          className={`w-full p-3 rounded-lg border-2 text-left transition-colors ${
-                            groupTravelForm.travelArrangement === 'will_buy_ticket'
+                          className={`w-full p-3 rounded-lg border-2 text-left transition-colors ${groupTravelForm.travelArrangement === 'will_buy_ticket'
                               ? 'border-primary bg-primary/5'
                               : 'border-border hover:border-primary/50'
-                          }`}
+                            }`}
                         >
                           <div className="flex items-start gap-2">
                             <Ticket className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -5767,11 +5839,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
                         <button
                           onClick={() => setGroupTravelForm(prev => ({ ...prev, travelArrangement: 'no_ticket_needed' }))}
-                          className={`w-full p-3 rounded-lg border-2 text-left transition-colors ${
-                            groupTravelForm.travelArrangement === 'no_ticket_needed'
+                          className={`w-full p-3 rounded-lg border-2 text-left transition-colors ${groupTravelForm.travelArrangement === 'no_ticket_needed'
                               ? 'border-primary bg-primary/5'
                               : 'border-border hover:border-primary/50'
-                          }`}
+                            }`}
                         >
                           <div className="flex items-start gap-2">
                             <X className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -5781,7 +5852,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                             </div>
                           </div>
                         </button>
-                        
+
                         {groupTravelForm.travelArrangement && (
                           <button
                             onClick={() => setGroupTravelForm(prev => ({ ...prev, travelArrangement: null }))}
@@ -5821,8 +5892,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                   className="flex-1"
                   onClick={handleSetGroupTravel}
                   disabled={
-                    groupTravelForm.isTraveling && 
-                    groupTravelForm.travelArrangement === 'no_ticket_needed' && 
+                    groupTravelForm.isTraveling &&
+                    groupTravelForm.travelArrangement === 'no_ticket_needed' &&
                     !groupTravelForm.noTicketReason.trim()
                   }
                 >
@@ -5888,15 +5959,15 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                               />
                             </div>
                             <DropdownMenuSeparator />
-                            
+
                             {/* Guest Information */}
                             <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Guest Information</div>
                             {[
                               { var: '{{groupname}}', label: 'Group Name', desc: 'Name of the guest group' },
                               { var: '{{guestname}}', label: 'Guest Name', desc: 'Individual guest name' },
                               { var: '{{groupinvitationurl}}', label: 'Invitation URL', desc: 'Direct link to invitation' },
-                            ].filter(item => 
-                              !dynamicContentSearch || 
+                            ].filter(item =>
+                              !dynamicContentSearch ||
                               item.label.toLowerCase().includes(dynamicContentSearch.toLowerCase()) ||
                               item.desc.toLowerCase().includes(dynamicContentSearch.toLowerCase()) ||
                               item.var.toLowerCase().includes(dynamicContentSearch.toLowerCase())
@@ -5909,14 +5980,14 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                   if (editor) {
                                     const selection = window.getSelection()
                                     let cursorPos = inviteTemplate.length
-                                    
+
                                     // Find cursor position in template string by counting actual characters
                                     if (selection && selection.rangeCount > 0 && editor.contains(selection.anchorNode)) {
                                       const range = selection.getRangeAt(0)
                                       const preCaretRange = range.cloneRange()
                                       preCaretRange.selectNodeContents(editor)
                                       preCaretRange.setEnd(range.endContainer, range.endOffset)
-                                      
+
                                       // Walk through nodes and count template string characters
                                       let charCount = 0
                                       const walker = (node: Node, parentIsEditor: boolean = false, indexInParent: number = 0): boolean => {
@@ -5946,8 +6017,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                           if (element.tagName === 'DIV' && parentIsEditor && indexInParent > 0) {
                                             // Only add newline if div doesn't start with BR (to avoid double counting)
                                             const firstChild = element.firstChild
-                                            const startsWithBR = firstChild?.nodeType === Node.ELEMENT_NODE && 
-                                                               (firstChild as HTMLElement).tagName === 'BR'
+                                            const startsWithBR = firstChild?.nodeType === Node.ELEMENT_NODE &&
+                                              (firstChild as HTMLElement).tagName === 'BR'
                                             if (!startsWithBR) {
                                               charCount += 1 // Add \n before div content (except first div)
                                             }
@@ -5962,11 +6033,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                       walker(editor, true, 0)
                                       cursorPos = charCount
                                     }
-                                    
+
                                     // Insert variable into template string
                                     const newTemplate = inviteTemplate.slice(0, cursorPos) + item.var + inviteTemplate.slice(cursorPos)
                                     setInviteTemplate(newTemplate)
-                                    
+
                                     // Focus editor after update
                                     setTimeout(() => editor.focus(), 0)
                                   }
@@ -5976,17 +6047,17 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                 <div className="text-muted-foreground">{item.desc}</div>
                               </DropdownMenuItem>
                             ))}
-                            
+
                             <DropdownMenuSeparator />
-                            
+
                             {/* Wedding Details */}
                             <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Wedding Details</div>
                             {[
                               { var: '{{partner1}}', label: 'Partner 1', desc: partnerNames.partner1 || 'First partner name' },
                               { var: '{{partner2}}', label: 'Partner 2', desc: partnerNames.partner2 || 'Second partner name' },
                               { var: '{{weddingdate}}', label: 'Wedding Date', desc: weddingDetails?.wedding_date ? new Date(weddingDetails.wedding_date).toLocaleDateString() : 'Wedding date' },
-                            ].filter(item => 
-                              !dynamicContentSearch || 
+                            ].filter(item =>
+                              !dynamicContentSearch ||
                               item.label.toLowerCase().includes(dynamicContentSearch.toLowerCase()) ||
                               item.desc.toLowerCase().includes(dynamicContentSearch.toLowerCase()) ||
                               item.var.toLowerCase().includes(dynamicContentSearch.toLowerCase())
@@ -5999,14 +6070,14 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                   if (editor) {
                                     const selection = window.getSelection()
                                     let cursorPos = inviteTemplate.length
-                                    
+
                                     // Find cursor position in template string by counting actual characters
                                     if (selection && selection.rangeCount > 0 && editor.contains(selection.anchorNode)) {
                                       const range = selection.getRangeAt(0)
                                       const preCaretRange = range.cloneRange()
                                       preCaretRange.selectNodeContents(editor)
                                       preCaretRange.setEnd(range.endContainer, range.endOffset)
-                                      
+
                                       // Walk through nodes and count template string characters
                                       let charCount = 0
                                       const walker = (node: Node, parentIsEditor: boolean = false, indexInParent: number = 0): boolean => {
@@ -6036,8 +6107,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                           if (element.tagName === 'DIV' && parentIsEditor && indexInParent > 0) {
                                             // Only add newline if div doesn't start with BR (to avoid double counting)
                                             const firstChild = element.firstChild
-                                            const startsWithBR = firstChild?.nodeType === Node.ELEMENT_NODE && 
-                                                               (firstChild as HTMLElement).tagName === 'BR'
+                                            const startsWithBR = firstChild?.nodeType === Node.ELEMENT_NODE &&
+                                              (firstChild as HTMLElement).tagName === 'BR'
                                             if (!startsWithBR) {
                                               charCount += 1 // Add \n before div content (except first div)
                                             }
@@ -6052,11 +6123,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                       walker(editor, true, 0)
                                       cursorPos = charCount
                                     }
-                                    
+
                                     // Insert variable into template string
                                     const newTemplate = inviteTemplate.slice(0, cursorPos) + item.var + inviteTemplate.slice(cursorPos)
                                     setInviteTemplate(newTemplate)
-                                    
+
                                     // Focus editor after update
                                     setTimeout(() => editor.focus(), 0)
                                   }
@@ -6066,9 +6137,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                 <div className="text-muted-foreground">{item.desc}</div>
                               </DropdownMenuItem>
                             ))}
-                            
+
                             <DropdownMenuSeparator />
-                            
+
                             {/* Venue Information */}
                             <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Venue Information</div>
                             {[
@@ -6076,8 +6147,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                               { var: '{{ceremonyaddress}}', label: 'Ceremony Address', desc: 'Full ceremony address' },
                               { var: '{{receptionplace}}', label: 'Reception Venue', desc: weddingDetails?.reception_venue_name || 'Reception venue name' },
                               { var: '{{receptionaddress}}', label: 'Reception Address', desc: 'Full reception address' },
-                            ].filter(item => 
-                              !dynamicContentSearch || 
+                            ].filter(item =>
+                              !dynamicContentSearch ||
                               item.label.toLowerCase().includes(dynamicContentSearch.toLowerCase()) ||
                               item.desc.toLowerCase().includes(dynamicContentSearch.toLowerCase()) ||
                               item.var.toLowerCase().includes(dynamicContentSearch.toLowerCase())
@@ -6090,14 +6161,14 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                   if (editor) {
                                     const selection = window.getSelection()
                                     let cursorPos = inviteTemplate.length
-                                    
+
                                     // Find cursor position in template string by counting actual characters
                                     if (selection && selection.rangeCount > 0 && editor.contains(selection.anchorNode)) {
                                       const range = selection.getRangeAt(0)
                                       const preCaretRange = range.cloneRange()
                                       preCaretRange.selectNodeContents(editor)
                                       preCaretRange.setEnd(range.endContainer, range.endOffset)
-                                      
+
                                       // Walk through nodes and count template string characters
                                       let charCount = 0
                                       const walker = (node: Node, parentIsEditor: boolean = false, indexInParent: number = 0): boolean => {
@@ -6127,8 +6198,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                           if (element.tagName === 'DIV' && parentIsEditor && indexInParent > 0) {
                                             // Only add newline if div doesn't start with BR (to avoid double counting)
                                             const firstChild = element.firstChild
-                                            const startsWithBR = firstChild?.nodeType === Node.ELEMENT_NODE && 
-                                                               (firstChild as HTMLElement).tagName === 'BR'
+                                            const startsWithBR = firstChild?.nodeType === Node.ELEMENT_NODE &&
+                                              (firstChild as HTMLElement).tagName === 'BR'
                                             if (!startsWithBR) {
                                               charCount += 1 // Add \n before div content (except first div)
                                             }
@@ -6143,11 +6214,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                       walker(editor, true, 0)
                                       cursorPos = charCount
                                     }
-                                    
+
                                     // Insert variable into template string
                                     const newTemplate = inviteTemplate.slice(0, cursorPos) + item.var + inviteTemplate.slice(cursorPos)
                                     setInviteTemplate(newTemplate)
-                                    
+
                                     // Focus editor after update
                                     setTimeout(() => editor.focus(), 0)
                                   }
@@ -6222,7 +6293,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                             return text
                           } else if (node.nodeType === Node.ELEMENT_NODE) {
                             const element = node as HTMLElement
-                            
+
                             // If it's a badge span, return the variable
                             if (element.hasAttribute('data-variable')) {
                               const variable = element.getAttribute('data-variable') || ''
@@ -6232,32 +6303,32 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                             if (element.tagName === 'BR') {
                               return '\n'
                             }
-                            
+
                             // Check if this is a wrapper DIV (contentEditable often wraps all content in a single DIV)
                             // A wrapper DIV is: direct child of editor (indexInParent=0, parentIsEditor=true) with DIV children
                             const isWrapperDiv = element.tagName === 'DIV' && parentIsEditor && indexInParent === 0 &&
-                                               Array.from(node.childNodes).some(child => 
-                                                 child.nodeType === Node.ELEMENT_NODE && 
-                                                 (child as HTMLElement).tagName === 'DIV'
-                                               )
-                            
+                              Array.from(node.childNodes).some(child =>
+                                child.nodeType === Node.ELEMENT_NODE &&
+                                (child as HTMLElement).tagName === 'DIV'
+                              )
+
                             // Handle DIV elements (contentEditable creates these on Enter)
                             if (element.tagName === 'DIV' && (parentIsEditor || isWrapperDiv)) {
                               const treatChildrenAsTopLevel = isWrapperDiv
                               const content = Array.from(node.childNodes)
                                 .map((child, idx) => extractTemplate(child, treatChildrenAsTopLevel, idx, depth + 1))
                                 .join('')
-                              
+
                               // If this is the wrapper div, don't add any newlines - just return the content
                               if (isWrapperDiv) {
                                 return content
                               }
-                              
+
                               // Add newline before each div except the first one
                               // But only if the div doesn't start with a BR (to avoid double newlines)
                               const firstChild = node.firstChild
-                              const startsWithBR = firstChild?.nodeType === Node.ELEMENT_NODE && 
-                                                   (firstChild as HTMLElement).tagName === 'BR'
+                              const startsWithBR = firstChild?.nodeType === Node.ELEMENT_NODE &&
+                                (firstChild as HTMLElement).tagName === 'BR'
                               const shouldAddNewline = indexInParent > 0 && !startsWithBR
                               return (shouldAddNewline ? '\n' : '') + content
                             }
@@ -6270,7 +6341,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                           return ''
                         }
                         const newText = extractTemplate(target, true, 0, 0)
-                        
+
                         if (newText !== inviteTemplate) {
                           isUpdatingRef.current = true
                           setInviteTemplate(newText)
@@ -6318,57 +6389,57 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                   </div>
                 </div>
 
-                  {/* Replace Variable Dropdown */}
-                  {showReplaceMenu && (
-                    <div 
-                      ref={replaceMenuRef}
-                      className="fixed bg-background border border-border rounded-lg shadow-lg p-2 z-[60] w-64"
-                      style={{
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)'
-                      }}
-                    >
-                      <div className="px-2 py-1.5 text-xs font-semibold border-b mb-2">
-                        Replace with:
-                      </div>
-                      <div className="max-h-64 overflow-y-auto space-y-1">
-                        {[
-                          { var: '{{groupname}}', label: 'Group Name' },
-                          { var: '{{guestname}}', label: 'Guest Name' },
-                          { var: '{{groupinvitationurl}}', label: 'Invitation URL' },
-                          { var: '{{partner1}}', label: 'Partner 1' },
-                          { var: '{{partner2}}', label: 'Partner 2' },
-                          { var: '{{weddingdate}}', label: 'Wedding Date' },
-                          { var: '{{ceremonyplace}}', label: 'Ceremony Venue' },
-                          { var: '{{ceremonyaddress}}', label: 'Ceremony Address' },
-                          { var: '{{receptionplace}}', label: 'Reception Venue' },
-                          { var: '{{receptionaddress}}', label: 'Reception Address' },
-                        ].filter(v => v.var !== showReplaceMenu).map((variable) => (
-                          <button
-                            key={variable.var}
-                            onClick={() => {
-                              const newTemplate = inviteTemplate.replace(showReplaceMenu!, variable.var)
-                              setInviteTemplate(newTemplate)
-                              setShowReplaceMenu(null)
-                            }}
-                            className="w-full text-left px-3 py-2 rounded-md hover:bg-accent text-sm transition-colors"
-                          >
-                            <div className="font-medium">{variable.label}</div>
-                            <div className="text-xs text-muted-foreground font-mono">{variable.var}</div>
-                          </button>
-                        ))}
-                      </div>
-                      <div className="border-t mt-2 pt-2">
-                        <button
-                          onClick={() => setShowReplaceMenu(null)}
-                          className="w-full text-center px-3 py-1.5 rounded-md hover:bg-accent text-xs text-muted-foreground transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                {/* Replace Variable Dropdown */}
+                {showReplaceMenu && (
+                  <div
+                    ref={replaceMenuRef}
+                    className="fixed bg-background border border-border rounded-lg shadow-lg p-2 z-[60] w-64"
+                    style={{
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)'
+                    }}
+                  >
+                    <div className="px-2 py-1.5 text-xs font-semibold border-b mb-2">
+                      Replace with:
                     </div>
-                  )}
+                    <div className="max-h-64 overflow-y-auto space-y-1">
+                      {[
+                        { var: '{{groupname}}', label: 'Group Name' },
+                        { var: '{{guestname}}', label: 'Guest Name' },
+                        { var: '{{groupinvitationurl}}', label: 'Invitation URL' },
+                        { var: '{{partner1}}', label: 'Partner 1' },
+                        { var: '{{partner2}}', label: 'Partner 2' },
+                        { var: '{{weddingdate}}', label: 'Wedding Date' },
+                        { var: '{{ceremonyplace}}', label: 'Ceremony Venue' },
+                        { var: '{{ceremonyaddress}}', label: 'Ceremony Address' },
+                        { var: '{{receptionplace}}', label: 'Reception Venue' },
+                        { var: '{{receptionaddress}}', label: 'Reception Address' },
+                      ].filter(v => v.var !== showReplaceMenu).map((variable) => (
+                        <button
+                          key={variable.var}
+                          onClick={() => {
+                            const newTemplate = inviteTemplate.replace(showReplaceMenu!, variable.var)
+                            setInviteTemplate(newTemplate)
+                            setShowReplaceMenu(null)
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-md hover:bg-accent text-sm transition-colors"
+                        >
+                          <div className="font-medium">{variable.label}</div>
+                          <div className="text-xs text-muted-foreground font-mono">{variable.var}</div>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="border-t mt-2 pt-2">
+                      <button
+                        onClick={() => setShowReplaceMenu(null)}
+                        className="w-full text-center px-3 py-1.5 rounded-md hover:bg-accent text-xs text-muted-foreground transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

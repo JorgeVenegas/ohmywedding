@@ -8,6 +8,7 @@ import { Header } from "@/components/header"
 import { UpdateWeddingNameId } from "@/components/ui/update-wedding-name-id"
 import { ActivityFeed } from "@/components/ui/activity-feed"
 import { InvitationStatsCard } from "@/components/ui/invitation-stats-card"
+import { RegistryPaymentNotifications } from "@/components/ui/registry-payment-notifications"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { getWeddingPath } from "@/lib/wedding-url"
 
@@ -118,12 +119,17 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
         </div>
 
         {/* Activity & Stats Section */}
-        <div className="mt-12 grid md:grid-cols-2 gap-6">
+        <div className="mt-12 grid md:grid-cols-2 xl:grid-cols-3 gap-6">
           {/* Invitation Stats */}
           <InvitationStatsCard weddingId={decodedWeddingId} />
           
           {/* Recent Activity */}
-          <ActivityFeed weddingId={decodedWeddingId} limit={8} />
+          <div className="xl:col-span-2">
+            <ActivityFeed weddingId={decodedWeddingId} limit={8} />
+          </div>
+
+          {/* Completed Payments */}
+          <RegistryPaymentNotifications weddingId={decodedWeddingId} />
         </div>
 
         {/* Settings Section */}

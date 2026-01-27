@@ -25,20 +25,7 @@ import {
   Copy,
   ExternalLink,
 } from "lucide-react"
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  Scatter,
-  ScatterChart,
-  ZAxis,
-} from "recharts"
+import { InteractiveAreaChart, DonutChart } from "@/components/ui/charts"
 
 interface Guest {
   id: string
@@ -547,31 +534,12 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
         {opensChartData.length > 0 && (
           <Card className="p-4">
             <h3 className="font-medium text-foreground mb-4">Invitation Views Over Time</h3>
-            <div className="h-[200px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={opensChartData} margin={{ left: 0, right: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                  <RechartsTooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--background))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="opens"
-                    stroke="#3b82f6"
-                    fill="#3b82f6"
-                    fillOpacity={0.2}
-                    name="Views"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+            <InteractiveAreaChart
+              data={opensChartData}
+              xAxisKey="date"
+              areas={[{ dataKey: "opens", name: "Views", color: "blue" }]}
+              height={220}
+            />
           </Card>
         )}
 
@@ -628,6 +596,21 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
             </div>
           )}
         </Card>
+
+        {/* RSVP Status Distribution */}
+        {group.guests.length > 0 && (
+          <Card className="p-4">
+            <h3 className="font-medium text-foreground mb-4">RSVP Status Distribution</h3>
+            <DonutChart
+              data={[
+                { name: "Confirmed", value: confirmedCount, color: "hsl(142 76% 36%)" },
+                { name: "Pending", value: pendingCount, color: "hsl(32 95% 44%)" },
+                { name: "Declined", value: declinedCount, color: "hsl(0 84% 60%)" },
+              ]}
+              height={280}
+            />
+          </Card>
+        )}
 
         {/* Message History */}
         {group.message && (

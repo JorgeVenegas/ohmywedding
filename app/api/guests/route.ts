@@ -220,10 +220,10 @@ export async function PUT(request: Request) {
     // Check current user auth
     const { data: { user } } = await supabase.auth.getUser()
 
-    // First, check if the guest exists and get its wedding_id
+    // First, check if the guest exists and get its wedding_id and current status
     const { data: existingGuest, error: fetchError } = await supabase
       .from("guests")
-      .select("wedding_id")
+      .select("wedding_id, confirmation_status, name, guest_group_id")
       .eq("id", body.id)
       .single()
 
@@ -294,6 +294,44 @@ export async function PUT(request: Request) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    // Log activity if confirmation status changed
+    const oldStatus = existingGuest.confirmation_status
+    const newStatus = body.confirmationStatus
+    if (newStatus && oldStatus !== newStatus && (newStatus === 'confirmed' || newStatus === 'declined')) {
+      const activityType = newStatus === 'confirmed' ? 'rsvp_confirmed' : 'rsvp_declined'
+      const description = newStatus === 'confirmed' 
+        ? `${existingGuest.name} confirmed by owner`
+        : `${existingGuest.name} declined by owner`
+
+      // Use service role to bypass RLS for activity logging
+      const { createClient } = await import('@supabase/supabase-js')
+      const supabaseAdmin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      )
+
+      await supabaseAdmin
+        .from('activity_logs')
+        .insert({
+          wedding_id: existingGuest.wedding_id,
+          guest_group_id: existingGuest.guest_group_id,
+          guest_id: body.id,
+          activity_type: activityType,
+          description: description,
+          metadata: {
+            source: 'admin',
+            old_status: oldStatus,
+            new_status: newStatus
+          }
+        })
     }
 
     return NextResponse.json({ success: true, data })

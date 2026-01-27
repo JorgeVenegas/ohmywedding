@@ -78,6 +78,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ received: true, error: "Contribution not found" })
       }
 
+      if (contribution.payment_status === "completed") {
+        console.log('Webhook: Contribution already completed, skipping update for session:', session.id)
+        return NextResponse.json({ received: true })
+      }
+
+      const { data: item } = await supabase
+        .from("custom_registry_items")
+        .select("title")
+        .eq("id", contribution.custom_registry_item_id)
+        .single()
+
       console.log('Webhook: Found contribution:', contribution.id, 'for session:', session.id)
 
       // Update contribution status
@@ -104,6 +115,34 @@ export async function POST(request: NextRequest) {
         console.error('Webhook: Error updating registry item amount:', rpcError)
       } else {
         console.log('Webhook: Successfully updated registry item amount by:', contribution.amount)
+      }
+
+      const contributionAmount = Number(contribution.amount || 0)
+      const descriptionParts = [
+        contribution.contributor_name || 'Someone',
+        `contributed $${contributionAmount.toFixed(2)}`,
+      ]
+
+      if (item?.title) {
+        descriptionParts.push(`to ${item.title}`)
+      }
+
+      const description = descriptionParts.join(' ')
+
+      const { error: activityError } = await supabase.rpc('log_activity', {
+        p_wedding_id: contribution.wedding_id,
+        p_activity_type: 'registry_contribution',
+        p_description: description,
+        p_metadata: {
+          amount: contributionAmount,
+          itemId: contribution.custom_registry_item_id,
+          contributorName: contribution.contributor_name,
+          paymentStatus: 'completed',
+        },
+      })
+
+      if (activityError) {
+        console.error('Webhook: Error logging contribution activity:', activityError)
       }
     } else {
       console.log('Webhook: Unhandled event type:', event.type)

@@ -187,8 +187,44 @@ export async function GET(request: NextRequest) {
       })
     })
 
-    // Convert dailyData to sorted array and calculate cumulative values
-    const chartData = Object.values(dailyData)
+    // Create full date range array for the selected period
+    const allDates = [
+      ...(activities?.map(a => new Date(a.created_at).getTime()) || []),
+      ...(opens?.map(o => new Date(o.opened_at).getTime()) || [])
+    ]
+    const earliestDate = allDates.length > 0 ? Math.min(...allDates) : now.getTime()
+    const chartStartDate = startDate ? new Date(startDate).getTime() : earliestDate
+    
+    // Build full date range
+    const dateRange: Date[] = []
+    const currentDate = new Date(chartStartDate)
+    currentDate.setHours(0, 0, 0, 0)
+    const endDate = new Date()
+    endDate.setHours(0, 0, 0, 0)
+
+    while (currentDate <= endDate) {
+      dateRange.push(new Date(currentDate))
+      currentDate.setDate(currentDate.getDate() + 1)
+    }
+
+    // Initialize all dates with zero values
+    const fullDailyData: Record<string, {
+      date: string
+      confirmed: number
+      declined: number
+      opens: number
+    }> = {}
+
+    dateRange.forEach(date => {
+      const dateStr = date.toISOString().split('T')[0]
+      fullDailyData[dateStr] = { date: dateStr, confirmed: 0, declined: 0, opens: 0 }
+    })
+
+    // Merge in actual data
+    Object.assign(fullDailyData, dailyData)
+
+    // Convert to sorted array and calculate cumulative values
+    const chartData = Object.values(fullDailyData)
       .sort((a, b) => a.date.localeCompare(b.date))
       .reduce((acc, day, index) => {
         const prev = acc[index - 1]

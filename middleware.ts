@@ -214,35 +214,13 @@ async function handleSupabaseAuth(request: NextRequest, response: NextResponse) 
   // Protect admin routes - require authentication
   if (request.nextUrl.pathname.startsWith('/admin')) {
     if (!user) {
-      // Always redirect to main domain for login
-      const hostname = request.headers.get('host') || ''
-      const subdomain = getSubdomain(hostname)
+      // Redirect to /login on the same host (subdomain or main)
+      const loginUrl = new URL('/login', request.url)
       
-      // Build main domain URL
-      const protocol = request.nextUrl.protocol
-      let mainDomain: string
+      // Set redirect to return to the original URL after login
+      loginUrl.searchParams.set('redirect', request.url)
       
-      if (hostname.includes('ohmy.local')) {
-        mainDomain = `${protocol}//ohmy.local:${hostname.split(':')[1] || '3000'}`
-      } else if (hostname.includes('ohmy.wedding')) {
-        mainDomain = `${protocol}//ohmy.wedding`
-      } else {
-        // Fallback to current host if not recognized
-        mainDomain = `${protocol}//${hostname}`
-      }
-      
-      // Build redirect URL that preserves the original path
-      const redirectUrl = new URL('/login', mainDomain)
-      
-      // If on subdomain, the redirect should be the full subdomain URL
-      if (subdomain) {
-        redirectUrl.searchParams.set('redirect', request.url)
-      } else {
-        // On main domain, just use the path
-        redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
-      }
-      
-      return NextResponse.redirect(redirectUrl)
+      return NextResponse.redirect(loginUrl)
     }
   }
 

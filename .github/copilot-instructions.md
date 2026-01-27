@@ -32,3 +32,7 @@ You need to take into account responsiveness and mobile design for every change 
 You should always aim to improve performance and reduce bundle size with every change you do
 
 aim for security a dn integrity of data, avoid data loss or leaks with every change you do. Ensure only people with the right roles can access sensitive data or perform critical actions.
+
+You should not create very large files. You should aim to create reusable components and separate pages in smaller components and sections.
+
+Fors super large files, you should aim to extract components and logic into smaller files to improve maintainability and readability.

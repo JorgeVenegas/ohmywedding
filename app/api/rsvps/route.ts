@@ -110,7 +110,7 @@ export async function POST(request: Request) {
         // Verify this guest belongs to the verified group
         const { data: guestData, error: guestError } = await supabaseAdmin
           .from('guests')
-          .select('guest_group_id')
+          .select('guest_group_id, name, wedding_id, confirmation_status')
           .eq('id', guest.guestId)
           .single()
         
@@ -120,6 +120,8 @@ export async function POST(request: Request) {
             { status: 403 }
           )
         }
+        
+        const oldStatus = guestData.confirmation_status
         
         const { error: updateError } = await supabaseAdmin
           .from('guests')
@@ -131,6 +133,29 @@ export async function POST(request: Request) {
             { error: `Failed to update guest: ${updateError.message}` },
             { status: 500 }
           )
+        }
+
+        // Log activity if status changed to confirmed or declined
+        if (confirmationStatus !== 'pending' && oldStatus !== confirmationStatus) {
+          const activityType = confirmationStatus === 'confirmed' ? 'rsvp_confirmed' : 'rsvp_declined'
+          const description = confirmationStatus === 'confirmed' 
+            ? `${guestData.name} confirmed attendance`
+            : `${guestData.name} declined attendance`
+
+          await supabaseAdmin
+            .from('activity_logs')
+            .insert({
+              wedding_id: guestData.wedding_id,
+              guest_group_id: body.groupId,
+              guest_id: guest.guestId,
+              activity_type: activityType,
+              description: description,
+              metadata: {
+                source: 'guest_rsvp',
+                old_status: oldStatus,
+                new_status: confirmationStatus
+              }
+            })
         }
       }
 
