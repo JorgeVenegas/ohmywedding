@@ -1,10 +1,34 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { BaseFAQProps, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 import Image from 'next/image'
+
+interface AnimatedFAQItemProps {
+  index: number
+  className?: string
+  style?: React.CSSProperties
+  children: ReactNode
+}
+
+function AnimatedFAQItem({ index, className, style, children }: AnimatedFAQItemProps) {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: true })
+
+  return (
+    <div
+      ref={ref}
+      className={`${className || ''} transition-all duration-500 ${
+        isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'
+      }`}
+      style={{ ...style, transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
+    >
+      {children}
+    </div>
+  )
+}
 
 export function FAQCardsVariant({
   theme,
@@ -108,9 +132,10 @@ export function FAQCardsVariant({
         ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {faqItems.map((item, index) => (
-            <div
+            <AnimatedFAQItem
               key={item.id || index}
-              className="p-5 sm:p-6 rounded-lg transition-transform hover:scale-[1.02]"
+              index={index}
+              className="p-5 sm:p-6 rounded-lg hover:scale-[1.02]"
               style={{ 
                 backgroundColor: cardBg,
                 border: `1px solid ${cardBorder}`,
@@ -172,7 +197,7 @@ export function FAQCardsVariant({
                   )}
                 </div>
               </div>
-            </div>
+            </AnimatedFAQItem>
           ))}
         </div>
         )}

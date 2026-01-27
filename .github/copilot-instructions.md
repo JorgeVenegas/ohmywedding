@@ -36,3 +36,5 @@ aim for security a dn integrity of data, avoid data loss or leaks with every cha
 You should not create very large files. You should aim to create reusable components and separate pages in smaller components and sections.
 
 Fors super large files, you should aim to extract components and logic into smaller files to improve maintainability and readability.
+
+For animations try to use framer motion whenever possible to keep consistency across the app

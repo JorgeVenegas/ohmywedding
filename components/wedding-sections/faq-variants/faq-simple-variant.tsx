@@ -1,10 +1,34 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { BaseFAQProps, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 import Image from 'next/image'
+
+interface AnimatedFAQItemProps {
+  index: number
+  className?: string
+  style?: React.CSSProperties
+  children: ReactNode
+}
+
+function AnimatedFAQItem({ index, className, style, children }: AnimatedFAQItemProps) {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: true })
+
+  return (
+    <div
+      ref={ref}
+      className={`${className || ''} transition-all duration-500 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      }`}
+      style={{ ...style, transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
+    >
+      {children}
+    </div>
+  )
+}
 
 export function FAQSimpleVariant({
   theme,
@@ -93,8 +117,9 @@ export function FAQSimpleVariant({
         ) : (
         <div className="space-y-8 sm:space-y-10">
           {faqItems.map((item, index) => (
-            <div 
+            <AnimatedFAQItem
               key={item.id || index}
+              index={index}
               className="group text-center sm:text-left"
             >
               <h3 
@@ -146,7 +171,7 @@ export function FAQSimpleVariant({
                   </div>
                 )}
               </div>
-            </div>
+            </AnimatedFAQItem>
           ))}
         </div>
         )}

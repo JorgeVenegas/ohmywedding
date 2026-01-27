@@ -1,10 +1,34 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, ReactNode } from 'react'
 import { ChevronDown, ChevronUp, HelpCircle, X } from 'lucide-react'
 import { BaseFAQProps, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 import Image from 'next/image'
+
+interface AnimatedFAQItemProps {
+  index: number
+  className?: string
+  style?: React.CSSProperties
+  children: ReactNode
+}
+
+function AnimatedFAQItem({ index, className, style, children }: AnimatedFAQItemProps) {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: true })
+
+  return (
+    <div
+      ref={ref}
+      className={`${className || ''} transition-all duration-500 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      }`}
+      style={{ ...style, transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
+    >
+      {children}
+    </div>
+  )
+}
 
 export function FAQAccordionVariant({
   theme,
@@ -135,9 +159,10 @@ export function FAQAccordionVariant({
             const isOpen = openItems.has(index)
             
             return (
-              <div 
+              <AnimatedFAQItem
                 key={item.id || index}
-                className="rounded-lg shadow-sm overflow-hidden transition-all duration-200"
+                index={index}
+                className="rounded-lg shadow-sm overflow-hidden"
                 style={{ 
                   backgroundColor: cardBg,
                   border: `1px solid ${cardBorder}`
@@ -216,7 +241,7 @@ export function FAQAccordionVariant({
                     )}
                   </div>
                 </div>
-              </div>
+              </AnimatedFAQItem>
             )
           })}
         </div>
