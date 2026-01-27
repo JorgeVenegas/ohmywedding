@@ -4,7 +4,7 @@
  * So /admin/jorgeandyuli/dashboard becomes /admin/dashboard
  */
 
-export function getCleanAdminUrl(weddingId: string, page: 'dashboard' | 'guests' | 'invitations' | 'registry' | 'settings' = 'dashboard'): string {
+export function getCleanAdminUrl(weddingId: string, page: string = 'dashboard'): string {
   if (typeof window === 'undefined') {
     return `/admin/${weddingId}/${page}`
   }

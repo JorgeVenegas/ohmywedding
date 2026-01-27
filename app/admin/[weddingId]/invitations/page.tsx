@@ -10,6 +10,23 @@ import { PremiumUpgradePrompt } from "@/components/ui/premium-gate"
 import { useSubscriptionContext } from "@/components/contexts/subscription-context"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  AreaChart,
+  Area,
+  ComposedChart,
+  Scatter,
+} from "recharts"
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -154,6 +171,37 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const [groupFilter, setGroupFilter] = useState<string>('all')
   const [invitedByFilter, setInvitedByFilter] = useState<string>('all')
   const [openedFilter, setOpenedFilter] = useState<'all' | 'opened' | 'not-opened'>('all')
+  
+  // Timeline chart state
+  const [timelineRange, setTimelineRange] = useState<'all' | '90d' | '30d' | '14d' | '7d'>('30d')
+  const [timelineData, setTimelineData] = useState<{
+    chartData: Array<{
+      date: string
+      confirmed: number
+      declined: number
+      opens: number
+      cumulativeConfirmed: number
+      cumulativeDeclined: number
+      cumulativeOpens: number
+    }>
+    confirmationEvents: Array<{
+      id: string
+      type: 'confirmed' | 'declined' | 'updated'
+      timestamp: string
+      groupId: string
+      groupName: string
+      guestId?: string
+      guestName?: string
+      description: string
+    }>
+    summary: {
+      totalConfirmed: number
+      totalDeclined: number
+      totalOpens: number
+    }
+  } | null>(null)
+  const [timelineLoading, setTimelineLoading] = useState(false)
+  const [timelineGroupFilter, setTimelineGroupFilter] = useState<string>('all')
   
   // Sorting state
   const [sortColumn, setSortColumn] = useState<'name' | 'group' | 'status' | null>(null)
@@ -590,6 +638,30 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     fetchUngroupedGuests()
     fetchWeddingData()
   }, [weddingId])
+
+  // Fetch timeline data when range or group filter changes
+  useEffect(() => {
+    fetchTimelineData()
+  }, [weddingId, timelineRange, timelineGroupFilter])
+
+  const fetchTimelineData = async () => {
+    setTimelineLoading(true)
+    try {
+      let url = `/api/invitation-tracking/timeline?weddingId=${encodeURIComponent(weddingId)}&range=${timelineRange}`
+      if (timelineGroupFilter !== 'all') {
+        url += `&groupId=${timelineGroupFilter}`
+      }
+      const response = await fetch(url)
+      const result = await response.json()
+      if (response.ok) {
+        setTimelineData(result)
+      }
+    } catch (error) {
+      console.error('Error fetching timeline data:', error)
+    } finally {
+      setTimelineLoading(false)
+    }
+  }
 
   // Auto-dismiss notification after 4 seconds
   useEffect(() => {
@@ -2162,6 +2234,99 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     return Array.from(tags)
   }, [guestGroups, ungroupedGuests])
 
+  // Chart data: Status by Invited By
+  const statusByInvitedByData = useMemo(() => {
+    const dataMap: Record<string, { name: string; confirmed: number; pending: number; declined: number }> = {}
+    
+    // Process all guests from groups
+    guestGroups.forEach(group => {
+      group.guests.forEach(guest => {
+        // Use guest's invited_by, or group's invited_by if guest doesn't have one
+        const invitedByList = (guest.invited_by?.length > 0 ? guest.invited_by : group.invited_by) || []
+        
+        if (invitedByList.length === 0) {
+          // Track as "Not specified"
+          if (!dataMap['Not specified']) {
+            dataMap['Not specified'] = { name: 'Not specified', confirmed: 0, pending: 0, declined: 0 }
+          }
+          if (guest.confirmation_status === 'confirmed') dataMap['Not specified'].confirmed++
+          else if (guest.confirmation_status === 'declined') dataMap['Not specified'].declined++
+          else dataMap['Not specified'].pending++
+        } else {
+          invitedByList.forEach(inviter => {
+            if (!dataMap[inviter]) {
+              dataMap[inviter] = { name: inviter, confirmed: 0, pending: 0, declined: 0 }
+            }
+            if (guest.confirmation_status === 'confirmed') dataMap[inviter].confirmed++
+            else if (guest.confirmation_status === 'declined') dataMap[inviter].declined++
+            else dataMap[inviter].pending++
+          })
+        }
+      })
+    })
+    
+    // Process ungrouped guests
+    ungroupedGuests.forEach(guest => {
+      const invitedByList = guest.invited_by || []
+      
+      if (invitedByList.length === 0) {
+        if (!dataMap['Not specified']) {
+          dataMap['Not specified'] = { name: 'Not specified', confirmed: 0, pending: 0, declined: 0 }
+        }
+        if (guest.confirmation_status === 'confirmed') dataMap['Not specified'].confirmed++
+        else if (guest.confirmation_status === 'declined') dataMap['Not specified'].declined++
+        else dataMap['Not specified'].pending++
+      } else {
+        invitedByList.forEach(inviter => {
+          if (!dataMap[inviter]) {
+            dataMap[inviter] = { name: inviter, confirmed: 0, pending: 0, declined: 0 }
+          }
+          if (guest.confirmation_status === 'confirmed') dataMap[inviter].confirmed++
+          else if (guest.confirmation_status === 'declined') dataMap[inviter].declined++
+          else dataMap[inviter].pending++
+        })
+      }
+    })
+    
+    return Object.values(dataMap)
+  }, [guestGroups, ungroupedGuests])
+
+  // Chart data: Tags by Invited By (for pie chart)
+  const tagsByInvitedByData = useMemo(() => {
+    const dataMap: Record<string, number> = {}
+    
+    // Process all guests from groups
+    guestGroups.forEach(group => {
+      group.guests.forEach(guest => {
+        // Merge group tags with guest tags
+        const allGuestTags = [...new Set([...(group.tags || []), ...(guest.tags || [])])]
+        
+        allGuestTags.forEach(tag => {
+          if (!dataMap[tag]) {
+            dataMap[tag] = 0
+          }
+          dataMap[tag]++
+        })
+      })
+    })
+    
+    // Process ungrouped guests
+    ungroupedGuests.forEach(guest => {
+      const guestTags = guest.tags || []
+      guestTags.forEach(tag => {
+        if (!dataMap[tag]) {
+          dataMap[tag] = 0
+        }
+        dataMap[tag]++
+      })
+    })
+    
+    return Object.entries(dataMap).map(([name, value]) => ({ name, value }))
+  }, [guestGroups, ungroupedGuests])
+
+  // Pie chart colors
+  const PIE_COLORS = ['#3b82f6', '#22c55e', '#a855f7', '#f97316', '#ec4899', '#14b8a6', '#eab308', '#6366f1']
+
   // Create a flat list of all guests with their group info and merged tags
   const allGuests = useMemo(() => {
     const guests: (Guest & { groupName?: string; groupTags?: string[]; allTags: string[] })[] = []
@@ -2492,6 +2657,253 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             </div>
           </div>
         </div>
+
+        {/* Charts Section */}
+        {(statusByInvitedByData.length > 0 || tagsByInvitedByData.length > 0) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+            {/* Status by Invited By - Stacked Bar Chart */}
+            {statusByInvitedByData.length > 0 && (
+              <Card className="p-4">
+                <h3 className="text-sm font-medium text-foreground mb-3">Guest Status by Invited By</h3>
+                <div className="h-[250px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={statusByInvitedByData} layout="vertical" margin={{ left: 20, right: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                      <XAxis type="number" tick={{ fontSize: 11 }} />
+                      <YAxis 
+                        dataKey="name" 
+                        type="category" 
+                        width={80} 
+                        tick={{ fontSize: 11 }} 
+                        tickLine={false}
+                      />
+                      <RechartsTooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--background))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                          fontSize: '12px'
+                        }} 
+                      />
+                      <Legend 
+                        wrapperStyle={{ fontSize: '11px' }}
+                        iconSize={10}
+                      />
+                      <Bar dataKey="confirmed" stackId="a" fill="#22c55e" name="Confirmed" radius={[0, 0, 0, 0]} />
+                      <Bar dataKey="pending" stackId="a" fill="#f59e0b" name="Pending" radius={[0, 0, 0, 0]} />
+                      <Bar dataKey="declined" stackId="a" fill="#ef4444" name="Declined" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
+            )}
+
+            {/* Tags Distribution - Pie Chart */}
+            {tagsByInvitedByData.length > 0 && (
+              <Card className="p-4">
+                <h3 className="text-sm font-medium text-foreground mb-3">Guest Distribution by Tag</h3>
+                <div className="h-[250px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={tagsByInvitedByData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                        outerRadius={80}
+                        innerRadius={40}
+                        fill="#8884d8"
+                        dataKey="value"
+                        paddingAngle={2}
+                      >
+                        {tagsByInvitedByData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--background))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                          fontSize: '12px'
+                        }}
+                        formatter={(value: number) => [`${value} guests`, 'Count']}
+                      />
+                      <Legend 
+                        wrapperStyle={{ fontSize: '11px' }}
+                        iconSize={10}
+                        layout="vertical"
+                        align="right"
+                        verticalAlign="middle"
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Confirmation Timeline Chart */}
+        <Card className="p-4 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <h3 className="text-sm font-medium text-foreground">Confirmation Timeline</h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Time Range Filter */}
+              <div className="flex items-center border rounded-lg bg-muted/30 p-0.5">
+                {(['7d', '14d', '30d', '90d', 'all'] as const).map((range) => (
+                  <button
+                    key={range}
+                    onClick={() => setTimelineRange(range)}
+                    className={`px-2 py-1 rounded-md text-xs transition-colors ${
+                      timelineRange === range
+                        ? 'bg-background text-primary shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {range === 'all' ? 'All' : range === '7d' ? '7 Days' : range === '14d' ? '2 Weeks' : range === '30d' ? '30 Days' : '90 Days'}
+                  </button>
+                ))}
+              </div>
+              {/* Group Filter */}
+              <select
+                value={timelineGroupFilter}
+                onChange={(e) => setTimelineGroupFilter(e.target.value)}
+                className="h-7 px-2 text-xs border rounded-md bg-background"
+              >
+                <option value="all">All Groups</option>
+                {guestGroups.map((group) => (
+                  <option key={group.id} value={group.id}>{group.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {timelineLoading ? (
+            <div className="h-[250px] flex items-center justify-center">
+              <div className="animate-pulse text-muted-foreground">Loading timeline...</div>
+            </div>
+          ) : timelineData && timelineData.chartData.length > 0 ? (
+            <div className="space-y-4">
+              {/* Timeline Chart */}
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={timelineData.chartData} margin={{ left: 0, right: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fontSize: 10 }}
+                      tickFormatter={(value) => {
+                        const date = new Date(value)
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                      }}
+                    />
+                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                    <RechartsTooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                      }}
+                      labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '11px' }} iconSize={10} />
+                    <Area
+                      type="monotone"
+                      dataKey="cumulativeConfirmed"
+                      stroke="#22c55e"
+                      fill="#22c55e"
+                      fillOpacity={0.2}
+                      name="Total Confirmed"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="cumulativeDeclined"
+                      stroke="#ef4444"
+                      fill="#ef4444"
+                      fillOpacity={0.1}
+                      name="Total Declined"
+                    />
+                    <Scatter
+                      dataKey="confirmed"
+                      fill="#22c55e"
+                      name="Confirmations"
+                    />
+                    <Scatter
+                      dataKey="declined"
+                      fill="#ef4444"
+                      name="Declines"
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Summary Stats */}
+              <div className="flex items-center gap-4 text-xs border-t pt-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                  <span className="text-muted-foreground">Confirmed:</span>
+                  <span className="font-medium text-green-600">{timelineData.summary.totalConfirmed}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-red-500" />
+                  <span className="text-muted-foreground">Declined:</span>
+                  <span className="font-medium text-red-600">{timelineData.summary.totalDeclined}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-blue-500" />
+                  <span className="text-muted-foreground">Opens:</span>
+                  <span className="font-medium text-blue-600">{timelineData.summary.totalOpens}</span>
+                </div>
+              </div>
+
+              {/* Recent Events */}
+              {timelineData.confirmationEvents.length > 0 && (
+                <div className="border-t pt-3">
+                  <h4 className="text-xs font-medium text-muted-foreground mb-2">Recent Confirmations</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {timelineData.confirmationEvents.slice(0, 8).map((event) => (
+                      <button
+                        key={event.id}
+                        onClick={() => router.push(getCleanAdminUrl(weddingId, `groups/${event.groupId}`))}
+                        className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs border transition-colors hover:bg-muted/50 ${
+                          event.type === 'confirmed'
+                            ? 'bg-green-50 border-green-200 text-green-700'
+                            : event.type === 'declined'
+                            ? 'bg-red-50 border-red-200 text-red-700'
+                            : 'bg-purple-50 border-purple-200 text-purple-700'
+                        }`}
+                      >
+                        {event.type === 'confirmed' ? (
+                          <CheckCircle2 className="w-3 h-3" />
+                        ) : event.type === 'declined' ? (
+                          <XCircle className="w-3 h-3" />
+                        ) : (
+                          <Clock className="w-3 h-3" />
+                        )}
+                        <span className="font-medium">{event.groupName}</span>
+                        <span className="text-muted-foreground">
+                          {new Date(event.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      </button>
+                    ))}
+                    {timelineData.confirmationEvents.length > 8 && (
+                      <span className="text-xs text-muted-foreground py-1">
+                        +{timelineData.confirmationEvents.length - 8} more
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="h-[100px] flex items-center justify-center text-muted-foreground text-sm">
+              No confirmation activity yet in this time range
+            </div>
+          )}
+        </Card>
 
         {/* Toolbar: View Toggle, Filters, and Actions */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-4">
@@ -3477,6 +3889,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => router.push(getCleanAdminUrl(weddingId, `groups/${group.id}`))}>
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    View Details
+                                  </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleCopyRSVPLink(group)}>
                                     <Copy className="w-4 h-4 mr-2" />
                                     Copy RSVP Link

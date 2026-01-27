@@ -18,9 +18,26 @@ export async function POST(request: NextRequest) {
   try {
     const { itemId, amount, contributorName, contributorEmail, message } = await request.json()
 
-    if (!itemId || !amount) {
+    const normalizedAmount = Number.parseInt(String(amount), 10)
+    const normalizedName = typeof contributorName === "string" ? contributorName.trim() : ""
+
+    if (!itemId || Number.isNaN(normalizedAmount)) {
       return NextResponse.json(
         { error: "Missing required fields" },
+        { status: 400 }
+      )
+    }
+
+    if (!normalizedName) {
+      return NextResponse.json(
+        { error: "Contributor name is required" },
+        { status: 400 }
+      )
+    }
+
+    if (!Number.isInteger(normalizedAmount) || normalizedAmount < 10) {
+      return NextResponse.json(
+        { error: "Amount must be a whole number of at least 10" },
         { status: 400 }
       )
     }
@@ -83,7 +100,7 @@ export async function POST(request: NextRequest) {
               name: `${item.title} - Gift Contribution`,
               description: item.description || undefined,
             },
-            unit_amount: Math.round(amount * 100), // Convert to cents
+            unit_amount: normalizedAmount * 100, // Convert to cents
           },
           quantity: 1,
         },
@@ -93,7 +110,7 @@ export async function POST(request: NextRequest) {
       cancel_url: cancelUrl,
       metadata: {
         itemId,
-        contributorName: contributorName || "",
+        contributorName: normalizedName,
         contributorEmail: contributorEmail || "",
         message: message || "",
         weddingNameId: wedding.wedding_name_id,
@@ -107,7 +124,7 @@ export async function POST(request: NextRequest) {
         wedding_id: item.wedding_id,
         contributor_name: contributorName || null,
         contributor_email: contributorEmail || null,
-        amount,
+        amount: normalizedAmount,
         message: message || null,
         stripe_checkout_session_id: session.id,
         payment_status: "pending",

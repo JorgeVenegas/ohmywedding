@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
-import { createServerSupabaseClient } from "@/lib/supabase-server"
+import { createClient } from "@supabase/supabase-js"
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -12,6 +12,14 @@ const getStripe = () => {
   return new Stripe(process.env.STRIPE_SECRET_KEY, {
     apiVersion: "2025-12-15.clover",
   })
+}
+
+// Create a service role client to bypass RLS for webhook updates
+function createServiceClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
 }
 
 export async function POST(request: NextRequest) {
@@ -51,7 +59,9 @@ export async function POST(request: NextRequest) {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session
 
-      const supabase = await createServerSupabaseClient()
+      // Use service role client to bypass RLS (webhooks have no auth context)
+      const supabase = createServiceClient()
+      
       const { data: contribution, error: fetchError } = await supabase
         .from("registry_contributions")
         .select("*")
@@ -59,12 +69,16 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (fetchError) {
+        console.error('Webhook: Error fetching contribution:', fetchError)
         return NextResponse.json({ received: true, error: "Contribution fetch error" })
       }
       
       if (!contribution) {
+        console.error('Webhook: Contribution not found for session:', session.id)
         return NextResponse.json({ received: true, error: "Contribution not found" })
       }
+
+      console.log('Webhook: Found contribution:', contribution.id, 'for session:', session.id)
 
       // Update contribution status
       const { error: updateError } = await supabase
@@ -76,7 +90,9 @@ export async function POST(request: NextRequest) {
         .eq("id", contribution.id)
 
       if (updateError) {
+        console.error('Webhook: Error updating contribution status:', updateError)
       } else {
+        console.log('Webhook: Successfully updated contribution status to completed')
       }
       
       const { error: rpcError } = await supabase.rpc('update_registry_item_amount', {
@@ -85,9 +101,12 @@ export async function POST(request: NextRequest) {
       })
 
       if (rpcError) {
+        console.error('Webhook: Error updating registry item amount:', rpcError)
       } else {
+        console.log('Webhook: Successfully updated registry item amount by:', contribution.amount)
       }
     } else {
+      console.log('Webhook: Unhandled event type:', event.type)
     }
 
     return NextResponse.json({ received: true })

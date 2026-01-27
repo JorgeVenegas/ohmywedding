@@ -117,9 +117,17 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
     setIsProcessing(true)
 
     try {
-      const amount = parseFloat(formData.amount)
-      if (isNaN(amount) || amount < 0.01) {
-        alert("Please enter a valid amount (minimum $0.01)")
+      const trimmedName = formData.contributorName.trim()
+      const amount = Number.parseInt(formData.amount, 10)
+
+      if (!trimmedName) {
+        alert("Please enter your name so the couple knows who contributed.")
+        setIsProcessing(false)
+        return
+      }
+
+      if (!Number.isInteger(amount) || amount < 10) {
+        alert("Please enter a whole-number amount of at least 10.")
         setIsProcessing(false)
         return
       }
@@ -133,7 +141,7 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
         body: JSON.stringify({
           itemId: selectedItem.id,
           amount,
-          contributorName: formData.contributorName,
+          contributorName: trimmedName,
           contributorEmail: formData.contributorEmail,
           message: formData.message,
         }),
@@ -287,11 +295,15 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
                     <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       type="number"
-                      step="0.01"
-                      min="0.01"
+                      inputMode="numeric"
+                      step={1}
+                      min={10}
                       value={formData.amount}
-                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      placeholder="0.00"
+                      onChange={(e) => {
+                        const sanitized = e.target.value.replace(/[^0-9]/g, "")
+                        setFormData({ ...formData, amount: sanitized })
+                      }}
+                      placeholder="10"
                       className="pl-10"
                       required
                       disabled={isProcessing}
@@ -304,12 +316,13 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    {t('registry.yourName')} ({t('common.optional')})
+                    {t('registry.yourName')} *
                   </label>
                   <Input
                     value={formData.contributorName}
                     onChange={(e) => setFormData({ ...formData, contributorName: e.target.value })}
                     placeholder="John Doe"
+                    required
                     disabled={isProcessing}
                   />
                 </div>

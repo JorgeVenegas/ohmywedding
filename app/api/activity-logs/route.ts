@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
     const weddingId = searchParams.get('weddingId')
     const limit = parseInt(searchParams.get('limit') || '20')
     const activityType = searchParams.get('type')
+    const groupId = searchParams.get('groupId')
 
     if (!weddingId) {
       return NextResponse.json({ error: "weddingId is required" }, { status: 400 })
@@ -49,6 +50,10 @@ export async function GET(request: NextRequest) {
 
     if (activityType) {
       query = query.eq('activity_type', activityType)
+    }
+
+    if (groupId) {
+      query = query.eq('guest_group_id', groupId)
     }
 
     const { data: activities, error } = await query
