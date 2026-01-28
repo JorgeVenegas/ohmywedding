@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { X } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
+import { AnimatedSection } from '../animated-section'
 import { BaseGalleryProps } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { getGalleryColorScheme } from './color-utils'
@@ -80,7 +81,7 @@ export function GalleryGridVariant({
         style={isColored ? { backgroundColor: bgColor } : undefined}
       >
         {/* Section Header */}
-        <div className={`mb-12 text-${titleAlignment}`}>
+        <AnimatedSection className={`mb-12 text-${titleAlignment}`}>
           <h2
             className="text-3xl md:text-5xl font-bold mb-4"
             style={{
@@ -100,7 +101,7 @@ export function GalleryGridVariant({
               {sectionSubtitle}
             </p>
           )}
-        </div>
+        </AnimatedSection>
 
         {/* Uniform Grid with staggered animation */}
         <div className={`grid gap-3 md:gap-4 w-full ${
@@ -111,12 +112,10 @@ export function GalleryGridVariant({
           'grid-cols-2 md:grid-cols-3 lg:grid-cols-6'
         }`}>
           {validPhotos.map((photo, index) => (
-            <div 
-              key={photo.id} 
+            <AnimatedSection 
+              key={photo.id}
+              index={index}
               className="relative aspect-square rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 bg-gray-100 cursor-pointer [&:hover_img]:scale-110 [&:hover_.overlay]:bg-black/40 [&:hover_.caption]:opacity-100 [&:hover_.caption]:translate-y-0"
-              style={{
-                animationDelay: `${index * 50}ms`
-              }}
               onClick={() => setSelectedPhoto(photo.url)}
             >
               <Image
@@ -140,7 +139,7 @@ export function GalleryGridVariant({
                   </p>
                 )}
               </div>
-            </div>
+            </AnimatedSection>
           ))}
         </div>
       </SectionWrapper>

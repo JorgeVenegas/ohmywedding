@@ -3,6 +3,7 @@
 import React from 'react'
 import Image from 'next/image'
 import { SectionWrapper } from '../section-wrapper'
+import { AnimatedSection } from '../animated-section'
 import { BaseGalleryProps } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { getGalleryColorScheme } from './color-utils'
@@ -74,7 +75,7 @@ export function GalleryBannerVariant({
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50" />
 
         {/* Centered Content Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center">
+        <AnimatedSection className="absolute inset-0 flex items-center justify-center">
           <div className="text-white text-center px-6 max-w-4xl">
             <h2
               className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 drop-shadow-lg"
@@ -96,7 +97,7 @@ export function GalleryBannerVariant({
               </p>
             )}
           </div>
-        </div>
+        </AnimatedSection>
       </div>
     </section>
   )

@@ -5,6 +5,7 @@ import { createConfigFromWedding } from "@/lib/wedding-configs"
 import { ConfigBasedWeddingRenderer } from "@/components/config-based-wedding-renderer"
 import { PageConfigProvider, usePageConfig } from "@/components/contexts/page-config-context"
 import { I18nProvider, useTranslation } from "@/components/contexts/i18n-context"
+import { EnvelopeProvider, useEnvelope } from "@/components/contexts/envelope-context"
 import { notFound, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Wedding } from "@/lib/wedding-data"
@@ -408,24 +409,29 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
     }).format(date)
   })() : ''
 
+  // Determine if envelope should be shown based on groupId (synchronously available from URL)
+  const hasEnvelope = !!groupId
+
   return (
     <>
-      <PageConfigProvider weddingNameId={weddingNameId}>
-        <WeddingContentWithCurtain
-          wedding={wedding}
-          weddingNameId={weddingNameId}
-          showEnvelope={showEnvelope}
-          isMobile={isMobile}
-          envelopeFalling={envelopeFalling}
-          envelopeOpening={envelopeOpening}
-          envelopeComplete={envelopeComplete}
-          handleEnvelopeClick={handleEnvelopeClick}
-          coupleNames={coupleNames}
-          coupleInitials={coupleInitials}
-          weddingDate={weddingDate}
-          guestGroup={guestGroup}
-        />
-      </PageConfigProvider>
+      <EnvelopeProvider hasEnvelope={hasEnvelope}>
+        <PageConfigProvider weddingNameId={weddingNameId}>
+          <WeddingContentWithCurtain
+            wedding={wedding}
+            weddingNameId={weddingNameId}
+            showEnvelope={showEnvelope}
+            isMobile={isMobile}
+            envelopeFalling={envelopeFalling}
+            envelopeOpening={envelopeOpening}
+            envelopeComplete={envelopeComplete}
+            handleEnvelopeClick={handleEnvelopeClick}
+            coupleNames={coupleNames}
+            coupleInitials={coupleInitials}
+            weddingDate={weddingDate}
+            guestGroup={guestGroup}
+          />
+        </PageConfigProvider>
+      </EnvelopeProvider>
     </>
   )
 }
@@ -459,6 +465,7 @@ function WeddingContentWithCurtain({
   guestGroup: GuestGroup | null
 }) {
   const { isLoading: configLoading, config } = usePageConfig()
+  const { markOpened } = useEnvelope()
   const [curtainFalling, setCurtainFalling] = useState(false)
   const [curtainComplete, setCurtainComplete] = useState(false)
   const [curtainColor, setCurtainColor] = useState('#c9a961') // Start with golden
@@ -507,6 +514,13 @@ function WeddingContentWithCurtain({
       }, 100)
     }
   }, [configLoading])
+
+  // Mark envelope as opened when it starts falling (for hero animation delay)
+  useEffect(() => {
+    if (envelopeFalling) {
+      markOpened()
+    }
+  }, [envelopeFalling, markOpened])
 
   return (
     <>

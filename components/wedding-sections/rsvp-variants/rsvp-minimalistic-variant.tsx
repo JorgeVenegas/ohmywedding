@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { SectionWrapper } from '../section-wrapper'
+import { AnimatedSection } from '../animated-section'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
@@ -268,7 +269,7 @@ export function RSVPMinimalisticVariant({
       <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
           {/* Header with generic text */}
-          <div className="mb-12 text-center" style={{ textAlign: alignment?.text || 'center' }}>
+          <AnimatedSection className="mb-12 text-center" style={{ textAlign: alignment?.text || 'center' }}>
             <h2 
               className="text-3xl md:text-4xl font-light tracking-wide mb-3"
               style={{ color: titleColor }}
@@ -287,10 +288,11 @@ export function RSVPMinimalisticVariant({
                 </p>
               </>
             )}
-          </div>
+          </AnimatedSection>
 
-          <div 
+          <AnimatedSection 
             className="p-6 sm:p-8 md:p-12 rounded-2xl border-2"
+            delay={100}
             style={{
               backgroundColor: cardBg,
               borderColor: titleColor,
@@ -394,7 +396,7 @@ export function RSVPMinimalisticVariant({
             >
               {t('rsvp.editResponse')}
             </button>
-          </div>
+          </AnimatedSection>
         </div>
       </SectionWrapper>
     )
@@ -405,7 +407,7 @@ export function RSVPMinimalisticVariant({
       <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
           {/* Header with generic text */}
-          <div className="mb-12 text-center" style={{ textAlign: alignment?.text || 'center' }}>
+          <AnimatedSection className="mb-12 text-center" style={{ textAlign: alignment?.text || 'center' }}>
             <h2 
               className="text-3xl md:text-4xl font-light tracking-wide mb-3"
               style={{ color: titleColor }}
@@ -424,10 +426,11 @@ export function RSVPMinimalisticVariant({
                 </p>
               </>
             )}
-          </div>
+          </AnimatedSection>
 
-          <div 
+          <AnimatedSection 
             className="p-6 sm:p-8 md:p-10 rounded-xl sm:rounded-2xl border"
+            delay={100}
             style={{
               backgroundColor: cardBg,
               borderColor: isColored ? `${titleColor}40` : '#e5e7eb',
@@ -436,7 +439,7 @@ export function RSVPMinimalisticVariant({
             <p className="text-center text-sm" style={{ color: textColor }}>
               {t('rsvp.individualInvitationsMessage')}
             </p>
-          </div>
+          </AnimatedSection>
         </div>
       </SectionWrapper>
     )
@@ -446,7 +449,7 @@ export function RSVPMinimalisticVariant({
     <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         {/* Header */}
-        <div className="mb-12 text-center" style={{ textAlign: alignment?.text || 'center' }}>
+        <AnimatedSection className="mb-12 text-center" style={{ textAlign: alignment?.text || 'center' }}>
           <h2 
             className="text-3xl md:text-4xl font-light tracking-wide mb-3"
             style={{ color: titleColor }}
@@ -465,11 +468,12 @@ export function RSVPMinimalisticVariant({
               </p>
             </>
           )}
-        </div>
+        </AnimatedSection>
 
         {groupData && (
-          <div 
+          <AnimatedSection 
             className="p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border"
+            delay={100}
             style={{
               backgroundColor: cardBg,
               borderColor: isColored ? `${titleColor}40` : '#e5e7eb',
@@ -637,7 +641,7 @@ export function RSVPMinimalisticVariant({
                 )}
               </button>
             </div>
-          </div>
+          </AnimatedSection>
         )}
       </div>
 

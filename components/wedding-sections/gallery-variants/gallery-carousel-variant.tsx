@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SectionWrapper } from '../section-wrapper'
+import { AnimatedSection } from '../animated-section'
 import { BaseGalleryProps } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { getGalleryColorScheme } from './color-utils'
@@ -85,7 +86,7 @@ export function GalleryCarouselVariant({
       style={isColored ? { backgroundColor: bgColor } : undefined}
     >
       {/* Section Header */}
-      <div className={`mb-8 md:mb-12 text-${titleAlignment}`}>
+      <AnimatedSection className={`mb-8 md:mb-12 text-${titleAlignment}`}>
         <h2
           className="text-3xl md:text-5xl font-bold mb-4"
           style={{
@@ -105,10 +106,10 @@ export function GalleryCarouselVariant({
             {sectionSubtitle}
           </p>
         )}
-      </div>
+      </AnimatedSection>
 
       {/* Carousel */}
-      <div className="relative max-w-5xl mx-auto">
+      <AnimatedSection delay={100} className="relative max-w-5xl mx-auto">
         {/* Main Image Container */}
         <div className="relative aspect-[4/3] md:aspect-[16/10] rounded-xl overflow-hidden shadow-2xl bg-gray-100">
           {validPhotos.map((photo, index) => (
@@ -196,7 +197,7 @@ export function GalleryCarouselVariant({
         <div className="text-center mt-4 text-sm" style={{ color: mutedTextColor }}>
           {currentIndex + 1} / {validPhotos.length}
         </div>
-      </div>
+      </AnimatedSection>
     </SectionWrapper>
   )
 }

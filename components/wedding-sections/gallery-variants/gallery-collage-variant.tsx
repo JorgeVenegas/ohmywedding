@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { X } from 'lucide-react'
+import { AnimatedSection } from '../animated-section'
 import { BaseGalleryProps } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { getGalleryColorScheme } from './color-utils'
@@ -132,7 +133,7 @@ export function GalleryCollageVariant({
       >
         {/* Section Header */}
         {(sectionTitle || sectionSubtitle) && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+          <AnimatedSection className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
             <div className={`text-${titleAlignment}`}>
               {sectionTitle && (
                 <h2
@@ -158,7 +159,7 @@ export function GalleryCollageVariant({
                 </p>
               )}
             </div>
-          </div>
+          </AnimatedSection>
         )}
 
         {/* Full-width grid container with overlay */}
@@ -203,8 +204,9 @@ export function GalleryCollageVariant({
               const isWide = wideImageIndices.includes(index)
               
               return (
-                <div 
-                  key={photo.id} 
+                <AnimatedSection 
+                  key={photo.id}
+                  index={index}
                   className={`relative overflow-hidden cursor-pointer group ${
                     isWide ? 'col-span-2 aspect-[2/1]' : 'aspect-square'
                   }`}
@@ -232,7 +234,7 @@ export function GalleryCollageVariant({
                       </p>
                     </div>
                   )}
-                </div>
+                </AnimatedSection>
               )
             })}
           </div>

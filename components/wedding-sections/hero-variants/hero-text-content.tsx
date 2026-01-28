@@ -7,6 +7,7 @@ import { Heart, Calendar } from 'lucide-react'
 import { formatWeddingDate, formatWeddingTime, calculateDaysUntilWedding } from '@/lib/wedding-utils-client'
 import { HeroContentProps } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { useEnvelope } from '@/components/contexts/envelope-context'
 
 export function HeroTextContent({
   wedding,
@@ -20,6 +21,7 @@ export function HeroTextContent({
   isOverlay = false
 }: HeroContentProps) {
   const { t, locale } = useI18n()
+  const { isOpened: envelopeOpened } = useEnvelope()
   
   // Helper to check if tagline is an old hardcoded English default
   const isOldTaglineDefault = (text: string | undefined) => {
@@ -49,12 +51,17 @@ export function HeroTextContent({
     return t('hero.justMarried')
   }
 
+  // Helper to get animation class only when envelope is opened
+  const getAnimationClass = (delay: string) => {
+    return envelopeOpened ? `animate-fade-in-up ${delay}` : 'opacity-0'
+  }
+
   return (
-    <div className={`${textAlign === 'left' ? 'text-left' : textAlign === 'right' ? 'text-right' : 'text-center'}`}>
+    <div className={`${textAlign === 'left' ? 'text-left' : textAlign === 'right' ? 'text-right' : 'text-center'} ${envelopeOpened ? '' : 'opacity-0'}`} style={{ transition: 'opacity 0.3s ease-in-out' }}>
       {/* Countdown Badge */}
       {showCountdown && wedding.wedding_date && (
         <div 
-          className={`inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-full text-sm sm:text-base md:text-lg font-medium mb-4 sm:mb-6 md:mb-8 shadow-lg animate-fade-in-up delay-300 ${
+          className={`inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-full text-sm sm:text-base md:text-lg font-medium mb-4 sm:mb-6 md:mb-8 shadow-lg ${getAnimationClass('delay-300')} ${
             isOverlay 
               ? 'bg-white/20 backdrop-blur-sm text-white border border-white/30' 
               : 'bg-white/80 backdrop-blur-sm border'
@@ -71,7 +78,7 @@ export function HeroTextContent({
 
       {/* Couple Names */}
       <h1 
-        className={`font-serif mb-4 sm:mb-6 md:mb-8 leading-tight animate-fade-in-up delay-500 ${
+        className={`font-serif mb-4 sm:mb-6 md:mb-8 leading-tight ${getAnimationClass('delay-500')} ${
           isOverlay 
             ? 'text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl text-white drop-shadow-lg' 
             : 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-slate-800'
@@ -88,7 +95,7 @@ export function HeroTextContent({
       {/* Tagline */}
       {showTagline && displayTagline && (
         <p 
-          className={`mb-4 sm:mb-6 md:mb-8 font-light animate-fade-in-up delay-700 ${
+          className={`mb-4 sm:mb-6 md:mb-8 font-light ${getAnimationClass('delay-700')} ${
             isOverlay 
               ? 'text-base sm:text-xl md:text-2xl lg:text-3xl text-white/90 drop-shadow-md' 
               : 'text-base sm:text-lg md:text-xl lg:text-2xl'
@@ -104,7 +111,7 @@ export function HeroTextContent({
 
       {/* Wedding Date */}
       <div 
-        className={`font-serif mb-5 sm:mb-6 md:mb-8 leading-tight animate-fade-in-up delay-1000 ${
+        className={`font-serif mb-5 sm:mb-6 md:mb-8 leading-tight ${getAnimationClass('delay-1000')} ${
           isOverlay 
             ? 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-white drop-shadow-lg' 
             : 'text-xl sm:text-2xl md:text-3xl lg:text-4xl text-slate-800'
@@ -119,7 +126,7 @@ export function HeroTextContent({
       </div>
 
       {/* Time & Location */}
-      <div className={`flex flex-col gap-2 sm:gap-3 sm:flex-row sm:gap-4 mb-6 sm:mb-8 md:mb-10 text-base sm:text-lg md:text-xl animate-fade-in-up delay-1100 ${
+      <div className={`flex flex-col gap-2 sm:gap-3 sm:flex-row sm:gap-4 mb-6 sm:mb-8 md:mb-10 text-base sm:text-lg md:text-xl ${getAnimationClass('delay-1100')} ${
         textAlign === 'center' ? 'items-center sm:justify-center' : 
         textAlign === 'right' ? 'items-end sm:justify-end' : 'items-start sm:justify-start'
       }`}>
@@ -139,7 +146,7 @@ export function HeroTextContent({
       </div>
 
       {/* Action Buttons */}
-      <div className={`flex flex-col gap-4 animate-fade-in-up delay-1300 ${
+      <div className={`flex flex-col gap-4 ${getAnimationClass('delay-1300')} ${
         textAlign === 'center' ? 'items-center' : 
         textAlign === 'right' ? 'items-end' : 'items-start'
       }`}>

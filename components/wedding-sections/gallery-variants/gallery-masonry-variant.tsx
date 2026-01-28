@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { X } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
+import { AnimatedSection } from '../animated-section'
 import { BaseGalleryProps } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { getGalleryColorScheme } from './color-utils'
@@ -86,7 +87,7 @@ export function GalleryMasonryVariant({
         style={isColored ? { backgroundColor: bgColor } : undefined}
       >
         {/* Section Header */}
-        <div className={`mb-12 text-${titleAlignment}`}>
+        <AnimatedSection className={`mb-12 text-${titleAlignment}`}>
           <h2
             className="text-3xl md:text-5xl font-bold mb-4"
             style={{
@@ -106,7 +107,7 @@ export function GalleryMasonryVariant({
               {sectionSubtitle}
             </p>
           )}
-        </div>
+        </AnimatedSection>
 
         {/* Masonry Grid - CSS Columns for Pinterest Style */}
         <div className={`gap-4 w-full ${
@@ -116,8 +117,9 @@ export function GalleryMasonryVariant({
           'columns-2 md:columns-3 lg:columns-5'
         }`}>
           {validPhotos.map((photo, index) => (
-            <div 
-              key={photo.id} 
+            <AnimatedSection 
+              key={photo.id}
+              index={index}
               className="break-inside-avoid mb-4 cursor-pointer"
               onClick={() => setSelectedPhoto(photo.url)}
             >
@@ -144,7 +146,7 @@ export function GalleryMasonryVariant({
                   )}
                 </div>
               </div>
-            </div>
+            </AnimatedSection>
           ))}
         </div>
       </SectionWrapper>

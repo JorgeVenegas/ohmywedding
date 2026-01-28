@@ -261,6 +261,7 @@ export function EventDetailsSplitVariant(props: BaseEventDetailsProps) {
 
         // Original full-width side-by-side layout with photos
         return events.map((event, index) => {
+          const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
           const isImageRight = index % 2 === 1
           const eventAlignment = getEventAlignment(event.type)
           const alignClasses = getAlignmentClasses(eventAlignment)
@@ -268,9 +269,13 @@ export function EventDetailsSplitVariant(props: BaseEventDetailsProps) {
           return (
             <div 
               key={event.id}
-              className="w-full"
+              ref={ref}
+              className={`w-full transition-all duration-700 ${
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+              }`}
               style={{ 
-                backgroundColor: isColored ? bgColor : (index % 2 === 0 ? '#ffffff' : (theme?.colors?.muted ? `${theme.colors.muted}08` : '#fafafa'))
+                backgroundColor: isColored ? bgColor : (index % 2 === 0 ? '#ffffff' : (theme?.colors?.muted ? `${theme.colors.muted}08` : '#fafafa')),
+                transitionDelay: isVisible ? `${index * 150}ms` : '0ms'
               }}
             >
               <div className={`flex flex-col lg:flex-row ${isImageRight ? 'lg:flex-row-reverse' : ''}`}>

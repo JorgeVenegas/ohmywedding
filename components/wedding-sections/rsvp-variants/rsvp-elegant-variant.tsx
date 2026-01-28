@@ -9,6 +9,7 @@ import { OTPVerificationDialog } from '@/components/ui/otp-verification-dialog'
 import { TravelFields } from '@/components/ui/travel-fields'
 import { Heart, Sparkles, CheckCircle2 } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
+import { AnimatedSection } from '../animated-section'
 import { BaseRSVPProps, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 
@@ -307,7 +308,7 @@ export function RSVPElegantVariant({
       <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
         <div className="container mx-auto px-4 py-20">
           <div className="max-w-3xl mx-auto">
-            <div 
+            <AnimatedSection 
               className="relative p-10 md:p-12 rounded-3xl border-4 shadow-2xl"
               style={{ 
                 backgroundColor: cardBg || '#f5f1ed',
@@ -411,7 +412,7 @@ export function RSVPElegantVariant({
                   {t('rsvp.editResponse')}
                 </button>
               </div>
-            </div>
+            </AnimatedSection>
           </div>
         </div>
       </SectionWrapper>
@@ -423,7 +424,7 @@ export function RSVPElegantVariant({
       <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
         <div className="container mx-auto px-4 py-20">
           <div className="max-w-xl mx-auto">
-            <div 
+            <AnimatedSection 
               className="relative p-6 sm:p-8 md:p-10 lg:p-12 rounded-2xl sm:rounded-3xl border-2 sm:border-4 shadow-2xl"
               style={{ 
                 backgroundColor: cardBg || '#f5f1ed',
@@ -453,7 +454,7 @@ export function RSVPElegantVariant({
                   {t('rsvp.individualInvitationsMessage')}
                 </p>
               </div>
-            </div>
+            </AnimatedSection>
           </div>
         </div>
       </SectionWrapper>
@@ -465,7 +466,7 @@ export function RSVPElegantVariant({
       <div className="container mx-auto px-4 py-20">
         <div className="max-w-2xl mx-auto">
           {/* Main Invitation Card */}
-          <div 
+          <AnimatedSection 
             className="relative p-6 sm:p-8 md:p-12 lg:p-16 rounded-2xl sm:rounded-3xl border-2 sm:border-4 shadow-2xl"
             style={{ 
               backgroundColor: cardBg || '#f5f1ed',
@@ -723,7 +724,7 @@ export function RSVPElegantVariant({
                 textColor={textColor}
               />
             )}
-          </div>
+          </AnimatedSection>
         </div>
       </div>
     </SectionWrapper>

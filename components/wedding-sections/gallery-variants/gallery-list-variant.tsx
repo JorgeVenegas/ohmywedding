@@ -3,6 +3,7 @@
 import React from 'react'
 import Image from 'next/image'
 import { SectionWrapper } from '../section-wrapper'
+import { AnimatedSection } from '../animated-section'
 import { BaseGalleryProps } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { getGalleryColorScheme } from './color-utils'
@@ -57,7 +58,7 @@ export function GalleryListVariant({
       style={isColored ? { backgroundColor: bgColor } : undefined}
     >
       {/* Section Header */}
-      <div className={`mb-12 text-${titleAlignment}`}>
+      <AnimatedSection className={`mb-12 text-${titleAlignment}`}>
         <h2
           className="text-3xl md:text-5xl font-bold mb-4"
           style={{
@@ -77,13 +78,14 @@ export function GalleryListVariant({
             {sectionSubtitle}
           </p>
         )}
-      </div>
+      </AnimatedSection>
 
       {/* Elegant Vertical List */}
       <div className="max-w-4xl mx-auto space-y-16 w-full">
         {validPhotos.map((photo, index) => (
-          <div 
+          <AnimatedSection 
             key={photo.id}
+            index={index}
             className={`flex flex-col ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} gap-8 items-center`}
           >
             {/* Photo */}
@@ -135,7 +137,7 @@ export function GalleryListVariant({
                 </p>
               )}
             </div>
-          </div>
+          </AnimatedSection>
         ))}
       </div>
     </SectionWrapper>

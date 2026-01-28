@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { SectionWrapper } from '../section-wrapper'
+import { AnimatedSection } from '../animated-section'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
@@ -249,7 +250,7 @@ export function RSVPCardsVariant({
     return (
       <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
-          <div 
+          <AnimatedSection 
             className="p-6 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl border-2 shadow-xl"
             style={{
               backgroundColor: cardBg,
@@ -346,7 +347,7 @@ export function RSVPCardsVariant({
                 </div>
               ))}
             </div>
-          </div>
+          </AnimatedSection>
         </div>
       </SectionWrapper>
     )
@@ -356,7 +357,7 @@ export function RSVPCardsVariant({
     <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         {/* Header */}
-        <div className="mb-12 text-center" style={{ textAlign: alignment?.text || 'center' }}>
+        <AnimatedSection className="mb-12 text-center" style={{ textAlign: alignment?.text || 'center' }}>
           <h2 
             className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight mb-3"
             style={{ color: titleColor }}
@@ -378,12 +379,12 @@ export function RSVPCardsVariant({
               </p>
             </>
           )}
-        </div>
+        </AnimatedSection>
 
         {groupData && (
           <>
             {/* Group Header */}
-            <div className="mb-8 text-center">
+            <AnimatedSection className="mb-8 text-center" delay={100}>
               <div 
                 className="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-2.5 rounded-full mb-3 text-sm sm:text-base"
                 style={{ 
@@ -398,13 +399,15 @@ export function RSVPCardsVariant({
               <p className="text-xs font-medium uppercase tracking-wide" style={{ color: `${textColor}99` }}>
                 {guests.length} {guests.length === 1 ? 'Guest' : 'Guests'}
               </p>
-            </div>
+            </AnimatedSection>
 
             {/* Guest Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              {guests.map((guest) => (
-                <div
+              {guests.map((guest, index) => (
+                <AnimatedSection
                   key={guest.id}
+                  index={index}
+                  delay={200 + index * 100}
                   className="group p-5 rounded-2xl border-2 shadow-md transition-all hover:shadow-lg"
                   style={{
                     backgroundColor: cardBg,
@@ -511,7 +514,7 @@ export function RSVPCardsVariant({
                     </div>
                   )}
 
-                </div>
+                </AnimatedSection>
               ))}
             </div>
 
@@ -572,6 +575,22 @@ export function RSVPCardsVariant({
               )}
             </button>
           </>
+        )}
+        
+        {/* Message when no group data */}
+        {!groupData && !loading && (
+          <AnimatedSection 
+            className="p-6 sm:p-8 md:p-10 rounded-xl sm:rounded-2xl border-2"
+            delay={100}
+            style={{
+              backgroundColor: cardBg,
+              borderColor: `${theme?.colors?.accent || titleColor}25`,
+            }}
+          >
+            <p className="text-center text-sm" style={{ color: textColor }}>
+              {t('rsvp.individualInvitationsMessage')}
+            </p>
+          </AnimatedSection>
         )}
       </div>
 
