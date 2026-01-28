@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseCountdownProps, TimeLeft, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { AnimatedCountdownUnit } from './animated-countdown-unit'
 
 export function CountdownModernVariant({
   weddingDate,
@@ -135,22 +136,24 @@ export function CountdownModernVariant({
           </p>
 
           <div className="flex justify-center items-stretch flex-wrap gap-3 md:gap-4">
-            {units.map((unit) => (
-              <div 
+            {units.map((unit, index) => (
+              <AnimatedCountdownUnit 
                 key={unit.label}
-                className={`relative overflow-hidden rounded-2xl p-4 sm:p-5 md:p-6 min-w-[70px] sm:min-w-[85px] md:min-w-[100px] ${
-                  isColored 
-                    ? 'shadow-lg' 
-                    : 'bg-gray-50 border border-gray-100'
-                }`}
-                style={isColored ? { 
-                  backgroundColor: cardBg,
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
-                } : undefined}
+                index={index}
+                className="relative overflow-hidden rounded-2xl p-4 sm:p-5 md:p-6 min-w-[70px] sm:min-w-[85px] md:min-w-[100px]"
+                style={{
+                  ...isColored ? { 
+                    backgroundColor: cardBg,
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
+                  } : {
+                    backgroundColor: '#fafafa',
+                    border: '1px solid #e5e7eb'
+                  }
+                }}
               >
                 <div className="relative z-10">
                   <div 
-                    className={`text-3xl sm:text-4xl md:text-5xl font-bold tabular-nums`}
+                    className="text-3xl sm:text-4xl md:text-5xl font-bold tabular-nums"
                     style={{ 
                       fontFamily: 'system-ui, -apple-system, sans-serif',
                       color: numberColor
@@ -165,7 +168,7 @@ export function CountdownModernVariant({
                     {unit.label}
                   </div>
                 </div>
-              </div>
+              </AnimatedCountdownUnit>
             ))}
           </div>
 

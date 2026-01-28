@@ -8,6 +8,7 @@ import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar } from 'luci
 import { SectionWrapper } from '../section-wrapper'
 import { BaseEventDetailsProps, buildEventList, getMapUrl, getColorScheme, getEventIconType, formatWeddingTime } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
 export function EventDetailsTimelineVariant(props: BaseEventDetailsProps) {
   const {
@@ -97,12 +98,18 @@ export function EventDetailsTimelineVariant(props: BaseEventDetailsProps) {
             style={{ backgroundColor: timelineColor, opacity: 0.3 }}
           />
 
-          {events.map((event, index) => (
+          {events.map((event, index) => {
+            const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+            return (
             <div 
               key={event.id}
-              className={`relative flex items-start gap-4 sm:gap-6 md:gap-8 mb-6 sm:mb-8 ${
+              ref={ref}
+              className={`relative flex items-start gap-4 sm:gap-6 md:gap-8 mb-6 sm:mb-8 transition-all duration-500 ${
                 index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
+              } ${
+                isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 ' + (index % 2 === 0 ? '-translate-x-8' : 'translate-x-8')
               }`}
+              style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
             >
               {/* Timeline dot */}
               <div 
@@ -226,7 +233,8 @@ export function EventDetailsTimelineVariant(props: BaseEventDetailsProps) {
               {/* Hidden spacer for desktop alternating layout */}
               <div className="hidden md:block md:w-[calc(50%-3rem)]" />
             </div>
-          ))}
+            )
+          })}
 
           {/* End dot */}
           <div 

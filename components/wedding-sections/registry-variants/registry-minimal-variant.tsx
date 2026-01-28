@@ -6,6 +6,7 @@ import { BaseRegistryProps, getColorScheme, getProviderLogoUrl } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { getWeddingPath } from '@/lib/wedding-url'
 import Link from 'next/link'
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
 export function RegistryMinimalVariant({
   theme,
@@ -93,7 +94,8 @@ export function RegistryMinimalVariant({
           </div>
         ) : (
           <div className="space-y-3">
-            {registries.map((registry) => {
+            {registries.map((registry, index) => {
+              const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
               const hasUrl = registry.url && registry.url.trim() !== ''
               const ItemWrapper = hasUrl ? 'a' : 'div'
               const linkProps = hasUrl ? {
@@ -106,8 +108,15 @@ export function RegistryMinimalVariant({
               }
 
               return (
-                <ItemWrapper
+                <div
                   key={registry.id}
+                  ref={ref}
+                  className={`transition-all duration-500 ${
+                    isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
+                  }`}
+                  style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
+                >
+                <ItemWrapper
                   {...linkProps}
                   className="group flex items-center justify-between p-4 rounded-lg transition-all duration-200 hover:bg-opacity-80 border-l-4"
                   style={{ 
@@ -155,6 +164,7 @@ export function RegistryMinimalVariant({
                   style={{ color: primary }}
                 />
               </ItemWrapper>
+                </div>
             )
           })}
 

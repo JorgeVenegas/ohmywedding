@@ -4,6 +4,7 @@ import { SectionWrapper } from '../section-wrapper'
 import { HeroTextContent } from './hero-text-content'
 import { BaseHeroProps } from './types'
 import { resolveColor } from '@/lib/color-utils'
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
 interface HeroBackgroundVariantProps extends BaseHeroProps {
   overlayOpacity?: number
@@ -33,6 +34,8 @@ export function HeroBackgroundVariant({
   // Resolve palette references to actual colors
   const resolvedGradientColor1 = resolveColor(gradientColor1, theme)
   const resolvedGradientColor2 = resolveColor(gradientColor2, theme)
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+  
   return (
     <SectionWrapper 
       theme={{
@@ -76,7 +79,12 @@ export function HeroBackgroundVariant({
       </div>
       
       {/* Centered Content */}
-      <div className="relative z-10 w-full max-w-4xl mx-auto px-4 flex items-center justify-center h-full">
+      <div 
+        ref={ref}
+        className={`relative z-10 w-full max-w-4xl mx-auto px-4 flex items-center justify-center h-full transition-all duration-700 ${
+          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
+      >
         <HeroTextContent
           wedding={wedding}
           dateId={dateId}

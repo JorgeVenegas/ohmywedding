@@ -5,6 +5,7 @@ import { Heart } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseCountdownProps, TimeLeft, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { AnimatedCountdownUnit } from './animated-countdown-unit'
 
 export function CountdownElegantVariant({
   weddingDate,
@@ -157,14 +158,18 @@ export function CountdownElegantVariant({
             {units.map((unit, index) => (
               <React.Fragment key={unit.label}>
                 {index > 0 && (
-                  <div 
+                  <AnimatedCountdownUnit
+                    index={index}
                     className={`hidden sm:flex items-center self-center ${separatorColor}`}
                     style={isColored ? { color: sectionTextColorAlt, opacity: 0.6 } : undefined}
                   >
                     <span className="text-2xl md:text-3xl font-light">&</span>
-                  </div>
+                  </AnimatedCountdownUnit>
                 )}
-                <div className="text-center">
+                <AnimatedCountdownUnit
+                  index={index}
+                  className="text-center"
+                >
                   <div 
                     className="text-5xl sm:text-6xl md:text-7xl font-light mb-2"
                     style={{ 
@@ -180,7 +185,7 @@ export function CountdownElegantVariant({
                   >
                     {unit.label}
                   </div>
-                </div>
+                </AnimatedCountdownUnit>
               </React.Fragment>
             ))}
           </div>

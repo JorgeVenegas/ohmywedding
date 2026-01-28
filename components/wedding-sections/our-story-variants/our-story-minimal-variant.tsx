@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseOurStoryProps, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
 export function OurStoryMinimalVariant({
   theme,
@@ -56,8 +57,15 @@ export function OurStoryMinimalVariant({
           )}
           
           <div className="space-y-6 sm:space-y-8">
-            {showHowWeMet && (
-              <div className="space-y-8">
+            {showHowWeMet && (() => {
+              const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+              return (
+              <div 
+                ref={ref}
+                className={`space-y-8 transition-all duration-700 ${
+                  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                }`}
+              >
                 {showHowWeMetPhoto && howWeMetPhoto && (
                   <div 
                     className="relative w-full max-w-2xl mx-auto h-64 md:h-96 rounded-lg overflow-hidden shadow-lg"
@@ -82,10 +90,18 @@ export function OurStoryMinimalVariant({
                   </p>
                 </div>
               </div>
-            )}
+            )})()}
             
-            {showProposal && (
-              <div className="space-y-8">
+            {showProposal && (() => {
+              const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+              return (
+              <div 
+                ref={ref}
+                className={`space-y-8 transition-all duration-700 ${
+                  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                }`}
+                style={{ transitionDelay: isVisible ? '200ms' : '0ms' }}
+              >
                 {showProposalPhoto && proposalPhoto && (
                   <div 
                     className="relative w-full max-w-2xl mx-auto h-64 md:h-96 rounded-lg overflow-hidden shadow-lg"
@@ -110,7 +126,7 @@ export function OurStoryMinimalVariant({
                   </p>
                 </div>
               </div>
-            )}
+            )})()}
           </div>
         </div>
       </div>

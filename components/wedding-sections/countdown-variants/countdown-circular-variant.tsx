@@ -5,6 +5,7 @@ import { Heart } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseCountdownProps, TimeLeft, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { AnimatedCountdownUnit } from './animated-countdown-unit'
 
 export function CountdownCircularVariant({
   weddingDate,
@@ -192,7 +193,7 @@ export function CountdownCircularVariant({
       alignment={alignment}
       style={isColored ? { backgroundColor: bgColor } : undefined}
     >
-        <div className="text-center py-6 sm:py-8">
+      <div className="text-center py-6 sm:py-8">
           {sectionTitle && (
             <h2 
               className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6"
@@ -220,15 +221,21 @@ export function CountdownCircularVariant({
             <Heart className="w-5 h-5 ml-2 fill-current" style={{ color: decorColor }} />
           </div>
 
-          <div className="flex justify-center items-center space-x-6 md:space-x-12 flex-wrap gap-6">
-            {units.map((unit) => (
-              <CircularProgress
+          <div 
+            className="flex justify-center items-center space-x-6 md:space-x-12 flex-wrap gap-6"
+          >
+            {units.map((unit, index) => (
+              <AnimatedCountdownUnit
                 key={unit.label}
-                value={unit.value}
-                max={unit.max}
-                label={unit.label}
-                unit={unit.unit}
-              />
+                index={index}
+              >
+                <CircularProgress
+                  value={unit.value}
+                  max={unit.max}
+                  label={unit.label}
+                  unit={unit.unit}
+                />
+              </AnimatedCountdownUnit>
             ))}
           </div>
 

@@ -5,7 +5,7 @@ import { ExternalLink, Gift, Heart, Sparkles } from 'lucide-react'
 import { BaseRegistryProps, getColorScheme, getProviderLogoUrl } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { getWeddingPath } from '@/lib/wedding-url'
-
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 import Link from 'next/link'
 
 export function RegistryElegantVariant({
@@ -141,13 +141,18 @@ export function RegistryElegantVariant({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto [&>*:last-child:nth-child(odd)]:md:col-span-2 [&>*:last-child:nth-child(odd)]:md:max-w-lg [&>*:last-child:nth-child(odd)]:md:mx-auto">
-            {registries.map((registry) => {
+            {registries.map((registry, index) => {
+              const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
               const hasUrl = registry.url && registry.url.trim() !== ''
 
               return (
                 <div
                   key={registry.id}
-                  className="relative w-full h-full"
+                  ref={ref}
+                  className={`relative w-full h-full transition-all duration-500 ${
+                    isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                  }`}
+                  style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
                 >
                   {/* Ornate outer border */}
                   <div 

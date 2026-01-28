@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { HeroTextContent } from './hero-text-content'
 import { BaseHeroProps } from './types'
 import { resolveColor } from '@/lib/color-utils'
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
 // Helper function to determine if a color is light
 function getLuminance(hex: string): number {
@@ -77,6 +78,8 @@ export function HeroSideBySideVariant({
   
   // Resolve palette references to actual colors
   const resolvedGradientColor1 = resolveColor(gradientColor1, theme)
+  
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
   const resolvedGradientColor2 = resolveColor(gradientColor2, theme)
 
   // Get background color if using colored background (with light/lighter variants)
@@ -165,9 +168,14 @@ export function HeroSideBySideVariant({
         </div>
         
         {/* Content Section */}
-        <div className={`w-full lg:w-1/2 flex items-center justify-center flex-1 lg:h-full overflow-y-auto ${
-          isImageLeft ? 'order-2 lg:order-2' : 'order-2 lg:order-1'
-        }`}>
+        <div 
+          ref={ref}
+          className={`w-full lg:w-1/2 flex items-center justify-center flex-1 lg:h-full overflow-y-auto transition-all duration-700 delay-300 ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          } ${
+            isImageLeft ? 'order-2 lg:order-2' : 'order-2 lg:order-1'
+          }`}
+        >
           <div className="w-full max-w-xl mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-8 lg:py-16">
             <div className="text-center lg:text-left">
               <HeroTextContent

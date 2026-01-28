@@ -15,7 +15,7 @@ interface AnimatedFAQItemProps {
 }
 
 function AnimatedFAQItem({ index, className, style, children }: AnimatedFAQItemProps) {
-  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: true })
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
 
   return (
     <div

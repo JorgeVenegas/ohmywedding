@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { SectionWrapper } from '../section-wrapper'
 import { HeroTextContent } from './hero-text-content'
 import { BaseHeroProps } from './types'
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
 interface HeroStackedVariantProps extends BaseHeroProps {
   showDecorations?: boolean
@@ -25,6 +26,8 @@ export function HeroStackedVariant({
   imageHeight = 'medium',
   imageWidth = 'centered'
 }: HeroStackedVariantProps) {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+  
   const heightClasses = {
     small: 'h-48 md:h-64',
     medium: 'h-64 md:h-80',
@@ -70,7 +73,12 @@ export function HeroStackedVariant({
       
       <div className="relative w-full h-full flex flex-col">
         {/* Content Section - Centered in remaining space */}
-        <div className="flex-1 flex items-center justify-center px-4 pt-16 md:pt-20">
+        <div 
+          ref={ref}
+          className={`flex-1 flex items-center justify-center px-4 pt-16 md:pt-20 transition-all duration-700 delay-300 ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+        >
           <div className="max-w-6xl mx-auto">
             <HeroTextContent
               wedding={wedding}

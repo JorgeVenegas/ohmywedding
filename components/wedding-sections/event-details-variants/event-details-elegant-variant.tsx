@@ -8,6 +8,7 @@ import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar, Heart } fro
 import { SectionWrapper } from '../section-wrapper'
 import { BaseEventDetailsProps, buildEventList, getMapUrl, getColorScheme, getEventIconType, formatWeddingTime } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
 export function EventDetailsElegantVariant(props: BaseEventDetailsProps) {
   const {
@@ -98,10 +99,16 @@ export function EventDetailsElegantVariant(props: BaseEventDetailsProps) {
 
         {/* Events in elegant layout */}
         <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 mb-6 sm:mb-8">
-          {events.map((event, index) => (
+          {events.map((event, index) => {
+            const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+            return (
             <div 
               key={event.id}
-              className="relative"
+              ref={ref}
+              className={`relative transition-all duration-500 ${
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+              }`}
+              style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
             >
               {/* Decorative connector line */}
               {index < events.length - 1 && (
@@ -245,7 +252,8 @@ export function EventDetailsElegantVariant(props: BaseEventDetailsProps) {
                 </div>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
 
         {/* Embedded Map */}

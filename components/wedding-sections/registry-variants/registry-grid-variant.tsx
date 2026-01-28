@@ -6,6 +6,7 @@ import { BaseRegistryProps, getColorScheme, getProviderLogoUrl } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { getWeddingPath } from '@/lib/wedding-url'
 import Link from 'next/link'
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
 export function RegistryGridVariant({
   theme,
@@ -106,7 +107,8 @@ export function RegistryGridVariant({
           </div>
         ) : (
           <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
-            {registries.map((registry) => {
+            {registries.map((registry, index) => {
+              const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
               const hasUrl = registry.url && registry.url.trim() !== ''
               const CardWrapper = hasUrl ? 'a' : 'div'
               const linkProps = hasUrl ? {
@@ -119,8 +121,15 @@ export function RegistryGridVariant({
               }
 
               return (
-                <CardWrapper
+                <div
                   key={registry.id}
+                  ref={ref}
+                  className={`transition-all duration-500 ${
+                    isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+                  }`}
+                  style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
+                >
+                <CardWrapper
                   {...linkProps}
                   className="group flex flex-col items-center gap-3 transition-transform duration-200 hover:-translate-y-1"
                 >
@@ -162,6 +171,7 @@ export function RegistryGridVariant({
                   </h3>
                 </div>
               </CardWrapper>
+                </div>
             )
           })}
 

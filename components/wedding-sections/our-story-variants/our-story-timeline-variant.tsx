@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseOurStoryProps, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
 export function OurStoryTimelineVariant({
   theme,
@@ -85,8 +86,16 @@ export function OurStoryTimelineVariant({
             />
             
             {allEvents.map((event, index) => {
+              const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
               return (
-                <div key={index} className="relative pl-8 flex items-center">
+                <div 
+                  key={index} 
+                  ref={ref}
+                  className={`relative pl-8 flex items-center transition-all duration-500 ${
+                    isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
+                  }`}
+                  style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
+                >
                   {/* Timeline dot */}
                   <div 
                     className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 shadow-md flex items-center justify-center z-10"
@@ -142,8 +151,22 @@ export function OurStoryTimelineVariant({
             
             <div className="space-y-6 sm:space-y-8">
               {allEvents.map((event, index) => {
+                const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+                const isLeft = index % 2 === 0
                 return (
-                  <div key={index} className={`flex items-center ${index % 2 === 0 ? '' : 'flex-row-reverse'}`}>
+                  <div 
+                    key={index} 
+                    ref={ref}
+                    className={`flex items-center transition-all duration-500 ${
+                      isLeft ? '' : 'flex-row-reverse'
+                    } ${
+                      isVisible ? 'opacity-100' : 'opacity-0'
+                    }`}
+                    style={{ 
+                      transform: isVisible ? 'translateX(0)' : isLeft ? 'translateX(-20px)' : 'translateX(20px)',
+                      transitionDelay: isVisible ? `${index * 150}ms` : '0ms'
+                    }}
+                  >
                     {/* Content - light tinted background */}
                     <div className={`w-1/2 ${index % 2 === 0 ? 'pr-8 text-right' : 'pl-8 text-left'}`}>
                       <div 
@@ -191,7 +214,7 @@ export function OurStoryTimelineVariant({
                             className="object-cover"
                           />
                         </div>
-                      )}
+                      )}  
                     </div>
                   </div>
                 )

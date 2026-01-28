@@ -5,6 +5,7 @@ import { Heart, Clock } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseCountdownProps, TimeLeft, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { AnimatedCountdownUnit } from './animated-countdown-unit'
 
 export function CountdownClassicVariant({
   weddingDate,
@@ -157,10 +158,16 @@ export function CountdownClassicVariant({
             <Heart className="w-5 h-5 sm:w-6 sm:h-6 ml-2 sm:ml-3 fill-current flex-shrink-0" style={{ color: iconColor }} />
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-xl sm:max-w-2xl md:max-w-4xl mx-auto px-4">
+          <div 
+            className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-xl sm:max-w-2xl md:max-w-4xl mx-auto px-4"
+          >
             {units.map((unit, index) => {
               return (
-                <div key={unit.label} className="text-center">
+                <AnimatedCountdownUnit 
+                  key={unit.label}
+                  index={index}
+                  className="text-center"
+                >
                   <div 
                     className={`relative rounded-lg shadow-lg border-2 p-3 sm:p-4 md:p-6 lg:p-8 ${isColored ? '' : 'bg-white'}`}
                     style={{ 
@@ -195,7 +202,7 @@ export function CountdownClassicVariant({
                     <div className="hidden sm:block absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 rounded-br-lg" 
                          style={{ borderColor: cardBorderColor }} />
                   </div>
-                </div>
+                </AnimatedCountdownUnit>
               )
             })}
           </div>

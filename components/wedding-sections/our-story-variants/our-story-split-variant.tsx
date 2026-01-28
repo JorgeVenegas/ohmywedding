@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { Heart, BookOpen, Sparkles } from 'lucide-react'
 import { BaseOurStoryProps, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
 export function OurStorySplitVariant({
   theme,
@@ -191,11 +192,16 @@ export function OurStorySplitVariant({
               const IconComponent = section.icon
               const sectionAlignment = getSectionAlignment(section.id)
               const alignClasses = getAlignmentClasses(sectionAlignment)
+              const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
               
               return (
                 <div 
                   key={section.id}
-                  className={alignClasses.text}
+                  ref={ref}
+                  className={`${alignClasses.text} transition-all duration-700 ${
+                    isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                  }`}
+                  style={{ transitionDelay: isVisible ? `${index * 150}ms` : '0ms' }}
                 >
                   {/* Icon */}
                   <div className={`flex ${alignClasses.flex} gap-3 mb-3 sm:mb-4`}>
@@ -254,13 +260,18 @@ export function OurStorySplitVariant({
           {storySections.map((section, index) => {
             const isImageRight = index % 2 === 1
             const IconComponent = section.icon
+            const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
 
             // Skip sections without photos if showPhotos is required
             if (!section.photo) {
               return (
                 <div 
                   key={section.id}
-                  className="max-w-4xl mx-auto px-4 sm:px-8 py-8 sm:py-10"
+                  ref={ref}
+                  className={`max-w-4xl mx-auto px-4 sm:px-8 py-8 sm:py-10 transition-all duration-700 ${
+                    isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                  }`}
+                  style={{ transitionDelay: isVisible ? `${index * 150}ms` : '0ms' }}
                 >
                   <div className="text-center">
                     {/* Icon */}
@@ -317,9 +328,14 @@ export function OurStorySplitVariant({
             return (
               <div 
                 key={section.id}
-                className="w-full"
+                ref={ref}
+                className={`w-full transition-all duration-700 ${
+                  isVisible ? 'opacity-100' : 'opacity-0'
+                }`}
                 style={{ 
-                  backgroundColor: isColored ? bgColor : (index % 2 === 0 ? '#ffffff' : (theme?.colors?.muted ? `${theme.colors.muted}08` : '#fafafa'))
+                  backgroundColor: isColored ? bgColor : (index % 2 === 0 ? '#ffffff' : (theme?.colors?.muted ? `${theme.colors.muted}08` : '#fafafa')),
+                  transform: isVisible ? 'translateY(0)' : 'translateY(40px)',
+                  transitionDelay: isVisible ? `${index * 150}ms` : '0ms'
                 }}
               >
                 {(() => {

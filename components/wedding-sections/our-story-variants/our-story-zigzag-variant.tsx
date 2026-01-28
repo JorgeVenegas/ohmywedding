@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseOurStoryProps, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
 export function OurStoryZigzagVariant({
   theme,
@@ -84,12 +85,18 @@ export function OurStoryZigzagVariant({
           
           <div className="space-y-24">
             {allEvents.map((event, index) => {
+              const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+              const isLeft = index % 2 === 0
               return (
                 <div 
-                  key={index} 
-                  className={`relative flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 ${
-                    index % 2 === 0 ? '' : 'md:flex-row-reverse'
+                  key={index}
+                  ref={ref}
+                  className={`relative flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 transition-all duration-700 ${
+                    isLeft ? '' : 'md:flex-row-reverse'
+                  } ${
+                    isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
                   }`}
+                  style={{ transitionDelay: isVisible ? `${index * 150}ms` : '0ms' }}
                 >
                   {/* Decorative number */}
                   <div 

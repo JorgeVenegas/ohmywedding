@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar, Navigation, Heart } from 'lucide-react'
 import { BaseEventDetailsProps, buildEventList, getMapUrl, getColorScheme, getEventIconType, formatWeddingTime } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
 export function EventDetailsSplitVariant(props: BaseEventDetailsProps) {
   const {
@@ -149,13 +150,18 @@ export function EventDetailsSplitVariant(props: BaseEventDetailsProps) {
                   : 'grid-cols-1 md:grid-cols-2'
               }`}>
                 {events.map((event, index) => {
+                  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
                   const eventAlignment = getEventAlignment(event.type)
                   const alignClasses = getAlignmentClasses(eventAlignment)
                   
                   return (
                   <div 
                     key={event.id}
-                    className={alignClasses.text}
+                    ref={ref}
+                    className={`${alignClasses.text} transition-all duration-500 ${
+                      isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                    }`}
+                    style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
                   >
                     {/* Event Icon */}
                     <div className={`flex ${alignClasses.flex} gap-3 mb-3 sm:mb-4`}>

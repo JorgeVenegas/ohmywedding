@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseCountdownProps, TimeLeft, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { AnimatedCountdownUnit } from './animated-countdown-unit'
 
 export function CountdownMinimalVariant({
   weddingDate,
@@ -114,7 +115,9 @@ export function CountdownMinimalVariant({
       alignment={alignment}
       style={isColored ? { backgroundColor: bgColor } : undefined}
     >
-      <div className="text-center py-20">
+      <div 
+        className="text-center py-20"
+      >
           {sectionTitle && (
             <h2 
               className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4"
@@ -136,18 +139,24 @@ export function CountdownMinimalVariant({
             {displayMessage}
           </p>
 
-          <div className="flex justify-center items-baseline flex-wrap space-x-2 sm:space-x-3 md:space-x-4 gap-2">
+          <div 
+            className="flex justify-center items-baseline flex-wrap space-x-2 sm:space-x-3 md:space-x-4 gap-2"
+          >
             {units.map((unit, index) => (
               <React.Fragment key={unit.label}>
                 {index > 0 && (
-                  <span 
+                  <AnimatedCountdownUnit
+                    index={index}
                     className={`text-xl sm:text-2xl md:text-4xl font-thin ${separatorClass}`}
                     style={{ color: separatorColor }}
                   >
                     :
-                  </span>
+                  </AnimatedCountdownUnit>
                 )}
-                <div className="text-center">
+                <AnimatedCountdownUnit
+                  index={index}
+                  className="text-center"
+                >
                   <span 
                     className="text-3xl sm:text-4xl md:text-7xl font-thin tabular-nums"
                     style={{ 
@@ -163,7 +172,7 @@ export function CountdownMinimalVariant({
                   >
                     {unit.label}
                   </span>
-                </div>
+                </AnimatedCountdownUnit>
               </React.Fragment>
             ))}
           </div>

@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { SectionWrapper } from '../section-wrapper'
 import { BaseOurStoryProps, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
 export function OurStoryCardsVariant({
   theme,
@@ -73,13 +74,20 @@ export function OurStoryCardsVariant({
           )}
           
           <div className={`grid gap-4 sm:gap-6 lg:gap-8 ${stories.length === 1 ? 'md:grid-cols-1 max-w-xl mx-auto' : 'md:grid-cols-2'}`}>
-            {stories.map((story, index) => (
-              <div key={index} 
-                   className={`rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:translate-y-[-4px] ${isColored ? '' : 'bg-white'}`}
-                   style={{ 
-                     backgroundColor: isColored ? cardBg : undefined,
-                     boxShadow: isColored ? `0 8px 32px rgba(0,0,0,0.15)` : undefined
-                   }}
+            {stories.map((story, index) => {
+              const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+              return (
+              <div 
+                key={index}
+                ref={ref}
+                className={`rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 hover:translate-y-[-4px] ${
+                  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                } ${isColored ? '' : 'bg-white'}`}
+                style={{ 
+                  backgroundColor: isColored ? cardBg : undefined,
+                  boxShadow: isColored ? `0 8px 32px rgba(0,0,0,0.15)` : undefined,
+                  transitionDelay: isVisible ? `${index * 100}ms` : '0ms'
+                }}
               >
                 {story.image && (
                   <div className="relative h-64">
@@ -102,7 +110,8 @@ export function OurStoryCardsVariant({
                   </p>
                 </div>
               </div>
-            ))}
+            )})
+            }
           </div>
           
           {/* Photo gallery if provided */}
@@ -113,10 +122,15 @@ export function OurStoryCardsVariant({
                 {t('ourStory.ourJourney')}
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {photos.slice(0, 8).map((photo, idx) => (
+                {photos.slice(0, 8).map((photo, idx) => {
+                  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+                  return (
                   <div 
-                    key={photo.id} 
-                    className="relative aspect-square rounded-lg overflow-hidden"
+                    key={photo.id}
+                    ref={ref}
+                    className={`relative aspect-square rounded-lg overflow-hidden transition-all duration-500 ${
+                      isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+                    }`}
                     style={isColored ? { 
                       boxShadow: `0 4px 16px rgba(0,0,0,0.15)` 
                     } : undefined}
@@ -128,7 +142,8 @@ export function OurStoryCardsVariant({
                       className="object-cover hover:scale-105 transition-transform duration-300"
                     />
                   </div>
-                ))}
+                )})
+                }
               </div>
             </div>
           )}

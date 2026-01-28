@@ -6,6 +6,7 @@ import { BaseRegistryProps, getColorScheme, getProviderLogoUrl } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { getWeddingPath } from '@/lib/wedding-url'
 import Link from 'next/link'
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
 export function RegistryCardsVariant({
   theme,
@@ -106,7 +107,8 @@ export function RegistryCardsVariant({
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 max-w-6xl mx-auto [&>*:last-child:nth-child(3n+1)]:lg:col-start-2">
-            {registries.map((registry) => {
+            {registries.map((registry, index) => {
+              const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
               const hasUrl = registry.url && registry.url.trim() !== ''
               const CardWrapper = hasUrl ? 'a' : 'div'
               const linkProps = hasUrl ? {
@@ -119,8 +121,15 @@ export function RegistryCardsVariant({
               }
 
               return (
-                <CardWrapper
+                <div
                   key={registry.id}
+                  ref={ref}
+                  className={`transition-all duration-500 ${
+                    isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                  }`}
+                  style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
+                >
+                <CardWrapper
                   {...linkProps}
                   className="group relative flex flex-col rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 w-full h-full"
                   style={{ 
@@ -181,6 +190,7 @@ export function RegistryCardsVariant({
                   </div>
                 </div>
               </CardWrapper>
+              </div>
             )
           })}
 

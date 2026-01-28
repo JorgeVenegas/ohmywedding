@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { SectionWrapper } from '../section-wrapper'
 import { HeroTextContent } from './hero-text-content'
 import { BaseHeroProps } from './types'
+import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
 interface HeroFramedVariantProps extends BaseHeroProps {
   frameStyle?: 'circular' | 'rounded' | 'square' | 'polaroid'
@@ -23,6 +24,7 @@ export function HeroFramedVariant({
   frameStyle = 'circular',
   imageSize = 'medium'
 }: HeroFramedVariantProps) {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
   const getSizeClasses = () => {
     switch (imageSize) {
       case 'small': return 'w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48'
@@ -61,7 +63,12 @@ export function HeroFramedVariant({
       className="h-[100dvh] max-h-[100dvh] relative overflow-hidden"
       id="hero"
     >
-      <div className="w-full h-[100dvh] max-w-6xl mx-auto px-4 flex flex-col items-center justify-center gap-6">
+      <div 
+        ref={ref}
+        className={`w-full h-[100dvh] max-w-6xl mx-auto px-4 flex flex-col items-center justify-center gap-6 transition-all duration-700 delay-300 ${
+          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
+      >
         {/* Framed Image */}
         <div className={`relative flex-shrink-0 ${getFrameClasses()} overflow-hidden`}>
           {heroImageUrl && (
