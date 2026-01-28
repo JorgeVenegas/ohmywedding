@@ -68,55 +68,61 @@ export function InvitationsChartsSection({
       <button
         onClick={() => setChartsExpanded(!chartsExpanded)}
         aria-expanded={chartsExpanded}
-        className="flex items-center gap-2 mb-4 px-2 sm:px-3 py-2 rounded-lg hover:bg-muted/50 transition-all duration-200"
+        className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10 hover:bg-primary/10 hover:border-primary/20 transition-all duration-200 ${
+          chartsExpanded ? 'mb-4' : 'mb-0'
+        }`}
       >
-        <ChevronDown className={`w-4 h-4 transition-transform duration-300 flex-shrink-0 ${chartsExpanded ? 'rotate-0' : '-rotate-90'}`} />
+        <ChevronDown className={`w-4 h-4 text-primary/70 transition-transform duration-300 flex-shrink-0 ${chartsExpanded ? 'rotate-0' : '-rotate-90'}`} />
         <span className="text-sm font-semibold text-foreground">Charts & Analytics</span>
+        <span className="text-xs text-muted-foreground ml-1">{chartsExpanded ? 'Hide' : 'Show'}</span>
       </button>
       <div
-        className={`space-y-6 overflow-hidden transition-all duration-300 ease-out ${chartsExpanded
+        className={`overflow-hidden transition-all duration-300 ease-out ${chartsExpanded
           ? 'max-h-[4000px] opacity-100 translate-y-0'
           : 'max-h-0 opacity-0 -translate-y-2 pointer-events-none'
         }`}
         aria-hidden={!chartsExpanded}
       >
-        {/* Status by Invited By - Stacked Bar Chart */}
-        {statusByInvitedByData.length > 0 && (
-          <ChartCard
-            title="Guest Status by Inviter"
-            description="Distribution of confirmations, pending, and declines"
-          >
-            <StackedBarChart
-              data={statusByInvitedByData}
-              categoryKey="name"
-              bars={[
-                { dataKey: "confirmed", name: "Confirmed", color: "emerald" },
-                { dataKey: "pending", name: "Pending", color: "amber" },
-                { dataKey: "declined", name: "Declined", color: "red" },
-              ]}
-              height={Math.max(250, statusByInvitedByData.length * 45 + 60)}
-            />
-          </ChartCard>
-        )}
+        {/* Status by Invited By & Tags - Side by side on larger screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Status by Invited By - Stacked Bar Chart */}
+          {statusByInvitedByData.length > 0 && (
+            <ChartCard
+              title="Guest Status by Inviter"
+              description="Distribution of confirmations, pending, and declines"
+            >
+              <StackedBarChart
+                data={statusByInvitedByData}
+                categoryKey="name"
+                bars={[
+                  { dataKey: "confirmed", name: "Confirmed", color: "emerald" },
+                  { dataKey: "pending", name: "Pending", color: "amber" },
+                  { dataKey: "declined", name: "Declined", color: "red" },
+                ]}
+                height={Math.max(250, statusByInvitedByData.length * 45 + 60)}
+              />
+            </ChartCard>
+          )}
 
-        {/* Tags Donut Chart */}
-        {tagsByInvitedByData.length > 0 && (
-          <ChartCard
-            title="Guest Distribution by Tag"
-            description="Breakdown of guests by their assigned categories"
-          >
-            <DonutChart
-              data={tagsByInvitedByData.map((item) => ({
-                name: item.name,
-                value: item.value,
-                color: TAG_PIE_COLORS[item.name.toLowerCase()] || TAG_PIE_COLORS.default,
-              }))}
-              height={280}
-              innerRadius={50}
-              outerRadius={90}
-            />
-          </ChartCard>
-        )}
+          {/* Tags Donut Chart */}
+          {tagsByInvitedByData.length > 0 && (
+            <ChartCard
+              title="Guest Distribution by Tag"
+              description="Breakdown of guests by their assigned categories"
+            >
+              <DonutChart
+                data={tagsByInvitedByData.map((item) => ({
+                  name: item.name,
+                  value: item.value,
+                  color: TAG_PIE_COLORS[item.name.toLowerCase()] || TAG_PIE_COLORS.default,
+                }))}
+                height={280}
+                innerRadius={50}
+                outerRadius={90}
+              />
+            </ChartCard>
+          )}
+        </div>
 
         {/* Confirmation Timeline Chart */}
         {!timelineLoading && (

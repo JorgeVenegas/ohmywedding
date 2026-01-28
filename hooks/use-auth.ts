@@ -69,11 +69,18 @@ export function useAuth() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        if (event === 'TOKEN_REFRESHED' && !session) {
-          // Token refresh failed, clear all cookies
-          clearAllAuthCookies()
-          setUser(null)
-        } else {
+        // Only update state on meaningful auth events to prevent unnecessary re-renders
+        if (event === 'TOKEN_REFRESHED') {
+          // Token refresh - don't update state as user data hasn't changed
+          // This prevents page reloads during automatic token refresh
+          if (!session) {
+            // Token refresh failed, clear all cookies
+            clearAllAuthCookies()
+            setUser(null)
+          }
+          // Don't update user state on successful token refresh
+        } else if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+          // Update user state only on actual sign in/out or user updates
           setUser(session?.user ?? null)
         }
         setLoading(false)
@@ -118,11 +125,16 @@ export function useWeddingPermissions(weddingNameId: string | null) {
       setAuthReady(true)
     })
     
-    // Listen for auth changes - respond to signed in/out only
+    // Listen for auth changes - only refetch on actual sign in/out
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      // Set auth ready on any event (including token refresh)
-      // But only refetch on actual sign in/out to avoid excessive API calls
       setAuthReady(true)
+      
+      // Only refetch permissions on actual authentication changes
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        // Trigger refetch by updating lastFetchKey
+        lastFetchKey.current = null
+      }
+      // Don't refetch on TOKEN_REFRESHED to avoid unnecessary API calls
     })
 
     return () => subscription.unsubscribe()

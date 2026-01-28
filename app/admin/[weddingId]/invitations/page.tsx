@@ -9,9 +9,8 @@ import { PremiumUpgradePrompt } from "@/components/ui/premium-gate"
 import { useSubscriptionContext } from "@/components/contexts/subscription-context"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import {
-  InvitationsHeader,
+  InvitationsHeaderToolbar,
   InvitationsChartsSection,
-  InvitationsToolbar,
   GuestsTableFlat,
   GuestsTableGroups,
   AddEditGroupModal,
@@ -228,7 +227,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   )
   const [weddingNameId, setWeddingNameId] = useState<string>('')
   const [weddingDetails, setWeddingDetails] = useState<any>(null)
-  const [chartsExpanded, setChartsExpanded] = useState(true)
+  const [chartsExpanded, setChartsExpanded] = useState(false)
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
 
   // Message viewing
@@ -2396,39 +2395,78 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         title="Invitations"
       />
 
-      <InvitationsHeader
-        guestGroupsCount={guestGroups.length}
-        filteredGroupsCount={filteredGroups.length}
-        displayedGuestCount={displayedGuestCount}
-        totalGuests={totalGuests}
-        confirmedGuests={confirmedGuests}
-        pendingGuests={pendingGuests}
-        declinedGuests={declinedGuests}
-        hasActiveFilters={hasActiveFilters}
-        addDropdownOpen={addDropdownOpen}
-        setAddDropdownOpen={setAddDropdownOpen}
-        onAddGuest={() => {
-          setSelectedGroupId(null)
-          setShowAddGuestModal(true)
-          setAddDropdownOpen(false)
+      <InvitationsHeaderToolbar
+        headerProps={{
+          guestGroupsCount: guestGroups.length,
+          filteredGroupsCount: filteredGroups.length,
+          displayedGuestCount: displayedGuestCount,
+          totalGuests: totalGuests,
+          confirmedGuests: confirmedGuests,
+          pendingGuests: pendingGuests,
+          declinedGuests: declinedGuests,
+          hasActiveFilters: hasActiveFilters,
+          addDropdownOpen: addDropdownOpen,
+          setAddDropdownOpen: setAddDropdownOpen,
+          onAddGuest: () => {
+            setSelectedGroupId(null)
+            setShowAddGuestModal(true)
+            setAddDropdownOpen(false)
+          },
+          onAddGroup: () => {
+            setShowAddGroupModal(true)
+            setAddDropdownOpen(false)
+          },
+          onImportCsv: () => {
+            setAddDropdownOpen(false)
+            setTimeout(() => {
+              document.getElementById('csv-import-input')?.click()
+            }, 100)
+          },
+          onExportCsv: handleExportCsv,
+          onOpenInviteSettings: () => setShowInviteTemplateModal(true),
+          onOpenSendInvites: () => setShowSendInvitesModal(true),
+          onCsvFileSelect: handleCsvFileSelect,
         }}
-        onAddGroup={() => {
-          setShowAddGroupModal(true)
-          setAddDropdownOpen(false)
+        toolbarProps={{
+          viewMode: viewMode,
+          setViewMode: setViewMode,
+          searchQuery: searchQuery,
+          setSearchQuery: setSearchQuery,
+          statusFilter: statusFilter,
+          setStatusFilter: setStatusFilter,
+          tagFilter: tagFilter,
+          setTagFilter: setTagFilter,
+          groupFilter: groupFilter,
+          setGroupFilter: setGroupFilter,
+          invitedByFilter: invitedByFilter,
+          setInvitedByFilter: setInvitedByFilter,
+          openedFilter: openedFilter,
+          setOpenedFilter: setOpenedFilter,
+          allTags: allTags,
+          guestGroups: guestGroups,
+          partnerOptions: partnerOptions,
+          filteredGroupsCount: filteredGroups.length,
+          totalGroupsCount: guestGroups.length,
+          filteredGuestsCount: filteredGuests.length,
+          totalGuestsCount: totalGuests,
+          visibleColumns: visibleColumns,
+          toggleColumn: toggleColumn,
+          showColumnMenu: showColumnMenu,
+          setShowColumnMenu: setShowColumnMenu,
+          selectedGuestIds: selectedGuestIds,
+          allGuests: allGuests,
+          onBulkStatusUpdate: handleBulkStatusUpdate,
+          onBulkDelete: handleBulkDelete,
+          onAssignGroup: () => setShowAssignGroupModal(true),
+          clearSelection: clearSelection,
+          setGroupTravelForm: setGroupTravelForm,
+          setShowGroupTravelDialog: setShowGroupTravelDialog,
+          setBulkInvitedBy: setBulkInvitedBy,
+          setShowBulkInvitedByModal: setShowBulkInvitedByModal,
         }}
-        onImportCsv={() => {
-          setAddDropdownOpen(false)
-          setTimeout(() => {
-            document.getElementById('csv-import-input')?.click()
-          }, 100)
-        }}
-        onExportCsv={handleExportCsv}
-        onOpenInviteSettings={() => setShowInviteTemplateModal(true)}
-        onOpenSendInvites={() => setShowSendInvitesModal(true)}
-        onCsvFileSelect={handleCsvFileSelect}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
         <InvitationsChartsSection
           weddingId={weddingId}
           chartsExpanded={chartsExpanded}
@@ -2443,45 +2481,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           setTimelineGroupFilter={setTimelineGroupFilter}
           guestGroups={guestGroups}
         />
+      </div>
 
-        <InvitationsToolbar
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          tagFilter={tagFilter}
-          setTagFilter={setTagFilter}
-          groupFilter={groupFilter}
-          setGroupFilter={setGroupFilter}
-          invitedByFilter={invitedByFilter}
-          setInvitedByFilter={setInvitedByFilter}
-          openedFilter={openedFilter}
-          setOpenedFilter={setOpenedFilter}
-          allTags={allTags}
-          guestGroups={guestGroups}
-          partnerOptions={partnerOptions}
-          filteredGroupsCount={filteredGroups.length}
-          totalGroupsCount={guestGroups.length}
-          filteredGuestsCount={filteredGuests.length}
-          totalGuestsCount={totalGuests}
-          visibleColumns={visibleColumns}
-          toggleColumn={toggleColumn}
-          showColumnMenu={showColumnMenu}
-          setShowColumnMenu={setShowColumnMenu}
-          selectedGuestIds={selectedGuestIds}
-          allGuests={allGuests}
-          onBulkStatusUpdate={handleBulkStatusUpdate}
-          onBulkDelete={handleBulkDelete}
-          onAssignGroup={() => setShowAssignGroupModal(true)}
-          clearSelection={clearSelection}
-          setGroupTravelForm={setGroupTravelForm}
-          setShowGroupTravelDialog={setShowGroupTravelDialog}
-          setBulkInvitedBy={setBulkInvitedBy}
-          setShowBulkInvitedByModal={setShowBulkInvitedByModal}
-        />
-
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
         {/* Flat View - All Guests Table */}
         {viewMode === 'flat' && (
           <GuestsTableFlat

@@ -19,7 +19,7 @@ import {
 } from "lucide-react"
 import type { GuestGroup, Guest, ColumnVisibility } from "../types"
 
-interface InvitationsToolbarProps {
+export interface InvitationsToolbarProps {
   // View mode
   viewMode: 'flat' | 'groups'
   setViewMode: (mode: 'flat' | 'groups') => void
@@ -73,7 +73,7 @@ interface InvitationsToolbarProps {
   setShowBulkInvitedByModal: (show: boolean) => void
 }
 
-export function InvitationsToolbar({
+export function InvitationsToolbarContent({
   viewMode,
   setViewMode,
   searchQuery,
@@ -152,12 +152,11 @@ export function InvitationsToolbar({
   }
 
   return (
-    <div className="sticky top-[165px] md:top-[130px] z-10 bg-background py-3 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 border-b border-border/30">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-        {/* Left: View Toggle and Filters */}
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* View Mode Toggle */}
-          <div className="flex items-center border rounded-lg bg-muted/30 p-0.5">
+    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+      {/* Left: View Toggle and Filters */}
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* View Mode Toggle */}
+        <div className="flex items-center border rounded-lg bg-muted/30 p-0.5">
             <button
               onClick={() => setViewMode('groups')}
               className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-colors ${viewMode === 'groups'
@@ -180,38 +179,38 @@ export function InvitationsToolbar({
               <LayoutList className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Guests</span>
             </button>
-          </div>
+        </div>
 
-          {/* Inline Filters */}
-          <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <Input
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-7 h-8 w-36 text-sm"
-            />
-          </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-            className="h-8 rounded-md border border-border bg-background px-2 text-xs"
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="declined">Declined</option>
-          </select>
-          <select
-            value={tagFilter}
-            onChange={(e) => setTagFilter(e.target.value)}
-            className="h-8 rounded-md border border-border bg-background px-2 text-xs"
-          >
-            <option value="all">All Tags</option>
-            {allTags.map(tag => (
-              <option key={tag} value={tag}>{tag}</option>
-            ))}
-          </select>
+        {/* Inline Filters */}
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-7 h-8 w-36 text-sm"
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+          className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+        >
+          <option value="all">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="declined">Declined</option>
+        </select>
+        <select
+          value={tagFilter}
+          onChange={(e) => setTagFilter(e.target.value)}
+          className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+        >
+          <option value="all">All Tags</option>
+          {allTags.map(tag => (
+            <option key={tag} value={tag}>{tag}</option>
+          ))}
+        </select>
           {viewMode === 'flat' && (
             <select
               value={groupFilter}
@@ -379,6 +378,16 @@ export function InvitationsToolbar({
             </>
           )}
         </div>
+      </div>
+
+  )
+}
+
+export function InvitationsToolbar(props: InvitationsToolbarProps) {
+  return (
+    <div className="bg-background py-3 border-b border-border/30">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <InvitationsToolbarContent {...props} />
       </div>
     </div>
   )

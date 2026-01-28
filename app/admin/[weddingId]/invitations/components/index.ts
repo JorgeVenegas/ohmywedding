@@ -1,4 +1,5 @@
 export { InvitationsHeader } from './invitations-header'
+export { InvitationsHeaderToolbar } from './invitations-header-toolbar'
 export { InvitationsChartsSection } from './invitations-charts-section'
 export { InvitationsToolbar } from './invitations-toolbar'
 export { GuestsTableFlat } from './guests-table-flat'

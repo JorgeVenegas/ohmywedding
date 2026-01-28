@@ -214,8 +214,35 @@ async function handleSupabaseAuth(request: NextRequest, response: NextResponse) 
   // Protect admin routes - require authentication
   if (request.nextUrl.pathname.startsWith('/admin')) {
     if (!user) {
-      // Redirect to /login on the same host (subdomain or main)
-      const loginUrl = new URL('/login', request.url)
+      const host = request.headers.get('host') || ''
+      const subdomain = getSubdomain(host)
+      
+      // Get the main domain for login redirect
+      // Subdomains don't have a login route, so redirect to main domain
+      let loginUrl: URL
+      
+      if (subdomain) {
+        // On subdomain - redirect to main domain for login
+        const hostWithoutPort = host.split(':')[0]
+        const port = host.includes(':') ? `:${host.split(':')[1]}` : ''
+        
+        // Determine the main domain based on current host
+        let mainDomain: string
+        if (hostWithoutPort.endsWith('.ohmy.local')) {
+          mainDomain = `ohmy.local${port}`
+        } else if (hostWithoutPort.endsWith('.ohmy.wedding')) {
+          mainDomain = 'ohmy.wedding'
+        } else {
+          // Fallback to BASE_DOMAIN
+          mainDomain = BASE_DOMAIN
+        }
+        
+        const protocol = request.nextUrl.protocol
+        loginUrl = new URL(`${protocol}//${mainDomain}/login`)
+      } else {
+        // Already on main domain
+        loginUrl = new URL('/login', request.url)
+      }
       
       // Set redirect to return to the original URL after login
       loginUrl.searchParams.set('redirect', request.url)
