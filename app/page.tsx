@@ -455,8 +455,19 @@ const heroVideos = [
 function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null)
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
+  const [currentWordIndex, setCurrentWordIndex] = useState(0)
   const videoRef = useRef<HTMLVideoElement>(null)
   
+  const rotatingWords = ["Displayed", "Celebrated", "Immortalized", "Unveiled"]
+  
+  // Auto-rotate through words
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length)
+    }, 4000) // Change word every 4 seconds
+    return () => clearInterval(interval)
+  }, [])
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"]
@@ -552,14 +563,25 @@ function HeroSection() {
           className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl xl:text-9xl text-[#f5f2eb] mb-6 sm:mb-10 leading-[0.95] tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
           style={{ textShadow: '0 4px 30px rgba(0,0,0,0.4), 0 2px 10px rgba(0,0,0,0.3)' }}
         >
-          <span className="block font-serif font-light">Your</span>
-          <span className="block font-['Elegant',cursive] text-[#DDA46F] text-[1.4em] sm:text-[1.5em] my-1 sm:my-2" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>
+          <span className="block font-serif font-light text-[1.4em] sm:text-[1.5em] my-1 sm:my-2" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>Your</span>
+          <span className="block font-serif font-light text-[1.4em] sm:text-[1.5em] my-1 sm:my-2" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>
             Love Story
           </span>
-          <span className="block font-serif font-light">Deserves</span>
-          <span className="block font-['Elegant',cursive] text-[#DDA46F] text-[1.4em] sm:text-[1.5em] mt-1 sm:mt-2" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>
-            Elegance
-          </span>
+          <div className="relative h-[1.2em] sm:h-[1.4em] md:h-[1.6em] lg:h-[1.8em] xl:h-[2em] flex items-center justify-center">
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={currentWordIndex}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+                className="block font-['Elegant',cursive] text-[#DDA46F] text-[2.4em] sm:text-[2.4em]"
+                style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
+              >
+                {rotatingWords[currentWordIndex]}
+              </motion.span>
+            </AnimatePresence>
+          </div>
         </motion.h1>
 
         <motion.p
@@ -568,8 +590,7 @@ function HeroSection() {
           transition={{ duration: 1.2, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className="text-sm sm:text-lg md:text-xl text-[#f5f2eb]/60 max-w-2xl mx-auto mb-8 sm:mb-14 leading-relaxed font-light tracking-wide px-2"
         >
-          Create a stunning, bespoke wedding website that captures the essence 
-          of your unique love story with unparalleled sophistication.
+          Create a stunning, bespoke wedding website where your love story is {rotatingWords[currentWordIndex].toLowerCase()} with unparalleled sophistication and elegance.
         </motion.p>
 
         <motion.div
