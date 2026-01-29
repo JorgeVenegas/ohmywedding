@@ -44,7 +44,23 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Elegant';
+  src: url('/fonts/elegant_4/Elegant DEMO.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
+
+/* Hide system cursor on landing page when custom cursor is visible */
+@media (min-width: 1024px) {
+  .hide-cursor,
+  .hide-cursor * {
+    cursor: none !important;
+  }
+}
 
 /* Keyframe animations for image preview modals */
 @keyframes fadeIn {
@@ -92,6 +108,24 @@
 .delay-1100 { animation-delay: 1100ms; }
 .delay-1300 { animation-delay: 1300ms; }
 
+/* Infinite scroll animation for templates */
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-33.333%);
+  }
+}
+
+.animate-scroll-left {
+  animation: scroll-left 30s linear infinite;
+}
+
+.animate-scroll-left:hover {
+  animation-play-state: paused;
+}
+
 /* Hide scrollbar globally */
 * {
   scrollbar-width: none; /* Firefox */
@@ -100,6 +134,16 @@
 
 *::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
+}
+
+/* Utility class for hiding scrollbar */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 :root {

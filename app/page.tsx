@@ -1,39 +1,87 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { 
   Heart, 
   Calendar, 
   Users, 
   Gift, 
   ImageIcon, 
+  MapPin, 
   MessageSquare, 
   Star, 
   ArrowRight, 
+  ArrowDown,
   User, 
   ChevronDown, 
   Edit3,
   Check,
   Sparkles,
   Crown,
-  Zap,
+  Bell,
   Globe,
   Palette,
-  Send
+  Send,
+  FileText,
+  Music,
+  Camera,
+  Clock,
+  Mail,
+  Eye,
+  CheckCircle2,
+  Play,
 } from "lucide-react"
-import { Header } from "@/components/header"
 import { useAuth } from "@/hooks/use-auth"
-import { createClient } from "@/lib/supabase-client"
 import { getWeddingUrl } from "@/lib/wedding-url"
 import { Suspense } from "react"
+import { motion, useScroll, useTransform, useInView, AnimatePresence, useSpring } from "framer-motion"
 
-// Component to handle auth code in URL (fallback for OAuth flows that redirect to root)
+// ============================================
+// COLOR PALETTE
+// ============================================
+// Primary: #420c14 - Deep Burgundy/Wine
+// Secondary: #172815 - Dark Forest Green
+// Tertiary: #424b1e - Olive Green
+// Accent: #732c2c - Wine Red
+// Gold: #DDA46F - Gold accent (main brand gold)
+// Light: #f5f2eb - Cream/Ivory
+
+// ============================================
+// SMOOTH SCROLL HOOK
+// ============================================
+
+function useSmoothScroll() {
+  useEffect(() => {
+    // Add smooth scroll CSS for luxury feel
+    const style = document.createElement('style')
+    style.textContent = `
+      html {
+        scroll-behavior: smooth;
+      }
+      
+      @supports (scroll-behavior: smooth) {
+        html {
+          scroll-behavior: smooth;
+        }
+      }
+    `
+    document.head.appendChild(style)
+    
+    return () => {
+      document.head.removeChild(style)
+    }
+  }, [])
+}
+
+// ============================================
+// AUTH & UTILITY COMPONENTS
+// ============================================
+
 function AuthCodeHandler() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -41,8 +89,6 @@ function AuthCodeHandler() {
   
   useEffect(() => {
     if (code) {
-      // Redirect to the proper server-side callback handler
-      // This ensures cookies are set correctly on the server, especially for Safari
       const callbackUrl = `/auth/callback?code=${code}&redirect=/`
       window.location.href = callbackUrl
     }
@@ -82,8 +128,8 @@ function AuthButtons() {
   if (loading) {
     return (
       <div className="flex gap-3">
-        <div className="h-10 w-20 bg-muted animate-pulse rounded-md" />
-        <div className="h-10 w-32 bg-muted animate-pulse rounded-md" />
+        <div className="h-10 w-20 bg-[#420c14]/20 animate-pulse rounded-md" />
+        <div className="h-10 w-32 bg-[#420c14]/20 animate-pulse rounded-md" />
       </div>
     )
   }
@@ -97,11 +143,11 @@ function AuthButtons() {
         <div className="relative">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-md text-[#f5f2eb]/90 hover:text-[#f5f2eb] hover:bg-[#f5f2eb]/10 transition-colors duration-500"
           >
             <User className="w-4 h-4" />
             <span className="text-sm font-medium hidden sm:inline max-w-[150px] truncate">{user.email}</span>
-            <ChevronDown className={`w-3 h-3 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-3 h-3 transition-transform duration-500 ${showUserMenu ? 'rotate-180' : ''}`} />
           </button>
           
           {showUserMenu && (
@@ -110,20 +156,20 @@ function AuthButtons() {
                 className="fixed inset-0 z-40" 
                 onClick={() => setShowUserMenu(false)}
               />
-              <div className="absolute top-full mt-2 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[200px] z-50">
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-xs text-gray-500">Signed in as</p>
-                  <p className="text-sm font-medium text-gray-700 truncate">{user.email}</p>
+              <div className="absolute top-full mt-2 right-0 bg-[#420c14]/95 backdrop-blur-xl rounded-lg shadow-2xl border border-[#DDA46F]/20 py-1 min-w-[200px] z-50">
+                <div className="px-4 py-2 border-b border-[#DDA46F]/10">
+                  <p className="text-xs text-[#f5f2eb]/50">Signed in as</p>
+                  <p className="text-sm font-medium text-[#f5f2eb]/90 truncate">{user.email}</p>
                 </div>
                 {userWeddings.length > 0 && (
-                  <div className="border-b border-gray-100">
-                    <p className="px-4 py-1 text-xs text-gray-500">Your Weddings</p>
+                  <div className="border-b border-[#DDA46F]/10">
+                    <p className="px-4 py-1 text-xs text-[#f5f2eb]/50">Your Weddings</p>
                     {userWeddings.map(wedding => (
                       <a
                         key={wedding.id}
                         href={getWeddingUrl(wedding.wedding_name_id)}
                         onClick={() => setShowUserMenu(false)}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="block px-4 py-2 text-sm text-[#f5f2eb]/80 hover:text-[#f5f2eb] hover:bg-[#f5f2eb]/5 transition-colors duration-300"
                       >
                         {wedding.partner1_first_name} & {wedding.partner2_first_name}
                       </a>
@@ -135,7 +181,7 @@ function AuthButtons() {
                     setShowUserMenu(false)
                     signOut()
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  className="w-full text-left px-4 py-2 text-sm text-[#DDA46F] hover:bg-[#DDA46F]/10 transition-colors duration-300"
                 >
                   Sign Out
                 </button>
@@ -144,17 +190,19 @@ function AuthButtons() {
           )}
         </div>
         {weddingsLoading ? (
-          <div className="h-10 w-32 bg-muted animate-pulse rounded-md" />
+          <div className="h-10 w-32 bg-[#420c14]/20 animate-pulse rounded-md" />
         ) : hasWedding ? (
           <a href={getWeddingUrl(firstWedding.wedding_name_id)}>
-            <Button className="bg-gradient-to-r from-[#B8860B] to-[#D4AF37] hover:from-[#A67807] hover:to-[#C9A226] text-white shadow-lg shadow-[#B8860B]/20">
+            <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-500">
               <Edit3 className="w-4 h-4 mr-2" />
               Edit Wedding
             </Button>
           </a>
         ) : (
           <Link href="/create-wedding">
-            <Button className="bg-gradient-to-r from-[#B8860B] to-[#D4AF37] hover:from-[#A67807] hover:to-[#C9A226] text-white shadow-lg shadow-[#B8860B]/20">Create Wedding</Button>
+            <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-500">
+              Create Wedding
+            </Button>
           </Link>
         )}
       </div>
@@ -164,765 +212,1700 @@ function AuthButtons() {
   return (
     <div className="flex gap-3">
       <Link href="/login">
-        <Button variant="ghost" className="text-foreground hover:bg-muted">
+        <Button variant="ghost" className="text-[#f5f2eb]/80 hover:text-[#f5f2eb] hover:bg-[#f5f2eb]/10 transition-all duration-500">
           Sign In
         </Button>
       </Link>
       <Link href="/create-wedding">
-        <Button className="bg-gradient-to-r from-[#B8860B] to-[#D4AF37] hover:from-[#A67807] hover:to-[#C9A226] text-white shadow-lg shadow-[#B8860B]/20">Get Started</Button>
+        <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-500">
+          Get Started
+        </Button>
       </Link>
     </div>
   )
 }
 
-// Animated counter component
-function AnimatedCounter({ target, suffix = "", duration = 2000 }: { target: number; suffix?: string; duration?: number }) {
-  const [count, setCount] = useState(0)
-  const [hasAnimated, setHasAnimated] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+// ============================================
+// CUSTOM CURSOR
+// ============================================
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !hasAnimated) {
-          setHasAnimated(true)
-          const startTime = Date.now()
-          const animate = () => {
-            const elapsed = Date.now() - startTime
-            const progress = Math.min(elapsed / duration, 1)
-            const easeOut = 1 - Math.pow(1 - progress, 3)
-            setCount(Math.floor(target * easeOut))
-            if (progress < 1) {
-              requestAnimationFrame(animate)
-            }
-          }
-          requestAnimationFrame(animate)
-        }
-      },
-      { threshold: 0.5 }
-    )
-
-    if (ref.current) {
-      observer.observe(ref.current)
-    }
-
-    return () => observer.disconnect()
-  }, [target, duration, hasAnimated])
-
-  return (
-    <div ref={ref} className="text-4xl sm:text-5xl font-bold text-foreground">
-      {count.toLocaleString()}{suffix}
-    </div>
-  )
-}
-
-// Fade in on scroll component
-function FadeInOnScroll({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
-  const ref = useRef<HTMLDivElement>(null)
+function CustomCursor() {
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [isHovering, setIsHovering] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
+  
+  const springConfig = { damping: 25, stiffness: 200 }
+  const cursorX = useSpring(0, springConfig)
+  const cursorY = useSpring(0, springConfig)
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setTimeout(() => setIsVisible(true), delay)
-        }
-      },
-      { threshold: 0.1 }
-    )
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) return
 
-    if (ref.current) {
-      observer.observe(ref.current)
+    const updatePosition = (e: MouseEvent) => {
+      cursorX.set(e.clientX)
+      cursorY.set(e.clientY)
+      setPosition({ x: e.clientX, y: e.clientY })
+      setIsVisible(true)
     }
 
-    return () => observer.disconnect()
-  }, [delay])
+    const handleMouseEnter = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (target.closest('button, a, [role="button"]')) {
+        setIsHovering(true)
+      }
+    }
+
+    const handleMouseLeave = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (target.closest('button, a, [role="button"]')) {
+        setIsHovering(false)
+      }
+    }
+
+    window.addEventListener('mousemove', updatePosition)
+    document.addEventListener('mouseover', handleMouseEnter)
+    document.addEventListener('mouseout', handleMouseLeave)
+
+    return () => {
+      window.removeEventListener('mousemove', updatePosition)
+      document.removeEventListener('mouseover', handleMouseEnter)
+      document.removeEventListener('mouseout', handleMouseLeave)
+    }
+  }, [cursorX, cursorY])
+
+  if (!isVisible) return null
 
   return (
-    <div
-      ref={ref}
-      className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} ${className}`}
+    <>
+      <motion.div
+        className="fixed top-0 left-0 w-3 h-3 bg-[#DDA46F] rounded-full pointer-events-none z-[9999] mix-blend-difference hidden lg:block"
+        style={{
+          x: cursorX,
+          y: cursorY,
+          translateX: '-50%',
+          translateY: '-50%',
+        }}
+        animate={{
+          scale: isHovering ? 0.5 : 1,
+        }}
+        transition={{ duration: 0.3 }}
+      />
+      <motion.div
+        className="fixed top-0 left-0 w-12 h-12 border-2 border-[#DDA46F]/50 rounded-full pointer-events-none z-[9999] hidden lg:block"
+        style={{
+          x: cursorX,
+          y: cursorY,
+          translateX: '-50%',
+          translateY: '-50%',
+        }}
+        animate={{
+          scale: isHovering ? 1.8 : 1,
+          borderColor: isHovering ? 'rgba(221, 164, 111, 0.8)' : 'rgba(221, 164, 111, 0.5)',
+        }}
+        transition={{ duration: 0.4 }}
+      />
+    </>
+  )
+}
+
+// ============================================
+// LUXURY HEADER
+// ============================================
+
+function LuxuryHeader() {
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  return (
+    <motion.header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-1000 ${
+        isScrolled 
+          ? 'bg-[#420c14]/95 backdrop-blur-xl border-b border-[#DDA46F]/10' 
+          : 'bg-transparent'
+      }`}
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
     >
-      {children}
-    </div>
-  )
-}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-24">
+          <Link href="/" className="flex items-center gap-3 group">
+            <Image
+              src="/images/logos/OMW Logo Gold.png"
+              alt="OhMyWedding"
+              width={44}
+              height={44}
+              className="h-11 w-auto transition-transform duration-700 group-hover:scale-110"
+              priority
+            />
+            <span className="font-serif text-xl text-[#f5f2eb] tracking-[0.15em] hidden sm:block">
+              OhMyWedding
+            </span>
+          </Link>
 
-// Feature showcase with hover effect
-function FeatureCard({
-  icon,
-  title,
-  description,
-  isPremium = false,
-}: {
-  icon: React.ReactNode
-  title: string
-  description: string
-  isPremium?: boolean
-}) {
-  return (
-    <Card className="group relative p-8 border border-[#D4AF37]/10 dark:border-[#D4AF37]/20 bg-gradient-to-br from-white to-[#FAF7F0]/30 dark:from-gray-900 dark:to-[#2A2520]/20 hover:shadow-xl hover:shadow-[#B8860B]/10 transition-all duration-500 hover:-translate-y-2 overflow-hidden">
-      {isPremium && (
-        <div className="absolute top-4 right-4">
-          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-[#B8860B] to-[#D4AF37] text-white">
-            <Crown className="w-3 h-3" />
-            Premium
-          </span>
-        </div>
-      )}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37]/0 via-[#D4AF37]/5 to-[#D4AF37]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-      <div className="relative">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#F5EFE6] to-[#FAF7F0] dark:from-[#2A2520]/50 dark:to-[#252018]/50 mb-6 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 border border-[#D4AF37]/10">
-          <div className="text-[#B8860B]">{icon}</div>
-        </div>
-        <h3 className="font-semibold text-xl text-foreground mb-3">{title}</h3>
-        <p className="text-muted-foreground leading-relaxed">{description}</p>
-      </div>
-    </Card>
-  )
-}
+          <nav className="hidden lg:flex items-center gap-10">
+            {[
+              { label: 'Features', href: '#features' },
+              { label: 'Experience', href: '#experience' },
+              { label: 'Pricing', href: '#pricing' },
+              { label: 'Templates', href: '#demos' },
+            ].map((item, index) => (
+              <motion.a
+                key={item.label}
+                href={item.href}
+                className="text-[#f5f2eb]/70 hover:text-[#DDA46F] transition-colors duration-500 text-sm tracking-[0.25em] uppercase"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.1 * index }}
+              >
+                {item.label}
+              </motion.a>
+            ))}
+          </nav>
 
-// Pricing card component
-function PricingCard({
-  name,
-  price,
-  period,
-  description,
-  features,
-  isPopular = false,
-  ctaText = "Get Started",
-  ctaHref = "/create-wedding",
-}: {
-  name: string
-  price: string
-  period: string
-  description: string
-  features: { text: string; included: boolean }[]
-  isPopular?: boolean
-  ctaText?: string
-  ctaHref?: string
-}) {
-  return (
-    <Card className={`relative p-8 ${isPopular ? 'border-2 border-[#D4AF37] shadow-xl shadow-[#B8860B]/15' : 'border border-border'} bg-card overflow-hidden`}>
-      {isPopular && (
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#B8860B] via-[#D4AF37] to-[#C9A87C]" />
-      )}
-      {isPopular && (
-        <div className="absolute -top-1 left-1/2 -translate-x-1/2">
-          <span className="inline-flex items-center gap-1 px-4 py-1 text-sm font-semibold rounded-full bg-gradient-to-r from-[#B8860B] to-[#D4AF37] text-white shadow-lg">
-            <Sparkles className="w-4 h-4" />
-            Most Popular
-          </span>
-        </div>
-      )}
-      <div className={isPopular ? 'pt-6' : ''}>
-        <h3 className="text-2xl font-bold text-foreground mb-2">{name}</h3>
-        <p className="text-muted-foreground mb-6">{description}</p>
-        <div className="mb-6">
-          <span className="text-5xl font-bold text-foreground">{price}</span>
-          <span className="text-muted-foreground ml-2">{period}</span>
-        </div>
-        <Link href={ctaHref}>
-          <Button 
-            className={`w-full h-12 text-lg ${isPopular ? 'bg-gradient-to-r from-[#B8860B] to-[#D4AF37] hover:from-[#A67807] hover:to-[#C9A226] text-white shadow-lg shadow-[#B8860B]/20' : ''}`}
-            variant={isPopular ? 'default' : 'outline'}
+          <div className="hidden lg:block">
+            <AuthButtons />
+          </div>
+
+          <button
+            className="lg:hidden text-[#f5f2eb] p-2"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            {ctaText}
-          </Button>
-        </Link>
-        <div className="mt-8 space-y-4">
-          {features.map((feature, index) => (
-            <div key={index} className="flex items-start gap-3">
-              <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center ${feature.included ? 'bg-green-100 dark:bg-green-900/50' : 'bg-gray-100 dark:bg-gray-800'}`}>
-                {feature.included ? (
-                  <Check className="w-3 h-3 text-green-600" />
-                ) : (
-                  <span className="w-2 h-0.5 bg-gray-400 rounded" />
-                )}
-              </div>
-              <span className={feature.included ? 'text-foreground' : 'text-muted-foreground'}>{feature.text}</span>
+            <div className="w-6 h-5 flex flex-col justify-between">
+              <motion.span 
+                className="w-full h-0.5 bg-[#f5f2eb]"
+                animate={{ rotate: isMobileMenuOpen ? 45 : 0, y: isMobileMenuOpen ? 9 : 0 }}
+                transition={{ duration: 0.5 }}
+              />
+              <motion.span 
+                className="w-full h-0.5 bg-[#f5f2eb]"
+                animate={{ opacity: isMobileMenuOpen ? 0 : 1 }}
+                transition={{ duration: 0.3 }}
+              />
+              <motion.span 
+                className="w-full h-0.5 bg-[#f5f2eb]"
+                animate={{ rotate: isMobileMenuOpen ? -45 : 0, y: isMobileMenuOpen ? -9 : 0 }}
+                transition={{ duration: 0.5 }}
+              />
             </div>
+          </button>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.5 }}
+            className="lg:hidden bg-[#420c14]/98 backdrop-blur-xl border-t border-[#DDA46F]/10"
+          >
+            <div className="px-4 py-8 space-y-6">
+              {[
+                { label: 'Features', href: '#features' },
+                { label: 'Experience', href: '#experience' },
+                { label: 'Pricing', href: '#pricing' },
+                { label: 'Templates', href: '#demos' },
+              ].map((item, index) => (
+                <motion.a
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block text-[#f5f2eb]/70 hover:text-[#DDA46F] transition-colors duration-500 text-sm tracking-[0.25em] uppercase py-2"
+                  initial={{ opacity: 0, x: -30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 * index }}
+                >
+                  {item.label}
+                </motion.a>
+              ))}
+              <div className="pt-6 border-t border-[#DDA46F]/10">
+                <AuthButtons />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.header>
+  )
+}
+
+// ============================================
+// VIDEO HERO SECTION
+// ============================================
+
+const heroVideos = [
+  "/videos/vid1.mp4",
+  "/videos/vid5.mp4",
+  "/videos/vid9.mp4",
+  "/videos/vid15.mp4",
+  "/videos/vid3.mp4",
+  "/videos/vid12.mp4",
+]
+
+function HeroSection() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"]
+  })
+  
+  const y = useTransform(scrollYProgress, [0, 1], [0, 300])
+  const opacity = useTransform(scrollYProgress, [0, 0.6], [1, 0])
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.1])
+
+  // Handle video end to switch to next video
+  const handleVideoEnd = useCallback(() => {
+    setCurrentVideoIndex((prev) => (prev + 1) % heroVideos.length)
+  }, [])
+
+  return (
+    <section ref={containerRef} className="relative min-h-[110vh] flex items-center justify-center overflow-hidden">
+      {/* Video Background with Carousel */}
+      <motion.div className="absolute inset-0 z-0" style={{ scale }}>
+        <AnimatePresence mode="sync">
+          <motion.video
+            key={currentVideoIndex}
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            preload="auto"
+            onEnded={handleVideoEnd}
+            className="absolute inset-0 w-full h-full object-cover"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <source src={heroVideos[currentVideoIndex]} type="video/mp4" />
+          </motion.video>
+        </AnimatePresence>
+        {/* Darker overlay for better text contrast */}
+        <div className="absolute inset-0 bg-[#420c14]/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#420c14]/40 via-transparent to-[#420c14]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#172815]/30 via-transparent to-[#172815]/30" />
+      </motion.div>
+
+      {/* Floating decorative elements */}
+      <motion.div
+        className="absolute top-1/3 left-[10%] w-64 h-64 rounded-full bg-[#DDA46F]/5 blur-3xl"
+        animate={{ 
+          scale: [1, 1.3, 1],
+          opacity: [0.3, 0.5, 0.3],
+          x: [0, 20, 0],
+        }}
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute bottom-1/3 right-[10%] w-80 h-80 rounded-full bg-[#424b1e]/20 blur-3xl"
+        animate={{ 
+          scale: [1.2, 1, 1.2],
+          opacity: [0.2, 0.4, 0.2],
+          y: [0, -30, 0],
+        }}
+        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-[#732c2c]/10 blur-3xl"
+        animate={{ 
+          scale: [1, 1.2, 1],
+          rotate: [0, 180, 360],
+        }}
+        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+      />
+
+      {/* Content */}
+      <motion.div 
+        className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
+        style={{ y, opacity }}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.5, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          className="mb-6 sm:mb-10"
+        >
+          <span className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-8 py-2 sm:py-3 rounded-full bg-[#f5f2eb]/5 backdrop-blur-md border border-[#DDA46F]/20 text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.2em] sm:tracking-[0.4em] uppercase">
+            <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden xs:inline">Luxury</span> Wedding Websites
+            <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
+          </span>
+        </motion.div>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 60 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.5, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl xl:text-9xl text-[#f5f2eb] mb-6 sm:mb-10 leading-[0.95] tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+          style={{ textShadow: '0 4px 30px rgba(0,0,0,0.4), 0 2px 10px rgba(0,0,0,0.3)' }}
+        >
+          <span className="block font-serif font-light">Your</span>
+          <span className="block font-['Elegant',cursive] text-[#DDA46F] text-[1.1em] sm:text-[1.15em] my-1 sm:my-2" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>
+            Love Story
+          </span>
+          <span className="block font-serif font-light">Deserves</span>
+          <span className="block font-['Elegant',cursive] text-[#DDA46F] text-[1.1em] sm:text-[1.15em] mt-1 sm:mt-2" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>
+            Elegance
+          </span>
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.2, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          className="text-sm sm:text-lg md:text-xl text-[#f5f2eb]/60 max-w-2xl mx-auto mb-8 sm:mb-14 leading-relaxed font-light tracking-wide px-2"
+        >
+          Create a stunning, bespoke wedding website that captures the essence 
+          of your unique love story with unparalleled sophistication.
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.2, delay: 1, ease: [0.22, 1, 0.36, 1] }}
+          className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-center items-center"
+        >
+          <Link href="/create-wedding">
+            <Button 
+              size="lg" 
+              className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] h-12 sm:h-16 px-6 sm:px-12 text-sm sm:text-base tracking-[0.1em] sm:tracking-[0.15em] font-medium group transition-all duration-700 w-full sm:w-auto"
+            >
+              Create Your Website
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 sm:ml-3 transition-transform duration-500 group-hover:translate-x-2" />
+            </Button>
+          </Link>
+          <Link href="#demos">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="border-[#f5f2eb]/30 text-[#f5f2eb] hover:bg-[#f5f2eb]/10 hover:border-[#f5f2eb]/50 h-12 sm:h-16 px-6 sm:px-12 text-sm sm:text-base tracking-[0.1em] sm:tracking-[0.15em] backdrop-blur-sm transition-all duration-700 w-full sm:w-auto"
+            >
+              <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
+              View Gallery
+            </Button>
+          </Link>
+        </motion.div>
+
+        {/* Stats */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.5, delay: 1.5 }}
+          className="mt-12 sm:mt-24 flex justify-center gap-8 sm:gap-16 md:gap-24"
+        >
+          {[
+            { value: '10K+', label: 'Happy Couples' },
+            { value: '50+', label: 'Countries' },
+            { value: '4.9', label: 'Rating', icon: <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-[#DDA46F] text-[#DDA46F] inline ml-1" /> },
+          ].map((stat, index) => (
+            <motion.div 
+              key={index} 
+              className="text-center"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 1.7 + index * 0.2 }}
+            >
+              <div className="text-xl sm:text-3xl md:text-4xl font-serif text-[#DDA46F] flex items-center justify-center">
+                {stat.value}
+                {stat.icon}
+              </div>
+              <div className="text-[10px] sm:text-xs text-[#f5f2eb]/40 tracking-[0.2em] sm:tracking-[0.3em] uppercase mt-1 sm:mt-2">{stat.label}</div>
+            </motion.div>
+          ))}
+        </motion.div>
+      </motion.div>
+
+      {/* Scroll Indicator */}
+      <motion.div
+        className="absolute bottom-12 left-1/2 -translate-x-1/2 z-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 2, duration: 1 }}
+      >
+        <motion.div
+          animate={{ y: [0, 15, 0] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+          className="flex flex-col items-center gap-3 text-[#f5f2eb]/40"
+        >
+          <span className="text-xs tracking-[0.4em] uppercase">Scroll to Explore</span>
+          <ArrowDown className="w-5 h-5" />
+        </motion.div>
+      </motion.div>
+    </section>
+  )
+}
+
+// ============================================
+// ABOUT SECTION WITH VIDEO
+// ============================================
+
+function AboutSection() {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: false, margin: "-100px" })
+
+  return (
+    <section ref={ref} className="py-20 sm:py-40 bg-[#f5f2eb] relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#DDA46F]/30 to-transparent" />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          {/* Content - Animated from left */}
+          <motion.div
+            initial={{ opacity: 0, x: -100 }}
+            animate={isInView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <motion.span 
+              className="text-[#424b1e] text-[10px] sm:text-xs tracking-[0.3em] sm:tracking-[0.4em] uppercase mb-4 sm:mb-6 block"
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 1, delay: 0.2 }}
+            >
+              About OhMyWedding
+            </motion.span>
+            
+            <motion.h2 
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#420c14] mb-6 sm:mb-10 leading-[1.1]"
+              initial={{ opacity: 0, y: 40 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 1.2, delay: 0.3 }}
+            >
+              <span className="font-serif font-light block">Where Love Meets</span>
+              <span className="font-['Elegant',cursive] text-[#732c2c] block mt-1 sm:mt-2">Exquisite Design</span>
+            </motion.h2>
+            
+            <motion.div 
+              className="space-y-4 sm:space-y-6 text-[#420c14]/60 text-sm sm:text-lg leading-relaxed"
+              initial={{ opacity: 0, y: 30 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 1, delay: 0.5 }}
+            >
+              <p>
+                We believe your wedding website should be as extraordinary as your love story. 
+                Every detail, every moment, every emotion deserves to be captured with elegance.
+              </p>
+              <p>
+                From the first save-the-date to the final thank you, OhMyWedding provides an unparalleled 
+                digital experience that reflects the beauty of your celebration.
+              </p>
+            </motion.div>
+            
+            {/* Feature highlights */}
+            <motion.div 
+              className="mt-8 sm:mt-12 grid grid-cols-2 gap-4 sm:gap-6"
+              initial={{ opacity: 0, y: 30 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 1, delay: 0.7 }}
+            >
+              {[
+                { icon: <Crown className="w-4 h-4 sm:w-5 sm:h-5" />, label: 'Luxury Templates' },
+                { icon: <Globe className="w-4 h-4 sm:w-5 sm:h-5" />, label: 'Your Own Domain' },
+                { icon: <Bell className="w-4 h-4 sm:w-5 sm:h-5" />, label: 'Smart Notifications' },
+                { icon: <Palette className="w-4 h-4 sm:w-5 sm:h-5" />, label: 'Full Customization' },
+              ].map((item, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, x: -30 }}
+                  animate={isInView ? { opacity: 1, x: 0 } : {}}
+                  transition={{ duration: 0.8, delay: 0.8 + index * 0.15 }}
+                  className="flex items-center gap-2 sm:gap-4 text-[#420c14]"
+                >
+                  <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-[#DDA46F]/10 flex items-center justify-center text-[#DDA46F] flex-shrink-0">
+                    {item.icon}
+                  </div>
+                  <span className="text-xs sm:text-sm font-medium tracking-wide">{item.label}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
+
+          {/* Video/Image Grid - Animated from right */}
+          <motion.div
+            initial={{ opacity: 0, x: 100 }}
+            animate={isInView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
+            className="relative"
+          >
+            <div className="relative aspect-[4/5] rounded-2xl sm:rounded-3xl overflow-hidden">
+              <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full h-full object-cover"
+                poster="/images/demo_images/demo-img-3.jpg"
+              >
+                <source src="/videos/vid8.mp4" type="video/mp4" />
+              </video>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#420c14]/30 to-transparent" />
+            </div>
+            
+            {/* Floating card - centered on mobile/tablet, bottom-left on desktop */}
+            <motion.div
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 lg:bottom-[-2rem] lg:left-[-2rem] lg:translate-x-0 bg-[#420c14] p-4 sm:p-6 lg:p-8 rounded-xl sm:rounded-2xl shadow-2xl w-[85%] sm:w-auto sm:max-w-[280px]"
+              initial={{ opacity: 0, y: 50 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 1, delay: 1 }}
+            >
+              <div className="flex gap-1 mb-2 sm:mb-3 justify-center lg:justify-start">
+                {[1,2,3,4,5].map(i => (
+                  <Star key={i} className="w-3 h-3 sm:w-4 sm:h-4 fill-[#DDA46F] text-[#DDA46F]" />
+                ))}
+              </div>
+              <p className="text-[#f5f2eb]/80 text-xs sm:text-sm italic leading-relaxed text-center lg:text-left">
+                &ldquo;The most beautiful wedding website we&apos;ve ever seen...&rdquo;
+              </p>
+              <p className="text-[#DDA46F] text-[10px] sm:text-xs mt-2 sm:mt-3 tracking-wider text-center lg:text-left">— Sarah & Michael</p>
+            </motion.div>
+            
+            {/* Decorative frame */}
+            <div className="absolute -inset-4 sm:-inset-6 border border-[#DDA46F]/20 rounded-[1.5rem] sm:rounded-[2rem] pointer-events-none" />
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================
+// FEATURES SECTION
+// ============================================
+
+const features = [
+  {
+    icon: <Eye className="w-7 h-7" />,
+    title: "Invitation Tracking",
+    description: "Know exactly when guests view your invitation with real-time open notifications.",
+    color: "#DDA46F",
+    image: "/images/demo_images/demo-img-40.jpg"
+  },
+  {
+    icon: <CheckCircle2 className="w-7 h-7" />,
+    title: "RSVP Dashboard",
+    description: "Comprehensive guest management with attendance, meal preferences, and confirmations.",
+    color: "#424b1e",
+    image: "/images/demo_images/demo-img-41.jpg"
+  },
+  {
+    icon: <Globe className="w-7 h-7" />,
+    title: "Your Own Subdomain",
+    description: "Personalized yournames.ohmy.wedding domain - elegantly branded for your special day.",
+    color: "#732c2c",
+    image: "/images/demo_images/demo-img-42.jpg"
+  },
+  {
+    icon: <Send className="w-7 h-7" />,
+    title: "Message Templates",
+    description: "Pre-designed templates for save-the-dates, reminders, and thank you notes.",
+    color: "#172815",
+    image: "/images/demo_images/demo-img-43.jpg"
+  },
+  {
+    icon: <Bell className="w-7 h-7" />,
+    title: "Smart Notifications",
+    description: "Instant alerts when guests RSVP or view invitations. Stay connected effortlessly.",
+    color: "#DDA46F",
+    image: "/images/demo_images/demo-img-44.jpg"
+  },
+  {
+    icon: <Crown className="w-7 h-7" />,
+    title: "Luxury Experience",
+    description: "Premium designs, smooth animations, and elegant typography throughout.",
+    color: "#420c14",
+    image: "/images/demo_images/demo-img-45.jpg"
+  },
+]
+
+function FeaturesSection() {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: false, margin: "-100px" })
+
+  return (
+    <section id="features" ref={ref} className="py-20 sm:py-40 bg-[#420c14] relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-[0.03]">
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(221,164,111,1) 1px, transparent 0)',
+          backgroundSize: '60px 60px'
+        }} />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+          transition={{ duration: 1.2 }}
+          className="text-center mb-12 sm:mb-24"
+        >
+          <span className="text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.3em] sm:tracking-[0.4em] uppercase mb-4 sm:mb-6 block">
+            Features
+          </span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl text-[#f5f2eb] mb-6 sm:mb-8 leading-tight">
+            <span className="font-serif font-light block">Powerful Tools for</span>
+            <span className="font-['Elegant',cursive] text-[#DDA46F] block mt-1 sm:mt-2">Your Perfect Day</span>
+          </h2>
+          <p className="text-[#f5f2eb]/50 text-sm sm:text-lg max-w-2xl mx-auto leading-relaxed px-2">
+            Everything you need to create, manage, and share your wedding website with elegance.
+          </p>
+        </motion.div>
+
+        {/* Features Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {features.map((feature, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 60 }}
+              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
+              transition={{ duration: 0.8, delay: index * 0.15 }}
+              className="group"
+            >
+              <div className="relative p-8 rounded-3xl bg-[#f5f2eb]/5 backdrop-blur-sm border border-[#f5f2eb]/10 hover:border-[#DDA46F]/40 transition-all duration-700 h-full overflow-hidden">
+                {/* Image Placeholder */}
+                <div className="relative aspect-video rounded-2xl overflow-hidden mb-6 bg-[#f5f2eb]/5">
+                  <Image
+                    src={feature.image}
+                    alt={feature.title}
+                    fill
+                    className="object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#420c14]/80 to-transparent" />
+                  <div className="absolute bottom-3 left-3">
+                    <motion.div 
+                      className="w-12 h-12 rounded-xl flex items-center justify-center backdrop-blur-sm transition-all duration-700 group-hover:scale-110"
+                      style={{ backgroundColor: `${feature.color}40`, color: feature.color }}
+                    >
+                      {feature.icon}
+                    </motion.div>
+                  </div>
+                </div>
+                
+                <h3 className="text-xl font-serif text-[#f5f2eb] mb-3">{feature.title}</h3>
+                <p className="text-[#f5f2eb]/50 leading-relaxed text-sm">{feature.description}</p>
+                
+                {/* Hover glow */}
+                <motion.div 
+                  className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
+                  style={{ 
+                    background: `radial-gradient(circle at 50% 0%, ${feature.color}15 0%, transparent 60%)` 
+                  }}
+                />
+              </div>
+            </motion.div>
           ))}
         </div>
       </div>
-    </Card>
+    </section>
   )
 }
 
-// FAQ component
-function FAQItem({ question, answer }: { question: string; answer: string }) {
-  const [isOpen, setIsOpen] = useState(false)
+// ============================================
+// EXPERIENCE SECTION - AWARD-WINNING DESIGN
+// ============================================
+
+const experiences = [
+  { 
+    id: 'hero',
+    title: "Hero", 
+    subtitle: "First Impressions",
+    description: "A captivating entrance with video backgrounds and elegant typography",
+    video: "/videos/vid11.mp4",
+    image: "/images/demo_images/demo-img-2.jpg",
+    carouselImage: "/images/demo_images/demo-img-35.jpg"
+  },
+  { 
+    id: 'countdown',
+    title: "Countdown", 
+    subtitle: "The Anticipation",
+    description: "Elegant countdown timers building excitement for your special day",
+    video: "/videos/vid13.mp4",
+    image: "/images/demo_images/demo-img-5.jpg",
+    carouselImage: "/images/demo_images/demo-img-40.jpg"
+  },
+  { 
+    id: 'story',
+    title: "Our Story", 
+    subtitle: "Your Journey",
+    description: "Beautiful timeline of your love story from first meeting to engagement",
+    video: "/videos/vid16.mp4",
+    image: "/images/demo_images/demo-img-7.jpg",
+    carouselImage: "/images/demo_images/demo-img-42.jpg"
+  },
+  { 
+    id: 'venue',
+    title: "Event Details", 
+    subtitle: "The Venue",
+    description: "Showcase your ceremony and reception locations with maps",
+    video: "/videos/vid18.mp4",
+    image: "/images/demo_images/demo-img-10.jpg",
+    carouselImage: "/images/demo_images/demo-img-44.jpg"
+  },
+  { 
+    id: 'rsvp',
+    title: "RSVP", 
+    subtitle: "The Response",
+    description: "Smart RSVP system with guest management and meal preferences",
+    video: "/videos/vid19.mp4",
+    image: "/images/demo_images/demo-img-15.jpg",
+    carouselImage: "/images/demo_images/demo-img-46.jpg"
+  },
+  { 
+    id: 'gallery',
+    title: "Gallery", 
+    subtitle: "Your Moments",
+    description: "Stunning photo galleries with elegant layouts and lightbox views",
+    video: "/videos/vid21.mp4",
+    image: "/images/demo_images/demo-img-20.jpg",
+    carouselImage: "/images/demo_images/demo-img-48.jpg"
+  },
+]
+
+function ExperienceSection() {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: false, margin: "-50px" })
+  const [activeIndex, setActiveIndex] = useState(0)
+
+  // Auto-rotate through experiences
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % experiences.length)
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
-    <div className="border-b border-border last:border-0">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full py-6 flex items-center justify-between text-left"
-      >
-        <span className="font-semibold text-lg text-foreground pr-4">{question}</span>
-        <ChevronDown className={`w-5 h-5 text-muted-foreground flex-shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-      <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-96 pb-6' : 'max-h-0'}`}>
-        <p className="text-muted-foreground leading-relaxed">{answer}</p>
+    <section id="experience" ref={ref} className="py-20 sm:py-32 bg-[#172815] relative overflow-hidden min-h-[700px] sm:min-h-[800px]">
+      {/* Background Video */}
+      <div className="absolute inset-0 z-0">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeIndex}
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute inset-0"
+          >
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-full h-full object-cover"
+              poster={experiences[activeIndex].image}
+            >
+              <source src={experiences[activeIndex].video} type="video/mp4" />
+            </video>
+          </motion.div>
+        </AnimatePresence>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#172815] via-[#172815]/80 to-[#172815]/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#172815] via-transparent to-[#172815]" />
       </div>
-    </div>
-  )
-}
 
-// Testimonial card
-function TestimonialCard({
-  quote,
-  author,
-  role,
-  rating,
-}: {
-  quote: string
-  author: string
-  role: string
-  rating: number
-}) {
-  return (
-    <Card className="p-8 border border-[#D4AF37]/10 dark:border-[#D4AF37]/20 bg-gradient-to-br from-white to-[#FAF7F0]/30 dark:from-gray-900 dark:to-[#2A2520]/20 hover:shadow-lg transition-all duration-300">
-      <div className="flex gap-1 mb-4">
-        {Array.from({ length: rating }).map((_, i) => (
-          <Star key={i} className="w-5 h-5 fill-[#D4AF37] text-[#D4AF37]" />
-        ))}
-      </div>
-      <blockquote className="text-foreground mb-6 leading-relaxed text-lg">
-        &ldquo;{quote}&rdquo;
-      </blockquote>
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#F5EFE6] to-[#FAF7F0] dark:from-[#2A2520]/50 dark:to-[#252018]/50 flex items-center justify-center border border-[#D4AF37]/10">
-          <Heart className="w-6 h-6 text-[#B8860B]" />
-        </div>
-        <div>
-          <p className="font-semibold text-foreground">{author}</p>
-          <p className="text-sm text-muted-foreground">{role}</p>
-        </div>
-      </div>
-    </Card>
-  )
-}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+          {/* Left - Content */}
+          <motion.div
+            initial={{ opacity: 0, x: -80 }}
+            animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -80 }}
+            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <span className="text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.3em] sm:tracking-[0.5em] uppercase mb-4 sm:mb-8 block">
+              Website Sections
+            </span>
+            
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#f5f2eb] mb-8 sm:mb-12 leading-[1.05]">
+              <span className="font-serif font-light block">Every Detail</span>
+              <span className="font-['Elegant',cursive] text-[#DDA46F] block mt-1 sm:mt-2">Beautifully Crafted</span>
+            </h2>
 
-export default function LandingPage() {
-  return (
-    <main className="min-h-screen bg-background overflow-x-hidden">
-      <Suspense fallback={null}>
-        <AuthCodeHandler />
-      </Suspense>
-      
-      <Header rightContent={<AuthButtons />} />
+            {/* Experience List - All items visible without scrolling */}
+            <div className="space-y-1 sm:space-y-1.5">
+              {experiences.map((exp, index) => (
+                <motion.button
+                  key={exp.id}
+                  onClick={() => setActiveIndex(index)}
+                  className={`w-full text-left rounded-lg sm:rounded-xl transition-all duration-500 overflow-hidden ${
+                    activeIndex === index 
+                      ? 'bg-[#DDA46F]/15 border border-[#DDA46F]/30' 
+                      : 'bg-[#f5f2eb]/5 border border-transparent hover:bg-[#f5f2eb]/10'
+                  }`}
+                  initial={{ opacity: 0, x: -40 }}
+                  animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -40 }}
+                  transition={{ duration: 0.6, delay: index * 0.08 }}
+                >
+                  <div className="p-2.5 sm:p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-serif text-sm sm:text-base text-[#f5f2eb] truncate">{exp.title}</h3>
+                      </div>
+                      <motion.div
+                        animate={{ scale: activeIndex === index ? 1 : 0.6, opacity: activeIndex === index ? 1 : 0.3 }}
+                        transition={{ duration: 0.4 }}
+                        className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#DDA46F] flex-shrink-0"
+                      />
+                    </div>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
 
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center pt-20">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#F5EFE6]/60 via-background to-[#F8F3E9]/40 dark:from-[#2A2520]/40 dark:via-background dark:to-[#252018]/30" />
-        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-[#D4AF37]/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-[#C9A87C]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <FadeInOnScroll>
-              <div className="space-y-8 text-center lg:text-left">
-                {/* Logo */}
-                <div className="flex items-center gap-3 justify-center lg:justify-start">
+          {/* Right - Large number and preview */}
+          <motion.div
+            initial={{ opacity: 0, x: 80 }}
+            animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 80 }}
+            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+            className="hidden lg:block relative"
+          >
+            <div className="relative aspect-[4/3] rounded-3xl overflow-hidden">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeIndex}
+                  initial={{ opacity: 0, scale: 1.1 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.8 }}
+                  className="absolute inset-0"
+                >
                   <Image
-                    src="/images/logos/OMW Logo Gold.png"
-                    alt="OhMyWedding"
-                    width={48}
-                    height={48}
-                    className="h-12 w-auto"
-                    priority
+                    src={experiences[activeIndex].carouselImage}
+                    alt={experiences[activeIndex].title}
+                    fill
+                    className="object-cover"
                   />
-                  <span className="font-serif text-2xl font-light text-foreground">OhMyWedding</span>
-                </div>
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#D4AF37]/10 dark:bg-[#D4AF37]/20 text-[#B8860B] dark:text-[#D4AF37] text-sm font-medium border border-[#D4AF37]/20">
-                  <Sparkles className="w-4 h-4" />
-                  Trusted by 10,000+ couples worldwide
-                </div>
-                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-foreground leading-tight">
-                  The Wedding Website
-                  <span className="block mt-2 bg-gradient-to-r from-[#B8860B] via-[#D4AF37] to-[#C9A87C] bg-clip-text text-transparent">
-                    Your Love Deserves
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#172815]/60 to-transparent" />
+                </motion.div>
+              </AnimatePresence>
+              
+              {/* Progress indicator */}
+              <div className="absolute bottom-6 left-6 right-6 flex gap-2">
+                {experiences.map((_, index) => (
+                  <motion.div
+                    key={index}
+                    className="h-1 rounded-full flex-1 bg-[#f5f2eb]/20 overflow-hidden cursor-pointer"
+                    onClick={() => setActiveIndex(index)}
+                  >
+                    <motion.div
+                      className="h-full bg-[#DDA46F]"
+                      initial={{ width: 0 }}
+                      animate={{ width: activeIndex === index ? '100%' : '0%' }}
+                      transition={{ duration: activeIndex === index ? 5 : 0.3 }}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Large number overlay */}
+            <motion.div
+              key={activeIndex}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="absolute -top-10 -right-10 text-[12rem] font-serif text-[#DDA46F]/10 leading-none pointer-events-none select-none"
+            >
+              {String(activeIndex + 1).padStart(2, '0')}
+            </motion.div>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================
+// PRICING SECTION
+// ============================================
+
+function PricingSection() {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: false, margin: "-100px" })
+
+  const plans = [
+    {
+      name: "Free",
+      price: "$0",
+      period: "forever",
+      description: "Perfect for getting started",
+      features: [
+        { text: "Beautiful wedding website", included: true },
+        { text: "Up to 50 guests", included: true },
+        { text: "Photo gallery", included: true },
+        { text: "Event schedule", included: true },
+        { text: "Gift registry links", included: true },
+        { text: "Basic customization", included: true },
+        { text: "Advanced RSVP system", included: false },
+        { text: "Digital invitations", included: false },
+      ],
+      cta: "Get Started",
+      href: "/create-wedding",
+      featured: false,
+    },
+    {
+      name: "Premium",
+      price: "$29",
+      period: "one-time",
+      description: "Everything for your big day",
+      features: [
+        { text: "Everything in Free", included: true },
+        { text: "Up to 100 guests", included: true },
+        { text: "Advanced RSVP system", included: true },
+        { text: "Digital invitations via WhatsApp", included: true },
+        { text: "Invitation open tracking", included: true },
+        { text: "Message templates", included: true },
+        { text: "Your own subdomain", included: true },
+        { text: "Custom domain", included: false },
+      ],
+      cta: "Upgrade Now",
+      href: "/upgrade",
+      featured: true,
+    },
+    {
+      name: "Deluxe",
+      price: "$99",
+      period: "one-time",
+      description: "The ultimate luxury experience",
+      features: [
+        { text: "Everything in Premium", included: true },
+        { text: "Unlimited guests", included: true },
+        { text: "Your own custom domain", included: true },
+        { text: "Custom-made sections", included: true },
+        { text: "Bespoke illustrations", included: true },
+        { text: "Priority support", included: true },
+        { text: "Dedicated account manager", included: true },
+        { text: "White-glove setup", included: true },
+      ],
+      cta: "Go Deluxe",
+      href: "/upgrade?plan=deluxe",
+      featured: false,
+      isDeluxe: true,
+    },
+  ]
+
+  return (
+    <section id="pricing" ref={ref} className="py-20 sm:py-40 bg-[#f5f2eb] relative overflow-hidden">
+      {/* Decorative elements */}
+      <motion.div
+        className="absolute top-1/4 left-[10%] w-40 sm:w-80 h-40 sm:h-80 rounded-full bg-[#DDA46F]/10 blur-3xl"
+        animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.5, 0.3] }}
+        transition={{ duration: 10, repeat: Infinity }}
+      />
+      <motion.div
+        className="absolute bottom-1/4 right-[10%] w-48 sm:w-96 h-48 sm:h-96 rounded-full bg-[#172815]/10 blur-3xl"
+        animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
+        transition={{ duration: 12, repeat: Infinity }}
+      />
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+          transition={{ duration: 1.2 }}
+          className="text-center mb-12 sm:mb-24"
+        >
+          <span className="text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.3em] sm:tracking-[0.4em] uppercase mb-4 sm:mb-6 block">
+            Pricing
+          </span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl text-[#420c14] mb-6 sm:mb-8 leading-tight">
+            <span className="font-serif font-light">Simple &</span>
+            <span className="font-['Elegant',cursive] text-[#DDA46F] ml-2 sm:ml-4">Transparent</span>
+          </h2>
+          <p className="text-[#420c14]/60 text-sm sm:text-lg max-w-2xl mx-auto px-2">
+            Start for free, upgrade when you&apos;re ready. No hidden fees.
+          </p>
+        </motion.div>
+
+        {/* Pricing Cards */}
+        <div className="grid md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+          {plans.map((plan, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 60 }}
+              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
+              transition={{ duration: 1, delay: index * 0.15 }}
+              className={`relative rounded-[1.5rem] sm:rounded-[2rem] p-5 sm:p-8 ${
+                plan.featured 
+                  ? 'bg-[#420c14] border-2 border-[#420c14] md:-mt-4 md:mb-4' 
+                  : (plan as { isDeluxe?: boolean }).isDeluxe
+                    ? 'bg-gradient-to-br from-[#DDA46F] to-[#c99560] border-2 border-[#DDA46F]'
+                    : 'bg-white border border-[#420c14]/10 shadow-xl shadow-[#420c14]/5'
+              }`}
+            >
+              {plan.featured && (
+                <motion.div 
+                  className="absolute -top-4 sm:-top-5 left-1/2 -translate-x-1/2"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  transition={{ duration: 0.8, delay: 0.5 }}
+                >
+                  <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-[#f5f2eb] text-[#420c14] text-xs sm:text-sm font-medium tracking-wider">
+                    <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
+                    Most Popular
                   </span>
-                </h1>
-                <p className="text-xl text-muted-foreground max-w-xl leading-relaxed">
-                  Create a stunning wedding website in minutes. Effortlessly manage guests, track RSVPs, and share your love story — all in one beautiful, easy-to-use platform.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                  <Link href="/create-wedding">
-                    <Button size="lg" className="bg-gradient-to-r from-[#B8860B] to-[#D4AF37] hover:from-[#A67807] hover:to-[#C9A226] text-white h-14 px-8 text-lg w-full sm:w-auto shadow-lg shadow-[#B8860B]/25">
-                      Create Your Free Website
-                      <ArrowRight className="w-5 h-5 ml-2" />
-                    </Button>
-                  </Link>
-                  <Link href="#pricing">
-                    <Button size="lg" variant="outline" className="h-14 px-8 text-lg border-[#D4AF37]/30 hover:bg-[#D4AF37]/10 hover:border-[#D4AF37]/50 w-full sm:w-auto">
-                      View Pricing
-                    </Button>
-                  </Link>
+                </motion.div>
+              )}
+
+              {(plan as { isDeluxe?: boolean }).isDeluxe && (
+                <motion.div 
+                  className="absolute -top-4 sm:-top-5 left-1/2 -translate-x-1/2"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  transition={{ duration: 0.8, delay: 0.5 }}
+                >
+                  <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-[#420c14] text-[#f5f2eb] text-xs sm:text-sm font-medium tracking-wider">
+                    <Crown className="w-3 h-3 sm:w-4 sm:h-4" />
+                    Luxury
+                  </span>
+                </motion.div>
+              )}
+
+              <div className={plan.featured || (plan as { isDeluxe?: boolean }).isDeluxe ? 'pt-2 sm:pt-4' : ''}>
+                <h3 className={`text-2xl sm:text-3xl font-serif mb-2 ${
+                  plan.featured ? 'text-[#f5f2eb]' : (plan as { isDeluxe?: boolean }).isDeluxe ? 'text-[#420c14]' : 'text-[#420c14]'
+                }`}>{plan.name}</h3>
+                <p className={`mb-6 sm:mb-8 text-sm sm:text-base ${
+                  plan.featured ? 'text-[#f5f2eb]/60' : (plan as { isDeluxe?: boolean }).isDeluxe ? 'text-[#420c14]/80' : 'text-[#420c14]/60'
+                }`}>{plan.description}</p>
+                
+                <div className="mb-8 sm:mb-10">
+                  <span className={`text-4xl sm:text-6xl font-serif ${
+                    plan.featured ? 'text-[#f5f2eb]' : (plan as { isDeluxe?: boolean }).isDeluxe ? 'text-[#420c14]' : 'text-[#420c14]'
+                  }`}>{plan.price}</span>
+                  <span className={`ml-2 sm:ml-3 text-sm sm:text-base ${
+                    plan.featured ? 'text-[#f5f2eb]/60' : (plan as { isDeluxe?: boolean }).isDeluxe ? 'text-[#420c14]/70' : 'text-[#420c14]/60'
+                  }`}>{plan.period}</span>
                 </div>
-                <div className="flex items-center gap-8 pt-4 justify-center lg:justify-start">
-                  <div className="flex -space-x-3">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <div key={i} className="w-10 h-10 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#C9A87C]/30 dark:from-[#D4AF37]/30 dark:to-[#C9A87C]/20 border-2 border-white dark:border-gray-900 flex items-center justify-center">
-                        <Heart className="w-4 h-4 text-[#B8860B]" />
-                      </div>
-                    ))}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <Star key={i} className="w-4 h-4 fill-[#D4AF37] text-[#D4AF37]" />
-                      ))}
-                    </div>
-                    <p className="text-sm text-muted-foreground">4.9/5 from 2,000+ reviews</p>
-                  </div>
-                </div>
-              </div>
-            </FadeInOnScroll>
-            
-            <FadeInOnScroll delay={200} className="hidden lg:block">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#D4AF37]/20 to-[#C9A87C]/20 rounded-3xl transform rotate-3 scale-105" />
-                <div className="relative bg-gradient-to-br from-[#FAF7F0] to-[#F5EFE6] dark:from-[#2A2520]/50 dark:to-[#252018]/50 rounded-3xl border border-[#D4AF37]/20 dark:border-[#D4AF37]/30 overflow-hidden aspect-[4/5] shadow-2xl shadow-[#B8860B]/10">
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
-                    <div className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#B8860B] to-[#D4AF37]" />
-                        <div>
-                          <div className="h-4 w-32 bg-[#D4AF37]/30 dark:bg-[#D4AF37]/20 rounded" />
-                          <div className="h-3 w-24 bg-[#D4AF37]/20 dark:bg-[#D4AF37]/10 rounded mt-1" />
-                        </div>
-                      </div>
-                      <div className="h-32 bg-gradient-to-br from-[#F5EFE6] to-[#FAF7F0] dark:from-[#2A2520]/50 dark:to-[#252018]/50 rounded-xl flex items-center justify-center">
-                        <Heart className="w-12 h-12 text-[#D4AF37]/60" />
-                      </div>
-                      <div className="space-y-2">
-                        <div className="h-4 w-full bg-[#D4AF37]/20 dark:bg-[#D4AF37]/10 rounded" />
-                        <div className="h-4 w-3/4 bg-[#D4AF37]/20 dark:bg-[#D4AF37]/10 rounded" />
-                      </div>
-                      <div className="pt-2">
-                        <div className="h-10 w-full bg-gradient-to-r from-[#B8860B] to-[#D4AF37] rounded-lg" />
-                      </div>
-                    </div>
-                    <p className="text-center text-sm text-muted-foreground mt-4">
-                      [Your wedding website mockup here]
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </FadeInOnScroll>
-          </div>
-        </div>
-      </section>
 
-      {/* Stats Section */}
-      <section className="py-20 bg-gradient-to-r from-[#FAF7F0] via-[#F5EFE6] to-[#FAF7F0] dark:from-[#2A2520]/30 dark:via-[#252018]/20 dark:to-[#2A2520]/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <FadeInOnScroll className="text-center">
-              <AnimatedCounter target={10000} suffix="+" />
-              <p className="text-muted-foreground mt-2">Happy Couples</p>
-            </FadeInOnScroll>
-            <FadeInOnScroll delay={100} className="text-center">
-              <AnimatedCounter target={500000} suffix="+" />
-              <p className="text-muted-foreground mt-2">RSVPs Collected</p>
-            </FadeInOnScroll>
-            <FadeInOnScroll delay={200} className="text-center">
-              <AnimatedCounter target={50} suffix="+" />
-              <p className="text-muted-foreground mt-2">Countries</p>
-            </FadeInOnScroll>
-            <FadeInOnScroll delay={300} className="text-center">
-              <div className="text-4xl sm:text-5xl font-bold text-foreground flex items-center justify-center gap-1">
-                4.9 <Star className="w-8 h-8 fill-[#D4AF37] text-[#D4AF37]" />
-              </div>
-              <p className="text-muted-foreground mt-2">Average Rating</p>
-            </FadeInOnScroll>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="py-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <FadeInOnScroll>
-            <div className="text-center mb-20">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#D4AF37]/10 dark:bg-[#D4AF37]/20 text-[#B8860B] dark:text-[#D4AF37] text-sm font-medium mb-6 border border-[#D4AF37]/20">
-                <Zap className="w-4 h-4" />
-                Powerful Features
-              </div>
-              <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
-                Everything You Need for Your
-                <span className="block mt-2 bg-gradient-to-r from-[#B8860B] via-[#D4AF37] to-[#C9A87C] bg-clip-text text-transparent">Perfect Wedding</span>
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-                From beautiful websites to seamless guest management, we&apos;ve got every detail covered
-              </p>
-            </div>
-          </FadeInOnScroll>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <FadeInOnScroll delay={0}>
-              <FeatureCard
-                icon={<Globe className="w-7 h-7" />}
-                title="Beautiful Website"
-                description="Create a stunning, mobile-friendly wedding website with our elegant templates and customization options."
-              />
-            </FadeInOnScroll>
-            <FadeInOnScroll delay={100}>
-              <FeatureCard
-                icon={<ImageIcon className="w-7 h-7" />}
-                title="Photo Gallery"
-                description="Showcase your engagement photos and create memories with beautiful gallery layouts."
-              />
-            </FadeInOnScroll>
-            <FadeInOnScroll delay={200}>
-              <FeatureCard
-                icon={<Calendar className="w-7 h-7" />}
-                title="Event Schedule"
-                description="Display your wedding day timeline so guests know exactly where to be and when."
-              />
-            </FadeInOnScroll>
-            <FadeInOnScroll delay={300}>
-              <FeatureCard
-                icon={<Gift className="w-7 h-7" />}
-                title="Gift Registry"
-                description="Link your favorite registries and wishlists for easy gift giving."
-              />
-            </FadeInOnScroll>
-            <FadeInOnScroll delay={400}>
-              <FeatureCard
-                icon={<Users className="w-7 h-7" />}
-                title="Guest Management"
-                description="Easily manage your guest list, track RSVPs, and organize seating arrangements."
-                isPremium
-              />
-            </FadeInOnScroll>
-            <FadeInOnScroll delay={500}>
-              <FeatureCard
-                icon={<Send className="w-7 h-7" />}
-                title="Digital Invitations"
-                description="Send beautiful digital invitations via WhatsApp or email with one click."
-                isPremium
-              />
-            </FadeInOnScroll>
-          </div>
-        </div>
-      </section>
-
-      {/* App Showcase Section */}
-      <section className="py-32 bg-gradient-to-b from-[#FAF7F0]/50 to-background dark:from-[#2A2520]/20 dark:to-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <FadeInOnScroll>
-              <div className="space-y-6">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#D4AF37]/10 dark:bg-[#D4AF37]/20 text-[#B8860B] dark:text-[#D4AF37] text-sm font-medium border border-[#D4AF37]/20">
-                  <Palette className="w-4 h-4" />
-                  Customization
-                </div>
-                <h2 className="text-4xl sm:text-5xl font-bold text-foreground">
-                  Make It Uniquely
-                  <span className="block mt-2 bg-gradient-to-r from-[#B8860B] via-[#D4AF37] to-[#C9A87C] bg-clip-text text-transparent">Yours</span>
-                </h2>
-                <p className="text-xl text-muted-foreground leading-relaxed">
-                  Choose from multiple design variants for each section. Switch between elegant, modern, or minimalist styles with just one click.
-                </p>
-                <ul className="space-y-4">
-                  {[
-                    'Multiple theme variants per section',
-                    'Custom colors to match your wedding palette',
-                    'Real-time preview as you customize',
-                    'Mobile-optimized designs',
-                  ].map((item, index) => (
-                    <li key={index} className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
-                        <Check className="w-4 h-4 text-green-600" />
-                      </div>
-                      <span className="text-foreground">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </FadeInOnScroll>
-            
-            <FadeInOnScroll delay={200}>
-              <div className="relative">
-                <div className="bg-gradient-to-br from-[#F5EFE6] to-[#FAF7F0] dark:from-[#2A2520]/30 dark:to-[#252018]/30 rounded-3xl p-8 border border-[#D4AF37]/20 dark:border-[#D4AF37]/30">
-                  <div className="aspect-[4/3] bg-white dark:bg-gray-900 rounded-2xl shadow-lg flex items-center justify-center">
-                    <div className="text-center p-8">
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-[#B8860B] to-[#D4AF37] flex items-center justify-center">
-                        <Palette className="w-8 h-8 text-white" />
-                      </div>
-                      <p className="text-muted-foreground">[App customization screenshot]</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </FadeInOnScroll>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section id="pricing" className="py-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <FadeInOnScroll>
-            <div className="text-center mb-20">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#D4AF37]/10 dark:bg-[#D4AF37]/20 text-[#B8860B] dark:text-[#D4AF37] text-sm font-medium mb-6 border border-[#D4AF37]/20">
-                <Crown className="w-4 h-4" />
-                Simple Pricing
-              </div>
-              <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
-                Choose Your Plan
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-                Start for free, upgrade when you&apos;re ready. No hidden fees, no surprises.
-              </p>
-            </div>
-          </FadeInOnScroll>
-
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <FadeInOnScroll delay={0}>
-              <PricingCard
-                name="Free"
-                price="$0"
-                period="forever"
-                description="Perfect for getting started"
-                features={[
-                  { text: 'Beautiful wedding website', included: true },
-                  { text: 'Photo gallery', included: true },
-                  { text: 'Event schedule', included: true },
-                  { text: 'Gift registry links', included: true },
-                  { text: 'Basic customization', included: true },
-                  { text: 'Guest management', included: false },
-                  { text: 'RSVP tracking', included: false },
-                  { text: 'Digital invitations', included: false },
-                  { text: 'Priority support', included: false },
-                ]}
-              />
-            </FadeInOnScroll>
-            <FadeInOnScroll delay={100}>
-              <PricingCard
-                name="Premium"
-                price="$29"
-                period="one-time payment"
-                description="Everything for your big day"
-                isPopular
-                ctaText="Upgrade to Premium"
-                ctaHref="/upgrade"
-                features={[
-                  { text: 'Everything in Free', included: true },
-                  { text: 'Unlimited guests', included: true },
-                  { text: 'Advanced RSVP system', included: true },
-                  { text: 'Digital invitations via WhatsApp', included: true },
-                  { text: 'Guest travel tracking', included: true },
-                  { text: 'Dietary preferences tracking', included: true },
-                  { text: 'CSV import/export', included: true },
-                  { text: 'Priority support', included: true },
-                  { text: 'Lifetime access', included: true },
-                ]}
-              />
-            </FadeInOnScroll>
-          </div>
-
-          <FadeInOnScroll delay={200}>
-            <div className="text-center mt-12">
-              <p className="text-muted-foreground">
-                💳 Secure payment via Stripe • 🔒 30-day money-back guarantee
-              </p>
-            </div>
-          </FadeInOnScroll>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="py-32 bg-gradient-to-b from-background to-[#FAF7F0]/50 dark:to-[#2A2520]/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <FadeInOnScroll>
-            <div className="text-center mb-20">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#D4AF37]/10 dark:bg-[#D4AF37]/20 text-[#B8860B] dark:text-[#D4AF37] text-sm font-medium mb-6 border border-[#D4AF37]/20">
-                <Heart className="w-4 h-4" />
-                Love Stories
-              </div>
-              <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
-                What Couples Say
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-                Join thousands of happy couples who chose OhMyWedding for their special day
-              </p>
-            </div>
-          </FadeInOnScroll>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <FadeInOnScroll delay={0}>
-              <TestimonialCard
-                quote="The RSVP system saved us so much time! We could track everything in one place and send reminders with just a click."
-                author="Sarah & Michael"
-                role="Married June 2025"
-                rating={5}
-              />
-            </FadeInOnScroll>
-            <FadeInOnScroll delay={100}>
-              <TestimonialCard
-                quote="Our guests loved how easy it was to RSVP and find all the wedding details. The design was absolutely beautiful!"
-                author="Emma & James"
-                role="Married August 2025"
-                rating={5}
-              />
-            </FadeInOnScroll>
-            <FadeInOnScroll delay={200}>
-              <TestimonialCard
-                quote="Best investment for our wedding! The guest management features alone saved us countless hours of spreadsheet work."
-                author="Jessica & David"
-                role="Married October 2025"
-                rating={5}
-              />
-            </FadeInOnScroll>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section id="faq" className="py-32">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <FadeInOnScroll>
-            <div className="text-center mb-16">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#D4AF37]/10 dark:bg-[#D4AF37]/20 text-[#B8860B] dark:text-[#D4AF37] text-sm font-medium mb-6 border border-[#D4AF37]/20">
-                <MessageSquare className="w-4 h-4" />
-                FAQ
-              </div>
-              <h2 className="text-4xl sm:text-5xl font-bold text-foreground">
-                Frequently Asked Questions
-              </h2>
-            </div>
-          </FadeInOnScroll>
-
-          <FadeInOnScroll delay={100}>
-            <div className="bg-card rounded-2xl border border-border p-8">
-              <FAQItem
-                question="How long does my website stay active?"
-                answer="Your wedding website stays active forever! We believe your memories should last a lifetime, so we don't take down your site after the wedding. You can keep it as a digital keepsake."
-              />
-              <FAQItem
-                question="Can I upgrade from Free to Premium later?"
-                answer="Absolutely! You can upgrade to Premium at any time. Your existing website content and settings will be preserved, and you'll instantly get access to all premium features."
-              />
-              <FAQItem
-                question="How does the RSVP system work?"
-                answer="Guests receive a personalized invitation link that takes them to your RSVP page. They verify their identity via phone, then can respond for their entire group. You'll see all responses in real-time in your dashboard."
-              />
-              <FAQItem
-                question="Can I customize the design to match my wedding colors?"
-                answer="Yes! You can customize colors throughout your website to match your wedding palette. Premium users get access to additional customization options and multiple design variants for each section."
-              />
-              <FAQItem
-                question="What payment methods do you accept?"
-                answer="We accept all major credit cards (Visa, Mastercard, American Express) through our secure Stripe payment system. All transactions are encrypted and secure."
-              />
-              <FAQItem
-                question="Do you offer refunds?"
-                answer="Yes, we offer a 30-day money-back guarantee. If you're not satisfied with Premium for any reason, contact our support team within 30 days of purchase for a full refund."
-              />
-              <FAQItem
-                question="Can multiple people manage the wedding website?"
-                answer="Yes! You can add collaborators to help manage your wedding website. Collaborators can help with guest management, content updates, and more."
-              />
-            </div>
-          </FadeInOnScroll>
-        </div>
-      </section>
-
-      {/* Final CTA Section */}
-      <section className="py-32 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#B8860B] via-[#C9A226] to-[#D4AF37]" />
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.3) 1px, transparent 0)',
-            backgroundSize: '30px 30px'
-          }} />
-        </div>
-        
-        <FadeInOnScroll>
-          <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="space-y-8">
-              <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white/20 text-white text-sm font-medium backdrop-blur-sm">
-                <Heart className="w-4 h-4 fill-current" />
-                Start your journey today
-              </div>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white">
-                Ready to Create Your
-                <span className="block mt-2">Wedding Website?</span>
-              </h2>
-              <p className="text-xl text-white/90 max-w-2xl mx-auto">
-                Join thousands of couples who&apos;ve created beautiful wedding websites with OhMyWedding. Get started in minutes.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                <Link href="/create-wedding">
-                  <Button size="lg" className="bg-white text-[#B8860B] hover:bg-white/90 h-14 px-8 text-lg w-full sm:w-auto shadow-lg">
-                    Create Your Free Website
-                    <ArrowRight className="w-5 h-5 ml-2" />
+                <Link href={plan.href}>
+                  <Button 
+                    className={`w-full h-12 sm:h-14 text-sm sm:text-base tracking-wider transition-all duration-700 ${
+                      plan.featured 
+                        ? 'bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14]' 
+                        : (plan as { isDeluxe?: boolean }).isDeluxe
+                          ? 'bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb]'
+                          : 'bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb]'
+                    }`}
+                  >
+                    {plan.cta}
                   </Button>
                 </Link>
-              </div>
-              <p className="text-white/70 text-sm">No credit card required • Takes less than 5 minutes</p>
-            </div>
-          </div>
-        </FadeInOnScroll>
-      </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border/30 bg-muted/20 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-12 mb-12">
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-3 mb-6">
-                <Image
-                  src="/images/logos/OMW Logo Gold.png"
-                  alt="OhMyWedding"
-                  width={40}
-                  height={40}
-                  className="h-10 w-auto"
-                />
-                <span className="font-serif text-2xl font-light text-foreground">OhMyWedding</span>
+                <div className="mt-8 sm:mt-10 space-y-4 sm:space-y-5">
+                  {plan.features.map((feature, featureIndex) => (
+                    <motion.div 
+                      key={featureIndex} 
+                      className="flex items-center gap-3 sm:gap-4"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+                      transition={{ duration: 0.5, delay: 0.3 + featureIndex * 0.08 }}
+                    >
+                      <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        feature.included 
+                          ? plan.featured ? 'bg-[#DDA46F]/30 text-[#DDA46F]' : (plan as { isDeluxe?: boolean }).isDeluxe ? 'bg-[#420c14]/20 text-[#420c14]' : 'bg-[#420c14]/10 text-[#420c14]'
+                          : plan.featured ? 'bg-[#f5f2eb]/10 text-[#f5f2eb]/30' : (plan as { isDeluxe?: boolean }).isDeluxe ? 'bg-[#420c14]/10 text-[#420c14]/30' : 'bg-[#420c14]/5 text-[#420c14]/30'
+                      }`}>
+                        {feature.included ? <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : <span className="w-2 h-0.5 bg-current" />}
+                      </div>
+                      <span className={`text-sm sm:text-base ${feature.included 
+                        ? plan.featured ? 'text-[#f5f2eb]/80' : (plan as { isDeluxe?: boolean }).isDeluxe ? 'text-[#420c14]/90' : 'text-[#420c14]/80'
+                        : plan.featured ? 'text-[#f5f2eb]/40' : (plan as { isDeluxe?: boolean }).isDeluxe ? 'text-[#420c14]/40' : 'text-[#420c14]/40'
+                      }`}>
+                        {feature.text}
+                      </span>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
-              <p className="text-lg text-muted-foreground leading-relaxed max-w-md">
-                Creating beautiful wedding websites that help couples celebrate their love story with style.
-              </p>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Guarantee */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ duration: 1, delay: 0.8 }}
+          className="mt-16 text-center text-[#420c14]/50 text-sm tracking-wide"
+        >
+          💳 Secure payment via Stripe • 🔒 30-day money-back guarantee
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================
+// GOLDEN BANNER SECTION
+// ============================================
+
+function GoldenBannerSection() {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: false, margin: "-100px" })
+
+  return (
+    <section ref={ref} className="relative h-[50vh] sm:h-[60vh] lg:h-[70vh] min-h-[350px] sm:min-h-[500px] lg:min-h-[600px] overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0">
+        <Image
+          src="/images/demo_images/demo-img-13.jpg"
+          alt="Wedding moment"
+          fill
+          className="object-cover"
+        />
+        {/* Golden gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#DDA46F]/85 via-[#DDA46F]/70 to-[#DDA46F]/85" />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 h-full flex items-center justify-center px-4 sm:px-8 lg:px-16">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 1.2 }}
+          className="text-center max-w-7xl"
+        >
+          <motion.p
+            className="text-[#420c14] leading-[1.2] text-[8em]"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
+            transition={{ duration: 1, delay: 0.3 }}
+            style={{ 
+              textShadow: '0 2px 20px rgba(221,164,111,0.3)'
+            }}
+          >
+            <span className="font-serif text-[2.15em] md:text-[3.15em]">&ldquo;Every </span>
+            <span className="font-['Elegant',cursive] text-[3.15em] md:text-[5.15em]">love story</span>
+            <span className="font-serif text-[2.15em] md:text-[3.15em]"> is beautiful, but yours deserves to be told with </span>
+            <span className="font-['Elegant',cursive] text-[3.15em] md:text-[5.15em]">elegance</span>
+            <span className="font-serif text-[2.15em] md:text-[3.15em]">&rdquo;</span>
+          </motion.p>
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================
+// TEMPLATES SECTION
+// ============================================
+
+function TemplatesSection() {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: false, margin: "-100px" })
+
+  const templates = [
+    { image: "/images/demo_images/demo-img-10.jpg", title: "Classic Elegance", style: "Timeless" },
+    { image: "/images/demo_images/demo-img-15.jpg", title: "Modern Romance", style: "Contemporary" },
+    { image: "/images/demo_images/demo-img-20.jpg", title: "Garden Party", style: "Natural" },
+    { image: "/images/demo_images/demo-img-25.jpg", title: "Rustic Charm", style: "Intimate" },
+    { image: "/images/demo_images/demo-img-30.jpg", title: "Coastal Dreams", style: "Serene" },
+    { image: "/images/demo_images/demo-img-35.jpg", title: "Urban Chic", style: "Modern" },
+  ]
+
+  // Duplicate templates for infinite scroll effect
+  const infiniteTemplates = [...templates, ...templates, ...templates]
+
+  return (
+    <section id="demos" ref={ref} className="py-20 sm:py-40 bg-[#f5f2eb] relative overflow-hidden">
+      <div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12 sm:mb-20">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+            transition={{ duration: 1.2 }}
+            className="text-center"
+          >
+            <span className="text-[#424b1e] text-[10px] sm:text-xs tracking-[0.3em] sm:tracking-[0.4em] uppercase mb-4 sm:mb-6 block">
+              Templates
+            </span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl text-[#420c14] mb-6 sm:mb-8 leading-tight">
+              <span className="font-serif font-light">Stunning Designs</span>
+              <span className="font-['Elegant',cursive] text-[#732c2c] block mt-1 sm:mt-2">For Every Style</span>
+            </h2>
+          </motion.div>
+        </div>
+
+        {/* Infinite horizontal scrolling gallery */}
+        <div className="relative">
+          <motion.div 
+            className="flex gap-4 sm:gap-6 lg:gap-8 pb-4 animate-scroll-left"
+            style={{ width: 'max-content' }}
+          >
+          {infiniteTemplates.map((template, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.8, delay: (index % templates.length) * 0.1 }}
+              className="flex-shrink-0 w-[200px] sm:w-[280px] md:w-[320px] lg:w-[380px] group cursor-pointer"
+            >
+              <div className="relative aspect-[3/4] rounded-2xl sm:rounded-3xl overflow-hidden mb-3 sm:mb-6">
+                <Image
+                  src={template.image}
+                  alt={template.title}
+                  fill
+                  className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#420c14]/80 via-[#420c14]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                <motion.div 
+                  className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+                  whileHover={{ scale: 1.05 }}
+                >
+                  <span className="px-8 py-4 bg-[#f5f2eb]/95 backdrop-blur-sm rounded-full text-[#420c14] text-sm font-medium tracking-wider">
+                    Preview Template
+                  </span>
+                </motion.div>
+              </div>
+              <h3 className="font-serif text-base sm:text-lg lg:text-xl text-[#420c14]">{template.title}</h3>
+              <p className="text-xs sm:text-sm text-[#420c14]/50 tracking-wider uppercase">{template.style}</p>
+            </motion.div>
+          ))}
+        </motion.div>
+        </div>
+
+        {/* CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 1, delay: 0.8 }}
+          className="mt-12 sm:mt-20 text-center"
+        >
+          <Link href="/demo">
+            <Button 
+              size="lg"
+              variant="outline"
+              className="border-[#420c14]/20 text-[#420c14] hover:border-[#DDA46F] hover:bg-[#DDA46F]/5 h-12 sm:h-16 px-8 sm:px-12 text-sm sm:text-base tracking-wider transition-all duration-700"
+            >
+              View All Templates
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 sm:ml-3" />
+            </Button>
+          </Link>
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================
+// TESTIMONIALS SECTION
+// ============================================
+
+const testimonials = [
+  {
+    quote: "The RSVP system saved us so much time! We could track everything in one place. Absolutely elegant and sophisticated.",
+    author: "Sarah & Michael",
+    role: "Married June 2025",
+    image: "/images/demo_images/demo-img-46.jpg"
+  },
+  {
+    quote: "Our guests loved how easy it was to RSVP. The design was beautiful and matched our vision perfectly.",
+    author: "Emma & James",
+    role: "Married August 2025",
+    image: "/images/demo_images/demo-img-47.jpg"
+  },
+  {
+    quote: "Best investment for our wedding! The invitation tracking feature is incredibly useful.",
+    author: "Jessica & David",
+    role: "Married October 2025",
+    image: "/images/demo_images/demo-img-48.jpg"
+  },
+]
+
+function TestimonialsSection() {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: false, margin: "-100px" })
+
+  return (
+    <section ref={ref} className="py-20 sm:py-40 bg-[#172815] relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#DDA46F]/30 to-transparent" />
+      
+      {/* Floating decorative elements */}
+      <motion.div
+        className="absolute top-1/4 right-[5%] w-32 sm:w-64 h-32 sm:h-64 rounded-full bg-[#DDA46F]/5 blur-3xl"
+        animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] }}
+        transition={{ duration: 8, repeat: Infinity }}
+      />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+          transition={{ duration: 1.2 }}
+          className="text-center mb-12 sm:mb-24"
+        >
+          <motion.span 
+            className="text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.3em] sm:tracking-[0.4em] uppercase mb-4 sm:mb-6 block"
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+          >
+            Testimonials
+          </motion.span>
+          <motion.h2 
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl text-[#f5f2eb] mb-6 sm:mb-8"
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 1, delay: 0.2 }}
+          >
+            <span className="font-serif font-light">Loved by Couples</span>
+            <span className="font-['Elegant',cursive] text-[#DDA46F] block mt-1 sm:mt-2">Worldwide</span>
+          </motion.h2>
+        </motion.div>
+
+        {/* Testimonials Grid */}
+        <div className="grid md:grid-cols-3 gap-6 sm:gap-10">
+          {testimonials.map((testimonial, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 60 }}
+              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
+              transition={{ duration: 0.8, delay: index * 0.2 }}
+              className="relative group"
+            >
+              {/* Background image with overlay */}
+              <div className="absolute inset-0 rounded-2xl sm:rounded-3xl overflow-hidden">
+                <Image
+                  src={testimonial.image}
+                  alt={testimonial.author}
+                  fill
+                  className="object-cover opacity-20 group-hover:opacity-30 transition-opacity duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-[#172815]/80 via-[#172815]/90 to-[#172815]" />
+              </div>
+              
+              <div className="relative p-6 sm:p-10 rounded-2xl sm:rounded-3xl bg-[#f5f2eb]/5 backdrop-blur-sm border border-[#f5f2eb]/10 h-full">
+                <motion.div 
+                  className="absolute -top-4 sm:-top-6 left-6 sm:left-10 text-5xl sm:text-8xl text-[#DDA46F]/20 font-serif"
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.5 }}
+                  transition={{ duration: 0.6, delay: 0.3 + index * 0.15 }}
+                >
+                  &ldquo;
+                </motion.div>
+                
+                <motion.div 
+                  className="flex gap-1 mb-4 sm:mb-8 relative"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+                  transition={{ duration: 0.5, delay: 0.4 + index * 0.15 }}
+                >
+                  {[1,2,3,4,5].map((i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0 }}
+                      transition={{ duration: 0.3, delay: 0.5 + index * 0.15 + i * 0.05 }}
+                    >
+                      <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-[#DDA46F] text-[#DDA46F]" />
+                    </motion.div>
+                  ))}
+                </motion.div>
+                
+                <motion.blockquote 
+                  className="text-[#f5f2eb]/80 mb-6 sm:mb-10 leading-relaxed text-sm sm:text-lg relative"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  transition={{ duration: 0.6, delay: 0.5 + index * 0.15 }}
+                >
+                  {testimonial.quote}
+                </motion.blockquote>
+                
+                <motion.div 
+                  className="flex items-center gap-3 sm:gap-5"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  transition={{ duration: 0.6, delay: 0.6 + index * 0.15 }}
+                >
+                  <div className="relative w-10 h-10 sm:w-14 sm:h-14 rounded-full overflow-hidden flex-shrink-0">
+                    <Image
+                      src={testimonial.image}
+                      alt={testimonial.author}
+                      fill
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#DDA46F]/20 to-[#732c2c]/20" />
+                  </div>
+                  <div>
+                    <p className="font-serif text-base sm:text-lg text-[#f5f2eb]">{testimonial.author}</p>
+                    <p className="text-xs sm:text-sm text-[#f5f2eb]/50">{testimonial.role}</p>
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ============================================
+// FINAL CTA SECTION
+// ============================================
+
+const ctaVideos = [
+  "/videos/vid2.mp4",
+  "/videos/vid10.mp4",
+  "/videos/vid4.mp4",
+  "/videos/vid17.mp4",
+  "/videos/vid6.mp4",
+  "/videos/vid20.mp4",
+  "/videos/vid8.mp4",
+]
+
+function FinalCTASection() {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: false, margin: "-100px" })
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
+
+  // Handle video end to switch to next video
+  const handleVideoEnd = useCallback(() => {
+    setCurrentVideoIndex((prev) => (prev + 1) % ctaVideos.length)
+  }, [])
+
+  return (
+    <section ref={ref} className="relative py-40 overflow-hidden">
+      {/* Background Video Carousel */}
+      <div className="absolute inset-0">
+        <AnimatePresence mode="sync">
+          <motion.video
+            key={currentVideoIndex}
+            autoPlay
+            muted
+            playsInline
+            onEnded={handleVideoEnd}
+            className="absolute inset-0 w-full h-full object-cover"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <source src={ctaVideos[currentVideoIndex]} type="video/mp4" />
+          </motion.video>
+        </AnimatePresence>
+        <div className="absolute inset-0 bg-[#420c14]/60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#420c14]/80 via-transparent to-[#420c14]/40" />
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 60 }}
+        animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
+        transition={{ duration: 1.5 }}
+        className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
+      >
+        <motion.span 
+          className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-8 py-2 sm:py-3 rounded-full bg-[#f5f2eb]/5 backdrop-blur-md border border-[#DDA46F]/20 text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.2em] sm:tracking-[0.4em] uppercase mb-8 sm:mb-12"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+          transition={{ duration: 1, delay: 0.3 }}
+        >
+          <Heart className="w-3 h-3 sm:w-4 sm:h-4 fill-current" />
+          Begin Your Journey
+        </motion.span>
+        
+        <motion.h2 
+          className="text-3xl sm:text-4xl md:text-5xl lg:text-8xl text-[#f5f2eb] mb-6 sm:mb-10 leading-[1.05] drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)] px-2"
+          initial={{ opacity: 0, y: 40 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+          transition={{ duration: 1.2, delay: 0.4 }}
+          style={{ textShadow: '0 4px 30px rgba(0,0,0,0.4), 0 2px 10px rgba(0,0,0,0.3)' }}
+        >
+          <span className="font-serif font-light block">Ready to Create Your</span>
+          <span className="font-['Elegant',cursive] text-[#DDA46F] block mt-2 sm:mt-4" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>Dream Wedding Site?</span>
+        </motion.h2>
+        
+        <motion.p 
+          className="text-sm sm:text-lg md:text-xl text-[#f5f2eb]/70 max-w-2xl mx-auto mb-8 sm:mb-14 leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.3)] px-4"
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 1, delay: 0.6 }}
+        >
+          Join thousands of couples who&apos;ve created beautiful wedding websites.
+          Start your journey in minutes.
+        </motion.p>
+        
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 1, delay: 0.8 }}
+        >
+          <Link href="/create-wedding">
+            <Button 
+              size="lg" 
+              className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] h-12 sm:h-16 px-8 sm:px-14 text-sm sm:text-base tracking-[0.1em] sm:tracking-[0.15em] font-medium transition-all duration-700"
+            >
+              Create Your Free Website
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 sm:ml-3" />
+            </Button>
+          </Link>
+        </motion.div>
+        
+        <motion.p 
+          className="text-[#f5f2eb]/40 text-xs sm:text-sm mt-6 sm:mt-10 tracking-wider drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ duration: 1, delay: 1 }}
+        >
+          No credit card required • Takes less than 5 minutes
+        </motion.p>
+      </motion.div>
+    </section>
+  )
+}
+
+// ============================================
+// FOOTER
+// ============================================
+
+function LuxuryFooter() {
+  return (
+    <footer className="bg-[#420c14] border-t border-[#DDA46F]/10 py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid md:grid-cols-4 gap-16 mb-16">
+          <div className="md:col-span-2">
+            <div className="flex items-center gap-4 mb-8">
+              <Image
+                src="/images/logos/OMW Logo Gold.png"
+                alt="OhMyWedding"
+                width={48}
+                height={48}
+                className="h-12 w-auto"
+              />
+              <span className="font-serif text-2xl text-[#f5f2eb] tracking-[0.1em]">OhMyWedding</span>
             </div>
-            <div>
-              <h4 className="font-semibold text-foreground mb-4">Product</h4>
-              <ul className="space-y-3 text-muted-foreground">
-                <li><Link href="#features" className="hover:text-foreground transition-colors">Features</Link></li>
-                <li><Link href="#pricing" className="hover:text-foreground transition-colors">Pricing</Link></li>
-                <li><Link href="#faq" className="hover:text-foreground transition-colors">FAQ</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-foreground mb-4">Support</h4>
-              <ul className="space-y-3 text-muted-foreground">
-                <li><Link href="#faq" className="hover:text-foreground transition-colors">FAQ</Link></li>
-                <li>
-                  <a
-                    href="mailto:support@ohmy.wedding"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Contact Us
-                  </a>
-                </li>
-                <li><Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
-                <li><Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-border/30 pt-8 text-center">
-            <p className="text-muted-foreground">
-              &copy; {new Date().getFullYear()} OhMyWedding. Made with{' '}
-              <Heart className="w-4 h-4 inline text-[#D4AF37] fill-[#D4AF37] mx-1" />{' '}
-              for couples in love.
+            <p className="text-[#f5f2eb]/50 leading-relaxed max-w-md">
+              Creating beautiful wedding websites that help couples celebrate their love story 
+              with elegance and sophistication.
             </p>
           </div>
+
+          <div>
+            <h4 className="text-[#f5f2eb] font-medium mb-6 tracking-[0.2em] text-sm uppercase">Product</h4>
+            <ul className="space-y-4">
+              {['Features', 'Pricing', 'Templates', 'FAQ'].map((item) => (
+                <li key={item}>
+                  <a 
+                    href={`#${item.toLowerCase()}`}
+                    className="text-[#f5f2eb]/50 hover:text-[#DDA46F] transition-colors duration-500 text-sm"
+                  >
+                    {item}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-[#f5f2eb] font-medium mb-6 tracking-[0.2em] text-sm uppercase">Support</h4>
+            <ul className="space-y-4">
+              {[
+                { label: 'Contact Us', href: 'mailto:support@ohmy.wedding' },
+                { label: 'Privacy Policy', href: '/privacy' },
+                { label: 'Terms of Service', href: '/terms' },
+              ].map((item) => (
+                <li key={item.label}>
+                  <a 
+                    href={item.href}
+                    className="text-[#f5f2eb]/50 hover:text-[#DDA46F] transition-colors duration-500 text-sm"
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-      </footer>
-    </main>
+
+        <div className="border-t border-[#DDA46F]/10 pt-10 text-center">
+          <p className="text-[#f5f2eb]/30 text-sm tracking-wide">
+            © {new Date().getFullYear()} OhMyWedding. Made with{' '}
+            <Heart className="w-4 h-4 inline text-[#DDA46F] fill-[#DDA46F] mx-1" />{' '}
+            for couples in love.
+          </p>
+        </div>
+      </div>
+    </footer>
+  )
+}
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
+
+export default function LandingPage() {
+  useSmoothScroll()
+
+  return (
+    <>
+      <CustomCursor />
+      
+      <style jsx global>{`
+        @media (min-width: 1024px) {
+          body,
+          body * {
+            cursor: none !important;
+          }
+        }
+        
+        html {
+          scroll-behavior: smooth;
+        }
+        
+        /* Smooth/heavy scroll feel */
+        @supports (scroll-behavior: smooth) {
+          html {
+            scroll-behavior: smooth;
+          }
+        }
+        
+        /* Custom selection color */
+        ::selection {
+          background: rgba(221, 164, 111, 0.3);
+          color: #f5f2eb;
+        }
+        
+        /* Glass effect utilities */
+        .glass {
+          background: rgba(245, 242, 235, 0.05);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+        }
+      `}</style>
+      
+      <main className="min-h-screen bg-[#420c14] overflow-x-hidden">
+        <Suspense fallback={null}>
+          <AuthCodeHandler />
+        </Suspense>
+        
+        <LuxuryHeader />
+        <HeroSection />
+        <AboutSection />
+        <FeaturesSection />
+        <ExperienceSection />
+        <PricingSection />
+        <GoldenBannerSection />
+        <TemplatesSection />
+        <TestimonialsSection />
+        <FinalCTASection />
+        <LuxuryFooter />
+      </main>
+    </>
   )
 }

@@ -11,7 +11,7 @@ const LOCAL_DOMAIN = 'ohmy.local'
 const RESERVED_SUBDOMAINS = ['www', 'api', 'admin', 'app', 'mail', 'blog', 'help', 'support', 'status']
 
 // Paths on the main domain that should not be treated as wedding name IDs
-const RESERVED_PATHS = ['','_next','api','auth','admin','create-wedding','login','upgrade','demo','success','favicon.ico']
+const RESERVED_PATHS = ['','_next','api','auth','admin','create-wedding','login','upgrade','demo','success','favicon.ico','fonts','videos','images','site.webmanifest']
 
 /**
  * Extract subdomain from hostname
