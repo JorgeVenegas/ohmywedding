@@ -553,11 +553,11 @@ function HeroSection() {
           style={{ textShadow: '0 4px 30px rgba(0,0,0,0.4), 0 2px 10px rgba(0,0,0,0.3)' }}
         >
           <span className="block font-serif font-light">Your</span>
-          <span className="block font-['Elegant',cursive] text-[#DDA46F] text-[1.1em] sm:text-[1.15em] my-1 sm:my-2" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>
+          <span className="block font-['Elegant',cursive] text-[#DDA46F] text-[1.4em] sm:text-[1.5em] my-1 sm:my-2" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>
             Love Story
           </span>
           <span className="block font-serif font-light">Deserves</span>
-          <span className="block font-['Elegant',cursive] text-[#DDA46F] text-[1.1em] sm:text-[1.15em] mt-1 sm:mt-2" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>
+          <span className="block font-['Elegant',cursive] text-[#DDA46F] text-[1.4em] sm:text-[1.5em] mt-1 sm:mt-2" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>
             Elegance
           </span>
         </motion.h1>
@@ -684,7 +684,7 @@ function AboutSection() {
               transition={{ duration: 1.2, delay: 0.3 }}
             >
               <span className="font-serif font-light block">Where Love Meets</span>
-              <span className="font-['Elegant',cursive] text-[#732c2c] block mt-1 sm:mt-2">Exquisite Design</span>
+              <span className="font-['Elegant',cursive] text-[#732c2c] text-[1.5em] block mt-1 sm:mt-2">Exquisite Design</span>
             </motion.h2>
             
             <motion.div 
@@ -856,7 +856,7 @@ function FeaturesSection() {
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl text-[#f5f2eb] mb-6 sm:mb-8 leading-tight">
             <span className="font-serif font-light block">Powerful Tools for</span>
-            <span className="font-['Elegant',cursive] text-[#DDA46F] block mt-1 sm:mt-2">Your Perfect Day</span>
+            <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] block mt-1 sm:mt-2">Your Perfect Day</span>
           </h2>
           <p className="text-[#f5f2eb]/50 text-sm sm:text-lg max-w-2xl mx-auto leading-relaxed px-2">
             Everything you need to create, manage, and share your wedding website with elegance.
@@ -990,13 +990,13 @@ function ExperienceSection() {
     <section id="experience" ref={ref} className="py-20 sm:py-32 bg-[#172815] relative overflow-hidden min-h-[700px] sm:min-h-[800px]">
       {/* Background Video */}
       <div className="absolute inset-0 z-0">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="sync">
           <motion.div
             key={activeIndex}
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
             className="absolute inset-0"
           >
             <video
@@ -1019,9 +1019,9 @@ function ExperienceSection() {
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
           {/* Left - Content */}
           <motion.div
-            initial={{ opacity: 0, x: -80 }}
-            animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -80 }}
-            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, y: 40 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
           >
             <span className="text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.3em] sm:tracking-[0.5em] uppercase mb-4 sm:mb-8 block">
               Website Sections
@@ -1029,7 +1029,7 @@ function ExperienceSection() {
             
             <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#f5f2eb] mb-8 sm:mb-12 leading-[1.05]">
               <span className="font-serif font-light block">Every Detail</span>
-              <span className="font-['Elegant',cursive] text-[#DDA46F] block mt-1 sm:mt-2">Beautifully Crafted</span>
+              <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] block mt-1 sm:mt-2">Beautifully Crafted</span>
             </h2>
 
             {/* Experience List - All items visible without scrolling */}
@@ -1043,9 +1043,9 @@ function ExperienceSection() {
                       ? 'bg-[#DDA46F]/15 border border-[#DDA46F]/30' 
                       : 'bg-[#f5f2eb]/5 border border-transparent hover:bg-[#f5f2eb]/10'
                   }`}
-                  initial={{ opacity: 0, x: -40 }}
-                  animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -40 }}
-                  transition={{ duration: 0.6, delay: index * 0.08 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  transition={{ duration: 0.5, delay: 0.3 + index * 0.06 }}
                 >
                   <div className="p-2.5 sm:p-3">
                     <div className="flex items-center justify-between gap-2">
@@ -1066,9 +1066,9 @@ function ExperienceSection() {
 
           {/* Right - Large number and preview */}
           <motion.div
-            initial={{ opacity: 0, x: 80 }}
-            animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 80 }}
-            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+            initial={{ opacity: 0, y: 40 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
             className="hidden lg:block relative"
           >
             <div className="relative aspect-[4/3] rounded-3xl overflow-hidden">
@@ -1223,7 +1223,7 @@ function PricingSection() {
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl text-[#420c14] mb-6 sm:mb-8 leading-tight">
             <span className="font-serif font-light">Simple &</span>
-            <span className="font-['Elegant',cursive] text-[#DDA46F] ml-2 sm:ml-4">Transparent</span>
+            <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] ml-2 sm:ml-4">Transparent</span>
           </h2>
           <p className="text-[#420c14]/60 text-sm sm:text-lg max-w-2xl mx-auto px-2">
             Start for free, upgrade when you&apos;re ready. No hidden fees.
@@ -1389,9 +1389,9 @@ function GoldenBannerSection() {
             }}
           >
             <span className="font-serif text-[2.15em] md:text-[3.15em]">&ldquo;Every </span>
-            <span className="font-['Elegant',cursive] text-[3.15em] md:text-[5.15em]">love story</span>
+            <span className="font-['Elegant',cursive] text-[3.6em] md:text-[5.9em]">love story</span>
             <span className="font-serif text-[2.15em] md:text-[3.15em]"> is beautiful, but yours deserves to be told with </span>
-            <span className="font-['Elegant',cursive] text-[3.15em] md:text-[5.15em]">elegance</span>
+            <span className="font-['Elegant',cursive] text-[3.6em] md:text-[5.9em]">elegance</span>
             <span className="font-serif text-[2.15em] md:text-[3.15em]">&rdquo;</span>
           </motion.p>
         </motion.div>
@@ -1436,7 +1436,7 @@ function TemplatesSection() {
             </span>
             <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl text-[#420c14] mb-6 sm:mb-8 leading-tight">
               <span className="font-serif font-light">Stunning Designs</span>
-              <span className="font-['Elegant',cursive] text-[#732c2c] block mt-1 sm:mt-2">For Every Style</span>
+              <span className="font-['Elegant',cursive] text-[#732c2c] text-[1.5em] block mt-1 sm:mt-2">For Every Style</span>
             </h2>
           </motion.div>
         </div>
@@ -1565,7 +1565,7 @@ function TestimonialsSection() {
             transition={{ duration: 1, delay: 0.2 }}
           >
             <span className="font-serif font-light">Loved by Couples</span>
-            <span className="font-['Elegant',cursive] text-[#DDA46F] block mt-1 sm:mt-2">Worldwide</span>
+            <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] block mt-1 sm:mt-2">Worldwide</span>
           </motion.h2>
         </motion.div>
 
@@ -1728,7 +1728,7 @@ function FinalCTASection() {
           style={{ textShadow: '0 4px 30px rgba(0,0,0,0.4), 0 2px 10px rgba(0,0,0,0.3)' }}
         >
           <span className="font-serif font-light block">Ready to Create Your</span>
-          <span className="font-['Elegant',cursive] text-[#DDA46F] block mt-2 sm:mt-4" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>Dream Wedding Site?</span>
+          <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] block mt-2 sm:mt-4" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>Dream Wedding Site?</span>
         </motion.h2>
         
         <motion.p 
