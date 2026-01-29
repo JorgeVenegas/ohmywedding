@@ -547,7 +547,7 @@ function HeroSection() {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.5, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-6 sm:mb-10"
+          className="mb-3 sm:mb-8"
         >
           <span className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-8 py-2 sm:py-3 rounded-full bg-[#f5f2eb]/5 backdrop-blur-md border border-[#DDA46F]/20 text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.2em] sm:tracking-[0.4em] uppercase">
             <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -560,11 +560,11 @@ function HeroSection() {
           initial={{ opacity: 0, y: 60 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.5, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl xl:text-9xl text-[#f5f2eb] mb-6 sm:mb-10 leading-[0.95] tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl xl:text-9xl text-[#f5f2eb] mb-4 sm:mb-8 leading-[0.95] tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
           style={{ textShadow: '0 4px 30px rgba(0,0,0,0.4), 0 2px 10px rgba(0,0,0,0.3)' }}
         >
-          <span className="block font-serif font-light text-[1.4em] sm:text-[1.5em] my-1 sm:my-2" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>Your</span>
-          <span className="block font-serif font-light text-[1.4em] sm:text-[1.5em] my-1 sm:my-2" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>
+          <span className="block font-serif font-light text-[1.4em] sm:text-[1.5em] my-0 sm:my-1" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>Your</span>
+          <span className="block font-serif font-light text-[1.4em] sm:text-[1.5em] my-0 sm:my-1" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>
             Love Story
           </span>
           <div className="relative h-[1.2em] sm:h-[1.4em] md:h-[1.6em] lg:h-[1.8em] xl:h-[2em] flex items-center justify-center">
@@ -588,7 +588,7 @@ function HeroSection() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.2, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="text-sm sm:text-lg md:text-xl text-[#f5f2eb]/60 max-w-2xl mx-auto mb-8 sm:mb-14 leading-relaxed font-light tracking-wide px-2"
+          className="text-sm sm:text-lg md:text-xl text-[#f5f2eb]/60 max-w-2xl mx-auto mb-5 sm:mb-10 leading-relaxed font-light tracking-wide px-2"
         >
           Create a stunning, bespoke wedding website where your love story is {rotatingWords[currentWordIndex].toLowerCase()} with unparalleled sophistication and elegance.
         </motion.p>
@@ -625,7 +625,7 @@ function HeroSection() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1.5, delay: 1.5 }}
-          className="mt-12 sm:mt-24 flex justify-center gap-8 sm:gap-16 md:gap-24"
+          className="mt-8 sm:mt-16 flex justify-center gap-8 sm:gap-16 md:gap-24"
         >
           {[
             { value: '10K+', label: 'Happy Couples' },
@@ -1854,11 +1854,14 @@ function LuxuryFooter() {
           </div>
         </div>
 
-        <div className="border-t border-[#DDA46F]/10 pt-10 text-center">
+        <div className="border-t border-[#DDA46F]/10 pt-10 text-center space-y-4">
           <p className="text-[#f5f2eb]/30 text-sm tracking-wide">
             © {new Date().getFullYear()} OhMyWedding. Made with{' '}
             <Heart className="w-4 h-4 inline text-[#DDA46F] fill-[#DDA46F] mx-1" />{' '}
             for couples in love.
+          </p>
+          <p className="text-[#f5f2eb]/20 text-[11px] leading-relaxed max-w-2xl mx-auto">
+            OhMyWedding collects basic account information (name, email, wedding date), content you create (photos, guest lists, details), and guest interactions (RSVPs, messages) to provide your wedding website. We use this data solely to deliver the service, enable notifications, improve features, and maintain security. We never sell your information. See our <Link href="/privacy" className="text-[#DDA46F] hover:underline">Privacy Policy</Link> for details.
           </p>
         </div>
       </div>

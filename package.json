@@ -1,6 +1,27 @@
 {
-  "name": "my-v0-project",
-  "version": "0.1.0",
+  "name": "ohmywedding",
+  "version": "1.0.0",
+  "description": "OhMyWedding - Create stunning, luxury wedding websites with beautiful designs, guest management, RSVPs, and registry features",
+  "author": "OhMyWedding",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ohmywedding/ohmywedding"
+  },
+  "homepage": "https://ohmy.wedding",
+  "bugs": {
+    "url": "https://github.com/ohmywedding/ohmywedding/issues",
+    "email": "support@ohmy.wedding"
+  },
+  "keywords": [
+    "wedding",
+    "website builder",
+    "rsvp",
+    "guest management",
+    "wedding invitations",
+    "registry",
+    "luxury design"
+  ],
   "private": true,
   "scripts": {
     "dev": "next dev --hostname ohmy.local",
