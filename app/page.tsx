@@ -35,6 +35,7 @@ import {
   Eye,
   CheckCircle2,
   Play,
+  X,
 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { getWeddingUrl } from "@/lib/wedding-url"
@@ -105,11 +106,12 @@ type UserWedding = {
   wedding_date: string | null
 }
 
-function AuthButtons() {
+function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
   const { user, loading, signOut } = useAuth()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [userWeddings, setUserWeddings] = useState<UserWedding[]>([])
   const [weddingsLoading, setWeddingsLoading] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (user) {
@@ -125,6 +127,20 @@ function AuthButtons() {
     }
   }, [user])
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false)
+      }
+    }
+
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showUserMenu])
+
   if (loading) {
     return (
       <div className="flex gap-3">
@@ -138,69 +154,130 @@ function AuthButtons() {
     const hasWedding = userWeddings.length > 0
     const firstWedding = userWeddings[0]
 
+    // Mobile: show everything inline, no dropdown
+    if (isMobile) {
+      return (
+        <div className="flex flex-col gap-4 w-full">
+          {/* User info */}
+          <div className="pb-4 border-b border-[#DDA46F]/20">
+            <p className="text-xs text-[#f5f2eb]/50 mb-1">Signed in as</p>
+            <p className="text-sm font-medium text-[#f5f2eb]/90 truncate">{user.email}</p>
+          </div>
+          
+          {/* Weddings list - scrollable with all weddings accessible */}
+          {userWeddings.length > 0 && (
+            <div className="pb-4 border-b border-[#DDA46F]/20">
+              <p className="text-xs text-[#f5f2eb]/50 font-semibold mb-2">Your Weddings ({userWeddings.length})</p>
+              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+                {userWeddings.map(wedding => (
+                  <a
+                    key={wedding.id}
+                    href={getWeddingUrl(wedding.wedding_name_id)}
+                    className="block px-3 py-2 text-sm text-[#f5f2eb]/80 hover:text-[#f5f2eb] bg-[#f5f2eb]/5 hover:bg-[#f5f2eb]/10 rounded-md transition-colors duration-150"
+                  >
+                    <div className="font-medium truncate">{wedding.partner1_first_name} & {wedding.partner2_first_name}</div>
+                    {wedding.wedding_date && <div className="text-xs text-[#f5f2eb]/50 mt-0.5">{new Date(wedding.wedding_date).toLocaleDateString()}</div>}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Action buttons */}
+          <div className="flex flex-col gap-3">
+            {weddingsLoading ? (
+              <div className="h-12 w-full bg-[#420c14]/20 animate-pulse rounded-md" />
+            ) : hasWedding ? (
+              <a href={getWeddingUrl(firstWedding.wedding_name_id)} className="w-full">
+                <Button className="w-full bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
+                  <Edit3 className="w-4 h-4 mr-2" />
+                  Edit Wedding
+                </Button>
+              </a>
+            ) : (
+              <Link href="/create-wedding" className="w-full">
+                <Button className="w-full bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
+                  Create Wedding
+                </Button>
+              </Link>
+            )}
+            
+            <button
+              onClick={() => signOut()}
+              className="w-full text-left px-4 py-3 text-sm text-[#DDA46F] hover:bg-[#DDA46F]/10 rounded-md transition-colors duration-200"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    // Desktop: show dropdown
     return (
       <div className="flex gap-3 items-center">
-        <div className="relative">
+        <div className="relative" ref={menuRef}>
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-2 px-3 py-2 rounded-md text-[#f5f2eb]/90 hover:text-[#f5f2eb] hover:bg-[#f5f2eb]/10 transition-colors duration-500"
+            className="flex items-center gap-2 px-3 py-2 rounded-md text-[#f5f2eb]/90 hover:text-[#f5f2eb] hover:bg-[#f5f2eb]/10 transition-colors duration-200"
           >
             <User className="w-4 h-4" />
             <span className="text-sm font-medium hidden sm:inline max-w-[150px] truncate">{user.email}</span>
-            <ChevronDown className={`w-3 h-3 transition-transform duration-500 ${showUserMenu ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`} />
           </button>
           
           {showUserMenu && (
-            <>
-              <div 
-                className="fixed inset-0 z-40" 
-                onClick={() => setShowUserMenu(false)}
-              />
-              <div className="absolute top-full mt-2 right-0 bg-[#420c14]/95 backdrop-blur-xl rounded-lg shadow-2xl border border-[#DDA46F]/20 py-1 min-w-[200px] z-50">
-                <div className="px-4 py-2 border-b border-[#DDA46F]/10">
-                  <p className="text-xs text-[#f5f2eb]/50">Signed in as</p>
-                  <p className="text-sm font-medium text-[#f5f2eb]/90 truncate">{user.email}</p>
-                </div>
-                {userWeddings.length > 0 && (
-                  <div className="border-b border-[#DDA46F]/10">
-                    <p className="px-4 py-1 text-xs text-[#f5f2eb]/50">Your Weddings</p>
-                    {userWeddings.map(wedding => (
-                      <a
-                        key={wedding.id}
-                        href={getWeddingUrl(wedding.wedding_name_id)}
-                        onClick={() => setShowUserMenu(false)}
-                        className="block px-4 py-2 text-sm text-[#f5f2eb]/80 hover:text-[#f5f2eb] hover:bg-[#f5f2eb]/5 transition-colors duration-300"
-                      >
-                        {wedding.partner1_first_name} & {wedding.partner2_first_name}
-                      </a>
-                    ))}
-                  </div>
-                )}
-                <button
-                  onClick={() => {
-                    setShowUserMenu(false)
-                    signOut()
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-[#DDA46F] hover:bg-[#DDA46F]/10 transition-colors duration-300"
-                >
-                  Sign Out
-                </button>
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.12 }}
+              className="absolute top-full right-0 mt-2 bg-[#420c14]/98 backdrop-blur-xl rounded-lg shadow-2xl border border-[#DDA46F]/20 py-2 z-50 min-w-[280px] max-h-[60vh] overflow-y-auto"
+            >
+              <div className="px-4 py-3 border-b border-[#DDA46F]/10">
+                <p className="text-xs text-[#f5f2eb]/50 mb-1">Signed in as</p>
+                <p className="text-sm font-medium text-[#f5f2eb]/90 truncate" title={user.email}>{user.email}</p>
               </div>
-            </>
+              {userWeddings.length > 0 && (
+                <div className="border-b border-[#DDA46F]/10 max-h-[280px] overflow-y-auto">
+                  <p className="px-4 py-2 text-xs text-[#f5f2eb]/50 font-semibold sticky top-0 bg-[#420c14]/98">Your Weddings</p>
+                  {userWeddings.map(wedding => (
+                    <a
+                      key={wedding.id}
+                      href={getWeddingUrl(wedding.wedding_name_id)}
+                      onClick={() => setShowUserMenu(false)}
+                      className="block px-4 py-3 text-sm text-[#f5f2eb]/80 hover:text-[#f5f2eb] hover:bg-[#f5f2eb]/10 transition-colors duration-150 border-l-2 border-transparent hover:border-[#DDA46F]"
+                    >
+                      <div className="font-medium">{wedding.partner1_first_name} & {wedding.partner2_first_name}</div>
+                      {wedding.wedding_date && <div className="text-xs text-[#f5f2eb]/50 mt-0.5">{new Date(wedding.wedding_date).toLocaleDateString()}</div>}
+                    </a>
+                  ))}
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  setShowUserMenu(false)
+                  signOut()
+                }}
+                className="w-full text-left px-4 py-3 text-sm text-[#DDA46F] hover:bg-[#DDA46F]/10 transition-colors duration-200 border-t border-[#DDA46F]/10"
+              >
+                Sign Out
+              </button>
+            </motion.div>
           )}
         </div>
         {weddingsLoading ? (
           <div className="h-10 w-32 bg-[#420c14]/20 animate-pulse rounded-md" />
         ) : hasWedding ? (
           <a href={getWeddingUrl(firstWedding.wedding_name_id)}>
-            <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-500">
+            <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
               <Edit3 className="w-4 h-4 mr-2" />
               Edit Wedding
             </Button>
           </a>
         ) : (
           <Link href="/create-wedding">
-            <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-500">
+            <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
               Create Wedding
             </Button>
           </Link>
@@ -209,15 +286,33 @@ function AuthButtons() {
     )
   }
 
+  // Not logged in
+  if (isMobile) {
+    return (
+      <div className="flex flex-col gap-3 w-full">
+        <Link href="/login" className="w-full">
+          <Button variant="ghost" className="w-full text-[#f5f2eb]/80 hover:text-[#f5f2eb] hover:bg-[#f5f2eb]/10 transition-all duration-200">
+            Sign In
+          </Button>
+        </Link>
+        <Link href="/create-wedding" className="w-full">
+          <Button className="w-full bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
+            Get Started
+          </Button>
+        </Link>
+      </div>
+    )
+  }
+
   return (
     <div className="flex gap-3">
       <Link href="/login">
-        <Button variant="ghost" className="text-[#f5f2eb]/80 hover:text-[#f5f2eb] hover:bg-[#f5f2eb]/10 transition-all duration-500">
+        <Button variant="ghost" className="text-[#f5f2eb]/80 hover:text-[#f5f2eb] hover:bg-[#f5f2eb]/10 transition-all duration-200">
           Sign In
         </Button>
       </Link>
       <Link href="/create-wedding">
-        <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-500">
+        <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
           Get Started
         </Button>
       </Link>
@@ -315,20 +410,60 @@ function CustomCursor() {
 function LuxuryHeader() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
+    let lastScrollTime = 0
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
+      const now = Date.now()
+      // Debounce: only update state every 100ms
+      if (now - lastScrollTime > 100) {
+        setIsScrolled(window.scrollY > 50)
+        lastScrollTime = now
+      }
     }
-    window.addEventListener('scroll', handleScroll)
+    window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Close mobile menu when escape is pressed
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobileMenuOpen) {
+        setIsMobileMenuOpen(false)
+      }
+    }
+    if (isMobileMenuOpen) {
+      window.addEventListener('keydown', handleEscape)
+      return () => window.removeEventListener('keydown', handleEscape)
+    }
+  }, [isMobileMenuOpen])
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+      document.body.style.position = 'fixed'
+      document.body.style.width = '100%'
+      document.body.style.top = `-${window.scrollY}px`
+    } else {
+      const scrollY = document.body.style.top
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.width = ''
+      document.body.style.top = ''
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1)
+      }
+    }
+  }, [isMobileMenuOpen])
+
   return (
+    <>
     <motion.header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-1000 ${
-        isScrolled 
-          ? 'bg-[#420c14]/95 backdrop-blur-xl border-b border-[#DDA46F]/10' 
+      className={`fixed top-0 left-0 right-0 z-[105] transition-all duration-1000 ${
+        isScrolled || isMobileMenuOpen
+          ? 'bg-[#420c14] backdrop-blur-xl border-b border-[#DDA46F]/10' 
           : 'bg-transparent'
       }`}
       initial={{ y: -100 }}
@@ -376,40 +511,75 @@ function LuxuryHeader() {
           </div>
 
           <button
-            className="lg:hidden text-[#f5f2eb] p-2"
+            className="lg:hidden text-[#f5f2eb] p-2 z-[110] relative"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
           >
             <div className="w-6 h-5 flex flex-col justify-between">
               <motion.span 
-                className="w-full h-0.5 bg-[#f5f2eb]"
+                className="w-full h-0.5 bg-[#f5f2eb] origin-center"
                 animate={{ rotate: isMobileMenuOpen ? 45 : 0, y: isMobileMenuOpen ? 9 : 0 }}
-                transition={{ duration: 0.5 }}
-              />
-              <motion.span 
-                className="w-full h-0.5 bg-[#f5f2eb]"
-                animate={{ opacity: isMobileMenuOpen ? 0 : 1 }}
                 transition={{ duration: 0.3 }}
               />
               <motion.span 
                 className="w-full h-0.5 bg-[#f5f2eb]"
+                animate={{ opacity: isMobileMenuOpen ? 0 : 1 }}
+                transition={{ duration: 0.2 }}
+              />
+              <motion.span 
+                className="w-full h-0.5 bg-[#f5f2eb] origin-center"
                 animate={{ rotate: isMobileMenuOpen ? -45 : 0, y: isMobileMenuOpen ? -9 : 0 }}
-                transition={{ duration: 0.5 }}
+                transition={{ duration: 0.3 }}
               />
             </div>
           </button>
         </div>
       </div>
-
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.5 }}
-            className="lg:hidden bg-[#420c14]/98 backdrop-blur-xl border-t border-[#DDA46F]/10"
+    </motion.header>
+    
+    {/* Mobile Menu - Rendered outside header for proper full-screen coverage */}
+    <AnimatePresence>
+      {isMobileMenuOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="fixed inset-0 lg:hidden"
+          style={{ zIndex: 9999 }}
+        >
+          {/* Full screen opaque background - multiple layers to ensure opacity */}
+          <div className="absolute inset-0 bg-[#420c14]" style={{ zIndex: 1 }} />
+          <div className="absolute inset-0 bg-[#420c14]" style={{ zIndex: 2 }} />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#420c14] to-[#2a080d]" style={{ zIndex: 3 }} />
+          
+          {/* Close button */}
+          <button
+            className="absolute top-8 right-4 text-[#f5f2eb] p-2"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="Close menu"
+            style={{ zIndex: 10 }}
           >
-            <div className="px-4 py-8 space-y-6">
+            <X className="w-8 h-8" />
+          </button>
+          
+          {/* Logo */}
+          <div className="absolute top-6 left-4" style={{ zIndex: 10 }}>
+            <Link href="/" className="flex items-center gap-3">
+              <Image
+                src="/images/logos/OMW Logo Gold.png"
+                alt="OhMyWedding"
+                width={44}
+                height={44}
+                className="h-11 w-auto"
+              />
+            </Link>
+          </div>
+          
+          {/* Content container */}
+          <div className="relative h-full flex flex-col pt-24 px-6 pb-8" style={{ zIndex: 5 }}>
+            {/* Navigation links */}
+            <nav className="flex-1 flex flex-col justify-center space-y-4">
               {[
                 { label: 'Features', href: '#features' },
                 { label: 'Experience', href: '#experience' },
@@ -420,22 +590,30 @@ function LuxuryHeader() {
                   key={item.label}
                   href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="block text-[#f5f2eb]/70 hover:text-[#DDA46F] transition-colors duration-500 text-sm tracking-[0.25em] uppercase py-2"
-                  initial={{ opacity: 0, x: -30 }}
+                  className="block text-[#f5f2eb] hover:text-[#DDA46F] transition-colors duration-200 text-2xl tracking-[0.2em] uppercase py-3"
+                  initial={{ opacity: 0, x: -40 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 * index }}
+                  transition={{ duration: 0.3, delay: 0.1 + index * 0.05 }}
                 >
                   {item.label}
                 </motion.a>
               ))}
-              <div className="pt-6 border-t border-[#DDA46F]/10">
-                <AuthButtons />
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.header>
+            </nav>
+            
+            {/* Auth buttons at bottom */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.3 }}
+              className="pt-6 border-t border-[#DDA46F]/20"
+            >
+              <AuthButtons isMobile />
+            </motion.div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+    </>
   )
 }
 
