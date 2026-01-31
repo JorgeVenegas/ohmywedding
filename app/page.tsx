@@ -551,7 +551,7 @@ function HeroSection() {
         >
           <span className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-8 py-2 sm:py-3 rounded-full bg-[#f5f2eb]/5 backdrop-blur-md border border-[#DDA46F]/20 text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.2em] sm:tracking-[0.4em] uppercase">
             <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden xs:inline">Luxury</span> Wedding Websites
+            The Digital Suite for Weddings
             <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
           </span>
         </motion.div>
@@ -590,7 +590,7 @@ function HeroSection() {
           transition={{ duration: 1.2, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className="text-sm sm:text-lg md:text-xl text-[#f5f2eb]/60 max-w-2xl mx-auto mb-5 sm:mb-10 leading-relaxed font-light tracking-wide px-2"
         >
-          Create a stunning, bespoke wedding website where your love story is {rotatingWords[currentWordIndex].toLowerCase()} with unparalleled sophistication and elegance.
+          Create your luxury wedding website, manage RSVPs, share photos, and celebrate your love story with elegance.
         </motion.p>
 
         <motion.div
@@ -651,7 +651,7 @@ function HeroSection() {
 
       {/* Scroll Indicator */}
       <motion.div
-        className="absolute bottom-12 left-1/2 -translate-x-1/2 z-10"
+        className="hidden lg:flex absolute bottom-12 left-1/2 -translate-x-1/2 z-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 2, duration: 1 }}
