@@ -103,18 +103,9 @@ export async function POST(request: NextRequest) {
       if (updateError) {
         console.error('Webhook: Error updating contribution status:', updateError)
       } else {
-        console.log('Webhook: Successfully updated contribution status to completed')
-      }
-      
-      const { error: rpcError } = await supabase.rpc('update_registry_item_amount', {
-        p_item_id: contribution.custom_registry_item_id,
-        p_amount_to_add: contribution.amount
-      })
-
-      if (rpcError) {
-        console.error('Webhook: Error updating registry item amount:', rpcError)
-      } else {
-        console.log('Webhook: Successfully updated registry item amount by:', contribution.amount)
+        // The database trigger automatically syncs the registry item amount
+        // when payment_status is updated to 'completed'
+        console.log('Webhook: Successfully updated contribution status to completed (trigger will sync amount)')
       }
 
       const contributionAmount = Number(contribution.amount || 0)
