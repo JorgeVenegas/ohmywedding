@@ -354,6 +354,10 @@ export const es: Translations = {
     processing: 'Procesando...',
     thankYou: '¡Gracias por tu generosa contribución!',
     confirmationEmail: 'Tu regalo significa mucho para nosotros. Deberías recibir un correo de confirmación en breve.',
+    contributionsUnavailable: 'Contribuciones Próximamente',
+    contributionsUnavailableDescription: 'La pareja aún está configurando su cuenta de pagos. Por favor vuelve más tarde para contribuir.',
+    comingSoon: 'Próximamente',
+    checkingStatus: 'Verificando estado...',
     providers: {
       amazon: 'Amplia selección de regalos del mercado más grande del mundo',
       liverpool: 'Registro de tienda departamental premium en México',

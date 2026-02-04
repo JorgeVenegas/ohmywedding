@@ -24,6 +24,9 @@ create table "weddings" (
   "og_description" text,
   "og_image_url" text,
   "is_demo" boolean default false, -- Flag for demo/template weddings
+  "stripe_account_id" text, -- Stripe Connect Express account ID for receiving registry payments
+  "stripe_onboarding_completed" boolean default false, -- Whether the couple has completed Stripe Connect onboarding
+  "payouts_enabled" boolean default false, -- Whether the connected account can receive payouts
   "created_at" timestamp with time zone default now(),
   "updated_at" timestamp with time zone default now()
 );

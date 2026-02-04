@@ -53,11 +53,16 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
         }
 
         // Check if user is owner or collaborator of this wedding
-        const { data: wedding, error: weddingError } = await supabase
+        // Detect if weddingId is a UUID (contains hyphens) or a wedding_name_id
+        const isUUID = decodedWeddingId.includes('-')
+        
+        const query = supabase
           .from('weddings')
           .select('owner_id, collaborator_emails')
-          .eq('wedding_name_id', decodedWeddingId)
-          .single()
+        
+        const { data: wedding, error: weddingError } = isUUID
+          ? await query.eq('id', decodedWeddingId).single()
+          : await query.eq('wedding_name_id', decodedWeddingId).single()
 
         if (weddingError || !wedding) {
           // Wedding not found

@@ -53,5 +53,10 @@ create table "registry_contributions" (
   "stripe_payment_intent_id" text unique,
   "stripe_checkout_session_id" text unique,
   "payment_status" text default 'pending',
+  "guest_covers_fee" boolean default false,
   "created_at" timestamp with time zone default now()
 );
+
+-- Note: Registry item current_amount is synced by the webhook handler in
+-- app/api/registry/webhook/route.ts when payment_status changes to 'completed'
+-- This approach is more reliable than database triggers for Stripe Connect payments

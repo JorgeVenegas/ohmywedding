@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Gift, Heart, DollarSign, CheckCircle } from "lucide-react"
+import { Gift, Heart, DollarSign, CheckCircle, AlertCircle, Info } from "lucide-react"
 import { createBrowserClient } from "@supabase/ssr"
 import { useI18n } from "@/components/contexts/i18n-context"
 
@@ -20,13 +20,19 @@ interface RegistryItem {
   display_order: number
 }
 
+interface WeddingPayoutStatus {
+  payouts_enabled: boolean
+}
+
 export default function RegistryPageContent({ weddingNameId }: { weddingNameId: string }) {
   const searchParams = useSearchParams()
   const { t } = useI18n()
   
   const [items, setItems] = useState<RegistryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isCheckingPayouts, setIsCheckingPayouts] = useState(true)
   const [weddingUuid, setWeddingUuid] = useState<string | null>(null)
+  const [payoutsEnabled, setPayoutsEnabled] = useState<boolean | null>(null)
   const [selectedItem, setSelectedItem] = useState<RegistryItem | null>(null)
   const [showContributeForm, setShowContributeForm] = useState(false)
   const [formData, setFormData] = useState({
@@ -34,6 +40,7 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
     contributorName: "",
     contributorEmail: "",
     message: "",
+    coverCommission: true,
   })
   const [isProcessing, setIsProcessing] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
@@ -67,7 +74,7 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
     try {
       const { data, error } = await supabase
         .from("weddings")
-        .select("id")
+        .select("id, payouts_enabled")
         .eq("wedding_name_id", weddingNameId)
         .single()
 
@@ -75,8 +82,27 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
         throw error
       }
       setWeddingUuid(data?.id || null)
+      
+      // Fetch live Stripe status from public endpoint
+      try {
+        const statusResponse = await fetch(`/api/weddings/${weddingNameId}/stripe-status`)
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json()
+          setPayoutsEnabled(statusData.payoutsEnabled)
+        } else {
+          // Fallback to database value
+          setPayoutsEnabled(data?.payouts_enabled || false)
+        }
+      } catch (err) {
+        console.warn("Failed to fetch live Stripe status:", err)
+        // Fallback to database value
+        setPayoutsEnabled(data?.payouts_enabled || false)
+      } finally {
+        setIsCheckingPayouts(false)
+      }
     } catch (error) {
       setIsLoading(false)
+      setIsCheckingPayouts(false)
     }
   }
 
@@ -107,7 +133,7 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
   const handleContribute = (item: RegistryItem) => {
     setSelectedItem(item)
     setShowContributeForm(true)
-    setFormData({ amount: "", contributorName: "", contributorEmail: "", message: "" })
+    setFormData({ amount: "", contributorName: "", contributorEmail: "", message: "", coverCommission: true })
   }
 
   const handleSubmitContribution = async (e: React.FormEvent) => {
@@ -144,13 +170,27 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
           contributorName: trimmedName,
           contributorEmail: formData.contributorEmail,
           message: formData.message,
+          coverCommission: formData.coverCommission,
         }),
       })
 
-      const { sessionId, url, error } = await response.json()
+      const { sessionId, url, error, code } = await response.json()
 
       if (error) {
-        alert(error)
+        // Show specific error messages based on error code
+        let errorMessage = error
+        
+        if (code === "NO_STRIPE_ACCOUNT") {
+          errorMessage = "This couple has not yet set up payment processing. Please ask them to complete their Stripe setup."
+        } else if (code === "PAYOUTS_NOT_ENABLED") {
+          errorMessage = "This couple's payment account is not yet fully set up. Please ask them to complete their verification."
+        } else if (code === "CHARGES_DISABLED") {
+          errorMessage = "This couple's payment account is restricted and cannot receive payments."
+        } else if (code === "STRIPE_VERIFICATION_ERROR") {
+          errorMessage = "We encountered an issue verifying the payment account. Please try again."
+        }
+        
+        alert(errorMessage)
         setIsProcessing(false)
         return
       }
@@ -199,6 +239,21 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
                 <h3 className="font-semibold text-foreground">{t('registry.thankYou')}</h3>
                 <p className="text-sm text-muted-foreground">
                   {t('registry.confirmationEmail')}
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Payments Not Enabled Message - Only show after we've confirmed payouts are disabled */}
+        {!isCheckingPayouts && payoutsEnabled === false && items.length > 0 && (
+          <Card className="p-6 mb-8 border-yellow-200 bg-yellow-50/50 dark:bg-yellow-950/20 dark:border-yellow-900">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0" />
+              <div>
+                <h3 className="font-semibold text-foreground">{t('registry.contributionsUnavailable')}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {t('registry.contributionsUnavailableDescription')}
                 </p>
               </div>
             </div>
@@ -264,10 +319,16 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
                   <Button
                     onClick={() => handleContribute(item)}
                     className="w-full"
-                    disabled={isFullyFunded}
+                    disabled={isFullyFunded || isCheckingPayouts || !payoutsEnabled}
                   >
                     <Gift className="w-4 h-4 mr-2" />
-                    {isFullyFunded ? t('registry.fullyFunded') : t('registry.contribute')}
+                    {isCheckingPayouts
+                      ? t('registry.checkingStatus')
+                      : isFullyFunded 
+                        ? t('registry.fullyFunded') 
+                        : !payoutsEnabled 
+                          ? t('registry.comingSoon') 
+                          : t('registry.contribute')}
                   </Button>
                 </Card>
               )
@@ -278,17 +339,17 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
         {/* Contribution Form Modal */}
         {showContributeForm && selectedItem && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <Card className="w-full max-w-md p-6 border border-border shadow-lg">
-              <h2 className="text-2xl font-bold text-foreground mb-2">
+            <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto p-4 border border-border shadow-lg">
+              <h2 className="text-xl font-bold text-foreground mb-1">
                 {t('registry.contributeTo')} {selectedItem.title}
               </h2>
-              <p className="text-sm text-muted-foreground mb-6">
+              <p className="text-xs text-muted-foreground mb-3">
                 {t('registry.everyContribution')}
               </p>
 
-              <form onSubmit={handleSubmitContribution} className="space-y-4">
+              <form onSubmit={handleSubmitContribution} className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
+                  <label className="block text-xs font-medium text-foreground mb-1">
                     {t('registry.contributionAmount')} *
                   </label>
                   <div className="relative">
@@ -297,38 +358,39 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
                       type="number"
                       inputMode="numeric"
                       step={1}
-                      min={10}
+                      min={20}
                       value={formData.amount}
                       onChange={(e) => {
                         const sanitized = e.target.value.replace(/[^0-9]/g, "")
                         setFormData({ ...formData, amount: sanitized })
                       }}
-                      placeholder="10"
-                      className="pl-10"
+                      placeholder="20"
+                      className="pl-10 text-sm"
                       required
                       disabled={isProcessing}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {t('registry.remaining')}: ${(Number(selectedItem.goal_amount) - Number(selectedItem.current_amount)).toFixed(2)}
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Minimum 20 MXN. {t('registry.remaining')}: ${(Number(selectedItem.goal_amount) - Number(selectedItem.current_amount)).toFixed(2)}
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
+                  <label className="block text-xs font-medium text-foreground mb-1">
                     {t('registry.yourName')} *
                   </label>
                   <Input
                     value={formData.contributorName}
                     onChange={(e) => setFormData({ ...formData, contributorName: e.target.value })}
                     placeholder="John Doe"
+                    className="text-sm"
                     required
                     disabled={isProcessing}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
+                  <label className="block text-xs font-medium text-foreground mb-1">
                     {t('registry.email')} ({t('common.optional')})
                   </label>
                   <Input
@@ -336,25 +398,103 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
                     value={formData.contributorEmail}
                     onChange={(e) => setFormData({ ...formData, contributorEmail: e.target.value })}
                     placeholder="john@example.com"
+                    className="text-sm"
                     disabled={isProcessing}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
+                  <label className="block text-xs font-medium text-foreground mb-1">
                     {t('registry.messageLabel')} ({t('common.optional')})
                   </label>
                   <Textarea
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     placeholder={t('registry.addPersonalMessage')}
-                    rows={3}
+                    rows={2}
+                    className="text-sm"
                     disabled={isProcessing}
                   />
                 </div>
 
-                <div className="flex gap-2 pt-4">
-                  <Button type="submit" className="flex-1" disabled={isProcessing}>
+                {/* Commission Option - Compact Fee Breakdown */}
+                <div className="space-y-2">
+                  {/* Toggle Option */}
+                  <div className="flex items-start gap-2 p-2.5 rounded-lg border border-border bg-muted/20">
+                    <input
+                      type="checkbox"
+                      id="cover-commission"
+                      checked={formData.coverCommission}
+                      onChange={(e) => setFormData({ ...formData, coverCommission: e.target.checked })}
+                      disabled={isProcessing}
+                      className="w-4 h-4 rounded cursor-pointer accent-primary mt-0.5 flex-shrink-0"
+                    />
+                    <label htmlFor="cover-commission" className="flex-1 cursor-pointer">
+                      <p className="text-xs font-semibold text-foreground">
+                        {formData.coverCommission ? "✓ Help us with the platform fee" : "Let the couple keep more"}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {formData.coverCommission
+                          ? "You pay the 20 MXN fee, couple gets your full amount"
+                          : "Couple gets your amount minus the 20 MXN fee"}
+                      </p>
+                    </label>
+                  </div>
+
+                  {/* Payment Breakdown - Two Column Layout */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Left Column - You Pay */}
+                    <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                      <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">
+                        You Pay
+                      </p>
+                      <p className="text-base font-bold text-foreground mt-0.5">
+                        ${formData.coverCommission 
+                          ? ((Number(formData.amount) || 0) + 20).toString()
+                          : (formData.amount || "0")}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {formData.coverCommission ? "Gift + Fee" : "Total"}
+                      </p>
+                    </div>
+
+                    {/* Right Column - Couple Receives */}
+                    <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
+                      <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
+                        They Get
+                      </p>
+                      <p className="text-base font-bold text-foreground mt-0.5">
+                        ${formData.coverCommission
+                          ? formData.amount || "0"
+                          : Math.max(0, (Number(formData.amount) || 0) - 20).toString()}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {formData.coverCommission ? "Full gift" : "After fee"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Fee Breakdown Details */}
+                  <div className="text-xs p-2.5 bg-muted/40 rounded space-y-1.5 border border-border/50">
+                    <p className="font-semibold text-foreground text-center mb-1.5">Fee Breakdown (20 MXN)</p>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Stripe Processing Fee:</span>
+                      <span className="font-medium text-foreground">8.12 MXN</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Platform Commission:</span>
+                      <span className="font-medium text-foreground">11.88 MXN</span>
+                    </div>
+                    <div className="h-px bg-border my-1"></div>
+                    <div className="flex justify-between font-semibold">
+                      <span className="text-foreground">Total Deduction:</span>
+                      <span className="text-foreground">20.00 MXN</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button type="submit" className="flex-1 text-sm" disabled={isProcessing}>
                     {isProcessing ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -367,6 +507,7 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
                   <Button
                     type="button"
                     variant="outline"
+                    size="sm"
                     onClick={() => {
                       setShowContributeForm(false)
                       setSelectedItem(null)

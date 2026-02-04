@@ -356,6 +356,10 @@ export const en: Translations = {
     processing: 'Processing...',
     thankYou: 'Thank you for your generous contribution!',
     confirmationEmail: 'Your gift means the world to us. You should receive a confirmation email shortly.',
+    contributionsUnavailable: 'Contributions Coming Soon',
+    contributionsUnavailableDescription: 'The couple is still setting up their payment account. Please check back later to contribute.',
+    comingSoon: 'Coming Soon',
+    checkingStatus: 'Checking status...',
     providers: {
       amazon: 'Wide selection of gifts from the world\'s largest marketplace',
       liverpool: 'Premium department store registry in Mexico',

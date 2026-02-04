@@ -358,6 +358,10 @@ export interface Translations {
     processing: string
     thankYou: string
     confirmationEmail: string
+    contributionsUnavailable: string
+    contributionsUnavailableDescription: string
+    comingSoon: string
+    checkingStatus: string
     providers: {
       amazon: string
       liverpool: string

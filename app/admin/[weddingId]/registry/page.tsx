@@ -1,15 +1,18 @@
 "use client"
 import { use, useState, useEffect } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Edit, Trash2, DollarSign, X, AlertCircle } from "lucide-react"
+import { Plus, Edit, Trash2, DollarSign, X, AlertCircle, CheckCircle2 } from "lucide-react"
 import { Header } from "@/components/header"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { createBrowserClient } from "@supabase/ssr"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { useImageUpload } from "@/hooks/use-image-upload"
+import { StripeConnectCard } from "@/components/stripe-connect-card"
+import { RegistryContributionsList } from "@/components/registry-contributions-list"
 
 interface RegistryItem {
   id: string
@@ -22,6 +25,15 @@ interface RegistryItem {
   display_order: number
 }
 
+interface WeddingData {
+  id: string
+  stripe_account_id: string | null
+  stripe_onboarding_completed: boolean
+  payouts_enabled: boolean
+  partner1_first_name: string | null
+  partner2_first_name: string | null
+}
+
 interface RegistryPageProps {
   params: Promise<{ weddingId: string }>
 }
@@ -29,6 +41,9 @@ interface RegistryPageProps {
 export default function RegistryPage({ params }: RegistryPageProps) {
   const resolvedParams = use(params)
   const weddingId = decodeURIComponent(resolvedParams.weddingId)
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const connectStatus = searchParams.get("connect")
   
   const { uploadImage } = useImageUpload()
   
@@ -36,7 +51,7 @@ export default function RegistryPage({ params }: RegistryPageProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingItem, setEditingItem] = useState<RegistryItem | null>(null)
-  const [weddingUuid, setWeddingUuid] = useState<string | null>(null)
+  const [weddingData, setWeddingData] = useState<WeddingData | null>(null)
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -47,6 +62,7 @@ export default function RegistryPage({ params }: RegistryPageProps) {
     show: false, 
     message: "" 
   })
+  const [showConnectSuccess, setShowConnectSuccess] = useState(connectStatus === "success")
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -54,29 +70,84 @@ export default function RegistryPage({ params }: RegistryPageProps) {
   )
 
   useEffect(() => {
-    fetchWeddingUuid()
+    fetchWeddingData()
   }, [weddingId])
 
-  const fetchWeddingUuid = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("weddings")
-        .select("id")
-        .eq("wedding_name_id", weddingId)
-        .single()
+  // When returning from Stripe, refresh immediately and periodically
+  useEffect(() => {
+    if (showConnectSuccess) {
+      // Refresh immediately
+      fetchWeddingData()
+      
+      // Refresh every 2 seconds while success message is shown
+      const interval = setInterval(() => {
+        fetchWeddingData()
+      }, 2000)
+      
+      // Hide message and clear URL after 5 seconds
+      const timer = setTimeout(() => {
+        setShowConnectSuccess(false)
+        // Clear the query param from URL
+        router.replace(`/admin/${weddingId}/registry`)
+      }, 5000)
+      
+      return () => {
+        clearInterval(interval)
+        clearTimeout(timer)
+      }
+    }
+  }, [showConnectSuccess, weddingId, router])
 
-      if (error) throw error
+  const fetchWeddingData = async () => {
+    try {
+      // Detect if weddingId is a UUID (contains hyphens) or a wedding_name_id
+      const isUUID = weddingId.includes('-')
+      const query = supabase
+        .from("weddings")
+        .select("id, stripe_account_id, stripe_onboarding_completed, payouts_enabled, partner1_first_name, partner2_first_name")
+      
+      const { data, error } = isUUID 
+        ? await query.eq("id", weddingId).single()
+        : await query.eq("wedding_name_id", weddingId).single()
+
+      if (error) {
+        console.error("Error fetching wedding data:", error)
+        setErrorDialog({ show: true, message: `Failed to load wedding: ${error.message}` })
+        setIsLoading(false)
+        return
+      }
+      
       if (data) {
-        setWeddingUuid(data.id)
+        // If there's a Stripe account, fetch live status from Stripe API
+        if (data.stripe_account_id) {
+          try {
+            const statusResponse = await fetch(`/api/connect/account-status?weddingId=${data.id}`)
+            if (statusResponse.ok) {
+              const statusData = await statusResponse.json()
+              // Override payouts_enabled with live Stripe data
+              data.payouts_enabled = statusData.payoutsEnabled
+            }
+          } catch (err) {
+            console.warn("Failed to fetch live Stripe status:", err)
+            // Continue with database payouts_enabled if API fails
+          }
+        }
+        
+        setWeddingData(data)
         fetchItems(data.id)
+      } else {
+        console.error("No wedding found for:", weddingId)
+        setErrorDialog({ show: true, message: "Wedding not found" })
+        setIsLoading(false)
       }
     } catch (error) {
+      console.error("Unexpected error:", error)
       setIsLoading(false)
     }
   }
 
   const fetchItems = async (uuid?: string) => {
-    const idToUse = uuid || weddingUuid
+    const idToUse = uuid || weddingData?.id
     if (!idToUse) return
 
     try {
@@ -97,42 +168,54 @@ export default function RegistryPage({ params }: RegistryPageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!weddingUuid) {
-      setErrorDialog({ show: true, message: "Wedding ID not found" })
+    if (!weddingData?.id) {
+      console.error("Wedding data not loaded:", { weddingData, weddingId })
+      setErrorDialog({ show: true, message: "Wedding data is not loaded. Please refresh the page." })
+      return
+    }
+    
+    if (!formData.title.trim()) {
+      setErrorDialog({ show: true, message: "Title is required" })
+      return
+    }
+
+    if (!formData.goal_amount || parseFloat(formData.goal_amount) <= 0) {
+      setErrorDialog({ show: true, message: "Goal amount must be greater than 0" })
       return
     }
     
     try {
       const itemData = {
-        wedding_id: weddingUuid,
-        title: formData.title,
-        description: formData.description || null,
+        wedding_id: weddingData.id,
+        title: formData.title.trim(),
+        description: formData.description?.trim() || null,
         goal_amount: parseFloat(formData.goal_amount) || 0,
         image_urls: formData.image_urls,
         display_order: editingItem ? editingItem.display_order : items.length,
       }
 
       if (editingItem) {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("custom_registry_items")
           .update(itemData)
           .eq("id", editingItem.id)
-          .select()
+
         if (error) throw error
       } else {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("custom_registry_items")
           .insert([itemData])
-          .select()
+
         if (error) throw error
       }
 
       setFormData({ title: "", description: "", goal_amount: "", image_urls: [] })
       setShowForm(false)
       setEditingItem(null)
-      fetchItems()
+      fetchItems(weddingData.id)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : JSON.stringify(error)
+      console.error("Error saving item:", error)
       setErrorDialog({ show: true, message: errorMessage })
     }
   }
@@ -230,6 +313,59 @@ export default function RegistryPage({ params }: RegistryPageProps) {
             Create custom registry items for experiences, funds, and special requests
           </p>
         </div>
+
+        {/* Error Display */}
+        {errorDialog.show && (
+          <Card className="p-4 mb-8 border-destructive bg-destructive/10">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground mb-1">Error</h3>
+                <p className="text-sm text-destructive">{errorDialog.message}</p>
+              </div>
+              <button 
+                onClick={() => setErrorDialog({ show: false, message: "" })}
+                className="text-destructive hover:text-destructive/80"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </Card>
+        )}
+
+        {/* Connect Success Message */}
+        {showConnectSuccess && (
+          <div className="mb-6 p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-lg flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+            <p className="text-sm text-green-800 dark:text-green-200">
+              Stripe account setup updated! Your account status will be refreshed shortly.
+            </p>
+            <button 
+              onClick={() => setShowConnectSuccess(false)}
+              className="ml-auto text-green-600 hover:text-green-800"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Stripe Connect Card */}
+        {weddingData && (
+          <StripeConnectCard
+            weddingId={weddingData.id}
+            stripeAccountId={weddingData.stripe_account_id}
+            stripeOnboardingCompleted={weddingData.stripe_onboarding_completed}
+            payoutsEnabled={weddingData.payouts_enabled}
+            onStatusChange={fetchWeddingData}
+          />
+        )}
+
+        {/* Contributions List */}
+        {weddingData && items.length > 0 && (
+          <div className="mb-8">
+            <RegistryContributionsList weddingId={weddingData.id} items={items} />
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid md:grid-cols-3 gap-4 mb-8">

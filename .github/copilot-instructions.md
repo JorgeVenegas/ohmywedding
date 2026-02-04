@@ -38,3 +38,7 @@ You should not create very large files. You should aim to create reusable compon
 Fors super large files, you should aim to extract components and logic into smaller files to improve maintainability and readability.
 
 For animations try to use framer motion whenever possible to keep consistency across the app
+
+Securituy is top priority, always follow best practices to avoid vulnerabilities. Avoid APIs that can expose sensitive data or operations to unauthorized users. Always limit what information is sent to the client. 
+
+Do not run anything locally with sql to create stuff. Everything should be on. a migration since local changes will be pushed to remote db, and they have to be consistet.
