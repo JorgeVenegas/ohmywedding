@@ -111,14 +111,21 @@ export async function middleware(request: NextRequest) {
       const hostWithoutPort = hostname.split(':')[0]
       const port = hostname.includes(':') ? `:${hostname.split(':')[1]}` : ''
 
-      // Only handle our known main domains (ohmy.local, ohmy.wedding)
-      if (hostWithoutPort === 'ohmy.local' || hostWithoutPort === 'ohmy.wedding') {
+      // Normalize: treat www.ohmy.wedding the same as ohmy.wedding
+      const normalizedHost = hostWithoutPort.replace(/^www\./, '')
+
+      // Only handle our known main domains (ohmy.local, ohmy.wedding, www.ohmy.wedding, localhost)
+      if (normalizedHost === 'ohmy.local' || normalizedHost === 'ohmy.wedding' || normalizedHost === 'localhost') {
+        // localhost uses path-based for all plans, no redirects needed
+        if (normalizedHost === 'localhost') {
+          // fall through to normal processing
+        } else {
         // Check wedding plan to decide whether to redirect to subdomain
         const plan = await getWeddingPlan(request, first)
 
         if (plan === 'premium' || plan === 'deluxe') {
           // Premium/Deluxe: redirect to subdomain URL
-          const targetHost = hostWithoutPort === 'ohmy.local'
+          const targetHost = normalizedHost === 'ohmy.local'
             ? `${first}.ohmy.local${port}`
             : `${first}.ohmy.wedding`
 
@@ -140,6 +147,7 @@ export async function middleware(request: NextRequest) {
           return NextResponse.redirect(redirectUrl)
         }
         // Free plan: DON'T redirect to subdomain, continue with normal path-based routing
+        }
       }
     }
   }
