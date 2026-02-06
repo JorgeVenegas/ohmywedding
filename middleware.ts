@@ -57,11 +57,13 @@ function getSubdomain(hostname: string): string | null {
 // This is completely independent of the logged-in user
 async function getWeddingPlan(weddingNameId: string): Promise<'free' | 'premium' | 'deluxe'> {
   try {
-    // Create a client with NO authentication - just use anon key
-    // This ensures the plan lookup doesn't depend on who's logged in
+    // Use the service role key to bypass RLS entirely.
+    // The wedding_features table only allows owner SELECT via RLS,
+    // but we need to read the plan for ANY visitor to handle redirects.
+    // This is safe because middleware runs server-side only.
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
       {
         cookies: {
           getAll() {
@@ -114,7 +116,6 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/auth/callback') || 
     pathname.startsWith('/api/registry/webhook') ||
     pathname.startsWith('/api/connect/webhook') ||
-    pathname.startsWith('/api/connect/register-webhook') ||
     pathname.startsWith('/api/subscriptions/webhook') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/fonts') ||
