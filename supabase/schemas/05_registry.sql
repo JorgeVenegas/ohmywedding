@@ -52,6 +52,7 @@ create table "registry_contributions" (
   "message" text,
   "stripe_payment_intent_id" text unique,
   "stripe_checkout_session_id" text unique,
+  "stripe_charge_id" text unique,
   "payment_status" text default 'pending',
   "guest_covers_fee" boolean default false,
   "created_at" timestamp with time zone default now()

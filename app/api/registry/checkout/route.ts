@@ -243,7 +243,7 @@ export async function POST(request: NextRequest) {
     const session = await stripe.checkout.sessions.create(
       {
         customer: customerId,
-        payment_method_types: ["customer_balance", "oxxo"],
+        payment_method_types: ["customer_balance"],
         payment_method_options: {
           customer_balance: {
             funding_type: "bank_transfer",

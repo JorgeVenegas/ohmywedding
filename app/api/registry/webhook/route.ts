@@ -129,13 +129,47 @@ export async function POST(request: NextRequest) {
     // Platform fee is automatically collected via application_fee_amount.
     //
     // Events we handle:
-    // 1. checkout.session.completed - Customer saw bank transfer instructions
-    // 2. payment_intent.succeeded - Payment actually received (bank transfer complete)
-    // 3. payment_intent.payment_failed - Payment failed
+    // 1. application_fee.created - Fee collected when connected account receives payment
+    //    (This means the charge succeeded on the connected account)
+    // 2. checkout.session.completed - Customer saw bank transfer instructions
+    // 3. payment_intent.succeeded - Payment actually received (bank transfer complete)
+    // 4. payment_intent.payment_failed - Payment failed
     // ====================================================================
 
+    // Handle application_fee.created - Direct charge succeeded on connected account!
+    if (event.type === "application_fee.created") {
+      const fee = event.data.object as Stripe.ApplicationFee
+      const chargeId = fee.charge as string
+
+      console.log('Webhook: application_fee.created for charge:', chargeId)
+      console.log('Webhook: Fee amount:', fee.amount)
+      console.log('Webhook: Connected account:', fee.account)
+
+      // Find contribution by charge ID
+      const { data: contribution, error: fetchError } = await supabase
+        .from("registry_contributions")
+        .select("*")
+        .eq("stripe_charge_id", chargeId)
+        .single()
+
+      if (fetchError || !contribution) {
+        console.warn('Webhook: Contribution not found for charge:', chargeId)
+        // This might be a test charge or other fee, just acknowledge
+        return NextResponse.json({ received: true })
+      }
+
+      if (contribution.payment_status === "completed") {
+        console.log('Webhook: Contribution already completed, skipping for charge:', chargeId)
+        return NextResponse.json({ received: true })
+      }
+
+      // Mark as completed - payment is now in the couple's connected account!
+      await markContributionCompleted(supabase, contribution, chargeId, chargeId)
+
+      console.log('Webhook: SUCCESS - Payment completed and in connected account!')
+    }
     // Handle checkout.session.completed - Customer saw bank transfer instructions
-    if (event.type === "checkout.session.completed") {
+    else if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session
       
       console.log('Webhook: checkout.session.completed for session:', session.id)
@@ -296,7 +330,8 @@ async function markContributionCompleted(
     amount: number
     custom_registry_item_id: string
   },
-  paymentIntentId: string
+  paymentIntentId: string,
+  chargeId?: string
 ) {
   console.log('Webhook: Marking contribution as completed:', contribution.id)
   
@@ -308,12 +343,19 @@ async function markContributionCompleted(
     .single()
 
   // Update contribution status to completed
+  const updateData: any = {
+    payment_status: "completed",
+    stripe_payment_intent_id: paymentIntentId,
+  }
+
+  // Store charge ID if provided (for direct charges)
+  if (chargeId) {
+    updateData.stripe_charge_id = chargeId
+  }
+
   const { error: updateError } = await supabase
     .from("registry_contributions")
-    .update({
-      payment_status: "completed",
-      stripe_payment_intent_id: paymentIntentId,
-    })
+    .update(updateData)
     .eq("id", contribution.id)
 
   if (updateError) {
