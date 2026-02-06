@@ -189,11 +189,17 @@ export async function middleware(request: NextRequest) {
   // - Free weddings: redirect to main domain path-based URL
   // =========================================================================
   if (subdomain && !RESERVED_SUBDOMAINS.includes(subdomain.toLowerCase())) {
-    // Skip static files on subdomains (API routes already handled above)
+    // Skip static files, API routes, and auth routes on subdomains - they should not be rewritten
     if (pathname.startsWith('/_next') ||
+        pathname.startsWith('/api/') ||
+        pathname.startsWith('/auth/') ||
         pathname === '/favicon.ico' ||
+        pathname === '/site.webmanifest' ||
         pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico)$/)) {
-      // Continue with normal processing
+      // API routes and static files: pass through to Supabase auth without rewriting
+      const response = NextResponse.next()
+      response.headers.set('x-wedding-subdomain', subdomain)
+      return handleSupabaseAuth(request, response)
     } else {
       // Check wedding plan - free weddings must not be on subdomains
       const plan = await getWeddingPlan(subdomain)
