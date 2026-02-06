@@ -103,6 +103,34 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Register platform webhook on the connected account
+    // This ensures the account sends charge events to the platform webhook
+    try {
+      const webhookUrl = new URL("/api/registry/webhook", request.url).toString()
+      console.log(`Registering webhook on connected account ${account.id}: ${webhookUrl}`)
+
+      // Create webhook endpoint on the connected account
+      await stripe.webhookEndpoints.create(
+        {
+          url: webhookUrl,
+          enabled_events: [
+            "charge.succeeded",
+            "charge.failed",
+            "charge.refunded",
+            "payment_intent.succeeded",
+            "payment_intent.payment_failed",
+          ],
+        },
+        { stripeAccount: account.id }
+      )
+
+      console.log(`Successfully registered webhook on connected account ${account.id}`)
+    } catch (webhookError) {
+      console.warn(`Warning: Failed to register webhook on connected account ${account.id}:`, webhookError)
+      // Don't fail the account creation if webhook registration fails
+      // The account is still usable, just won't have webhook events
+    }
+
     return NextResponse.json({
       accountId: account.id,
       message: "Stripe Connect account created successfully",

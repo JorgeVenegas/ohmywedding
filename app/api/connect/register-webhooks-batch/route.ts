@@ -1,0 +1,171 @@
+import { NextRequest, NextResponse } from "next/server"
+import Stripe from "stripe"
+import { createServerSupabaseClient } from "@/lib/supabase-server"
+import { createClient } from "@supabase/supabase-js"
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error("STRIPE_SECRET_KEY is not set")
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2025-12-15.clover",
+  })
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createServerSupabaseClient()
+    
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
+    // Check if user is superadmin
+    const { data: isAdmin, error: adminError } = await supabase.rpc("is_superuser")
+    
+    if (adminError || !isAdmin) {
+      return NextResponse.json(
+        { error: "Only superadmins can perform this action" },
+        { status: 403 }
+      )
+    }
+
+    const stripe = getStripe()
+    const webhookUrl = new URL("/api/registry/webhook", request.url).toString()
+    const serviceSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    // Fetch all weddings with connected Stripe accounts
+    const { data: weddings, error: fetchError } = await serviceSupabase
+      .from("weddings")
+      .select("id, wedding_name_id, stripe_account_id, partner1_first_name, partner2_first_name")
+      .not("stripe_account_id", "is", null)
+
+    if (fetchError) {
+      console.error("Failed to fetch weddings:", fetchError)
+      return NextResponse.json(
+        { error: "Failed to fetch weddings" },
+        { status: 500 }
+      )
+    }
+
+    if (!weddings || weddings.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: "No weddings with connected Stripe accounts found",
+        results: {
+          newlyRegistered: 0,
+          alreadyRegistered: 0,
+          failed: 0,
+          total: 0,
+        },
+        details: [],
+      })
+    }
+
+    const results: Array<{
+      weddingId: string
+      weddingName: string
+      weddingNameId: string
+      status: "success" | "already_registered" | "error"
+      webhookId?: string
+      message: string
+    }> = []
+
+    let newlyRegistered = 0
+    let alreadyRegistered = 0
+    let failed = 0
+
+    for (const wedding of weddings) {
+      const weddingLabel = `${wedding.partner1_first_name} & ${wedding.partner2_first_name}`
+
+      try {
+        // Check if webhook already exists
+        const webhooks = await stripe.webhookEndpoints.list(
+          { limit: 100 },
+          { stripeAccount: wedding.stripe_account_id }
+        )
+
+        const existingWebhook = webhooks.data.find(wh => wh.url === webhookUrl)
+
+        if (existingWebhook) {
+          results.push({
+            weddingId: wedding.id,
+            weddingName: weddingLabel,
+            weddingNameId: wedding.wedding_name_id,
+            status: "already_registered",
+            webhookId: existingWebhook.id,
+            message: "Webhook already registered",
+          })
+          alreadyRegistered++
+          continue
+        }
+
+        // Register webhook
+        const webhook = await stripe.webhookEndpoints.create(
+          {
+            url: webhookUrl,
+            enabled_events: [
+              "charge.succeeded",
+              "charge.failed",
+              "charge.refunded",
+              "payment_intent.succeeded",
+              "payment_intent.payment_failed",
+            ],
+          },
+          { stripeAccount: wedding.stripe_account_id }
+        )
+
+        results.push({
+          weddingId: wedding.id,
+          weddingName: weddingLabel,
+          weddingNameId: wedding.wedding_name_id,
+          status: "success",
+          webhookId: webhook.id,
+          message: "Webhook successfully registered",
+        })
+        newlyRegistered++
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error"
+        results.push({
+          weddingId: wedding.id,
+          weddingName: weddingLabel,
+          weddingNameId: wedding.wedding_name_id,
+          status: "error",
+          message: errorMessage,
+        })
+        failed++
+      }
+    }
+
+    return NextResponse.json({
+      success: failed === 0,
+      message: `Processed ${weddings.length} account(s)`,
+      results: {
+        newlyRegistered,
+        alreadyRegistered,
+        failed,
+        total: weddings.length,
+      },
+      details: results,
+    })
+  } catch (error) {
+    console.error("Error in batch register-webhooks:", error)
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    return NextResponse.json(
+      { error: `Failed to register webhooks: ${errorMessage}` },
+      { status: 500 }
+    )
+  }
+}

@@ -128,12 +128,17 @@ export async function POST(request: NextRequest) {
     // No transfers are needed - the couple receives the money directly.
     // Platform fee is automatically collected via application_fee_amount.
     //
-    // Events we handle:
-    // 1. application_fee.created - Fee collected when connected account receives payment
-    //    (This means the charge succeeded on the connected account)
-    // 2. checkout.session.completed - Customer saw bank transfer instructions
-    // 3. payment_intent.succeeded - Payment actually received (bank transfer complete)
-    // 4. payment_intent.payment_failed - Payment failed
+    // CRITICAL: Webhook events for resources created ON connected accounts are sent 
+    // to the CONNECTED ACCOUNT'S webhook, NOT the platform's webhook.
+    //
+    // The checkout.session.completed event will NOT reach this webhook because:
+    // - The checkout session is created on the connected account
+    // - Stripe sends those events to the connected account's endpoint
+    // 
+    // Instead, we rely on:
+    // 1. application_fee.created - Sent to platform when charge completes on connected account
+    //    (This confirms the payment was successful and fee was collected)
+    // 2. charge.succeeded - Sent to platform for charges on connected accounts (with charge_fee.created)
     // ====================================================================
 
     // Handle application_fee.created - Direct charge succeeded on connected account!
@@ -168,95 +173,79 @@ export async function POST(request: NextRequest) {
 
       console.log('Webhook: SUCCESS - Payment completed and in connected account!')
     }
-    // Handle checkout.session.completed - Customer saw bank transfer instructions
-    else if (event.type === "checkout.session.completed") {
-      const session = event.data.object as Stripe.Checkout.Session
+    // NOTE: checkout.session.completed is NOT handled here because those events go to the 
+    // connected account's webhook, not the platform's. See comments above.
+    else if (event.type === "charge.succeeded") {
+      // charge.succeeded is sent for all charges on the platform
+      const charge = event.data.object as Stripe.Charge
       
-      console.log('Webhook: checkout.session.completed for session:', session.id)
-      console.log('Webhook: Payment status:', session.payment_status)
-      console.log('Webhook: Metadata:', session.metadata)
+      console.log('Webhook: charge.succeeded for charge:', charge.id)
+      console.log('Webhook: Charge amount:', charge.amount)
+      console.log('Webhook: Application fee:', charge.application_fee)
       
-      // Find contribution by checkout session ID
-      const { data: contribution, error: fetchError } = await supabase
-        .from("registry_contributions")
-        .select("*")
-        .eq("stripe_checkout_session_id", session.id)
-        .single()
-
-      if (fetchError || !contribution) {
-        console.error('Webhook: Contribution not found for session:', session.id)
+      // For direct charges, find contribution by payment intent ID
+      if (!charge.payment_intent) {
+        console.warn('Webhook: charge.succeeded but no payment_intent, skipping')
         return NextResponse.json({ received: true })
       }
 
-      // For bank transfers, payment_status will be "unpaid" at this point
-      // The customer has seen the bank details but hasn't transferred yet
-      if (session.payment_status === "paid") {
-        // Instant payment - mark as completed
-        console.log('Webhook: Session already paid, marking as completed')
-        await markContributionCompleted(supabase, contribution, session.payment_intent as string)
-      } else {
-        // Bank transfer - customer saw instructions, awaiting actual transfer
-        const { error: updateError } = await supabase
-          .from("registry_contributions")
-          .update({
-            payment_status: "awaiting_transfer",
-            stripe_payment_intent_id: session.payment_intent as string,
-          })
-          .eq("id", contribution.id)
+      const { data: contribution, error: fetchError } = await supabase
+        .from("registry_contributions")
+        .select("*")
+        .eq("stripe_payment_intent_id", charge.payment_intent as string)
+        .single()
 
-        if (updateError) {
-          console.error('Webhook: Error updating contribution to awaiting_transfer:', updateError)
-        } else {
-          console.log('Webhook: Updated contribution to awaiting_transfer for session:', session.id)
-        }
-      }
-    }
-    
-    // Handle payment_intent.succeeded - Actual funds received!
-    // This is when the bank transfer is actually completed
-    else if (event.type === "payment_intent.succeeded") {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent
-      
-      console.log('Webhook: payment_intent.succeeded for PI:', paymentIntent.id)
-      console.log('Webhook: Amount received:', paymentIntent.amount_received)
-      console.log('Webhook: Application fee:', (paymentIntent as any).application_fee_amount)
-      
-      // Find the contribution by payment intent ID
-      let contribution = await findContribution(supabase, stripe, paymentIntent.id)
-
-      if (!contribution) {
-        console.error('Webhook: Contribution not found for payment intent:', paymentIntent.id)
+      if (fetchError || !contribution) {
+        console.warn('Webhook: Contribution not found for charge:', charge.id)
         return NextResponse.json({ received: true })
       }
 
       if (contribution.payment_status === "completed") {
-        console.log('Webhook: Contribution already completed, skipping for PI:', paymentIntent.id)
+        console.log('Webhook: Contribution already completed, skipping for charge:', charge.id)
         return NextResponse.json({ received: true })
       }
 
       // Mark as completed - payment is now in the couple's connected account!
-      await markContributionCompleted(supabase, contribution, paymentIntent.id)
-      
-      console.log('Webhook: SUCCESS - Payment completed and in connected account!')
+      await markContributionCompleted(supabase, contribution, charge.payment_intent as string, charge.id)
+
+      console.log('Webhook: SUCCESS - Charge completed and in connected account!')
     }
-    
-    // Handle payment_intent.payment_failed - Bank transfer failed or expired
-    else if (event.type === "payment_intent.payment_failed") {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent
+    else if (event.type === "charge.refunded") {
+      // Handle refunded charges
+      const charge = event.data.object as Stripe.Charge
       
-      console.log('Webhook: payment_intent.payment_failed for PI:', paymentIntent.id)
+      console.log('Webhook: charge.refunded for charge:', charge.id)
+      
+      const { error: updateError } = await supabase
+        .from("registry_contributions")
+        .update({
+          payment_status: "refunded",
+        })
+        .eq("stripe_charge_id", charge.id)
+
+      if (updateError) {
+        console.error('Webhook: Error updating contribution to refunded:', updateError)
+      } else {
+        console.log('Webhook: Updated contribution to refunded for charge:', charge.id)
+      }
+    }
+    else if (event.type === "charge.failed") {
+      // Handle failed charges
+      const charge = event.data.object as Stripe.Charge
+      
+      console.log('Webhook: charge.failed for charge:', charge.id)
       
       const { error: updateError } = await supabase
         .from("registry_contributions")
         .update({
           payment_status: "failed",
         })
-        .eq("stripe_payment_intent_id", paymentIntent.id)
+        .eq("stripe_charge_id", charge.id)
 
       if (updateError) {
         console.error('Webhook: Error updating contribution to failed:', updateError)
       } else {
-        console.log('Webhook: Updated contribution to failed for PI:', paymentIntent.id)
+        console.log('Webhook: Updated contribution to failed for charge:', charge.id)
       }
     }
     
