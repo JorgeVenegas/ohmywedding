@@ -71,7 +71,7 @@ export function PremiumUpgradePrompt({
   feature,
   variant = 'card',
 }: PremiumUpgradePromptProps) {
-  const featureNames: Record<keyof WeddingFeatures, string> = {
+  const featureNames: Partial<Record<keyof WeddingFeatures, string>> = {
     rsvp_enabled: 'RSVP Management',
     invitations_panel_enabled: 'Invitations & Guest Management',
     gallery_enabled: 'Photo Gallery',
@@ -80,7 +80,7 @@ export function PremiumUpgradePrompt({
   }
 
   const defaultTitle = feature 
-    ? `${featureNames[feature]} is a Premium Feature`
+    ? `${featureNames[feature] || 'This feature'} is a Premium Feature`
     : 'Premium Feature'
 
   const defaultDescription = 'Upgrade to Premium to unlock this feature and get access to all premium benefits for your wedding.'

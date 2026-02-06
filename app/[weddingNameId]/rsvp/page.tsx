@@ -6,9 +6,10 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { CheckCircle2 } from "lucide-react"
+import { CheckCircle2, Crown } from "lucide-react"
 import { WeddingFooter } from "@/components/wedding-footer"
 import { getWeddingPath } from "@/lib/wedding-url"
+import { useWeddingFeaturesPublic, isFeatureEnabled } from "@/hooks/use-wedding-features-public"
 
 interface RSVPPageProps {
   params: Promise<{ dateId: string; weddingNameId: string }>
@@ -21,6 +22,9 @@ export default async function RSVPPage({ params }: RSVPPageProps) {
 }
 
 function RSVPPageClient({ dateId, weddingNameId }: { dateId: string; weddingNameId: string }) {
+  const { plan, features, loading: featuresLoading } = useWeddingFeaturesPublic(weddingNameId)
+  const rsvpEnabled = isFeatureEnabled(features, 'rsvp_enabled')
+  
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -70,7 +74,26 @@ function RSVPPageClient({ dateId, weddingNameId }: { dateId: string; weddingName
 
       {/* Form */}
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {!submitted ? (
+        {featuresLoading ? (
+          <Card className="p-8 sm:p-10 border border-border shadow-sm text-center">
+            <p className="text-muted-foreground">Loading...</p>
+          </Card>
+        ) : !rsvpEnabled ? (
+          <Card className="p-8 sm:p-10 border-[#DDA46F]/30 shadow-sm text-center bg-gradient-to-br from-[#420c14]/5 to-[#DDA46F]/5">
+            <div className="mb-6 flex justify-center">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#420c14] to-[#DDA46F] flex items-center justify-center shadow-lg">
+                <Crown className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            <h2 className="text-3xl font-bold text-[#420c14] mb-2">Premium Feature</h2>
+            <p className="text-muted-foreground mb-8">
+              RSVP collection is available on Premium and Deluxe plans.
+            </p>
+            <Link href={getWeddingPath(weddingNameId)}>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Back to Wedding</Button>
+            </Link>
+          </Card>
+        ) : !submitted ? (
           <Card className="p-8 sm:p-10 border border-border shadow-sm">
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-foreground mb-2">We'd Love to Have You!</h1>

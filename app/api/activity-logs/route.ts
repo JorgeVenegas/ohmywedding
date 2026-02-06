@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase-server"
+import { createServerSupabaseClient, createAdminSupabaseClient } from "@/lib/supabase-server"
 import { createClient } from "@/lib/supabase-client"
 
 export const dynamic = 'force-dynamic'
@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = await createServerSupabaseClient()
+    const adminClient = createAdminSupabaseClient()
 
     // Get wedding UUID from wedding_name_id
     const { data: wedding, error: weddingError } = await supabase
@@ -30,6 +31,36 @@ export async function GET(request: NextRequest) {
     if (weddingError || !wedding) {
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
     }
+
+    // Get wedding plan to determine activity limits
+    const { data: weddingFeatures } = await adminClient
+      .from('wedding_features')
+      .select('plan')
+      .eq('wedding_id', wedding.id)
+      .single()
+
+    const plan = (weddingFeatures?.plan as 'free' | 'premium' | 'deluxe') || 'free'
+
+    // Get plan-specific activity tracking limit
+    const { data: planFeatures } = await adminClient
+      .from('plan_features')
+      .select('limit_value')
+      .eq('plan', plan)
+      .eq('feature_key', 'activity_tracking_limit')
+      .single()
+
+    let effectiveLimit = limit
+    const planLimit = planFeatures?.limit_value
+
+    // Apply plan-based limits
+    // Free: 10 items, Premium: 7 days of data, Deluxe: unlimited
+    if (plan === 'free' && planLimit !== null) {
+      effectiveLimit = Math.min(limit, planLimit) // Cap at plan limit (default 10)
+    } else if (plan === 'premium') {
+      // Premium: Filter to last 7 days
+      // We'll add a date filter below
+    }
+    // Deluxe: no limits
 
     let query = supabase
       .from('activity_logs')
@@ -46,7 +77,14 @@ export async function GET(request: NextRequest) {
       `)
       .eq('wedding_id', wedding.id)
       .order('created_at', { ascending: false })
-      .limit(limit)
+      .limit(effectiveLimit)
+
+    // Premium: Only show last 7 days
+    if (plan === 'premium') {
+      const sevenDaysAgo = new Date()
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+      query = query.gte('created_at', sevenDaysAgo.toISOString())
+    }
 
     if (activityType) {
       query = query.eq('activity_type', activityType)
@@ -74,7 +112,11 @@ export async function GET(request: NextRequest) {
       guestName: (activity.guests as any)?.name,
     })) || []
 
-    return NextResponse.json({ activities: formattedActivities })
+    return NextResponse.json({ 
+      activities: formattedActivities,
+      plan,
+      limit: effectiveLimit 
+    })
   } catch (error) {
     console.error('Error getting activity logs:', error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

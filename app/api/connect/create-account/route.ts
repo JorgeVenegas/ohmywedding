@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
       capabilities: {
         card_payments: { requested: true },
         transfers: { requested: true },
+        mx_bank_transfer_payments: { requested: true }, // Enable SPEI bank transfers
       },
       business_type: "individual",
       metadata: {

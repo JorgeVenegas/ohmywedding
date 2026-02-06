@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Edit, Trash2, DollarSign, X, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Plus, Edit, Trash2, DollarSign, X, AlertCircle, CheckCircle2, Crown, Lock } from "lucide-react"
 import { Header } from "@/components/header"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { createBrowserClient } from "@supabase/ssr"
@@ -13,6 +13,8 @@ import { ImageUpload } from "@/components/ui/image-upload"
 import { useImageUpload } from "@/hooks/use-image-upload"
 import { StripeConnectCard } from "@/components/stripe-connect-card"
 import { RegistryContributionsList } from "@/components/registry-contributions-list"
+import { useWeddingFeatures, isFeatureEnabled } from "@/hooks/use-wedding-features"
+import Link from "next/link"
 
 interface RegistryItem {
   id: string
@@ -46,6 +48,7 @@ export default function RegistryPage({ params }: RegistryPageProps) {
   const connectStatus = searchParams.get("connect")
   
   const { uploadImage } = useImageUpload()
+  const { plan, features, loading: featuresLoading } = useWeddingFeatures(weddingId)
   
   const [items, setItems] = useState<RegistryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -68,6 +71,8 @@ export default function RegistryPage({ params }: RegistryPageProps) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
+  
+  const customRegistryEnabled = isFeatureEnabled(features, 'custom_registry_enabled')
 
   useEffect(() => {
     fetchWeddingData()
@@ -314,6 +319,39 @@ export default function RegistryPage({ params }: RegistryPageProps) {
           </p>
         </div>
 
+        {/* Feature Gate - Premium/Deluxe Only */}
+        {!featuresLoading && !customRegistryEnabled && (
+          <Card className="p-8 mb-8 border-[#DDA46F]/30 shadow-sm bg-gradient-to-br from-[#420c14]/5 to-[#DDA46F]/5">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#420c14] to-[#DDA46F] flex items-center justify-center shadow-lg">
+                <Crown className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-semibold text-[#420c14] mb-2">Premium Feature</h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                Custom registry with bespoke items and secure payouts is available on <strong>Premium</strong> and <strong>Deluxe</strong> plans.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link href="/upgrade">
+                  <Button className="bg-gradient-to-r from-[#420c14] to-[#DDA46F] hover:from-[#420c14]/90 hover:to-[#DDA46F]/90 text-white">
+                    <Crown className="w-4 h-4 mr-2" />
+                    Upgrade Plan
+                  </Button>
+                </Link>
+                <Button variant="outline" onClick={() => router.push(`/admin/${weddingId}/dashboard`)}>
+                  Go to Dashboard
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground mt-6">
+                Current plan: <span className="font-semibold capitalize">{plan}</span>
+              </p>
+            </div>
+          </Card>
+        )}
+
+        {/* Rest of content only shows if feature is enabled */}
+        {!featuresLoading && customRegistryEnabled && (
+          <>
+        
         {/* Error Display */}
         {errorDialog.show && (
           <Card className="p-4 mb-8 border-destructive bg-destructive/10">
@@ -601,6 +639,9 @@ export default function RegistryPage({ params }: RegistryPageProps) {
             ))
           )}
         </div>
+        
+        </>
+        )}
       </div>
 
       {/* Error Dialog */}

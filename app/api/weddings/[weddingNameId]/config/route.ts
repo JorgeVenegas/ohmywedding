@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createServerSupabaseClient, createAdminSupabaseClient } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -122,6 +122,55 @@ export async function PUT(
 
     if (!config || typeof config !== 'object') {
       return NextResponse.json({ error: 'Invalid configuration data' }, { status: 400 })
+    }
+
+    // Validate config against wedding plan features
+    const adminClient = createAdminSupabaseClient()
+    
+    // Get wedding plan
+    const { data: weddingFeatures } = await adminClient
+      .from('wedding_features')
+      .select('plan')
+      .eq('wedding_id', existingWedding.id)
+      .single()
+    
+    const plan = weddingFeatures?.plan || 'free'
+    
+    // Get plan features
+    const { data: planFeatures } = await adminClient
+      .from('plan_features')
+      .select('feature_key, enabled')
+      .eq('plan', plan)
+    
+    const features = planFeatures || []
+    
+    // Helper to check if a feature is enabled
+    const isFeatureEnabled = (featureKey: string) => {
+      const feature = features.find(f => f.feature_key === featureKey)
+      return feature?.enabled || false
+    }
+    
+    // Validate sections against plan features
+    const sections = config.sections || []
+    const restrictedSections: string[] = []
+    
+    for (const section of sections) {
+      // Check RSVP section
+      if (section.id === 'rsvp' && !isFeatureEnabled('rsvp_enabled')) {
+        restrictedSections.push('RSVP')
+      }
+      // Check custom registry section
+      if (section.id === 'custom-registry' && !isFeatureEnabled('custom_registry_enabled')) {
+        restrictedSections.push('Custom Registry')
+      }
+    }
+    
+    // If there are restricted sections, return error
+    if (restrictedSections.length > 0) {
+      return NextResponse.json({ 
+        error: `The following sections are not available on your current plan: ${restrictedSections.join(', ')}. Please upgrade to enable these features.`,
+        restrictedSections 
+      }, { status: 403 })
     }
 
     const { data: updatedWeddings, error } = await supabase

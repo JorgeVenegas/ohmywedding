@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { NextResponse } from "next/server"
 import { requireFeature } from "@/lib/subscription-api"
+import { getWeddingFeatureLimit } from "@/lib/subscription"
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -94,6 +95,25 @@ export async function POST(request: Request) {
     
     if (!wedding) {
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
+    }
+
+    // Check guest group limit for wedding's plan
+    const groupLimit = await getWeddingFeatureLimit(wedding.id, 'guest_groups_limit')
+    if (groupLimit !== null) {
+      // Count current groups
+      const { count: currentGroupCount } = await supabase
+        .from('guest_groups')
+        .select('*', { count: 'exact', head: true })
+        .eq('wedding_id', wedding.id)
+      
+      if ((currentGroupCount || 0) >= groupLimit) {
+        return NextResponse.json({ 
+          error: `Guest group limit reached. Your plan allows ${groupLimit} groups. Upgrade to add more.`,
+          code: 'GROUP_LIMIT_EXCEEDED',
+          limit: groupLimit,
+          current: currentGroupCount || 0
+        }, { status: 403 })
+      }
     }
 
     const { data, error } = await supabase.from("guest_groups").insert([

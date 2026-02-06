@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Gift, Heart, DollarSign, CheckCircle, AlertCircle, Info } from "lucide-react"
+import { Gift, Heart, DollarSign, CheckCircle, AlertCircle, Info, Crown } from "lucide-react"
 import { createBrowserClient } from "@supabase/ssr"
 import { useI18n } from "@/components/contexts/i18n-context"
+import { useWeddingFeaturesPublic, isFeatureEnabled } from "@/hooks/use-wedding-features-public"
+import Link from "next/link"
+import { getWeddingPath } from "@/lib/wedding-url"
 
 interface RegistryItem {
   id: string
@@ -27,6 +30,8 @@ interface WeddingPayoutStatus {
 export default function RegistryPageContent({ weddingNameId }: { weddingNameId: string }) {
   const searchParams = useSearchParams()
   const { t } = useI18n()
+  const { plan, features, loading: featuresLoading } = useWeddingFeaturesPublic(weddingNameId)
+  const customRegistryEnabled = isFeatureEnabled(features, 'custom_registry_enabled')
   
   const [items, setItems] = useState<RegistryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -205,12 +210,36 @@ export default function RegistryPageContent({ weddingNameId }: { weddingNameId: 
     }
   }
 
-  if (isLoading) {
+  if (isLoading || featuresLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">{t('registry.loadingRegistry')}</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show upgrade prompt if custom registry is not enabled
+  if (!customRegistryEnabled) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <Card className="p-8 sm:p-10 border-[#DDA46F]/30 shadow-sm text-center bg-gradient-to-br from-[#420c14]/5 to-[#DDA46F]/5">
+            <div className="mb-6 flex justify-center">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#420c14] to-[#DDA46F] flex items-center justify-center shadow-lg">
+                <Crown className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            <h2 className="text-3xl font-bold text-[#420c14] mb-2">Premium Feature</h2>
+            <p className="text-muted-foreground mb-8">
+              Custom cash registries are available on Premium and Deluxe plans.
+            </p>
+            <Link href={getWeddingPath(weddingNameId)}>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Back to Wedding</Button>
+            </Link>
+          </Card>
         </div>
       </div>
     )

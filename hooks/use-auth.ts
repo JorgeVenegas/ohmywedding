@@ -43,6 +43,33 @@ function clearAllAuthCookies() {
   })
 }
 
+// Clear all Supabase auth storage (cookies + local/session storage)
+function clearAllAuthStorage() {
+  clearAllAuthCookies()
+
+  if (typeof window === 'undefined') return
+
+  try {
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('sb-') || key.includes('supabase')) {
+        localStorage.removeItem(key)
+      }
+    })
+  } catch (error) {
+    console.warn('Failed to clear localStorage auth data', error)
+  }
+
+  try {
+    Object.keys(sessionStorage).forEach((key) => {
+      if (key.startsWith('sb-') || key.includes('supabase')) {
+        sessionStorage.removeItem(key)
+      }
+    })
+  } catch (error) {
+    console.warn('Failed to clear sessionStorage auth data', error)
+  }
+}
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -56,7 +83,7 @@ export function useAuth() {
         // Handle refresh token errors by clearing all cookies and session
         if (error.message?.includes('Refresh Token') || (error as any).code === 'refresh_token_not_found') {
           console.warn('Refresh token error, clearing all auth cookies')
-          clearAllAuthCookies()
+          clearAllAuthStorage()
           supabase.auth.signOut().catch(() => {})
           setUser(null)
         }
@@ -75,7 +102,7 @@ export function useAuth() {
           // This prevents page reloads during automatic token refresh
           if (!session) {
             // Token refresh failed, clear all cookies
-            clearAllAuthCookies()
+            clearAllAuthStorage()
             setUser(null)
           }
           // Don't update user state on successful token refresh
@@ -101,7 +128,7 @@ export function useAuth() {
     }
     
     // Clear all Supabase auth cookies to handle domain mismatch issues
-    clearAllAuthCookies()
+    clearAllAuthStorage()
     
     window.location.href = '/'
   }, [])

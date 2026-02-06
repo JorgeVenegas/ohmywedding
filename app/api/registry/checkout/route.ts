@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { createClient } from "@supabase/supabase-js"
+import { getRegistryCommission } from "@/lib/subscription"
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -150,17 +151,19 @@ export async function POST(request: NextRequest) {
     const cancelUrl = `${baseUrl}${pathPrefix}/registry?canceled=true`
 
     // ====================================================================
-    // FEE CALCULATION
+    // FEE CALCULATION (Dynamic based on wedding plan)
     // ====================================================================
-    // Total deduction from couple = 20 MXN (includes Stripe fees + taxes + our commission)
+    // Total deduction from couple = Commission from plan_features table
+    // Premium: 20 MXN, Deluxe: 10 MXN
     // 
-    // Stripe cuts 8.12 MXN (Stripe fees + IVA)
-    // Platform keeps 11.88 MXN (20 MXN - 8.12 MXN)
+    // Stripe cuts 8.12 MXN (Stripe fees + IVA) - constant
+    // Platform keeps the rest (commission - Stripe fees)
     // ====================================================================
     
-    const TOTAL_FEE_CENTAVOS = 2000 // 20 MXN total deduction
-    const STRIPE_FEE_CENTAVOS = 812 // 8.12 MXN (Stripe fees + IVA)
-    const PLATFORM_COMMISSION_CENTAVOS = 1188 // 11.88 MXN (20 MXN - 8.12 MXN)
+    // Get commission from plan_features table based on wedding's plan
+    const COMMISSION_CENTAVOS = await getRegistryCommission(item.wedding_id)
+    const STRIPE_FEE_CENTAVOS = 812 // 8.12 MXN (Stripe fees + IVA) - constant
+    const PLATFORM_COMMISSION_CENTAVOS = Math.max(0, COMMISSION_CENTAVOS - STRIPE_FEE_CENTAVOS)
     
     const amountInCentavos = normalizedAmount * 100
 
@@ -170,15 +173,15 @@ export async function POST(request: NextRequest) {
 
     if (guestCoversFee) {
       // Guest covers fee: guest pays amount + fee, couple gets full amount
-      totalAmountCentavos = amountInCentavos + TOTAL_FEE_CENTAVOS
+      totalAmountCentavos = amountInCentavos + COMMISSION_CENTAVOS
       coupleReceivesCentavos = amountInCentavos
     } else {
       // Fee deducted from gift: guest pays amount, couple gets amount - fee
       totalAmountCentavos = amountInCentavos
-      coupleReceivesCentavos = amountInCentavos - TOTAL_FEE_CENTAVOS
+      coupleReceivesCentavos = amountInCentavos - COMMISSION_CENTAVOS
     }
     
-    console.log(`Checkout: Fee breakdown - Total: 20 MXN, Stripe+IVA: 8.12 MXN, Platform commission: 11.88 MXN`)
+    console.log(`Checkout: Fee breakdown - Total commission: ${COMMISSION_CENTAVOS/100} MXN, Stripe+IVA: 8.12 MXN, Platform: ${PLATFORM_COMMISSION_CENTAVOS/100} MXN`)
 
     // ====================================================================
     // DIRECT CHARGES ON CONNECTED ACCOUNT
@@ -240,7 +243,7 @@ export async function POST(request: NextRequest) {
     const session = await stripe.checkout.sessions.create(
       {
         customer: customerId,
-        payment_method_types: ["customer_balance"],
+        payment_method_types: ["customer_balance", "oxxo"],
         payment_method_options: {
           customer_balance: {
             funding_type: "bank_transfer",
@@ -278,7 +281,7 @@ export async function POST(request: NextRequest) {
           weddingNameId: wedding.wedding_name_id,
           weddingId: item.wedding_id,
           connectedAccountId: wedding.stripe_account_id,
-          totalFee: String(TOTAL_FEE_CENTAVOS),
+          totalFee: String(COMMISSION_CENTAVOS),
           stripeFee: String(STRIPE_FEE_CENTAVOS),
           ourCommission: String(PLATFORM_COMMISSION_CENTAVOS),
           coupleReceives: String(coupleReceivesCentavos),

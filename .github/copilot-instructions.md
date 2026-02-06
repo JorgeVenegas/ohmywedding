@@ -42,3 +42,7 @@ For animations try to use framer motion whenever possible to keep consistency ac
 Securituy is top priority, always follow best practices to avoid vulnerabilities. Avoid APIs that can expose sensitive data or operations to unauthorized users. Always limit what information is sent to the client. 
 
 Do not run anything locally with sql to create stuff. Everything should be on. a migration since local changes will be pushed to remote db, and they have to be consistet.
+
+Use shadcn components when possible and just customize them with the tailwind classes. Avoid creating new components when a shadcn one can be used with custom classes.If dependency issues, fix.
+
+When working on the wedding site, always ensure that the user experience is smooth and intuitive. Prioritize usability and accessibility in every design and development decision.

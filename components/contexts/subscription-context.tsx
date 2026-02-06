@@ -141,10 +141,15 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
     }
   }, [authLoading, fetchSubscriptionAndFeatures])
 
-  const isPremium = planType === 'premium'
+  const isPremium = planType === 'premium' || planType === 'deluxe'
 
-  const canAccessFeature = useCallback((feature: keyof WeddingFeatures) => {
-    return features[feature]
+  const canAccessFeature = useCallback((feature: keyof WeddingFeatures): boolean => {
+    const value = features[feature]
+    // Handle the plan field which is a string, not a boolean
+    if (feature === 'plan') {
+      return value !== 'free'
+    }
+    return value === true
   }, [features])
 
   return (

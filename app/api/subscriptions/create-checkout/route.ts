@@ -84,7 +84,7 @@ export async function POST(request: Request) {
               name: 'Oh My Wedding - Premium',
               description: 'One-time payment for lifetime access to all premium features',
             },
-            unit_amount: PRICING.premium.price,
+            unit_amount: PRICING.premium.price_usd,
           },
           quantity: 1,
         },

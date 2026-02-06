@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
@@ -683,9 +683,9 @@ function HeroSection() {
           </motion.video>
         </AnimatePresence>
         {/* Darker overlay for better text contrast */}
-        <div className="absolute inset-0 bg-[#420c14]/60" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#420c14]/40 via-transparent to-[#420c14]" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#172815]/30 via-transparent to-[#172815]/30" />
+        <div className="absolute inset-0 bg-[#420c14]/40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#420c14]/30 via-transparent to-[#420c14]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#172815]/20 via-transparent to-[#172815]/20" />
       </motion.div>
 
       {/* Floating decorative elements */}
@@ -1339,16 +1339,14 @@ function PricingSection() {
       name: "Free",
       price: "$0",
       period: "forever",
-      description: "Perfect for getting started",
+      description: "A refined start for your celebration",
       features: [
         { text: "Beautiful wedding website", included: true },
-        { text: "Up to 50 guests", included: true },
         { text: "Photo gallery", included: true },
         { text: "Event schedule", included: true },
         { text: "Gift registry links", included: true },
-        { text: "Basic customization", included: true },
-        { text: "Advanced RSVP system", included: false },
-        { text: "Digital invitations", included: false },
+        { text: "Up to 50 guests", included: true },
+        { text: "Last 10 activities only", included: true },
       ],
       cta: "Get Started",
       href: "/create-wedding",
@@ -1356,18 +1354,18 @@ function PricingSection() {
     },
     {
       name: "Premium",
-      price: "$29",
+      price: "$250",
       period: "one-time",
-      description: "Everything for your big day",
+      description: "Refined essentials for an elegant celebration",
       features: [
         { text: "Everything in Free", included: true },
-        { text: "Up to 100 guests", included: true },
-        { text: "Advanced RSVP system", included: true },
-        { text: "Digital invitations via WhatsApp", included: true },
-        { text: "Invitation open tracking", included: true },
-        { text: "Message templates", included: true },
-        { text: "Your own subdomain", included: true },
-        { text: "Custom domain", included: false },
+        { text: "Up to 250 guests", included: true },
+        { text: "Unlimited guest groups", included: true },
+        { text: "1 week activity retention", included: true },
+        { text: "Personalized invitations", included: true },
+        { text: "Bespoke registry with secure payouts", included: true },
+        { text: "Bespoke domain option", included: true },
+        { text: "Website stays forever", included: true },
       ],
       cta: "Upgrade Now",
       href: "/upgrade",
@@ -1375,24 +1373,63 @@ function PricingSection() {
     },
     {
       name: "Deluxe",
-      price: "$99",
+      price: "$500",
       period: "one-time",
-      description: "The ultimate luxury experience",
+      description: "The most exquisite, white-glove experience",
       features: [
         { text: "Everything in Premium", included: true },
-        { text: "Unlimited guests", included: true },
-        { text: "Your own custom domain", included: true },
-        { text: "Custom-made sections", included: true },
-        { text: "Bespoke illustrations", included: true },
-        { text: "Priority support", included: true },
-        { text: "Dedicated account manager", included: true },
-        { text: "White-glove setup", included: true },
+        { text: "Unlimited guests & groups", included: true },
+        { text: "Unlimited activity retention", included: true },
+        { text: "Bespoke domain setup", included: true },
+        { text: "Daily activity reports", included: true },
+        { text: "WhatsApp automation (extra cost)", included: true },
+        { text: "Bespoke section components", included: true },
+        { text: "Lower registry commission", included: true },
       ],
       cta: "Go Deluxe",
       href: "/upgrade?plan=deluxe",
       featured: false,
       isDeluxe: true,
     },
+  ]
+
+  // Comparison table data
+  const comparisonFeatures = [
+    { category: "Core Features", features: [
+      { name: "Beautiful wedding website", free: true, premium: true, deluxe: true },
+      { name: "Photo gallery", free: true, premium: true, deluxe: true },
+      { name: "Event schedule", free: true, premium: true, deluxe: true },
+      { name: "Gift registry links", free: true, premium: true, deluxe: true },
+      { name: "Website permanence", free: "6 months", premium: "Forever", deluxe: "Forever" },
+    ]},
+    { category: "Guest Management", features: [
+      { name: "Guest limit", free: "50", premium: "250", deluxe: "Unlimited" },
+      { name: "Guest groups", free: "15", premium: "Unlimited", deluxe: "Unlimited" },
+      { name: "Advanced RSVP system", free: false, premium: true, deluxe: true },
+      { name: "Activity tracking for invitations & communications", free: "Last 10", premium: "1 week", deluxe: "Unlimited" },
+    ]},
+    { category: "Registry & Payments", features: [
+      { name: "Bespoke registry with secure payouts", free: false, premium: true, deluxe: true },
+      { name: "No personal account sharing", free: false, premium: true, deluxe: true },
+      { name: "Registry commission", free: "—", premium: "20 MXN", deluxe: "10 MXN" },
+    ]},
+    { category: "Invitations & Communication", features: [
+      { name: "Personalized digital invitations", free: false, premium: true, deluxe: true },
+      { name: "Activity tracking on invitations & communications", free: false, premium: true, deluxe: true },
+      { name: "WhatsApp automation (extra cost)", free: false, premium: false, deluxe: true },
+      { name: "Curated message templates", free: false, premium: true, deluxe: true },
+    ]},
+    { category: "Customization & Reports", features: [
+      { name: "Personalized subdomain", free: false, premium: true, deluxe: true },
+      { name: "Bespoke domain support", free: false, premium: true, deluxe: true },
+      { name: "Activity reports", free: false, premium: "Weekly", deluxe: "Daily" },
+      { name: "Bespoke section components", free: false, premium: false, deluxe: true },
+    ]},
+    { category: "Support", features: [
+      { name: "Email support", free: true, premium: true, deluxe: true },
+      { name: "Priority support", free: false, premium: true, deluxe: true },
+      { name: "Dedicated support agent", free: false, premium: false, deluxe: true },
+    ]},
   ]
 
   return (
@@ -1533,6 +1570,133 @@ function PricingSection() {
             </motion.div>
           ))}
         </div>
+
+        {/* Comparison Table */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+          transition={{ duration: 1, delay: 0.6 }}
+          className="mt-16 sm:mt-24 bg-white rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-10 border border-[#420c14]/10 shadow-xl shadow-[#420c14]/5 overflow-hidden"
+        >
+          <h3 className="text-2xl sm:text-3xl font-serif text-[#420c14] mb-8 sm:mb-12 text-center">
+            Compare Plans
+          </h3>
+          
+          <div className="overflow-x-auto -mx-6 sm:mx-0">
+            <div className="inline-block min-w-full align-middle px-6 sm:px-0">
+              <table className="w-full table-fixed">
+                <colgroup>
+                  <col className="w-[30%]" />
+                  <col className="w-[23.33%]" />
+                  <col className="w-[23.33%]" />
+                  <col className="w-[23.33%]" />
+                </colgroup>
+                <thead>
+                  <tr className="border-b-2 border-[#420c14]/10">
+                    <th className="text-left py-4 sm:py-6 pr-4 sm:pr-8 text-sm sm:text-base font-medium text-[#420c14]/60">
+                      Features
+                    </th>
+                    <th className="text-center py-4 sm:py-6 px-3 sm:px-6">
+                      <div className="text-base sm:text-lg font-serif text-[#420c14]">Free</div>
+                      <div className="text-xs sm:text-sm text-[#420c14]/50 mt-1">$0</div>
+                    </th>
+                    <th className="text-center py-4 sm:py-6 px-3 sm:px-6 relative">
+                      <div className="absolute inset-0 bg-[#420c14]/5 -mx-3 sm:-mx-6" />
+                      <div className="relative">
+                        <div className="text-base sm:text-lg font-serif text-[#420c14]">Premium</div>
+                        <div className="text-xs sm:text-sm text-[#420c14]/50 mt-1">$250</div>
+                        <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-[#DDA46F] mx-auto mt-1" />
+                      </div>
+                    </th>
+                    <th className="text-center py-4 sm:py-6 px-3 sm:px-6">
+                      <div className="text-base sm:text-lg font-serif text-[#420c14]">Deluxe</div>
+                      <div className="text-xs sm:text-sm text-[#420c14]/50 mt-1">$500</div>
+                      <Crown className="w-3 h-3 sm:w-4 sm:h-4 text-[#DDA46F] mx-auto mt-1" />
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {comparisonFeatures.map((category, catIndex) => (
+                    <React.Fragment key={catIndex}>
+                      <tr>
+                        <td colSpan={4} className="pt-6 sm:pt-8 pb-3 sm:pb-4">
+                          <h4 className="text-xs sm:text-sm font-semibold text-[#420c14] tracking-wider uppercase">
+                            {category.category}
+                          </h4>
+                        </td>
+                      </tr>
+                      {category.features.map((feature, featIndex) => (
+                        <motion.tr
+                          key={featIndex}
+                          className="border-b border-[#420c14]/5 hover:bg-[#420c14]/[0.02] transition-colors"
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+                          transition={{ duration: 0.3, delay: 0.7 + (catIndex * 0.1) + (featIndex * 0.05) }}
+                        >
+                          <td className="py-3 sm:py-4 pr-4 sm:pr-8 text-xs sm:text-sm text-[#420c14]/70">
+                            {feature.name}
+                          </td>
+                          <td className="py-3 sm:py-4 px-3 sm:px-6 text-center">
+                            {typeof feature.free === 'boolean' ? (
+                              feature.free ? (
+                                <Check className="w-4 h-4 sm:w-5 sm:h-5 text-[#420c14] mx-auto" />
+                              ) : (
+                                <span className="text-[#420c14]/20 text-lg">—</span>
+                              )
+                            ) : (
+                              <span className="text-xs sm:text-sm text-[#420c14]/70">{feature.free}</span>
+                            )}
+                          </td>
+                          <td className="py-3 sm:py-4 px-3 sm:px-6 text-center bg-[#420c14]/[0.02]">
+                            {typeof feature.premium === 'boolean' ? (
+                              feature.premium ? (
+                                <Check className="w-4 h-4 sm:w-5 sm:h-5 text-[#420c14] mx-auto" />
+                              ) : (
+                                <span className="text-[#420c14]/20 text-lg">—</span>
+                              )
+                            ) : (
+                              <span className="text-xs sm:text-sm text-[#420c14]/70 font-medium">{feature.premium}</span>
+                            )}
+                          </td>
+                          <td className="py-3 sm:py-4 px-3 sm:px-6 text-center">
+                            {typeof feature.deluxe === 'boolean' ? (
+                              feature.deluxe ? (
+                                <Check className="w-4 h-4 sm:w-5 sm:h-5 text-[#DDA46F] mx-auto" />
+                              ) : (
+                                <span className="text-[#420c14]/20 text-lg">—</span>
+                              )
+                            ) : (
+                              <span className="text-xs sm:text-sm text-[#DDA46F] font-medium">{feature.deluxe}</span>
+                            )}
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* CTA buttons in table */}
+          <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-[#420c14]/10">
+            <Link href="/create-wedding" className="block">
+              <Button className="w-full bg-[#420c14]/5 hover:bg-[#420c14]/10 text-[#420c14] text-xs sm:text-sm h-10 sm:h-12">
+                Get Started
+              </Button>
+            </Link>
+            <Link href="/upgrade" className="block">
+              <Button className="w-full bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb] text-xs sm:text-sm h-10 sm:h-12">
+                Upgrade
+              </Button>
+            </Link>
+            <Link href="/upgrade?plan=deluxe" className="block">
+              <Button className="w-full bg-gradient-to-r from-[#DDA46F] to-[#c99560] hover:from-[#c99560] hover:to-[#b88550] text-[#420c14] text-xs sm:text-sm h-10 sm:h-12">
+                Go Deluxe
+              </Button>
+            </Link>
+          </div>
+        </motion.div>
 
         {/* Guarantee */}
         <motion.div

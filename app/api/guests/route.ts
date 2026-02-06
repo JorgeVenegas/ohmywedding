@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { NextResponse } from "next/server"
 import { requireFeature } from "@/lib/subscription-api"
+import { getWeddingFeatureLimit } from "@/lib/subscription"
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -95,6 +96,27 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
       }
       
+      // Check guest limit for wedding's plan
+      const guestLimit = await getWeddingFeatureLimit(wedding.id, 'guests_limit')
+      if (guestLimit !== null) {
+        // Count current guests
+        const { count: currentGuestCount } = await supabase
+          .from('guests')
+          .select('*', { count: 'exact', head: true })
+          .eq('wedding_id', wedding.id)
+        
+        const newGuestCount = (currentGuestCount || 0) + body.guests.length
+        if (newGuestCount > guestLimit) {
+          return NextResponse.json({ 
+            error: `Guest limit exceeded. Your plan allows ${guestLimit} guests. You currently have ${currentGuestCount || 0} and are trying to add ${body.guests.length}.`,
+            code: 'GUEST_LIMIT_EXCEEDED',
+            limit: guestLimit,
+            current: currentGuestCount || 0,
+            requested: body.guests.length
+          }, { status: 403 })
+        }
+      }
+      
       const guestsToInsert = body.guests.map((guest: {
         name: string
         phoneNumber?: string
@@ -160,6 +182,25 @@ export async function POST(request: Request) {
     
     if (weddingError || !wedding) {
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
+    }
+
+    // Check guest limit for wedding's plan
+    const guestLimit = await getWeddingFeatureLimit(wedding.id, 'guests_limit')
+    if (guestLimit !== null) {
+      // Count current guests
+      const { count: currentGuestCount } = await supabase
+        .from('guests')
+        .select('*', { count: 'exact', head: true })
+        .eq('wedding_id', wedding.id)
+      
+      if ((currentGuestCount || 0) >= guestLimit) {
+        return NextResponse.json({ 
+          error: `Guest limit reached. Your plan allows ${guestLimit} guests. Upgrade to add more.`,
+          code: 'GUEST_LIMIT_EXCEEDED',
+          limit: guestLimit,
+          current: currentGuestCount || 0
+        }, { status: 403 })
+      }
     }
 
     // Inherit tags from group if assigned to one
