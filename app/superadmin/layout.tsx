@@ -12,12 +12,20 @@ export default async function SuperadminLayout({
   const supabase = await createServerSupabaseClient()
   
   // Check if user is authenticated
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  console.log('[SuperAdmin] User:', user?.id, user?.email)
+  // Handle refresh token errors gracefully
+  let user = null
+  try {
+    const { data, error } = await supabase.auth.getUser()
+    if (error) {
+      console.warn('[SuperAdmin] Auth error:', error.message)
+      redirect('/login?redirect=/superadmin')
+    }
+    user = data.user
+  } catch {
+    redirect('/login?redirect=/superadmin')
+  }
   
   if (!user) {
-    console.log('[SuperAdmin] No user, redirecting to login')
     redirect('/login?redirect=/superadmin')
   }
   
@@ -28,10 +36,7 @@ export default async function SuperadminLayout({
     .eq('user_id', user.id)
     .single()
   
-  console.log('[SuperAdmin] Superuser check:', { superuser, superuserError, userId: user.id })
-  
   if (!superuser) {
-    console.log('[SuperAdmin] Not a superuser, redirecting to home')
     redirect('/')
   }
   

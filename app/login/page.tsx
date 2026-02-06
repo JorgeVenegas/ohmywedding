@@ -29,6 +29,40 @@ function LoginForm() {
   const isFullUrl = redirectTo.startsWith('http://') || redirectTo.startsWith('https://')
   const finalRedirectUrl = isFullUrl ? redirectTo : redirectTo
 
+  // Clear any stale auth tokens on mount to prevent refresh_token_not_found errors
+  useEffect(() => {
+    const supabase = createClient()
+    // Sign out to clear any stale server-side tokens
+    supabase.auth.getSession().then(({ error }) => {
+      if (error) {
+        // Stale session detected - clean up everything
+        supabase.auth.signOut().catch(() => {})
+        // Clear localStorage/sessionStorage
+        try {
+          Object.keys(localStorage).forEach((key) => {
+            if (key.startsWith('sb-') || key.includes('supabase')) {
+              localStorage.removeItem(key)
+            }
+          })
+          Object.keys(sessionStorage).forEach((key) => {
+            if (key.startsWith('sb-') || key.includes('supabase')) {
+              sessionStorage.removeItem(key)
+            }
+          })
+        } catch {}
+        // Clear cookies
+        document.cookie.split(';').forEach(c => {
+          const name = c.trim().split('=')[0]
+          if (name.startsWith('sb-') || name.includes('supabase')) {
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.wedding`
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.local`
+          }
+        })
+      }
+    })
+  }, [])
+
   // Show error from URL params (e.g., OAuth callback errors)
   useEffect(() => {
     if (errorParam) {
