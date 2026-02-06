@@ -17,14 +17,19 @@ const getStripe = () => {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('Batch webhook registration request received')
+    
     const supabase = await createServerSupabaseClient()
     
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
+    console.log('Auth check:', { userId: user?.id, email: user?.email, hasError: !!authError })
+    
     if (authError || !user) {
+      console.warn('Unauthorized access attempt:', authError?.message)
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "Unauthorized", details: authError?.message },
         { status: 401 }
       )
     }
@@ -32,9 +37,12 @@ export async function POST(request: NextRequest) {
     // Check if user is superadmin
     const { data: isAdmin, error: adminError } = await supabase.rpc("is_superuser")
     
+    console.log('Superadmin check:', { isAdmin, hasError: !!adminError })
+    
     if (adminError || !isAdmin) {
+      console.warn('Non-admin user attempted batch webhook registration:', user.email)
       return NextResponse.json(
-        { error: "Only superadmins can perform this action" },
+        { error: "Only superadmins can perform this action", details: adminError?.message },
         { status: 403 }
       )
     }

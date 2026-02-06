@@ -248,7 +248,10 @@ export async function middleware(request: NextRequest) {
   
   // Skip middleware for auth callback and Stripe webhook to prevent interference
   if (request.nextUrl.pathname.startsWith('/auth/callback') || 
-      request.nextUrl.pathname.startsWith('/api/registry/webhook')) {
+      request.nextUrl.pathname.startsWith('/api/registry/webhook') ||
+      request.nextUrl.pathname.startsWith('/api/connect/webhook') ||
+      request.nextUrl.pathname.startsWith('/api/connect/register-webhook') ||
+      request.nextUrl.pathname.startsWith('/api/subscriptions/webhook')) {
     return NextResponse.next()
   }
 
