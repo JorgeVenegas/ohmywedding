@@ -53,41 +53,50 @@ function getSubdomain(hostname: string): string | null {
   return null
 }
 
-// Helper to create a Supabase client for plan checking in middleware
-function createMiddlewareSupabase(request: NextRequest) {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll() {},
-      },
-    }
-  )
-}
-
 // Helper to look up a wedding's plan by its wedding_name_id
-async function getWeddingPlan(request: NextRequest, weddingNameId: string): Promise<'free' | 'premium' | 'deluxe'> {
+// This is completely independent of the logged-in user
+async function getWeddingPlan(weddingNameId: string): Promise<'free' | 'premium' | 'deluxe'> {
   try {
-    const supabase = createMiddlewareSupabase(request)
-    const { data: wedding } = await supabase
+    // Create a client with NO authentication - just use anon key
+    // This ensures the plan lookup doesn't depend on who's logged in
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return []
+          },
+          setAll() {},
+        },
+      }
+    )
+
+    const { data: wedding, error: weddingError } = await supabase
       .from('weddings')
       .select('id')
       .eq('wedding_name_id', weddingNameId)
       .single()
 
-    if (!wedding) return 'free'
+    if (weddingError || !wedding) {
+      console.warn(`Middleware: Wedding not found for ${weddingNameId}:`, weddingError?.message)
+      return 'free'
+    }
 
-    const { data: weddingFeatures } = await supabase
+    const { data: weddingFeatures, error: featuresError } = await supabase
       .from('wedding_features')
       .select('plan')
       .eq('wedding_id', wedding.id)
       .single()
 
-    return (weddingFeatures?.plan as 'free' | 'premium' | 'deluxe') || 'free'
+    if (featuresError || !weddingFeatures) {
+      console.warn(`Middleware: Features not found for wedding ${wedding.id}:`, featuresError?.message)
+      return 'free'
+    }
+
+    const plan = (weddingFeatures.plan as 'free' | 'premium' | 'deluxe') || 'free'
+    console.log(`Middleware: Wedding ${weddingNameId} has plan: ${plan}`)
+    return plan
   } catch {
     return 'free'
   }
@@ -95,6 +104,28 @@ async function getWeddingPlan(request: NextRequest, weddingNameId: string): Prom
 
 export async function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || ''
+  const pathname = request.nextUrl.pathname
+
+  // =========================================================================
+  // SKIP MIDDLEWARE: API routes and special paths
+  // These should be processed directly without routing logic
+  // =========================================================================
+  if (
+    pathname.startsWith('/auth/callback') || 
+    pathname.startsWith('/api/registry/webhook') ||
+    pathname.startsWith('/api/connect/webhook') ||
+    pathname.startsWith('/api/connect/register-webhook') ||
+    pathname.startsWith('/api/subscriptions/webhook') ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/fonts') ||
+    pathname.startsWith('/images') ||
+    pathname.startsWith('/videos') ||
+    pathname.startsWith('/favicon.ico') ||
+    pathname === '/site.webmanifest'
+  ) {
+    return NextResponse.next()
+  }
+
   const subdomain = getSubdomain(hostname)
 
   // =========================================================================
@@ -103,7 +134,6 @@ export async function middleware(request: NextRequest) {
   // - Premium/Deluxe weddings: redirect to subdomain
   // =========================================================================
   if (!subdomain) {
-    const pathname = request.nextUrl.pathname
     const segments = pathname.split('/').filter(Boolean)
     const first = segments[0]
 
@@ -121,7 +151,7 @@ export async function middleware(request: NextRequest) {
           // fall through to normal processing
         } else {
         // Check wedding plan to decide whether to redirect to subdomain
-        const plan = await getWeddingPlan(request, first)
+        const plan = await getWeddingPlan(first)
 
         if (plan === 'premium' || plan === 'deluxe') {
           // Premium/Deluxe: redirect to subdomain URL
@@ -158,17 +188,14 @@ export async function middleware(request: NextRequest) {
   // - Free weddings: redirect to main domain path-based URL
   // =========================================================================
   if (subdomain && !RESERVED_SUBDOMAINS.includes(subdomain.toLowerCase())) {
-    const pathname = request.nextUrl.pathname
-    
-    // Skip static files and API routes on subdomains
-    if (pathname.startsWith('/_next') || 
-        pathname.startsWith('/api') ||
+    // Skip static files on subdomains (API routes already handled above)
+    if (pathname.startsWith('/_next') ||
         pathname === '/favicon.ico' ||
         pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico)$/)) {
       // Continue with normal processing
     } else {
       // Check wedding plan - free weddings must not be on subdomains
-      const plan = await getWeddingPlan(request, subdomain)
+      const plan = await getWeddingPlan(subdomain)
 
       if (plan === 'free') {
         // Free plan: redirect ALL subdomain requests (public + admin) to main domain
@@ -244,15 +271,6 @@ export async function middleware(request: NextRequest) {
         return handleSupabaseAuth(request, response)
       }
     }
-  }
-  
-  // Skip middleware for auth callback and Stripe webhook to prevent interference
-  if (request.nextUrl.pathname.startsWith('/auth/callback') || 
-      request.nextUrl.pathname.startsWith('/api/registry/webhook') ||
-      request.nextUrl.pathname.startsWith('/api/connect/webhook') ||
-      request.nextUrl.pathname.startsWith('/api/connect/register-webhook') ||
-      request.nextUrl.pathname.startsWith('/api/subscriptions/webhook')) {
-    return NextResponse.next()
   }
 
   let supabaseResponse = NextResponse.next({
