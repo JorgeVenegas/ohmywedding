@@ -54,7 +54,26 @@ export async function GET() {
       }
     }
     
-    return NextResponse.json({ weddings: allWeddings })
+    // Enrich weddings with plan info from wedding_features
+    const weddingIds = allWeddings.map(w => w.id)
+    let planMap: Record<string, string> = {}
+    if (weddingIds.length > 0) {
+      const { data: features } = await supabase
+        .from('wedding_features')
+        .select('wedding_id, plan')
+        .in('wedding_id', weddingIds)
+      
+      if (features) {
+        planMap = Object.fromEntries(features.map(f => [f.wedding_id, f.plan || 'free']))
+      }
+    }
+    
+    const weddingsWithPlan = allWeddings.map(w => ({
+      ...w,
+      plan: planMap[w.id] || 'free',
+    }))
+    
+    return NextResponse.json({ weddings: weddingsWithPlan })
   } catch (error) {
     return NextResponse.json({ weddings: [] })
   }

@@ -53,12 +53,55 @@ function getSubdomain(hostname: string): string | null {
   return null
 }
 
+// Helper to create a Supabase client for plan checking in middleware
+function createMiddlewareSupabase(request: NextRequest) {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll() {},
+      },
+    }
+  )
+}
+
+// Helper to look up a wedding's plan by its wedding_name_id
+async function getWeddingPlan(request: NextRequest, weddingNameId: string): Promise<'free' | 'premium' | 'deluxe'> {
+  try {
+    const supabase = createMiddlewareSupabase(request)
+    const { data: wedding } = await supabase
+      .from('weddings')
+      .select('id')
+      .eq('wedding_name_id', weddingNameId)
+      .single()
+
+    if (!wedding) return 'free'
+
+    const { data: weddingFeatures } = await supabase
+      .from('wedding_features')
+      .select('plan')
+      .eq('wedding_id', wedding.id)
+      .single()
+
+    return (weddingFeatures?.plan as 'free' | 'premium' | 'deluxe') || 'free'
+  } catch {
+    return 'free'
+  }
+}
+
 export async function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || ''
   const subdomain = getSubdomain(hostname)
 
-  // If we're on the main domain and the path uses old routing (/weddingId or /admin/weddingId/..),
-  // redirect to the corresponding subdomain URL.
+  // =========================================================================
+  // MAIN DOMAIN: path-based wedding URLs (/weddingNameId/...)
+  // - Free weddings: serve normally (path-based is correct)
+  // - Premium/Deluxe weddings: redirect to subdomain
+  // =========================================================================
   if (!subdomain) {
     const pathname = request.nextUrl.pathname
     const segments = pathname.split('/').filter(Boolean)
@@ -68,33 +111,44 @@ export async function middleware(request: NextRequest) {
       const hostWithoutPort = hostname.split(':')[0]
       const port = hostname.includes(':') ? `:${hostname.split(':')[1]}` : ''
 
-      // Only handle our known main domains
+      // Only handle our known main domains (ohmy.local, ohmy.wedding)
       if (hostWithoutPort === 'ohmy.local' || hostWithoutPort === 'ohmy.wedding') {
-        let targetHost = hostWithoutPort === 'ohmy.local'
-          ? `${first}.ohmy.local${port}`
-          : `${first}.ohmy.wedding`
+        // Check wedding plan to decide whether to redirect to subdomain
+        const plan = await getWeddingPlan(request, first)
 
-        let targetPath = pathname
+        if (plan === 'premium' || plan === 'deluxe') {
+          // Premium/Deluxe: redirect to subdomain URL
+          const targetHost = hostWithoutPort === 'ohmy.local'
+            ? `${first}.ohmy.local${port}`
+            : `${first}.ohmy.wedding`
 
-        if (pathname.startsWith(`/admin/${first}`)) {
-          const rest = pathname.slice(`/admin/${first}`.length)
-          targetPath = rest ? `/admin${rest}` : '/admin/dashboard'
-        } else {
-          const rest = pathname.slice(first.length + 1)
-          targetPath = rest ? `/${rest}` : '/'
+          let targetPath = pathname
+
+          if (pathname.startsWith(`/admin/${first}`)) {
+            const rest = pathname.slice(`/admin/${first}`.length)
+            targetPath = rest ? `/admin${rest}` : '/admin/dashboard'
+          } else {
+            const rest = pathname.slice(first.length + 1)
+            targetPath = rest ? `/${rest}` : '/'
+          }
+
+          const redirectUrl = new URL(request.url)
+          redirectUrl.hostname = targetHost.split(':')[0]
+          redirectUrl.port = targetHost.includes(':') ? targetHost.split(':')[1] : ''
+          redirectUrl.pathname = targetPath
+
+          return NextResponse.redirect(redirectUrl)
         }
-
-        const redirectUrl = new URL(request.url)
-        redirectUrl.hostname = targetHost.split(':')[0]
-        redirectUrl.port = targetHost.includes(':') ? targetHost.split(':')[1] : ''
-        redirectUrl.pathname = targetPath
-
-        return NextResponse.redirect(redirectUrl)
+        // Free plan: DON'T redirect to subdomain, continue with normal path-based routing
       }
     }
   }
   
-  // Handle subdomain routing for wedding pages and admin
+  // =========================================================================
+  // SUBDOMAIN: wedding-specific subdomain (e.g., weddingname.ohmy.wedding)
+  // - Premium/Deluxe weddings: serve normally (subdomain is correct)
+  // - Free weddings: redirect to main domain path-based URL
+  // =========================================================================
   if (subdomain && !RESERVED_SUBDOMAINS.includes(subdomain.toLowerCase())) {
     const pathname = request.nextUrl.pathname
     
@@ -105,70 +159,41 @@ export async function middleware(request: NextRequest) {
         pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico)$/)) {
       // Continue with normal processing
     } else {
-      // Check if wedding is on free plan and redirect to main domain
-      // This check only applies to public wedding pages (not admin)
-      if (!pathname.startsWith('/admin')) {
-        try {
-          const supabase = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-              cookies: {
-                getAll() {
-                  return request.cookies.getAll()
-                },
-                setAll() {},
-              },
-            }
-          )
+      // Check wedding plan - free weddings must not be on subdomains
+      const plan = await getWeddingPlan(request, subdomain)
 
-          // Get wedding ID from subdomain
-          const { data: wedding } = await supabase
-            .from('weddings')
-            .select('id')
-            .eq('wedding_name_id', subdomain)
-            .single()
+      if (plan === 'free') {
+        // Free plan: redirect ALL subdomain requests (public + admin) to main domain
+        const hostWithoutPort = hostname.split(':')[0]
+        const port = hostname.includes(':') ? `:${hostname.split(':')[1]}` : ''
 
-          if (wedding) {
-            // Get wedding plan
-            const { data: weddingFeatures } = await supabase
-              .from('wedding_features')
-              .select('plan')
-              .eq('wedding_id', wedding.id)
-              .single()
-
-            const plan = weddingFeatures?.plan || 'free'
-
-            // If free plan, redirect to main domain path-based URL
-            if (plan === 'free') {
-              const hostWithoutPort = hostname.split(':')[0]
-              const port = hostname.includes(':') ? `:${hostname.split(':')[1]}` : ''
-
-              let mainDomain: string
-              if (hostWithoutPort.endsWith('.ohmy.local')) {
-                mainDomain = `ohmy.local${port}`
-              } else if (hostWithoutPort.endsWith('.ohmy.wedding')) {
-                mainDomain = 'ohmy.wedding'
-              } else {
-                mainDomain = BASE_DOMAIN
-              }
-
-              const redirectUrl = new URL(request.url)
-              redirectUrl.hostname = mainDomain.split(':')[0]
-              if (mainDomain.includes(':')) {
-                redirectUrl.port = mainDomain.split(':')[1]
-              }
-              redirectUrl.pathname = `/${subdomain}${pathname === '/' ? '' : pathname}`
-
-              return NextResponse.redirect(redirectUrl)
-            }
-          }
-        } catch (error) {
-          // If there's an error checking the plan, continue with normal subdomain handling
-          console.error('Error checking wedding plan:', error)
+        let mainDomain: string
+        if (hostWithoutPort.endsWith('.ohmy.local')) {
+          mainDomain = `ohmy.local${port}`
+        } else if (hostWithoutPort.endsWith('.ohmy.wedding')) {
+          mainDomain = 'ohmy.wedding'
+        } else {
+          mainDomain = BASE_DOMAIN
         }
+
+        const redirectUrl = new URL(request.url)
+        redirectUrl.hostname = mainDomain.split(':')[0]
+        if (mainDomain.includes(':')) {
+          redirectUrl.port = mainDomain.split(':')[1]
+        }
+
+        if (pathname.startsWith('/admin')) {
+          // /admin/dashboard -> /admin/weddingNameId/dashboard
+          const adminPath = pathname.slice(6) // Remove '/admin'
+          redirectUrl.pathname = `/admin/${subdomain}${adminPath || '/dashboard'}`
+        } else {
+          redirectUrl.pathname = `/${subdomain}${pathname === '/' ? '' : pathname}`
+        }
+
+        return NextResponse.redirect(redirectUrl)
       }
-      
+
+      // Premium/Deluxe: serve normally on subdomain
       if (pathname.startsWith('/admin')) {
         // Handle admin routes
         // /admin/dashboard on jorgeandyuli.ohmy.local -> /admin/jorgeandyuli/dashboard

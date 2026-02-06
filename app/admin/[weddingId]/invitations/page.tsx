@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch"
 import { PremiumUpgradePrompt } from "@/components/ui/premium-gate"
 import { useSubscriptionContext } from "@/components/contexts/subscription-context"
 import { getCleanAdminUrl } from "@/lib/admin-url"
+import { getWeddingUrl, type WeddingPlan } from "@/lib/wedding-url"
 import {
   InvitationsHeaderToolbar,
   InvitationsChartsSection,
@@ -226,6 +227,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     "Dear {{groupname}},\n\nWe are delighted to invite you to celebrate our wedding on {{weddingdate}}!\n\nView your personalized invitation here: {{groupinvitationurl}}\n\nWith love,\n{{partner1}} & {{partner2}}"
   )
   const [weddingNameId, setWeddingNameId] = useState<string>('')
+  const [weddingPlan, setWeddingPlan] = useState<WeddingPlan>('free')
   const [weddingDetails, setWeddingDetails] = useState<any>(null)
   const [chartsExpanded, setChartsExpanded] = useState(false)
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
@@ -516,8 +518,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   const fetchWeddingData = async () => {
     try {
-      const response = await fetch(`/api/weddings/${encodeURIComponent(weddingId)}/details`)
-      const result = await response.json()
+      const [detailsRes, featuresRes] = await Promise.all([
+        fetch(`/api/weddings/${encodeURIComponent(weddingId)}/details`),
+        fetch(`/api/weddings/${encodeURIComponent(weddingId)}/features`),
+      ])
+      const result = await detailsRes.json()
       if (result.details) {
         setPartnerNames({
           partner1: result.details.partner1_first_name || '',
@@ -528,6 +533,12 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         // Load invitation template if it exists in page_config
         if (result.details.page_config?.invitationTemplate) {
           setInviteTemplate(result.details.page_config.invitationTemplate)
+        }
+      }
+      if (featuresRes.ok) {
+        const featuresData = await featuresRes.json()
+        if (featuresData.plan) {
+          setWeddingPlan(featuresData.plan as WeddingPlan)
         }
       }
     } catch (error) {
@@ -1364,29 +1375,15 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     }
   }
 
-  // Helper to get invitation URL - strips weddingNameId if on subdomain
+  // Helper to get invitation URL using plan-aware wedding URL
   const getInvitationUrl = (groupId?: string): string => {
-    if (typeof window === 'undefined') {
-      return groupId
-        ? `/${weddingNameId || weddingId}?groupId=${groupId}`
-        : `/${weddingNameId || weddingId}`
+    const nameId = weddingNameId || weddingId
+    const baseUrl = getWeddingUrl(nameId, '', weddingPlan)
+    if (groupId) {
+      const separator = baseUrl.includes('?') ? '&' : '?'
+      return `${baseUrl}${separator}groupId=${groupId}`
     }
-
-    const baseUrl = window.location.origin
-    const hostname = window.location.hostname
-
-    // Check if we're on a subdomain (e.g., jorgeandyuli.ohmy.local or jorgeandyuli.ohmy.wedding)
-    const isSubdomain = hostname.includes('ohmy.local') || hostname.includes('ohmy.wedding')
-
-    if (isSubdomain) {
-      // On a subdomain, just use root path
-      return groupId ? `${baseUrl}/?groupId=${groupId}` : baseUrl
-    }
-
-    // On main domain, include the weddingNameId in the path
-    return groupId
-      ? `${baseUrl}/${weddingNameId || weddingId}?groupId=${groupId}`
-      : `${baseUrl}/${weddingNameId || weddingId}`
+    return baseUrl
   }
 
   // Utility function to replace template variables with actual values
@@ -2701,6 +2698,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         partnerNames={partnerNames}
         weddingId={weddingId}
         weddingNameId={weddingNameId}
+        weddingPlan={weddingPlan}
       />
 
       {/* Message Viewing Modal */}

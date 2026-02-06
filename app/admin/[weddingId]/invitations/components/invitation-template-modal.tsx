@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { X, Plus, Check, Mail } from "lucide-react"
+import { getWeddingUrl, type WeddingPlan } from "@/lib/wedding-url"
 
 // Types
 interface WeddingDetails {
@@ -38,6 +39,7 @@ interface InvitationTemplateModalProps {
   partnerNames: PartnerNames
   weddingId: string
   weddingNameId?: string
+  weddingPlan?: WeddingPlan
 }
 
 // Template examples
@@ -110,6 +112,7 @@ export function InvitationTemplateModal({
   partnerNames,
   weddingId,
   weddingNameId,
+  weddingPlan = 'free',
 }: InvitationTemplateModalProps) {
   const [inviteTemplate, setInviteTemplate] = useState(initialTemplate)
   const [dynamicContentSearch, setDynamicContentSearch] = useState('')
@@ -151,10 +154,11 @@ export function InvitationTemplateModal({
     template: string,
     data: { groupName?: string; guestName?: string; groupId?: string }
   ): string => {
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+    const nameId = weddingNameId || weddingId
+    const baseUrl = getWeddingUrl(nameId, '', weddingPlan)
     const invitationUrl = data.groupId 
-      ? `${baseUrl}/${weddingNameId || weddingId}?g=${data.groupId}`
-      : `${baseUrl}/${weddingNameId || weddingId}`
+      ? `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}g=${data.groupId}`
+      : baseUrl
 
     const partner1 = partnerNames.partner1 || 'Partner 1'
     const partner2 = partnerNames.partner2 || 'Partner 2'
@@ -181,7 +185,7 @@ export function InvitationTemplateModal({
       .replace(/\{\{receptionplace\}\}/gi, weddingDetails?.reception_venue_name || 'TBD')
       .replace(/\{\{ceremonyaddress\}\}/gi, weddingDetails?.ceremony_venue_address || 'TBD')
       .replace(/\{\{receptionaddress\}\}/gi, weddingDetails?.reception_venue_address || 'TBD')
-  }, [weddingDetails, partnerNames, weddingId, weddingNameId])
+  }, [weddingDetails, partnerNames, weddingId, weddingNameId, weddingPlan])
 
   // Insert variable at cursor position
   const insertVariableAtCursor = useCallback((variableValue: string) => {

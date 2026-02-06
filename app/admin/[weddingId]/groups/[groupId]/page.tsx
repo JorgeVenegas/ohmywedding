@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Header } from "@/components/header"
 import { getCleanAdminUrl } from "@/lib/admin-url"
+import { getWeddingUrl, type WeddingPlan } from "@/lib/wedding-url"
 import {
   Users,
   Phone,
@@ -97,6 +98,7 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
   const [openEvents, setOpenEvents] = useState<OpenEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [weddingNameId, setWeddingNameId] = useState<string>('')
+  const [weddingPlan, setWeddingPlan] = useState<WeddingPlan>('free')
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -108,10 +110,19 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
 
   const fetchWeddingInfo = async () => {
     try {
-      const response = await fetch(`/api/weddings/${encodeURIComponent(weddingId)}/details`)
-      const result = await response.json()
+      const [detailsRes, featuresRes] = await Promise.all([
+        fetch(`/api/weddings/${encodeURIComponent(weddingId)}/details`),
+        fetch(`/api/weddings/${encodeURIComponent(weddingId)}/features`),
+      ])
+      const result = await detailsRes.json()
       if (result.details?.wedding_name_id) {
         setWeddingNameId(result.details.wedding_name_id)
+      }
+      if (featuresRes.ok) {
+        const featuresData = await featuresRes.json()
+        if (featuresData.plan) {
+          setWeddingPlan(featuresData.plan as WeddingPlan)
+        }
       }
     } catch (error) {
       console.error('Error fetching wedding info:', error)
@@ -229,9 +240,11 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
 
   const invitationUrl = useMemo(() => {
     if (!weddingNameId || !groupId) return ''
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ohmy.wedding'
-    return `${baseUrl.replace('https://', `https://${weddingNameId}.`).replace('http://', `http://${weddingNameId}.`)}?g=${groupId}`
-  }, [weddingNameId, groupId])
+    const baseUrl = getWeddingUrl(weddingNameId, '', weddingPlan)
+    // Append query param - getWeddingUrl returns either a full URL or relative path
+    const separator = baseUrl.includes('?') ? '&' : '?'
+    return `${baseUrl}${separator}g=${groupId}`
+  }, [weddingNameId, groupId, weddingPlan])
 
   const copyInvitationUrl = async () => {
     if (invitationUrl) {

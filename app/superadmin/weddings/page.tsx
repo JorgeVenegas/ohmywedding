@@ -24,6 +24,7 @@ import { Search, Heart, Calendar, User, Loader2, ExternalLink, Crown, TrendingUp
 import { format } from "date-fns"
 import { toast } from "sonner"
 import Link from "next/link"
+import { getWeddingUrl } from "@/lib/wedding-url"
 
 type PlanType = 'free' | 'premium' | 'deluxe'
 
@@ -224,7 +225,7 @@ export default function WeddingsManagementPage() {
                 
                 <div className="flex items-center gap-3">
                   <Link 
-                    href={`/${wedding.wedding_name_id}`} 
+                    href={getWeddingUrl(wedding.wedding_name_id, '', wedding.plan || 'free')} 
                     target="_blank"
                     className="w-10 h-10 rounded-xl bg-[#420c14]/5 flex items-center justify-center text-[#420c14]/40 hover:text-[#420c14] hover:bg-[#420c14]/10 transition-colors"
                   >

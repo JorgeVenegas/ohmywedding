@@ -46,26 +46,47 @@ function getPortSuffix(): string {
 }
 
 /**
- * Generate a URL for a wedding page
+ * Wedding plan type
+ */
+export type WeddingPlan = 'free' | 'premium' | 'deluxe'
+
+/**
+ * Generate a URL for a wedding page, plan-aware.
  * 
- * In production: https://demo-luxury-noir.ohmy.wedding/
- * In development: http://localhost:3000/demo-luxury-noir
+ * - Free weddings: always path-based (e.g., /weddingname or localhost:3000/weddingname)
+ * - Premium/Deluxe weddings: subdomain-based in production/ohmy.local (e.g., weddingname.ohmy.wedding)
+ * - On localhost, all weddings use path-based routing regardless of plan
  * 
  * @param weddingNameId - The wedding name ID (e.g., "demo-luxury-noir")
  * @param path - Optional path within the wedding (e.g., "/gallery", "/rsvp")
- * @returns The full URL or relative path depending on environment
+ * @param plan - The wedding plan. Defaults to 'free' (path-based).
+ * @returns The full URL or relative path depending on environment and plan
  */
-export function getWeddingUrl(weddingNameId: string, path: string = ''): string {
+export function getWeddingUrl(weddingNameId: string, path: string = '', plan: WeddingPlan = 'free'): string {
   // Normalize path
   const normalizedPath = path.startsWith('/') ? path : (path ? `/${path}` : '')
   
-  // In development/localhost, use path-based routing
+  // In development/localhost, always use path-based routing
   if (isLocalhost()) {
     return `/${weddingNameId}${normalizedPath}`
   }
   
-  // Check if we're on ohmy.local (local subdomain testing)
   const protocol = getProtocol()
+
+  // Free plan: always path-based on main domain
+  if (plan === 'free') {
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname
+      if (host === LOCAL_DOMAIN || host.endsWith(`.${LOCAL_DOMAIN}`)) {
+        const port = window.location.port ? `:${window.location.port}` : ''
+        return `${protocol}//${LOCAL_DOMAIN}${port}/${weddingNameId}${normalizedPath}`
+      }
+    }
+    const baseDomain = BASE_DOMAIN.replace(/^www\./, '')
+    return `${protocol}//${baseDomain}/${weddingNameId}${normalizedPath}`
+  }
+  
+  // Premium/Deluxe: subdomain-based
   if (typeof window !== 'undefined') {
     const host = window.location.hostname
     if (host === LOCAL_DOMAIN || host.endsWith(`.${LOCAL_DOMAIN}`)) {
@@ -115,10 +136,14 @@ export function getWeddingPath(weddingNameId: string, path: string = ''): string
 /**
  * Generate the display URL for a wedding (for showing to users)
  * 
+ * - Free: ohmy.wedding/weddingname
+ * - Premium/Deluxe: weddingname.ohmy.wedding
+ * 
  * @param weddingNameId - The wedding name ID
+ * @param plan - The wedding plan. Defaults to 'free'.
  * @returns Human-readable URL
  */
-export function getWeddingDisplayUrl(weddingNameId: string): string {
+export function getWeddingDisplayUrl(weddingNameId: string, plan: WeddingPlan = 'free'): string {
   if (isLocalhost()) {
     const portSuffix = getPortSuffix()
     return `localhost${portSuffix}/${weddingNameId}`
@@ -129,11 +154,17 @@ export function getWeddingDisplayUrl(weddingNameId: string): string {
     const host = window.location.hostname
     if (host === LOCAL_DOMAIN || host.endsWith(`.${LOCAL_DOMAIN}`)) {
       const port = window.location.port ? `:${window.location.port}` : ''
+      if (plan === 'free') {
+        return `${LOCAL_DOMAIN}${port}/${weddingNameId}`
+      }
       return `${weddingNameId}.${LOCAL_DOMAIN}${port}`
     }
   }
   
   const baseDomain = BASE_DOMAIN.replace(/^www\./, '')
+  if (plan === 'free') {
+    return `${baseDomain}/${weddingNameId}`
+  }
   return `${weddingNameId}.${baseDomain}`
 }
 

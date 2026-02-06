@@ -38,7 +38,7 @@ import {
   X,
 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
-import { getWeddingUrl } from "@/lib/wedding-url"
+import { getWeddingUrl, type WeddingPlan } from "@/lib/wedding-url"
 import { Suspense } from "react"
 import { motion, useScroll, useTransform, useInView, AnimatePresence, useSpring } from "framer-motion"
 
@@ -104,6 +104,7 @@ type UserWedding = {
   partner1_first_name: string
   partner2_first_name: string
   wedding_date: string | null
+  plan?: WeddingPlan
 }
 
 function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
@@ -172,7 +173,7 @@ function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
                 {userWeddings.map(wedding => (
                   <a
                     key={wedding.id}
-                    href={getWeddingUrl(wedding.wedding_name_id)}
+                    href={getWeddingUrl(wedding.wedding_name_id, '', wedding.plan || 'free')}
                     className="block px-3 py-2 text-sm text-[#f5f2eb]/80 hover:text-[#f5f2eb] bg-[#f5f2eb]/5 hover:bg-[#f5f2eb]/10 rounded-md transition-colors duration-150"
                   >
                     <div className="font-medium truncate">{wedding.partner1_first_name} & {wedding.partner2_first_name}</div>
@@ -188,7 +189,7 @@ function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
             {weddingsLoading ? (
               <div className="h-12 w-full bg-[#420c14]/20 animate-pulse rounded-md" />
             ) : hasWedding ? (
-              <a href={getWeddingUrl(firstWedding.wedding_name_id)} className="w-full">
+              <a href={getWeddingUrl(firstWedding.wedding_name_id, '', firstWedding.plan || 'free')} className="w-full">
                 <Button className="w-full bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
                   <Edit3 className="w-4 h-4 mr-2" />
                   Edit Wedding
@@ -244,7 +245,7 @@ function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
                   {userWeddings.map(wedding => (
                     <a
                       key={wedding.id}
-                      href={getWeddingUrl(wedding.wedding_name_id)}
+                      href={getWeddingUrl(wedding.wedding_name_id, '', wedding.plan || 'free')}
                       onClick={() => setShowUserMenu(false)}
                       className="block px-4 py-3 text-sm text-[#f5f2eb]/80 hover:text-[#f5f2eb] hover:bg-[#f5f2eb]/10 transition-colors duration-150 border-l-2 border-transparent hover:border-[#DDA46F]"
                     >
@@ -269,7 +270,7 @@ function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
         {weddingsLoading ? (
           <div className="h-10 w-32 bg-[#420c14]/20 animate-pulse rounded-md" />
         ) : hasWedding ? (
-          <a href={getWeddingUrl(firstWedding.wedding_name_id)}>
+          <a href={getWeddingUrl(firstWedding.wedding_name_id, '', firstWedding.plan || 'free')}>
             <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
               <Edit3 className="w-4 h-4 mr-2" />
               Edit Wedding
