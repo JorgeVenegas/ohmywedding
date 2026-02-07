@@ -45,7 +45,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Guest, GuestGroup, ColumnVisibility, TAG_COLORS } from "../types"
+import { Guest, GuestGroup, ColumnVisibility, TAG_COLORS, resolveInvitedBy } from "../types"
 
 export type SortColumn = 'name' | 'group' | 'status' | null
 export type SortDirection = 'asc' | 'desc'
@@ -84,6 +84,7 @@ interface GuestsTableGroupsProps {
   setShowMessageModal: (show: boolean) => void
   getInvitationUrl: (groupId?: string) => string
   navigateToGroupDetails: (groupId: string) => void
+  partnerNames: { partner1: string; partner2: string }
 }
 
 function getTagColor(tag: string): string {
@@ -135,6 +136,7 @@ export function GuestsTableGroups({
   setShowMessageModal,
   getInvitationUrl,
   navigateToGroupDetails,
+  partnerNames,
 }: GuestsTableGroupsProps) {
   return (
     <Card className="border border-border overflow-hidden shadow-sm">
@@ -218,11 +220,9 @@ export function GuestsTableGroups({
                 const pendingCount = group.guests.filter(g => g.confirmation_status === 'pending').length
                 const declinedCount = group.guests.filter(g => g.confirmation_status === 'declined').length
                 const allGroupTags = [...new Set([
-                  ...(group.tags || []),
                   ...group.guests.flatMap(g => g.tags || [])
                 ])]
                 const allGroupInvitedBy = [...new Set([
-                  ...(group.invited_by || []),
                   ...group.guests.flatMap(g => g.invited_by || [])
                 ])]
                 const allGuestsInvited = group.guests.length > 0 && group.guests.every(g => g.invitation_sent)
@@ -261,7 +261,24 @@ export function GuestsTableGroups({
                       <td className="px-3 py-2">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-foreground">{group.name}</span>
+                            <span className={`font-medium ${!group.name ? 'italic text-muted-foreground' : 'text-foreground'}`}>
+                              {group.name || '(Unnamed Group)'}
+                            </span>
+                            {/* Alert for missing name */}
+                            {!group.name && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 border border-amber-300">
+                                      <span className="text-amber-600 text-xs font-bold">!</span>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p className="text-xs">This group needs a name. Click to edit.</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
                             {/* Opened indicator */}
                             <TooltipProvider>
                               <Tooltip>
@@ -379,12 +396,12 @@ export function GuestsTableGroups({
                         <td className="px-3 py-2">
                           {allGroupInvitedBy.length > 0 ? (
                             <div className="flex gap-1 flex-wrap">
-                              {allGroupInvitedBy.map(name => (
+                              {allGroupInvitedBy.map(ref => (
                                 <span
-                                  key={name}
+                                  key={ref}
                                   className="px-1.5 py-0.5 text-[10px] rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200"
                                 >
-                                  {name}
+                                  {resolveInvitedBy(ref, partnerNames)}
                                 </span>
                               ))}
                             </div>
@@ -685,12 +702,12 @@ export function GuestsTableGroups({
                                 <td className="px-3 py-2">
                                   {guest.invited_by && guest.invited_by.length > 0 ? (
                                     <div className="flex gap-1 flex-wrap">
-                                      {guest.invited_by.map(name => (
+                                      {guest.invited_by.map(ref => (
                                         <span
-                                          key={name}
+                                          key={ref}
                                           className="px-1.5 py-0.5 text-[10px] rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200"
                                         >
-                                          {name}
+                                          {resolveInvitedBy(ref, partnerNames)}
                                         </span>
                                       ))}
                                     </div>
@@ -949,12 +966,12 @@ export function GuestsTableGroups({
                         <td className="px-3 py-2">
                           {guest.invited_by && guest.invited_by.length > 0 ? (
                             <div className="flex gap-1 flex-wrap">
-                              {guest.invited_by.map(name => (
+                              {guest.invited_by.map(ref => (
                                 <span
-                                  key={name}
+                                  key={ref}
                                   className="px-1.5 py-0.5 text-[10px] rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200"
                                 >
-                                  {name}
+                                  {resolveInvitedBy(ref, partnerNames)}
                                 </span>
                               ))}
                             </div>

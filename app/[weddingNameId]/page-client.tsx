@@ -244,6 +244,38 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
   const groupId = urlSearchParams.get('groupId')
   const isOwnerPreview = urlSearchParams.get('preview') === 'true'
 
+  // Redirect free weddings accessed via subdomain to main domain path-based URL
+  useEffect(() => {
+    const checkAndRedirect = () => {
+      // Only run on client side
+      if (typeof window === 'undefined') return
+      
+      const hostname = window.location.hostname
+      const protocol = window.location.protocol
+      const pathname = window.location.pathname
+      const search = window.location.search
+
+      // Check if accessed via subdomain (e.g., jorgeandyuli.ohmy.local instead of ohmy.local/jorgeandyuli)
+      const mainDomainPattern = /^[a-z0-9-]+\.ohmy\.(local|com)$/i
+      const isSubdomain = mainDomainPattern.test(hostname)
+
+      if (isSubdomain && wedding && wedding.wedding_features?.plan === 'free') {
+        const subdomain = hostname.split('.')[0]
+        const mainDomain = 'ohmy.local'
+        const port = window.location.port ? `:${window.location.port}` : ''
+        const newUrl = `${protocol}//${mainDomain}${port}/${subdomain}${pathname === '/' ? '' : pathname}${search}`
+        window.location.href = newUrl
+      }
+    }
+
+    // Check after wedding data loads (when weddingDataLoading becomes false)
+    if (!weddingDataLoading) {
+      checkAndRedirect()
+    }
+  }, [wedding, weddingDataLoading])
+
+
+
   // Track invitation open when page loads with groupId
   useEffect(() => {
     if (groupId && weddingNameId && !hasTrackedOpen && !isDemoMode) {

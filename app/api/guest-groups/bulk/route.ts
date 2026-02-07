@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { NextResponse } from "next/server"
+import { requireFeature } from "@/lib/subscription-api"
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -16,6 +17,12 @@ export async function POST(request: Request) {
     }
 
     const decodedWeddingId = decodeURIComponent(weddingId)
+
+    // Check premium access for guest management
+    const featureCheck = await requireFeature('invitations_panel_enabled', decodedWeddingId)
+    if (!featureCheck.allowed) {
+      return featureCheck.response
+    }
 
     // Check if user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -55,9 +62,7 @@ export async function POST(request: Request) {
           wedding_id: wedding.id,
           name: groupName,
           phone_number: groupData.phoneNumber || null,
-          tags: groupData.tags || [],
           notes: groupData.notes || null,
-          invited_by: groupData.invitedBy || [],
         }])
         .select()
         .single()
@@ -76,7 +81,7 @@ export async function POST(request: Request) {
           guest_group_id: group.id,
           name: guestCount === 1 ? groupName : `Guest ${i}`,
           phone_number: null,
-          tags: [],
+          tags: groupData.tags || [],
           confirmation_status: 'pending',
           dietary_restrictions: null,
           notes: null,

@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Edit, Trash2, DollarSign, X, AlertCircle, CheckCircle2, Crown, Lock } from "lucide-react"
+import { ViewSwitcher } from "@/components/ui/view-switcher"
+import { Plus, Edit, Trash2, DollarSign, X, AlertCircle, CheckCircle2, Crown, Lock, LayoutGrid, Filter, ArrowUpDown, Search, ExternalLink } from "lucide-react"
 import { Header } from "@/components/header"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { createBrowserClient } from "@supabase/ssr"
@@ -25,6 +26,7 @@ interface RegistryItem {
   image_urls: string[]
   is_active: boolean
   display_order: number
+  created_at: string
 }
 
 interface WeddingData {
@@ -47,6 +49,20 @@ export default function RegistryPage({ params }: RegistryPageProps) {
   const router = useRouter()
   const connectStatus = searchParams.get("connect")
   
+  // View mode: 'items' or 'contributions' - initialized from URL param
+  const initialViewMode = searchParams.get('view') === 'contributions' ? 'contributions' : 'items'
+  const [viewModeState, setViewModeState] = useState<'items' | 'contributions'>(initialViewMode)
+  
+  // Update URL when view mode changes
+  const setViewMode = (mode: 'items' | 'contributions') => {
+    setViewModeState(mode)
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('view', mode)
+    router.replace(`?${params.toString()}`, { scroll: false })
+  }
+  
+  const viewMode = viewModeState
+  
   const { uploadImage } = useImageUpload()
   const { plan, features, loading: featuresLoading } = useWeddingFeatures(weddingId)
   
@@ -66,6 +82,18 @@ export default function RegistryPage({ params }: RegistryPageProps) {
     message: "" 
   })
   const [showConnectSuccess, setShowConnectSuccess] = useState(connectStatus === "success")
+  
+  // Filter states for items
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
+  
+  // Filter states for contributions
+  const [contributionSearchQuery, setContributionSearchQuery] = useState("")
+  const [contributionFilterByItem, setContributionFilterByItem] = useState<string>("all")
+  const [contributionFilterByStatus, setContributionFilterByStatus] = useState<string>("all")
+  const [contributionSortBy, setContributionSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
+  const [contributionStats, setContributionStats] = useState({ count: 0, amount: 0 })
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -290,34 +318,249 @@ export default function RegistryPage({ params }: RegistryPageProps) {
   const totalRaised = items.reduce((sum, item) => sum + Number(item.current_amount), 0)
   const percentageRaised = totalGoal > 0 ? (totalRaised / totalGoal) * 100 : 0
 
+  // Filter and sort items
+  const filteredAndSortedItems = items
+    .filter(item => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        const matchesTitle = item.title.toLowerCase().includes(query)
+        const matchesDescription = item.description?.toLowerCase().includes(query)
+        if (!matchesTitle && !matchesDescription) return false
+      }
+      
+      // Status filter
+      if (statusFilter === 'active' && !item.is_active) return false
+      if (statusFilter === 'inactive' && item.is_active) return false
+      
+      return true
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'highest':
+          return Number(b.goal_amount) - Number(a.goal_amount)
+        case 'lowest':
+          return Number(a.goal_amount) - Number(b.goal_amount)
+        case 'oldest':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        case 'newest':
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      }
+    })
+
   return (
     <main className="min-h-screen bg-background">
       <Header
         showBackButton
         backHref={getCleanAdminUrl(weddingId, 'dashboard')}
         title="Registry Manager"
-        rightContent={
-          <Button
-            size="sm"
-            onClick={() => {
-              setShowForm(!showForm)
-              setEditingItem(null)
-              setFormData({ title: "", description: "", goal_amount: "", image_urls: [] })
-            }}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Item
-          </Button>
-        }
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Custom Registry</h1>
-          <p className="text-muted-foreground">
-            Create custom registry items for experiences, funds, and special requests
-          </p>
-        </div>
+        {/* Header with Title and Stats */}
+        {!featuresLoading && customRegistryEnabled && (
+          <div className="mb-6">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Custom Registry</h1>
+                <p className="text-sm text-muted-foreground">
+                  Create custom registry items for experiences, funds, and special requests
+                </p>
+              </div>
+              
+              {/* Stats Pills and Action Button */}
+              <div className="flex items-center gap-3 flex-wrap">
+                {viewMode === 'items' ? (
+                  <>
+                    {/* Items Stats */}
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
+                      <LayoutGrid className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-foreground font-semibold">{items.length}</span>
+                      <span className="text-muted-foreground">items</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
+                      <DollarSign className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-foreground font-semibold">${totalGoal.toFixed(2)}</span>
+                      <span className="text-muted-foreground">goal</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary/10 text-xs font-medium">
+                      <div className="w-1.5 h-1.5 rounded-full bg-secondary" />
+                      <span className="text-secondary font-semibold">${totalRaised.toFixed(2)}</span>
+                      <span className="text-muted-foreground">raised</span>
+                    </div>
+                    {/* Add Item Button */}
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setShowForm(!showForm)
+                        setEditingItem(null)
+                        setFormData({ title: "", description: "", goal_amount: "", image_urls: [] })
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Item
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    {/* Contributions Stats */}
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
+                      <DollarSign className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-foreground font-semibold">{contributionStats.count}</span>
+                      <span className="text-muted-foreground">contributions</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary/10 text-xs font-medium">
+                      <div className="w-1.5 h-1.5 rounded-full bg-secondary" />
+                      <span className="text-secondary font-semibold">${contributionStats.amount.toFixed(2)}</span>
+                      <span className="text-muted-foreground">received</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+            
+            {/* View Switcher and Filters Row */}
+            <div className="sticky top-[72px] z-40 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 bg-background/95 supports-[backdrop-filter]:bg-background/75 backdrop-blur border-b border-border/40">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 py-3">
+                <div className="flex items-center gap-3 flex-wrap">
+                {/* View Switcher */}
+                <ViewSwitcher
+                  options={[
+                    { value: 'items', label: 'Items', icon: LayoutGrid },
+                    { value: 'contributions', label: 'Contributions', icon: DollarSign },
+                  ]}
+                  value={viewMode}
+                  onChange={(mode) => setViewMode(mode as 'items' | 'contributions')}
+                />
+                
+                {/* Inline Filters - Items */}
+                {viewMode === 'items' && items.length > 0 && (
+                  <>
+                    <div className="relative">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                      <Input
+                        placeholder="Search..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-7 h-8 w-36 text-sm"
+                      />
+                    </div>
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                      className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                      className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+                    >
+                      <option value="newest">Newest</option>
+                      <option value="oldest">Oldest</option>
+                      <option value="highest">Highest Goal</option>
+                      <option value="lowest">Lowest Goal</option>
+                    </select>
+                  </>
+                )}
+                
+                {/* Inline Filters - Contributions */}
+                {viewMode === 'contributions' && items.length > 0 && (
+                  <>
+                    <div className="relative">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                      <Input
+                        placeholder="Search..."
+                        value={contributionSearchQuery}
+                        onChange={(e) => setContributionSearchQuery(e.target.value)}
+                        className="pl-7 h-8 w-36 text-sm"
+                      />
+                    </div>
+                    <select
+                      value={contributionFilterByItem}
+                      onChange={(e) => setContributionFilterByItem(e.target.value)}
+                      className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+                    >
+                      <option value="all">All Items</option>
+                      {items.map(item => (
+                        <option key={item.id} value={item.id}>
+                          {item.title}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={contributionFilterByStatus}
+                      onChange={(e) => setContributionFilterByStatus(e.target.value)}
+                      className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="completed">Completed</option>
+                      <option value="incomplete">Incomplete</option>
+                      <option value="requires_action">Requires Action</option>
+                      <option value="failed">Failed</option>
+                    </select>
+                    <select
+                      value={contributionSortBy}
+                      onChange={(e) => setContributionSortBy(e.target.value as typeof contributionSortBy)}
+                      className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+                    >
+                      <option value="newest">Newest</option>
+                      <option value="oldest">Oldest</option>
+                      <option value="highest">Highest Amount</option>
+                      <option value="lowest">Lowest Amount</option>
+                    </select>
+                  </>
+                )}
+                </div>
+                
+                {/* Stripe Status Indicator - Right Side */}
+                {weddingData && (
+                  <div className="flex items-center gap-2">
+                  {weddingData.payouts_enabled ? (
+                    <>
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-xs font-medium border border-emerald-200 dark:border-emerald-800">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span className="text-emerald-700 dark:text-emerald-300">Stripe Connected</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          try {
+                            const response = await fetch("/api/connect/account-link", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ weddingId: weddingData.id, type: "login" }),
+                            })
+                            if (!response.ok) throw new Error("Failed to get dashboard link")
+                            const { url } = await response.json()
+                            window.open(url, "_blank")
+                          } catch (err) {
+                            console.error(err)
+                          }
+                        }}
+                        className="h-8"
+                      >
+                        <ExternalLink className="w-3 h-3 mr-1.5" />
+                        Dashboard
+                      </Button>
+                    </>
+                  ) : weddingData.stripe_account_id ? (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-xs font-medium border border-amber-200 dark:border-amber-800">
+                      <AlertCircle className="w-3 h-3 text-amber-600" />
+                      <span className="text-amber-700 dark:text-amber-300">Setup Incomplete</span>
+                    </div>
+                  ) : null}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Feature Gate - Premium/Deluxe Only */}
         {!featuresLoading && !customRegistryEnabled && (
@@ -371,64 +614,32 @@ export default function RegistryPage({ params }: RegistryPageProps) {
           </Card>
         )}
 
-        {/* Connect Success Message */}
-        {showConnectSuccess && (
-          <div className="mb-6 p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-lg flex items-center gap-3">
-            <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-            <p className="text-sm text-green-800 dark:text-green-200">
-              Stripe account setup updated! Your account status will be refreshed shortly.
-            </p>
-            <button 
-              onClick={() => setShowConnectSuccess(false)}
-              className="ml-auto text-green-600 hover:text-green-800"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
-        {/* Stripe Connect Card */}
-        {weddingData && (
-          <StripeConnectCard
-            weddingId={weddingData.id}
-            stripeAccountId={weddingData.stripe_account_id}
-            stripeOnboardingCompleted={weddingData.stripe_onboarding_completed}
-            payoutsEnabled={weddingData.payouts_enabled}
-            onStatusChange={fetchWeddingData}
+        {/* Contributions View */}
+        {viewMode === 'contributions' && weddingData && items.length > 0 && (
+          <RegistryContributionsList 
+            weddingId={weddingData.id} 
+            items={items}
+            searchQuery={contributionSearchQuery}
+            filterByItem={contributionFilterByItem}
+            filterByStatus={contributionFilterByStatus}
+            sortBy={contributionSortBy}
+            onStatsChange={setContributionStats}
           />
         )}
 
-        {/* Contributions List */}
-        {weddingData && items.length > 0 && (
-          <div className="mb-8">
-            <RegistryContributionsList weddingId={weddingData.id} items={items} />
-          </div>
-        )}
-
-        {/* Stats */}
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
-          <Card className="p-4 border border-border shadow-sm">
-            <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wide">
-              Total Items
-            </p>
-            <p className="text-2xl font-bold text-foreground">{items.length}</p>
-          </Card>
-          <Card className="p-4 border border-border shadow-sm">
-            <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wide">
-              Total Goal
-            </p>
-            <p className="text-2xl font-bold text-foreground">${totalGoal.toFixed(2)}</p>
-          </Card>
-          <Card className="p-4 border border-border shadow-sm">
-            <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wide">
-              Total Raised
-            </p>
-            <p className="text-2xl font-bold text-secondary">${totalRaised.toFixed(2)}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {percentageRaised.toFixed(1)}% of goal
-            </p>
-          </Card>
-        </div>
+        {/* Items View */}
+        {viewMode === 'items' && (
+          <>
+            {/* Stripe Connect Card */}
+            {weddingData && (
+              <StripeConnectCard
+                weddingId={weddingData.id}
+                stripeAccountId={weddingData.stripe_account_id}
+                stripeOnboardingCompleted={weddingData.stripe_onboarding_completed}
+                payoutsEnabled={weddingData.payouts_enabled}
+                onStatusChange={fetchWeddingData}
+              />
+            )}
 
         {/* Form */}
         {showForm && (
@@ -506,9 +717,13 @@ export default function RegistryPage({ params }: RegistryPageProps) {
                   {/* Upload Component */}
                   <ImageUpload
                     onUpload={(url) => {
+                      if (!url) return
                       setFormData(prev => ({
                         ...prev,
-                        image_urls: [...prev.image_urls, url]
+                        image_urls: [
+                          url,
+                          ...prev.image_urls.filter(Boolean).filter(existing => existing !== url)
+                        ]
                       }))
                     }}
                     placeholder="Add registry item image"
@@ -550,8 +765,13 @@ export default function RegistryPage({ params }: RegistryPageProps) {
                 Create Your First Item
               </Button>
             </Card>
+          ) : filteredAndSortedItems.length === 0 ? (
+            <Card className="p-12 text-center border border-border shadow-sm">
+              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <p className="text-muted-foreground">No items match your filters</p>
+            </Card>
           ) : (
-            items.map((item) => (
+            filteredAndSortedItems.map((item) => (
               <Card key={item.id} className="p-6 border border-border shadow-sm">
                 <div className="flex items-start gap-4">
                   {/* Image Thumbnail */}
@@ -639,6 +859,9 @@ export default function RegistryPage({ params }: RegistryPageProps) {
             ))
           )}
         </div>
+        </>
+        )}
+        {/* End Items View */}
         
         </>
         )}

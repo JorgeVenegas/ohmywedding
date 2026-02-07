@@ -5,6 +5,7 @@ create index "idx_weddings_owner_id" on weddings("owner_id");
 create index "idx_weddings_wedding_date" on weddings("wedding_date");
 
 create index "idx_guest_groups_wedding_id" on guest_groups("wedding_id");
+create index "idx_guest_groups_draft" on guest_groups (wedding_id, is_draft) where is_draft = true;
 
 create index "idx_guests_wedding_id" on guests("wedding_id");
 create index "idx_guests_guest_group_id" on guests("guest_group_id");

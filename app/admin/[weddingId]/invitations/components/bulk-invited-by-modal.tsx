@@ -4,16 +4,18 @@ import { X, UserCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import type { Guest } from "../types"
+import type { PartnerOption } from "../types"
 
 interface BulkInvitedByModalProps {
   isOpen: boolean
   onClose: () => void
   selectedGuestIds: Set<string>
   allGuests: Guest[]
-  partnerOptions: string[]
+  partnerOptions: PartnerOption[]
   bulkInvitedBy: string[]
   setBulkInvitedBy: React.Dispatch<React.SetStateAction<string[]>>
   onUpdate: () => void
+  isSubmitting?: boolean
 }
 
 export function BulkInvitedByModal({
@@ -25,6 +27,7 @@ export function BulkInvitedByModal({
   bulkInvitedBy,
   setBulkInvitedBy,
   onUpdate,
+  isSubmitting = false,
 }: BulkInvitedByModalProps) {
   if (!isOpen) return null
 
@@ -59,21 +62,21 @@ export function BulkInvitedByModal({
               Invited By
             </label>
             <div className="flex flex-wrap gap-2">
-              {partnerOptions.map((name) => (
+              {partnerOptions.map((partner) => (
                 <button
-                  key={name}
+                  key={partner.key}
                   type="button"
                   onClick={() => setBulkInvitedBy(prev =>
-                    prev.includes(name)
-                      ? prev.filter(n => n !== name)
-                      : [...prev, name]
+                    prev.includes(partner.key)
+                      ? prev.filter(k => k !== partner.key)
+                      : [...prev, partner.key]
                   )}
-                  className={`px-4 py-2 rounded-full text-sm border transition-colors ${bulkInvitedBy.includes(name)
+                  className={`px-4 py-2 rounded-full text-sm border transition-colors ${bulkInvitedBy.includes(partner.key)
                       ? "bg-indigo-100 text-indigo-700 border-indigo-200"
                       : "bg-muted text-muted-foreground border-border hover:border-primary/50"
                     }`}
                 >
-                  {name}
+                  {partner.name}
                 </button>
               ))}
             </div>
@@ -101,15 +104,17 @@ export function BulkInvitedByModal({
               variant="outline"
               className="flex-1"
               onClick={handleClose}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button
               className="flex-1"
               onClick={onUpdate}
+              disabled={isSubmitting}
             >
               <UserCheck className="w-4 h-4 mr-2" />
-              Update {selectedGuestIds.size} Guest{selectedGuestIds.size !== 1 ? 's' : ''}
+              {isSubmitting ? 'Updating...' : 'Update Invited By'}
             </Button>
           </div>
         </div>

@@ -117,6 +117,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/registry/webhook') ||
     pathname.startsWith('/api/connect/webhook') ||
     pathname.startsWith('/api/subscriptions/webhook') ||
+    pathname.startsWith('/api/cron/') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/fonts') ||
     pathname.startsWith('/images') ||
@@ -155,7 +156,10 @@ export async function middleware(request: NextRequest) {
         const plan = await getWeddingPlan(first)
 
         if (plan === 'premium' || plan === 'deluxe') {
-          // Premium/Deluxe: redirect to subdomain URL
+          // Premium/Deluxe: redirect to subdomain URL.
+          // Construct as string to avoid issues with request.url not reflecting
+          // the actual Host header hostname.
+          const protocol = request.nextUrl.protocol || 'http:'
           const targetHost = normalizedHost === 'ohmy.local'
             ? `${first}.ohmy.local${port}`
             : `${first}.ohmy.wedding`
@@ -170,12 +174,8 @@ export async function middleware(request: NextRequest) {
             targetPath = rest ? `/${rest}` : '/'
           }
 
-          const redirectUrl = new URL(request.url)
-          redirectUrl.hostname = targetHost.split(':')[0]
-          redirectUrl.port = targetHost.includes(':') ? targetHost.split(':')[1] : ''
-          redirectUrl.pathname = targetPath
-
-          return NextResponse.redirect(redirectUrl)
+          const redirectTarget = `${protocol}//${targetHost}${targetPath}`
+          return NextResponse.redirect(redirectTarget)
         }
         // Free plan: DON'T redirect to subdomain, continue with normal path-based routing
         }
@@ -185,8 +185,8 @@ export async function middleware(request: NextRequest) {
   
   // =========================================================================
   // SUBDOMAIN: wedding-specific subdomain (e.g., weddingname.ohmy.wedding)
-  // - Premium/Deluxe weddings: serve normally (subdomain is correct)
-  // - Free weddings: redirect to main domain path-based URL
+  // - Premium/Deluxe weddings: rewrite to path-based URL (subdomain is correct)
+  // - Free weddings: redirect to main domain with raw Location header
   // =========================================================================
   if (subdomain && !RESERVED_SUBDOMAINS.includes(subdomain.toLowerCase())) {
     // Skip static files, API routes, and auth routes on subdomains - they should not be rewritten
@@ -205,54 +205,37 @@ export async function middleware(request: NextRequest) {
       const plan = await getWeddingPlan(subdomain)
 
       if (plan === 'free') {
-        // Free plan: redirect ALL subdomain requests (public + admin) to main domain
-        const hostWithoutPort = hostname.split(':')[0]
-        const port = hostname.includes(':') ? `:${hostname.split(':')[1]}` : ''
-
-        let mainDomain: string
-        if (hostWithoutPort.endsWith('.ohmy.local')) {
-          mainDomain = `ohmy.local${port}`
-        } else if (hostWithoutPort.endsWith('.ohmy.wedding')) {
-          mainDomain = 'ohmy.wedding'
-        } else {
-          mainDomain = BASE_DOMAIN
-        }
-
-        const redirectUrl = new URL(request.url)
-        redirectUrl.hostname = mainDomain.split(':')[0]
-        if (mainDomain.includes(':')) {
-          redirectUrl.port = mainDomain.split(':')[1]
-        }
-
+        // Free weddings are served path-based, not subdomain-based.
+        // Rewrite the request to the path-based route.
         if (pathname.startsWith('/admin')) {
-          // /admin/dashboard -> /admin/weddingNameId/dashboard
           const adminPath = pathname.slice(6) // Remove '/admin'
-          redirectUrl.pathname = `/admin/${subdomain}${adminPath || '/dashboard'}`
+          const newPath = `/admin/${subdomain}${adminPath || '/dashboard'}`
+          const url = request.nextUrl.clone()
+          url.pathname = newPath
+          
+          const response = NextResponse.rewrite(url)
+          response.headers.set('x-wedding-subdomain', subdomain)
+          return handleSupabaseAuth(request, response)
         } else {
-          redirectUrl.pathname = `/${subdomain}${pathname === '/' ? '' : pathname}`
+          const newPath = `/${subdomain}${pathname === '/' ? '' : pathname}`
+          const url = request.nextUrl.clone()
+          url.pathname = newPath
+          
+          const response = NextResponse.rewrite(url)
+          response.headers.set('x-wedding-subdomain', subdomain)
+          return handleSupabaseAuth(request, response)
         }
-
-        return NextResponse.redirect(redirectUrl)
       }
 
       // Premium/Deluxe: serve normally on subdomain
       if (pathname.startsWith('/admin')) {
-        // Handle admin routes
-        // /admin/dashboard on jorgeandyuli.ohmy.local -> /admin/jorgeandyuli/dashboard
-        // /admin/jorgeandyuli/dashboard on jorgeandyuli.ohmy.local -> /admin/jorgeandyuli/dashboard (no change)
-        
         const adminPath = pathname.slice(6) // Remove '/admin' prefix, e.g., '/dashboard'
         
-        // Check if the path already contains the subdomain as the weddingId
-        // e.g., /jorgeandyuli/dashboard
-        if (adminPath.startsWith(`/${subdomain}/`)) {
-          // Already has the correct weddingId, just proceed normally
+        if (adminPath.startsWith(`/${subdomain}/`) || adminPath === `/${subdomain}`) {
           const response = NextResponse.next()
           response.headers.set('x-wedding-subdomain', subdomain)
           return handleSupabaseAuth(request, response)
         } else {
-          // Path doesn't have weddingId yet (e.g., /dashboard), inject the subdomain
-          // /admin/dashboard -> /admin/jorgeandyuli/dashboard
           const newPath = `/admin/${subdomain}${adminPath}`
           const url = request.nextUrl.clone()
           url.pathname = newPath
@@ -262,19 +245,12 @@ export async function middleware(request: NextRequest) {
           return handleSupabaseAuth(request, response)
         }
       } else {
-        // Rewrite to the wedding page
-        // /gallery on demo-luxury-noir.ohmy.wedding -> /demo-luxury-noir/gallery
         const newPath = `/${subdomain}${pathname === '/' ? '' : pathname}`
         const url = request.nextUrl.clone()
         url.pathname = newPath
         
-        // Rewrite internally (user sees subdomain URL, server sees path-based URL)
         const response = NextResponse.rewrite(url)
-        
-        // Set a header so the app knows we're on a subdomain
         response.headers.set('x-wedding-subdomain', subdomain)
-        
-        // Continue with Supabase auth handling
         return handleSupabaseAuth(request, response)
       }
     }

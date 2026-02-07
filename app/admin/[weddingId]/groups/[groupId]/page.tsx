@@ -379,28 +379,36 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
               </div>
             )}
 
-            {group.tags && group.tags.length > 0 && (
-              <div className="flex items-start gap-2">
-                <Tag className="w-4 h-4 text-muted-foreground mt-0.5" />
-                <div className="flex flex-wrap gap-1">
-                  {group.tags.map((tag, idx) => (
-                    <span
-                      key={idx}
-                      className={`px-2 py-0.5 rounded-full text-xs border ${getTagColor(tag)}`}
-                    >
-                      {tag}
-                    </span>
-                  ))}
+            {/* Tags aggregated from guests */}
+            {(() => {
+              const allTags = [...new Set(group.guests?.flatMap((g: any) => g.tags || []) || [])]
+              return allTags.length > 0 ? (
+                <div className="flex items-start gap-2">
+                  <Tag className="w-4 h-4 text-muted-foreground mt-0.5" />
+                  <div className="flex flex-wrap gap-1">
+                    {allTags.map((tag: string, idx: number) => (
+                      <span
+                        key={idx}
+                        className={`px-2 py-0.5 rounded-full text-xs border ${getTagColor(tag)}`}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              ) : null
+            })()}
 
-            {group.invited_by && group.invited_by.length > 0 && (
-              <div className="flex items-center gap-2 text-sm">
-                <User className="w-4 h-4 text-muted-foreground" />
-                <span>Invited by: {group.invited_by.join(', ')}</span>
-              </div>
-            )}
+            {/* Invited by aggregated from guests */}
+            {(() => {
+              const allInvitedBy = [...new Set(group.guests?.flatMap((g: any) => g.invited_by || []) || [])]
+              return allInvitedBy.length > 0 ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <User className="w-4 h-4 text-muted-foreground" />
+                  <span>Invited by: {allInvitedBy.join(', ')}</span>
+                </div>
+              ) : null
+            })()}
 
             {group.notes && (
               <div className="text-sm text-muted-foreground border-t pt-3 mt-3">

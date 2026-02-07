@@ -1,7 +1,10 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 import Stripe from 'stripe'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { PRICING } from '@/lib/subscription-shared'
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 // Lazy initialization to avoid build-time errors
 function getStripe() {
@@ -10,7 +13,10 @@ function getStripe() {
   })
 }
 
-export async function POST(request: Request) {
+const VALID_PLANS = ['premium', 'deluxe'] as const
+type ValidPlan = typeof VALID_PLANS[number]
+
+export async function POST(request: NextRequest) {
   try {
     const stripe = getStripe()
     const supabase = await createServerSupabaseClient()
@@ -27,12 +33,15 @@ export async function POST(request: Request) {
 
     const { planType } = await request.json()
 
-    if (planType !== 'premium') {
+    if (!VALID_PLANS.includes(planType)) {
       return NextResponse.json(
-        { error: 'Invalid plan type' },
+        { error: 'Invalid plan type. Must be premium or deluxe.' },
         { status: 400 }
       )
     }
+
+    const plan = planType as ValidPlan
+    const pricing = PRICING[plan]
 
     // Check if user already has an active subscription
     const { data: existingSubscription } = await supabase
@@ -72,34 +81,50 @@ export async function POST(request: Request) {
       customerId = customer.id
     }
 
-    // Create Stripe Checkout Session
+    const planLabel = plan === 'premium' ? 'Premium' : 'Deluxe'
+
+    // Get base URL from request headers (works in all environments)
+    const host = request.headers.get('host') || ''
+    const protocol = request.headers.get('x-forwarded-proto') || 'http'
+    const baseUrl = `${protocol}://${host}`
+
+    // Create Stripe Checkout Session with card and bank transfer (same as registry)
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      payment_method_types: ['card'],
+      payment_method_types: ['customer_balance'],
+      payment_method_options: {
+        customer_balance: {
+          funding_type: 'bank_transfer',
+          bank_transfer: {
+            type: 'mx_bank_transfer', // SPEI for Mexico
+          },
+        },
+      },
       line_items: [
         {
           price_data: {
-            currency: 'usd',
+            currency: 'mxn',
             product_data: {
-              name: 'Oh My Wedding - Premium',
-              description: 'One-time payment for lifetime access to all premium features',
+              name: `Oh My Wedding - ${planLabel}`,
+              description: `One-time payment for lifetime access to all ${planLabel.toLowerCase()} features`,
             },
-            unit_amount: PRICING.premium.price_usd,
+            unit_amount: pricing.price_mxn,
           },
           quantity: 1,
         },
       ],
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/upgrade/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/upgrade?cancelled=true`,
+      success_url: `${baseUrl}/upgrade/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/upgrade?cancelled=true`,
       metadata: {
         user_id: user.id,
-        plan_type: 'premium',
+        plan_type: plan,
       },
     })
 
     return NextResponse.json({ url: session.url })
   } catch (error) {
+    console.error('Checkout session creation failed:', error)
     return NextResponse.json(
       { error: 'Failed to create checkout session' },
       { status: 500 }

@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { ViewSwitcher } from "@/components/ui/view-switcher"
 import {
   Users2,
   LayoutList,
@@ -17,7 +18,7 @@ import {
   UserCheck,
   Trash2,
 } from "lucide-react"
-import type { GuestGroup, Guest, ColumnVisibility } from "../types"
+import type { GuestGroup, Guest, ColumnVisibility, PartnerOption } from "../types"
 
 export interface InvitationsToolbarProps {
   // View mode
@@ -39,7 +40,7 @@ export interface InvitationsToolbarProps {
   // Filter data
   allTags: string[]
   guestGroups: GuestGroup[]
-  partnerOptions: string[]
+  partnerOptions: PartnerOption[]
   // Filter counts
   filteredGroupsCount: number
   totalGroupsCount: number
@@ -156,30 +157,14 @@ export function InvitationsToolbarContent({
       {/* Left: View Toggle and Filters */}
       <div className="flex items-center gap-3 flex-wrap">
         {/* View Mode Toggle */}
-        <div className="flex items-center border rounded-lg bg-muted/30 p-0.5">
-            <button
-              onClick={() => setViewMode('groups')}
-              className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-colors ${viewMode === 'groups'
-                  ? 'bg-background text-primary shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-                }`}
-              title="Groups table"
-            >
-              <Users2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Groups</span>
-            </button>
-            <button
-              onClick={() => setViewMode('flat')}
-              className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-colors ${viewMode === 'flat'
-                  ? 'bg-background text-primary shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-                }`}
-              title="Flat guest list"
-            >
-              <LayoutList className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Guests</span>
-            </button>
-        </div>
+        <ViewSwitcher
+          options={[
+            { value: 'groups', label: 'Groups', icon: Users2 },
+            { value: 'flat', label: 'Guests', icon: LayoutList },
+          ]}
+          value={viewMode}
+          onChange={(mode) => setViewMode(mode as 'flat' | 'groups')}
+        />
 
         {/* Inline Filters */}
         <div className="relative">
@@ -230,8 +215,8 @@ export function InvitationsToolbarContent({
             className="h-8 rounded-md border border-border bg-background px-2 text-xs"
           >
             <option value="all">All Invited By</option>
-            {partnerOptions.map(name => (
-              <option key={name} value={name}>{name}</option>
+            {partnerOptions.map(partner => (
+              <option key={partner.key} value={partner.key}>{partner.name}</option>
             ))}
           </select>
           <select

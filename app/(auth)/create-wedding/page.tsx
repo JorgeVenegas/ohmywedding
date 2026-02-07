@@ -1017,31 +1017,31 @@ export default function CreateWeddingPage() {
             {/* AI Design - Elegant gold-themed design */}
             <div className="relative mb-8">
               {/* Subtle golden glow */}
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-[#D4AF37]/20 via-[#C9A87C]/20 to-[#B8860B]/20 rounded-2xl blur-lg opacity-60" />
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-[#DDA46F]/20 via-[#c99560]/20 to-[#DDA46F]/20 rounded-2xl blur-lg opacity-60" />
               
-              <div className="relative bg-gradient-to-br from-stone-50 via-amber-50/30 to-stone-50 rounded-2xl p-6 border border-[#D4AF37]/30 overflow-hidden">
+              <div className="relative bg-gradient-to-br from-stone-50 via-amber-50/30 to-stone-50 rounded-2xl p-6 border border-[#DDA46F]/30 overflow-hidden">
                 {/* Subtle decorative elements */}
                 <div className="absolute top-0 right-0 w-32 h-32 opacity-5 pointer-events-none">
                   <svg viewBox="0 0 100 100" fill="none" className="w-full h-full">
-                    <path d="M50 0C50 27.6142 27.6142 50 0 50C27.6142 50 50 72.3858 50 100C50 72.3858 72.3858 50 100 50C72.3858 50 50 27.6142 50 0Z" fill="#B8860B"/>
+                    <path d="M50 0C50 27.6142 27.6142 50 0 50C27.6142 50 50 72.3858 50 100C50 72.3858 72.3858 50 100 50C72.3858 50 50 27.6142 50 0Z" fill="#DDA46F"/>
                   </svg>
                 </div>
                 <div className="absolute bottom-0 left-0 w-24 h-24 opacity-5 pointer-events-none">
                   <svg viewBox="0 0 100 100" fill="none" className="w-full h-full">
-                    <circle cx="50" cy="50" r="40" stroke="#D4AF37" strokeWidth="2"/>
-                    <circle cx="50" cy="50" r="25" stroke="#D4AF37" strokeWidth="1"/>
+                    <circle cx="50" cy="50" r="40" stroke="#DDA46F" strokeWidth="2"/>
+                    <circle cx="50" cy="50" r="25" stroke="#DDA46F" strokeWidth="1"/>
                   </svg>
                 </div>
                 
                 <div className="relative">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#B8860B] shadow-md">
+                    <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#DDA46F] to-[#c99560] shadow-md">
                       <Sparkles className="w-5 h-5 text-white" />
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-stone-800 flex items-center gap-2">
                         AI Design Assistant
-                        <span className="px-2 py-0.5 text-[10px] font-medium bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-white rounded-full">
+                        <span className="px-2 py-0.5 text-[10px] font-medium bg-gradient-to-r from-[#DDA46F] to-[#c99560] text-white rounded-full">
                           NEW
                         </span>
                       </h3>
@@ -1056,7 +1056,7 @@ export default function CreateWeddingPage() {
                       placeholder="Tell us about your wedding vision...
 
 Example: 'A romantic garden ceremony with soft blush colors and elegant serif fonts. We love vintage touches and want to share our love story timeline.'"
-                      className="min-h-28 bg-white/80 border-[#D4AF37]/30 text-stone-800 placeholder:text-stone-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 resize-none"
+                      className="min-h-28 bg-white/80 border-[#DDA46F]/30 text-stone-800 placeholder:text-stone-400 focus:border-[#DDA46F] focus:ring-[#DDA46F]/20 resize-none"
                     />
                     <div className="absolute bottom-3 right-3">
                       <Button
@@ -1064,7 +1064,7 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
                         size="sm"
                         onClick={handleAiGenerate}
                         disabled={!aiPrompt.trim() || isAiGenerating}
-                        className="bg-gradient-to-r from-[#D4AF37] to-[#B8860B] hover:from-[#C9A87C] hover:to-[#D4AF37] text-white border-0 shadow-md disabled:opacity-40 disabled:bg-stone-200 disabled:from-stone-200 disabled:to-stone-300 disabled:text-stone-400 disabled:shadow-none disabled:cursor-not-allowed disabled:hover:from-stone-200 disabled:hover:to-stone-300"
+                        className="bg-gradient-to-r from-[#DDA46F] to-[#c99560] hover:from-[#c99560] hover:to-[#DDA46F] text-white border-0 shadow-md disabled:opacity-40 disabled:bg-stone-200 disabled:from-stone-200 disabled:to-stone-300 disabled:text-stone-400 disabled:shadow-none disabled:cursor-not-allowed disabled:hover:from-stone-200 disabled:hover:to-stone-300"
                       >
                         {isAiGenerating ? (
                           <>
@@ -1093,18 +1093,18 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
                         key={item.label}
                         type="button"
                         onClick={() => setAiPrompt(item.prompt)}
-                        className="px-3 py-1.5 text-xs font-medium bg-white/80 text-stone-600 rounded-full border border-[#D4AF37]/30 hover:border-[#D4AF37] hover:bg-[#D4AF37]/10 transition-all flex items-center gap-1.5"
+                        className="px-3 py-1.5 text-xs font-medium bg-white/80 text-stone-600 rounded-full border border-[#DDA46F]/30 hover:border-[#DDA46F] hover:bg-[#DDA46F]/10 transition-all flex items-center gap-1.5"
                       >
-                        <item.icon className="w-3 h-3 text-[#D4AF37]" />
+                        <item.icon className="w-3 h-3 text-[#DDA46F]" />
                         {item.label}
                       </button>
                     ))}
                   </div>
 
                   {selectedTemplate && aiPrompt && !isAiGenerating && (
-                    <div className="mt-4 p-3 bg-white/60 rounded-lg border border-[#D4AF37]/30">
+                    <div className="mt-4 p-3 bg-white/60 rounded-lg border border-[#DDA46F]/30">
                       <p className="text-sm text-stone-700">
-                        <span className="text-[#B8860B] font-medium">Recommendation:</span> Based on your vision, we suggest <strong className="text-stone-800">{selectedTemplate.name}</strong>
+                        <span className="text-[#DDA46F] font-medium">Recommendation:</span> Based on your vision, we suggest <strong className="text-stone-800">{selectedTemplate.name}</strong>
                       </p>
                     </div>
                   )}

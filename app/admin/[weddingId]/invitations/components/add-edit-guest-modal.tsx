@@ -1,11 +1,13 @@
 "use client"
 
+import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { X, Tag, Plus, FileText } from "lucide-react"
 import { GuestGroup, PREDEFINED_TAGS, TAG_COLORS } from "../types"
+import type { PartnerOption } from "../types"
 
 interface GuestForm {
   name: string
@@ -38,10 +40,13 @@ interface AddEditGuestModalProps {
   setIsCreatingNewGroup: (value: boolean) => void
   newGroupNameForGuest: string
   setNewGroupNameForGuest: (value: string) => void
-  partnerOptions: string[]
+  partnerOptions: PartnerOption[]
+  allTags?: string[]
   onClose: () => void
   onSubmit: () => void
+  onSaveAndAddAnother?: () => void
   toggleGuestTag: (tag: string) => void
+  isSubmitting?: boolean
 }
 
 function getTagColor(tag: string): string {
@@ -61,11 +66,29 @@ export function AddEditGuestModal({
   newGroupNameForGuest,
   setNewGroupNameForGuest,
   partnerOptions,
+  allTags = [],
   onClose,
   onSubmit,
+  onSaveAndAddAnother,
   toggleGuestTag,
+  isSubmitting = false,
 }: AddEditGuestModalProps) {
+  const [customTagInput, setCustomTagInput] = useState('')
+
   if (!isOpen) return null
+
+  // Merge predefined + existing custom tags from the system
+  const customTags = allTags.filter(t => !PREDEFINED_TAGS.includes(t))
+  const displayTags = [...PREDEFINED_TAGS, ...customTags]
+
+  const handleAddCustomTag = () => {
+    const tag = customTagInput.trim().toLowerCase()
+    if (!tag) return
+    if (!guestForm.tags.includes(tag)) {
+      toggleGuestTag(tag)
+    }
+    setCustomTagInput('')
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -164,7 +187,7 @@ export function AddEditGuestModal({
               Tags
             </label>
             <div className="flex flex-wrap gap-2">
-              {PREDEFINED_TAGS.map((tag) => (
+              {displayTags.map((tag) => (
                 <button
                   key={tag}
                   type="button"
@@ -179,6 +202,30 @@ export function AddEditGuestModal({
                   {tag}
                 </button>
               ))}
+            </div>
+            <div className="flex gap-2 mt-2">
+              <Input
+                value={customTagInput}
+                onChange={(e) => setCustomTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleAddCustomTag()
+                  }
+                }}
+                placeholder="Add custom tag..."
+                className="h-8 text-xs"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 px-2"
+                onClick={handleAddCustomTag}
+                disabled={!customTagInput.trim()}
+              >
+                <Plus className="w-3 h-3" />
+              </Button>
             </div>
           </div>
 
@@ -231,25 +278,25 @@ export function AddEditGuestModal({
               Invited By
             </label>
             <div className="flex flex-wrap gap-2">
-              {partnerOptions.map((name) => (
+              {partnerOptions.map((partner) => (
                 <button
-                  key={name}
+                  key={partner.key}
                   type="button"
                   onClick={() =>
                     setGuestForm((prev) => ({
                       ...prev,
-                      invitedBy: prev.invitedBy.includes(name)
-                        ? prev.invitedBy.filter((n) => n !== name)
-                        : [...prev.invitedBy, name],
+                      invitedBy: prev.invitedBy.includes(partner.key)
+                        ? prev.invitedBy.filter((k) => k !== partner.key)
+                        : [...prev.invitedBy, partner.key],
                     }))
                   }
                   className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-                    guestForm.invitedBy.includes(name)
+                    guestForm.invitedBy.includes(partner.key)
                       ? "bg-indigo-100 text-indigo-700 border-indigo-200"
                       : "bg-muted text-muted-foreground border-border hover:border-primary/50"
                   }`}
                 >
-                  {name}
+                  {partner.name}
                 </button>
               ))}
             </div>
@@ -359,15 +406,25 @@ export function AddEditGuestModal({
         </div>
 
         <div className="flex gap-2 p-6 pt-4 border-t">
-          <Button variant="outline" className="flex-1" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
+          {!editingGuest && onSaveAndAddAnother && (
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={onSaveAndAddAnother}
+              disabled={!guestForm.name || isSubmitting}
+            >
+              {isSubmitting ? 'Saving...' : 'Save & Add Another'}
+            </Button>
+          )}
           <Button
             className="flex-1"
             onClick={onSubmit}
-            disabled={!guestForm.name}
+            disabled={!guestForm.name || isSubmitting}
           >
-            {editingGuest ? "Update" : "Add"} Guest
+            {isSubmitting ? 'Saving...' : `${editingGuest ? "Update" : "Add"} Guest`}
           </Button>
         </div>
       </Card>

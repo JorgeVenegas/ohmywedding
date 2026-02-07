@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createBrowserClient } from "@supabase/ssr"
 import { SubscriptionProvider } from "@/components/contexts/subscription-context"
+import { PlanIndicator } from "@/components/plan-indicator"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 
 interface AdminLayoutProps {
@@ -124,6 +125,7 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
   return (
     <SubscriptionProvider weddingId={weddingId}>
       {children}
+      <PlanIndicator />
     </SubscriptionProvider>
   )
 }

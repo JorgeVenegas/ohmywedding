@@ -2,6 +2,8 @@
  * Generate clean admin URLs that remove redundant weddingId on subdomains
  * On subdomains like jorgeandyuli.ohmy.local, the weddingId is implicit in the hostname
  * So /admin/jorgeandyuli/dashboard becomes /admin/dashboard
+ * 
+ * On main domain (both free and when on subdomain), include the full path
  */
 
 export function getCleanAdminUrl(weddingId: string, page: string = 'dashboard'): string {
@@ -10,14 +12,22 @@ export function getCleanAdminUrl(weddingId: string, page: string = 'dashboard'):
   }
 
   const hostname = window.location.hostname
-  const isSubdomain = hostname.includes('ohmy.local') || hostname.includes('ohmy.wedding')
+  
+  // Check if we're on a subdomain (premium/deluxe weddings)
+  // This means the subdomain IS the wedding ID
+  const isOnSubdomain = (hostname.includes('.ohmy.local') || hostname.includes('.ohmy.wedding')) && 
+                        !hostname.startsWith('www.')
+  
+  // Also check if the current subdomain matches the wedding we're trying to navigate to
+  const currentSubdomain = hostname.split('.')[0]
+  const isCurrentWeddingSubdomain = isOnSubdomain && currentSubdomain === weddingId
 
-  if (isSubdomain) {
-    // On subdomain, weddingId is implicit in hostname
+  // Only use the clean URL if we're on a subdomain AND it's the same wedding
+  if (isCurrentWeddingSubdomain) {
     return `/admin/${page}`
   }
 
-  // On main domain, need explicit weddingId
+  // Otherwise, always include the full weddingId (for free users or navigating to different weddings)
   return `/admin/${weddingId}/${page}`
 }
 

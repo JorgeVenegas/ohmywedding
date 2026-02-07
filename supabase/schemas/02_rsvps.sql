@@ -4,15 +4,14 @@
 create table "guest_groups" (
   "id" uuid primary key default gen_random_uuid(),
   "wedding_id" uuid not null references weddings(id) on delete cascade,
-  "name" text not null,
+  "name" text, -- Can be NULL for draft groups
   "phone_number" text,
-  "tags" text[] default '{}',
   "notes" text,
-  "invited_by" text[] default '{}',
   "invitation_sent" boolean default false,
   "invitation_sent_at" timestamp with time zone,
   "message" text,
   "rsvp_submitted_at" timestamp with time zone,
+  "is_draft" boolean default false, -- Indicates if this is a draft group (created but not finalized)
   "created_at" timestamp with time zone default now(),
   "updated_at" timestamp with time zone default now()
 );

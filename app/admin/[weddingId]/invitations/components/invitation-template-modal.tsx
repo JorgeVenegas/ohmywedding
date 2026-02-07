@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { X, Plus, Check, Mail } from "lucide-react"
+import { X, Plus, Check, Mail, Lock } from "lucide-react"
 import { getWeddingUrl, type WeddingPlan } from "@/lib/wedding-url"
 
 // Types
@@ -35,6 +35,7 @@ interface InvitationTemplateModalProps {
   onClose: () => void
   invitationTemplate: string
   onSave: (template: string) => Promise<void>
+  onUpgradeRequired?: () => void
   weddingDetails: WeddingDetails | null
   partnerNames: PartnerNames
   weddingId: string
@@ -108,6 +109,7 @@ export function InvitationTemplateModal({
   onClose,
   invitationTemplate: initialTemplate,
   onSave,
+  onUpgradeRequired,
   weddingDetails,
   partnerNames,
   weddingId,
@@ -434,6 +436,11 @@ export function InvitationTemplateModal({
 
   // Handle save
   const handleSave = async () => {
+    // Gate: free plan users cannot save - show upgrade modal
+    if (weddingPlan === 'free' && onUpgradeRequired) {
+      onUpgradeRequired()
+      return
+    }
     setSaving(true)
     try {
       await onSave(inviteTemplate)
@@ -679,8 +686,12 @@ export function InvitationTemplateModal({
             Cancel
           </Button>
           <Button className="flex-1" onClick={handleSave} disabled={saving}>
-            <Check className="w-4 h-4 mr-2" />
-            {saving ? 'Saving...' : 'Save Template'}
+            {weddingPlan === 'free' ? (
+              <Lock className="w-4 h-4 mr-2" />
+            ) : (
+              <Check className="w-4 h-4 mr-2" />
+            )}
+            {saving ? 'Saving...' : weddingPlan === 'free' ? 'Upgrade to Save' : 'Save Template'}
           </Button>
         </div>
       </Card>

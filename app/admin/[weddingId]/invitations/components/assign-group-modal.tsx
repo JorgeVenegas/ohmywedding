@@ -17,6 +17,7 @@ interface AssignGroupModalProps {
   newGroupName: string
   setNewGroupName: (name: string) => void
   onAssign: () => void
+  isSubmitting?: boolean
 }
 
 export function AssignGroupModal({
@@ -30,6 +31,7 @@ export function AssignGroupModal({
   newGroupName,
   setNewGroupName,
   onAssign,
+  isSubmitting = false,
 }: AssignGroupModalProps) {
   if (!isOpen) return null
 
@@ -106,16 +108,17 @@ export function AssignGroupModal({
               variant="outline"
               className="flex-1"
               onClick={handleClose}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button
               className="flex-1"
               onClick={onAssign}
-              disabled={assignToGroupId === 'new' && !newGroupName.trim()}
+              disabled={(assignToGroupId === 'new' && !newGroupName.trim()) || isSubmitting}
             >
               <FolderPlus className="w-4 h-4 mr-2" />
-              Assign to Group
+              {isSubmitting ? 'Assigning...' : 'Assign to Group'}
             </Button>
           </div>
         </div>

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { PremiumUpgradePrompt } from "@/components/ui/premium-gate"
+import { UpgradeModal, type UpgradeReason } from "@/components/ui/upgrade-modal"
 import { useSubscriptionContext } from "@/components/contexts/subscription-context"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { getWeddingUrl, type WeddingPlan } from "@/lib/wedding-url"
@@ -35,7 +36,11 @@ import {
   GroupTravelForm,
   TAG_COLORS,
   PREDEFINED_TAGS,
+  resolveInvitedBy,
+  nameToInvitedByKey,
+  normalizeInvitedBy,
 } from "./types"
+import type { PartnerOption } from "./types"
 import {
   Tooltip,
   TooltipContent,
@@ -43,6 +48,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Header } from "@/components/header"
+import { ViewSwitcher } from "@/components/ui/view-switcher"
 import {
   Users,
   Users2,
@@ -275,27 +281,50 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const [csvImportError, setCsvImportError] = useState<string | null>(null)
   const [csvImporting, setCsvImporting] = useState(false)
 
+  // Loading states for modals to prevent double submissions
+  const [isSubmittingGuest, setIsSubmittingGuest] = useState(false)
+  const [isSubmittingGroup, setIsSubmittingGroup] = useState(false)
+  const [isSubmittingBulkInvitedBy, setIsSubmittingBulkInvitedBy] = useState(false)
+  const [isSubmittingAssign, setIsSubmittingAssign] = useState(false)
+  const [isSubmittingTravel, setIsSubmittingTravel] = useState(false)
+
+  // Upgrade modal state
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [upgradeReason, setUpgradeReason] = useState<UpgradeReason>('guest_limit')
+
+  // Quota tracking
+  const [guestLimit, setGuestLimit] = useState<number | null>(null)
+  const [groupLimit, setGroupLimit] = useState<number | null>(null)
+
   // Database fields for CSV mapping - Guests mode
-  const GUEST_DB_FIELDS = [
-    { key: 'name', label: 'Guest Name', required: true },
-    { key: 'groupName', label: 'Group Name', required: true },
-    { key: 'phoneNumber', label: 'Phone Number', required: false },
-    { key: 'tags', label: 'Tags (comma-separated)', required: false },
-    { key: 'confirmationStatus', label: 'Status (pending/confirmed/declined)', required: false },
-    { key: 'dietaryRestrictions', label: 'Dietary Restrictions', required: false },
-    { key: 'invitedBy', label: 'Invited By (comma-separated)', required: false },
-    { key: 'notes', label: 'Notes', required: false },
-  ]
+  const GUEST_DB_FIELDS = useMemo(() => {
+    const p1 = partnerNames.partner1 || 'Partner 1'
+    const p2 = partnerNames.partner2 || 'Partner 2'
+    return [
+      { key: 'name', label: 'Guest Name', required: true },
+      { key: 'groupName', label: 'Group Name', required: true },
+      { key: 'phoneNumber', label: 'Phone Number', required: false },
+      { key: 'tags', label: 'Tags (comma-separated)', required: false },
+      { key: 'confirmationStatus', label: 'Status (pending/confirmed/declined)', required: false },
+      { key: 'dietaryRestrictions', label: 'Dietary Restrictions', required: false },
+      { key: 'invitedBy', label: `Invited By (${p1}, ${p2})`, required: false },
+      { key: 'notes', label: 'Notes', required: false },
+    ]
+  }, [partnerNames])
 
   // Database fields for CSV mapping - Groups mode
-  const GROUP_DB_FIELDS = [
-    { key: 'groupName', label: 'Group Name', required: true },
-    { key: 'guestCount', label: 'Number of Guests', required: true },
-    { key: 'phoneNumber', label: 'Phone Number', required: false },
-    { key: 'tags', label: 'Tags (comma-separated)', required: false },
-    { key: 'invitedBy', label: 'Invited By (comma-separated)', required: false },
-    { key: 'notes', label: 'Notes', required: false },
-  ]
+  const GROUP_DB_FIELDS = useMemo(() => {
+    const p1 = partnerNames.partner1 || 'Partner 1'
+    const p2 = partnerNames.partner2 || 'Partner 2'
+    return [
+      { key: 'groupName', label: 'Group Name', required: true },
+      { key: 'guestCount', label: 'Number of Guests', required: true },
+      { key: 'phoneNumber', label: 'Phone Number', required: false },
+      { key: 'tags', label: 'Tags (comma-separated)', required: false },
+      { key: 'invitedBy', label: `Invited By (${p1}, ${p2})`, required: false },
+      { key: 'notes', label: 'Notes', required: false },
+    ]
+  }, [partnerNames])
 
   // Get current DB fields based on import mode
   const DB_FIELDS = csvImportMode === 'groups' ? GROUP_DB_FIELDS : GUEST_DB_FIELDS
@@ -304,9 +333,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const [groupForm, setGroupForm] = useState({
     name: "",
     phoneNumber: "",
-    tags: [] as string[],
     notes: "",
-    invitedBy: [] as string[],
   })
 
   // State for guests to add within the group modal
@@ -320,6 +347,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     notes: string
   }>>([])
 
+  // State for the draft group ID when creating a new group with guests
+  const [draftGroupId, setDraftGroupId] = useState<string | null>(null)
   const [tempGuestForm, setTempGuestForm] = useState({
     name: "",
     phoneNumber: "",
@@ -349,6 +378,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   // State for creating a new group from guest form
   const [newGroupNameForGuest, setNewGroupNameForGuest] = useState("")
   const [isCreatingNewGroup, setIsCreatingNewGroup] = useState(false)
+
+  // Loading state for adding guest to modal (not for API calls, just UI state)
+  const [isAddingGuestToModal, setIsAddingGuestToModal] = useState(false)
 
   // State for group travel dialog
   const [showGroupTravelDialog, setShowGroupTravelDialog] = useState(false)
@@ -518,9 +550,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   const fetchWeddingData = async () => {
     try {
-      const [detailsRes, featuresRes] = await Promise.all([
+      const [detailsRes, featuresRes, limitsRes] = await Promise.all([
         fetch(`/api/weddings/${encodeURIComponent(weddingId)}/details`),
         fetch(`/api/weddings/${encodeURIComponent(weddingId)}/features`),
+        fetch(`/api/weddings/${encodeURIComponent(weddingId)}/limits`),
       ])
       const result = await detailsRes.json()
       if (result.details) {
@@ -541,19 +574,26 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           setWeddingPlan(featuresData.plan as WeddingPlan)
         }
       }
+      if (limitsRes.ok) {
+        const limitsData = await limitsRes.json()
+        setGuestLimit(limitsData.guestLimit)
+        setGroupLimit(limitsData.groupLimit)
+      }
     } catch (error) {
     }
   }
 
+  // Helper to show upgrade modal
+  const showUpgrade = (reason: UpgradeReason) => {
+    setUpgradeReason(reason)
+    setShowUpgradeModal(true)
+  }
+
   // Get partner options for display - use fetched names or fallback to generic labels
-  const partnerOptions = useMemo(() => {
-    const options: string[] = []
-    if (partnerNames.partner1) options.push(partnerNames.partner1)
-    if (partnerNames.partner2) options.push(partnerNames.partner2)
-    // If no partner names are set, provide fallback options
-    if (options.length === 0) {
-      options.push('Partner 1', 'Partner 2')
-    }
+  const partnerOptions: PartnerOption[] = useMemo(() => {
+    const options: PartnerOption[] = []
+    options.push({ key: 'partner1', name: partnerNames.partner1 || 'Partner 1' })
+    options.push({ key: 'partner2', name: partnerNames.partner2 || 'Partner 2' })
     return options
   }, [partnerNames])
 
@@ -596,7 +636,44 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   }
 
   const handleAddGroup = async () => {
+    if (isSubmittingGroup) return
+    setIsSubmittingGroup(true)
+    
     try {
+      // If we have a draft group (guests were added), update it to finalize
+      if (draftGroupId) {
+        const response = await fetch("/api/guest-groups", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: draftGroupId,
+            name: groupForm.name,
+            phoneNumber: groupForm.phoneNumber || null,
+            notes: groupForm.notes || null,
+          }),
+        })
+
+        if (!response.ok) {
+          const result = await response.json().catch(() => ({}))
+          setNotification({ isOpen: true, type: 'error', title: 'Error', message: `Error finalizing group: ${result.error || 'Please try again.'}` })
+          return
+        }
+
+        await Promise.all([fetchGuestGroups(), fetchUngroupedGuests()])
+        setShowAddGroupModal(false)
+        resetGroupForm()
+        setDraftGroupId(null)
+        setGuestsInGroupModal([])
+        setNotification({
+          isOpen: true,
+          type: 'success',
+          title: 'Success',
+          message: `Group finalized with ${guestsInGroupModal.length} guest${guestsInGroupModal.length !== 1 ? 's' : ''}!`
+        })
+        return
+      }
+
+      // If no draft group (no guests were added), create a regular group
       const response = await fetch("/api/guest-groups", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -604,62 +681,42 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           weddingId: weddingId,
           name: groupForm.name,
           phoneNumber: groupForm.phoneNumber || null,
-          tags: groupForm.tags,
           notes: groupForm.notes || null,
-          invitedBy: groupForm.invitedBy,
         }),
       })
 
       const result = await response.json()
 
       if (!response.ok) {
+        // Check if it's a quota error
+        if (result.code === 'GROUP_LIMIT_EXCEEDED') {
+          setShowAddGroupModal(false)
+          showUpgrade('group_limit')
+          return
+        }
         setNotification({ isOpen: true, type: 'error', title: 'Error', message: `Error adding group: ${result.error}` })
         return
       }
 
-      // If there are guests to add, create them for this group
-      if (guestsInGroupModal.length > 0 && result.data?.id) {
-        const groupId = result.data.id
-
-        for (const guest of guestsInGroupModal) {
-          try {
-            await fetch("/api/guests", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                weddingId: weddingId,
-                groupId: groupId,
-                name: guest.name,
-                phoneNumber: guest.phoneNumber || null,
-                tags: guest.tags,
-                confirmationStatus: guest.confirmationStatus,
-                dietaryRestrictions: guest.dietaryRestrictions || null,
-                notes: guest.notes || null,
-              }),
-            })
-          } catch (error) {
-          }
-        }
-      }
-
-      await fetchGuestGroups()
+      await Promise.all([fetchGuestGroups(), fetchUngroupedGuests()])
       setShowAddGroupModal(false)
       resetGroupForm()
       setNotification({
         isOpen: true,
         type: 'success',
         title: 'Success',
-        message: guestsInGroupModal.length > 0
-          ? `Group and ${guestsInGroupModal.length} guest${guestsInGroupModal.length > 1 ? 's' : ''} added successfully!`
-          : 'Group added successfully!'
+        message: 'Group created successfully!'
       })
     } catch (error) {
       setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error adding group. Please try again.' })
+    } finally {
+      setIsSubmittingGroup(false)
     }
   }
 
   const handleUpdateGroup = async () => {
-    if (!editingGroup) return
+    if (!editingGroup || isSubmittingGroup) return
+    setIsSubmittingGroup(true)
 
     try {
       const response = await fetch("/api/guest-groups", {
@@ -669,18 +726,33 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           id: editingGroup.id,
           name: groupForm.name,
           phoneNumber: groupForm.phoneNumber || null,
-          tags: groupForm.tags,
           notes: groupForm.notes || null,
-          invitedBy: groupForm.invitedBy,
         }),
       })
 
       if (response.ok) {
-        await fetchGuestGroups()
+        await Promise.all([fetchGuestGroups(), fetchUngroupedGuests()])
         setEditingGroup(null)
         resetGroupForm()
+        setNotification({
+          isOpen: true,
+          type: 'success',
+          title: 'Success',
+          message: 'Group updated successfully!'
+        })
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+        setNotification({ 
+          isOpen: true, 
+          type: 'error', 
+          title: 'Error', 
+          message: errorData.error || 'Failed to update group. Please try again.' 
+        })
       }
     } catch (error) {
+      setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error updating group. Please try again.' })
+    } finally {
+      setIsSubmittingGroup(false)
     }
   }
 
@@ -709,7 +781,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     })
   }
 
-  const handleAddGuest = async () => {
+  const handleAddGuest = async (keepOpen = false) => {
+    if (isSubmittingGuest) return
+    setIsSubmittingGuest(true)
+    
     try {
       let groupIdToUse = selectedGroupId
 
@@ -721,8 +796,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           body: JSON.stringify({
             weddingId: weddingId,
             name: newGroupNameForGuest.trim(),
-            tags: [],
-            invitedBy: [],
           }),
         })
 
@@ -730,7 +803,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           const { data: newGroup } = await groupResponse.json()
           groupIdToUse = newGroup.id
         } else {
-          setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Failed to create group. Please try again.' })
+          const errorData = await groupResponse.json().catch(() => ({}))
+          setNotification({ 
+            isOpen: true, 
+            type: 'error', 
+            title: 'Error', 
+            message: errorData.error || 'Failed to create group. Please try again.' 
+          })
           return
         }
       }
@@ -743,17 +822,25 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           body: JSON.stringify({
             weddingId: weddingId,
             name: guestForm.name.trim() || "New Group",
-            tags: [],
-            invitedBy: guestForm.invitedBy,
           }),
         })
 
         if (groupResponse.ok) {
           const { data: newGroup } = await groupResponse.json()
           groupIdToUse = newGroup.id
+        } else {
+          const errorData = await groupResponse.json().catch(() => ({}))
+          setNotification({ 
+            isOpen: true, 
+            type: 'error', 
+            title: 'Error', 
+            message: errorData.error || 'Failed to create group. Please try again.' 
+          })
+          return
         }
       }
 
+      // Now create the guest with the group ID
       const response = await fetch("/api/guests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -774,20 +861,70 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       })
 
       if (response.ok) {
-        await fetchGuestGroups()
-        await fetchUngroupedGuests()
-        setShowAddGuestModal(false)
-        setSelectedGroupId(null)
-        setIsCreatingNewGroup(false)
-        setNewGroupNameForGuest("")
-        resetGuestForm()
+        // Refresh the tables to show new data
+        await Promise.all([fetchGuestGroups(), fetchUngroupedGuests()])
+        
+        if (keepOpen) {
+          // Reset only the form, keep modal open and preserve group selection
+          setGuestForm({
+            name: "",
+            phoneNumber: "",
+            tags: [],
+            confirmationStatus: "pending",
+            dietaryRestrictions: "",
+            notes: "",
+            invitedBy: [],
+            isTraveling: false,
+            travelingFrom: "",
+            travelArrangement: null,
+            ticketAttachmentUrl: null,
+            noTicketReason: "",
+          })
+          // Keep selectedGroupId so subsequent guests go to the same group
+          if (groupIdToUse) {
+            setSelectedGroupId(groupIdToUse)
+            setIsCreatingNewGroup(false)
+            setNewGroupNameForGuest("")
+          }
+        } else {
+          setShowAddGuestModal(false)
+          setSelectedGroupId(null)
+          setIsCreatingNewGroup(false)
+          setNewGroupNameForGuest("")
+          resetGuestForm()
+        }
+        setNotification({
+          isOpen: true,
+          type: 'success',
+          title: 'Success',
+          message: keepOpen ? 'Guest added! You can add another.' : 'Guest created successfully!'
+        })
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+        // Check if it's a quota error
+        if (errorData.code === 'GUEST_LIMIT_EXCEEDED') {
+          setShowAddGuestModal(false)
+          showUpgrade('guest_limit')
+          return
+        }
+        setNotification({ 
+          isOpen: true, 
+          type: 'error', 
+          title: 'Error', 
+          message: errorData.error || 'Failed to create guest. Please try again.' 
+        })
       }
     } catch (error) {
+      console.error('Error creating guest:', error)
+      setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error creating guest. Please try again.' })
+    } finally {
+      setIsSubmittingGuest(false)
     }
   }
 
   const handleUpdateGuest = async () => {
-    if (!editingGuest) return
+    if (!editingGuest || isSubmittingGuest) return
+    setIsSubmittingGuest(true)
 
     try {
       const response = await fetch("/api/guests", {
@@ -812,13 +949,30 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       })
 
       if (response.ok) {
-        await fetchGuestGroups()
-        await fetchUngroupedGuests()
+        await Promise.all([fetchGuestGroups(), fetchUngroupedGuests()])
         setEditingGuest(null)
         setSelectedGroupId(null)
         resetGuestForm()
+        setNotification({
+          isOpen: true,
+          type: 'success',
+          title: 'Success',
+          message: 'Guest updated successfully!'
+        })
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+        setNotification({ 
+          isOpen: true, 
+          type: 'error', 
+          title: 'Error', 
+          message: errorData.error || 'Failed to update guest. Please try again.' 
+        })
       }
     } catch (error) {
+      console.error('Error updating guest:', error)
+      setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error updating guest. Please try again.' })
+    } finally {
+      setIsSubmittingGuest(false)
     }
   }
 
@@ -876,8 +1030,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   }
 
   const resetGroupForm = () => {
-    setGroupForm({ name: "", phoneNumber: "", tags: [], notes: "", invitedBy: [] })
+    setGroupForm({ name: "", phoneNumber: "", notes: "" })
     setGuestsInGroupModal([])
+    setDraftGroupId(null)
     setTempGuestForm({
       name: "",
       phoneNumber: "",
@@ -910,11 +1065,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   const openEditGroup = (group: GuestGroup) => {
     setGroupForm({
-      name: group.name,
+      name: group.name || "",
       phoneNumber: group.phone_number || "",
-      tags: group.tags || [],
       notes: group.notes || "",
-      invitedBy: group.invited_by || [],
     })
     setEditingGroup(group)
   }
@@ -927,7 +1080,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       confirmationStatus: guest.confirmation_status,
       dietaryRestrictions: guest.dietary_restrictions || "",
       notes: guest.notes || "",
-      invitedBy: guest.invited_by || [],
+      invitedBy: normalizeInvitedBy(guest.invited_by, partnerNames),
       isTraveling: guest.is_traveling || false,
       travelingFrom: guest.traveling_from || "",
       travelArrangement: guest.travel_arrangement || null,
@@ -941,15 +1094,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const openAddGuestToGroup = (groupId: string) => {
     setSelectedGroupId(groupId)
     setShowAddGuestModal(true)
-  }
-
-  const toggleTag = (tag: string) => {
-    setGroupForm(prev => ({
-      ...prev,
-      tags: prev.tags.includes(tag)
-        ? prev.tags.filter(t => t !== tag)
-        : [...prev.tags, tag],
-    }))
   }
 
   const toggleGuestTag = (tag: string) => {
@@ -971,24 +1115,87 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     }))
   }
 
-  const addGuestToGroupModal = () => {
-    if (!tempGuestForm.name.trim()) return
+  const addGuestToGroupModal = async () => {
+    if (!tempGuestForm.name.trim() || isAddingGuestToModal) return
+    setIsAddingGuestToModal(true)
 
-    const newGuest = {
-      id: Date.now().toString(),
-      ...tempGuestForm,
+    try {
+      // Use a local variable to track the group ID to avoid stale state reads
+      let groupId = editingGroup?.id || draftGroupId
+
+      // If this is the first guest and no draft group exists, create one
+      if (!groupId) {
+        const response = await fetch("/api/guest-groups", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            weddingId: weddingId,
+            name: "",
+            isDraft: true,
+          }),
+        })
+
+        if (response.ok) {
+          const { data } = await response.json()
+          groupId = data.id
+          setDraftGroupId(data.id)
+        } else {
+          setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Failed to create draft group. Please try again.' })
+          return
+        }
+      }
+
+      // Create the guest linked to the group
+      const guestResponse = await fetch("/api/guests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          weddingId: weddingId,
+          guestGroupId: groupId,
+          name: tempGuestForm.name.trim(),
+          phoneNumber: tempGuestForm.phoneNumber || null,
+          tags: tempGuestForm.tags,
+          confirmationStatus: tempGuestForm.confirmationStatus,
+          dietaryRestrictions: tempGuestForm.dietaryRestrictions || null,
+          notes: tempGuestForm.notes || null,
+        }),
+      })
+
+      if (!guestResponse.ok) {
+        const errorData = await guestResponse.json().catch(() => ({}))
+        setNotification({ isOpen: true, type: 'error', title: 'Error', message: errorData.error || 'Failed to create guest. Please try again.' })
+        return
+      }
+
+      setNotification({ 
+        isOpen: true, 
+        type: 'success', 
+        title: 'Success', 
+        message: `Guest "${tempGuestForm.name.trim()}" added!` 
+      })
+
+      // Add to local state for display in the modal
+      const newGuest = {
+        id: Date.now().toString(),
+        ...tempGuestForm,
+      }
+
+      setGuestsInGroupModal(prev => [...prev, newGuest])
+      setTempGuestForm({
+        name: "",
+        phoneNumber: "",
+        tags: [],
+        confirmationStatus: "pending",
+        dietaryRestrictions: "",
+        notes: "",
+      })
+      setIsAddingGuestInModal(false)
+    } catch (error) {
+      console.error('Error adding guest to group modal:', error)
+      setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error adding guest. Please try again.' })
+    } finally {
+      setIsAddingGuestToModal(false)
     }
-
-    setGuestsInGroupModal(prev => [...prev, newGuest])
-    setTempGuestForm({
-      name: "",
-      phoneNumber: "",
-      tags: [],
-      confirmationStatus: "pending",
-      dietaryRestrictions: "",
-      notes: "",
-    })
-    setIsAddingGuestInModal(false)
   }
 
   const removeGuestFromGroupModal = (guestId: string) => {
@@ -1052,7 +1259,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   }
 
   const handleAssignToGroup = async () => {
-    if (selectedGuestIds.size === 0) return
+    if (selectedGuestIds.size === 0 || isSubmittingAssign) return
+    setIsSubmittingAssign(true)
 
     try {
       let targetGroupId = assignToGroupId
@@ -1113,6 +1321,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       setNotification({ isOpen: true, type: 'success', title: 'Success', message: 'Guests assigned to group successfully!' })
     } catch (error) {
       setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error assigning guests. Please try again.' })
+    } finally {
+      setIsSubmittingAssign(false)
     }
   }
 
@@ -1193,7 +1403,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   // Bulk invited by update handler
   const handleBulkInvitedByUpdate = async () => {
-    if (selectedGuestIds.size === 0) return
+    if (selectedGuestIds.size === 0 || isSubmittingBulkInvitedBy) return
+    setIsSubmittingBulkInvitedBy(true)
 
     try {
       const updatePromises = Array.from(selectedGuestIds).map(async (guestId) => {
@@ -1236,6 +1447,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       })
     } catch (error) {
       setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error updating guests. Please try again.' })
+    } finally {
+      setIsSubmittingBulkInvitedBy(false)
     }
   }
 
@@ -1278,7 +1491,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const openGroupTravelDialog = (group: GuestGroup) => {
     setGroupTravelForm({
       groupId: group.id,
-      groupName: group.name,
+      groupName: group.name || "(Unnamed Group)",
       isTraveling: false,
       travelingFrom: "",
       travelArrangement: null,
@@ -1288,6 +1501,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   }
 
   const handleSetGroupTravel = async () => {
+    if (isSubmittingTravel) return
+    setIsSubmittingTravel(true)
+
     try {
       // Check if it's a bulk action on selected guests or a group action
       const isSelectedGuestsBulkAction = groupTravelForm.groupId === ''
@@ -1321,11 +1537,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         updates.noTicketReason = groupTravelForm.travelArrangement === 'no_ticket_needed'
           ? groupTravelForm.noTicketReason
           : null
+        // DO NOT include ticketAttachmentUrl here - preserve existing tickets
       } else {
         updates.travelingFrom = null
         updates.travelArrangement = null
         updates.noTicketReason = null
-        updates.ticketAttachmentUrl = null
+        // DO NOT nullify ticketAttachmentUrl when setting traveling to false
+        // Users might have uploaded tickets already
       }
 
       // Update all guests
@@ -1372,6 +1590,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         title: 'Error',
         message: 'Failed to set travel info'
       })
+    } finally {
+      setIsSubmittingTravel(false)
     }
   }
 
@@ -1495,11 +1715,17 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   // Send invite placeholder functions (functionality to be added later)
   const handleSendGroupInvite = async (group: GuestGroup) => {
+    // Check premium access first
+    if (!canAccessFeature('invitations_panel_enabled')) {
+      showUpgrade('send_invites')
+      return
+    }
+
     // Generate personalized message using template
     const personalizedMessage = replaceTemplateVariables(
       inviteTemplate,
       {
-        groupName: group.name,
+        groupName: group.name || "(Unnamed Group)",
         groupId: group.id
       },
       weddingDetails
@@ -1556,6 +1782,12 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   }
 
   const handleSendGuestInvite = async (guest: Guest) => {
+    // Check premium access first
+    if (!canAccessFeature('invitations_panel_enabled')) {
+      showUpgrade('send_invites')
+      return
+    }
+
     // Find the group for this guest to generate proper invitation URL
     const guestGroup = guestGroups.find(g => g.id === guest.guest_group_id)
 
@@ -1564,7 +1796,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       inviteTemplate,
       {
         guestName: guest.name,
-        groupName: guestGroup?.name,
+        groupName: guestGroup?.name || "(Unnamed Group)",
         groupId: guestGroup?.id
       },
       weddingDetails
@@ -1808,6 +2040,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     try {
       if (csvImportMode === 'groups') {
         // Groups mode: Create groups with auto-generated guests
+        const invalidInvitedByValues: string[] = []
         const groupsData = csvData.map(row => {
           const group: Record<string, string | string[] | number> = {}
 
@@ -1816,8 +2049,21 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
             if (dbField === 'guestCount') {
               group[dbField] = parseInt(value) || 1
-            } else if (dbField === 'tags' || dbField === 'invitedBy') {
-              group[dbField] = value.split(',').map(t => t.trim()).filter(t => t)
+            } else if (dbField === 'invitedBy') {
+              // Validate and map invited_by to partner references
+              const rawNames = value.split(',').map(t => t.trim()).filter(t => t)
+              const mapped: string[] = []
+              for (const name of rawNames) {
+                const key = nameToInvitedByKey(name, partnerNames)
+                if (key) {
+                  if (!mapped.includes(key)) mapped.push(key)
+                } else {
+                  invalidInvitedByValues.push(name)
+                }
+              }
+              group[dbField] = mapped
+            } else if (dbField === 'tags') {
+              group[dbField] = value.split(',').map(t => t.trim().toLowerCase()).filter(t => t)
             } else {
               group[dbField] = value
             }
@@ -1825,6 +2071,16 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
           return group
         }).filter(group => group.groupName && (group.groupName as string).trim())
+
+        if (invalidInvitedByValues.length > 0) {
+          const unique = [...new Set(invalidInvitedByValues)]
+          const partnerNamesList = partnerOptions.map(p => p.name).join(', ')
+          setCsvImportError(
+            `Invalid "Invited By" values: ${unique.join(', ')}. Only partner names are allowed: ${partnerNamesList}.`
+          )
+          setCsvImporting(false)
+          return
+        }
 
         if (groupsData.length === 0) {
           setCsvImportError("No valid groups found in CSV. Make sure the Group Name column has values.")
@@ -1845,6 +2101,19 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         const result = await response.json()
 
         if (!response.ok) {
+          // Check for quota errors
+          if (result.code === 'GROUP_LIMIT_EXCEEDED') {
+            setShowCsvImportModal(false)
+            showUpgrade('group_limit')
+            setCsvImporting(false)
+            return
+          }
+          if (result.code === 'GUEST_LIMIT_EXCEEDED') {
+            setShowCsvImportModal(false)
+            showUpgrade('guest_limit')
+            setCsvImporting(false)
+            return
+          }
           setCsvImportError(result.error || "Failed to import groups")
           setCsvImporting(false)
           return
@@ -1861,14 +2130,28 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         setNotification({ isOpen: true, type: 'success', title: 'Import Complete', message: `Successfully imported ${result.groupCount} groups with ${result.guestCount} guests!` })
       } else {
         // Guests mode: Create guests and auto-create groups as needed
+        const invalidInvitedByValues: string[] = []
         const guestsData = csvData.map(row => {
           const guest: Record<string, string | string[]> = {}
 
           Object.entries(columnMapping).forEach(([csvIndex, dbField]) => {
             const value = row[parseInt(csvIndex)] || ''
 
-            if (dbField === 'tags' || dbField === 'invitedBy') {
-              guest[dbField] = value.split(',').map(t => t.trim()).filter(t => t)
+            if (dbField === 'invitedBy') {
+              // Validate and map invited_by to partner references
+              const rawNames = value.split(',').map(t => t.trim()).filter(t => t)
+              const mapped: string[] = []
+              for (const name of rawNames) {
+                const key = nameToInvitedByKey(name, partnerNames)
+                if (key) {
+                  if (!mapped.includes(key)) mapped.push(key)
+                } else {
+                  invalidInvitedByValues.push(name)
+                }
+              }
+              guest[dbField] = mapped
+            } else if (dbField === 'tags') {
+              guest[dbField] = value.split(',').map(t => t.trim().toLowerCase()).filter(t => t)
             } else if (dbField === 'confirmationStatus') {
               const statusLower = value.toLowerCase().trim()
               if (statusLower === 'confirmed' || statusLower === 'yes' || statusLower === 'attending') {
@@ -1885,6 +2168,16 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
           return guest
         }).filter(guest => guest.name && (guest.name as string).trim() && guest.groupName && (guest.groupName as string).trim())
+
+        if (invalidInvitedByValues.length > 0) {
+          const unique = [...new Set(invalidInvitedByValues)]
+          const partnerNamesList = partnerOptions.map(p => p.name).join(', ')
+          setCsvImportError(
+            `Invalid "Invited By" values: ${unique.join(', ')}. Only partner names are allowed: ${partnerNamesList}.`
+          )
+          setCsvImporting(false)
+          return
+        }
 
         if (guestsData.length === 0) {
           setCsvImportError("No valid guests found in CSV. Make sure both Name and Group Name columns have values.")
@@ -1905,6 +2198,19 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         const result = await response.json()
 
         if (!response.ok) {
+          // Check for quota errors
+          if (result.code === 'GUEST_LIMIT_EXCEEDED') {
+            setShowCsvImportModal(false)
+            showUpgrade('guest_limit')
+            setCsvImporting(false)
+            return
+          }
+          if (result.code === 'GROUP_LIMIT_EXCEEDED') {
+            setShowCsvImportModal(false)
+            showUpgrade('group_limit')
+            setCsvImporting(false)
+            return
+          }
           setCsvImportError(result.error || "Failed to import guests")
           setCsvImporting(false)
           return
@@ -1950,15 +2256,15 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     }> = []
 
     // Add guests from groups
-    guestGroups.forEach(group => {
+    normalizedGroups.forEach(group => {
       group.guests.forEach(guest => {
         allGuestsForExport.push({
-          groupName: group.name,
+          groupName: group.name || "(Unnamed Group)",
           name: guest.name,
           phone: guest.phone_number || '',
           status: guest.confirmation_status,
           tags: (guest.tags || []).join(', '),
-          invitedBy: (guest.invited_by || []).join(', '),
+          invitedBy: (guest.invited_by || []).map(ref => resolveInvitedBy(ref, partnerNames)).join(', '),
           dietaryRestrictions: guest.dietary_restrictions || '',
           notes: guest.notes || '',
         })
@@ -1966,14 +2272,14 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     })
 
     // Add ungrouped guests (legacy)
-    ungroupedGuests.forEach(guest => {
+    normalizedUngroupedGuests.forEach(guest => {
       allGuestsForExport.push({
         groupName: '(No Group)',
         name: guest.name,
         phone: guest.phone_number || '',
         status: guest.confirmation_status,
         tags: (guest.tags || []).join(', '),
-        invitedBy: (guest.invited_by || []).join(', '),
+        invitedBy: (guest.invited_by || []).map(ref => resolveInvitedBy(ref, partnerNames)).join(', '),
         dietaryRestrictions: guest.dietary_restrictions || '',
         notes: guest.notes || '',
       })
@@ -2045,72 +2351,64 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     return TAG_COLORS[tag.toLowerCase()] || TAG_COLORS.default
   }
 
+  // ── Normalize invited_by across all guest data ──────────────────────
+  // Converts any legacy raw name strings (e.g. "Jorge") to references
+  // ("partner1"). Runs reactively when partnerNames or guest data change.
+  const normalizedGroups = useMemo(() => {
+    if (!partnerNames.partner1 && !partnerNames.partner2) return guestGroups
+    return guestGroups.map(group => ({
+      ...group,
+      guests: group.guests.map(guest => ({
+        ...guest,
+        invited_by: normalizeInvitedBy(guest.invited_by, partnerNames),
+      })),
+    }))
+  }, [guestGroups, partnerNames])
+
+  const normalizedUngroupedGuests = useMemo(() => {
+    if (!partnerNames.partner1 && !partnerNames.partner2) return ungroupedGuests
+    return ungroupedGuests.map(guest => ({
+      ...guest,
+      invited_by: normalizeInvitedBy(guest.invited_by, partnerNames),
+    }))
+  }, [ungroupedGuests, partnerNames])
+
   // Calculate stats (including ungrouped guests) - TOTAL counts (unfiltered)
-  const groupedGuestsCount = guestGroups.reduce((acc, group) => acc + group.guests.length, 0)
-  const totalGuests = groupedGuestsCount + ungroupedGuests.length
-  const totalConfirmedGuests = guestGroups.reduce(
+  const groupedGuestsCount = normalizedGroups.reduce((acc, group) => acc + group.guests.length, 0)
+  const totalGuests = groupedGuestsCount + normalizedUngroupedGuests.length
+  const totalConfirmedGuests = normalizedGroups.reduce(
     (acc, group) => acc + group.guests.filter(g => g.confirmation_status === "confirmed").length,
     0
-  ) + ungroupedGuests.filter(g => g.confirmation_status === "confirmed").length
-  const totalDeclinedGuests = guestGroups.reduce(
+  ) + normalizedUngroupedGuests.filter(g => g.confirmation_status === "confirmed").length
+  const totalDeclinedGuests = normalizedGroups.reduce(
     (acc, group) => acc + group.guests.filter(g => g.confirmation_status === "declined").length,
     0
-  ) + ungroupedGuests.filter(g => g.confirmation_status === "declined").length
-  const totalPendingGuests = guestGroups.reduce(
+  ) + normalizedUngroupedGuests.filter(g => g.confirmation_status === "declined").length
+  const totalPendingGuests = normalizedGroups.reduce(
     (acc, group) => acc + group.guests.filter(g => g.confirmation_status === "pending").length,
     0
-  ) + ungroupedGuests.filter(g => g.confirmation_status === "pending").length
+  ) + normalizedUngroupedGuests.filter(g => g.confirmation_status === "pending").length
 
-  // Get all unique tags from groups AND individual guests
+  // Get all unique tags from individual guests (single source of truth)
   const allTags = useMemo(() => {
     const tags = new Set<string>()
-    guestGroups.forEach(group => {
-      group.tags?.forEach(tag => tags.add(tag))
-      // Also include tags from individual guests within groups
+    normalizedGroups.forEach(group => {
       group.guests?.forEach(guest => {
         guest.tags?.forEach(tag => tags.add(tag))
       })
     })
     // Include tags from ungrouped guests
-    ungroupedGuests.forEach(guest => {
+    normalizedUngroupedGuests.forEach(guest => {
       guest.tags?.forEach(tag => tags.add(tag))
     })
     return Array.from(tags)
-  }, [guestGroups, ungroupedGuests])
+  }, [normalizedGroups, normalizedUngroupedGuests])
 
   // Chart data: Status by Invited By
   const statusByInvitedByData = useMemo(() => {
     const dataMap: Record<string, { name: string; confirmed: number; pending: number; declined: number }> = {}
 
-    // Process all guests from groups
-    guestGroups.forEach(group => {
-      group.guests.forEach(guest => {
-        // Use guest's invited_by, or group's invited_by if guest doesn't have one
-        const invitedByList = (guest.invited_by?.length > 0 ? guest.invited_by : group.invited_by) || []
-
-        if (invitedByList.length === 0) {
-          // Track as "Not specified"
-          if (!dataMap['Not specified']) {
-            dataMap['Not specified'] = { name: 'Not specified', confirmed: 0, pending: 0, declined: 0 }
-          }
-          if (guest.confirmation_status === 'confirmed') dataMap['Not specified'].confirmed++
-          else if (guest.confirmation_status === 'declined') dataMap['Not specified'].declined++
-          else dataMap['Not specified'].pending++
-        } else {
-          invitedByList.forEach(inviter => {
-            if (!dataMap[inviter]) {
-              dataMap[inviter] = { name: inviter, confirmed: 0, pending: 0, declined: 0 }
-            }
-            if (guest.confirmation_status === 'confirmed') dataMap[inviter].confirmed++
-            else if (guest.confirmation_status === 'declined') dataMap[inviter].declined++
-            else dataMap[inviter].pending++
-          })
-        }
-      })
-    })
-
-    // Process ungrouped guests
-    ungroupedGuests.forEach(guest => {
+    const processGuest = (guest: Guest) => {
       const invitedByList = guest.invited_by || []
 
       if (invitedByList.length === 0) {
@@ -2121,29 +2419,38 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         else if (guest.confirmation_status === 'declined') dataMap['Not specified'].declined++
         else dataMap['Not specified'].pending++
       } else {
-        invitedByList.forEach(inviter => {
-          if (!dataMap[inviter]) {
-            dataMap[inviter] = { name: inviter, confirmed: 0, pending: 0, declined: 0 }
+        invitedByList.forEach(ref => {
+          const displayName = resolveInvitedBy(ref, partnerNames)
+          if (!dataMap[displayName]) {
+            dataMap[displayName] = { name: displayName, confirmed: 0, pending: 0, declined: 0 }
           }
-          if (guest.confirmation_status === 'confirmed') dataMap[inviter].confirmed++
-          else if (guest.confirmation_status === 'declined') dataMap[inviter].declined++
-          else dataMap[inviter].pending++
+          if (guest.confirmation_status === 'confirmed') dataMap[displayName].confirmed++
+          else if (guest.confirmation_status === 'declined') dataMap[displayName].declined++
+          else dataMap[displayName].pending++
         })
       }
+    }
+
+    // Process all guests from groups
+    normalizedGroups.forEach(group => {
+      group.guests.forEach(processGuest)
     })
 
+    // Process ungrouped guests
+    normalizedUngroupedGuests.forEach(processGuest)
+
     return Object.values(dataMap)
-  }, [guestGroups, ungroupedGuests])
+  }, [normalizedGroups, normalizedUngroupedGuests, partnerNames])
 
   // Chart data: Tags by Invited By (for pie chart)
   const tagsByInvitedByData = useMemo(() => {
     const dataMap: Record<string, number> = {}
 
     // Process all guests from groups
-    guestGroups.forEach(group => {
+    normalizedGroups.forEach(group => {
       group.guests.forEach(guest => {
-        // Merge group tags with guest tags
-        const allGuestTags = [...new Set([...(group.tags || []), ...(guest.tags || [])])]
+        // Use guest's own tags (single source of truth)
+        const allGuestTags = guest.tags || []
 
         allGuestTags.forEach(tag => {
           if (!dataMap[tag]) {
@@ -2155,7 +2462,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     })
 
     // Process ungrouped guests
-    ungroupedGuests.forEach(guest => {
+    normalizedUngroupedGuests.forEach(guest => {
       const guestTags = guest.tags || []
       guestTags.forEach(tag => {
         if (!dataMap[tag]) {
@@ -2166,41 +2473,37 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     })
 
     return Object.entries(dataMap).map(([name, value]) => ({ name, value }))
-  }, [guestGroups, ungroupedGuests])
+  }, [normalizedGroups, normalizedUngroupedGuests])
 
   // Pie chart colors
   const PIE_COLORS = ['#3b82f6', '#22c55e', '#a855f7', '#f97316', '#ec4899', '#14b8a6', '#eab308', '#6366f1']
 
   // Create a flat list of all guests with their group info and merged tags
   const allGuests = useMemo(() => {
-    const guests: (Guest & { groupName?: string; groupTags?: string[]; allTags: string[] })[] = []
+    const guests: (Guest & { groupName?: string; allTags: string[] })[] = []
 
     // Add guests from groups
-    guestGroups.forEach(group => {
+    normalizedGroups.forEach(group => {
       group.guests.forEach(guest => {
-        // Merge group tags with guest's own tags (unique)
-        const mergedTags = [...new Set([...(group.tags || []), ...(guest.tags || [])])]
         guests.push({
           ...guest,
-          groupName: group.name,
-          groupTags: group.tags || [],
-          allTags: mergedTags
+          groupName: group.name || undefined,
+          allTags: guest.tags || []
         })
       })
     })
 
     // Add ungrouped guests
-    ungroupedGuests.forEach(guest => {
+    normalizedUngroupedGuests.forEach(guest => {
       guests.push({
         ...guest,
         groupName: undefined,
-        groupTags: [],
         allTags: guest.tags || []
       })
     })
 
     return guests
-  }, [guestGroups, ungroupedGuests])
+  }, [normalizedGroups, normalizedUngroupedGuests])
 
   // Filter and sort guests based on current filters
   const filteredGuests = useMemo(() => {
@@ -2219,7 +2522,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         return false
       }
 
-      // Tag filter - check merged tags (group + guest tags)
+      // Tag filter - check guest's own tags
       if (tagFilter !== 'all') {
         if (!guest.allTags?.includes(tagFilter)) return false
       }
@@ -2271,11 +2574,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   // Filter and sort groups based on current filters (for groups view)
   const filteredGroups = useMemo(() => {
-    let filtered = guestGroups.filter(group => {
+    let filtered = normalizedGroups.filter(group => {
       // Search filter - search in group name and guest names
       if (searchQuery) {
         const query = searchQuery.toLowerCase()
-        const matchesGroupName = group.name.toLowerCase().includes(query)
+        const matchesGroupName = group.name?.toLowerCase().includes(query) || false
         const matchesGuestName = group.guests.some(g => g.name.toLowerCase().includes(query))
         if (!matchesGroupName && !matchesGuestName) return false
       }
@@ -2286,18 +2589,16 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         if (!hasMatchingStatus) return false
       }
 
-      // Tag filter - check group tags or any guest tags
+      // Tag filter - check guest tags within the group
       if (tagFilter !== 'all') {
-        const groupHasTag = group.tags?.includes(tagFilter)
         const guestsHaveTag = group.guests.some(g => g.tags?.includes(tagFilter))
-        if (!groupHasTag && !guestsHaveTag) return false
+        if (!guestsHaveTag) return false
       }
 
-      // Invited by filter - check group invited_by or any guest invited_by
+      // Invited by filter - check guest invited_by within the group
       if (invitedByFilter !== 'all') {
-        const groupHasInvitedBy = group.invited_by?.includes(invitedByFilter)
         const guestsHaveInvitedBy = group.guests.some(g => g.invited_by?.includes(invitedByFilter))
-        if (!groupHasInvitedBy && !guestsHaveInvitedBy) return false
+        if (!guestsHaveInvitedBy) return false
       }
 
       // Opened filter - check if group has been opened
@@ -2313,8 +2614,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     // Apply sorting
     if (sortColumn === 'name') {
       filtered = [...filtered].sort((a, b) => {
-        const aValue = a.name.toLowerCase()
-        const bValue = b.name.toLowerCase()
+        const aValue = a.name?.toLowerCase() ?? ''
+        const bValue = b.name?.toLowerCase() ?? ''
         if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
         if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
         return 0
@@ -2322,7 +2623,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     }
 
     return filtered
-  }, [guestGroups, searchQuery, statusFilter, tagFilter, invitedByFilter, openedFilter, sortColumn, sortDirection])
+  }, [normalizedGroups, searchQuery, statusFilter, tagFilter, invitedByFilter, openedFilter, sortColumn, sortDirection])
 
   // Calculate filtered statistics based on filtered guests
   const filteredGuestCount = filteredGuests.length
@@ -2364,25 +2665,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     )
   }
 
-  // Check if user has access to invitations feature
-  if (!canAccessFeature('invitations_panel_enabled')) {
-    return (
-      <main className="min-h-screen bg-background">
-        <Header
-          showBackButton
-          backHref={getCleanAdminUrl(weddingId, 'dashboard')}
-          title="Invitations"
-        />
-        <div className="max-w-2xl mx-auto px-4 py-20">
-          <PremiumUpgradePrompt
-            feature="invitations_panel_enabled"
-            title="Upgrade to Manage Guests & Invitations"
-            description="Guest management, invitations, and RSVP tracking are premium features. Upgrade to Premium to manage your guest list, send invitations, and track RSVPs."
-          />
-        </div>
-      </main>
-    )
-  }
+  // No full page gate - free users can browse but save/send actions are gated
 
   return (
     <main className="min-h-screen bg-background">
@@ -2405,11 +2688,24 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           addDropdownOpen: addDropdownOpen,
           setAddDropdownOpen: setAddDropdownOpen,
           onAddGuest: () => {
+            // Check if at guest limit
+            if (guestLimit !== null && totalGuests >= guestLimit) {
+              showUpgrade('guest_limit')
+              setAddDropdownOpen(false)
+              return
+            }
             setSelectedGroupId(null)
             setShowAddGuestModal(true)
             setAddDropdownOpen(false)
           },
           onAddGroup: () => {
+            // Check if at group limit (exclude draft groups from count)
+            const nonDraftGroupCount = guestGroups.filter(g => !g.is_draft).length
+            if (groupLimit !== null && nonDraftGroupCount >= groupLimit) {
+              showUpgrade('group_limit')
+              setAddDropdownOpen(false)
+              return
+            }
             setShowAddGroupModal(true)
             setAddDropdownOpen(false)
           },
@@ -2420,8 +2716,18 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             }, 100)
           },
           onExportCsv: handleExportCsv,
-          onOpenInviteSettings: () => setShowInviteTemplateModal(true),
-          onOpenSendInvites: () => setShowSendInvitesModal(true),
+          onOpenInviteSettings: () => {
+            // Free users can open and edit but save is gated inside the modal
+            setShowInviteTemplateModal(true)
+          },
+          onOpenSendInvites: () => {
+            // Check if user has premium access
+            if (!canAccessFeature('invitations_panel_enabled')) {
+              showUpgrade('send_invites')
+              return
+            }
+            setShowSendInvitesModal(true)
+          },
           onCsvFileSelect: handleCsvFileSelect,
         }}
         toolbarProps={{
@@ -2498,6 +2804,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             handleDeleteGuest={handleDeleteGuest}
             handleSendGuestInvite={handleSendGuestInvite}
             updateGuestInvitationStatus={updateGuestInvitationStatus}
+            partnerNames={partnerNames}
           />
         )}
 
@@ -2505,7 +2812,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         {viewMode === 'groups' && (
           <GuestsTableGroups
             filteredGroups={filteredGroups}
-            ungroupedGuests={ungroupedGuests}
+            ungroupedGuests={normalizedUngroupedGuests}
             guestGroupsCount={guestGroups.length}
             expandedGroups={expandedGroups}
             toggleGroupExpansion={toggleGroupExpansion}
@@ -2537,6 +2844,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             setShowMessageModal={setShowMessageModal}
             getInvitationUrl={getInvitationUrl}
             navigateToGroupDetails={navigateToGroupDetails}
+            partnerNames={partnerNames}
           />
         )}
       </div>
@@ -2546,7 +2854,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         editingGroup={editingGroup}
         groupForm={groupForm}
         setGroupForm={setGroupForm}
-        partnerOptions={partnerOptions}
         guestsInGroupModal={guestsInGroupModal}
         isAddingGuestInModal={isAddingGuestInModal}
         setIsAddingGuestInModal={setIsAddingGuestInModal}
@@ -2556,12 +2863,15 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           setShowAddGroupModal(false)
           setEditingGroup(null)
           resetGroupForm()
+          // Always refresh tables when closing to pick up any draft groups/guests created
+          Promise.all([fetchGuestGroups(), fetchUngroupedGuests()])
         }}
         onSubmit={editingGroup ? handleUpdateGroup : handleAddGroup}
         addGuestToGroupModal={addGuestToGroupModal}
         removeGuestFromGroupModal={removeGuestFromGroupModal}
-        toggleTag={toggleTag}
         toggleTempGuestTag={toggleTempGuestTag}
+        isSubmitting={isSubmittingGroup}
+        isAddingGuest={isAddingGuestToModal}
       />
 
       {/* Add/Edit Guest Modal */}
@@ -2578,14 +2888,17 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         newGroupNameForGuest={newGroupNameForGuest}
         setNewGroupNameForGuest={setNewGroupNameForGuest}
         partnerOptions={partnerOptions}
+        allTags={allTags}
         onClose={() => {
           setShowAddGuestModal(false)
           setEditingGuest(null)
           setSelectedGroupId(null)
           resetGuestForm()
         }}
-        onSubmit={editingGuest ? handleUpdateGuest : handleAddGuest}
+        onSubmit={editingGuest ? handleUpdateGuest : () => handleAddGuest(false)}
+        onSaveAndAddAnother={() => handleAddGuest(true)}
         toggleGuestTag={toggleGuestTag}
+        isSubmitting={isSubmittingGuest}
       />
 
       {/* Assign to Group Modal */}
@@ -2600,6 +2913,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         newGroupName={newGroupName}
         setNewGroupName={setNewGroupName}
         onAssign={handleAssignToGroup}
+        isSubmitting={isSubmittingAssign}
       />
 
       {/* Bulk Invited By Modal */}
@@ -2612,6 +2926,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         bulkInvitedBy={bulkInvitedBy}
         setBulkInvitedBy={setBulkInvitedBy}
         onUpdate={handleBulkInvitedByUpdate}
+        isSubmitting={isSubmittingBulkInvitedBy}
       />
 
       {/* CSV Import Modal */}
@@ -2655,6 +2970,15 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
       />
 
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        reason={upgradeReason}
+        currentCount={upgradeReason === 'guest_limit' ? totalGuests : guestGroups.filter(g => !g.is_draft).length}
+        limit={upgradeReason === 'guest_limit' ? guestLimit ?? undefined : groupLimit ?? undefined}
+      />
+
       {/* Group Travel Info Dialog */}
       <GroupTravelDialog
         isOpen={showGroupTravelDialog}
@@ -2664,6 +2988,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         selectedGuestIds={selectedGuestIds}
         onClose={() => setShowGroupTravelDialog(false)}
         onSubmit={handleSetGroupTravel}
+        isSubmitting={isSubmittingTravel}
       />
 
       {/* Invitation Template Settings Modal */}
@@ -2693,6 +3018,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           } else {
             throw new Error('Failed to save')
           }
+        }}
+        onUpgradeRequired={() => {
+          setShowInviteTemplateModal(false)
+          showUpgrade('invite_settings')
         }}
         weddingDetails={weddingDetails}
         partnerNames={partnerNames}

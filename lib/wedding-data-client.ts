@@ -17,7 +17,17 @@ export async function getWeddingByNameIdClient(weddingNameId: string): Promise<W
     return null
   }
 
-  return data as Wedding
+  // Fetch the wedding features (plan info)
+  const { data: features } = await supabase
+    .from('wedding_features')
+    .select('plan')
+    .eq('wedding_id', data.id)
+    .single()
+
+  return {
+    ...data,
+    wedding_features: features ? { plan: features.plan } : { plan: 'free' }
+  } as Wedding
 }
 
 export async function getWeddingByDateAndNameIdClient(dateId: string, weddingNameId: string): Promise<Wedding | null> {
@@ -37,7 +47,17 @@ export async function getWeddingByDateAndNameIdClient(dateId: string, weddingNam
     return null
   }
 
-  return data as Wedding
+  // Fetch the wedding features (plan info)
+  const { data: features } = await supabase
+    .from('wedding_features')
+    .select('plan')
+    .eq('wedding_id', data.id)
+    .single()
+
+  return {
+    ...data,
+    wedding_features: features ? { plan: features.plan } : { plan: 'free' }
+  } as Wedding
 }
 
 // Legacy function for backward compatibility

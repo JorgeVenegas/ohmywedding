@@ -22,7 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Guest, ColumnVisibility, TAG_COLORS } from "../types"
+import { Guest, ColumnVisibility, TAG_COLORS, resolveInvitedBy } from "../types"
 
 export type SortColumn = 'name' | 'group' | 'status' | null
 export type SortDirection = 'asc' | 'desc'
@@ -42,6 +42,7 @@ interface GuestsTableFlatProps {
   handleDeleteGuest: (guestId: string) => void
   handleSendGuestInvite: (guest: Guest) => void
   updateGuestInvitationStatus: (guestId: string, sent: boolean) => void
+  partnerNames: { partner1: string; partner2: string }
 }
 
 function getTagColor(tag: string): string {
@@ -74,6 +75,7 @@ export function GuestsTableFlat({
   handleDeleteGuest,
   handleSendGuestInvite,
   updateGuestInvitationStatus,
+  partnerNames,
 }: GuestsTableFlatProps) {
   return (
     <Card className="border border-border overflow-hidden shadow-sm">
@@ -207,8 +209,30 @@ export function GuestsTableFlat({
                     <td className="px-3 py-2 text-muted-foreground">{guest.phone_number || "-"}</td>
                   )}
                   {visibleColumns.group && (
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {guest.groupName || <span className="italic text-muted-foreground/50">Ungrouped</span>}
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-1">
+                        {guest.groupName !== undefined && guest.groupName !== null ? (
+                          <span className="text-muted-foreground">{guest.groupName}</span>
+                        ) : guest.guest_group_id ? (
+                          <>
+                            <span className="italic text-muted-foreground">(Unnamed Group)</span>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-100 border border-amber-300">
+                                    <span className="text-amber-600 text-xs font-bold">!</span>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs">This group needs a name</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </>
+                        ) : (
+                          <span className="italic text-muted-foreground/50">Ungrouped</span>
+                        )}
+                      </div>
                     </td>
                   )}
                   {visibleColumns.tags && (
@@ -248,12 +272,12 @@ export function GuestsTableFlat({
                     <td className="px-3 py-2">
                       {guest.invited_by && guest.invited_by.length > 0 ? (
                         <div className="flex gap-1 flex-wrap">
-                          {guest.invited_by.map(name => (
+                          {guest.invited_by.map(ref => (
                             <span
-                              key={name}
+                              key={ref}
                               className="px-1.5 py-0.5 text-[10px] rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200"
                             >
-                              {name}
+                              {resolveInvitedBy(ref, partnerNames)}
                             </span>
                           ))}
                         </div>

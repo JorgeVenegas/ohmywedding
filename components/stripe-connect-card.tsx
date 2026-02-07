@@ -131,6 +131,10 @@ export function StripeConnectCard({
 
   const status = getStatus()
 
+  if (payoutsEnabled) {
+    return null
+  }
+
   const borderColor = {
     success: "border-green-200 bg-green-50/50 dark:bg-green-950/20 dark:border-green-900",
     warning: "border-yellow-200 bg-yellow-50/50 dark:bg-yellow-950/20 dark:border-yellow-900",

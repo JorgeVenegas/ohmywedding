@@ -6,7 +6,8 @@ import { useAuth } from '@/hooks/use-auth'
 import { 
   type PlanType, 
   type WeddingFeatures, 
-  getDefaultFeatures 
+  getDefaultFeatures,
+  requiresPremium,
 } from '@/lib/subscription-shared'
 
 interface SubscriptionContextValue {
@@ -66,43 +67,17 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
 
       setIsSuperuser(isSuperuserUser)
 
-      // If superuser, grant all features
-      if (isSuperuserUser) {
-        setPlanType('premium')
-        setFeatures({
-          rsvp_enabled: true,
-          invitations_panel_enabled: true,
-          gallery_enabled: true,
-          registry_enabled: true,
-          schedule_enabled: true,
-        })
-        setLoading(false)
-        return
-      }
-
-      // Fetch user subscription
-      const { data: subscription } = await supabase
-        .from('user_subscriptions')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
-
-      let userPlanType: PlanType = 'free'
-      if (subscription) {
-        const isActive = subscription.status === 'active' || subscription.status === 'trial'
-        const isExpired = subscription.expires_at && new Date(subscription.expires_at) < new Date()
-        if (isActive && !isExpired) {
-          userPlanType = subscription.plan_type as PlanType
-        }
-      }
-      setPlanType(userPlanType)
-
-      // Fetch wedding features
-      const { data: wedding } = await supabase
+      // Fetch wedding features (which includes the wedding's plan)
+      // weddingId could be either UUID or wedding_name_id, so we need to handle both
+      const isUUID = weddingId.includes('-')
+      
+      const weddingQuery = supabase
         .from('weddings')
         .select('id')
-        .eq('wedding_name_id', weddingId)
-        .single()
+      
+      const { data: wedding } = isUUID
+        ? await weddingQuery.eq('id', weddingId).single()
+        : await weddingQuery.eq('wedding_name_id', weddingId).single()
 
       if (wedding) {
         const { data: weddingFeatures } = await supabase
@@ -112,19 +87,64 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
           .single()
 
         if (weddingFeatures) {
-          setFeatures({
-            rsvp_enabled: weddingFeatures.rsvp_enabled,
-            invitations_panel_enabled: weddingFeatures.invitations_panel_enabled,
-            gallery_enabled: weddingFeatures.gallery_enabled,
-            registry_enabled: weddingFeatures.registry_enabled,
-            schedule_enabled: weddingFeatures.schedule_enabled,
-          })
+          // Always use the wedding's plan as the source of truth
+          const weddingPlan = (weddingFeatures.plan as PlanType) || 'free'
+          setPlanType(weddingPlan)
+          
+          // Superusers get all features enabled regardless of plan
+          if (isSuperuserUser) {
+            setFeatures({
+              rsvp_enabled: true,
+              invitations_panel_enabled: true,
+              gallery_enabled: true,
+              registry_enabled: true,
+              schedule_enabled: true,
+            })
+          } else {
+            setFeatures({
+              rsvp_enabled: weddingFeatures.rsvp_enabled,
+              invitations_panel_enabled: weddingFeatures.invitations_panel_enabled,
+              gallery_enabled: weddingFeatures.gallery_enabled,
+              registry_enabled: weddingFeatures.registry_enabled,
+              schedule_enabled: weddingFeatures.schedule_enabled,
+            })
+          }
         } else {
-          // No features record - use defaults based on subscription
-          setFeatures(getDefaultFeatures(userPlanType))
+          // No features record yet
+          if (isSuperuserUser) {
+            // Superuser still sees all features but plan stays free
+            setPlanType('free')
+            setFeatures({
+              rsvp_enabled: true,
+              invitations_panel_enabled: true,
+              gallery_enabled: true,
+              registry_enabled: true,
+              schedule_enabled: true,
+            })
+          } else {
+            // Fetch user subscription as fallback
+            const { data: subscription } = await supabase
+              .from('user_subscriptions')
+              .select('*')
+              .eq('user_id', user.id)
+              .single()
+
+            let userPlanType: PlanType = 'free'
+            if (subscription) {
+              const isActive = subscription.status === 'active' || subscription.status === 'trial'
+              const isExpired = subscription.expires_at && new Date(subscription.expires_at) < new Date()
+              if (isActive && !isExpired) {
+                userPlanType = subscription.plan_type as PlanType
+              }
+            }
+            setPlanType(userPlanType)
+            setFeatures(getDefaultFeatures(userPlanType))
+          }
         }
       } else {
-        setFeatures(getDefaultFeatures(userPlanType))
+        // Wedding not found
+        setPlanType('free')
+        setFeatures(getDefaultFeatures('free'))
       }
     } catch (error) {
       setPlanType('free')
@@ -144,13 +164,18 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
   const isPremium = planType === 'premium' || planType === 'deluxe'
 
   const canAccessFeature = useCallback((feature: keyof WeddingFeatures): boolean => {
-    const value = features[feature]
     // Handle the plan field which is a string, not a boolean
     if (feature === 'plan') {
-      return value !== 'free'
+      return planType !== 'free'
     }
-    return value === true
-  }, [features])
+    // Defense-in-depth: premium features always require a paid plan,
+    // regardless of what the DB boolean says (prevents stale data issues).
+    // Superusers bypass this so they can still access everything.
+    if (!isSuperuser && requiresPremium(feature) && planType === 'free') {
+      return false
+    }
+    return features[feature] === true
+  }, [features, planType, isSuperuser])
 
   return (
     <SubscriptionContext.Provider 

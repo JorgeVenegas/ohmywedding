@@ -87,15 +87,15 @@ export function PremiumUpgradePrompt({
 
   if (variant === 'inline') {
     return (
-      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-[#FAF7F0] to-[#F5EFE6] dark:from-[#2A2520]/30 dark:to-[#252018]/30 border border-[#D4AF37]/30 dark:border-[#D4AF37]/40 rounded-lg">
-        <Lock className="w-5 h-5 text-[#B8860B]" />
+      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-[#FAF7F0] to-[#F5EFE6] dark:from-[#2A2520]/30 dark:to-[#252018]/30 border border-[#DDA46F]/30 dark:border-[#DDA46F]/40 rounded-lg">
+        <Lock className="w-5 h-5 text-[#DDA46F]" />
         <div className="flex-1">
-          <p className="text-sm font-medium text-[#8B7355] dark:text-[#D4AF37]">
+          <p className="text-sm font-medium text-[#8B7355] dark:text-[#DDA46F]">
             {title || defaultTitle}
           </p>
         </div>
         <Link href="/upgrade">
-          <Button size="sm" className="bg-gradient-to-r from-[#B8860B] to-[#D4AF37] hover:from-[#A67807] hover:to-[#C9A226] text-white shadow-lg shadow-[#B8860B]/20">
+          <Button size="sm" className="bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb] shadow-lg shadow-[#420c14]/20">
             <Sparkles className="w-4 h-4 mr-1" />
             Upgrade
           </Button>
@@ -106,15 +106,15 @@ export function PremiumUpgradePrompt({
 
   if (variant === 'banner') {
     return (
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#B8860B] via-[#D4AF37] to-[#C9A87C] p-1 rounded-lg">
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#DDA46F] via-[#c99560] to-[#DDA46F] p-1 rounded-lg">
         <div className="bg-background rounded-md p-6 text-center">
-          <Crown className="w-10 h-10 mx-auto mb-3 text-[#D4AF37]" />
+          <Crown className="w-10 h-10 mx-auto mb-3 text-[#DDA46F]" />
           <h3 className="text-lg font-semibold mb-2">{title || defaultTitle}</h3>
           <p className="text-muted-foreground text-sm mb-4 max-w-md mx-auto">
             {description || defaultDescription}
           </p>
           <Link href="/upgrade">
-            <Button className="bg-gradient-to-r from-[#B8860B] to-[#D4AF37] hover:from-[#A67807] hover:to-[#C9A226] text-white shadow-lg shadow-[#B8860B]/20">
+            <Button className="bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb] shadow-lg shadow-[#420c14]/20">
               <Sparkles className="w-4 h-4 mr-2" />
               Upgrade to Premium
             </Button>
@@ -126,11 +126,11 @@ export function PremiumUpgradePrompt({
 
   // Default card variant
   return (
-    <Card className="relative overflow-hidden border-2 border-[#D4AF37]/30 dark:border-[#D4AF37]/40">
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#B8860B] via-[#D4AF37] to-[#C9A87C]" />
+    <Card className="relative overflow-hidden border-2 border-[#DDA46F]/30 dark:border-[#DDA46F]/40">
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#DDA46F] via-[#c99560] to-[#DDA46F]" />
       <div className="p-8 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[#F5EFE6] to-[#FAF7F0] dark:from-[#2A2520]/50 dark:to-[#252018]/50 mb-4 border border-[#D4AF37]/20">
-          <Lock className="w-8 h-8 text-[#B8860B]" />
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[#F5EFE6] to-[#FAF7F0] dark:from-[#2A2520]/50 dark:to-[#252018]/50 mb-4 border border-[#DDA46F]/20">
+          <Lock className="w-8 h-8 text-[#DDA46F]" />
         </div>
         <h3 className="text-xl font-semibold mb-2">{title || defaultTitle}</h3>
         <p className="text-muted-foreground mb-6 max-w-md mx-auto">
@@ -138,7 +138,7 @@ export function PremiumUpgradePrompt({
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link href="/upgrade">
-            <Button className="bg-gradient-to-r from-[#B8860B] to-[#D4AF37] hover:from-[#A67807] hover:to-[#C9A226] text-white shadow-lg shadow-[#B8860B]/20">
+            <Button className="bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb] shadow-lg shadow-[#420c14]/20">
               <Sparkles className="w-4 h-4 mr-2" />
               Upgrade to Premium
             </Button>
@@ -157,7 +157,7 @@ export function PremiumUpgradePrompt({
 // Badge component to show premium status
 export function PremiumBadge({ className }: { className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-gradient-to-r from-[#B8860B] to-[#D4AF37] text-white ${className}`}>
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-gradient-to-r from-[#DDA46F] to-[#c99560] text-white ${className}`}>
       <Crown className="w-3 h-3" />
       Premium
     </span>
@@ -168,7 +168,7 @@ export function PremiumBadge({ className }: { className?: string }) {
 export function PremiumLock({ className }: { className?: string }) {
   return (
     <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#F5EFE6] dark:bg-[#2A2520]/50 ${className}`}>
-      <Lock className="w-3 h-3 text-[#B8860B]" />
+      <Lock className="w-3 h-3 text-[#DDA46F]" />
     </span>
   )
 }

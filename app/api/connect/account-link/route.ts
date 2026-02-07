@@ -85,8 +85,8 @@ export async function POST(request: NextRequest) {
     
     const baseUrl = `${protocol}://${mainDomain}`
     
-    const returnUrl = `${baseUrl}/admin/${wedding.id}/registry?connect=success`
-    const refreshUrl = `${baseUrl}/admin/${wedding.id}/registry?connect=refresh`
+    const returnUrl = `${baseUrl}/admin/${wedding.wedding_name_id}/registry?connect=success`
+    const refreshUrl = `${baseUrl}/admin/${wedding.wedding_name_id}/registry?connect=refresh`
 
     if (type === "login") {
       // Generate login link for existing connected accounts

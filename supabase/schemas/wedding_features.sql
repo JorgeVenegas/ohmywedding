@@ -4,6 +4,9 @@ CREATE TABLE IF NOT EXISTS public.wedding_features (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   wedding_id UUID NOT NULL REFERENCES public.weddings(id) ON DELETE CASCADE,
   
+  -- Plan information
+  plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'premium', 'deluxe')),
+  
   -- Paid Features
   rsvp_enabled BOOLEAN NOT NULL DEFAULT false,
   invitations_panel_enabled BOOLEAN NOT NULL DEFAULT false,

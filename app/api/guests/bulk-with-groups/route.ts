@@ -75,9 +75,7 @@ export async function POST(request: Request) {
           wedding_id: wedding.id,
           name: groupName,
           phone_number: null,
-          tags: [],
           notes: null,
-          invited_by: [],
         }])
         .select()
         .single()

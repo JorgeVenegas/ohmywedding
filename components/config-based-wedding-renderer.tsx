@@ -575,7 +575,7 @@ function ConfigBasedWeddingRendererContent({
         <WeddingNav 
           person1Name={effectiveWedding.partner1_first_name}
           person2Name={effectiveWedding.partner2_first_name}
-          accentColor={config.siteSettings.theme?.colors?.primary || '#B8860B'}
+          accentColor={config.siteSettings.theme?.colors?.primary || '#DDA46F'}
           showNavLinks={config.siteSettings.navigation?.showNavLinks !== false}
           enabledSections={allComponents.map(c => c.type)}
           useColorBackground={config.siteSettings.navigation?.useColorBackground || false}

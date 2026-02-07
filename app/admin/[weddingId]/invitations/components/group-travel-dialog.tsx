@@ -15,6 +15,7 @@ interface GroupTravelDialogProps {
   selectedGuestIds: Set<string>
   onClose: () => void
   onSubmit: () => void
+  isSubmitting?: boolean
 }
 
 export function GroupTravelDialog({
@@ -25,13 +26,14 @@ export function GroupTravelDialog({
   selectedGuestIds,
   onClose,
   onSubmit,
+  isSubmitting = false,
 }: GroupTravelDialogProps) {
   if (!isOpen) return null
 
   const isSubmitDisabled =
-    groupTravelForm.isTraveling &&
+    (groupTravelForm.isTraveling &&
     groupTravelForm.travelArrangement === 'no_ticket_needed' &&
-    !groupTravelForm.noTicketReason.trim()
+    !groupTravelForm.noTicketReason.trim()) || isSubmitting
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -180,7 +182,7 @@ export function GroupTravelDialog({
           </div>
 
           <div className="flex gap-3 mt-6">
-            <Button variant="outline" className="flex-1" onClick={onClose}>
+            <Button variant="outline" className="flex-1" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
             <Button
@@ -189,7 +191,7 @@ export function GroupTravelDialog({
               disabled={isSubmitDisabled}
             >
               <Check className="w-4 h-4 mr-2" />
-              Apply to Group
+              {isSubmitting ? 'Applying...' : 'Apply to Group'}
             </Button>
           </div>
         </div>

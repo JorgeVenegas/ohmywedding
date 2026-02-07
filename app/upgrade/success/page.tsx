@@ -78,7 +78,7 @@ function UpgradeSuccessContent() {
             <Button variant="outline">Try Again</Button>
           </Link>
           <Link href="mailto:support@ohmywedding.app">
-            <Button className="bg-gradient-to-r from-[#B8860B] to-[#D4AF37] hover:from-[#A67807] hover:to-[#C9A226] text-white shadow-lg shadow-[#B8860B]/20">
+            <Button className="bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb] shadow-lg shadow-[#420c14]/20">
               Contact Support
             </Button>
           </Link>
@@ -121,9 +121,9 @@ function UpgradeSuccessContent() {
       </div>
 
       {/* Premium Badge */}
-      <Card className="relative overflow-hidden border-[#D4AF37]/30 dark:border-[#D4AF37]/40 bg-gradient-to-r from-[#FAF7F0] to-[#F5EFE6] dark:from-[#2A2520]/50 dark:to-[#252018]/50 p-6 mb-10">
+      <Card className="relative overflow-hidden border-[#DDA46F]/30 dark:border-[#DDA46F]/40 bg-gradient-to-r from-[#FAF7F0] to-[#F5EFE6] dark:from-[#2A2520]/50 dark:to-[#252018]/50 p-6 mb-10">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-r from-[#B8860B] to-[#D4AF37] flex items-center justify-center">
+          <div className="w-14 h-14 rounded-full bg-gradient-to-r from-[#DDA46F] to-[#c99560] flex items-center justify-center">
             <Sparkles className="w-7 h-7 text-white" />
           </div>
           <div>
@@ -132,7 +132,7 @@ function UpgradeSuccessContent() {
           </div>
         </div>
         <div className="absolute top-2 right-4">
-          <Heart className="w-6 h-6 text-[#D4AF37] animate-bounce" />
+          <Heart className="w-6 h-6 text-[#DDA46F] animate-bounce" />
         </div>
       </Card>
 
@@ -144,8 +144,8 @@ function UpgradeSuccessContent() {
         <div className="space-y-4">
           {nextSteps.map((step, index) => (
             <Card key={index} className="p-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#F5EFE6] to-[#FAF7F0] dark:from-[#2A2520]/50 dark:to-[#252018]/50 flex items-center justify-center shrink-0 border border-[#D4AF37]/10">
-                <span className="text-[#B8860B]">{step.icon}</span>
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#F5EFE6] to-[#FAF7F0] dark:from-[#2A2520]/50 dark:to-[#252018]/50 flex items-center justify-center shrink-0 border border-[#DDA46F]/10">
+                <span className="text-[#DDA46F]">{step.icon}</span>
               </div>
               <div className="flex-1">
                 <h4 className="font-semibold text-foreground">{step.title}</h4>
@@ -161,7 +161,7 @@ function UpgradeSuccessContent() {
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Link href="/">
           <Button 
-            className="w-full sm:w-auto h-12 px-8 bg-gradient-to-r from-[#B8860B] to-[#D4AF37] hover:from-[#A67807] hover:to-[#C9A226] text-white shadow-lg shadow-[#B8860B]/20"
+            className="w-full sm:w-auto h-12 px-8 bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb] shadow-lg shadow-[#420c14]/20"
           >
             Go to Dashboard
             <ArrowRight className="w-4 h-4 ml-2" />
@@ -178,7 +178,7 @@ export default function UpgradeSuccessPage() {
       <Header />
       <Suspense fallback={
         <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-[#D4AF37] mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 animate-spin text-[#DDA46F] mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-foreground">Loading...</h2>
         </div>
       }>

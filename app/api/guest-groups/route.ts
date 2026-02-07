@@ -18,11 +18,8 @@ export async function GET(request: Request) {
 
     const decodedWeddingId = decodeURIComponent(weddingId)
     
-    // Check premium access for guest management
-    const featureCheck = await requireFeature('invitations_panel_enabled', decodedWeddingId)
-    if (!featureCheck.allowed) {
-      return featureCheck.response
-    }
+    // No plan check on GET - free users can browse their guest list
+    // Write operations (POST/PUT/DELETE) are plan-gated
 
     const supabase = await createServerSupabaseClient()
     
@@ -100,11 +97,12 @@ export async function POST(request: Request) {
     // Check guest group limit for wedding's plan
     const groupLimit = await getWeddingFeatureLimit(wedding.id, 'guest_groups_limit')
     if (groupLimit !== null) {
-      // Count current groups
+      // Count current groups (exclude drafts from the count)
       const { count: currentGroupCount } = await supabase
         .from('guest_groups')
         .select('*', { count: 'exact', head: true })
         .eq('wedding_id', wedding.id)
+        .eq('is_draft', false)
       
       if ((currentGroupCount || 0) >= groupLimit) {
         return NextResponse.json({ 
@@ -116,14 +114,18 @@ export async function POST(request: Request) {
       }
     }
 
+    const rawName = typeof body.name === 'string' ? body.name : null
+
+    // Determine if this is a draft group (no name provided or isDraft flag)
+    const isDraft = body.isDraft === true || !rawName || rawName.trim() === ''
+
     const { data, error } = await supabase.from("guest_groups").insert([
       {
         wedding_id: wedding.id,
-        name: body.name,
+        name: rawName,
         phone_number: body.phoneNumber || null,
-        tags: body.tags || [],
         notes: body.notes || null,
-        invited_by: body.invitedBy || [],
+        is_draft: isDraft,
       },
     ]).select().single()
 
@@ -146,13 +148,24 @@ export async function PUT(request: Request) {
     const supabase = await createServerSupabaseClient()
     const body = await request.json()
 
+    // Check premium access for guest management
+    if (body.weddingId) {
+      const featureCheck = await requireFeature('invitations_panel_enabled', decodeURIComponent(body.weddingId))
+      if (!featureCheck.allowed) {
+        return featureCheck.response
+      }
+    }
+
     const updateData: Record<string, any> = {
       name: body.name,
       phone_number: body.phoneNumber,
-      tags: body.tags,
       notes: body.notes,
-      invited_by: body.invitedBy || [],
       updated_at: new Date().toISOString(),
+    }
+
+    // If name is being set and it's not empty, mark as not draft
+    if (body.name && body.name.trim() !== '') {
+      updateData.is_draft = false
     }
 
     // Handle invitation status
@@ -185,9 +198,18 @@ export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
+    const weddingId = searchParams.get('weddingId')
 
     if (!id) {
       return NextResponse.json({ error: "id is required" }, { status: 400 })
+    }
+
+    // Check premium access for guest management
+    if (weddingId) {
+      const featureCheck = await requireFeature('invitations_panel_enabled', decodeURIComponent(weddingId))
+      if (!featureCheck.allowed) {
+        return featureCheck.response
+      }
     }
 
     const supabase = await createServerSupabaseClient()

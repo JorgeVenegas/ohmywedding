@@ -408,6 +408,20 @@
   }
 }
 
+/* Shimmer effect for plan indicator */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
 /* Smooth transitions for section position changes */
 [role="region"] {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

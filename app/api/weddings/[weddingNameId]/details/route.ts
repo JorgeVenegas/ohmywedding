@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { requireFeature } from '@/lib/subscription-api'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -119,6 +120,17 @@ export async function PATCH(
 
     if (!page_config || typeof page_config !== 'object') {
       return NextResponse.json({ error: 'Invalid page_config data' }, { status: 400 })
+    }
+
+    // Gate invitation template saves to premium plans (defense-in-depth)
+    if (page_config.invitationTemplate !== undefined && !isSuperuser) {
+      const featureCheck = await requireFeature('invitations_panel_enabled', weddingNameId)
+      if (!featureCheck.allowed) {
+        return NextResponse.json(
+          { error: 'Saving invitation templates requires a Premium subscription', feature: 'invite_settings', upgrade_url: '/upgrade' },
+          { status: 403 }
+        )
+      }
     }
 
     // Merge the new page_config with existing

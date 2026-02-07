@@ -177,7 +177,7 @@ export function WeddingPageRenderer({
       <WeddingNav 
         person1Name={wedding.partner1_first_name}
         person2Name={wedding.partner2_first_name}
-        accentColor={config.theme?.colors?.primary || '#B8860B'}
+        accentColor={config.theme?.colors?.primary || '#DDA46F'}
         themeColors={config.theme?.colors}
       />
       

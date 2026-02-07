@@ -13,7 +13,7 @@ $$ LANGUAGE plpgsql;
 CREATE TABLE IF NOT EXISTS public.user_subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  plan_type TEXT NOT NULL DEFAULT 'free' CHECK (plan_type IN ('free', 'premium')),
+  plan_type TEXT NOT NULL DEFAULT 'free' CHECK (plan_type IN ('free', 'premium', 'deluxe')),
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'cancelled', 'expired', 'trial')),
   
   -- Subscription dates
@@ -88,9 +88,9 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
   RETURN QUERY
-  SELECT 'rsvp_enabled'::TEXT, (p_plan_type = 'premium')
+  SELECT 'rsvp_enabled'::TEXT, (p_plan_type IN ('premium', 'deluxe'))
   UNION ALL
-  SELECT 'invitations_panel_enabled'::TEXT, (p_plan_type = 'premium')
+  SELECT 'invitations_panel_enabled'::TEXT, (p_plan_type IN ('premium', 'deluxe'))
   UNION ALL
   SELECT 'gallery_enabled'::TEXT, TRUE -- Always available
   UNION ALL

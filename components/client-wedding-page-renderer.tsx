@@ -239,7 +239,7 @@ function ClientWeddingPageRendererContent({
       <WeddingNav 
         person1Name={wedding.partner1_first_name}
         person2Name={wedding.partner2_first_name}
-        accentColor={appliedConfig.theme?.colors?.primary || '#B8860B'}
+        accentColor={appliedConfig.theme?.colors?.primary || '#DDA46F'}
         themeColors={appliedConfig.theme?.colors}
       />
       

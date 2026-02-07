@@ -26,6 +26,9 @@ export interface Wedding {
   og_image_url: string | null
   created_at: string
   updated_at: string
+  wedding_features?: {
+    plan?: 'free' | 'premium' | 'deluxe'
+  }
 }
 
 export async function getWeddingByDateAndNameId(dateId: string, weddingNameId: string): Promise<Wedding | null> {

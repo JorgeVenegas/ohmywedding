@@ -7,7 +7,7 @@ import type { Guest } from "../types"
 
 interface GroupForMessage {
   id: string
-  name: string
+  name: string | null
   message: string | null
   rsvp_submitted_at: string | null
   guests: Guest[]
@@ -42,7 +42,9 @@ export function MessageViewingModal({
       <Card className="w-full max-w-2xl max-h-[80vh] flex flex-col">
         <div className="flex items-center justify-between p-6 pb-4 border-b">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Message from {group.name}</h2>
+            <h2 className="text-xl font-semibold text-foreground">
+              Message from {group.name || '(Unnamed Group)'}
+            </h2>
             {group.rsvp_submitted_at && (
               <p className="text-sm text-muted-foreground mt-1">
                 Submitted on {new Date(group.rsvp_submitted_at).toLocaleString()}

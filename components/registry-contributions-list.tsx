@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { createBrowserClient } from "@supabase/ssr"
-import { DollarSign, User, Calendar, MessageSquare } from "lucide-react"
+import { DollarSign, User, Calendar, MessageSquare, AlertCircle, X } from "lucide-react"
 
 interface Contribution {
   id: string
@@ -21,16 +21,27 @@ interface Contribution {
 interface RegistryItem {
   id: string
   title: string
+  image_urls?: string[]
 }
 
 interface RegistryContributionsListProps {
   weddingId: string
   items: RegistryItem[]
+  searchQuery?: string
+  filterByItem?: string
+  filterByStatus?: string
+  sortBy?: "newest" | "oldest" | "highest" | "lowest"
+  onStatsChange?: (stats: { count: number; amount: number }) => void
 }
 
 export function RegistryContributionsList({
   weddingId,
   items,
+  searchQuery = "",
+  filterByItem = "all",
+  filterByStatus = "all",
+  sortBy = "newest",
+  onStatsChange,
 }: RegistryContributionsListProps) {
   const [contributions, setContributions] = useState<Contribution[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -50,6 +61,7 @@ export function RegistryContributionsList({
         .from("registry_contributions")
         .select("*")
         .eq("wedding_id", weddingId)
+        .notIn("payment_status", ["pending", "incomplete"])
         .order("created_at", { ascending: false })
 
       if (error) throw error
@@ -68,15 +80,21 @@ export function RegistryContributionsList({
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
-        return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-      case "awaiting_transfer":
-        return "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-      case "pending":
-        return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
+        return "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-800/60"
+      case "processing":
+        return "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200/60 dark:border-blue-800/60"
+      case "requires_action":
+        return "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200/60 dark:border-amber-800/60"
       case "failed":
-        return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+        return "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200/60 dark:border-red-800/60"
+      case "refunded":
+        return "bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200/60 dark:border-purple-800/60"
+      case "expired":
+        return "bg-gray-50 dark:bg-gray-900/30 text-gray-500 dark:text-gray-400 border-gray-200/60 dark:border-gray-800/60"
+      case "incomplete":
+        return "bg-slate-50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-slate-800/60"
       default:
-        return "bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300"
+        return "bg-gray-50 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300 border-gray-200/60 dark:border-gray-800/60"
     }
   }
 
@@ -90,119 +108,140 @@ export function RegistryContributionsList({
     })
   }
 
-  const totalContributions = contributions.length
-  const totalAmount = contributions
+  // Filter and sort contributions
+  const filteredAndSorted = contributions
+    .filter(c => {
+      if (filterByItem !== "all" && c.custom_registry_item_id !== filterByItem) return false
+      if (filterByStatus !== "all" && c.payment_status !== filterByStatus) return false
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        const matchesName = c.contributor_name?.toLowerCase().includes(query)
+        const matchesEmail = c.contributor_email?.toLowerCase().includes(query)
+        const matchesItem = getItemTitle(c.custom_registry_item_id).toLowerCase().includes(query)
+        if (!matchesName && !matchesEmail && !matchesItem) return false
+      }
+      return true
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "highest":
+          return Number(b.amount) - Number(a.amount)
+        case "lowest":
+          return Number(a.amount) - Number(b.amount)
+        case "oldest":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        case "newest":
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      }
+    })
+
+  const totalContributions = filteredAndSorted.length
+  const totalAmount = filteredAndSorted
     .filter(c => c.payment_status === 'completed')
     .reduce((sum, c) => sum + Number(c.amount), 0)
-  const totalFees = contributions
-    .filter(c => c.payment_status === 'completed')
-    .reduce((sum, c) => sum + (c.guest_covers_fee ? 20 : 0), 0)
+  
+  const statuses = Array.from(new Set(contributions.map(c => c.payment_status)))
+
+  useEffect(() => {
+    onStatsChange?.({ count: totalContributions, amount: totalAmount })
+  }, [onStatsChange, totalContributions, totalAmount])
 
   if (isLoading) {
     return (
-      <Card className="p-6 border border-border">
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading contributions...</p>
-        </div>
-      </Card>
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-secondary"></div>
+      </div>
     )
   }
 
   return (
-    <Card className="p-6 border border-border">
-      <h3 className="text-lg font-semibold text-foreground mb-4">Contributions</h3>
-
-      {/* Summary Stats */}
-      {contributions.length > 0 && (
-        <div className="grid md:grid-cols-3 gap-3 mb-6 p-4 bg-muted/40 rounded-lg">
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-              Total Contributions
-            </p>
-            <p className="text-xl font-bold text-foreground">{totalContributions}</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-              Total Received
-            </p>
-            <p className="text-xl font-bold text-secondary">${totalAmount.toFixed(2)}</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-              Fees Covered
-            </p>
-            <p className="text-xl font-bold text-primary">${totalFees.toFixed(2)}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Contributions List */}
-      {contributions.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">
-          <p>No contributions yet</p>
-        </div>
+    <>
+      {/* Contributions Grid */}
+      {filteredAndSorted.length === 0 ? (
+        <Card className="p-12 text-center border border-border shadow-sm">
+          <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+          <p className="text-muted-foreground">
+            {contributions.length === 0 ? "No contributions yet" : "No contributions match your filters"}
+          </p>
+        </Card>
       ) : (
-        <div className="space-y-3 max-h-96 overflow-y-auto">
-          {contributions.map((contribution) => (
-            <div
+        <div className="space-y-3">
+          {filteredAndSorted.map((contribution) => {
+            const item = items.find(i => i.id === contribution.custom_registry_item_id)
+            return (
+            <Card
               key={contribution.id}
-              className="p-4 border border-border/50 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors"
+              className="p-3 border border-border shadow-sm hover:shadow-md transition-shadow"
             >
-              <div className="flex items-start justify-between gap-4 mb-2">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    <span className="font-medium text-foreground">
-                      {contribution.contributor_name || "Anonymous"}
-                    </span>
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusColor(
-                        contribution.payment_status
-                      )}`}
-                    >
-                      {contribution.payment_status}
-                    </span>
+              <div className="grid grid-cols-1 md:grid-cols-[1.2fr_1.4fr_0.6fr] gap-3 items-center">
+                {/* Column 1: Item */}
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-lg border border-border/60 bg-muted/40 overflow-hidden flex items-center justify-center">
+                    {item?.image_urls?.[0] ? (
+                      <img
+                        src={item.image_urls[0]}
+                        alt={getItemTitle(contribution.custom_registry_item_id)}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <DollarSign className="w-4 h-4 text-emerald-600" />
+                    )}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {getItemTitle(contribution.custom_registry_item_id)}
-                  </p>
+                  <div className="min-w-0">
+                    <p className="text-[11px] text-muted-foreground">Item</p>
+                    <p className="text-sm font-semibold text-foreground truncate">
+                      {getItemTitle(contribution.custom_registry_item_id)}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="font-bold text-lg text-foreground">
-                    ${Number(contribution.amount).toFixed(2)}
-                  </p>
-                  {contribution.guest_covers_fee && (
-                    <p className="text-xs text-primary font-medium">+ 20 MXN fee</p>
+
+                {/* Column 2: Contribution Details */}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <User className="w-4 h-4 text-secondary" />
+                    <p className="text-sm font-semibold text-foreground truncate">
+                      {contribution.contributor_name || "Anonymous"}
+                    </p>
+                  </div>
+                  {contribution.contributor_email && (
+                    <p className="text-[11px] text-muted-foreground truncate mb-1">
+                      {contribution.contributor_email}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                    <span>{formatDate(contribution.created_at)}</span>
+                  </div>
+                  {contribution.message && (
+                    <div className="mt-2 p-2 bg-muted/50 rounded-md border-l-2 border-secondary">
+                      <div className="flex items-start gap-2">
+                        <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-600" />
+                        <p className="text-[11px] text-foreground italic line-clamp-2">"{contribution.message}"</p>
+                      </div>
+                    </div>
                   )}
                 </div>
-              </div>
 
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  <span>{formatDate(contribution.created_at)}</span>
-                </div>
-                {contribution.contributor_email && (
-                  <div className="flex items-center gap-1 truncate">
-                    <span className="flex-shrink-0">✉</span>
-                    <span className="truncate">{contribution.contributor_email}</span>
-                  </div>
-                )}
-              </div>
-
-              {contribution.message && (
-                <div className="mt-2 p-2 bg-background/50 rounded border border-border/30">
-                  <p className="text-xs flex items-start gap-1.5">
-                    <MessageSquare className="w-3 h-3 flex-shrink-0 mt-0.5 text-muted-foreground" />
-                    <span className="text-muted-foreground italic">"{contribution.message}"</span>
+                {/* Column 3: Amount + Status */}
+                <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-2">
+                  <p className="text-xl font-semibold text-secondary">
+                    ${Number(contribution.amount).toFixed(2)}
                   </p>
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border leading-none ${getStatusColor(
+                      contribution.payment_status
+                    )}`}
+                  >
+                    {contribution.payment_status.replace(/_/g, ' ')}
+                  </span>
                 </div>
-              )}
-            </div>
-          ))}
+              </div>
+            </Card>
+            )
+          })}
         </div>
       )}
-    </Card>
+    </>
   )
 }

@@ -20,11 +20,8 @@ export async function GET(request: Request) {
 
     const decodedWeddingId = decodeURIComponent(weddingId)
     
-    // Check premium access for guest management
-    const featureCheck = await requireFeature('invitations_panel_enabled', decodedWeddingId)
-    if (!featureCheck.allowed) {
-      return featureCheck.response
-    }
+    // No plan check on GET - free users can browse their guest list
+    // Write operations (POST/PUT/DELETE) are plan-gated
 
     const supabase = await createServerSupabaseClient()
     
@@ -203,23 +200,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // Inherit tags from group if assigned to one
-    let tagsToUse = body.tags || []
-    if (body.guestGroupId) {
-      const { data: group } = await supabase
-        .from('guest_groups')
-        .select('tags')
-        .eq('id', body.guestGroupId)
-        .single()
-      
-      if (group && group.tags) {
-        // Merge guest tags with group tags (group tags first, then unique guest tags)
-        const groupTags = group.tags || []
-        const guestOnlyTags = (body.tags || []).filter((t: string) => !groupTags.includes(t))
-        tagsToUse = [...groupTags, ...guestOnlyTags]
-      }
-    }
-
     const { data, error } = await supabase.from("guests").insert([
       {
         wedding_id: wedding.id,
@@ -227,7 +207,7 @@ export async function POST(request: Request) {
         name: body.name,
         phone_number: body.phoneNumber || null,
         email: body.email || null,
-        tags: tagsToUse,
+        tags: body.tags || [],
         confirmation_status: body.confirmationStatus || 'pending',
         dietary_restrictions: body.dietaryRestrictions || null,
         notes: body.notes || null,
@@ -261,10 +241,10 @@ export async function PUT(request: Request) {
     // Check current user auth
     const { data: { user } } = await supabase.auth.getUser()
 
-    // First, check if the guest exists and get its wedding_id and current status
+    // First, check if the guest exists and get its wedding_id and current data
     const { data: existingGuest, error: fetchError } = await supabase
       .from("guests")
-      .select("wedding_id, confirmation_status, name, guest_group_id")
+      .select("wedding_id, confirmation_status, name, guest_group_id, invited_by, is_traveling, traveling_from, travel_arrangement, ticket_attachment_url, no_ticket_reason, admin_set_travel")
       .eq("id", body.id)
       .single()
 
@@ -282,39 +262,34 @@ export async function PUT(request: Request) {
     if (weddingError) {
     }
 
-    // Inherit tags from new group if group assignment changed
-    let tagsToUse = body.tags || []
-    if (body.guestGroupId) {
-      const { data: group } = await supabase
-        .from('guest_groups')
-        .select('tags')
-        .eq('id', body.guestGroupId)
-        .single()
-      
-      if (group && group.tags) {
-        // Merge guest tags with group tags (group tags first, then unique guest tags)
-        const groupTags = group.tags || []
-        const guestOnlyTags = (body.tags || []).filter((t: string) => !groupTags.includes(t))
-        tagsToUse = [...groupTags, ...guestOnlyTags]
-      }
+    // Make invited_by additive - merge with existing values
+    let invitedByToUse = body.invitedBy || []
+    if (body.invitedBy && body.invitedBy.length > 0) {
+      const existingInvitedBy = existingGuest.invited_by || []
+      // Merge arrays and remove duplicates
+      invitedByToUse = [...new Set([...existingInvitedBy, ...body.invitedBy])]
+    } else if (!body.invitedBy) {
+      // If not provided in update, keep existing values
+      invitedByToUse = existingGuest.invited_by || []
     }
 
     const updateData: Record<string, any> = {
       name: body.name,
       phone_number: body.phoneNumber,
       email: body.email,
-      tags: tagsToUse,
+      tags: body.tags || [],
       guest_group_id: body.guestGroupId,
       confirmation_status: body.confirmationStatus,
       dietary_restrictions: body.dietaryRestrictions,
       notes: body.notes,
-      invited_by: body.invitedBy || [],
-      is_traveling: body.isTraveling || false,
-      traveling_from: body.travelingFrom || null,
-      travel_arrangement: body.travelArrangement || null,
-      ticket_attachment_url: body.ticketAttachmentUrl || null,
-      no_ticket_reason: body.noTicketReason || null,
-      admin_set_travel: body.adminSetTravel !== undefined ? body.adminSetTravel : (body.isTraveling === true),
+      invited_by: invitedByToUse,
+      is_traveling: body.isTraveling !== undefined ? body.isTraveling : existingGuest.is_traveling,
+      traveling_from: body.travelingFrom !== undefined ? body.travelingFrom : existingGuest.traveling_from,
+      travel_arrangement: body.travelArrangement !== undefined ? body.travelArrangement : existingGuest.travel_arrangement,
+      // Only update ticket_attachment_url if explicitly provided, otherwise preserve existing
+      ticket_attachment_url: body.ticketAttachmentUrl !== undefined ? body.ticketAttachmentUrl : existingGuest.ticket_attachment_url,
+      no_ticket_reason: body.noTicketReason !== undefined ? body.noTicketReason : existingGuest.no_ticket_reason,
+      admin_set_travel: body.adminSetTravel !== undefined ? body.adminSetTravel : existingGuest.admin_set_travel,
       updated_at: new Date().toISOString(),
     }
 

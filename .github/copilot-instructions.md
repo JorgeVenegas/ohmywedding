@@ -46,3 +46,12 @@ Do not run anything locally with sql to create stuff. Everything should be on. a
 Use shadcn components when possible and just customize them with the tailwind classes. Avoid creating new components when a shadcn one can be used with custom classes.If dependency issues, fix.
 
 When working on the wedding site, always ensure that the user experience is smooth and intuitive. Prioritize usability and accessibility in every design and development decision.
+
+When running the build, wait for it to complete before trying to run it again. The output of the build is similar to: 
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 5.9s
+  Running TypeScript  ...
+
+  Nothing in the db should be dependant on the wedding name id, since it can change. Always use the wedding id for db operations and only use the wedding name id for display purposes and urls.
