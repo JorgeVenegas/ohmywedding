@@ -165,7 +165,7 @@ export function InvitationsHeaderContent({
 
 export function InvitationsHeader(props: InvitationsHeaderProps) {
   return (
-    <div className="sticky top-[57px] z-20 bg-background/95 backdrop-blur border-b border-border/40">
+    <div className="sticky top-[52px] z-20 bg-background/95 backdrop-blur border-b border-border/40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <InvitationsHeaderContent {...props} />
       </div>

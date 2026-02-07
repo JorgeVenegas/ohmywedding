@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { LogOut, ArrowRight, Mail, Gift, Settings } from "lucide-react"
 import { Header } from "@/components/header"
-import { UpdateWeddingNameId } from "@/components/ui/update-wedding-name-id"
 import { ActivityFeed } from "@/components/ui/activity-feed"
 import { InvitationStatsCard } from "@/components/ui/invitation-stats-card"
 import { RegistryPaymentNotifications } from "@/components/ui/registry-payment-notifications"
@@ -63,7 +62,7 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       />
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="page-container">
         {/* Welcome Section */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-2">Welcome Back!</h1>
@@ -130,12 +129,6 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
 
           {/* Completed Payments */}
           <RegistryPaymentNotifications weddingId={decodedWeddingId} />
-        </div>
-
-        {/* Settings Section */}
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold text-foreground mb-6">Settings</h2>
-          <UpdateWeddingNameId currentWeddingNameId={decodedWeddingId} />
         </div>
       </div>
     </main>

@@ -22,8 +22,8 @@ export function Header({
 }: HeaderProps) {
   return (
     <div className="sticky top-0 z-50 border-b border-border/30 bg-background/80 backdrop-blur-lg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-        {/* Left: Logo + Back Button */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 relative flex items-center justify-between">
+        {/* Left: Back Button */}
         <div className="flex items-center gap-4">
           {showBackButton && backHref && (
             <Link href={backHref} className="flex items-center gap-2 hover:text-primary transition-colors">
@@ -31,7 +31,11 @@ export function Header({
               <span className="text-sm text-muted-foreground font-light">Back</span>
             </Link>
           )}
-          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+        </div>
+
+        {/* Center: Logo */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity pointer-events-auto">
             <Image
               src="/images/logos/OMW Logo Gold.png"
               alt="OhMyWedding Logo"
@@ -43,13 +47,6 @@ export function Header({
             {!hideLogoText && <span className="font-serif text-xl font-light text-foreground">OhMyWedding</span>}
           </Link>
         </div>
-
-        {/* Center: Title */}
-        {title && (
-          <div className="hidden sm:flex items-center gap-2 flex-1 justify-center">
-            <span className="font-serif text-lg font-light text-foreground">{title}</span>
-          </div>
-        )}
 
         {/* Right: Custom Content */}
         <div className="flex items-center gap-3">{rightContent}</div>

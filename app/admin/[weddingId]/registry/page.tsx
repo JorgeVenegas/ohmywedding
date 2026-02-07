@@ -400,11 +400,13 @@ export default function RegistryPage({ params }: RegistryPageProps) {
         title="Registry Manager"
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header with Title and Stats */}
-        {!featuresLoading && (
-          <div className="mb-6">
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
+      {/* Sticky Toolbar Section */}
+      {!featuresLoading && (
+        <div className="sticky top-[57px] z-20 bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Header with Title and Stats */}
+            <div className="py-4">
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Custom Registry</h1>
                 <p className="text-sm text-muted-foreground">
@@ -465,11 +467,12 @@ export default function RegistryPage({ params }: RegistryPageProps) {
                   </>
                 )}
               </div>
+              </div>
             </div>
-            
+
             {/* View Switcher and Filters Row */}
-            <div className="sticky top-[72px] z-40 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 bg-background/95 supports-[backdrop-filter]:bg-background/75 backdrop-blur border-b border-border/40">
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 py-3">
+            <div className="border-t border-border/30 py-3">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
                 <div className="flex items-center gap-3 flex-wrap">
                 {/* View Switcher */}
                 <ViewSwitcher
@@ -607,8 +610,10 @@ export default function RegistryPage({ params }: RegistryPageProps) {
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
         {/* Rest of content */}
         {!featuresLoading && (
           <>

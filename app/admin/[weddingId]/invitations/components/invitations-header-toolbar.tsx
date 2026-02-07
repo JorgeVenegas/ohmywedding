@@ -15,17 +15,15 @@ export function InvitationsHeaderToolbar({
   toolbarProps,
 }: InvitationsHeaderToolbarProps) {
   return (
-    <div className="sticky top-[57px] z-20 bg-background/95 backdrop-blur">
-      {/* Header Section */}
-      <div className="border-b border-border/40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div className="sticky top-[57px] z-20 bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header Section */}
+        <div className="py-4">
           <InvitationsHeaderContent {...headerProps} />
         </div>
-      </div>
 
-      {/* Toolbar Section */}
-      <div className="py-3 border-b border-border/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Toolbar Section */}
+        <div className="border-t border-border/30 py-3">
           <InvitationsToolbarContent {...toolbarProps} />
         </div>
       </div>

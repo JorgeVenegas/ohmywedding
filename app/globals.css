@@ -108,6 +108,12 @@
 .delay-1100 { animation-delay: 1100ms; }
 .delay-1300 { animation-delay: 1300ms; }
 
+@layer components {
+  .page-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8;
+  }
+}
+
 /* Infinite scroll animation for templates */
 @keyframes scroll-left {
   0% {

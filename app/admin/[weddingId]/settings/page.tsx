@@ -3,6 +3,7 @@
 import Link from "next/link"
 import React, { useState, useEffect, use } from "react"
 import { Header } from "@/components/header"
+import { UpdateWeddingNameId } from "@/components/ui/update-wedding-name-id"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
@@ -164,7 +165,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="page-container">
           <div className="flex items-center justify-center h-96">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
@@ -177,8 +178,8 @@ export default function SettingsPage({ params }: SettingsPageProps) {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="page-container">
+        <div className="mb-12 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
             <p className="text-muted-foreground">
@@ -617,7 +618,12 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                     </p>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-6">
+                    <div className="rounded-lg border border-border/60 bg-background/60 p-4">
+                      <UpdateWeddingNameId currentWeddingNameId={decodeURIComponent(weddingId)} />
+                    </div>
+
+                    <div className="space-y-4">
                     <div>
                       <Label className="text-base font-medium">Timezone</Label>
                       <p className="text-sm text-muted-foreground mt-1 mb-3">
@@ -644,6 +650,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                         <option value="en">English</option>
                         <option value="es">Español</option>
                       </select>
+                    </div>
                     </div>
                   </div>
                 </div>

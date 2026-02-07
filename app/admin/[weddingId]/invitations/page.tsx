@@ -2695,178 +2695,180 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       />
 
       <InvitationsHeaderToolbar
-        headerProps={{
-          guestGroupsCount: guestGroups.length,
-          filteredGroupsCount: filteredGroups.length,
-          displayedGuestCount: displayedGuestCount,
-          totalGuests: totalGuests,
-          confirmedGuests: confirmedGuests,
-          pendingGuests: pendingGuests,
-          declinedGuests: declinedGuests,
-          hasActiveFilters: hasActiveFilters,
-          addDropdownOpen: addDropdownOpen,
-          setAddDropdownOpen: setAddDropdownOpen,
-          onAddGuest: () => {
-            // Check if at guest limit
-            if (guestLimit !== null && totalGuests >= guestLimit) {
-              showUpgrade('guest_limit')
+          headerProps={{
+            guestGroupsCount: guestGroups.length,
+            filteredGroupsCount: filteredGroups.length,
+            displayedGuestCount: displayedGuestCount,
+            totalGuests: totalGuests,
+            confirmedGuests: confirmedGuests,
+            pendingGuests: pendingGuests,
+            declinedGuests: declinedGuests,
+            hasActiveFilters: hasActiveFilters,
+            addDropdownOpen: addDropdownOpen,
+            setAddDropdownOpen: setAddDropdownOpen,
+            onAddGuest: () => {
+              // Check if at guest limit
+              if (guestLimit !== null && totalGuests >= guestLimit) {
+                showUpgrade('guest_limit')
+                setAddDropdownOpen(false)
+                return
+              }
+              setSelectedGroupId(null)
+              setShowAddGuestModal(true)
               setAddDropdownOpen(false)
-              return
-            }
-            setSelectedGroupId(null)
-            setShowAddGuestModal(true)
-            setAddDropdownOpen(false)
-          },
-          onAddGroup: () => {
-            // Check if at group limit (exclude draft groups from count)
-            const nonDraftGroupCount = guestGroups.filter(g => !g.is_draft).length
-            if (groupLimit !== null && nonDraftGroupCount >= groupLimit) {
-              showUpgrade('group_limit')
+            },
+            onAddGroup: () => {
+              // Check if at group limit (exclude draft groups from count)
+              const nonDraftGroupCount = guestGroups.filter(g => !g.is_draft).length
+              if (groupLimit !== null && nonDraftGroupCount >= groupLimit) {
+                showUpgrade('group_limit')
+                setAddDropdownOpen(false)
+                return
+              }
+              setShowAddGroupModal(true)
               setAddDropdownOpen(false)
-              return
-            }
-            setShowAddGroupModal(true)
-            setAddDropdownOpen(false)
-          },
-          onImportCsv: () => {
-            setAddDropdownOpen(false)
-            setTimeout(() => {
-              document.getElementById('csv-import-input')?.click()
-            }, 100)
-          },
-          onExportCsv: handleExportCsv,
-          onOpenInviteSettings: () => {
-            // Free users can open and edit but save is gated inside the modal
-            setShowInviteTemplateModal(true)
-          },
-          onOpenSendInvites: () => {
-            // Check if user has premium access
-            if (!canAccessFeature('invitations_panel_enabled')) {
-              showUpgrade('send_invites')
-              return
-            }
-            setShowSendInvitesModal(true)
-          },
-          onCsvFileSelect: handleCsvFileSelect,
-        }}
-        toolbarProps={{
-          viewMode: viewMode,
-          setViewMode: setViewMode,
-          searchQuery: searchQuery,
-          setSearchQuery: setSearchQuery,
-          statusFilter: statusFilter,
-          setStatusFilter: setStatusFilter,
-          tagFilter: tagFilter,
-          setTagFilter: setTagFilter,
-          groupFilter: groupFilter,
-          setGroupFilter: setGroupFilter,
-          invitedByFilter: invitedByFilter,
-          setInvitedByFilter: setInvitedByFilter,
-          openedFilter: openedFilter,
-          setOpenedFilter: setOpenedFilter,
-          allTags: allTags,
-          guestGroups: guestGroups,
-          partnerOptions: partnerOptions,
-          filteredGroupsCount: filteredGroups.length,
-          totalGroupsCount: guestGroups.length,
-          filteredGuestsCount: filteredGuests.length,
-          totalGuestsCount: totalGuests,
-          visibleColumns: visibleColumns,
-          toggleColumn: toggleColumn,
-          showColumnMenu: showColumnMenu,
-          setShowColumnMenu: setShowColumnMenu,
-          selectedGuestIds: selectedGuestIds,
-          allGuests: allGuests,
-          onBulkStatusUpdate: handleBulkStatusUpdate,
-          onBulkDelete: handleBulkDelete,
-          onAssignGroup: () => setShowAssignGroupModal(true),
-          clearSelection: clearSelection,
-          setGroupTravelForm: setGroupTravelForm,
-          setShowGroupTravelDialog: setShowGroupTravelDialog,
-          setBulkInvitedBy: setBulkInvitedBy,
-          setShowBulkInvitedByModal: setShowBulkInvitedByModal,
-        }}
-      />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-        <InvitationsChartsSection
-          weddingId={weddingId}
-          chartsExpanded={chartsExpanded}
-          setChartsExpanded={setChartsExpanded}
-          statusByInvitedByData={statusByInvitedByData}
-          tagsByInvitedByData={tagsByInvitedByData}
-          timelineLoading={timelineLoading}
-          timelineData={timelineData}
-          timelineRange={timelineRange}
-          setTimelineRange={setTimelineRange}
-          timelineGroupFilter={timelineGroupFilter}
-          setTimelineGroupFilter={setTimelineGroupFilter}
-          guestGroups={guestGroups}
+            },
+            onImportCsv: () => {
+              setAddDropdownOpen(false)
+              setTimeout(() => {
+                document.getElementById('csv-import-input')?.click()
+              }, 100)
+            },
+            onExportCsv: handleExportCsv,
+            onOpenInviteSettings: () => {
+              // Free users can open and edit but save is gated inside the modal
+              setShowInviteTemplateModal(true)
+            },
+            onOpenSendInvites: () => {
+              // Check if user has premium access
+              if (!canAccessFeature('invitations_panel_enabled')) {
+                showUpgrade('send_invites')
+                return
+              }
+              setShowSendInvitesModal(true)
+            },
+            onCsvFileSelect: handleCsvFileSelect,
+          }}
+          toolbarProps={{
+            viewMode: viewMode,
+            setViewMode: setViewMode,
+            searchQuery: searchQuery,
+            setSearchQuery: setSearchQuery,
+            statusFilter: statusFilter,
+            setStatusFilter: setStatusFilter,
+            tagFilter: tagFilter,
+            setTagFilter: setTagFilter,
+            groupFilter: groupFilter,
+            setGroupFilter: setGroupFilter,
+            invitedByFilter: invitedByFilter,
+            setInvitedByFilter: setInvitedByFilter,
+            openedFilter: openedFilter,
+            setOpenedFilter: setOpenedFilter,
+            allTags: allTags,
+            guestGroups: guestGroups,
+            partnerOptions: partnerOptions,
+            filteredGroupsCount: filteredGroups.length,
+            totalGroupsCount: guestGroups.length,
+            filteredGuestsCount: filteredGuests.length,
+            totalGuestsCount: totalGuests,
+            visibleColumns: visibleColumns,
+            toggleColumn: toggleColumn,
+            showColumnMenu: showColumnMenu,
+            setShowColumnMenu: setShowColumnMenu,
+            selectedGuestIds: selectedGuestIds,
+            allGuests: allGuests,
+            onBulkStatusUpdate: handleBulkStatusUpdate,
+            onBulkDelete: handleBulkDelete,
+            onAssignGroup: () => setShowAssignGroupModal(true),
+            clearSelection: clearSelection,
+            setGroupTravelForm: setGroupTravelForm,
+            setShowGroupTravelDialog: setShowGroupTravelDialog,
+            setBulkInvitedBy: setBulkInvitedBy,
+            setShowBulkInvitedByModal: setShowBulkInvitedByModal,
+          }}
         />
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-        {/* Flat View - All Guests Table */}
-        {viewMode === 'flat' && (
-          <GuestsTableFlat
-            filteredGuests={filteredGuests}
-            totalGuests={totalGuests}
-            selectedGuestIds={selectedGuestIds}
-            toggleSelectAll={toggleSelectAll}
-            toggleGuestSelection={toggleGuestSelection}
-            visibleColumns={visibleColumns}
-            sortColumn={sortColumn}
-            sortDirection={sortDirection}
-            handleSort={handleSort}
-            handleUpdateGuestStatus={handleUpdateGuestStatus}
-            openEditGuest={openEditGuest}
-            handleDeleteGuest={handleDeleteGuest}
-            handleSendGuestInvite={handleSendGuestInvite}
-            updateGuestInvitationStatus={updateGuestInvitationStatus}
-            partnerNames={partnerNames}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        <div className="mt-6">
+          <InvitationsChartsSection
+            weddingId={weddingId}
+            chartsExpanded={chartsExpanded}
+            setChartsExpanded={setChartsExpanded}
+            statusByInvitedByData={statusByInvitedByData}
+            tagsByInvitedByData={tagsByInvitedByData}
+            timelineLoading={timelineLoading}
+            timelineData={timelineData}
+            timelineRange={timelineRange}
+            setTimelineRange={setTimelineRange}
+            timelineGroupFilter={timelineGroupFilter}
+            setTimelineGroupFilter={setTimelineGroupFilter}
+            guestGroups={guestGroups}
           />
-        )}
+        </div>
 
-        {/* Groups Table View with Expandable Rows */}
-        {viewMode === 'groups' && (
-          <GuestsTableGroups
-            filteredGroups={filteredGroups}
-            ungroupedGuests={normalizedUngroupedGuests}
-            guestGroupsCount={guestGroups.length}
-            expandedGroups={expandedGroups}
-            toggleGroupExpansion={toggleGroupExpansion}
-            showUngroupedExpanded={showUngroupedExpanded}
-            setShowUngroupedExpanded={setShowUngroupedExpanded}
-            selectedGuestIds={selectedGuestIds}
-            toggleSelectGroup={toggleSelectGroup}
-            toggleGuestSelection={toggleGuestSelection}
-            isGroupFullySelected={isGroupFullySelected}
-            isGroupPartiallySelected={isGroupPartiallySelected}
-            visibleColumns={visibleColumns}
-            sortColumn={sortColumn}
-            sortDirection={sortDirection}
-            handleSort={handleSort}
-            handleUpdateGuestStatus={handleUpdateGuestStatus}
-            handleGroupStatusUpdate={handleGroupStatusUpdate}
-            openEditGuest={openEditGuest}
-            openEditGroup={openEditGroup}
-            openAddGuestToGroup={openAddGuestToGroup}
-            handleDeleteGuest={handleDeleteGuest}
-            handleDeleteGroup={handleDeleteGroup}
-            handleSendGuestInvite={handleSendGuestInvite}
-            handleSendGroupInvite={handleSendGroupInvite}
-            handleCopyRSVPLink={handleCopyRSVPLink}
-            updateGuestInvitationStatus={updateGuestInvitationStatus}
-            updateGroupInvitationStatus={updateGroupInvitationStatus}
-            openGroupTravelDialog={openGroupTravelDialog}
-            setSelectedGroupForMessage={setSelectedGroupForMessage}
-            setShowMessageModal={setShowMessageModal}
-            getInvitationUrl={getInvitationUrl}
-            navigateToGroupDetails={navigateToGroupDetails}
-            partnerNames={partnerNames}
-            planType={planType}
-          />
-        )}
+        <div className="mt-6">
+          {/* Flat View - All Guests Table */}
+          {viewMode === 'flat' && (
+            <GuestsTableFlat
+              filteredGuests={filteredGuests}
+              totalGuests={totalGuests}
+              selectedGuestIds={selectedGuestIds}
+              toggleSelectAll={toggleSelectAll}
+              toggleGuestSelection={toggleGuestSelection}
+              visibleColumns={visibleColumns}
+              sortColumn={sortColumn}
+              sortDirection={sortDirection}
+              handleSort={handleSort}
+              handleUpdateGuestStatus={handleUpdateGuestStatus}
+              openEditGuest={openEditGuest}
+              handleDeleteGuest={handleDeleteGuest}
+              handleSendGuestInvite={handleSendGuestInvite}
+              updateGuestInvitationStatus={updateGuestInvitationStatus}
+              partnerNames={partnerNames}
+            />
+          )}
+
+          {/* Groups Table View with Expandable Rows */}
+          {viewMode === 'groups' && (
+            <GuestsTableGroups
+              filteredGroups={filteredGroups}
+              ungroupedGuests={normalizedUngroupedGuests}
+              guestGroupsCount={guestGroups.length}
+              expandedGroups={expandedGroups}
+              toggleGroupExpansion={toggleGroupExpansion}
+              showUngroupedExpanded={showUngroupedExpanded}
+              setShowUngroupedExpanded={setShowUngroupedExpanded}
+              selectedGuestIds={selectedGuestIds}
+              toggleSelectGroup={toggleSelectGroup}
+              toggleGuestSelection={toggleGuestSelection}
+              isGroupFullySelected={isGroupFullySelected}
+              isGroupPartiallySelected={isGroupPartiallySelected}
+              visibleColumns={visibleColumns}
+              sortColumn={sortColumn}
+              sortDirection={sortDirection}
+              handleSort={handleSort}
+              handleUpdateGuestStatus={handleUpdateGuestStatus}
+              handleGroupStatusUpdate={handleGroupStatusUpdate}
+              openEditGuest={openEditGuest}
+              openEditGroup={openEditGroup}
+              openAddGuestToGroup={openAddGuestToGroup}
+              handleDeleteGuest={handleDeleteGuest}
+              handleDeleteGroup={handleDeleteGroup}
+              handleSendGuestInvite={handleSendGuestInvite}
+              handleSendGroupInvite={handleSendGroupInvite}
+              handleCopyRSVPLink={handleCopyRSVPLink}
+              updateGuestInvitationStatus={updateGuestInvitationStatus}
+              updateGroupInvitationStatus={updateGroupInvitationStatus}
+              openGroupTravelDialog={openGroupTravelDialog}
+              setSelectedGroupForMessage={setSelectedGroupForMessage}
+              setShowMessageModal={setShowMessageModal}
+              getInvitationUrl={getInvitationUrl}
+              navigateToGroupDetails={navigateToGroupDetails}
+              partnerNames={partnerNames}
+              planType={planType}
+            />
+          )}
+        </div>
       </div>
       {/* Add/Edit Group Modal */}
       <AddEditGroupModal

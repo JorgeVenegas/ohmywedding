@@ -24,7 +24,7 @@ export default function GuestsPage({ params }: GuestsPageProps) {
         backHref={getCleanAdminUrl(weddingId, 'dashboard')}
         title="Guest List"
       />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="page-container">
         <div className="text-center">
           <p className="text-muted-foreground">Redirecting to guest management...</p>
         </div>
