@@ -69,7 +69,7 @@ export function useWeddingFeatures(weddingId: string | undefined): WeddingFeatur
 
         // Get wedding plan
         const { data: weddingFeatures, error: weddingError } = await supabase
-          .from('wedding_features')
+          .from('wedding_subscriptions')
           .select('plan')
           .eq('wedding_id', actualWeddingId)
           .single()

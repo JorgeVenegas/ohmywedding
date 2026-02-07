@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     
     // Get current plan
     const { data: currentFeatures } = await supabase
-      .from('wedding_features')
+      .from('wedding_subscriptions')
       .select('plan')
       .eq('wedding_id', weddingId)
       .single()
@@ -72,18 +72,12 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Update or insert wedding features with new plan
+    // Update wedding subscription with new plan
     const { error: updateError } = await supabase
-      .from('wedding_features')
+      .from('wedding_subscriptions')
       .upsert({
         wedding_id: weddingId,
         plan: newPlan,
-        // Set features based on plan
-        rsvp_enabled: newPlan !== 'free',
-        invitations_panel_enabled: newPlan !== 'free',
-        gallery_enabled: true,
-        registry_enabled: true,
-        schedule_enabled: true,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'wedding_id'

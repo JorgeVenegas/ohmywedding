@@ -39,9 +39,9 @@ export function useWeddingFeaturesPublic(weddingNameId: string) {
           throw new Error(`Failed to find wedding: ${weddingError.message}`)
         }
 
-        // Get wedding plan from wedding_features
+        // Get wedding plan from wedding_subscriptions
         const { data: weddingFeatures, error: wfError } = await supabase
-          .from('wedding_features')
+          .from('wedding_subscriptions')
           .select('plan')
           .eq('wedding_id', wedding.id)
           .single()

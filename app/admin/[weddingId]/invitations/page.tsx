@@ -103,7 +103,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const router = useRouter()
 
   // Premium feature check
-  const { canAccessFeature, loading: subscriptionLoading } = useSubscriptionContext()
+  const { canAccessFeature, loading: subscriptionLoading, planType } = useSubscriptionContext()
 
   const [guestGroups, setGuestGroups] = useState<GuestGroup[]>([])
   const [ungroupedGuests, setUngroupedGuests] = useState<Guest[]>([])
@@ -332,7 +332,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   // Form states
   const [groupForm, setGroupForm] = useState({
     name: "",
-    phoneNumber: "",
     notes: "",
   })
 
@@ -648,7 +647,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           body: JSON.stringify({
             id: draftGroupId,
             name: groupForm.name,
-            phoneNumber: groupForm.phoneNumber || null,
             notes: groupForm.notes || null,
           }),
         })
@@ -680,7 +678,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         body: JSON.stringify({
           weddingId: weddingId,
           name: groupForm.name,
-          phoneNumber: groupForm.phoneNumber || null,
           notes: groupForm.notes || null,
         }),
       })
@@ -725,7 +722,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         body: JSON.stringify({
           id: editingGroup.id,
           name: groupForm.name,
-          phoneNumber: groupForm.phoneNumber || null,
           notes: groupForm.notes || null,
         }),
       })
@@ -1030,7 +1026,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   }
 
   const resetGroupForm = () => {
-    setGroupForm({ name: "", phoneNumber: "", notes: "" })
+    setGroupForm({ name: "", notes: "" })
     setGuestsInGroupModal([])
     setDraftGroupId(null)
     setTempGuestForm({
@@ -1066,7 +1062,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const openEditGroup = (group: GuestGroup) => {
     setGroupForm({
       name: group.name || "",
-      phoneNumber: group.phone_number || "",
       notes: group.notes || "",
     })
     setEditingGroup(group)
@@ -1721,6 +1716,25 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       return
     }
 
+    // Group-level send invites is only available for Deluxe plans
+    if (planType !== 'deluxe') {
+      showUpgrade('send_invites')
+      return
+    }
+
+    // Get guests with phone numbers in this group
+    const guestsWithPhone = group.guests.filter(g => g.phone_number)
+
+    if (guestsWithPhone.length === 0) {
+      setNotification({
+        isOpen: true,
+        type: 'error',
+        title: 'No Phone Numbers',
+        message: `No guests in ${group.name} have phone numbers set`
+      })
+      return
+    }
+
     // Generate personalized message using template
     const personalizedMessage = replaceTemplateVariables(
       inviteTemplate,
@@ -1731,9 +1745,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       weddingDetails
     )
 
-    // Open WhatsApp with personalized message
-    if (group.phone_number) {
-      let phoneNumber = group.phone_number.replace(/[^0-9]/g, '')
+    // Open WhatsApp with each guest that has a phone number
+    for (const guest of guestsWithPhone) {
+      let phoneNumber = guest.phone_number!.replace(/[^0-9]/g, '')
       // Add +52 country code if not present
       if (!phoneNumber.startsWith('52')) {
         phoneNumber = '52' + phoneNumber
@@ -1742,23 +1756,22 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`
       window.open(whatsappUrl, '_blank')
 
-      // Mark group as sent
-      await updateGroupInvitationStatus(group.id, true)
-
-      setNotification({
-        isOpen: true,
-        type: 'success',
-        title: 'WhatsApp Opened',
-        message: `Opening WhatsApp to send invitation to ${group.name}`
-      })
-    } else {
-      setNotification({
-        isOpen: true,
-        type: 'error',
-        title: 'No Phone Number',
-        message: `${group.name} does not have a phone number set`
-      })
+      // Mark guest as sent
+      await updateGuestInvitationStatus(guest.id, true)
     }
+
+    // Check if all guests in group are now sent
+    const allGuestsSent = group.guests.every(g => !g.phone_number || g.invitation_sent)
+    if (allGuestsSent && !group.invitation_sent) {
+      await updateGroupInvitationStatus(group.id, true)
+    }
+
+    setNotification({
+      isOpen: true,
+      type: 'success',
+      title: 'WhatsApp Opened',
+      message: `Opening WhatsApp to send invitations to ${guestsWithPhone.length} guest${guestsWithPhone.length !== 1 ? 's' : ''} in ${group.name}`
+    })
   }
 
   const handleCopyRSVPLink = (group: GuestGroup) => {
@@ -1803,8 +1816,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     )
 
     // Open WhatsApp with personalized message
-    // Try guest phone first, then group phone
-    const phoneNumber = guest.phone_number || guestGroup?.phone_number
+    const phoneNumber = guest.phone_number
 
     if (phoneNumber) {
       let cleanPhone = phoneNumber.replace(/[^0-9]/g, '')
@@ -1841,6 +1853,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   }
 
   const handleSendAllInvites = () => {
+    // Send all invites is only for Deluxe plans
+    if (planType !== 'deluxe') {
+      setShowSendInvitesModal(false)
+      showUpgrade('send_invites')
+      return
+    }
+
     // TODO: Implement actual sending logic
     const notSentCount = allGuests.filter(g => !g.invitation_sent).length
     setShowSendInvitesModal(false)
@@ -2845,6 +2864,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             getInvitationUrl={getInvitationUrl}
             navigateToGroupDetails={navigateToGroupDetails}
             partnerNames={partnerNames}
+            planType={planType}
           />
         )}
       </div>

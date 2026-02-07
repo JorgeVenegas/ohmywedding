@@ -27,7 +27,6 @@ interface GuestInGroupModal {
 
 interface GroupForm {
   name: string
-  phoneNumber: string
   notes: string
 }
 
@@ -101,34 +100,6 @@ export function AddEditGroupModal({
               onChange={(e) => setGroupForm({ ...groupForm, name: e.target.value })}
               placeholder="e.g., The Smith Family"
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Phone Number
-            </label>
-            {editingGroup && editingGroup.guests && editingGroup.guests.some((g: Guest) => g.phone_number) ? (
-              <select
-                value={groupForm.phoneNumber}
-                onChange={(e) => setGroupForm({ ...groupForm, phoneNumber: e.target.value })}
-                className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
-              >
-                <option value="">Select from guest phones or leave empty</option>
-                {editingGroup.guests
-                  .filter((g: Guest) => g.phone_number)
-                  .map((g: Guest) => (
-                    <option key={g.id} value={g.phone_number || ""}>
-                      {g.name}: {g.phone_number}
-                    </option>
-                  ))}
-              </select>
-            ) : (
-              <Input
-                value={groupForm.phoneNumber}
-                onChange={(e) => setGroupForm({ ...groupForm, phoneNumber: e.target.value })}
-                placeholder="e.g., +1 555 123 4567"
-              />
-            )}
           </div>
 
           <div>

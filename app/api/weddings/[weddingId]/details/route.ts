@@ -5,20 +5,20 @@ import { requireFeature } from '@/lib/subscription-api'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-// GET /api/weddings/[weddingNameId]/details
+// GET /api/weddings/[weddingId]/details
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ weddingNameId: string }> }
+  { params }: { params: Promise<{ weddingId: string }> }
 ) {
   try {
     const supabase = await createServerSupabaseClient()
-    const { weddingNameId: rawWeddingNameId } = await params
+    const { weddingId: rawWeddingId } = await params
     
-    // Decode the weddingNameId in case it's URL encoded
-    const weddingNameId = decodeURIComponent(rawWeddingNameId)
+    // Decode the weddingId in case it's URL encoded
+    const weddingId = decodeURIComponent(rawWeddingId)
 
     // Check if it's a UUID or wedding_name_id
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(weddingNameId)
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(weddingId)
     
     let query = supabase
       .from('weddings')
@@ -40,9 +40,9 @@ export async function GET(
     
     // Query by id if UUID, otherwise by wedding_name_id
     if (isUuid) {
-      query = query.eq('id', weddingNameId)
+      query = query.eq('id', weddingId)
     } else {
-      query = query.eq('wedding_name_id', weddingNameId)
+      query = query.eq('wedding_name_id', weddingId)
     }
     
     const { data: wedding, error } = await query.single()
@@ -58,21 +58,21 @@ export async function GET(
   }
 }
 
-// PATCH /api/weddings/[weddingNameId]/details - For updating page_config
+// PATCH /api/weddings/[weddingId]/details - For updating page_config
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ weddingNameId: string }> }
+  { params }: { params: Promise<{ weddingId: string }> }
 ) {
   try {
     const supabase = await createServerSupabaseClient()
-    const { weddingNameId: rawWeddingNameId } = await params
-    const weddingNameId = decodeURIComponent(rawWeddingNameId)
+    const { weddingId: rawWeddingId } = await params
+    const weddingId = decodeURIComponent(rawWeddingId)
     
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
     
     // Check if it's a UUID or wedding_name_id
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(weddingNameId)
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(weddingId)
     
     // First, check if the wedding exists
     let existingQuery = supabase
@@ -80,9 +80,9 @@ export async function PATCH(
       .select('id, owner_id, collaborator_emails, page_config')
     
     if (isUuid) {
-      existingQuery = existingQuery.eq('id', weddingNameId)
+      existingQuery = existingQuery.eq('id', weddingId)
     } else {
-      existingQuery = existingQuery.eq('wedding_name_id', weddingNameId)
+      existingQuery = existingQuery.eq('wedding_name_id', weddingId)
     }
     
     const { data: existingWedding, error: findError } = await existingQuery.single()
@@ -124,7 +124,7 @@ export async function PATCH(
 
     // Gate invitation template saves to premium plans (defense-in-depth)
     if (page_config.invitationTemplate !== undefined && !isSuperuser) {
-      const featureCheck = await requireFeature('invitations_panel_enabled', weddingNameId)
+      const featureCheck = await requireFeature('invitations_panel_enabled', weddingId)
       if (!featureCheck.allowed) {
         return NextResponse.json(
           { error: 'Saving invitation templates requires a Premium subscription', feature: 'invite_settings', upgrade_url: '/upgrade' },
@@ -148,9 +148,9 @@ export async function PATCH(
       })
     
     if (isUuid) {
-      updateQuery = updateQuery.eq('id', weddingNameId)
+      updateQuery = updateQuery.eq('id', weddingId)
     } else {
-      updateQuery = updateQuery.eq('wedding_name_id', weddingNameId)
+      updateQuery = updateQuery.eq('wedding_name_id', weddingId)
     }
 
     const { data: updatedWedding, error } = await updateQuery
@@ -171,14 +171,14 @@ export async function PATCH(
   }
 }
 
-// PUT /api/weddings/[weddingNameId]/details
+// PUT /api/weddings/[weddingId]/details
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ weddingNameId: string }> }
+  { params }: { params: Promise<{ weddingId: string }> }
 ) {
   try {
     const supabase = await createServerSupabaseClient()
-    const { weddingNameId } = await params
+    const { weddingId } = await params
     
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
@@ -187,7 +187,7 @@ export async function PUT(
     const { data: existingWedding, error: findError } = await supabase
       .from('weddings')
       .select('id, owner_id')
-      .eq('wedding_name_id', weddingNameId)
+      .eq('wedding_name_id', weddingId)
       .single()
     
     if (findError || !existingWedding) {
@@ -207,7 +207,7 @@ export async function PUT(
       const { data: weddingWithCollabs } = await supabase
         .from('weddings')
         .select('collaborator_emails')
-        .eq('wedding_name_id', weddingNameId)
+        .eq('wedding_name_id', weddingId)
         .single()
       
       if (weddingWithCollabs?.collaborator_emails && user.email) {
@@ -268,7 +268,7 @@ export async function PUT(
     const { data: updatedWedding, error } = await supabase
       .from('weddings')
       .update(updateData)
-      .eq('wedding_name_id', weddingNameId)
+      .eq('wedding_name_id', weddingId)
       .select()
       .single()
 

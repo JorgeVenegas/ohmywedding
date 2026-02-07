@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     // Get wedding plan to determine activity limits
     const { data: weddingFeatures } = await adminClient
-      .from('wedding_features')
+      .from('wedding_subscriptions')
       .select('plan')
       .eq('wedding_id', wedding.id)
       .single()

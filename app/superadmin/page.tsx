@@ -15,7 +15,7 @@ async function getStats() {
   
   // Get weddings by plan
   const { data: planStats } = await supabase
-    .from('wedding_features')
+    .from('wedding_subscriptions')
     .select('plan')
   
   const planCounts = {

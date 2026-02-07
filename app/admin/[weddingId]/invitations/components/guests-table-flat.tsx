@@ -300,7 +300,7 @@ export function GuestsTableFlat({
                           <MailCheck className="w-3.5 h-3.5" />
                           Sent
                         </button>
-                      ) : (
+                      ) : guest.phone_number ? (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -310,7 +310,7 @@ export function GuestsTableFlat({
                           <Send className="w-3 h-3 mr-1" />
                           Send
                         </Button>
-                      )}
+                      ) : null}
                     </td>
                   )}
                   {visibleColumns.travelInfo && (

@@ -4,14 +4,14 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-// GET /api/weddings/[weddingNameId]/collaborators - List collaborators
+// GET /api/weddings/[weddingId]/collaborators - List collaborators
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ weddingNameId: string }> }
+  { params }: { params: Promise<{ weddingId: string }> }
 ) {
   try {
     const supabase = await createServerSupabaseClient()
-    const { weddingNameId } = await params
+    const { weddingId } = await params
 
     // Try to get user from cookies first
     let { data: { user } } = await supabase.auth.getUser()
@@ -36,7 +36,7 @@ export async function GET(
     const { data: weddingData, error } = await supabase
       .from('weddings')
       .select('owner_id')
-      .eq('wedding_name_id', weddingNameId)
+      .eq('wedding_name_id', weddingId)
       .single()
 
     if (error || !weddingData) {
@@ -50,7 +50,7 @@ export async function GET(
       const { data: weddingWithCollabs } = await supabase
         .from('weddings')
         .select('collaborator_emails')
-        .eq('wedding_name_id', weddingNameId)
+        .eq('wedding_name_id', weddingId)
         .single()
       
       if (weddingWithCollabs?.collaborator_emails) {
@@ -91,14 +91,14 @@ export async function GET(
   }
 }
 
-// POST /api/weddings/[weddingNameId]/collaborators - Add collaborator email
+// POST /api/weddings/[weddingId]/collaborators - Add collaborator email
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ weddingNameId: string }> }
+  { params }: { params: Promise<{ weddingId: string }> }
 ) {
   try {
     const supabase = await createServerSupabaseClient()
-    const { weddingNameId } = await params
+    const { weddingId } = await params
 
     // Try to get user from cookies first
     let { data: { user } } = await supabase.auth.getUser()
@@ -121,7 +121,7 @@ export async function POST(
     const { data: weddingData, error: findError } = await supabase
       .from('weddings')
       .select('owner_id')
-      .eq('wedding_name_id', weddingNameId)
+      .eq('wedding_name_id', weddingId)
       .single()
 
     if (findError || !weddingData) {
@@ -150,7 +150,7 @@ export async function POST(
       const { data: weddingWithCollabs } = await supabase
         .from('weddings')
         .select('collaborator_emails')
-        .eq('wedding_name_id', weddingNameId)
+        .eq('wedding_name_id', weddingId)
         .single()
       
       if (weddingWithCollabs?.collaborator_emails) {
@@ -190,7 +190,7 @@ export async function POST(
         collaborator_emails: updatedEmails,
         updated_at: new Date().toISOString()
       })
-      .eq('wedding_name_id', weddingNameId)
+      .eq('wedding_name_id', weddingId)
 
     if (updateError) {
       return NextResponse.json({ error: 'Failed to add collaborator' }, { status: 500 })
@@ -206,14 +206,14 @@ export async function POST(
   }
 }
 
-// DELETE /api/weddings/[weddingNameId]/collaborators - Remove collaborator email
+// DELETE /api/weddings/[weddingId]/collaborators - Remove collaborator email
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ weddingNameId: string }> }
+  { params }: { params: Promise<{ weddingId: string }> }
 ) {
   try {
     const supabase = await createServerSupabaseClient()
-    const { weddingNameId } = await params
+    const { weddingId } = await params
 
     // Try to get user from cookies first
     let { data: { user } } = await supabase.auth.getUser()
@@ -245,7 +245,7 @@ export async function DELETE(
     const { data: weddingData, error: findError } = await supabase
       .from('weddings')
       .select('owner_id')
-      .eq('wedding_name_id', weddingNameId)
+      .eq('wedding_name_id', weddingId)
       .single()
 
     if (findError || !weddingData) {
@@ -278,7 +278,7 @@ export async function DELETE(
       const { data: weddingWithCollabs } = await supabase
         .from('weddings')
         .select('collaborator_emails')
-        .eq('wedding_name_id', weddingNameId)
+        .eq('wedding_name_id', weddingId)
         .single()
       
       if (weddingWithCollabs?.collaborator_emails) {
@@ -298,7 +298,7 @@ export async function DELETE(
         collaborator_emails: updatedEmails,
         updated_at: new Date().toISOString()
       })
-      .eq('wedding_name_id', weddingNameId)
+      .eq('wedding_name_id', weddingId)
 
     if (updateError) {
       return NextResponse.json({ error: 'Failed to remove collaborator' }, { status: 500 })

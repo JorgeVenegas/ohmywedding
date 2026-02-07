@@ -62,6 +62,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check wedding plan - Stripe connect is only for paid plans
+    const { data: weddingFeatures, error: featuresError } = await supabase
+      .from("wedding_subscriptions")
+      .select("plan")
+      .eq("wedding_id", weddingId)
+      .single()
+
+    if (featuresError || !weddingFeatures) {
+      return NextResponse.json(
+        { error: "Wedding features not found" },
+        { status: 404 }
+      )
+    }
+
+    const plan = weddingFeatures.plan as 'free' | 'premium' | 'deluxe'
+    if (plan === 'free') {
+      return NextResponse.json(
+        { error: "Stripe connection is only available for Premium and Deluxe plans. Please upgrade your wedding plan." },
+        { status: 403 }
+      )
+    }
+
     // Check if account already exists
     if (wedding.stripe_account_id) {
       return NextResponse.json(

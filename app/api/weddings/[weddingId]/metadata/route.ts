@@ -4,15 +4,15 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-// PATCH /api/weddings/[weddingNameId]/metadata
+// PATCH /api/weddings/[weddingId]/metadata
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ weddingNameId: string }> }
+  { params }: { params: Promise<{ weddingId: string }> }
 ) {
   try {
     const supabase = await createServerSupabaseClient()
-    const { weddingNameId: rawWeddingNameId } = await params
-    const weddingNameId = decodeURIComponent(rawWeddingNameId)
+    const { weddingId: rawWeddingId } = await params
+    const weddingId = decodeURIComponent(rawWeddingId)
     
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
@@ -21,7 +21,7 @@ export async function PATCH(
     }
 
     // Check if it's a UUID or wedding_name_id
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(weddingNameId)
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(weddingId)
     
     // Get wedding to verify ownership
     let query = supabase
@@ -29,9 +29,9 @@ export async function PATCH(
       .select('id, owner_id, collaborator_emails')
     
     if (isUuid) {
-      query = query.eq('id', weddingNameId)
+      query = query.eq('id', weddingId)
     } else {
-      query = query.eq('wedding_name_id', weddingNameId)
+      query = query.eq('wedding_name_id', weddingId)
     }
     
     const { data: wedding, error: fetchError } = await query.single()

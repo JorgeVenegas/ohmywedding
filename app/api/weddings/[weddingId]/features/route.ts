@@ -3,63 +3,60 @@ import { createServerSupabaseClient } from "@/lib/supabase-server"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ weddingNameId: string }> }
+  { params }: { params: Promise<{ weddingId: string }> }
 ) {
   try {
-    const { weddingNameId } = await params
-    const decodedWeddingNameId = decodeURIComponent(weddingNameId)
+    const { weddingId } = await params
+    const decodedWeddingId = decodeURIComponent(weddingId)
     const supabase = await createServerSupabaseClient()
 
     // First, get the wedding UUID from the wedding_name_id
     const { data: wedding, error: weddingError } = await supabase
       .from("weddings")
       .select("id")
-      .eq("wedding_name_id", decodedWeddingNameId)
+      .eq("wedding_name_id", decodedWeddingId)
       .single()
 
     if (weddingError || !wedding) {
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
     }
 
-    // Get wedding settings
-    const { data: settings, error: settingsError } = await supabase
-      .from("wedding_settings")
+    // Get wedding features
+    const { data: features, error: featuresError } = await supabase
+      .from("wedding_features")
       .select("*")
       .eq("wedding_id", wedding.id)
       .single()
 
-    if (settingsError && settingsError.code !== "PGRST116") {
+    if (featuresError && featuresError.code !== "PGRST116") {
       // PGRST116 = no rows returned
-      throw settingsError
+      throw featuresError
     }
 
-    // If no settings exist, create default ones
-    if (!settings) {
-      const { data: newSettings, error: insertError } = await supabase
-        .from("wedding_settings")
+    // If no features exist, create default ones
+    if (!features) {
+      const { data: newFeatures, error: insertError } = await supabase
+        .from("wedding_features")
         .insert({
           wedding_id: wedding.id,
-          rsvp_travel_confirmation_enabled: true,
-          rsvp_require_ticket_attachment: false,
-          rsvp_require_no_ticket_reason: false,
-          rsvp_allow_plus_ones: true,
-          gallery_allow_guest_uploads: false,
-          gallery_moderation_enabled: true,
-          timezone: "UTC",
-          language: "en",
+          rsvp_enabled: true, // Default to true for existing weddings
+          invitations_panel_enabled: true,
+          gallery_enabled: true,
+          registry_enabled: true,
+          schedule_enabled: true,
         })
         .select()
         .single()
 
       if (insertError) throw insertError
 
-      return NextResponse.json({ settings: newSettings })
+      return NextResponse.json({ features: newFeatures })
     }
 
-    return NextResponse.json({ settings })
+    return NextResponse.json({ features })
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to fetch wedding settings" },
+      { error: "Failed to fetch wedding features" },
       { status: 500 }
     )
   }
@@ -67,11 +64,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ weddingNameId: string }> }
+  { params }: { params: Promise<{ weddingId: string }> }
 ) {
   try {
-    const { weddingNameId } = await params
-    const decodedWeddingNameId = decodeURIComponent(weddingNameId)
+    const { weddingId } = await params
+    const decodedWeddingId = decodeURIComponent(weddingId)
     const body = await request.json()
     const supabase = await createServerSupabaseClient()
 
@@ -79,7 +76,7 @@ export async function PUT(
     const { data: wedding, error: weddingError } = await supabase
       .from("weddings")
       .select("id")
-      .eq("wedding_name_id", decodedWeddingNameId)
+      .eq("wedding_name_id", decodedWeddingId)
       .single()
 
     if (weddingError || !wedding) {
@@ -87,7 +84,7 @@ export async function PUT(
     }
 
     const { data, error } = await supabase
-      .from("wedding_settings")
+      .from("wedding_features")
       .upsert(
         {
           wedding_id: wedding.id,
@@ -102,10 +99,10 @@ export async function PUT(
 
     if (error) throw error
 
-    return NextResponse.json({ settings: data })
+    return NextResponse.json({ features: data })
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to update wedding settings" },
+      { error: "Failed to update wedding features" },
       { status: 500 }
     )
   }

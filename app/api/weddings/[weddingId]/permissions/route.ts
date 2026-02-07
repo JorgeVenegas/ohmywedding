@@ -14,15 +14,15 @@ export type WeddingPermissions = {
   userId: string | null
 }
 
-// GET /api/weddings/[weddingNameId]/permissions - Check user permissions for a wedding
+// GET /api/weddings/[weddingId]/permissions - Check user permissions for a wedding
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ weddingNameId: string }> }
+  { params }: { params: Promise<{ weddingId: string }> }
 ) {
   try {
     const supabase = await createServerSupabaseClient()
-    const { weddingNameId: rawWeddingNameId } = await params
-    const weddingNameId = decodeURIComponent(rawWeddingNameId)
+    const { weddingId: rawWeddingId } = await params
+    const weddingId = decodeURIComponent(rawWeddingId)
 
     // Try to get user from cookies first
     let { data: { user } } = await supabase.auth.getUser()
@@ -41,7 +41,7 @@ export async function GET(
     const { data: wedding, error: weddingError } = await supabase
       .from('weddings')
       .select('owner_id, is_demo')
-      .eq('wedding_name_id', weddingNameId)
+      .eq('wedding_name_id', weddingId)
       .single()
 
     if (weddingError || !wedding) {
@@ -54,7 +54,7 @@ export async function GET(
       const { data: weddingWithCollabs } = await supabase
         .from('weddings')
         .select('collaborator_emails')
-        .eq('wedding_name_id', weddingNameId)
+        .eq('wedding_name_id', weddingId)
         .single()
       
       if (weddingWithCollabs?.collaborator_emails) {

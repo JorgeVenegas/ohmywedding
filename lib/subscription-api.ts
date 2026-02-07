@@ -65,21 +65,11 @@ export async function checkSubscription(weddingNameId?: string): Promise<Subscri
     }
   }
   
-  // Get user subscription
-  const { data: subscription } = await supabase
-    .from('user_subscriptions')
-    .select('*')
-    .eq('user_id', user.id)
-    .single()
-  
+  // Get user subscription (DEPRECATED - user subscriptions have been removed)
+  // NOTE: Plans are now per-wedding, not per-user. Kept for backwards compatibility.
   let planType: PlanType = 'free'
-  if (subscription) {
-    const isActive = subscription.status === 'active' || subscription.status === 'trial'
-    const isExpired = subscription.expires_at && new Date(subscription.expires_at) < new Date()
-    if (isActive && !isExpired) {
-      planType = subscription.plan_type as PlanType
-    }
-  }
+  // Previously checked user_subscriptions, but this table has been removed.
+  // Plans are now determined at the wedding level.
   
   // If weddingNameId provided, also check wedding-specific features
   if (weddingNameId) {
@@ -91,23 +81,18 @@ export async function checkSubscription(weddingNameId?: string): Promise<Subscri
     
     if (wedding) {
       const { data: weddingFeatures } = await supabase
-        .from('wedding_features')
-        .select('*')
+        .from('wedding_subscriptions')
+        .select('plan')
         .eq('wedding_id', wedding.id)
         .single()
       
       if (weddingFeatures) {
+        const weddingPlan = weddingFeatures.plan as PlanType
         return {
           isAuthenticated: true,
           userId: user.id,
-          planType,
-          features: {
-            rsvp_enabled: weddingFeatures.rsvp_enabled,
-            invitations_panel_enabled: weddingFeatures.invitations_panel_enabled,
-            gallery_enabled: weddingFeatures.gallery_enabled,
-            registry_enabled: weddingFeatures.registry_enabled,
-            schedule_enabled: weddingFeatures.schedule_enabled,
-          },
+          planType: weddingPlan,
+          features: getDefaultFeatures(weddingPlan),
         }
       }
     }

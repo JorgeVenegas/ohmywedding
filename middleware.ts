@@ -58,7 +58,7 @@ function getSubdomain(hostname: string): string | null {
 async function getWeddingPlan(weddingNameId: string): Promise<'free' | 'premium' | 'deluxe'> {
   try {
     // Use the service role key to bypass RLS entirely.
-    // The wedding_features table only allows owner SELECT via RLS,
+    // The wedding_subscriptions table only allows owner SELECT via RLS,
     // but we need to read the plan for ANY visitor to handle redirects.
     // This is safe because middleware runs server-side only.
     const supabase = createServerClient(
@@ -86,7 +86,7 @@ async function getWeddingPlan(weddingNameId: string): Promise<'free' | 'premium'
     }
 
     const { data: weddingFeatures, error: featuresError } = await supabase
-      .from('wedding_features')
+      .from('wedding_subscriptions')
       .select('plan')
       .eq('wedding_id', wedding.id)
       .single()
@@ -206,25 +206,14 @@ export async function middleware(request: NextRequest) {
 
       if (plan === 'free') {
         // Free weddings are served path-based, not subdomain-based.
-        // Rewrite the request to the path-based route.
-        if (pathname.startsWith('/admin')) {
-          const adminPath = pathname.slice(6) // Remove '/admin'
-          const newPath = `/admin/${subdomain}${adminPath || '/dashboard'}`
-          const url = request.nextUrl.clone()
-          url.pathname = newPath
-          
-          const response = NextResponse.rewrite(url)
-          response.headers.set('x-wedding-subdomain', subdomain)
-          return handleSupabaseAuth(request, response)
-        } else {
-          const newPath = `/${subdomain}${pathname === '/' ? '' : pathname}`
-          const url = request.nextUrl.clone()
-          url.pathname = newPath
-          
-          const response = NextResponse.rewrite(url)
-          response.headers.set('x-wedding-subdomain', subdomain)
-          return handleSupabaseAuth(request, response)
-        }
+        // Rewrite to a 404 page with subdomain info
+        const url = request.nextUrl.clone()
+        url.pathname = '/subdomain-not-available'
+        url.searchParams.set('subdomain', subdomain)
+        
+        const response = NextResponse.rewrite(url)
+        response.headers.set('x-wedding-subdomain', subdomain)
+        return handleSupabaseAuth(request, response)
       }
 
       // Premium/Deluxe: serve normally on subdomain

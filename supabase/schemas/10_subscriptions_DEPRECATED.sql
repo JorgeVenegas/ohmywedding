@@ -1,0 +1,8 @@
+-- This file has been deprecated.
+-- User subscriptions have been removed. Plans are now per-wedding, not per-user.
+-- 
+-- See migration: 20260207_rename_wedding_features_to_subscriptions.sql
+-- See table: wedding_subscriptions in wedding_features.sql
+--
+-- The user_subscriptions table is being dropped by the migration.
+-- All subscription/plan logic should now use the wedding_subscriptions table.

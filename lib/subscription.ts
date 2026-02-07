@@ -15,45 +15,10 @@ import {
 } from './subscription-shared'
 
 // =============================================================================
-// USER SUBSCRIPTION FUNCTIONS
+// USER SUBSCRIPTION FUNCTIONS (DEPRECATED)
 // =============================================================================
-
-// Server-side: Get user's subscription
-export async function getUserSubscription(userId: string): Promise<UserSubscription | null> {
-  const supabase = await createServerSupabaseClient()
-  
-  const { data, error } = await supabase
-    .from('user_subscriptions')
-    .select('*')
-    .eq('user_id', userId)
-    .single()
-  
-  if (error || !data) {
-    return null
-  }
-  
-  return data as UserSubscription
-}
-
-// Server-side: Get user's active plan type
-export async function getUserPlanType(userId: string): Promise<PlanType> {
-  const subscription = await getUserSubscription(userId)
-  
-  if (!subscription) {
-    return 'free'
-  }
-  
-  // Check if subscription is active and not expired
-  if (subscription.status !== 'active' && subscription.status !== 'trial') {
-    return 'free'
-  }
-  
-  if (subscription.expires_at && new Date(subscription.expires_at) < new Date()) {
-    return 'free'
-  }
-  
-  return subscription.plan_type
-}
+// Note: User subscriptions have been removed. Plans are now per-wedding.
+// Use getWeddingPlan() instead to get a wedding's plan.
 
 // =============================================================================
 // WEDDING PLAN FUNCTIONS (Database-driven)
@@ -64,7 +29,7 @@ export async function getWeddingPlan(weddingId: string): Promise<PlanType> {
   const supabase = await createServerSupabaseClient()
   
   const { data, error } = await supabase
-    .from('wedding_features')
+    .from('wedding_subscriptions')
     .select('plan')
     .eq('wedding_id', weddingId)
     .single()
@@ -215,29 +180,23 @@ export async function getRegistryCommission(weddingId: string): Promise<number> 
 // LEGACY WEDDING FEATURES FUNCTIONS
 // =============================================================================
 
-// Server-side: Get wedding features
+// Server-side: Get wedding features (DEPRECATED - use plan-based features instead)
 export async function getWeddingFeatures(weddingId: string): Promise<WeddingFeatures> {
   const supabase = await createServerSupabaseClient()
   
   const { data, error } = await supabase
-    .from('wedding_features')
-    .select('*')
+    .from('wedding_subscriptions')
+    .select('plan')
     .eq('wedding_id', weddingId)
     .single()
   
   if (error || !data) {
-    // Return free defaults if no features found
+    // Return free defaults if no subscription found
     return getDefaultFeatures('free')
   }
   
-  return {
-    rsvp_enabled: data.rsvp_enabled,
-    invitations_panel_enabled: data.invitations_panel_enabled,
-    gallery_enabled: data.gallery_enabled,
-    registry_enabled: data.registry_enabled,
-    schedule_enabled: data.schedule_enabled,
-    plan: data.plan || 'free',
-  }
+  const plan = (data.plan as PlanType) || 'free'
+  return getDefaultFeatures(plan)
 }
 
 // Server-side: Check if a specific feature is enabled for a wedding
@@ -250,14 +209,16 @@ export async function isFeatureEnabled(
   return typeof value === 'boolean' ? value : false
 }
 
-// Server-side: Check if user has premium or deluxe access
+// Server-side: Check if user has premium or deluxe access (DEPRECATED - use wedding plans instead)
 export async function hasPremiumAccess(userId: string): Promise<boolean> {
-  const planType = await getUserPlanType(userId)
-  return hasPlanLevel(planType, 'premium')
+  // User subscriptions have been removed. Plans are now per-wedding.
+  // This function always returns false. Use wedding plan functions instead.
+  return false
 }
 
-// Server-side: Check if user has deluxe access
+// Server-side: Check if user has deluxe access (DEPRECATED - use wedding plans instead)
 export async function hasDeluxeAccess(userId: string): Promise<boolean> {
-  const planType = await getUserPlanType(userId)
-  return planType === 'deluxe'
+  // User subscriptions have been removed. Plans are now per-wedding.
+  // This function always returns false. Use wedding plan functions instead.
+  return false
 }

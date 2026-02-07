@@ -81,8 +81,8 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
 
       if (wedding) {
         const { data: weddingFeatures } = await supabase
-          .from('wedding_features')
-          .select('*')
+          .from('wedding_subscriptions')
+          .select('plan')
           .eq('wedding_id', wedding.id)
           .single()
 
@@ -101,16 +101,10 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
               schedule_enabled: true,
             })
           } else {
-            setFeatures({
-              rsvp_enabled: weddingFeatures.rsvp_enabled,
-              invitations_panel_enabled: weddingFeatures.invitations_panel_enabled,
-              gallery_enabled: weddingFeatures.gallery_enabled,
-              registry_enabled: weddingFeatures.registry_enabled,
-              schedule_enabled: weddingFeatures.schedule_enabled,
-            })
+            setFeatures(getDefaultFeatures(weddingPlan))
           }
         } else {
-          // No features record yet
+          // No subscription record yet
           if (isSuperuserUser) {
             // Superuser still sees all features but plan stays free
             setPlanType('free')
@@ -122,23 +116,9 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
               schedule_enabled: true,
             })
           } else {
-            // Fetch user subscription as fallback
-            const { data: subscription } = await supabase
-              .from('user_subscriptions')
-              .select('*')
-              .eq('user_id', user.id)
-              .single()
-
-            let userPlanType: PlanType = 'free'
-            if (subscription) {
-              const isActive = subscription.status === 'active' || subscription.status === 'trial'
-              const isExpired = subscription.expires_at && new Date(subscription.expires_at) < new Date()
-              if (isActive && !isExpired) {
-                userPlanType = subscription.plan_type as PlanType
-              }
-            }
-            setPlanType(userPlanType)
-            setFeatures(getDefaultFeatures(userPlanType))
+            // No wedding subscription found, default to free
+            setPlanType('free')
+            setFeatures(getDefaultFeatures('free'))
           }
         }
       } else {

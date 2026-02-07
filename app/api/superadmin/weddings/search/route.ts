@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     const weddingsWithPlans = await Promise.all(
       (weddings || []).map(async (wedding) => {
         const { data: features } = await adminClient
-          .from('wedding_features')
+          .from('wedding_subscriptions')
           .select('plan')
           .eq('wedding_id', wedding.id)
           .single()

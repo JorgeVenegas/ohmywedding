@@ -27,7 +27,6 @@ export interface Guest {
 export interface GuestGroup {
   id: string
   name: string | null
-  phone_number: string | null
   notes: string | null
   invitation_sent: boolean
   invitation_sent_at: string | null

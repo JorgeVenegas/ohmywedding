@@ -16,17 +16,17 @@ const getStripe = () => {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ weddingNameId: string }> }
+  { params }: { params: Promise<{ weddingId: string }> }
 ) {
   try {
-    const { weddingNameId } = await params
+    const { weddingId } = await params
     const supabase = await createServerSupabaseClient()
 
     // Get wedding by name ID (public endpoint - no auth required)
     const { data: wedding, error: weddingError } = await supabase
       .from("weddings")
       .select("id, stripe_account_id, stripe_onboarding_completed, payouts_enabled")
-      .eq("wedding_name_id", weddingNameId)
+      .eq("wedding_name_id", weddingId)
       .single()
 
     if (weddingError || !wedding) {

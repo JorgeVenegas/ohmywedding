@@ -7,8 +7,10 @@ export const dynamic = 'force-dynamic'
 async function getSubscriptions() {
   const supabase = await createServerSupabaseClient()
   
+  // NOTE: User subscriptions have been removed. Plans are now per-wedding.
+  // This page should display wedding subscriptions instead.
   const { data, error } = await supabase
-    .from('user_subscriptions')
+    .from('wedding_subscriptions')
     .select('*')
     .order('created_at', { ascending: false })
     .limit(100)

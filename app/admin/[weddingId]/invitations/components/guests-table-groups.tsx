@@ -46,6 +46,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Guest, GuestGroup, ColumnVisibility, TAG_COLORS, resolveInvitedBy } from "../types"
+import type { PlanType } from "@/lib/subscription-shared"
 
 export type SortColumn = 'name' | 'group' | 'status' | null
 export type SortDirection = 'asc' | 'desc'
@@ -85,6 +86,7 @@ interface GuestsTableGroupsProps {
   getInvitationUrl: (groupId?: string) => string
   navigateToGroupDetails: (groupId: string) => void
   partnerNames: { partner1: string; partner2: string }
+  planType: PlanType
 }
 
 function getTagColor(tag: string): string {
@@ -137,6 +139,7 @@ export function GuestsTableGroups({
   getInvitationUrl,
   navigateToGroupDetails,
   partnerNames,
+  planType,
 }: GuestsTableGroupsProps) {
   return (
     <Card className="border border-border overflow-hidden shadow-sm">
@@ -225,8 +228,10 @@ export function GuestsTableGroups({
                 const allGroupInvitedBy = [...new Set([
                   ...group.guests.flatMap(g => g.invited_by || [])
                 ])]
-                const allGuestsInvited = group.guests.length > 0 && group.guests.every(g => g.invitation_sent)
-                const someGuestsInvited = group.guests.some(g => g.invitation_sent)
+                // Only count guests with phone numbers for invitation tracking
+                const guestsWithPhone = group.guests.filter(g => g.phone_number)
+                const allGuestsInvited = guestsWithPhone.length > 0 && guestsWithPhone.every(g => g.invitation_sent)
+                const someGuestsInvited = guestsWithPhone.some(g => g.invitation_sent)
                 const isExpanded = expandedGroups.has(group.id)
 
                 return (
@@ -332,12 +337,6 @@ export function GuestsTableGroups({
                               </TooltipProvider>
                             )}
                           </div>
-                          {group.phone_number && (
-                            <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                              <Phone className="w-3 h-3" />
-                              {group.phone_number}
-                            </div>
-                          )}
                         </div>
                       </td>
                       <td className="px-3 py-2 text-center">
@@ -729,7 +728,7 @@ export function GuestsTableGroups({
                                     >
                                       <MailCheck className="w-3.5 h-3.5" />
                                     </button>
-                                  ) : (
+                                  ) : guest.phone_number ? (
                                     <Button
                                       variant="ghost"
                                       size="sm"
@@ -741,7 +740,7 @@ export function GuestsTableGroups({
                                     >
                                       <Send className="w-3 h-3" />
                                     </Button>
-                                  )}
+                                  ) : null}
                                 </td>
                               )}
                               {visibleColumns.travelInfo && (

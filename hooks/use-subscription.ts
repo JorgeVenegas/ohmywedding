@@ -20,65 +20,14 @@ interface UseSubscriptionReturn {
   refetch: () => Promise<void>
 }
 
-// Hook to get user's subscription status
+// Hook to get user's subscription status (DEPRECATED - plans are now per-wedding)
 export function useSubscription(): UseSubscriptionReturn {
+  // User subscriptions have been removed. Default to free.
+  // To get a wedding's plan, use useWeddingFeatures() instead.
   const { user, loading: authLoading } = useAuth()
-  const [planType, setPlanType] = useState<PlanType>('free')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchSubscription = useCallback(async () => {
-    if (!user) {
-      setPlanType('free')
-      setLoading(false)
-      return
-    }
-
-    try {
-      setLoading(true)
-      const supabase = createClient()
-      
-      const { data, error: fetchError } = await supabase
-        .from('user_subscriptions')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
-
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        throw fetchError
-      }
-
-      if (data) {
-        // Check if subscription is active and not expired
-        const isActive = data.status === 'active' || data.status === 'trial'
-        const isExpired = data.expires_at && new Date(data.expires_at) < new Date()
-        
-        if (isActive && !isExpired) {
-          setPlanType(data.plan_type as PlanType)
-        } else {
-          setPlanType('free')
-        }
-      } else {
-        setPlanType('free')
-      }
-      
-      setError(null)
-    } catch (err) {
-      setError('Failed to fetch subscription')
-      setPlanType('free')
-    } finally {
-      setLoading(false)
-    }
-  }, [user])
-
-  useEffect(() => {
-    if (!authLoading) {
-      fetchSubscription()
-    }
-  }, [authLoading, fetchSubscription])
-
-  const features = getDefaultFeatures(planType)
-  const isPremium = planType === 'premium' || planType === 'deluxe'
+  
+  const features = getDefaultFeatures('free')
+  const isPremium = false
 
   const canAccessFeature = useCallback((feature: keyof WeddingFeatures): boolean => {
     const value = features[feature]
@@ -90,13 +39,13 @@ export function useSubscription(): UseSubscriptionReturn {
   }, [features])
 
   return {
-    planType,
+    planType: 'free',
     features,
-    loading: loading || authLoading,
-    error,
+    loading: authLoading,
+    error: null,
     isPremium,
     canAccessFeature,
-    refetch: fetchSubscription,
+    refetch: async () => {},
   }
 }
 
@@ -139,8 +88,8 @@ export function useWeddingFeatures(weddingId: string | null): UseWeddingFeatures
       }
 
       const { data, error: fetchError } = await supabase
-        .from('wedding_features')
-        .select('*')
+        .from('wedding_subscriptions')
+        .select('plan')
         .eq('wedding_id', wedding.id)
         .single()
 
@@ -149,13 +98,8 @@ export function useWeddingFeatures(weddingId: string | null): UseWeddingFeatures
       }
 
       if (data) {
-        setFeatures({
-          rsvp_enabled: data.rsvp_enabled,
-          invitations_panel_enabled: data.invitations_panel_enabled,
-          gallery_enabled: data.gallery_enabled,
-          registry_enabled: data.registry_enabled,
-          schedule_enabled: data.schedule_enabled,
-        })
+        const plan = data.plan as PlanType
+        setFeatures(getDefaultFeatures(plan))
       } else {
         setFeatures(getDefaultFeatures('free'))
       }

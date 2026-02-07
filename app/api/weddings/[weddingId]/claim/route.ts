@@ -4,14 +4,14 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-// POST /api/weddings/[weddingNameId]/claim - Claim ownership of an unowned wedding
+// POST /api/weddings/[weddingId]/claim - Claim ownership of an unowned wedding
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ weddingNameId: string }> }
+  { params }: { params: Promise<{ weddingId: string }> }
 ) {
   try {
     const supabase = await createServerSupabaseClient()
-    const { weddingNameId } = await params
+    const { weddingId } = await params
 
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
@@ -24,7 +24,7 @@ export async function POST(
     const { data: wedding, error: weddingError } = await supabase
       .from('weddings')
       .select('owner_id')
-      .eq('wedding_name_id', weddingNameId)
+      .eq('wedding_name_id', weddingId)
       .single()
 
     if (weddingError || !wedding) {
@@ -41,7 +41,7 @@ export async function POST(
 
     // Claim ownership - use raw SQL to bypass RLS
     const { error: updateError } = await supabase.rpc('claim_wedding_ownership', {
-      p_wedding_name_id: weddingNameId,
+      p_wedding_name_id: weddingId,
       p_user_id: user.id
     })
 
@@ -53,7 +53,7 @@ export async function POST(
           owner_id: user.id,
           updated_at: new Date().toISOString()
         })
-        .eq('wedding_name_id', weddingNameId)
+        .eq('wedding_name_id', weddingId)
         .is('owner_id', null)
 
       if (directUpdateError) {

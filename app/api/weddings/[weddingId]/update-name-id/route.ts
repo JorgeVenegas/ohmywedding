@@ -3,10 +3,10 @@ import { createServerSupabaseClient } from "@/lib/supabase-server"
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ weddingNameId: string }> }
+  { params }: { params: Promise<{ weddingId: string }> }
 ) {
   try {
-    const { weddingNameId } = await params
+    const { weddingId } = await params
     const { newWeddingNameId } = await request.json()
 
     if (!newWeddingNameId || typeof newWeddingNameId !== 'string') {
@@ -35,13 +35,13 @@ export async function PATCH(
       )
     }
 
-    const decodedWeddingNameId = decodeURIComponent(weddingNameId)
+    const decodedWeddingId = decodeURIComponent(weddingId)
 
     // Verify user owns this wedding (check owner_id, not user_id)
     const { data: wedding, error: fetchError } = await supabase
       .from('weddings')
       .select('id, wedding_name_id, owner_id')
-      .eq('wedding_name_id', decodedWeddingNameId)
+      .eq('wedding_name_id', decodedWeddingId)
       .single()
 
     if (fetchError || !wedding) {

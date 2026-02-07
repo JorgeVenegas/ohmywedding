@@ -4,19 +4,19 @@ import { createServerSupabaseClient, createAdminSupabaseClient } from '@/lib/sup
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-// GET /api/weddings/[weddingNameId]/config
+// GET /api/weddings/[weddingId]/config
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ weddingNameId: string }> }
+  { params }: { params: Promise<{ weddingId: string }> }
 ) {
   try {
     const supabase = await createServerSupabaseClient()
-    const { weddingNameId } = await params
+    const { weddingId } = await params
 
     const { data: wedding, error } = await supabase
       .from('weddings')
       .select('page_config, primary_color, secondary_color, accent_color, og_title, og_description, og_image_url')
-      .eq('wedding_name_id', weddingNameId)
+      .eq('wedding_name_id', weddingId)
       .single()
 
     if (error) {
@@ -55,14 +55,14 @@ export async function GET(
   }
 }
 
-// PUT /api/weddings/[weddingNameId]/config
+// PUT /api/weddings/[weddingId]/config
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ weddingNameId: string }> }
+  { params }: { params: Promise<{ weddingId: string }> }
 ) {
   try {
     const supabase = await createServerSupabaseClient()
-    const { weddingNameId } = await params
+    const { weddingId } = await params
     
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
@@ -71,7 +71,7 @@ export async function PUT(
     const { data: existingWedding, error: findError } = await supabase
       .from('weddings')
       .select('id, date_id, wedding_name_id, owner_id')
-      .eq('wedding_name_id', weddingNameId)
+      .eq('wedding_name_id', weddingId)
       .single()
     
     if (findError || !existingWedding) {
@@ -103,7 +103,7 @@ export async function PUT(
       const { data: weddingWithCollabs } = await supabase
         .from('weddings')
         .select('collaborator_emails')
-        .eq('wedding_name_id', weddingNameId)
+        .eq('wedding_name_id', weddingId)
         .single()
       
       if (weddingWithCollabs?.collaborator_emails && user.email) {
@@ -149,29 +149,6 @@ export async function PUT(
       const feature = features.find(f => f.feature_key === featureKey)
       return feature?.enabled || false
     }
-    
-    // Validate sections against plan features
-    const sections = config.sections || []
-    const restrictedSections: string[] = []
-    
-    for (const section of sections) {
-      // Check RSVP section
-      if (section.id === 'rsvp' && !isFeatureEnabled('rsvp_enabled')) {
-        restrictedSections.push('RSVP')
-      }
-      // Check custom registry section
-      if (section.id === 'custom-registry' && !isFeatureEnabled('custom_registry_enabled')) {
-        restrictedSections.push('Custom Registry')
-      }
-    }
-    
-    // If there are restricted sections, return error
-    if (restrictedSections.length > 0) {
-      return NextResponse.json({ 
-        error: `The following sections are not available on your current plan: ${restrictedSections.join(', ')}. Please upgrade to enable these features.`,
-        restrictedSections 
-      }, { status: 403 })
-    }
 
     const { data: updatedWeddings, error } = await supabase
       .from('weddings')
@@ -179,7 +156,7 @@ export async function PUT(
         page_config: config,
         updated_at: new Date().toISOString()
       })
-      .eq('wedding_name_id', weddingNameId)
+      .eq('wedding_name_id', weddingId)
       .select('id, page_config')
 
     if (error) {

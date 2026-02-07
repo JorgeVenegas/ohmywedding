@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ViewSwitcher } from "@/components/ui/view-switcher"
+import { UpgradeModal } from "@/components/ui/upgrade-modal"
 import { Plus, Edit, Trash2, DollarSign, X, AlertCircle, CheckCircle2, Crown, Lock, LayoutGrid, Filter, ArrowUpDown, Search, ExternalLink } from "lucide-react"
 import { Header } from "@/components/header"
 import { getCleanAdminUrl } from "@/lib/admin-url"
@@ -71,6 +72,7 @@ export default function RegistryPage({ params }: RegistryPageProps) {
   const [showForm, setShowForm] = useState(false)
   const [editingItem, setEditingItem] = useState<RegistryItem | null>(null)
   const [weddingData, setWeddingData] = useState<WeddingData | null>(null)
+  const [itemsWithPendingContributions, setItemsWithPendingContributions] = useState<Set<string>>(new Set())
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -82,6 +84,7 @@ export default function RegistryPage({ params }: RegistryPageProps) {
     message: "" 
   })
   const [showConnectSuccess, setShowConnectSuccess] = useState(connectStatus === "success")
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   
   // Filter states for items
   const [searchQuery, setSearchQuery] = useState("")
@@ -192,9 +195,40 @@ export default function RegistryPage({ params }: RegistryPageProps) {
 
       if (error) throw error
       setItems(data || [])
+      
+      // Check for items with pending contributions
+      checkForPendingContributions(data || [])
     } catch (error) {
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const checkForPendingContributions = async (items: RegistryItem[]) => {
+    if (items.length === 0) {
+      setItemsWithPendingContributions(new Set())
+      return
+    }
+
+    try {
+      const itemIds = items.map(item => item.id)
+      const { data: contributions, error } = await supabase
+        .from("custom_registry_contributions")
+        .select("custom_registry_item_id, status")
+        .in("custom_registry_item_id", itemIds)
+        .eq("status", "requires_action")
+
+      if (error) {
+        console.warn("Error checking for pending contributions:", error)
+        return
+      }
+
+      const itemsWithPending = new Set(
+        contributions?.map(c => c.custom_registry_item_id) || []
+      )
+      setItemsWithPendingContributions(itemsWithPending)
+    } catch (error) {
+      console.warn("Error checking for pending contributions:", error)
     }
   }
 
@@ -285,6 +319,15 @@ export default function RegistryPage({ params }: RegistryPageProps) {
   }
 
   const handleDelete = async (id: string) => {
+    // Check if this item has pending contributions
+    if (itemsWithPendingContributions.has(id)) {
+      setErrorDialog({ 
+        show: true, 
+        message: "Cannot delete this registry item because it has contributions requiring action. Please resolve pending contributions first or deactivate the item instead." 
+      })
+      return
+    }
+
     if (!confirm("Are you sure you want to delete this registry item?")) return
 
     try {
@@ -359,7 +402,7 @@ export default function RegistryPage({ params }: RegistryPageProps) {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header with Title and Stats */}
-        {!featuresLoading && customRegistryEnabled && (
+        {!featuresLoading && (
           <div className="mb-6">
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
               <div>
@@ -393,9 +436,13 @@ export default function RegistryPage({ params }: RegistryPageProps) {
                     <Button
                       size="sm"
                       onClick={() => {
-                        setShowForm(!showForm)
-                        setEditingItem(null)
-                        setFormData({ title: "", description: "", goal_amount: "", image_urls: [] })
+                        if (plan === 'free') {
+                          setShowUpgradeModal(true)
+                        } else {
+                          setShowForm(!showForm)
+                          setEditingItem(null)
+                          setFormData({ title: "", description: "", goal_amount: "", image_urls: [] })
+                        }
                       }}
                     >
                       <Plus className="w-4 h-4 mr-2" />
@@ -562,37 +609,8 @@ export default function RegistryPage({ params }: RegistryPageProps) {
           </div>
         )}
 
-        {/* Feature Gate - Premium/Deluxe Only */}
-        {!featuresLoading && !customRegistryEnabled && (
-          <Card className="p-8 mb-8 border-[#DDA46F]/30 shadow-sm bg-gradient-to-br from-[#420c14]/5 to-[#DDA46F]/5">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#420c14] to-[#DDA46F] flex items-center justify-center shadow-lg">
-                <Crown className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-semibold text-[#420c14] mb-2">Premium Feature</h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                Custom registry with bespoke items and secure payouts is available on <strong>Premium</strong> and <strong>Deluxe</strong> plans.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/upgrade">
-                  <Button className="bg-gradient-to-r from-[#420c14] to-[#DDA46F] hover:from-[#420c14]/90 hover:to-[#DDA46F]/90 text-white">
-                    <Crown className="w-4 h-4 mr-2" />
-                    Upgrade Plan
-                  </Button>
-                </Link>
-                <Button variant="outline" onClick={() => router.push(`/admin/${weddingId}/dashboard`)}>
-                  Go to Dashboard
-                </Button>
-              </div>
-              <p className="text-sm text-muted-foreground mt-6">
-                Current plan: <span className="font-semibold capitalize">{plan}</span>
-              </p>
-            </div>
-          </Card>
-        )}
-
-        {/* Rest of content only shows if feature is enabled */}
-        {!featuresLoading && customRegistryEnabled && (
+        {/* Rest of content */}
+        {!featuresLoading && (
           <>
         
         {/* Error Display */}
@@ -846,13 +864,22 @@ export default function RegistryPage({ params }: RegistryPageProps) {
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDelete(item.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="relative group">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDelete(item.id)}
+                        disabled={itemsWithPendingContributions.has(item.id)}
+                        className={itemsWithPendingContributions.has(item.id) ? "opacity-50 cursor-not-allowed" : ""}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                      {itemsWithPendingContributions.has(item.id) && (
+                        <div className="absolute right-0 bottom-full mb-2 hidden group-hover:block bg-[#420c14] text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
+                          Resolve pending contributions first
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Card>
@@ -886,6 +913,13 @@ export default function RegistryPage({ params }: RegistryPageProps) {
           </Card>
         </div>
       )}
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        reason="general"
+      />
     </main>
   )
 }

@@ -17,9 +17,9 @@ export async function getWeddingByNameIdClient(weddingNameId: string): Promise<W
     return null
   }
 
-  // Fetch the wedding features (plan info)
+  // Fetch the wedding subscription (plan info)
   const { data: features } = await supabase
-    .from('wedding_features')
+    .from('wedding_subscriptions')
     .select('plan')
     .eq('wedding_id', data.id)
     .single()
@@ -47,9 +47,9 @@ export async function getWeddingByDateAndNameIdClient(dateId: string, weddingNam
     return null
   }
 
-  // Fetch the wedding features (plan info)
+  // Fetch the wedding subscription (plan info)
   const { data: features } = await supabase
-    .from('wedding_features')
+    .from('wedding_subscriptions')
     .select('plan')
     .eq('wedding_id', data.id)
     .single()

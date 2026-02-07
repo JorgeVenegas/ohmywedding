@@ -23,7 +23,7 @@ interface UpgradeModalProps {
   limit?: number
 }
 
-const CONTENT_MAP: Record<UpgradeReason, { title: string; description: string; features: string[] }> = {
+const CONTENT_MAP: Record<UpgradeReason, { title: string; description: string; features: string[]; imagePlaceholder?: string; planLevel?: string }> = {
   general: {
     title: 'Upgrade Your Wedding Plan',
     description: 'Unlock premium features to make your wedding planning experience even better.',
@@ -35,6 +35,7 @@ const CONTENT_MAP: Record<UpgradeReason, { title: string; description: string; f
       'Activity reports and analytics',
       'Custom subdomain for your wedding site',
     ],
+    imagePlaceholder: 'general',
   },
   guest_limit: {
     title: 'Guest Limit Reached',
@@ -45,6 +46,7 @@ const CONTENT_MAP: Record<UpgradeReason, { title: string; description: string; f
       'Advanced RSVP tracking',
       'Confirmation & activity tracking',
     ],
+    imagePlaceholder: 'guests',
   },
   group_limit: {
     title: 'Group Limit Reached',
@@ -55,46 +57,60 @@ const CONTENT_MAP: Record<UpgradeReason, { title: string; description: string; f
       'Group travel coordination',
       'Advanced organization tools',
     ],
+    imagePlaceholder: 'groups',
   },
   send_invites: {
-    title: 'Send Invitations',
-    description: 'Send personalized WhatsApp invitations directly to your guests.',
+    title: 'Send WhatsApp Invitations',
+    description: 'Send personalized WhatsApp invitations directly to your guests. Group-level sending available with Deluxe plan.',
     features: [
-      'Send invites via WhatsApp',
+      'Send invites via WhatsApp to individual guests',
+      'Send to entire groups at once (Deluxe)',
       'Personalized invitation templates',
       'Track who opened invitations',
-      'Confirmation tracking',
+      'Automatic confirmation tracking',
+      'Direct messaging to multiple guests',
     ],
+    imagePlaceholder: 'send-invites',
+    planLevel: 'deluxe',
   },
   invite_settings: {
     title: 'Invitation Settings',
-    description: 'Customize your invitation messages and templates.',
+    description: 'Customize your invitation messages and templates to match your wedding style.',
     features: [
       'Custom invitation templates',
-      'Personalized messages',
+      'Personalized message variables',
       'Template variables support',
       'Professional invitation management',
+      'Multi-language support',
+      'Brand customization',
     ],
+    imagePlaceholder: 'invite-settings',
   },
   invitation_tracking: {
     title: 'Invitation Tracking',
-    description: 'Track when guests view and confirm their invitations.',
+    description: 'See exactly when your guests view and confirm their invitations.',
     features: [
       'See who opened invitations',
       'Confirmation timestamps',
-      'Activity reports',
-      'Detailed analytics',
+      'Activity reports & timeline',
+      'Detailed analytics & insights',
+      'Bulk action capabilities',
+      'Export reports',
     ],
+    imagePlaceholder: 'tracking',
   },
   rsvp_system: {
     title: 'RSVP System',
-    description: 'Enable advanced RSVP management with confirmation tracking.',
+    description: 'Enable advanced RSVP management with comprehensive guest tracking.',
     features: [
-      'Full RSVP system',
+      'Full RSVP system with confirmations',
       'Guest confirmation tracking',
       'Travel information collection',
       'Dietary restrictions management',
+      'Guest status workflow',
+      'Export guest data',
     ],
+    imagePlaceholder: 'rsvp',
   },
 }
 
@@ -157,6 +173,25 @@ export function UpgradeModal({
                   <div>
                     <h2 className="text-xl sm:text-2xl font-serif text-[#420c14]">{content.title}</h2>
                     <p className="text-sm text-[#420c14]/60 mt-1">{content.description}</p>
+                    {content.planLevel && (
+                      <div className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-lg bg-[#DDA46F]/10 border border-[#DDA46F]/30">
+                        <Crown className="w-3.5 h-3.5 text-[#DDA46F]" />
+                        <span className="text-xs font-medium text-[#DDA46F] uppercase tracking-wide">{content.planLevel} Feature</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Demo Image/Video Placeholder */}
+                <div className="mb-6 rounded-xl overflow-hidden border border-[#420c14]/10 bg-gradient-to-br from-[#420c14]/5 to-[#DDA46F]/5">
+                  <div className="aspect-video w-full flex items-center justify-center bg-[#f0ebe3]">
+                    <div className="text-center">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#DDA46F]/10 mb-3">
+                        <Sparkles className="w-8 h-8 text-[#DDA46F]" />
+                      </div>
+                      <p className="text-sm text-[#420c14]/50">Demo image or video coming soon</p>
+                      <p className="text-xs text-[#420c14]/30 mt-1">Shows how this feature works in action</p>
+                    </div>
                   </div>
                 </div>
 
@@ -184,7 +219,7 @@ export function UpgradeModal({
                 <div className="mb-6">
                   <h4 className="font-medium text-[#420c14] mb-3 flex items-center gap-2 text-sm tracking-wider uppercase">
                     <Sparkles className="w-4 h-4 text-[#DDA46F]" />
-                    Unlock with Premium
+                    {content.planLevel === 'deluxe' ? 'Deluxe Features' : 'Unlock with Premium'}
                   </h4>
                   <div className="grid sm:grid-cols-2 gap-2">
                     {content.features.map((feature, index) => (
@@ -205,7 +240,7 @@ export function UpgradeModal({
                 </div>
 
                 {/* Quick pricing comparison */}
-                <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className={`grid gap-3 mb-6 ${content.planLevel === 'deluxe' ? 'grid-cols-3' : 'grid-cols-2'}`}>
                   <div className="rounded-xl border border-[#420c14]/10 p-4 bg-white">
                     <div className="flex items-center justify-between mb-2">
                       <h5 className="text-sm font-medium text-[#420c14]/70">Free</h5>
@@ -222,13 +257,15 @@ export function UpgradeModal({
                       </li>
                     </ul>
                   </div>
-                  <div className="rounded-xl border-2 border-[#DDA46F] p-4 bg-[#DDA46F]/5 relative">
-                    <div className="absolute -top-2 right-3">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-[#420c14] text-[#f5f2eb]">
-                        <Sparkles className="w-2.5 h-2.5" />
-                        Popular
-                      </span>
-                    </div>
+                  <div className={`rounded-xl border-2 p-4 relative ${content.planLevel === 'deluxe' ? 'border-[#420c14]/20 bg-white' : 'border-[#DDA46F] bg-[#DDA46F]/5'}`}>
+                    {content.planLevel !== 'deluxe' && (
+                      <div className="absolute -top-2 right-3">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-[#420c14] text-[#f5f2eb]">
+                          <Sparkles className="w-2.5 h-2.5" />
+                          Popular
+                        </span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between mb-2">
                       <h5 className="text-sm font-medium text-[#420c14]">Premium</h5>
                       <div className="text-right">
@@ -247,6 +284,33 @@ export function UpgradeModal({
                       </li>
                     </ul>
                   </div>
+                  {content.planLevel === 'deluxe' && (
+                    <div className="rounded-xl border-2 border-[#DDA46F] p-4 bg-[#DDA46F]/5 relative">
+                      <div className="absolute -top-2 right-3">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-[#420c14] text-[#f5f2eb]">
+                          <Crown className="w-2.5 h-2.5" />
+                          Best
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between mb-2">
+                        <h5 className="text-sm font-medium text-[#420c14]">Deluxe</h5>
+                        <div className="text-right">
+                          <span className="text-xl font-serif text-[#420c14]">$500</span>
+                          <span className="text-[10px] text-[#420c14]/50 block">one-time</span>
+                        </div>
+                      </div>
+                      <ul className="space-y-1 text-xs text-[#420c14]/70">
+                        <li className="flex items-center gap-1.5">
+                          <Check className="w-3 h-3 text-[#DDA46F]" />
+                          <span className="font-medium">Unlimited guests</span>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Check className="w-3 h-3 text-[#DDA46F]" />
+                          <span className="font-medium">Unlimited groups</span>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
                 </div>
 
                 {/* CTA Buttons */}
