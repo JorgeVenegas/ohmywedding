@@ -1,3 +1,34 @@
+# Stripe Webhook Setup Guide - Complete
+
+## Overview
+Oh My Wedding uses three separate Stripe webhooks for different purposes:
+
+1. **Subscriptions Webhook** - Handles plan upgrades (platform account level)
+2. **Registry Webhook** - Handles gift contributions (connected account level)
+3. **Connect Webhook** - Handles account verification & status (connected account level)
+
+Each webhook is a **separate endpoint with its own signing secret**. You must create all three in your Stripe Dashboard.
+
+---
+
+## Webhook Endpoints Summary
+
+| Webhook | URL | Purpose | Secret Env Var | Events |
+|---------|-----|---------|---|--------|
+| Subscriptions | `/api/subscriptions/webhook` | User plan upgrades | `STRIPE_WEBHOOK_SECRET` | `checkout.session.completed` |
+| Registry | `/api/registry/webhook` | Gift contributions | `STRIPE_REGISTRY_WEBHOOK_SECRET` | `checkout.session.completed`, `checkout.session.expired`, `payment_intent.*`, `charge.*` |
+| Connect | `/api/connect/webhook` | Account verification | `STRIPE_CONNECT_WEBHOOK_SECRET` | `account.updated`, `account.application.deauthorized` |
+
+---
+
+## Quick Setup Checklist
+
+- [ ] Create 3 webhook endpoints in Stripe Dashboard (Developers > Webhooks)
+- [ ] For each endpoint, copy its signing secret and add to `.env` with the correct variable name
+- [ ] Verify webhook events are being received (check Stripe Dashboard > Recent deliveries)
+
+---
+
 # Stripe Connect Webhook Setup Guide
 
 ## Overview
@@ -113,15 +144,21 @@ Triggered when:
 
 ## Environment Variables Checklist
 
-Make sure you have all required variables in your `.env.local`:
+Make sure you have all three webhook secrets in your `.env.local`:
 
 ```bash
-# Required for Stripe Connect
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_CONNECT_WEBHOOK_SECRET=whsec_...
+# Stripe Main Account (Platform) - for subscription payments
+STRIPE_WEBHOOK_SECRET=whsec_...          # from /api/subscriptions/webhook endpoint
 
-# Optional but recommended for testing
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+# Stripe Registry Webhook - for registry contribution payments (from connected accounts)
+STRIPE_REGISTRY_WEBHOOK_SECRET=whsec_... # from /api/registry/webhook endpoint
+
+# Stripe Connect Webhook - for account verification & status updates (from connected accounts)
+STRIPE_CONNECT_WEBHOOK_SECRET=whsec_...  # from /api/connect/webhook endpoint
+
+# Other required vars
+STRIPE_SECRET_KEY=sk_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_...
 ```
 
 ## Troubleshooting

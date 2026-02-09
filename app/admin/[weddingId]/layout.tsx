@@ -53,35 +53,25 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
           return
         }
 
-        // Check if user is owner or collaborator of this wedding
-        // Detect if weddingId is a UUID (contains hyphens) or a wedding_name_id
-        const isUUID = decodedWeddingId.includes('-')
+        // Use the permissions API to check access
+        const response = await fetch(`/api/weddings/${decodedWeddingId}/permissions`)
         
-        const query = supabase
-          .from('weddings')
-          .select('owner_id, collaborator_emails')
-        
-        const { data: wedding, error: weddingError } = isUUID
-          ? await query.eq('id', decodedWeddingId).single()
-          : await query.eq('wedding_name_id', decodedWeddingId).single()
-
-        if (weddingError || !wedding) {
-          // Wedding not found
+        if (!response.ok) {
           setIsAuthorized(false)
           setIsLoading(false)
           return
         }
 
-        const isOwner = wedding.owner_id === user.id
-        const isCollaborator = wedding.collaborator_emails?.includes(user.email || '')
-        const isUnowned = wedding.owner_id === null // Allow access to unowned weddings for claiming
-
-        if (isOwner || isCollaborator || isUnowned) {
+        const { permissions } = await response.json()
+        
+        // Allow access if user can edit (owner, collaborator, or unowned wedding)
+        if (permissions.canEdit || permissions.role === 'owner' || permissions.role === 'editor') {
           setIsAuthorized(true)
         } else {
           setIsAuthorized(false)
         }
       } catch (error) {
+        console.error('Authorization check failed:', error)
         setIsAuthorized(false)
       } finally {
         setIsLoading(false)

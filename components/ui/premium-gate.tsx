@@ -55,7 +55,7 @@ export function PremiumGate({
     return null
   }
 
-  return <PremiumUpgradePrompt title={title} description={description} feature={feature} />
+  return <PremiumUpgradePrompt title={title} description={description} feature={feature} weddingId={weddingId} />
 }
 
 interface PremiumUpgradePromptProps {
@@ -63,6 +63,7 @@ interface PremiumUpgradePromptProps {
   description?: string
   feature?: keyof WeddingFeatures
   variant?: 'card' | 'inline' | 'banner'
+  weddingId?: string
 }
 
 export function PremiumUpgradePrompt({
@@ -70,7 +71,12 @@ export function PremiumUpgradePrompt({
   description,
   feature,
   variant = 'card',
+  weddingId,
 }: PremiumUpgradePromptProps) {
+  const upgradeParams = new URLSearchParams()
+  upgradeParams.set('source', `premium_gate_${feature || 'general'}`)
+  if (weddingId) upgradeParams.set('weddingId', weddingId)
+  const upgradeHref = `/upgrade?${upgradeParams.toString()}`
   const featureNames: Partial<Record<keyof WeddingFeatures, string>> = {
     rsvp_enabled: 'RSVP Management',
     invitations_panel_enabled: 'Invitations & Guest Management',
@@ -94,7 +100,7 @@ export function PremiumUpgradePrompt({
             {title || defaultTitle}
           </p>
         </div>
-        <Link href="/upgrade">
+        <Link href={upgradeHref}>
           <Button size="sm" className="bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb] shadow-lg shadow-[#420c14]/20">
             <Sparkles className="w-4 h-4 mr-1" />
             Upgrade
@@ -113,7 +119,7 @@ export function PremiumUpgradePrompt({
           <p className="text-muted-foreground text-sm mb-4 max-w-md mx-auto">
             {description || defaultDescription}
           </p>
-          <Link href="/upgrade">
+          <Link href={upgradeHref}>
             <Button className="bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb] shadow-lg shadow-[#420c14]/20">
               <Sparkles className="w-4 h-4 mr-2" />
               Upgrade to Premium
@@ -137,7 +143,7 @@ export function PremiumUpgradePrompt({
           {description || defaultDescription}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link href="/upgrade">
+          <Link href={upgradeHref}>
             <Button className="bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb] shadow-lg shadow-[#420c14]/20">
               <Sparkles className="w-4 h-4 mr-2" />
               Upgrade to Premium

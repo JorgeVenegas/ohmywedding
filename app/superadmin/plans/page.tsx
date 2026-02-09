@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase-client"
+import { PRICING } from "@/lib/subscription-shared"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
@@ -274,11 +275,11 @@ export default function PlanFeaturesPage() {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-[#420c14]/60">USD</span>
-              <span className="font-medium text-[#420c14]">${premiumPricing ? (premiumPricing.price_usd / 100).toFixed(0) : 250}</span>
+              <span className="font-medium text-[#420c14]">${premiumPricing ? (premiumPricing.price_usd / 100).toFixed(0) : (PRICING.premium.price_usd / 100)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-[#420c14]/60">MXN</span>
-              <span className="font-medium text-[#420c14]">${premiumPricing ? (premiumPricing.price_mxn / 100).toFixed(0) : 5000}</span>
+              <span className="font-medium text-[#420c14]">${premiumPricing ? (premiumPricing.price_mxn / 100).toFixed(0) : (PRICING.premium.price_mxn / 100)}</span>
             </div>
           </div>
         </div>
@@ -292,11 +293,11 @@ export default function PlanFeaturesPage() {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-[#f5f2eb]/60">USD</span>
-              <span className="font-medium text-[#f5f2eb]">${deluxePricing ? (deluxePricing.price_usd / 100).toFixed(0) : 500}</span>
+              <span className="font-medium text-[#f5f2eb]">${deluxePricing ? (deluxePricing.price_usd / 100).toFixed(0) : (PRICING.deluxe.price_usd / 100)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-[#f5f2eb]/60">MXN</span>
-              <span className="font-medium text-[#f5f2eb]">${deluxePricing ? (deluxePricing.price_mxn / 100).toFixed(0) : 10000}</span>
+              <span className="font-medium text-[#f5f2eb]">${deluxePricing ? (deluxePricing.price_mxn / 100).toFixed(0) : (PRICING.deluxe.price_mxn / 100)}</span>
             </div>
           </div>
         </div>

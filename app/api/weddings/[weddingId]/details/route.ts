@@ -23,6 +23,7 @@ export async function GET(
     let query = supabase
       .from('weddings')
       .select(`
+        id,
         partner1_first_name,
         partner1_last_name,
         partner2_first_name,
@@ -127,7 +128,7 @@ export async function PATCH(
       const featureCheck = await requireFeature('invitations_panel_enabled', weddingId)
       if (!featureCheck.allowed) {
         return NextResponse.json(
-          { error: 'Saving invitation templates requires a Premium subscription', feature: 'invite_settings', upgrade_url: '/upgrade' },
+          { error: 'Saving invitation templates requires a Premium subscription', feature: 'invite_settings', upgrade_url: '/upgrade?source=api_gate_invite_settings' },
           { status: 403 }
         )
       }

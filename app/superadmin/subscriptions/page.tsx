@@ -1,18 +1,18 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server"
-import { CreditCard, Calendar, User, Crown, TrendingUp, CheckCircle2, XCircle, Clock } from "lucide-react"
+import { CreditCard, Calendar, User, Crown, TrendingUp, CheckCircle2, XCircle, Clock, BarChart3 } from "lucide-react"
 import { format } from "date-fns"
+import Link from "next/link"
 
 export const dynamic = 'force-dynamic'
 
 async function getSubscriptions() {
   const supabase = await createServerSupabaseClient()
   
-  // NOTE: User subscriptions have been removed. Plans are now per-wedding.
-  // This page should display wedding subscriptions instead.
+  // Get wedding subscriptions with owner info
   const { data, error } = await supabase
     .from('wedding_subscriptions')
-    .select('*')
-    .order('created_at', { ascending: false })
+    .select('*, weddings(id, partner1_first_name, partner2_first_name, owner_id)')
+    .order('updated_at', { ascending: false })
     .limit(100)
   
   if (error) {
@@ -80,6 +80,12 @@ export default async function SubscriptionsPage() {
             Premium
           </span>
         )
+      case 'free':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#420c14]/5 text-[#420c14]/60 text-xs font-medium">
+            Free
+          </span>
+        )
       default: 
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#420c14]/5 text-[#420c14]/60 text-xs font-medium">
@@ -92,9 +98,9 @@ export default async function SubscriptionsPage() {
   // Calculate stats
   const stats = {
     total: subscriptions.length,
-    active: subscriptions.filter(s => s.status === 'active').length,
-    premium: subscriptions.filter(s => s.plan_type === 'premium').length,
-    deluxe: subscriptions.filter(s => s.plan_type === 'deluxe').length,
+    premium: subscriptions.filter(s => s.plan === 'premium').length,
+    deluxe: subscriptions.filter(s => s.plan === 'deluxe').length,
+    free: subscriptions.filter(s => s.plan === 'free').length,
   }
 
   return (
@@ -104,20 +110,20 @@ export default async function SubscriptionsPage() {
         <p className="text-[10px] uppercase tracking-[0.3em] text-[#DDA46F] mb-2">Payments</p>
         <h1 className="text-4xl font-serif text-[#420c14]">Subscriptions</h1>
         <p className="text-[#420c14]/60 mt-2">
-          View all subscription payments and status
+          Wedding subscription plans and payment tracking
         </p>
       </div>
       
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <div className="bg-white rounded-2xl p-6 border border-[#420c14]/10 shadow-sm">
           <p className="text-sm font-medium text-[#420c14]/60 mb-3">Total Subscriptions</p>
           <p className="text-3xl font-serif text-[#420c14]">{stats.total}</p>
         </div>
         
         <div className="bg-white rounded-2xl p-6 border border-[#420c14]/10 shadow-sm">
-          <p className="text-sm font-medium text-[#420c14]/60 mb-3">Active</p>
-          <p className="text-3xl font-serif text-green-600">{stats.active}</p>
+          <p className="text-sm font-medium text-[#420c14]/60 mb-3">Free Plan</p>
+          <p className="text-3xl font-serif text-[#420c14]/40">{stats.free}</p>
         </div>
         
         <div className="bg-white rounded-2xl p-6 border border-[#DDA46F]/30 shadow-sm">
@@ -129,6 +135,46 @@ export default async function SubscriptionsPage() {
           <p className="text-sm font-medium text-[#f5f2eb]/70 mb-3">Deluxe</p>
           <p className="text-3xl font-serif text-[#f5f2eb]">{stats.deluxe}</p>
         </div>
+
+        <Link href="/superadmin/subscriptions/funnel">
+          <div className="bg-white rounded-2xl p-6 border border-blue-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+            <p className="text-sm font-medium text-blue-600 mb-3 flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" />
+              Conversion Funnel
+            </p>
+            <p className="text-sm text-blue-600/60">View analytics →</p>
+          </div>
+        </Link>
+      </div>
+      
+      {/* Quick Links */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Link href="/superadmin/subscriptions/payments">
+          <div className="bg-white rounded-2xl p-6 border border-emerald-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                <CreditCard className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="font-medium text-[#420c14]">Payment Records</p>
+                <p className="text-sm text-[#420c14]/60">Track payment lifecycle and revenue →</p>
+              </div>
+            </div>
+          </div>
+        </Link>
+        <Link href="/superadmin/subscriptions/funnel">
+          <div className="bg-white rounded-2xl p-6 border border-blue-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="font-medium text-[#420c14]">Conversion Funnel</p>
+                <p className="text-sm text-[#420c14]/60">View funnel analytics →</p>
+              </div>
+            </div>
+          </div>
+        </Link>
       </div>
       
       {/* Subscriptions List */}
@@ -140,7 +186,7 @@ export default async function SubscriptionsPage() {
             </div>
             <div>
               <h2 className="font-medium text-[#420c14]">All Subscriptions</h2>
-              <p className="text-sm text-[#420c14]/60">Subscription payment history</p>
+              <p className="text-sm text-[#420c14]/60">Active wedding subscriptions</p>
             </div>
           </div>
         </div>
@@ -152,7 +198,7 @@ export default async function SubscriptionsPage() {
           </div>
         ) : (
           <div className="divide-y divide-[#420c14]/5">
-            {subscriptions.map((sub) => (
+            {subscriptions.map((sub: any) => (
               <div 
                 key={sub.id}
                 className="flex items-center justify-between p-5 hover:bg-[#420c14]/[0.02] transition-colors"
@@ -162,24 +208,21 @@ export default async function SubscriptionsPage() {
                     <User className="w-6 h-6 text-[#420c14]/40" />
                   </div>
                   <div>
-                    <div className="font-mono text-xs text-[#420c14]/50 bg-[#420c14]/5 px-2 py-0.5 rounded inline-block mb-1">
-                      {sub.user_id.slice(0, 8)}...
+                    <div className="font-medium text-sm text-[#420c14] mb-1">
+                      {sub.weddings?.partner1_first_name} & {sub.weddings?.partner2_first_name}
                     </div>
                     <div className="flex items-center gap-2 text-sm text-[#420c14]/50">
                       <Calendar className="w-3 h-3" />
                       {format(new Date(sub.created_at), 'MMM d, yyyy')}
-                      {sub.stripe_subscription_id && (
-                        <span className="font-mono text-xs bg-[#420c14]/5 px-2 py-0.5 rounded">
-                          {sub.stripe_subscription_id.slice(0, 12)}...
-                        </span>
-                      )}
+                      <span className="font-mono text-xs bg-[#420c14]/5 px-2 py-0.5 rounded">
+                        {sub.wedding_id?.slice(0, 8)}...
+                      </span>
                     </div>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  {getPlanBadge(sub.plan_type)}
-                  {getStatusBadge(sub.status)}
+                  {getPlanBadge(sub.plan)}
                 </div>
               </div>
             ))}

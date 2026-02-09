@@ -2999,6 +2999,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         reason={upgradeReason}
         currentCount={upgradeReason === 'guest_limit' ? totalGuests : guestGroups.filter(g => !g.is_draft).length}
         limit={upgradeReason === 'guest_limit' ? guestLimit ?? undefined : groupLimit ?? undefined}
+        weddingId={weddingDetails?.id || weddingId}
       />
 
       {/* Group Travel Info Dialog */}

@@ -213,10 +213,10 @@ export default function RegistryPage({ params }: RegistryPageProps) {
     try {
       const itemIds = items.map(item => item.id)
       const { data: contributions, error } = await supabase
-        .from("custom_registry_contributions")
-        .select("custom_registry_item_id, status")
+        .from("registry_contributions")
+        .select("custom_registry_item_id, payment_status")
         .in("custom_registry_item_id", itemIds)
-        .eq("status", "requires_action")
+        .eq("payment_status", "requires_action")
 
       if (error) {
         console.warn("Error checking for pending contributions:", error)
@@ -402,7 +402,7 @@ export default function RegistryPage({ params }: RegistryPageProps) {
 
       {/* Sticky Toolbar Section */}
       {!featuresLoading && (
-        <div className="sticky top-[57px] z-20 bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-sm">
+        <div className="sticky top-[52px] z-20 bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Header with Title and Stats */}
             <div className="py-4">
@@ -923,7 +923,8 @@ export default function RegistryPage({ params }: RegistryPageProps) {
       <UpgradeModal
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
-        reason="general"
+        reason="custom_registry"
+        weddingId={weddingData?.id || weddingId}
       />
     </main>
   )

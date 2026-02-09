@@ -1,3 +1,5 @@
+Always run npm run build --debug, never forget the --debug flag since it provides more detailed output that can help catch warnings and notices that might be missed otherwise.
+
 Do not create new supabase migrations, update the declarative schema and then generate a new migration from the diff.
 Do not create unnecessary MD files.
 
@@ -47,11 +49,34 @@ Use shadcn components when possible and just customize them with the tailwind cl
 
 When working on the wedding site, always ensure that the user experience is smooth and intuitive. Prioritize usability and accessibility in every design and development decision.
 
-When running the build, wait for it to complete before trying to run it again. The output of the build is similar to: 
+When running the build, wait for it to complete before trying to run it again. After running npm run build, wait for 10 seconds for it to complete. If you try to run it again before it completes, it can cause issues and errors. Always give it enough time to finish before running it again. 
 
-⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
-  Creating an optimized production build ...
-✓ Compiled successfully in 5.9s
-  Running TypeScript  ...
+Nothing in the db should be dependant on the wedding name id, since it can change. Always use the wedding id for db operations and only use the wedding name id for display purposes and urls.
 
-  Nothing in the db should be dependant on the wedding name id, since it can change. Always use the wedding id for db operations and only use the wedding name id for display purposes and urls.
+## Stripe Webhooks - Local Testing
+
+When testing Stripe features (subscriptions, registry, or Connect), you MUST have the webhook listeners running:
+
+**Before testing, start the webhooks:**
+```bash
+./scripts/start-webhooks.sh
+```
+
+This starts 3 webhook listeners:
+- **Subscriptions**: `/api/subscriptions/webhook` - Tracks payment funnel events (payment_intent.created, payment_intent.requires_action, payment_intent.succeeded, payment_intent.payment_failed, checkout.session.completed)
+- **Registry**: `/api/registry/webhook` - Tracks registry checkout events  
+- **Connect**: `/api/connect/webhook` - Tracks Stripe Connect account events
+
+The script will output the signing secrets. Update `.env.local` if they change:
+- `STRIPE_SUBSCRIPTIONS_WEBHOOK_SECRET`
+- `STRIPE_REGISTRY_WEBHOOK_SECRET`
+- `STRIPE_CONNECT_WEBHOOK_SECRET`
+
+**To test webhooks manually:**
+```bash
+stripe trigger payment_intent.created
+stripe trigger checkout.session.completed
+stripe trigger payment_intent.requires_action
+```
+
+Keep the webhook script running in a separate terminal while testing.

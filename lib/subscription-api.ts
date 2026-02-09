@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createServerSupabaseClient } from "@/lib/supabase-server"
 import type { WeddingFeatures, PlanType } from "@/lib/subscription-shared"
+import { getDefaultFeatures } from "@/lib/subscription-shared"
 
 export interface SubscriptionCheckResult {
   isAuthenticated: boolean
@@ -8,27 +9,6 @@ export interface SubscriptionCheckResult {
   planType: PlanType
   features: WeddingFeatures
   error?: string
-}
-
-// Get default features based on plan type
-function getDefaultFeatures(planType: PlanType): WeddingFeatures {
-  if (planType === 'premium') {
-    return {
-      rsvp_enabled: true,
-      invitations_panel_enabled: true,
-      gallery_enabled: true,
-      registry_enabled: true,
-      schedule_enabled: true,
-    }
-  }
-  
-  return {
-    rsvp_enabled: false,
-    invitations_panel_enabled: false,
-    gallery_enabled: true,
-    registry_enabled: true,
-    schedule_enabled: true,
-  }
 }
 
 // Check subscription and features for API route
@@ -130,7 +110,7 @@ export async function requireFeature(
         { 
           error: 'This feature requires a Premium subscription',
           feature,
-          upgrade_url: '/upgrade',
+          upgrade_url: `/upgrade?source=api_gate_${feature}`,
         },
         { status: 403 }
       ),
@@ -160,7 +140,7 @@ export async function requirePremium(weddingNameId?: string): Promise<{ allowed:
       response: NextResponse.json(
         { 
           error: 'This feature requires a Premium subscription',
-          upgrade_url: '/upgrade',
+          upgrade_url: '/upgrade?source=api_gate_premium',
         },
         { status: 403 }
       ),

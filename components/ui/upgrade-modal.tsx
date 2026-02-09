@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 export type UpgradeReason = 
   | 'general'
+  | 'custom_registry'
+  | 'plan_indicator'
   | 'guest_limit'
   | 'group_limit'
   | 'send_invites'
@@ -21,10 +23,37 @@ interface UpgradeModalProps {
   reason: UpgradeReason
   currentCount?: number
   limit?: number
+  weddingId?: string
 }
 
 const CONTENT_MAP: Record<UpgradeReason, { title: string; description: string; features: string[]; imagePlaceholder?: string; planLevel?: string }> = {
   general: {
+    title: 'Upgrade Your Wedding Plan',
+    description: 'Unlock premium features to make your wedding planning experience even better.',
+    features: [
+      'Up to 250 guests (Premium) or Unlimited (Deluxe)',
+      'Send personalized WhatsApp invitations',
+      'Full RSVP system with confirmation tracking',
+      'Custom invitation templates & settings',
+      'Activity reports and analytics',
+      'Custom subdomain for your wedding site',
+    ],
+    imagePlaceholder: 'general',
+  },
+  custom_registry: {
+    title: 'Custom Gift Registry',
+    description: 'Create a personalized gift registry with secure payments powered by Stripe.',
+    features: [
+      'Unlimited registry items with images',
+      'Secure payment processing via Stripe',
+      'Track contributions in real-time',
+      'Direct payouts to your bank account',
+      'Guest-friendly contribution experience',
+      'Custom goals and descriptions',
+    ],
+    imagePlaceholder: 'registry',
+  },
+  plan_indicator: {
     title: 'Upgrade Your Wedding Plan',
     description: 'Unlock premium features to make your wedding planning experience even better.',
     features: [
@@ -120,8 +149,13 @@ export function UpgradeModal({
   reason,
   currentCount,
   limit,
+  weddingId,
 }: UpgradeModalProps) {
   const content = CONTENT_MAP[reason]
+  const upgradeParams = new URLSearchParams()
+  upgradeParams.set('source', reason)
+  if (weddingId) upgradeParams.set('weddingId', weddingId)
+  const upgradeHref = `/upgrade?${upgradeParams.toString()}`
 
   return (
     <AnimatePresence>
@@ -315,7 +349,7 @@ export function UpgradeModal({
 
                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Link href="/upgrade" className="flex-1">
+                  <Link href={upgradeHref} className="flex-1">
                     <Button 
                       className="w-full h-12 bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb] tracking-wider transition-all duration-300"
                       size="lg"

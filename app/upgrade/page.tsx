@@ -4,10 +4,9 @@ import React, { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Header } from "@/components/header"
 import { useAuth } from "@/hooks/use-auth"
 import { useSubscription } from "@/hooks/use-subscription"
-import { PRICING } from "@/lib/subscription-shared"
+import { PRICING, PLAN_CARDS, COMPARISON_FEATURES } from "@/lib/subscription-shared"
 import { motion } from "framer-motion"
 import {
   Crown,
@@ -15,85 +14,37 @@ import {
   Sparkles,
   ArrowLeft,
   Shield,
-  Loader2
+  Loader2,
+  X
 } from "lucide-react"
 
 const plans = [
   {
     id: "premium" as const,
-    name: "Premium",
-    price: PRICING.premium.priceDisplayMXN || `$${(PRICING.premium.price_mxn / 100).toLocaleString()} MXN`,
-    period: "one-time",
-    description: "Refined essentials for an elegant celebration",
-    features: [
-      { text: "Everything in Free", included: true },
-      { text: "Up to 250 guests", included: true },
-      { text: "Unlimited guest groups", included: true },
-      { text: "1 week activity retention", included: true },
-      { text: "Personalized invitations", included: true },
-      { text: "Bespoke registry with secure payouts", included: true },
-      { text: "Bespoke domain option", included: true },
-      { text: "Website stays forever", included: true },
-    ],
+    name: PLAN_CARDS.premium.name,
+    price: PLAN_CARDS.premium.price,
+    period: PLAN_CARDS.premium.period,
+    tagline: PLAN_CARDS.premium.tagline,
+    description: PLAN_CARDS.premium.description,
+    features: PLAN_CARDS.premium.features.map(text => ({ text, included: true })),
     featured: true,
   },
   {
     id: "deluxe" as const,
-    name: "Deluxe",
-    price: PRICING.deluxe.priceDisplayMXN || `$${(PRICING.deluxe.price_mxn / 100).toLocaleString()} MXN`,
-    period: "one-time",
-    description: "The most exquisite, white-glove experience",
-    features: [
-      { text: "Everything in Premium", included: true },
-      { text: "Unlimited guests & groups", included: true },
-      { text: "Unlimited activity retention", included: true },
-      { text: "Bespoke domain setup", included: true },
-      { text: "Daily activity reports", included: true },
-      { text: "WhatsApp automation (extra cost)", included: true },
-      { text: "Bespoke section components", included: true },
-      { text: "Lower registry commission", included: true },
-    ],
+    name: PLAN_CARDS.deluxe.name,
+    price: PLAN_CARDS.deluxe.price,
+    period: PLAN_CARDS.deluxe.period,
+    tagline: PLAN_CARDS.deluxe.tagline,
+    description: PLAN_CARDS.deluxe.description,
+    features: PLAN_CARDS.deluxe.features.map(text => ({ text, included: true })),
     isDeluxe: true,
   },
 ]
 
-const comparisonFeatures = [
-  { category: "Core Features", features: [
-    { name: "Beautiful wedding website", free: true, premium: true, deluxe: true },
-    { name: "Photo gallery", free: true, premium: true, deluxe: true },
-    { name: "Event schedule", free: true, premium: true, deluxe: true },
-    { name: "Gift registry links", free: true, premium: true, deluxe: true },
-    { name: "Website permanence", free: "6 months", premium: "Forever", deluxe: "Forever" },
-  ]},
-  { category: "Guest Management", features: [
-    { name: "Guest limit", free: "50", premium: "250", deluxe: "Unlimited" },
-    { name: "Guest groups", free: "15", premium: "Unlimited", deluxe: "Unlimited" },
-    { name: "Advanced RSVP system", free: false, premium: true, deluxe: true },
-    { name: "Activity tracking", free: "Last 10", premium: "1 week", deluxe: "Unlimited" },
-  ]},
-  { category: "Registry & Payments", features: [
-    { name: "Bespoke registry with secure payouts", free: false, premium: true, deluxe: true },
-    { name: "No personal account sharing", free: false, premium: true, deluxe: true },
-    { name: "Registry commission", free: "—", premium: "20 MXN", deluxe: "10 MXN" },
-  ]},
-  { category: "Invitations & Communication", features: [
-    { name: "Personalized digital invitations", free: false, premium: true, deluxe: true },
-    { name: "Invitation activity tracking", free: false, premium: true, deluxe: true },
-    { name: "WhatsApp automation (extra cost)", free: false, premium: false, deluxe: true },
-    { name: "Curated message templates", free: false, premium: true, deluxe: true },
-  ]},
-  { category: "Customization & Reports", features: [
-    { name: "Personalized subdomain", free: false, premium: true, deluxe: true },
-    { name: "Bespoke domain support", free: false, premium: true, deluxe: true },
-    { name: "Activity reports", free: false, premium: "Weekly", deluxe: "Daily" },
-    { name: "Bespoke section components", free: false, premium: false, deluxe: true },
-  ]},
-  { category: "Support", features: [
-    { name: "Email support", free: true, premium: true, deluxe: true },
-    { name: "Priority support", free: false, premium: true, deluxe: true },
-    { name: "Dedicated support agent", free: false, premium: false, deluxe: true },
-  ]},
-]
+const comparisonFeatures = COMPARISON_FEATURES.map(cat => ({
+  ...cat,
+  features: cat.features.map(f => ({ ...f })),
+}))
 
 function UpgradePageContent() {
   const { user, loading: authLoading } = useAuth()
@@ -105,6 +56,45 @@ function UpgradePageContent() {
   )
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showWeddingSelector, setShowWeddingSelector] = useState(false)
+  const [weddings, setWeddings] = useState<Array<{ id: string; wedding_name_id: string; partner1_first_name?: string; partner2_first_name?: string; plan?: string }>>([])
+  const [selectedWeddingId, setSelectedWeddingId] = useState<string | null>(null)
+  const [loadingWeddings, setLoadingWeddings] = useState(false)
+
+  // Lead attribution: source tells us where the user came from
+  const leadSource = searchParams.get("source") || "direct"
+  // If weddingId is provided, auto-select that wedding (skip selector)
+  const preselectedWeddingId = searchParams.get("weddingId") || null
+  // Lead tracking: store the lead ID for this session
+  const [leadId, setLeadId] = useState<string | null>(null)
+
+  // Create/reuse a lead as soon as the user visits the upgrade page
+  useEffect(() => {
+    if (authLoading || !user) return
+    // Don't create leads if already premium
+    if (!subscriptionLoading && isPremium) return
+
+    const createLead = async () => {
+      try {
+        const res = await fetch('/api/subscription-leads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source: leadSource,
+            plan: searchParams.get("plan") || undefined,
+            weddingId: preselectedWeddingId || undefined,
+          }),
+        })
+        const data = await res.json()
+        if (data.leadId) {
+          setLeadId(data.leadId)
+        }
+      } catch {
+        // Non-blocking - don't interrupt user flow for analytics
+      }
+    }
+    createLead()
+  }, [user, authLoading, subscriptionLoading, isPremium, leadSource, preselectedWeddingId, searchParams])
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -115,7 +105,26 @@ function UpgradePageContent() {
   if (!authLoading && !subscriptionLoading && isPremium) {
     return (
       <main className="min-h-screen bg-[#f5f2eb]">
-        <Header />
+        <div className="max-w-2xl mx-auto px-4 py-8 sm:py-12">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex items-center justify-between mb-12"
+          >
+            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <div className="text-[#420c14]">
+                <h2 className="text-lg sm:text-2xl font-serif font-light">
+                  Oh<span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.3em]">My</span>Wedding
+                </h2>
+                <p className="text-[7px] sm:text-[10px] text-[#420c14]/40 tracking-widest mt-0.5">WEDDING WEBSITES</p>
+              </div>
+            </Link>
+            <Link href="/" className="text-[#420c14]/60 hover:text-[#420c14] transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+          </motion.div>
+        </div>
         <div className="max-w-2xl mx-auto px-4 py-20 text-center">
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-r from-[#DDA46F] to-[#c99560] flex items-center justify-center">
             <Crown className="w-10 h-10 text-white" />
@@ -136,43 +145,125 @@ function UpgradePageContent() {
 
   const handleUpgrade = async (planType: "premium" | "deluxe") => {
     if (!user) {
-      router.push('/login?redirect=/upgrade')
+      const redirectParams = new URLSearchParams(searchParams.toString())
+      redirectParams.set('plan', planType)
+      router.push(`/login?redirect=/upgrade?${redirectParams.toString()}`)
       return
     }
 
+    setSelectedPlan(planType)
     setIsProcessing(true)
     setError(null)
+    setLoadingWeddings(true)
 
     try {
-      const response = await fetch('/api/subscriptions/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planType }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create checkout session')
+      // If a wedding was pre-selected via URL, go straight to checkout
+      if (preselectedWeddingId) {
+        await proceedToCheckout(planType, preselectedWeddingId)
+        return
       }
 
-      if (data.url) {
-        window.location.href = data.url
+      // Get user's weddings
+      const weddingsResponse = await fetch('/api/weddings')
+      const weddingsData = await weddingsResponse.json()
+
+      if (!weddingsResponse.ok) {
+        throw new Error(weddingsData.error || 'Failed to fetch weddings')
+      }
+
+      const userWeddings = weddingsData.weddings || []
+
+      if (userWeddings.length === 0) {
+        setError('You need to create a wedding first')
+        setIsProcessing(false)
+        setLoadingWeddings(false)
+        return
+      }
+
+      // Filter weddings eligible for the selected plan
+      const PLAN_LEVELS: Record<string, number> = { free: 0, premium: 1, deluxe: 2 }
+      const targetLevel = PLAN_LEVELS[planType] || 0
+      const eligibleWeddings = userWeddings.filter((w: { plan?: string }) => {
+        const currentLevel = PLAN_LEVELS[w.plan || 'free'] || 0
+        return currentLevel < targetLevel
+      })
+
+      if (eligibleWeddings.length === 0) {
+        const planName = planType.charAt(0).toUpperCase() + planType.slice(1)
+        setError(`All your weddings are already on ${planName} or higher. No upgrades needed!`)
+        setIsProcessing(false)
+        setLoadingWeddings(false)
+        return
+      }
+
+      // If only one eligible wedding, proceed directly
+      if (eligibleWeddings.length === 1) {
+        await proceedToCheckout(planType, eligibleWeddings[0].id)
+        return
+      }
+
+      // Multiple eligible weddings - show selection dialog
+      setWeddings(eligibleWeddings)
+      setShowWeddingSelector(true)
+      setIsProcessing(false)
+      setLoadingWeddings(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+      setIsProcessing(false)
+      setLoadingWeddings(false)
+    }
+  }
+
+  const proceedToCheckout = async (planType: "premium" | "deluxe", weddingId: string) => {
+    try {
+      setIsProcessing(true)
+
+      // Track wedding selection on the lead
+      if (leadId) {
+        try {
+          await fetch('/api/subscription-leads', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ leadId, weddingId }),
+          })
+        } catch {
+          // Non-blocking
+        }
+      }
+
+      const checkoutResponse = await fetch(`/api/weddings/${weddingId}/subscription/checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planType, source: leadSource, leadId }),
+      })
+
+      const checkoutData = await checkoutResponse.json()
+
+      if (!checkoutResponse.ok) {
+        throw new Error(checkoutData.error || 'Failed to create checkout session')
+      }
+
+      if (checkoutData.url) {
+        window.location.href = checkoutData.url
       } else {
         throw new Error('No checkout URL received')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
       setIsProcessing(false)
+      setShowWeddingSelector(false)
     }
+  }
+
+  const handleWeddingSelect = async (weddingId: string) => {
+    setSelectedWeddingId(weddingId)
+    await proceedToCheckout(selectedPlan, weddingId)
   }
 
   const loading = authLoading || subscriptionLoading
 
   return (
     <main className="min-h-screen bg-[#f5f2eb] relative overflow-hidden">
-      <Header />
-
       {/* Decorative blurs */}
       <motion.div
         className="absolute top-1/4 left-[10%] w-40 sm:w-80 h-40 sm:h-80 rounded-full bg-[#DDA46F]/10 blur-3xl pointer-events-none"
@@ -185,15 +276,30 @@ function UpgradePageContent() {
         transition={{ duration: 12, repeat: Infinity }}
       />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative">
-        {/* Back link */}
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-[#420c14]/60 hover:text-[#420c14] mb-8 transition-colors text-sm tracking-wider"
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative">
+        {/* OhMyWedding Branding */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="flex items-center justify-between mb-12 sm:mb-16"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Home
-        </Link>
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <div className="text-[#420c14]">
+              <h2 className="text-lg sm:text-2xl font-serif font-light">
+                Oh<span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.3em]">My</span>Wedding
+              </h2>
+              <p className="text-[7px] sm:text-[10px] text-[#420c14]/40 tracking-widest mt-0.5">WEDDING WEBSITES</p>
+            </div>
+          </Link>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-[#420c14]/60 hover:text-[#420c14] transition-colors text-sm tracking-wider"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </Link>
+        </motion.div>
 
         {/* Header */}
         <motion.div
@@ -313,6 +419,19 @@ function UpgradePageContent() {
                     </>
                   )}
                 </Button>
+
+                <div className="mt-4 text-center">
+                  <Link 
+                    href={plan.id === 'premium' ? '/premium' : '/deluxe'}
+                    className={`text-xs sm:text-sm hover:underline transition-colors ${
+                      plan.featured
+                        ? 'text-[#f5f2eb]/60 hover:text-[#f5f2eb]'
+                        : 'text-[#420c14]/50 hover:text-[#420c14]'
+                    }`}
+                  >
+                    Learn more about {plan.id === 'premium' ? 'Premium' : 'Deluxe'}
+                  </Link>
+                </div>
 
                 <div className="mt-8 sm:mt-10 space-y-4 sm:space-y-5">
                   {plan.features.map((feature, featureIndex) => (
@@ -493,6 +612,73 @@ function UpgradePageContent() {
             💳 Secure payment via Stripe • 🔒 30-day money-back guarantee
           </p>
         </motion.div>
+
+        {/* Wedding Selection Modal */}
+        {showWeddingSelector && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-4"
+            >
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-serif text-[#420c14]">Select Wedding</h2>
+                <button
+                  onClick={() => setShowWeddingSelector(false)}
+                  className="text-[#420c14]/50 hover:text-[#420c14]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <p className="text-sm text-[#420c14]/60">
+                Which wedding would you like to upgrade to <span className="font-semibold capitalize">{selectedPlan}</span>?
+              </p>
+
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {weddings.map((wedding) => (
+                  <button
+                    key={wedding.id}
+                    onClick={() => handleWeddingSelect(wedding.id)}
+                    disabled={isProcessing}
+                    className="w-full text-left p-3 rounded-lg border border-[#420c14]/10 hover:border-[#420c14]/30 hover:bg-[#f5f2eb]/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="font-medium text-[#420c14]">
+                        {wedding.partner1_first_name && wedding.partner2_first_name
+                          ? `${wedding.partner1_first_name} & ${wedding.partner2_first_name}`
+                          : wedding.wedding_name_id}
+                      </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                        wedding.plan === 'premium'
+                          ? 'bg-[#DDA46F]/10 text-[#DDA46F] border border-[#DDA46F]/30'
+                          : wedding.plan === 'deluxe'
+                          ? 'bg-[#420c14] text-[#f5f2eb]'
+                          : 'bg-[#420c14]/5 text-[#420c14]/50'
+                      }`}>
+                        {wedding.plan === 'premium' ? 'Premium' : wedding.plan === 'deluxe' ? 'Deluxe' : 'Free'}
+                      </span>
+                    </div>
+                    <div className="text-xs text-[#420c14]/50 mt-1">
+                      {wedding.wedding_name_id}
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-[#420c14]/10">
+                <Button
+                  onClick={() => setShowWeddingSelector(false)}
+                  variant="outline"
+                  className="flex-1"
+                  disabled={isProcessing}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     </main>
   )
@@ -501,11 +687,8 @@ function UpgradePageContent() {
 export default function UpgradePage() {
   return (
     <Suspense fallback={
-      <main className="min-h-screen bg-[#f5f2eb]">
-        <Header />
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-[#DDA46F]" />
-        </div>
+      <main className="min-h-screen bg-[#f5f2eb] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#DDA46F]" />
       </main>
     }>
       <UpgradePageContent />

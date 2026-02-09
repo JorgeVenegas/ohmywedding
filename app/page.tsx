@@ -39,6 +39,7 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { getWeddingUrl, type WeddingPlan } from "@/lib/wedding-url"
+import { PLAN_CARDS, COMPARISON_FEATURES } from "@/lib/subscription-shared"
 import { Suspense } from "react"
 import { motion, useScroll, useTransform, useInView, AnimatePresence, useSpring } from "framer-motion"
 
@@ -1337,101 +1338,45 @@ function PricingSection() {
 
   const plans = [
     {
-      name: "Free",
-      price: "$0",
-      period: "forever",
-      description: "A refined start for your celebration",
-      features: [
-        { text: "Beautiful wedding website", included: true },
-        { text: "Photo gallery", included: true },
-        { text: "Event schedule", included: true },
-        { text: "Gift registry links", included: true },
-        { text: "Up to 50 guests", included: true },
-        { text: "Last 10 activities only", included: true },
-      ],
-      cta: "Get Started",
-      href: "/create-wedding",
+      name: PLAN_CARDS.free.name,
+      price: PLAN_CARDS.free.price,
+      period: PLAN_CARDS.free.period,
+      description: PLAN_CARDS.free.description,
+      features: PLAN_CARDS.free.features.map(text => ({ text, included: true })),
+      cta: PLAN_CARDS.free.cta,
+      href: PLAN_CARDS.free.href,
       featured: false,
     },
     {
-      name: "Premium",
-      price: "$250",
-      period: "one-time",
-      description: "Refined essentials for an elegant celebration",
-      features: [
-        { text: "Everything in Free", included: true },
-        { text: "Up to 250 guests", included: true },
-        { text: "Unlimited guest groups", included: true },
-        { text: "1 week activity retention", included: true },
-        { text: "Personalized invitations", included: true },
-        { text: "Bespoke registry with secure payouts", included: true },
-        { text: "Bespoke domain option", included: true },
-        { text: "Website stays forever", included: true },
-      ],
-      cta: "Upgrade Now",
-      href: "/upgrade",
+      name: PLAN_CARDS.premium.name,
+      price: PLAN_CARDS.premium.price,
+      period: PLAN_CARDS.premium.period,
+      tagline: PLAN_CARDS.premium.tagline,
+      description: PLAN_CARDS.premium.description,
+      features: PLAN_CARDS.premium.features.map(text => ({ text, included: true })),
+      cta: PLAN_CARDS.premium.cta,
+      href: `/upgrade?source=landing_pricing_premium`,
       featured: true,
     },
     {
-      name: "Deluxe",
-      price: "$500",
-      period: "one-time",
-      description: "The most exquisite, white-glove experience",
-      features: [
-        { text: "Everything in Premium", included: true },
-        { text: "Unlimited guests & groups", included: true },
-        { text: "Unlimited activity retention", included: true },
-        { text: "Bespoke domain setup", included: true },
-        { text: "Daily activity reports", included: true },
-        { text: "WhatsApp automation (extra cost)", included: true },
-        { text: "Bespoke section components", included: true },
-        { text: "Lower registry commission", included: true },
-      ],
-      cta: "Go Deluxe",
-      href: "/upgrade?plan=deluxe",
+      name: PLAN_CARDS.deluxe.name,
+      price: PLAN_CARDS.deluxe.price,
+      period: PLAN_CARDS.deluxe.period,
+      tagline: PLAN_CARDS.deluxe.tagline,
+      description: PLAN_CARDS.deluxe.description,
+      features: PLAN_CARDS.deluxe.features.map(text => ({ text, included: true })),
+      cta: PLAN_CARDS.deluxe.cta,
+      href: `/upgrade?plan=deluxe&source=landing_pricing_deluxe`,
       featured: false,
       isDeluxe: true,
     },
   ]
 
   // Comparison table data
-  const comparisonFeatures = [
-    { category: "Core Features", features: [
-      { name: "Beautiful wedding website", free: true, premium: true, deluxe: true },
-      { name: "Photo gallery", free: true, premium: true, deluxe: true },
-      { name: "Event schedule", free: true, premium: true, deluxe: true },
-      { name: "Gift registry links", free: true, premium: true, deluxe: true },
-      { name: "Website permanence", free: "6 months", premium: "Forever", deluxe: "Forever" },
-    ]},
-    { category: "Guest Management", features: [
-      { name: "Guest limit", free: "50", premium: "250", deluxe: "Unlimited" },
-      { name: "Guest groups", free: "15", premium: "Unlimited", deluxe: "Unlimited" },
-      { name: "Advanced RSVP system", free: false, premium: true, deluxe: true },
-      { name: "Activity tracking for invitations & communications", free: "Last 10", premium: "1 week", deluxe: "Unlimited" },
-    ]},
-    { category: "Registry & Payments", features: [
-      { name: "Bespoke registry with secure payouts", free: false, premium: true, deluxe: true },
-      { name: "No personal account sharing", free: false, premium: true, deluxe: true },
-      { name: "Registry commission", free: "—", premium: "20 MXN", deluxe: "10 MXN" },
-    ]},
-    { category: "Invitations & Communication", features: [
-      { name: "Personalized digital invitations", free: false, premium: true, deluxe: true },
-      { name: "Activity tracking on invitations & communications", free: false, premium: true, deluxe: true },
-      { name: "WhatsApp automation (extra cost)", free: false, premium: false, deluxe: true },
-      { name: "Curated message templates", free: false, premium: true, deluxe: true },
-    ]},
-    { category: "Customization & Reports", features: [
-      { name: "Personalized subdomain", free: false, premium: true, deluxe: true },
-      { name: "Bespoke domain support", free: false, premium: true, deluxe: true },
-      { name: "Activity reports", free: false, premium: "Weekly", deluxe: "Daily" },
-      { name: "Bespoke section components", free: false, premium: false, deluxe: true },
-    ]},
-    { category: "Support", features: [
-      { name: "Email support", free: true, premium: true, deluxe: true },
-      { name: "Priority support", free: false, premium: true, deluxe: true },
-      { name: "Dedicated support agent", free: false, premium: false, deluxe: true },
-    ]},
-  ]
+  const comparisonFeatures = COMPARISON_FEATURES.map(cat => ({
+    ...cat,
+    features: cat.features.map(f => ({ ...f })),
+  }))
 
   return (
     <section id="pricing" ref={ref} className="py-20 sm:py-40 bg-[#f5f2eb] relative overflow-hidden">
@@ -1528,19 +1473,36 @@ function PricingSection() {
                   }`}>{plan.period}</span>
                 </div>
 
-                <Link href={plan.href}>
-                  <Button 
-                    className={`w-full h-12 sm:h-14 text-sm sm:text-base tracking-wider transition-all duration-700 ${
-                      plan.featured 
-                        ? 'bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14]' 
-                        : (plan as { isDeluxe?: boolean }).isDeluxe
-                          ? 'bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb]'
-                          : 'bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb]'
-                    }`}
-                  >
-                    {plan.cta}
-                  </Button>
-                </Link>
+                <div className="space-y-3">
+                  <Link href={plan.href}>
+                    <Button 
+                      className={`w-full h-12 sm:h-14 text-sm sm:text-base tracking-wider transition-all duration-700 ${
+                        plan.featured 
+                          ? 'bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14]' 
+                          : (plan as { isDeluxe?: boolean }).isDeluxe
+                            ? 'bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb]'
+                            : 'bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb]'
+                      }`}
+                    >
+                      {plan.cta}
+                    </Button>
+                  </Link>
+                  
+                  <div className="text-center">
+                    <Link 
+                      href={plan.name === 'Premium' ? '/premium' : plan.name === 'Deluxe' ? '/deluxe' : '#'}
+                      className={`text-xs sm:text-sm hover:underline transition-colors ${
+                        plan.featured
+                          ? 'text-[#f5f2eb]/60 hover:text-[#f5f2eb]'
+                          : (plan as { isDeluxe?: boolean }).isDeluxe
+                            ? 'text-[#420c14]/50 hover:text-[#420c14]'
+                            : 'text-[#420c14]/50 hover:text-[#420c14]'
+                      }`}
+                    >
+                      {plan.name !== 'Free' && `Learn more about ${plan.name}`}
+                    </Link>
+                  </div>
+                </div>
 
                 <div className="mt-8 sm:mt-10 space-y-4 sm:space-y-5">
                   {plan.features.map((feature, featureIndex) => (
@@ -1686,12 +1648,12 @@ function PricingSection() {
                 Get Started
               </Button>
             </Link>
-            <Link href="/upgrade" className="block">
+            <Link href="/upgrade?source=landing_comparison_premium" className="block">
               <Button className="w-full bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb] text-xs sm:text-sm h-10 sm:h-12">
                 Upgrade
               </Button>
             </Link>
-            <Link href="/upgrade?plan=deluxe" className="block">
+            <Link href="/upgrade?plan=deluxe&source=landing_comparison_deluxe" className="block">
               <Button className="w-full bg-gradient-to-r from-[#DDA46F] to-[#c99560] hover:from-[#c99560] hover:to-[#b88550] text-[#420c14] text-xs sm:text-sm h-10 sm:h-12">
                 Go Deluxe
               </Button>

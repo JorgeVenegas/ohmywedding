@@ -10,51 +10,47 @@ export async function GET(
     const decodedWeddingId = decodeURIComponent(weddingId)
     const supabase = await createServerSupabaseClient()
 
-    // First, get the wedding UUID from the wedding_name_id
-    const { data: wedding, error: weddingError } = await supabase
+    // Support both UUID and wedding_name_id (slug)
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedWeddingId)
+
+    const weddingQuery = supabase
       .from("weddings")
       .select("id")
-      .eq("wedding_name_id", decodedWeddingId)
-      .single()
+
+    const { data: wedding, error: weddingError } = isUUID
+      ? await weddingQuery.eq("id", decodedWeddingId).single()
+      : await weddingQuery.eq("wedding_name_id", decodedWeddingId).single()
 
     if (weddingError || !wedding) {
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
     }
 
-    // Get wedding features
-    const { data: features, error: featuresError } = await supabase
-      .from("wedding_features")
-      .select("*")
+    // Get the wedding's subscription plan
+    const { data: subscription } = await supabase
+      .from("wedding_subscriptions")
+      .select("plan")
       .eq("wedding_id", wedding.id)
-      .single()
+      .maybeSingle()
 
-    if (featuresError && featuresError.code !== "PGRST116") {
-      // PGRST116 = no rows returned
-      throw featuresError
+    const plan = subscription?.plan || "free"
+
+    // Get all features for this plan from plan_features table
+    const { data: planFeatures, error: featuresError } = await supabase
+      .from("plan_features")
+      .select("feature_key, enabled, limit_value")
+      .eq("plan", plan)
+
+    if (featuresError) throw featuresError
+
+    // Build features map
+    const featuresMap: Record<string, { enabled: boolean; limit: number | null }> = {}
+    for (const f of planFeatures || []) {
+      featuresMap[f.feature_key] = { enabled: f.enabled, limit: f.limit_value }
     }
 
-    // If no features exist, create default ones
-    if (!features) {
-      const { data: newFeatures, error: insertError } = await supabase
-        .from("wedding_features")
-        .insert({
-          wedding_id: wedding.id,
-          rsvp_enabled: true, // Default to true for existing weddings
-          invitations_panel_enabled: true,
-          gallery_enabled: true,
-          registry_enabled: true,
-          schedule_enabled: true,
-        })
-        .select()
-        .single()
-
-      if (insertError) throw insertError
-
-      return NextResponse.json({ features: newFeatures })
-    }
-
-    return NextResponse.json({ features })
+    return NextResponse.json({ plan, features: featuresMap })
   } catch (error) {
+    console.error("Error fetching wedding features:", error)
     return NextResponse.json(
       { error: "Failed to fetch wedding features" },
       { status: 500 }
@@ -72,35 +68,45 @@ export async function PUT(
     const body = await request.json()
     const supabase = await createServerSupabaseClient()
 
-    // First, get the wedding UUID from the wedding_name_id
-    const { data: wedding, error: weddingError } = await supabase
+    // Support both UUID and wedding_name_id (slug)
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedWeddingId)
+
+    const weddingQuery = supabase
       .from("weddings")
       .select("id")
-      .eq("wedding_name_id", decodedWeddingId)
-      .single()
+
+    const { data: wedding, error: weddingError } = isUUID
+      ? await weddingQuery.eq("id", decodedWeddingId).single()
+      : await weddingQuery.eq("wedding_name_id", decodedWeddingId).single()
 
     if (weddingError || !wedding) {
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
     }
 
+    // The PUT is for updating the subscription plan (admin use)
+    const { plan } = body
+    if (!plan || !['free', 'premium', 'deluxe'].includes(plan)) {
+      return NextResponse.json({ error: "Invalid plan" }, { status: 400 })
+    }
+
     const { data, error } = await supabase
-      .from("wedding_features")
+      .from("wedding_subscriptions")
       .upsert(
         {
           wedding_id: wedding.id,
-          ...body,
+          plan,
+          updated_at: new Date().toISOString(),
         },
-        {
-          onConflict: "wedding_id",
-        }
+        { onConflict: "wedding_id" }
       )
       .select()
       .single()
 
     if (error) throw error
 
-    return NextResponse.json({ features: data })
+    return NextResponse.json({ subscription: data })
   } catch (error) {
+    console.error("Error updating wedding features:", error)
     return NextResponse.json(
       { error: "Failed to update wedding features" },
       { status: 500 }

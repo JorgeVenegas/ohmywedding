@@ -71,7 +71,7 @@ function SubdomainNotAvailableContent() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/upgrade">
+            <Link href="/upgrade?source=subdomain_unavailable">
               <Button
                 size="lg"
                 className="bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb] tracking-wider px-8"

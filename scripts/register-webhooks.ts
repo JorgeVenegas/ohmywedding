@@ -1,5 +1,6 @@
 import Stripe from "stripe"
 import { createClient } from "@supabase/supabase-js"
+import { STRIPE_API_VERSION } from "@/lib/stripe-config"
 
 /**
  * Script to register platform webhook on all existing connected Stripe accounts
@@ -42,7 +43,7 @@ async function registerWebhooksOnExistingAccounts() {
   }
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-12-15.clover",
+    apiVersion: STRIPE_API_VERSION as any,
   })
 
   const supabase = createClient(

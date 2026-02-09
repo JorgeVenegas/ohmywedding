@@ -121,7 +121,7 @@ export function PlanIndicator() {
       <UpgradeModal
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
-        reason="general"
+        reason="plan_indicator"
       />
     </>
   )

@@ -15,7 +15,7 @@ export function InvitationsHeaderToolbar({
   toolbarProps,
 }: InvitationsHeaderToolbarProps) {
   return (
-    <div className="sticky top-[57px] z-20 bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-sm">
+    <div className="sticky top-[52px] z-20 bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="py-4">

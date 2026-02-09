@@ -54,17 +54,17 @@ export async function GET() {
       }
     }
     
-    // Enrich weddings with plan info from wedding_features
+    // Enrich weddings with plan info from wedding_subscriptions
     const weddingIds = allWeddings.map(w => w.id)
     let planMap: Record<string, string> = {}
     if (weddingIds.length > 0) {
-      const { data: features } = await supabase
-        .from('wedding_features')
+      const { data: subscriptions } = await supabase
+        .from('wedding_subscriptions')
         .select('wedding_id, plan')
         .in('wedding_id', weddingIds)
       
-      if (features) {
-        planMap = Object.fromEntries(features.map(f => [f.wedding_id, f.plan || 'free']))
+      if (subscriptions) {
+        planMap = Object.fromEntries(subscriptions.map(s => [s.wedding_id, s.plan || 'free']))
       }
     }
     

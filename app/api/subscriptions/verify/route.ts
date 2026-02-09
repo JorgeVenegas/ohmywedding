@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { STRIPE_API_VERSION } from '@/lib/stripe-config'
 
 // Lazy initialization to avoid build-time errors
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2025-12-15.clover',
+    apiVersion: STRIPE_API_VERSION as any,
   })
 }
 

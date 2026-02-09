@@ -128,13 +128,13 @@ export async function PUT(
     const adminClient = createAdminSupabaseClient()
     
     // Get wedding plan
-    const { data: weddingFeatures } = await adminClient
-      .from('wedding_features')
+    const { data: weddingSubscription } = await adminClient
+      .from('wedding_subscriptions')
       .select('plan')
       .eq('wedding_id', existingWedding.id)
-      .single()
+      .maybeSingle()
     
-    const plan = weddingFeatures?.plan || 'free'
+    const plan = weddingSubscription?.plan || 'free'
     
     // Get plan features
     const { data: planFeatures } = await adminClient

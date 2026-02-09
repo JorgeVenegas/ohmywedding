@@ -171,33 +171,142 @@ export const PLAN_FEATURES: PlanFeature[] = [
 export const PRICING = {
   free: {
     name: 'Free',
+    tagline: 'Get started for free',
     price_usd: 0,
     price_mxn: 0,
     priceDisplay: '$0',
+    priceDisplayMXN: '$0 MXN',
     period: 'forever',
-    description: 'Perfect for getting started',
+    description: 'Create your free wedding website with essential features to get started.',
   },
   premium: {
     name: 'Premium',
-    price_usd: 25000, // $250 USD in cents
-    price_mxn: 500000, // $5,000 MXN in centavos
-    priceDisplay: '$250 USD',
-    priceDisplayMXN: '$5,000 MXN',
+    tagline: 'We do it together',
+    price_usd: 35000, // $350 USD in cents
+    price_mxn: 700000, // $7,000 MXN in centavos
+    priceDisplay: '$350 USD',
+    priceDisplayMXN: '$7,000 MXN',
     period: 'one-time',
-    description: 'Everything you need for your big day',
+    description: 'We accompany you from day one — premium features, expert guidance, and all existing components at your fingertips.',
     stripePriceId: process.env.STRIPE_PREMIUM_PRICE_ID || '',
   },
   deluxe: {
     name: 'Deluxe',
-    price_usd: 50000, // $500 USD in cents
-    price_mxn: 1000000, // $10,000 MXN in centavos
-    priceDisplay: '$500 USD',
-    priceDisplayMXN: '$10,000 MXN',
+    tagline: 'We take care of everything',
+    price_usd: 75000, // $750 USD in cents
+    price_mxn: 1500000, // $15,000 MXN in centavos
+    priceDisplay: '$750 USD',
+    priceDisplayMXN: '$15,000 MXN',
     period: 'one-time',
-    description: 'The ultimate wedding experience',
+    description: 'The ultimate bespoke experience — we create your wedding page with completely personalized, custom-made components and exceptional attention to detail.',
     stripePriceId: process.env.STRIPE_DELUXE_PRICE_ID || '',
   },
 }
+
+// --- Centralized plan card definitions (for upgrade + landing pages) ---
+
+export const PLAN_CARDS = {
+  free: {
+    name: PRICING.free.name,
+    tagline: PRICING.free.tagline,
+    price: PRICING.free.priceDisplayMXN,
+    period: PRICING.free.period,
+    description: 'A refined start for your celebration',
+    features: [
+      'Beautiful wedding website',
+      'Photo gallery',
+      'Event schedule',
+      'Gift registry links',
+      'Up to 50 guests',
+      'Last 10 activities only',
+    ],
+    cta: 'Get Started',
+    href: '/create-wedding',
+  },
+  premium: {
+    name: PRICING.premium.name,
+    tagline: PRICING.premium.tagline,
+    price: PRICING.premium.priceDisplayMXN,
+    period: PRICING.premium.period,
+    description: 'We accompany you from day one with expert guidance and premium tools',
+    features: [
+      'Everything in Free',
+      'Up to 250 guests',
+      'Unlimited guest groups',
+      '1 week activity retention',
+      'Personalized invitations',
+      'Bespoke registry with secure payouts',
+      'Bespoke domain option',
+      'Website stays forever',
+      'Expert guidance & advice from our team',
+    ],
+    cta: 'Upgrade to Premium',
+    href: '/upgrade?source=pricing_premium',
+  },
+  deluxe: {
+    name: PRICING.deluxe.name,
+    tagline: PRICING.deluxe.tagline,
+    price: PRICING.deluxe.priceDisplayMXN,
+    period: PRICING.deluxe.period,
+    description: 'We take care of everything — bespoke design, personalized components, exceptional attention to detail',
+    features: [
+      'Everything in Premium',
+      'Unlimited guests & groups',
+      'Unlimited activity retention',
+      'Completely personalized, bespoke components',
+      'Bespoke domain setup',
+      'Daily activity reports',
+      'WhatsApp automation (extra cost)',
+      'Lower registry commission',
+      'Dedicated personal support agent',
+      'We design & build your entire page',
+    ],
+    cta: 'Go Deluxe',
+    href: '/upgrade?plan=deluxe&source=pricing_deluxe',
+  },
+}
+
+// --- Centralized feature comparison table ---
+
+export const COMPARISON_FEATURES = [
+  { category: 'Core Features', features: [
+    { name: 'Beautiful wedding website', free: true, premium: true, deluxe: true },
+    { name: 'Photo gallery', free: true, premium: true, deluxe: true },
+    { name: 'Event schedule', free: true, premium: true, deluxe: true },
+    { name: 'Gift registry links', free: true, premium: true, deluxe: true },
+    { name: 'Website permanence', free: '6 months', premium: 'Forever', deluxe: 'Forever' },
+  ]},
+  { category: 'Guest Management', features: [
+    { name: 'Guest limit', free: '50', premium: '250', deluxe: 'Unlimited' },
+    { name: 'Guest groups', free: '15', premium: 'Unlimited', deluxe: 'Unlimited' },
+    { name: 'Advanced RSVP system', free: false, premium: true, deluxe: true },
+    { name: 'Activity tracking', free: 'Last 10', premium: '1 week', deluxe: 'Unlimited' },
+  ]},
+  { category: 'Registry & Payments', features: [
+    { name: 'Bespoke registry with secure payouts', free: false, premium: true, deluxe: true },
+    { name: 'No personal account sharing', free: false, premium: true, deluxe: true },
+    { name: 'Registry commission', free: '—', premium: '20 MXN', deluxe: '10 MXN' },
+  ]},
+  { category: 'Invitations & Communication', features: [
+    { name: 'Personalized digital invitations', free: false, premium: true, deluxe: true },
+    { name: 'Invitation activity tracking', free: false, premium: true, deluxe: true },
+    { name: 'WhatsApp automation (extra cost)', free: false, premium: false, deluxe: true },
+    { name: 'Curated message templates', free: false, premium: true, deluxe: true },
+  ]},
+  { category: 'Customization & Design', features: [
+    { name: 'Personalized subdomain', free: false, premium: true, deluxe: true },
+    { name: 'Bespoke domain support', free: false, premium: true, deluxe: true },
+    { name: 'Activity reports', free: false, premium: 'Weekly', deluxe: 'Daily' },
+    { name: 'Bespoke section components', free: false, premium: false, deluxe: true },
+    { name: 'Completely personalized page design', free: false, premium: false, deluxe: true },
+  ]},
+  { category: 'Experience & Support', features: [
+    { name: 'Email support', free: true, premium: true, deluxe: true },
+    { name: 'Expert guidance & advice', free: false, premium: true, deluxe: true },
+    { name: 'Dedicated personal support agent', free: false, premium: false, deluxe: true },
+    { name: 'We design & build your page', free: false, premium: false, deluxe: true },
+  ]},
+] as const
 
 // Default features for each plan
 export function getDefaultFeatures(planType: PlanType): WeddingFeatures {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createClient } from "@supabase/supabase-js"
+import { STRIPE_API_VERSION } from "@/lib/stripe-config"
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -10,7 +11,7 @@ const getStripe = () => {
     throw new Error("STRIPE_SECRET_KEY is not set")
   }
   return new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-12-15.clover",
+    apiVersion: STRIPE_API_VERSION as any,
   })
 }
 

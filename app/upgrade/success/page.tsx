@@ -74,7 +74,7 @@ function UpgradeSuccessContent() {
           We couldn&apos;t verify your payment. If you were charged, please contact support.
         </p>
         <div className="flex gap-4 justify-center">
-          <Link href="/upgrade">
+          <Link href="/upgrade?source=payment_retry">
             <Button variant="outline">Try Again</Button>
           </Link>
           <Link href="mailto:support@ohmywedding.app">
