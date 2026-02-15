@@ -20,19 +20,46 @@ interface I18nProviderProps {
   initialLocale?: Locale
 }
 
-export function I18nProvider({ children, initialLocale = defaultLocale }: I18nProviderProps) {
-  const [locale, setLocaleState] = useState<Locale>(initialLocale)
+export function I18nProvider({ children, initialLocale }: I18nProviderProps) {
+  // Always initialize with a deterministic value to avoid hydration mismatch.
+  // localStorage/cookie are read in a useEffect after mount.
+  const [locale, setLocaleState] = useState<Locale>(initialLocale || defaultLocale)
   
+  // After mount, sync locale from localStorage / geo cookie (only when no initialLocale)
+  useEffect(() => {
+    if (initialLocale) return // initialLocale takes priority
+    let detected: Locale | null = null
+    const stored = localStorage.getItem('preferred-locale') as Locale | null
+    if (stored && locales.includes(stored)) {
+      detected = stored
+    } else {
+      const cookie = document.cookie.split('; ').find(c => c.startsWith('geo-locale='))
+      if (cookie) {
+        const val = cookie.split('=')[1] as Locale
+        if (locales.includes(val)) detected = val
+      }
+    }
+    if (detected && detected !== locale) {
+      setLocaleState(detected)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Update locale when initialLocale prop changes (e.g., from config)
   useEffect(() => {
     if (initialLocale && initialLocale !== locale) {
       setLocaleState(initialLocale)
-      // Update html lang attribute
       if (typeof document !== 'undefined') {
         document.documentElement.lang = initialLocale
       }
     }
   }, [initialLocale, locale])
+  
+  // Set html lang on mount and when locale changes
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = locale
+    }
+  }, [locale])
   
   const setLocale = useCallback((newLocale: Locale) => {
     if (locales.includes(newLocale)) {

@@ -6,6 +6,7 @@ import { createBrowserClient } from "@supabase/ssr"
 import { SubscriptionProvider } from "@/components/contexts/subscription-context"
 import { PlanIndicator } from "@/components/plan-indicator"
 import { getCleanAdminUrl } from "@/lib/admin-url"
+import { useTranslation } from "@/components/contexts/i18n-context"
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -17,6 +18,7 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [weddingId, setWeddingId] = useState<string>('')
   const router = useRouter()
+  const { t } = useTranslation()
 
   useEffect(() => {
     async function checkAuthorization() {
@@ -86,7 +88,7 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Verifying access...</p>
+          <p className="text-muted-foreground">{t('admin.layout.verifyingAccess')}</p>
         </div>
       </div>
     )
@@ -96,16 +98,15 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center max-w-md px-4">
-          <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-2">{t('admin.layout.noPermission')}</h1>
           <p className="text-muted-foreground mb-6">
-            You don&apos;t have permission to access this wedding&apos;s admin panel. 
-            Only the wedding owner and invited collaborators can manage this wedding.
+            {t('admin.layout.noPermissionDescription')}
           </p>
           <button
             onClick={() => router.push('/')}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
           >
-            Go Home
+            {t('admin.layout.goHome')}
           </button>
         </div>
       </div>

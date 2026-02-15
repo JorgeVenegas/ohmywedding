@@ -104,6 +104,9 @@ async function getWeddingPlan(weddingNameId: string): Promise<'free' | 'premium'
   }
 }
 
+// English-speaking countries (default to English)
+const ENGLISH_COUNTRIES = new Set(['US', 'CA', 'GB', 'AU', 'NZ', 'IE'])
+
 export async function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || ''
   const pathname = request.nextUrl.pathname
@@ -382,6 +385,20 @@ async function handleSupabaseAuth(request: NextRequest, response: NextResponse) 
       
       return NextResponse.redirect(loginUrl)
     }
+  }
+
+  // Set geo-locale cookie for language auto-detection
+  // Only set if the user doesn't already have a preferred-locale in localStorage
+  // (that's client-side, so we just always set the geo cookie as a hint)
+  if (!request.cookies.get('geo-locale')) {
+    const country = request.headers.get('x-vercel-ip-country') || ''
+    const geoLocale = ENGLISH_COUNTRIES.has(country) ? 'en' : 'es'
+    response.cookies.set('geo-locale', geoLocale, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365, // 1 year
+      sameSite: 'lax',
+      ...(cookieDomain ? { domain: cookieDomain } : {}),
+    })
   }
 
   return response

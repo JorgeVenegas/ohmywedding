@@ -57,6 +57,13 @@ ALTER TABLE public.wedding_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wedding_settings ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for wedding_subscriptions
+-- Anyone can read wedding subscription plan (needed for public pages like registry)
+CREATE POLICY "Anyone can view wedding subscription plan"
+  ON public.wedding_subscriptions
+  FOR SELECT
+  TO public
+  USING (true);
+
 -- Wedding owners and collaborators can view their subscription
 CREATE POLICY "Wedding owners and collaborators can view subscriptions"
   ON public.wedding_subscriptions
@@ -146,5 +153,6 @@ CREATE TRIGGER update_wedding_settings_updated_at
   EXECUTE FUNCTION update_updated_at_column();
 
 -- Grant permissions
+GRANT SELECT ON public.wedding_subscriptions TO anon;
 GRANT SELECT, INSERT, UPDATE ON public.wedding_subscriptions TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON public.wedding_settings TO authenticated;

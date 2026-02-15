@@ -42,6 +42,8 @@ import { getWeddingUrl, type WeddingPlan } from "@/lib/wedding-url"
 import { PLAN_CARDS, COMPARISON_FEATURES } from "@/lib/subscription-shared"
 import { Suspense } from "react"
 import { motion, useScroll, useTransform, useInView, AnimatePresence, useSpring } from "framer-motion"
+import { LanguageSwitcher } from "@/components/ui/language-switcher"
+import { useTranslation } from "@/components/contexts/i18n-context"
 
 // ============================================
 // COLOR PALETTE
@@ -110,6 +112,7 @@ type UserWedding = {
 
 function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
   const { user, loading, signOut } = useAuth()
+  const { t } = useTranslation()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [userWeddings, setUserWeddings] = useState<UserWedding[]>([])
   const [weddingsLoading, setWeddingsLoading] = useState(false)
@@ -162,14 +165,14 @@ function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
         <div className="flex flex-col gap-4 w-full">
           {/* User info */}
           <div className="pb-4 border-b border-[#DDA46F]/20">
-            <p className="text-xs text-[#f5f2eb]/50 mb-1">Signed in as</p>
+            <p className="text-xs text-[#f5f2eb]/50 mb-1">{t('landing.nav.signedInAs')}</p>
             <p className="text-sm font-medium text-[#f5f2eb]/90 truncate">{user.email}</p>
           </div>
           
           {/* Weddings list - scrollable with all weddings accessible */}
           {userWeddings.length > 0 && (
             <div className="pb-4 border-b border-[#DDA46F]/20">
-              <p className="text-xs text-[#f5f2eb]/50 font-semibold mb-2">Your Weddings ({userWeddings.length})</p>
+              <p className="text-xs text-[#f5f2eb]/50 font-semibold mb-2">{t('landing.nav.yourWeddings')} ({userWeddings.length})</p>
               <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
                 {userWeddings.map(wedding => (
                   <a
@@ -193,13 +196,13 @@ function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
               <a href={getWeddingUrl(firstWedding.wedding_name_id, '', firstWedding.plan || 'free')} className="w-full">
                 <Button className="w-full bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
                   <Edit3 className="w-4 h-4 mr-2" />
-                  Edit Wedding
+                  {t('landing.nav.editWedding')}
                 </Button>
               </a>
             ) : (
               <Link href="/create-wedding" className="w-full">
                 <Button className="w-full bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
-                  Create Wedding
+                  {t('landing.nav.createWedding')}
                 </Button>
               </Link>
             )}
@@ -208,7 +211,7 @@ function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
               onClick={() => signOut()}
               className="w-full text-left px-4 py-3 text-sm text-[#DDA46F] hover:bg-[#DDA46F]/10 rounded-md transition-colors duration-200"
             >
-              Sign Out
+              {t('landing.nav.signOut')}
             </button>
           </div>
         </div>
@@ -237,12 +240,12 @@ function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
               className="absolute top-full right-0 mt-2 bg-[#420c14]/98 backdrop-blur-xl rounded-lg shadow-2xl border border-[#DDA46F]/20 py-2 z-50 min-w-[280px] max-h-[60vh] overflow-y-auto"
             >
               <div className="px-4 py-3 border-b border-[#DDA46F]/10">
-                <p className="text-xs text-[#f5f2eb]/50 mb-1">Signed in as</p>
+                <p className="text-xs text-[#f5f2eb]/50 mb-1">{t('landing.nav.signedInAs')}</p>
                 <p className="text-sm font-medium text-[#f5f2eb]/90 truncate" title={user.email}>{user.email}</p>
               </div>
               {userWeddings.length > 0 && (
                 <div className="border-b border-[#DDA46F]/10 max-h-[280px] overflow-y-auto">
-                  <p className="px-4 py-2 text-xs text-[#f5f2eb]/50 font-semibold sticky top-0 bg-[#420c14]/98">Your Weddings</p>
+                  <p className="px-4 py-2 text-xs text-[#f5f2eb]/50 font-semibold sticky top-0 bg-[#420c14]/98">{t('landing.nav.yourWeddings')}</p>
                   {userWeddings.map(wedding => (
                     <a
                       key={wedding.id}
@@ -263,7 +266,7 @@ function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
                 }}
                 className="w-full text-left px-4 py-3 text-sm text-[#DDA46F] hover:bg-[#DDA46F]/10 transition-colors duration-200 border-t border-[#DDA46F]/10"
               >
-                Sign Out
+                {t('landing.nav.signOut')}
               </button>
             </motion.div>
           )}
@@ -274,13 +277,13 @@ function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
           <a href={getWeddingUrl(firstWedding.wedding_name_id, '', firstWedding.plan || 'free')}>
             <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
               <Edit3 className="w-4 h-4 mr-2" />
-              Edit Wedding
+              {t('landing.nav.editWedding')}
             </Button>
           </a>
         ) : (
           <Link href="/create-wedding">
             <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
-              Create Wedding
+              {t('landing.nav.createWedding')}
             </Button>
           </Link>
         )}
@@ -294,12 +297,12 @@ function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
       <div className="flex flex-col gap-3 w-full">
         <Link href="/login" className="w-full">
           <Button variant="ghost" className="w-full text-[#f5f2eb]/80 hover:text-[#f5f2eb] hover:bg-[#f5f2eb]/10 transition-all duration-200">
-            Sign In
+            {t('landing.nav.signIn')}
           </Button>
         </Link>
         <Link href="/create-wedding" className="w-full">
           <Button className="w-full bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
-            Get Started
+            {t('landing.nav.getStarted')}
           </Button>
         </Link>
       </div>
@@ -310,12 +313,12 @@ function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
     <div className="flex gap-3">
       <Link href="/login">
         <Button variant="ghost" className="text-[#f5f2eb]/80 hover:text-[#f5f2eb] hover:bg-[#f5f2eb]/10 transition-all duration-200">
-          Sign In
+          {t('landing.nav.signIn')}
         </Button>
       </Link>
       <Link href="/create-wedding">
         <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
-          Get Started
+          {t('landing.nav.getStarted')}
         </Button>
       </Link>
     </div>
@@ -410,6 +413,7 @@ function CustomCursor() {
 // ============================================
 
 function LuxuryHeader() {
+  const { t } = useTranslation()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -490,10 +494,10 @@ function LuxuryHeader() {
 
           <nav className="hidden lg:flex items-center gap-10">
             {[
-              { label: 'Features', href: '#features' },
-              { label: 'Experience', href: '#experience' },
-              { label: 'Pricing', href: '#pricing' },
-              { label: 'Templates', href: '#demos' },
+              { label: t('landing.nav.features'), href: '#features' },
+              { label: t('landing.nav.experience'), href: '#experience' },
+              { label: t('landing.nav.pricing'), href: '#pricing' },
+              { label: t('landing.nav.templates'), href: '#demos' },
             ].map((item, index) => (
               <motion.a
                 key={item.label}
@@ -508,7 +512,8 @@ function LuxuryHeader() {
             ))}
           </nav>
 
-          <div className="hidden lg:block">
+          <div className="hidden lg:flex items-center gap-4">
+            <LanguageSwitcher variant="pill" />
             <AuthButtons />
           </div>
 
@@ -583,10 +588,10 @@ function LuxuryHeader() {
             {/* Navigation links */}
             <nav className="flex-1 flex flex-col justify-center space-y-4">
               {[
-                { label: 'Features', href: '#features' },
-                { label: 'Experience', href: '#experience' },
-                { label: 'Pricing', href: '#pricing' },
-                { label: 'Templates', href: '#demos' },
+                { label: t('landing.nav.features'), href: '#features' },
+                { label: t('landing.nav.experience'), href: '#experience' },
+                { label: t('landing.nav.pricing'), href: '#pricing' },
+                { label: t('landing.nav.templates'), href: '#demos' },
               ].map((item, index) => (
                 <motion.a
                   key={item.label}
@@ -602,13 +607,16 @@ function LuxuryHeader() {
               ))}
             </nav>
             
-            {/* Auth buttons at bottom */}
+            {/* Language switcher & Auth buttons at bottom */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.3 }}
-              className="pt-6 border-t border-[#DDA46F]/20"
+              className="pt-6 border-t border-[#DDA46F]/20 space-y-4"
             >
+              <div className="flex items-center justify-center">
+                <LanguageSwitcher variant="pill" />
+              </div>
               <AuthButtons isMobile />
             </motion.div>
           </div>
@@ -637,8 +645,11 @@ function HeroSection() {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
   const [currentWordIndex, setCurrentWordIndex] = useState(0)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const { t, locale } = useTranslation()
   
-  const rotatingWords = ["Displayed", "Celebrated", "Immortalized", "Unveiled"]
+  const rotatingWords = (locale === 'es' 
+    ? ['Exhibido', 'Celebrado', 'Inmortalizado', 'Revelado'] 
+    : ['Displayed', 'Celebrated', 'Immortalized', 'Unveiled'])
   
   // Auto-rotate through words
   useEffect(() => {
@@ -731,7 +742,7 @@ function HeroSection() {
         >
           <span className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-8 py-2 sm:py-3 rounded-full bg-[#f5f2eb]/5 backdrop-blur-md border border-[#DDA46F]/20 text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.2em] sm:tracking-[0.4em] uppercase">
             <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
-            The Digital Suite for Weddings
+            {t('landing.hero.title')}
             <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
           </span>
         </motion.div>
@@ -743,7 +754,7 @@ function HeroSection() {
           className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl xl:text-9xl text-[#f5f2eb] mb-4 sm:mb-8 leading-[0.95] tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
           style={{ textShadow: '0 4px 30px rgba(0,0,0,0.4), 0 2px 10px rgba(0,0,0,0.3)' }}
         >
-          <span className="block font-serif font-light text-[1.4em] sm:text-[1.5em] my-0 sm:my-1" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>Your</span>
+          <span className="block font-serif font-light text-[1.4em] sm:text-[1.5em] my-0 sm:my-1" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>{t('landing.hero.subtitle')}</span>
           <span className="block font-serif font-light text-[1.4em] sm:text-[1.5em] my-0 sm:my-1" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>
             Love Story
           </span>
@@ -784,7 +795,7 @@ function HeroSection() {
               size="lg" 
               className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] h-12 sm:h-16 px-6 sm:px-12 text-sm sm:text-base tracking-[0.1em] sm:tracking-[0.15em] font-medium group transition-all duration-700 w-full sm:w-auto"
             >
-              Create Your Website
+              {t('landing.hero.cta')}
               <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 sm:ml-3 transition-transform duration-500 group-hover:translate-x-2" />
             </Button>
           </Link>
@@ -795,7 +806,7 @@ function HeroSection() {
               className="border-[#f5f2eb]/30 text-[#f5f2eb] hover:bg-[#f5f2eb]/10 hover:border-[#f5f2eb]/50 h-12 sm:h-16 px-6 sm:px-12 text-sm sm:text-base tracking-[0.1em] sm:tracking-[0.15em] backdrop-blur-sm transition-all duration-700 w-full sm:w-auto"
             >
               <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
-              View Gallery
+              {t('landing.hero.secondary')}
             </Button>
           </Link>
         </motion.div>
@@ -808,9 +819,9 @@ function HeroSection() {
           className="mt-8 sm:mt-16 flex justify-center gap-8 sm:gap-16 md:gap-24"
         >
           {[
-            { value: '10K+', label: 'Happy Couples' },
-            { value: '50+', label: 'Countries' },
-            { value: '4.9', label: 'Rating', icon: <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-[#DDA46F] text-[#DDA46F] inline ml-1" /> },
+            { value: '10K+', label: t('landing.hero.stats.couples') },
+            { value: '50+', label: t('landing.hero.stats.countries') },
+            { value: '4.9', label: t('landing.hero.stats.rating'), icon: <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-[#DDA46F] text-[#DDA46F] inline ml-1" /> },
           ].map((stat, index) => (
             <motion.div 
               key={index} 
@@ -841,7 +852,7 @@ function HeroSection() {
           transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
           className="flex flex-col items-center gap-3 text-[#f5f2eb]/40"
         >
-          <span className="text-xs tracking-[0.4em] uppercase">Scroll to Explore</span>
+          <span className="text-xs tracking-[0.4em] uppercase">{t('landing.hero.scrollToExplore')}</span>
           <ArrowDown className="w-5 h-5" />
         </motion.div>
       </motion.div>
@@ -856,6 +867,7 @@ function HeroSection() {
 function AboutSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: false, margin: "-100px" })
+  const { t } = useTranslation()
 
   return (
     <section ref={ref} className="py-20 sm:py-40 bg-[#f5f2eb] relative overflow-hidden">
@@ -875,7 +887,7 @@ function AboutSection() {
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 1, delay: 0.2 }}
             >
-              About OhMyWedding
+              {t('landing.about.label')}
             </motion.span>
             
             <motion.h2 
@@ -884,8 +896,8 @@ function AboutSection() {
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 1.2, delay: 0.3 }}
             >
-              <span className="font-serif font-light block">Where Love Meets</span>
-              <span className="font-['Elegant',cursive] text-[#732c2c] text-[1.5em] block mt-1 sm:mt-2">Exquisite Design</span>
+              <span className="font-serif font-light block">{t('landing.about.title')}</span>
+              <span className="font-['Elegant',cursive] text-[#732c2c] text-[1.5em] block mt-1 sm:mt-2">{t('landing.about.subtitle')}</span>
             </motion.h2>
             
             <motion.div 
@@ -895,12 +907,10 @@ function AboutSection() {
               transition={{ duration: 1, delay: 0.5 }}
             >
               <p>
-                We believe your wedding website should be as extraordinary as your love story. 
-                Every detail, every moment, every emotion deserves to be captured with elegance.
+                {t('landing.about.description1')}
               </p>
               <p>
-                From the first save-the-date to the final thank you, OhMyWedding provides an unparalleled 
-                digital experience that reflects the beauty of your celebration.
+                {t('landing.about.description2')}
               </p>
             </motion.div>
             
@@ -912,10 +922,10 @@ function AboutSection() {
               transition={{ duration: 1, delay: 0.7 }}
             >
               {[
-                { icon: <Crown className="w-4 h-4 sm:w-5 sm:h-5" />, label: 'Luxury Templates' },
-                { icon: <Globe className="w-4 h-4 sm:w-5 sm:h-5" />, label: 'Your Own Domain' },
-                { icon: <Bell className="w-4 h-4 sm:w-5 sm:h-5" />, label: 'Smart Notifications' },
-                { icon: <Palette className="w-4 h-4 sm:w-5 sm:h-5" />, label: 'Full Customization' },
+                { icon: <Crown className="w-4 h-4 sm:w-5 sm:h-5" />, label: t('landing.about.pills.templates') },
+                { icon: <Globe className="w-4 h-4 sm:w-5 sm:h-5" />, label: t('landing.about.pills.domain') },
+                { icon: <Bell className="w-4 h-4 sm:w-5 sm:h-5" />, label: t('landing.about.pills.notifications') },
+                { icon: <Palette className="w-4 h-4 sm:w-5 sm:h-5" />, label: t('landing.about.pills.customization') },
               ].map((item, index) => (
                 <motion.div
                   key={index}
@@ -967,9 +977,9 @@ function AboutSection() {
                 ))}
               </div>
               <p className="text-[#f5f2eb]/80 text-xs sm:text-sm italic leading-relaxed text-center lg:text-left">
-                &ldquo;The most beautiful wedding website we&apos;ve ever seen...&rdquo;
+                {t('landing.about.testimonial.quote')}
               </p>
-              <p className="text-[#DDA46F] text-[10px] sm:text-xs mt-2 sm:mt-3 tracking-wider text-center lg:text-left">— Sarah & Michael</p>
+              <p className="text-[#DDA46F] text-[10px] sm:text-xs mt-2 sm:mt-3 tracking-wider text-center lg:text-left">{t('landing.about.testimonial.author')}</p>
             </motion.div>
             
             {/* Decorative frame */}
@@ -985,46 +995,46 @@ function AboutSection() {
 // FEATURES SECTION
 // ============================================
 
-const features = [
+const featureItems = [
   {
     icon: <Eye className="w-7 h-7" />,
-    title: "Invitation Tracking",
-    description: "Know exactly when guests view your invitation with real-time open notifications.",
+    titleKey: 'landing.features.items.invitationTracking.title' as const,
+    descriptionKey: 'landing.features.items.invitationTracking.description' as const,
     color: "#DDA46F",
     image: "/images/demo_images/demo-img-40.jpg"
   },
   {
     icon: <CheckCircle2 className="w-7 h-7" />,
-    title: "RSVP Dashboard",
-    description: "Comprehensive guest management with attendance, meal preferences, and confirmations.",
+    titleKey: 'landing.features.items.rsvpDashboard.title' as const,
+    descriptionKey: 'landing.features.items.rsvpDashboard.description' as const,
     color: "#424b1e",
     image: "/images/demo_images/demo-img-41.jpg"
   },
   {
     icon: <Globe className="w-7 h-7" />,
-    title: "Your Own Subdomain",
-    description: "Personalized yournames.ohmy.wedding domain - elegantly branded for your special day.",
+    titleKey: 'landing.features.items.subdomain.title' as const,
+    descriptionKey: 'landing.features.items.subdomain.description' as const,
     color: "#732c2c",
     image: "/images/demo_images/demo-img-42.jpg"
   },
   {
     icon: <Send className="w-7 h-7" />,
-    title: "Message Templates",
-    description: "Pre-designed templates for save-the-dates, reminders, and thank you notes.",
+    titleKey: 'landing.features.items.messageTemplates.title' as const,
+    descriptionKey: 'landing.features.items.messageTemplates.description' as const,
     color: "#172815",
     image: "/images/demo_images/demo-img-43.jpg"
   },
   {
     icon: <Bell className="w-7 h-7" />,
-    title: "Smart Notifications",
-    description: "Instant alerts when guests RSVP or view invitations. Stay connected effortlessly.",
+    titleKey: 'landing.features.items.notifications.title' as const,
+    descriptionKey: 'landing.features.items.notifications.description' as const,
     color: "#DDA46F",
     image: "/images/demo_images/demo-img-44.jpg"
   },
   {
     icon: <Crown className="w-7 h-7" />,
-    title: "Luxury Experience",
-    description: "Premium designs, smooth animations, and elegant typography throughout.",
+    titleKey: 'landing.features.items.luxuryExperience.title' as const,
+    descriptionKey: 'landing.features.items.luxuryExperience.description' as const,
     color: "#420c14",
     image: "/images/demo_images/demo-img-45.jpg"
   },
@@ -1033,6 +1043,7 @@ const features = [
 function FeaturesSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: false, margin: "-100px" })
+  const { t } = useTranslation()
 
   return (
     <section id="features" ref={ref} className="py-20 sm:py-40 bg-[#420c14] relative overflow-hidden">
@@ -1053,20 +1064,20 @@ function FeaturesSection() {
           className="text-center mb-12 sm:mb-24"
         >
           <span className="text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.3em] sm:tracking-[0.4em] uppercase mb-4 sm:mb-6 block">
-            Features
+            {t('landing.features.label')}
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl text-[#f5f2eb] mb-6 sm:mb-8 leading-tight">
-            <span className="font-serif font-light block">Powerful Tools for</span>
-            <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] block mt-1 sm:mt-2">Your Perfect Day</span>
+            <span className="font-serif font-light block">{t('landing.features.title')}</span>
+            <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] block mt-1 sm:mt-2">{t('landing.features.subtitle')}</span>
           </h2>
           <p className="text-[#f5f2eb]/50 text-sm sm:text-lg max-w-2xl mx-auto leading-relaxed px-2">
-            Everything you need to create, manage, and share your wedding website with elegance.
+            {t('landing.features.description')}
           </p>
         </motion.div>
 
         {/* Features Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
+          {featureItems.map((feature, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 60 }}
@@ -1079,7 +1090,7 @@ function FeaturesSection() {
                 <div className="relative aspect-video rounded-2xl overflow-hidden mb-6 bg-[#f5f2eb]/5">
                   <Image
                     src={feature.image}
-                    alt={feature.title}
+                    alt={t(feature.titleKey)}
                     fill
                     className="object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-700"
                   />
@@ -1094,8 +1105,8 @@ function FeaturesSection() {
                   </div>
                 </div>
                 
-                <h3 className="text-xl font-serif text-[#f5f2eb] mb-3">{feature.title}</h3>
-                <p className="text-[#f5f2eb]/50 leading-relaxed text-sm">{feature.description}</p>
+                <h3 className="text-xl font-serif text-[#f5f2eb] mb-3">{t(feature.titleKey)}</h3>
+                <p className="text-[#f5f2eb]/50 leading-relaxed text-sm">{t(feature.descriptionKey)}</p>
                 
                 {/* Hover glow */}
                 <motion.div 
@@ -1117,57 +1128,47 @@ function FeaturesSection() {
 // EXPERIENCE SECTION - AWARD-WINNING DESIGN
 // ============================================
 
-const experiences = [
+const experienceKeys = ['hero', 'countdown', 'ourStory', 'eventDetails', 'rsvp', 'gallery'] as const
+
+const experienceData = [
   { 
     id: 'hero',
-    title: "Hero", 
-    subtitle: "First Impressions",
-    description: "A captivating entrance with video backgrounds and elegant typography",
+    key: 'hero' as const,
     video: "/videos/vid11.mp4",
     image: "/images/demo_images/demo-img-2.jpg",
     carouselImage: "/images/demo_images/demo-img-35.jpg"
   },
   { 
     id: 'countdown',
-    title: "Countdown", 
-    subtitle: "The Anticipation",
-    description: "Elegant countdown timers building excitement for your special day",
+    key: 'countdown' as const,
     video: "/videos/vid13.mp4",
     image: "/images/demo_images/demo-img-5.jpg",
     carouselImage: "/images/demo_images/demo-img-40.jpg"
   },
   { 
     id: 'story',
-    title: "Our Story", 
-    subtitle: "Your Journey",
-    description: "Beautiful timeline of your love story from first meeting to engagement",
+    key: 'ourStory' as const,
     video: "/videos/vid16.mp4",
     image: "/images/demo_images/demo-img-7.jpg",
     carouselImage: "/images/demo_images/demo-img-42.jpg"
   },
   { 
     id: 'venue',
-    title: "Event Details", 
-    subtitle: "The Venue",
-    description: "Showcase your ceremony and reception locations with maps",
+    key: 'eventDetails' as const,
     video: "/videos/vid18.mp4",
     image: "/images/demo_images/demo-img-10.jpg",
     carouselImage: "/images/demo_images/demo-img-44.jpg"
   },
   { 
     id: 'rsvp',
-    title: "RSVP", 
-    subtitle: "The Response",
-    description: "Smart RSVP system with guest management and meal preferences",
+    key: 'rsvp' as const,
     video: "/videos/vid19.mp4",
     image: "/images/demo_images/demo-img-15.jpg",
     carouselImage: "/images/demo_images/demo-img-46.jpg"
   },
   { 
     id: 'gallery',
-    title: "Gallery", 
-    subtitle: "Your Moments",
-    description: "Stunning photo galleries with elegant layouts and lightbox views",
+    key: 'gallery' as const,
     video: "/videos/vid21.mp4",
     image: "/images/demo_images/demo-img-20.jpg",
     carouselImage: "/images/demo_images/demo-img-48.jpg"
@@ -1178,11 +1179,12 @@ function ExperienceSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: false, margin: "-50px" })
   const [activeIndex, setActiveIndex] = useState(0)
+  const { t } = useTranslation()
 
   // Auto-rotate through experiences
   useEffect(() => {
     const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % experiences.length)
+      setActiveIndex((prev) => (prev + 1) % experienceData.length)
     }, 5000)
     return () => clearInterval(interval)
   }, [])
@@ -1206,9 +1208,9 @@ function ExperienceSection() {
               loop
               playsInline
               className="w-full h-full object-cover"
-              poster={experiences[activeIndex].image}
+              poster={experienceData[activeIndex].image}
             >
-              <source src={experiences[activeIndex].video} type="video/mp4" />
+              <source src={experienceData[activeIndex].video} type="video/mp4" />
             </video>
           </motion.div>
         </AnimatePresence>
@@ -1225,17 +1227,17 @@ function ExperienceSection() {
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
           >
             <span className="text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.3em] sm:tracking-[0.5em] uppercase mb-4 sm:mb-8 block">
-              Website Sections
+              {t('landing.experience.label')}
             </span>
             
             <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#f5f2eb] mb-8 sm:mb-12 leading-[1.05]">
-              <span className="font-serif font-light block">Every Detail</span>
-              <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] block mt-1 sm:mt-2">Beautifully Crafted</span>
+              <span className="font-serif font-light block">{t('landing.experience.title')}</span>
+              <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] block mt-1 sm:mt-2">{t('landing.experience.subtitle')}</span>
             </h2>
 
             {/* Experience List - All items visible without scrolling */}
             <div className="space-y-1 sm:space-y-1.5">
-              {experiences.map((exp, index) => (
+              {experienceData.map((exp, index) => (
                 <motion.button
                   key={exp.id}
                   onClick={() => setActiveIndex(index)}
@@ -1251,7 +1253,7 @@ function ExperienceSection() {
                   <div className="p-2.5 sm:p-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-serif text-sm sm:text-base text-[#f5f2eb] truncate">{exp.title}</h3>
+                        <h3 className="font-serif text-sm sm:text-base text-[#f5f2eb] truncate">{t(`landing.experience.sections.${exp.key}.title`)}</h3>
                       </div>
                       <motion.div
                         animate={{ scale: activeIndex === index ? 1 : 0.6, opacity: activeIndex === index ? 1 : 0.3 }}
@@ -1283,8 +1285,8 @@ function ExperienceSection() {
                   className="absolute inset-0"
                 >
                   <Image
-                    src={experiences[activeIndex].carouselImage}
-                    alt={experiences[activeIndex].title}
+                    src={experienceData[activeIndex].carouselImage}
+                    alt={t(`landing.experience.sections.${experienceData[activeIndex].key}.title`)}
                     fill
                     className="object-cover"
                   />
@@ -1294,7 +1296,7 @@ function ExperienceSection() {
               
               {/* Progress indicator */}
               <div className="absolute bottom-6 left-6 right-6 flex gap-2">
-                {experiences.map((_, index) => (
+                {experienceData.map((_, index) => (
                   <motion.div
                     key={index}
                     className="h-1 rounded-full flex-1 bg-[#f5f2eb]/20 overflow-hidden cursor-pointer"
@@ -1335,6 +1337,7 @@ function ExperienceSection() {
 function PricingSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: false, margin: "-100px" })
+  const { t } = useTranslation()
 
   const plans = [
     {
@@ -1401,14 +1404,14 @@ function PricingSection() {
           className="text-center mb-12 sm:mb-24"
         >
           <span className="text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.3em] sm:tracking-[0.4em] uppercase mb-4 sm:mb-6 block">
-            Pricing
+            {t('landing.pricing.label')}
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl text-[#420c14] mb-6 sm:mb-8 leading-tight">
-            <span className="font-serif font-light">Simple &</span>
-            <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] ml-2 sm:ml-4">Transparent</span>
+            <span className="font-serif font-light">{t('landing.pricing.title')}</span>
+            <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] ml-2 sm:ml-4">{t('landing.pricing.subtitle')}</span>
           </h2>
           <p className="text-[#420c14]/60 text-sm sm:text-lg max-w-2xl mx-auto px-2">
-            Start for free, upgrade when you&apos;re ready. No hidden fees.
+            {t('landing.pricing.description')}
           </p>
         </motion.div>
 
@@ -1437,7 +1440,7 @@ function PricingSection() {
                 >
                   <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-[#f5f2eb] text-[#420c14] text-xs sm:text-sm font-medium tracking-wider">
                     <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Most Popular
+                    {t('landing.pricing.mostPopular')}
                   </span>
                 </motion.div>
               )}
@@ -1451,7 +1454,7 @@ function PricingSection() {
                 >
                   <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-[#420c14] text-[#f5f2eb] text-xs sm:text-sm font-medium tracking-wider">
                     <Crown className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Luxury
+                    {t('landing.pricing.luxury')}
                   </span>
                 </motion.div>
               )}
@@ -1499,7 +1502,7 @@ function PricingSection() {
                             : 'text-[#420c14]/50 hover:text-[#420c14]'
                       }`}
                     >
-                      {plan.name !== 'Free' && `Learn more about ${plan.name}`}
+                      {plan.name !== 'Free' && t('landing.pricing.learnMore', { plan: plan.name })}
                     </Link>
                   </div>
                 </div>
@@ -1542,7 +1545,7 @@ function PricingSection() {
           className="mt-16 sm:mt-24 bg-white rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-10 border border-[#420c14]/10 shadow-xl shadow-[#420c14]/5 overflow-hidden"
         >
           <h3 className="text-2xl sm:text-3xl font-serif text-[#420c14] mb-8 sm:mb-12 text-center">
-            Compare Plans
+            {t('landing.pricing.comparePlans')}
           </h3>
           
           <div className="overflow-x-auto -mx-6 sm:mx-0">
@@ -1557,22 +1560,22 @@ function PricingSection() {
                 <thead>
                   <tr className="border-b-2 border-[#420c14]/10">
                     <th className="text-left py-4 sm:py-6 pr-4 sm:pr-8 text-sm sm:text-base font-medium text-[#420c14]/60">
-                      Features
+                      {t('landing.pricing.features')}
                     </th>
                     <th className="text-center py-4 sm:py-6 px-3 sm:px-6">
-                      <div className="text-base sm:text-lg font-serif text-[#420c14]">Free</div>
+                      <div className="text-base sm:text-lg font-serif text-[#420c14]">{t('landing.pricing.free')}</div>
                       <div className="text-xs sm:text-sm text-[#420c14]/50 mt-1">$0</div>
                     </th>
                     <th className="text-center py-4 sm:py-6 px-3 sm:px-6 relative">
                       <div className="absolute inset-0 bg-[#420c14]/5 -mx-3 sm:-mx-6" />
                       <div className="relative">
-                        <div className="text-base sm:text-lg font-serif text-[#420c14]">Premium</div>
+                        <div className="text-base sm:text-lg font-serif text-[#420c14]">{t('landing.pricing.premium')}</div>
                         <div className="text-xs sm:text-sm text-[#420c14]/50 mt-1">$250</div>
                         <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-[#DDA46F] mx-auto mt-1" />
                       </div>
                     </th>
                     <th className="text-center py-4 sm:py-6 px-3 sm:px-6">
-                      <div className="text-base sm:text-lg font-serif text-[#420c14]">Deluxe</div>
+                      <div className="text-base sm:text-lg font-serif text-[#420c14]">{t('landing.pricing.deluxe')}</div>
                       <div className="text-xs sm:text-sm text-[#420c14]/50 mt-1">$500</div>
                       <Crown className="w-3 h-3 sm:w-4 sm:h-4 text-[#DDA46F] mx-auto mt-1" />
                     </th>
@@ -1645,17 +1648,17 @@ function PricingSection() {
           <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-[#420c14]/10">
             <Link href="/create-wedding" className="block">
               <Button className="w-full bg-[#420c14]/5 hover:bg-[#420c14]/10 text-[#420c14] text-xs sm:text-sm h-10 sm:h-12">
-                Get Started
+                {t('landing.nav.getStarted')}
               </Button>
             </Link>
             <Link href="/upgrade?source=landing_comparison_premium" className="block">
               <Button className="w-full bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb] text-xs sm:text-sm h-10 sm:h-12">
-                Upgrade
+                {t('landing.pricing.premium')}
               </Button>
             </Link>
             <Link href="/upgrade?plan=deluxe&source=landing_comparison_deluxe" className="block">
               <Button className="w-full bg-gradient-to-r from-[#DDA46F] to-[#c99560] hover:from-[#c99560] hover:to-[#b88550] text-[#420c14] text-xs sm:text-sm h-10 sm:h-12">
-                Go Deluxe
+                {t('landing.pricing.deluxe')}
               </Button>
             </Link>
           </div>
@@ -1668,7 +1671,7 @@ function PricingSection() {
           transition={{ duration: 1, delay: 0.8 }}
           className="mt-16 text-center text-[#420c14]/50 text-sm tracking-wide"
         >
-          💳 Secure payment via Stripe • 🔒 30-day money-back guarantee
+          💳 {t('landing.pricing.guarantee.secure')} • 🔒 {t('landing.pricing.guarantee.moneyBack')}
         </motion.div>
       </div>
     </section>
@@ -1682,6 +1685,7 @@ function PricingSection() {
 function GoldenBannerSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: false, margin: "-100px" })
+  const { t } = useTranslation()
 
   return (
     <section ref={ref} className="relative h-[50vh] sm:h-[60vh] lg:h-[70vh] min-h-[350px] sm:min-h-[500px] lg:min-h-[600px] overflow-hidden">
@@ -1714,11 +1718,7 @@ function GoldenBannerSection() {
               textShadow: '0 2px 20px rgba(221,164,111,0.3)'
             }}
           >
-            <span className="font-serif text-[2.15em] md:text-[3.15em]">&ldquo;Every </span>
-            <span className="font-['Elegant',cursive] text-[3.6em] md:text-[5.9em]">love story</span>
-            <span className="font-serif text-[2.15em] md:text-[3.15em]"> is beautiful, but yours deserves to be told with </span>
-            <span className="font-['Elegant',cursive] text-[3.6em] md:text-[5.9em]">elegance</span>
-            <span className="font-serif text-[2.15em] md:text-[3.15em]">&rdquo;</span>
+            <span className="font-serif text-[2.15em] md:text-[3.15em]">&ldquo;{t('landing.goldenBanner.quote')}&rdquo;</span>
           </motion.p>
         </motion.div>
       </div>
@@ -1856,6 +1856,7 @@ const testimonials = [
 function TestimonialsSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: false, margin: "-100px" })
+  const { t } = useTranslation()
 
   return (
     <section ref={ref} className="py-20 sm:py-40 bg-[#172815] relative overflow-hidden">
@@ -1882,7 +1883,7 @@ function TestimonialsSection() {
             animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.8, delay: 0.1 }}
           >
-            Testimonials
+            {t('landing.testimonials.label')}
           </motion.span>
           <motion.h2 
             className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl text-[#f5f2eb] mb-6 sm:mb-8"
@@ -1890,8 +1891,8 @@ function TestimonialsSection() {
             animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
             transition={{ duration: 1, delay: 0.2 }}
           >
-            <span className="font-serif font-light">Loved by Couples</span>
-            <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] block mt-1 sm:mt-2">Worldwide</span>
+            <span className="font-serif font-light">{t('landing.testimonials.title')}</span>
+            <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] block mt-1 sm:mt-2">{t('landing.testimonials.subtitle')}</span>
           </motion.h2>
         </motion.div>
 
@@ -2000,6 +2001,7 @@ function FinalCTASection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: false, margin: "-100px" })
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
+  const { t } = useTranslation()
 
   // Handle video end to switch to next video
   const handleVideoEnd = useCallback(() => {
@@ -2043,7 +2045,7 @@ function FinalCTASection() {
           transition={{ duration: 1, delay: 0.3 }}
         >
           <Heart className="w-3 h-3 sm:w-4 sm:h-4 fill-current" />
-          Begin Your Journey
+          {t('landing.finalCta.label')}
         </motion.span>
         
         <motion.h2 
@@ -2053,8 +2055,8 @@ function FinalCTASection() {
           transition={{ duration: 1.2, delay: 0.4 }}
           style={{ textShadow: '0 4px 30px rgba(0,0,0,0.4), 0 2px 10px rgba(0,0,0,0.3)' }}
         >
-          <span className="font-serif font-light block">Ready to Create Your</span>
-          <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] block mt-2 sm:mt-4" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>Dream Wedding Site?</span>
+          <span className="font-serif font-light block">{t('landing.finalCta.title')}</span>
+          <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] block mt-2 sm:mt-4" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>{t('landing.finalCta.subtitle')}</span>
         </motion.h2>
         
         <motion.p 
@@ -2063,8 +2065,7 @@ function FinalCTASection() {
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 1, delay: 0.6 }}
         >
-          Join thousands of couples who&apos;ve created beautiful wedding websites.
-          Start your journey in minutes.
+          {t('landing.finalCta.description')}
         </motion.p>
         
         <motion.div
@@ -2077,7 +2078,7 @@ function FinalCTASection() {
               size="lg" 
               className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] h-12 sm:h-16 px-8 sm:px-14 text-sm sm:text-base tracking-[0.1em] sm:tracking-[0.15em] font-medium transition-all duration-700"
             >
-              Create Your Free Website
+              {t('landing.finalCta.cta')}
               <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 sm:ml-3" />
             </Button>
           </Link>
@@ -2089,7 +2090,7 @@ function FinalCTASection() {
           animate={isInView ? { opacity: 1 } : { opacity: 0 }}
           transition={{ duration: 1, delay: 1 }}
         >
-          No credit card required • Takes less than 5 minutes
+          {t('landing.finalCta.note')}
         </motion.p>
       </motion.div>
     </section>
@@ -2101,6 +2102,8 @@ function FinalCTASection() {
 // ============================================
 
 function LuxuryFooter() {
+  const { t } = useTranslation()
+
   return (
     <footer className="bg-[#420c14] border-t border-[#DDA46F]/10 py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -2123,15 +2126,20 @@ function LuxuryFooter() {
           </div>
 
           <div>
-            <h4 className="text-[#f5f2eb] font-medium mb-6 tracking-[0.2em] text-sm uppercase">Product</h4>
+            <h4 className="text-[#f5f2eb] font-medium mb-6 tracking-[0.2em] text-sm uppercase">{t('landing.footer.product')}</h4>
             <ul className="space-y-4">
-              {['Features', 'Pricing', 'Templates', 'FAQ'].map((item) => (
-                <li key={item}>
+              {[
+                { label: t('landing.nav.features'), href: '#features' },
+                { label: t('landing.pricing.label'), href: '#pricing' },
+                { label: t('landing.templates.label'), href: '#demos' },
+                { label: t('landing.footer.faq'), href: '#faq' },
+              ].map((item) => (
+                <li key={item.href}>
                   <a 
-                    href={`#${item.toLowerCase()}`}
+                    href={item.href}
                     className="text-[#f5f2eb]/50 hover:text-[#DDA46F] transition-colors duration-500 text-sm"
                   >
-                    {item}
+                    {item.label}
                   </a>
                 </li>
               ))}
@@ -2139,12 +2147,12 @@ function LuxuryFooter() {
           </div>
 
           <div>
-            <h4 className="text-[#f5f2eb] font-medium mb-6 tracking-[0.2em] text-sm uppercase">Support</h4>
+            <h4 className="text-[#f5f2eb] font-medium mb-6 tracking-[0.2em] text-sm uppercase">{t('landing.footer.support')}</h4>
             <ul className="space-y-4">
               {[
-                { label: 'Contact Us', href: 'mailto:support@ohmy.wedding' },
-                { label: 'Privacy Policy', href: '/privacy' },
-                { label: 'Terms of Service', href: '/terms' },
+                { label: t('landing.footer.contactUs'), href: 'mailto:support@ohmy.wedding' },
+                { label: t('landing.footer.privacyPolicy'), href: '/privacy' },
+                { label: t('landing.footer.termsOfService'), href: '/terms' },
               ].map((item) => (
                 <li key={item.label}>
                   <a 
@@ -2161,12 +2169,11 @@ function LuxuryFooter() {
 
         <div className="border-t border-[#DDA46F]/10 pt-10 text-center space-y-4">
           <p className="text-[#f5f2eb]/30 text-sm tracking-wide">
-            © {new Date().getFullYear()} OhMyWedding. Made with{' '}
-            <Heart className="w-4 h-4 inline text-[#DDA46F] fill-[#DDA46F] mx-1" />{' '}
-            for couples in love.
+            © {new Date().getFullYear()} OhMyWedding. {t('landing.footer.madeWith')}{' '}
+            <Heart className="w-4 h-4 inline text-[#DDA46F] fill-[#DDA46F] mx-1" />
           </p>
           <p className="text-[#f5f2eb]/20 text-[11px] leading-relaxed max-w-2xl mx-auto">
-            OhMyWedding collects basic account information (name, email, wedding date), content you create (photos, guest lists, details), and guest interactions (RSVPs, messages) to provide your wedding website. We use this data solely to deliver the service, enable notifications, improve features, and maintain security. We never sell your information. See our <Link href="/privacy" className="text-[#DDA46F] hover:underline">Privacy Policy</Link> for details.
+            {t('landing.footer.privacyDescription')} <Link href="/privacy" className="text-[#DDA46F] hover:underline">{t('landing.footer.privacyPolicy')}</Link>
           </p>
         </div>
       </div>

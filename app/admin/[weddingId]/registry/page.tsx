@@ -16,6 +16,7 @@ import { useImageUpload } from "@/hooks/use-image-upload"
 import { StripeConnectCard } from "@/components/stripe-connect-card"
 import { RegistryContributionsList } from "@/components/registry-contributions-list"
 import { useWeddingFeatures, isFeatureEnabled } from "@/hooks/use-wedding-features"
+import { useTranslation } from "@/components/contexts/i18n-context"
 import Link from "next/link"
 
 interface RegistryItem {
@@ -66,6 +67,7 @@ export default function RegistryPage({ params }: RegistryPageProps) {
   
   const { uploadImage } = useImageUpload()
   const { plan, features, loading: featuresLoading } = useWeddingFeatures(weddingId)
+  const { t } = useTranslation()
   
   const [items, setItems] = useState<RegistryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -397,7 +399,7 @@ export default function RegistryPage({ params }: RegistryPageProps) {
       <Header
         showBackButton
         backHref={getCleanAdminUrl(weddingId, 'dashboard')}
-        title="Registry Manager"
+        title={t('admin.registry.title')}
       />
 
       {/* Sticky Toolbar Section */}
@@ -408,9 +410,9 @@ export default function RegistryPage({ params }: RegistryPageProps) {
             <div className="py-4">
               <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Custom Registry</h1>
+                <h1 className="text-2xl font-bold text-foreground">{t('admin.registry.customRegistry')}</h1>
                 <p className="text-sm text-muted-foreground">
-                  Create custom registry items for experiences, funds, and special requests
+                  {t('admin.registry.description')}
                 </p>
               </div>
               
@@ -422,17 +424,17 @@ export default function RegistryPage({ params }: RegistryPageProps) {
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
                       <LayoutGrid className="w-3 h-3 text-muted-foreground" />
                       <span className="text-foreground font-semibold">{items.length}</span>
-                      <span className="text-muted-foreground">items</span>
+                      <span className="text-muted-foreground">{t('admin.registry.stats.items')}</span>
                     </div>
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
                       <DollarSign className="w-3 h-3 text-muted-foreground" />
                       <span className="text-foreground font-semibold">${totalGoal.toFixed(2)}</span>
-                      <span className="text-muted-foreground">goal</span>
+                      <span className="text-muted-foreground">{t('admin.registry.stats.goal')}</span>
                     </div>
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary/10 text-xs font-medium">
                       <div className="w-1.5 h-1.5 rounded-full bg-secondary" />
                       <span className="text-secondary font-semibold">${totalRaised.toFixed(2)}</span>
-                      <span className="text-muted-foreground">raised</span>
+                      <span className="text-muted-foreground">{t('admin.registry.stats.raised')}</span>
                     </div>
                     {/* Add Item Button */}
                     <Button
@@ -448,7 +450,7 @@ export default function RegistryPage({ params }: RegistryPageProps) {
                       }}
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      Add Item
+                      {t('admin.registry.buttons.addItem')}
                     </Button>
                   </>
                 ) : (
@@ -457,12 +459,12 @@ export default function RegistryPage({ params }: RegistryPageProps) {
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
                       <DollarSign className="w-3 h-3 text-muted-foreground" />
                       <span className="text-foreground font-semibold">{contributionStats.count}</span>
-                      <span className="text-muted-foreground">contributions</span>
+                      <span className="text-muted-foreground">{t('admin.registry.stats.contributions')}</span>
                     </div>
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary/10 text-xs font-medium">
                       <div className="w-1.5 h-1.5 rounded-full bg-secondary" />
                       <span className="text-secondary font-semibold">${contributionStats.amount.toFixed(2)}</span>
-                      <span className="text-muted-foreground">received</span>
+                      <span className="text-muted-foreground">{t('admin.registry.stats.received')}</span>
                     </div>
                   </>
                 )}
@@ -477,8 +479,8 @@ export default function RegistryPage({ params }: RegistryPageProps) {
                 {/* View Switcher */}
                 <ViewSwitcher
                   options={[
-                    { value: 'items', label: 'Items', icon: LayoutGrid },
-                    { value: 'contributions', label: 'Contributions', icon: DollarSign },
+                    { value: 'items', label: t('admin.registry.itemsTab'), icon: LayoutGrid },
+                    { value: 'contributions', label: t('admin.registry.contributionsTab'), icon: DollarSign },
                   ]}
                   value={viewMode}
                   onChange={(mode) => setViewMode(mode as 'items' | 'contributions')}

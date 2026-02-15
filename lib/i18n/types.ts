@@ -840,6 +840,605 @@ export interface Translations {
     notAttending: string
     pending: string
   }
+
+  // Landing page
+  landing: {
+    nav: {
+      features: string
+      experience: string
+      pricing: string
+      templates: string
+      signIn: string
+      getStarted: string
+      createWedding: string
+      yourWeddings: string
+      editWedding: string
+      signOut: string
+      signedInAs: string
+    }
+    hero: {
+      title: string
+      subtitle: string
+      rotatingWords: string[]
+      cta: string
+      secondary: string
+      scrollToExplore: string
+      stats: {
+        couples: string
+        countries: string
+        rating: string
+      }
+    }
+    about: {
+      label: string
+      title: string
+      subtitle: string
+      description1: string
+      description2: string
+      pills: {
+        templates: string
+        domain: string
+        notifications: string
+        customization: string
+      }
+      testimonial: {
+        quote: string
+        author: string
+      }
+    }
+    features: {
+      label: string
+      title: string
+      subtitle: string
+      description: string
+      items: {
+        invitationTracking: { title: string; description: string }
+        rsvpDashboard: { title: string; description: string }
+        subdomain: { title: string; description: string }
+        messageTemplates: { title: string; description: string }
+        notifications: { title: string; description: string }
+        luxuryExperience: { title: string; description: string }
+      }
+    }
+    experience: {
+      label: string
+      title: string
+      subtitle: string
+      sections: {
+        hero: { title: string; subtitle: string; description: string }
+        countdown: { title: string; subtitle: string; description: string }
+        ourStory: { title: string; subtitle: string; description: string }
+        eventDetails: { title: string; subtitle: string; description: string }
+        rsvp: { title: string; subtitle: string; description: string }
+        gallery: { title: string; subtitle: string; description: string }
+      }
+    }
+    pricing: {
+      label: string
+      title: string
+      subtitle: string
+      description: string
+      comparePlans: string
+      features: string
+      free: string
+      premium: string
+      deluxe: string
+      mostPopular: string
+      luxury: string
+      learnMore: string
+      guarantee: {
+        secure: string
+        moneyBack: string
+      }
+    }
+    goldenBanner: {
+      quote: string
+    }
+    templates: {
+      label: string
+      title: string
+      subtitle: string
+      previewTemplate: string
+      viewAll: string
+    }
+    testimonials: {
+      label: string
+      title: string
+      subtitle: string
+    }
+    finalCta: {
+      label: string
+      title: string
+      subtitle: string
+      description: string
+      cta: string
+      note: string
+    }
+    footer: {
+      product: string
+      support: string
+      faq: string
+      contactUs: string
+      privacyPolicy: string
+      termsOfService: string
+      madeWith: string
+      privacyDescription: string
+    }
+  }
+
+  // Upgrade page
+  upgrade: {
+    title: string
+    subtitle: string
+    description: string
+    alreadyPremium: {
+      title: string
+      description: string
+      goToDashboard: string
+    }
+    comparePlans: string
+    features: string
+    mostPopular: string
+    luxury: string
+    upgradeNow: string
+    goDeluxe: string
+    redirecting: string
+    learnMore: string
+    guarantee: {
+      encrypted: string
+      instantAccess: string
+      securePayment: string
+    }
+    weddingSelector: {
+      title: string
+      description: string
+      currentPlan: string
+    }
+    errors: {
+      noWedding: string
+      allUpgraded: string
+      generic: string
+    }
+  }
+
+  // Plans (shared for premium & deluxe pages)
+  plans: {
+    common: {
+      oneTimePayment: string
+      noSubscriptions: string
+      yoursForever: string
+      completelyPersonalized: string
+      upgradeToPremuim: string
+      getDeluxe: string
+      learnAboutDeluxe: string
+      learnAboutPremium: string
+      seeAllFeatures: string
+      discoverExperience: string
+      privacy: string
+      terms: string
+      home: string
+      madeWith: string
+    }
+    premium: {
+      label: string
+      heroTitle: string
+      heroHighlight: string
+      heroDescription: string
+      promise: {
+        label: string
+        title: string
+        subtitle: string
+        description: string
+        tools: { title: string; description: string }
+        guidance: { title: string; description: string }
+        fromDayOne: { title: string; description: string }
+      }
+      features: {
+        label: string
+        title: string
+        subtitle: string
+        items: {
+          guests: { title: string; description: string }
+          invitations: { title: string; description: string }
+          registry: { title: string; description: string }
+          domain: { title: string; description: string }
+          tracking: { title: string; description: string }
+          reports: { title: string; description: string }
+          forever: { title: string; description: string }
+          guidance: { title: string; description: string }
+        }
+      }
+      howItWorks: {
+        label: string
+        title: string
+        steps: {
+          upgrade: { title: string; description: string }
+          access: { title: string; description: string }
+          build: { title: string; description: string }
+          celebrate: { title: string; description: string }
+        }
+      }
+      comparison: {
+        label: string
+        title: string
+        feature: string
+      }
+      whyUpgrade: {
+        label: string
+        title: string
+        reasons: {
+          forever: { title: string; description: string }
+          guestManagement: { title: string; description: string }
+          registry: { title: string; description: string }
+          guidance: { title: string; description: string }
+          tracking: { title: string; description: string }
+          pricing: { title: string; description: string }
+        }
+      }
+      testimonials: {
+        label: string
+        title: string
+      }
+      faq: {
+        label: string
+        title: string
+        items: Array<{ q: string; a: string }>
+      }
+      deluxeUpsell: {
+        title: string
+        description: string
+      }
+      finalCta: {
+        title: string
+        highlight: string
+        description: string
+      }
+    }
+    deluxe: {
+      label: string
+      heroTitle: string
+      heroHighlight: string
+      heroDescription: string
+      difference: {
+        label: string
+        title: string
+        highlight: string
+        subtitle: string
+        description: string
+        items: {
+          design: { title: string; description: string }
+          components: { title: string; description: string }
+          agent: { title: string; description: string }
+          detail: { title: string; description: string }
+        }
+      }
+      features: {
+        label: string
+        title: string
+        subtitle: string
+        description: string
+        items: {
+          personalizedDesign: { title: string; description: string }
+          customComponents: { title: string; description: string }
+          dedicatedAgent: { title: string; description: string }
+          unlimitedGuests: { title: string; description: string }
+          invitations: { title: string; description: string }
+          registry: { title: string; description: string }
+          customDomain: { title: string; description: string }
+          activityTracking: { title: string; description: string }
+          dailyReports: { title: string; description: string }
+          prioritySupport: { title: string; description: string }
+          websiteForever: { title: string; description: string }
+          weBuildEverything: { title: string; description: string }
+        }
+      }
+      process: {
+        label: string
+        title: string
+        subtitle: string
+        description: string
+        steps: {
+          discovery: { title: string; description: string }
+          design: { title: string; description: string }
+          build: { title: string; description: string }
+          review: { title: string; description: string }
+          launch: { title: string; description: string }
+        }
+      }
+      comparison: {
+        label: string
+        title: string
+        subtitle: string
+        description: string
+        aspects: {
+          whoBuilds: { label: string; premium: string; deluxe: string }
+          designApproach: { label: string; premium: string; deluxe: string }
+          components: { label: string; premium: string; deluxe: string }
+          support: { label: string; premium: string; deluxe: string }
+          guestLimit: { label: string; premium: string; deluxe: string }
+          activityTracking: { label: string; premium: string; deluxe: string }
+          reports: { label: string; premium: string; deluxe: string }
+          price: { label: string }
+        }
+      }
+      forWho: {
+        label: string
+        title: string
+        profiles: {
+          busy: { title: string; description: string }
+          designLovers: { title: string; description: string }
+          destination: { title: string; description: string }
+          large: { title: string; description: string }
+        }
+      }
+      testimonials: {
+        label: string
+        title: string
+        items: Array<{ quote: string; name: string; detail: string }>
+      }
+      faq: {
+        label: string
+        title: string
+        items: Array<{ q: string; a: string }>
+      }
+      finalCta: {
+        title: string
+        highlight: string
+        subtitle: string
+        description: string
+      }
+    }
+  }
+
+  // Authentication pages
+  auth: {
+    login: {
+      createAccount: string
+      welcomeBack: string
+      signUpSubtitle: string
+      signInSubtitle: string
+      continueWithGoogle: string
+      orContinueWithEmail: string
+      email: string
+      password: string
+      minPassword: string
+      creatingAccount: string
+      signingIn: string
+      createAccountBtn: string
+      signInBtn: string
+      alreadyHaveAccount: string
+      dontHaveAccount: string
+      signIn: string
+      signUp: string
+      andCreateWedding: string
+    }
+    createWedding: {
+      essentialDetails: string
+      essentialDetailsDesc: string
+      yourNames: string
+      firstName: string
+      lastName: string
+      optional: string
+      iHaveDate: string
+      weddingDate: string
+      ceremonyTime: string
+      receptionTime: string
+      websiteLanguage: string
+      chooseStartingPoint: string
+      chooseStartingPointDesc: string
+      aiDesignAssistant: string
+      newBadge: string
+      describeYourDream: string
+      designing: string
+      designMySite: string
+      orChooseTemplate: string
+      browseTemplates: string
+      curatedDesigns: string
+      startFromScratch: string
+      fullCustomization: string
+      addYourPhotos: string
+      addYourPhotosDesc: string
+      clickToSelect: string
+      selectMultiple: string
+      uploadingPhotos: string
+      uploaded: string
+      clearAll: string
+      autoArrange: string
+      distributing: string
+      styleYourWebsite: string
+      styleYourWebsiteDesc: string
+      colorPalette: string
+      fontStyle: string
+      selectColorPalette: string
+      selectFontPairing: string
+      pageSections: string
+      pageSectionsDesc: string
+      fullCustomizationMode: string
+      configureEveryDetail: string
+      dragToReorder: string
+      readyToCreate: string
+      enterNamesAbove: string
+      sections: string
+      creatingWebsite: string
+      pleaseWait: string
+      createWebsiteBtn: string
+    }
+  }
+
+  // Admin dashboard
+  admin: {
+    dashboard: {
+      viewWebsite: string
+      signOut: string
+      welcomeBack: string
+      manageDescription: string
+      management: string
+      cards: {
+        invitations: { title: string; description: string }
+        registry: { title: string; description: string }
+        settings: { title: string; description: string }
+      }
+    }
+    layout: {
+      verifyingAccess: string
+      noPermission: string
+      noPermissionDescription: string
+      goHome: string
+    }
+    settings: {
+      title: string
+      description: string
+      backToDashboard: string
+      nav: {
+        subscription: string
+        rsvp: string
+        registry: string
+        invitations: string
+        gallery: string
+        general: string
+      }
+      subscription: {
+        title: string
+        currentPlan: string
+        status: string
+        expires: string
+      }
+      features: {
+        title: string
+        rsvp: { name: string; description: string }
+        invitations: { name: string; description: string }
+        gallery: { name: string; description: string }
+        registry: { name: string; description: string }
+        schedule: { name: string; description: string }
+      }
+      upgradeToPremium: string
+      upgradeDescription: string
+      premiumFeature: string
+      rsvpSettings: {
+        title: string
+        travelConfirmation: string
+        requireTicket: string
+        requireReason: string
+        allowPlusOnes: string
+        rsvpDeadline: string
+      }
+      gallerySettings: {
+        allowGuestUploads: string
+        moderation: string
+      }
+      generalSettings: {
+        timezone: string
+        language: string
+      }
+      saving: string
+      active: string
+      inactive: string
+      locked: string
+    }
+    registry: {
+      title: string
+      customRegistry: string
+      description: string
+      stats: {
+        items: string
+        goal: string
+        raised: string
+        contributions: string
+        received: string
+      }
+      filters: {
+        allStatus: string
+        active: string
+        inactive: string
+        newest: string
+        oldest: string
+        highestGoal: string
+        lowestGoal: string
+        allItems: string
+        completed: string
+        requiresAction: string
+        failed: string
+      }
+      stripe: {
+        connected: string
+        setupIncomplete: string
+        dashboard: string
+      }
+      form: {
+        titleLabel: string
+        descriptionLabel: string
+        goalAmount: string
+        images: string
+      }
+      buttons: {
+        addItem: string
+        createItem: string
+        updateItem: string
+        activate: string
+        deactivate: string
+      }
+      empty: {
+        noItems: string
+        createFirst: string
+        noMatch: string
+      }
+      progress: string
+      funded: string
+      itemsTab: string
+      contributionsTab: string
+    }
+    invitations: {
+      notifications: {
+        groupCreated: string
+        guestCreated: string
+        importComplete: string
+        assignedToGroup: string
+      }
+      errors: {
+        failedCreateGuest: string
+        failedSetTravel: string
+        generic: string
+      }
+      confirmDelete: {
+        group: string
+        guests: string
+        guestsMessage: string
+      }
+      csv: {
+        groupName: string
+        tags: string
+        dietaryRestrictions: string
+        notes: string
+        status: string
+        invitedBy: string
+      }
+      defaults: {
+        partner1: string
+        partner2: string
+        unnamedGroup: string
+        noGroup: string
+        newGroup: string
+        tbd: string
+      }
+      whatsapp: {
+        noPhoneNumbers: string
+        opened: string
+      }
+      status: {
+        notSpecified: string
+        comingSoon: string
+        updated: string
+        deleted: string
+      }
+    }
+  }
+
+  // Language switcher
+  languageSwitcher: {
+    label: string
+    en: string
+    es: string
+  }
 }
 
 // Type for translation function

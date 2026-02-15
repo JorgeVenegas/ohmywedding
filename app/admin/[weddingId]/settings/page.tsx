@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { getCleanAdminUrl } from "@/lib/admin-url"
+import { useTranslation } from "@/components/contexts/i18n-context"
 import {
   Settings,
   Users,
@@ -85,6 +86,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
   const [saving, setSaving] = useState(false)
   const [activeSection, setActiveSection] = useState<Section>("subscription")
   const [hasChanges, setHasChanges] = useState(false)
+  const { t } = useTranslation()
 
   useEffect(() => {
     fetchData()
@@ -153,12 +155,12 @@ export default function SettingsPage({ params }: SettingsPageProps) {
   }
 
   const menuItems = [
-    { id: "subscription", label: "Subscription", icon: Crown },
-    { id: "features", label: "Features & Access", icon: Settings },
-    { id: "rsvp", label: "RSVP Settings", icon: Users },
-    { id: "invitations", label: "Invitations", icon: Mail },
-    { id: "gallery", label: "Gallery", icon: Image },
-    { id: "general", label: "General", icon: Globe },
+    { id: "subscription", label: t('admin.settings.nav.subscription'), icon: Crown },
+    { id: "features", label: t('admin.settings.features.title'), icon: Settings },
+    { id: "rsvp", label: t('admin.settings.nav.rsvp'), icon: Users },
+    { id: "invitations", label: t('admin.settings.nav.invitations'), icon: Mail },
+    { id: "gallery", label: t('admin.settings.nav.gallery'), icon: Image },
+    { id: "general", label: t('admin.settings.nav.general'), icon: Globe },
   ]
 
   if (loading) {
@@ -181,13 +183,13 @@ export default function SettingsPage({ params }: SettingsPageProps) {
       <div className="page-container">
         <div className="mb-12 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">{t('admin.settings.title')}</h1>
             <p className="text-muted-foreground">
-              Manage your subscription, features, and wedding site preferences
+              {t('admin.settings.description')}
             </p>
           </div>
           <Button size="sm" variant="outline" asChild>
-            <Link href={getCleanAdminUrl(weddingId, "dashboard")}>Back to dashboard</Link>
+            <Link href={getCleanAdminUrl(weddingId, "dashboard")}>{t('admin.settings.backToDashboard')}</Link>
           </Button>
         </div>
 
@@ -232,7 +234,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-xl font-semibold text-foreground mb-1">
-                      Subscription & Plan
+                      {t('admin.settings.subscription.title')}
                     </h2>
                     <p className="text-sm text-muted-foreground">
                       Manage your subscription and view available features
@@ -258,17 +260,17 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                         )}
                         <div>
                           <h3 className="text-2xl font-bold">
-                            {subscription?.plan === 'premium' ? 'Premium' : 'Free'} Plan
+                            {subscription?.plan === 'premium' ? 'Premium' : 'Free'}
                           </h3>
                           <p className="text-sm text-muted-foreground capitalize">
-                            Status: {subscription?.status || 'Active'}
+                            {t('admin.settings.subscription.status')} {subscription?.status || t('admin.settings.active')}
                           </p>
                         </div>
                       </div>
                       {subscription?.plan === 'free' && (
                         <Button className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white">
                           <Crown className="h-4 w-4 mr-2" />
-                          Upgrade to Premium
+                          {t('admin.settings.upgradeToPremium')}
                         </Button>
                       )}
                     </div>
@@ -276,40 +278,40 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                     {subscription?.expires_at && (
                       <p className="text-sm text-muted-foreground mb-4">
                         {subscription.plan === 'premium' 
-                          ? `Expires: ${new Date(subscription.expires_at).toLocaleDateString()}`
+                          ? `${t('admin.settings.subscription.expires')} ${new Date(subscription.expires_at).toLocaleDateString()}`
                           : ''}
                       </p>
                     )}
 
                     {/* Features List */}
                     <div className="space-y-3 mt-6">
-                      <h4 className="font-semibold text-foreground mb-3">Available Features</h4>
+                      <h4 className="font-semibold text-foreground mb-3">{t('admin.settings.features.title')}</h4>
                       <div className="grid gap-3">
                         <FeatureItem
-                          label="RSVP System"
-                          description="Guest attendance management"
+                          label={t('admin.settings.features.rsvp.name')}
+                          description={t('admin.settings.features.rsvp.description')}
                           available={planFeatures?.rsvp_enabled ?? false}
                           isPremium
                         />
                         <FeatureItem
-                          label="Invitations Panel"
-                          description="Send and track invitations"
+                          label={t('admin.settings.features.invitations.name')}
+                          description={t('admin.settings.features.invitations.description')}
                           available={planFeatures?.invitations_panel_enabled ?? false}
                           isPremium
                         />
                         <FeatureItem
-                          label="Photo Gallery"
-                          description="Share wedding photos"
+                          label={t('admin.settings.features.gallery.name')}
+                          description={t('admin.settings.features.gallery.description')}
                           available={planFeatures?.gallery_enabled ?? false}
                         />
                         <FeatureItem
-                          label="Gift Registry"
-                          description="Manage gift lists"
+                          label={t('admin.settings.features.registry.name')}
+                          description={t('admin.settings.features.registry.description')}
                           available={planFeatures?.registry_enabled ?? false}
                         />
                         <FeatureItem
-                          label="Event Schedule"
-                          description="Display wedding timeline"
+                          label={t('admin.settings.features.schedule.name')}
+                          description={t('admin.settings.features.schedule.description')}
                           available={planFeatures?.schedule_enabled ?? false}
                         />
                       </div>
@@ -338,7 +340,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-xl font-semibold text-foreground mb-1">
-                      Features & Access
+                      {t('admin.settings.features.title')}
                     </h2>
                     <p className="text-sm text-muted-foreground">
                       View your plan's features and their status
@@ -362,38 +364,38 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                   <div className="space-y-4">
                     <FeatureStatusCard
                       icon={Users}
-                      label="RSVP System"
-                      description="Allow guests to RSVP and manage their attendance"
+                      label={t('admin.settings.features.rsvp.name')}
+                      description={t('admin.settings.features.rsvp.description')}
                       available={planFeatures?.rsvp_enabled ?? false}
                       enabled={features?.rsvp_enabled ?? false}
                       isPremium
                     />
                     <FeatureStatusCard
                       icon={Mail}
-                      label="Invitations Panel"
-                      description="Manage guest lists and send invitations"
+                      label={t('admin.settings.features.invitations.name')}
+                      description={t('admin.settings.features.invitations.description')}
                       available={planFeatures?.invitations_panel_enabled ?? false}
                       enabled={features?.invitations_panel_enabled ?? false}
                       isPremium
                     />
                     <FeatureStatusCard
                       icon={Image}
-                      label="Gallery"
-                      description="Share photos and memories from your wedding"
+                      label={t('admin.settings.features.gallery.name')}
+                      description={t('admin.settings.features.gallery.description')}
                       available={planFeatures?.gallery_enabled ?? false}
                       enabled={features?.gallery_enabled ?? false}
                     />
                     <FeatureStatusCard
                       icon={Gift}
-                      label="Registry"
-                      description="Create and manage your gift registry"
+                      label={t('admin.settings.features.registry.name')}
+                      description={t('admin.settings.features.registry.description')}
                       available={planFeatures?.registry_enabled ?? false}
                       enabled={features?.registry_enabled ?? false}
                     />
                     <FeatureStatusCard
                       icon={Calendar}
-                      label="Schedule"
-                      description="Display your wedding day timeline and events"
+                      label={t('admin.settings.features.schedule.name')}
+                      description={t('admin.settings.features.schedule.description')}
                       available={planFeatures?.schedule_enabled ?? false}
                       enabled={features?.schedule_enabled ?? false}
                     />
@@ -405,7 +407,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-xl font-semibold text-foreground mb-1">
-                      RSVP Settings
+                      {t('admin.settings.rsvpSettings.title')}
                     </h2>
                     <p className="text-sm text-muted-foreground">
                       Configure how guests respond to your invitation
@@ -430,7 +432,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                     <div className="space-y-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <Label className="text-base font-medium">Travel Confirmation</Label>
+                          <Label className="text-base font-medium">{t('admin.settings.rsvpSettings.travelConfirmation')}</Label>
                           <p className="text-sm text-muted-foreground mt-1">
                             Allow guests to provide travel information and manage their trip details
                           </p>
@@ -448,7 +450,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                         <div className="pl-6 space-y-4">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <Label>Require Ticket Attachment</Label>
+                              <Label>{t('admin.settings.rsvpSettings.requireTicket')}</Label>
                               <p className="text-xs text-muted-foreground mt-1">
                                 Guests must upload their ticket when they indicate they will purchase one
                               </p>
@@ -464,7 +466,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
 
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <Label>Require No-Ticket Reason</Label>
+                              <Label>{t('admin.settings.rsvpSettings.requireReason')}</Label>
                               <p className="text-xs text-muted-foreground mt-1">
                                 Guests must explain why they don't need a ticket
                               </p>
@@ -484,7 +486,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                     <div className="border-t border-border pt-4">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
-                          <Label className="text-base font-medium">Allow Plus Ones</Label>
+                          <Label className="text-base font-medium">{t('admin.settings.rsvpSettings.allowPlusOnes')}</Label>
                           <p className="text-sm text-muted-foreground mt-1">
                             Let guests bring additional attendees
                           </p>
@@ -500,7 +502,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                     </div>
 
                     <div className="border-t border-border pt-4">
-                      <Label className="text-base font-medium">RSVP Deadline</Label>
+                      <Label className="text-base font-medium">{t('admin.settings.rsvpSettings.rsvpDeadline')}</Label>
                       <p className="text-sm text-muted-foreground mt-1 mb-3">
                         Last date for guests to submit their RSVP
                       </p>
@@ -520,7 +522,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-xl font-semibold text-foreground mb-1">
-                      Invitation Settings
+                      {t('admin.settings.nav.invitations')}
                     </h2>
                     <p className="text-sm text-muted-foreground">
                       Customize your invitation messages and preferences
@@ -565,7 +567,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-xl font-semibold text-foreground mb-1">
-                      Gallery Settings
+                      {t('admin.settings.nav.gallery')}
                     </h2>
                     <p className="text-sm text-muted-foreground">
                       Configure photo gallery preferences
@@ -575,7 +577,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                   <div className="space-y-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <Label className="text-base font-medium">Allow Guest Uploads</Label>
+                        <Label className="text-base font-medium">{t('admin.settings.gallerySettings.allowGuestUploads')}</Label>
                         <p className="text-sm text-muted-foreground mt-1">
                           Let guests upload their photos to the gallery
                         </p>
@@ -590,7 +592,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
 
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <Label className="text-base font-medium">Moderation</Label>
+                        <Label className="text-base font-medium">{t('admin.settings.gallerySettings.moderation')}</Label>
                         <p className="text-sm text-muted-foreground mt-1">
                           Review and approve guest uploads before they appear
                         </p>
@@ -611,7 +613,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-xl font-semibold text-foreground mb-1">
-                      General Settings
+                      {t('admin.settings.nav.general')}
                     </h2>
                     <p className="text-sm text-muted-foreground">
                       Configure timezone and language preferences
@@ -625,7 +627,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
 
                     <div className="space-y-4">
                     <div>
-                      <Label className="text-base font-medium">Timezone</Label>
+                      <Label className="text-base font-medium">{t('admin.settings.generalSettings.timezone')}</Label>
                       <p className="text-sm text-muted-foreground mt-1 mb-3">
                         Default timezone for all dates and times
                       </p>
@@ -638,7 +640,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                     </div>
 
                     <div>
-                      <Label className="text-base font-medium">Language</Label>
+                      <Label className="text-base font-medium">{t('admin.settings.generalSettings.language')}</Label>
                       <p className="text-sm text-muted-foreground mt-1 mb-3">
                         Primary language for your wedding site
                       </p>
@@ -669,12 +671,12 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                   {saving ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground"></div>
-                      Saving...
+                      {t('admin.settings.saving')}
                     </>
                   ) : (
                     <>
                       <Save className="h-4 w-4" />
-                      Save Changes
+                      {t('common.saveChanges')}
                     </>
                   )}
                 </Button>
@@ -695,6 +697,7 @@ interface FeatureItemProps {
 }
 
 function FeatureItem({ label, description, available, isPremium }: FeatureItemProps) {
+  const { t } = useTranslation()
   return (
     <div className="flex items-start gap-3 p-3 rounded-lg bg-card/50 border border-border/50">
       <div className={`flex-shrink-0 mt-0.5 h-6 w-6 rounded-full flex items-center justify-center ${
@@ -743,6 +746,7 @@ function FeatureStatusCard({
   enabled,
   isPremium,
 }: FeatureStatusCardProps) {
+  const { t } = useTranslation()
   return (
     <div className={`flex items-start justify-between p-4 rounded-lg border transition-colors ${
       available 
@@ -764,12 +768,12 @@ function FeatureStatusCard({
             </Label>
             {isPremium && (
               <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 rounded-full">
-                Premium
+                {t('admin.settings.premiumFeature')}
               </span>
             )}
             {!available && (
               <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 rounded-full">
-                Locked
+                {t('admin.settings.locked')}
               </span>
             )}
           </div>
@@ -778,7 +782,7 @@ function FeatureStatusCard({
             <div className="flex items-center gap-2 mt-2">
               <div className={`h-2 w-2 rounded-full ${enabled ? 'bg-green-500' : 'bg-gray-400'}`} />
               <span className="text-xs text-muted-foreground">
-                {enabled ? 'Active' : 'Inactive'}
+                {enabled ? t('admin.settings.active') : t('admin.settings.inactive')}
               </span>
             </div>
           )}

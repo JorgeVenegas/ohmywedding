@@ -17,6 +17,8 @@ import {
   Loader2,
   X
 } from "lucide-react"
+import { LanguageSwitcher } from "@/components/ui/language-switcher"
+import { useTranslation } from "@/components/contexts/i18n-context"
 
 const plans = [
   {
@@ -51,6 +53,7 @@ function UpgradePageContent() {
   const { isPremium, loading: subscriptionLoading } = useSubscription()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { t } = useTranslation()
   const [selectedPlan, setSelectedPlan] = useState<"premium" | "deluxe">(
     searchParams.get("plan") === "deluxe" ? "deluxe" : "premium"
   )
@@ -129,13 +132,13 @@ function UpgradePageContent() {
           <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-r from-[#DDA46F] to-[#c99560] flex items-center justify-center">
             <Crown className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-serif text-[#420c14] mb-4">You&apos;re Already Premium!</h1>
+          <h1 className="text-3xl font-serif text-[#420c14] mb-4">{t('upgrade.alreadyPremium.title')}</h1>
           <p className="text-[#420c14]/60 mb-8">
-            You have full access to all premium features. Enjoy creating your perfect wedding website!
+            {t('upgrade.alreadyPremium.description')}
           </p>
           <Link href="/">
             <Button className="bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb]">
-              Go to Dashboard
+              {t('upgrade.alreadyPremium.goToDashboard')}
             </Button>
           </Link>
         </div>
@@ -174,7 +177,7 @@ function UpgradePageContent() {
       const userWeddings = weddingsData.weddings || []
 
       if (userWeddings.length === 0) {
-        setError('You need to create a wedding first')
+        setError(t('upgrade.errors.noWedding'))
         setIsProcessing(false)
         setLoadingWeddings(false)
         return
@@ -190,7 +193,7 @@ function UpgradePageContent() {
 
       if (eligibleWeddings.length === 0) {
         const planName = planType.charAt(0).toUpperCase() + planType.slice(1)
-        setError(`All your weddings are already on ${planName} or higher. No upgrades needed!`)
+        setError(t('upgrade.errors.allUpgraded', { plan: planName }))
         setIsProcessing(false)
         setLoadingWeddings(false)
         return
@@ -292,13 +295,16 @@ function UpgradePageContent() {
               <p className="text-[7px] sm:text-[10px] text-[#420c14]/40 tracking-widest mt-0.5">WEDDING WEBSITES</p>
             </div>
           </Link>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-[#420c14]/60 hover:text-[#420c14] transition-colors text-sm tracking-wider"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </Link>
+          <div className="flex items-center gap-4">
+            <LanguageSwitcher variant="buttons" className="text-[#420c14]" textColor="#420c14" />
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-[#420c14]/60 hover:text-[#420c14] transition-colors text-sm tracking-wider"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              {t('common.back')}
+            </Link>
+          </div>
         </motion.div>
 
         {/* Header */}
@@ -312,11 +318,11 @@ function UpgradePageContent() {
             Upgrade
           </span>
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#420c14] mb-6 leading-tight">
-            <span className="font-serif font-light">Choose Your</span>
-            <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] ml-2 sm:ml-4">Plan</span>
+            <span className="font-serif font-light">{t('upgrade.title')}</span>
+            <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] ml-2 sm:ml-4">{t('upgrade.subtitle')}</span>
           </h1>
           <p className="text-[#420c14]/60 text-sm sm:text-lg max-w-2xl mx-auto">
-            One-time payment, lifetime access. No subscriptions, no hidden fees.
+            {t('upgrade.description')}
           </p>
         </motion.div>
 
@@ -359,7 +365,7 @@ function UpgradePageContent() {
                 >
                   <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-[#f5f2eb] text-[#420c14] text-xs sm:text-sm font-medium tracking-wider">
                     <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Most Popular
+                    {t('upgrade.mostPopular')}
                   </span>
                 </motion.div>
               )}
@@ -373,7 +379,7 @@ function UpgradePageContent() {
                 >
                   <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-[#420c14] text-[#f5f2eb] text-xs sm:text-sm font-medium tracking-wider">
                     <Crown className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Luxury
+                    {t('upgrade.luxury')}
                   </span>
                 </motion.div>
               )}
@@ -410,12 +416,12 @@ function UpgradePageContent() {
                   {isProcessing && selectedPlan === plan.id ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Redirecting to checkout...
+                      {t('upgrade.redirecting')}
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4 mr-2" />
-                      {plan.featured ? 'Upgrade Now' : 'Go Deluxe'}
+                      {plan.featured ? t('upgrade.upgradeNow') : t('upgrade.goDeluxe')}
                     </>
                   )}
                 </Button>
@@ -429,7 +435,7 @@ function UpgradePageContent() {
                         : 'text-[#420c14]/50 hover:text-[#420c14]'
                     }`}
                   >
-                    Learn more about {plan.id === 'premium' ? 'Premium' : 'Deluxe'}
+                    {t('upgrade.learnMore', { plan: plan.id === 'premium' ? 'Premium' : 'Deluxe' })}
                   </Link>
                 </div>
 
@@ -468,7 +474,7 @@ function UpgradePageContent() {
           className="bg-white rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-10 border border-[#420c14]/10 shadow-xl shadow-[#420c14]/5 overflow-hidden mb-12"
         >
           <h3 className="text-2xl sm:text-3xl font-serif text-[#420c14] mb-8 sm:mb-12 text-center">
-            Compare Plans
+            {t('upgrade.comparePlans')}
           </h3>
 
           <div className="overflow-x-auto -mx-6 sm:mx-0">
@@ -483,7 +489,7 @@ function UpgradePageContent() {
                 <thead>
                   <tr className="border-b-2 border-[#420c14]/10">
                     <th className="text-left py-4 sm:py-6 pr-4 sm:pr-8 text-sm sm:text-base font-medium text-[#420c14]/60">
-                      Features
+                      {t('upgrade.features')}
                     </th>
                     <th className="text-center py-4 sm:py-6 px-3 sm:px-6">
                       <div className="text-base sm:text-lg font-serif text-[#420c14]">Free</div>
@@ -574,7 +580,7 @@ function UpgradePageContent() {
               {isProcessing && selectedPlan === 'premium' ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                'Upgrade to Premium'
+                t('upgrade.upgradeNow')
               )}
             </Button>
             <Button
@@ -585,7 +591,7 @@ function UpgradePageContent() {
               {isProcessing && selectedPlan === 'deluxe' ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                'Go Deluxe'
+                t('upgrade.goDeluxe')
               )}
             </Button>
           </div>
@@ -601,15 +607,15 @@ function UpgradePageContent() {
           <div className="inline-flex items-center gap-6 text-sm text-[#420c14]/50 flex-wrap justify-center">
             <span className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-green-600" />
-              SSL Encrypted
+              {t('upgrade.guarantee.encrypted')}
             </span>
             <span className="flex items-center gap-2">
               <Check className="w-5 h-5 text-green-600" />
-              Instant Access
+              {t('upgrade.guarantee.instantAccess')}
             </span>
           </div>
           <p className="text-[#420c14]/40 text-sm tracking-wide">
-            💳 Secure payment via Stripe • 🔒 30-day money-back guarantee
+            💳 {t('upgrade.guarantee.securePayment')}
           </p>
         </motion.div>
 
@@ -622,7 +628,7 @@ function UpgradePageContent() {
               className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-4"
             >
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-serif text-[#420c14]">Select Wedding</h2>
+                <h2 className="text-xl font-serif text-[#420c14]">{t('upgrade.weddingSelector.title')}</h2>
                 <button
                   onClick={() => setShowWeddingSelector(false)}
                   className="text-[#420c14]/50 hover:text-[#420c14]"
@@ -632,7 +638,7 @@ function UpgradePageContent() {
               </div>
 
               <p className="text-sm text-[#420c14]/60">
-                Which wedding would you like to upgrade to <span className="font-semibold capitalize">{selectedPlan}</span>?
+                {t('upgrade.weddingSelector.description', { plan: selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1) })}
               </p>
 
               <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -673,7 +679,7 @@ function UpgradePageContent() {
                   className="flex-1"
                   disabled={isProcessing}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </div>
             </motion.div>

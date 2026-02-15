@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Header } from "@/components/header"
+import { LanguageSwitcher } from "@/components/ui/language-switcher"
+import { useTranslation } from "@/components/contexts/i18n-context"
 
 function LoginForm() {
   const [email, setEmail] = useState("")
@@ -17,6 +19,7 @@ function LoginForm() {
   const [isSignUp, setIsSignUp] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const { t } = useTranslation()
   
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -134,18 +137,18 @@ function LoginForm() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-background to-muted flex flex-col">
       {/* Header */}
-      <Header showBackButton backHref="/" hideLogoText={false} />
+      <Header showBackButton backHref="/" hideLogoText={false} rightContent={<LanguageSwitcher variant="buttons" />} />
 
       {/* Login Form */}
       <div className="flex-1 flex items-center justify-center px-4 py-12">
         <Card className="w-full max-w-md p-8 border border-border">
           <h1 className="text-2xl font-bold text-foreground mb-2">
-            {isSignUp ? "Create Account" : "Welcome Back"}
+            {isSignUp ? t('auth.login.createAccount') : t('auth.login.welcomeBack')}
           </h1>
           <p className="text-muted-foreground mb-6">
             {isSignUp 
-              ? "Sign up to create and manage your wedding website" 
-              : "Sign in to your wedding website"}
+              ? t('auth.login.signUpSubtitle') 
+              : t('auth.login.signInSubtitle')}
           </p>
 
           {error && (
@@ -186,7 +189,7 @@ function LoginForm() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Continue with Google
+            {t('auth.login.continueWithGoogle')}
           </Button>
 
           <div className="relative mb-4">
@@ -194,13 +197,13 @@ function LoginForm() {
               <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-muted-foreground">Or continue with email</span>
+              <span className="bg-white px-2 text-muted-foreground">{t('auth.login.orContinueWithEmail')}</span>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Email</label>
+              <label className="block text-sm font-medium text-foreground mb-2">{t('auth.login.email')}</label>
               <Input
                 type="email"
                 value={email}
@@ -211,7 +214,7 @@ function LoginForm() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Password</label>
+              <label className="block text-sm font-medium text-foreground mb-2">{t('auth.login.password')}</label>
               <Input
                 type="password"
                 value={password}
@@ -223,7 +226,7 @@ function LoginForm() {
               />
               {isSignUp && (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Minimum 6 characters
+                  {t('auth.login.minPassword')}
                 </p>
               )}
             </div>
@@ -233,8 +236,8 @@ function LoginForm() {
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {isLoading 
-                ? (isSignUp ? "Creating account..." : "Signing in...") 
-                : (isSignUp ? "Create Account" : "Sign In")}
+                ? (isSignUp ? t('auth.login.creatingAccount') : t('auth.login.signingIn')) 
+                : (isSignUp ? t('auth.login.createAccountBtn') : t('auth.login.signInBtn'))}
             </Button>
           </form>
 
@@ -249,15 +252,15 @@ function LoginForm() {
               className="text-primary hover:underline font-medium text-sm"
             >
               {isSignUp 
-                ? "Already have an account? Sign in" 
-                : "Don't have an account? Sign up"}
+                ? `${t('auth.login.alreadyHaveAccount')} ${t('auth.login.signIn')}` 
+                : `${t('auth.login.dontHaveAccount')} ${t('auth.login.signUp')}`}
             </button>
             
             {!isSignUp && (
               <p className="text-muted-foreground text-sm">
                 Or{" "}
                 <Link href="/create-wedding" className="text-primary hover:underline font-medium">
-                  create a wedding
+                  {t('auth.login.andCreateWedding')}
                 </Link>
               </p>
             )}
@@ -272,7 +275,7 @@ export default function LoginPage() {
   return (
     <Suspense fallback={
       <main className="min-h-screen bg-gradient-to-b from-background to-muted flex flex-col">
-        <Header showBackButton backHref="/" hideLogoText={false} />
+        <Header showBackButton backHref="/" hideLogoText={false} rightContent={<LanguageSwitcher variant="buttons" />} />
         <div className="flex-1 flex items-center justify-center px-4 py-12">
           <Card className="w-full max-w-md p-8 border border-border">
             <div className="animate-pulse space-y-4">

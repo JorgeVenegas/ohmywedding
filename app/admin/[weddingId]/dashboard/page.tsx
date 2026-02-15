@@ -10,6 +10,7 @@ import { InvitationStatsCard } from "@/components/ui/invitation-stats-card"
 import { RegistryPaymentNotifications } from "@/components/ui/registry-payment-notifications"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { getWeddingPath } from "@/lib/wedding-url"
+import { useTranslation } from "@/components/contexts/i18n-context"
 
 interface AdminDashboardProps {
   params: Promise<{ weddingId: string }>
@@ -18,25 +19,26 @@ interface AdminDashboardProps {
 export default function AdminDashboard({ params }: AdminDashboardProps) {
   const { weddingId } = use(params)
   const decodedWeddingId = decodeURIComponent(weddingId)
+  const { t } = useTranslation()
 
   const sections = [
     {
-      title: "Invitations & Guests",
-      description: "Manage guest groups, invitations, RSVPs, and track confirmations",
+      title: t('admin.dashboard.cards.invitations.title'),
+      description: t('admin.dashboard.cards.invitations.description'),
       icon: Mail,
       href: getCleanAdminUrl(weddingId, 'invitations'),
       color: "primary",
     },
     {
-      title: "Gift Registry",
-      description: "Manage your wedding gift registries and wishlists",
+      title: t('admin.dashboard.cards.registry.title'),
+      description: t('admin.dashboard.cards.registry.description'),
       icon: Gift,
       href: getCleanAdminUrl(weddingId, 'registry'),
       color: "accent",
     },
     {
-      title: "Settings",
-      description: "Configure features, RSVP options, invitations, and general preferences",
+      title: t('admin.dashboard.cards.settings.title'),
+      description: t('admin.dashboard.cards.settings.description'),
       icon: Settings,
       href: getCleanAdminUrl(weddingId, 'settings'),
       color: "secondary",
@@ -50,12 +52,12 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
           <div className="flex gap-2">
             <Link href={getWeddingPath(weddingId)}>
               <Button variant="ghost" size="sm" className="text-foreground hover:bg-muted">
-                View Website
+                {t('admin.dashboard.viewWebsite')}
               </Button>
             </Link>
             <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10">
               <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
+              {t('admin.dashboard.signOut')}
             </Button>
           </div>
         }
@@ -65,13 +67,13 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       <div className="page-container">
         {/* Welcome Section */}
         <div className="mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Welcome Back!</h1>
-          <p className="text-lg text-muted-foreground">Manage your wedding website and guest information</p>
+          <h1 className="text-4xl font-bold text-foreground mb-2">{t('admin.dashboard.welcomeBack')}</h1>
+          <p className="text-lg text-muted-foreground">{t('admin.dashboard.manageDescription')}</p>
         </div>
 
         {/* Management Sections */}
         <div>
-          <h2 className="text-2xl font-bold text-foreground mb-6">Management</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-6">{t('admin.dashboard.management')}</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sections.map((section, index) => {
               const Icon = section.icon

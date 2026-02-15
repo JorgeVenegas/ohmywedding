@@ -31,12 +31,16 @@ import {
   Infinity,
 } from "lucide-react"
 import { PRICING, PLAN_CARDS, COMPARISON_FEATURES } from "@/lib/subscription-shared"
+import { LanguageSwitcher } from "@/components/ui/language-switcher"
+import { useTranslation } from "@/components/contexts/i18n-context"
+import { getTranslations } from "@/lib/i18n"
 
 // ============================================
 // HERO SECTION
 // ============================================
 
 function HeroSection() {
+  const { t } = useTranslation()
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#1a0a0d] via-[#420c14] to-[#1a0a0d]">
       {/* Decorative gold elements */}
@@ -58,34 +62,34 @@ function HeroSection() {
           <div className="flex items-center justify-center gap-2 mb-6">
             <Crown className="w-5 h-5 text-[#DDA46F]" />
             <p className="text-[10px] sm:text-xs tracking-[0.5em] text-[#DDA46F] uppercase font-medium">
-              Deluxe Experience
+              {t('plans.deluxe.label')}
             </p>
             <Crown className="w-5 h-5 text-[#DDA46F]" />
           </div>
 
           <h1 className="text-5xl sm:text-7xl md:text-8xl font-serif text-[#f5f2eb] leading-[1.05] mb-8">
-            We Take Care of{" "}
-            <span className="block text-[#DDA46F] italic">Everything</span>
+            {t('plans.deluxe.heroTitle')}{" "}
+            <span className="block text-[#DDA46F] italic">{t('plans.deluxe.heroHighlight')}</span>
           </h1>
 
           <p className="text-lg sm:text-xl text-[#f5f2eb]/50 max-w-2xl mx-auto leading-relaxed mb-4">
-            A fully bespoke wedding page, designed and built by our team with exceptional attention to detail. Every element custom-made, every pixel personalized to tell your unique love story.
+            {t('plans.deluxe.heroDescription')}
           </p>
 
           <p className="text-4xl sm:text-5xl font-serif text-[#DDA46F] mb-2">
             {PRICING.deluxe.priceDisplayMXN}
           </p>
-          <p className="text-sm text-[#f5f2eb]/30 mb-12">One-time payment • Completely personalized • Yours forever</p>
+          <p className="text-sm text-[#f5f2eb]/30 mb-12">{t('plans.common.oneTimePayment')} • {t('plans.common.completelyPersonalized')} • {t('plans.common.yoursForever')}</p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/upgrade?plan=deluxe&source=deluxe_page_hero">
               <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] text-base px-12 py-7 rounded-full font-medium shadow-xl shadow-[#DDA46F]/20 border border-[#DDA46F]/50">
-                Get Deluxe
+                {t('plans.common.getDeluxe')}
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
             <a href="#experience" className="text-[#f5f2eb]/40 hover:text-[#DDA46F] transition-colors text-sm flex items-center gap-2">
-              Discover the experience
+              {t('plans.common.discoverExperience')}
               <ChevronDown className="w-4 h-4" />
             </a>
           </div>
@@ -105,6 +109,7 @@ function HeroSection() {
 function DifferenceSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-100px" })
+  const { t } = useTranslation()
 
   return (
     <section id="experience" ref={ref} className="py-24 sm:py-36 bg-[#f5f2eb] relative">
@@ -115,13 +120,13 @@ function DifferenceSection() {
           transition={{ duration: 0.8 }}
           className="text-center mb-20"
         >
-          <p className="text-[10px] tracking-[0.4em] text-[#DDA46F] uppercase mb-4">The Deluxe Difference</p>
+          <p className="text-[10px] tracking-[0.4em] text-[#DDA46F] uppercase mb-4">{t('plans.deluxe.difference.label')}</p>
           <h2 className="text-3xl sm:text-5xl font-serif text-[#420c14] leading-tight mb-6">
-            Not a Template.<br />
-            <span className="text-[#DDA46F]">A Masterpiece.</span>
+            {t('plans.deluxe.difference.title')}<br />
+            <span className="text-[#DDA46F]">{t('plans.deluxe.difference.highlight')}</span>
           </h2>
           <p className="text-lg text-[#420c14]/50 max-w-2xl mx-auto leading-relaxed">
-            While other plans use pre-built components, Deluxe is entirely different. We interview you, understand your vision, and hand-craft every section of your wedding page from scratch.
+            {t('plans.deluxe.difference.description')}
           </p>
         </motion.div>
 
@@ -129,26 +134,26 @@ function DifferenceSection() {
           {[
             {
               icon: Palette,
-              title: "Bespoke Design",
-              description: "Every component is custom-designed to match your style, colors, and personality. No templates — everything is made just for you.",
+              title: t('plans.deluxe.difference.items.design.title'),
+              description: t('plans.deluxe.difference.items.design.description'),
               accent: true,
             },
             {
               icon: Layers,
-              title: "Custom Components",
-              description: "We build unique sections that don't exist in any template library. A timeline of your story, interactive galleries, animated elements — whatever you dream, we build.",
+              title: t('plans.deluxe.difference.items.components.title'),
+              description: t('plans.deluxe.difference.items.components.description'),
               accent: false,
             },
             {
               icon: Headphones,
-              title: "Dedicated Agent",
-              description: "You get a dedicated personal support agent who knows your wedding inside and out. Direct communication, quick turnaround, and personalized attention.",
+              title: t('plans.deluxe.difference.items.agent.title'),
+              description: t('plans.deluxe.difference.items.agent.description'),
               accent: false,
             },
             {
               icon: Gem,
-              title: "Exceptional Detail",
-              description: "From micro-animations to typography pairing, every detail is polished to perfection. Your wedding page will feel like a luxury brand experience.",
+              title: t('plans.deluxe.difference.items.detail.title'),
+              description: t('plans.deluxe.difference.items.detail.description'),
               accent: true,
             },
           ].map((item, i) => (
@@ -188,72 +193,25 @@ function DifferenceSection() {
 // EVERYTHING INCLUDED
 // ============================================
 
-const deluxeFeatures = [
-  {
-    icon: Palette,
-    title: "Completely Personalized Design",
-    description: "Your wedding page is designed from scratch. We match your style, your colors, your vibe — down to the last detail.",
-  },
-  {
-    icon: Layers,
-    title: "Bespoke Custom Components",
-    description: "Unique sections built just for you. Interactive timelines, custom galleries, animated love stories — beyond any template.",
-  },
-  {
-    icon: Headphones,
-    title: "Dedicated Personal Agent",
-    description: "A dedicated support agent who manages your entire project. Direct communication, fast responses, and someone who truly knows your wedding.",
-  },
-  {
-    icon: Users,
-    title: "Unlimited Guests",
-    description: "No guest limits. Manage unlimited guests and groups with the most advanced RSVP and tracking system available.",
-  },
-  {
-    icon: Send,
-    title: "Personalized Invitations",
-    description: "Beautiful digital invitations with full open and engagement tracking. Know exactly who received, opened, and responded.",
-  },
-  {
-    icon: Gift,
-    title: "Premium Registry",
-    description: "Accept gifts and contributions securely through Stripe. Professional payouts directly to your verified account.",
-  },
-  {
-    icon: Globe,
-    title: "Custom Domain",
-    description: "Your personalized subdomain or connect your own custom domain. Your website, your address, your brand.",
-  },
-  {
-    icon: Eye,
-    title: "1 Month Activity Tracking",
-    description: "30 days of detailed activity retention. Track every interaction with comprehensive analytics and insights.",
-  },
-  {
-    icon: BarChart3,
-    title: "Daily Reports",
-    description: "Receive daily activity reports with detailed breakdowns of RSVPs, invitation opens, contributions, and more.",
-  },
-  {
-    icon: Shield,
-    title: "Priority Support",
-    description: "You're never waiting. Get priority responses and direct access to our design and support team throughout your journey.",
-  },
-  {
-    icon: Calendar,
-    title: "Website Forever",
-    description: "Your bespoke wedding page stays online forever. A digital heirloom that preserves your love story for generations.",
-  },
-  {
-    icon: Sparkles,
-    title: "We Build Everything",
-    description: "You don't lift a finger. Tell us your vision and we handle the design, development, content, and launch. You just approve.",
-  },
+const featureIcons = [
+  { icon: Palette, key: 'personalizedDesign' as const },
+  { icon: Layers, key: 'customComponents' as const },
+  { icon: Headphones, key: 'dedicatedAgent' as const },
+  { icon: Users, key: 'unlimitedGuests' as const },
+  { icon: Send, key: 'invitations' as const },
+  { icon: Gift, key: 'registry' as const },
+  { icon: Globe, key: 'customDomain' as const },
+  { icon: Eye, key: 'activityTracking' as const },
+  { icon: BarChart3, key: 'dailyReports' as const },
+  { icon: Shield, key: 'prioritySupport' as const },
+  { icon: Calendar, key: 'websiteForever' as const },
+  { icon: Sparkles, key: 'weBuildEverything' as const },
 ]
 
 function EverythingIncludedSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-80px" })
+  const { t } = useTranslation()
 
   return (
     <section ref={ref} className="py-20 sm:py-32 bg-white relative">
@@ -264,19 +222,19 @@ function EverythingIncludedSection() {
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
-          <p className="text-[10px] tracking-[0.4em] text-[#DDA46F] uppercase mb-4">Everything Included</p>
+          <p className="text-[10px] tracking-[0.4em] text-[#DDA46F] uppercase mb-4">{t('plans.deluxe.features.label')}</p>
           <h2 className="text-3xl sm:text-5xl font-serif text-[#420c14] leading-tight mb-4">
-            The Complete Package
+            {t('plans.deluxe.features.title')}
           </h2>
           <p className="text-[#420c14]/50 max-w-xl mx-auto">
-            Every feature we offer, plus exclusive bespoke services that go far beyond any template
+            {t('plans.deluxe.features.subtitle')}
           </p>
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {deluxeFeatures.map((feature, i) => (
+          {featureIcons.map((feature, i) => (
             <motion.div
-              key={feature.title}
+              key={feature.key}
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.05 + i * 0.06 }}
@@ -285,8 +243,8 @@ function EverythingIncludedSection() {
               <div className="w-10 h-10 rounded-full bg-[#DDA46F]/10 flex items-center justify-center mb-4 group-hover:bg-[#DDA46F]/20 transition-colors border border-[#DDA46F]/20">
                 <feature.icon className="w-4 h-4 text-[#DDA46F]" />
               </div>
-              <h3 className="font-medium text-[#420c14] mb-2">{feature.title}</h3>
-              <p className="text-sm text-[#420c14]/50 leading-relaxed">{feature.description}</p>
+              <h3 className="font-medium text-[#420c14] mb-2">{t(`plans.deluxe.features.items.${feature.key}.title`)}</h3>
+              <p className="text-sm text-[#420c14]/50 leading-relaxed">{t(`plans.deluxe.features.items.${feature.key}.description`)}</p>
             </motion.div>
           ))}
         </div>
@@ -385,16 +343,21 @@ function ProcessSection() {
 function PlanComparisonSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-80px" })
+  const { t } = useTranslation()
+
+  const aspectKeys = ['whoBuilds', 'designApproach', 'components', 'support', 'guestLimit', 'activityTracking', 'reports'] as const
 
   const differences = [
-    { aspect: "Who builds the page", premium: "You, with our guidance", deluxe: "We build everything for you" },
-    { aspect: "Design approach", premium: "Pre-built premium templates", deluxe: "Completely bespoke, designed from scratch" },
-    { aspect: "Components", premium: "Existing premium components", deluxe: "Custom-made, unique components" },
-    { aspect: "Support", premium: "Expert guidance & advice", deluxe: "Dedicated personal agent" },
-    { aspect: "Guest limit", premium: "Up to 250", deluxe: "Unlimited" },
-    { aspect: "Activity tracking", premium: "1 week retention", deluxe: "1 month retention" },
-    { aspect: "Reports", premium: "Weekly reports", deluxe: "Daily reports" },
-    { aspect: "Price", premium: PRICING.premium.priceDisplayMXN, deluxe: PRICING.deluxe.priceDisplayMXN },
+    ...aspectKeys.map(key => ({
+      aspect: t(`plans.deluxe.comparison.aspects.${key}.label`),
+      premium: t(`plans.deluxe.comparison.aspects.${key}.premium`),
+      deluxe: t(`plans.deluxe.comparison.aspects.${key}.deluxe`),
+    })),
+    {
+      aspect: t('plans.deluxe.comparison.aspects.price.label'),
+      premium: PRICING.premium.priceDisplayMXN,
+      deluxe: PRICING.deluxe.priceDisplayMXN,
+    },
   ]
 
   return (
@@ -406,10 +369,10 @@ function PlanComparisonSection() {
           transition={{ duration: 0.8 }}
           className="text-center mb-12"
         >
-          <p className="text-[10px] tracking-[0.4em] text-[#DDA46F] uppercase mb-4">Compare</p>
-          <h2 className="text-3xl sm:text-4xl font-serif text-[#420c14] mb-4">Premium vs Deluxe</h2>
+          <p className="text-[10px] tracking-[0.4em] text-[#DDA46F] uppercase mb-4">{t('plans.deluxe.comparison.label')}</p>
+          <h2 className="text-3xl sm:text-4xl font-serif text-[#420c14] mb-4">{t('plans.deluxe.comparison.title')}</h2>
           <p className="text-[#420c14]/50 max-w-md mx-auto">
-            Both are excellent. The question is: do you want to build it, or do you want us to handle everything?
+            {t('plans.deluxe.comparison.description')}
           </p>
         </motion.div>
 
@@ -446,12 +409,12 @@ function PlanComparisonSection() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
           <Link href="/upgrade?plan=deluxe&source=deluxe_page_comparison">
             <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] px-8 py-5 rounded-full font-medium">
-              Get Deluxe
+              {t('plans.common.getDeluxe')}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </Link>
           <Link href="/premium" className="text-sm text-[#420c14]/40 hover:text-[#DDA46F] transition-colors">
-            Learn about Premium
+            {t('plans.common.learnAboutPremium')}
           </Link>
         </div>
       </div>
@@ -466,24 +429,9 @@ function PlanComparisonSection() {
 function TestimonialsSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-80px" })
-
-  const testimonials = [
-    {
-      quote: "We didn't want a template — we wanted something that felt truly ours. The Deluxe team created a wedding page that brought tears to our eyes. Every detail was perfect.",
-      name: "Valentina & Mateo",
-      detail: "Destination Wedding in Tulum",
-    },
-    {
-      quote: "Having a dedicated agent made everything so easy. We told them our vision and they brought it to life beyond what we imagined. Our guests are still talking about the website.",
-      name: "Isabella & Santiago",
-      detail: "Wedding in San Miguel de Allende",
-    },
-    {
-      quote: "The custom animations and interactive timeline of our love story were absolutely stunning. It wasn't just a website — it was a work of art. Worth every centavo.",
-      name: "Camila & Sebastián",
-      detail: "Wedding in Valle de Bravo",
-    },
-  ]
+  const { t, locale } = useTranslation()
+  const translations = getTranslations(locale)
+  const testimonials = translations.plans.deluxe.testimonials.items
 
   return (
     <section ref={ref} className="py-20 sm:py-32 bg-[#f5f2eb] relative">
@@ -494,14 +442,14 @@ function TestimonialsSection() {
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
-          <p className="text-[10px] tracking-[0.4em] text-[#DDA46F] uppercase mb-4">Stories</p>
-          <h2 className="text-3xl sm:text-4xl font-serif text-[#420c14]">Loved by Couples</h2>
+          <p className="text-[10px] tracking-[0.4em] text-[#DDA46F] uppercase mb-4">{t('plans.deluxe.testimonials.label')}</p>
+          <h2 className="text-3xl sm:text-4xl font-serif text-[#420c14]">{t('plans.deluxe.testimonials.title')}</h2>
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-          {testimonials.map((t, i) => (
+          {testimonials.map((item, i) => (
             <motion.div
-              key={t.name}
+              key={item.name}
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.2 + i * 0.15 }}
@@ -512,10 +460,10 @@ function TestimonialsSection() {
                   <Star key={j} className="w-4 h-4 text-[#DDA46F] fill-[#DDA46F]" />
                 ))}
               </div>
-              <p className="text-[#420c14]/70 leading-relaxed mb-6 italic">&ldquo;{t.quote}&rdquo;</p>
+              <p className="text-[#420c14]/70 leading-relaxed mb-6 italic">&ldquo;{item.quote}&rdquo;</p>
               <div>
-                <p className="font-medium text-[#420c14] text-sm">{t.name}</p>
-                <p className="text-xs text-[#420c14]/40">{t.detail}</p>
+                <p className="font-medium text-[#420c14] text-sm">{item.name}</p>
+                <p className="text-xs text-[#420c14]/40">{item.detail}</p>
               </div>
             </motion.div>
           ))}
@@ -532,25 +480,9 @@ function TestimonialsSection() {
 function ForWhoSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-80px" })
+  const { t } = useTranslation()
 
-  const profiles = [
-    {
-      title: "Busy Couples",
-      description: "You have a million things to plan. Let us handle the website entirely — one less thing to worry about.",
-    },
-    {
-      title: "Design Lovers",
-      description: "You appreciate fine design and want something truly unique. Templates just won't do for your special day.",
-    },
-    {
-      title: "Destination Weddings",
-      description: "Your guests need travel info, accommodation details, and logistics in a beautiful, organized way.",
-    },
-    {
-      title: "Large Celebrations",
-      description: "500+ guests? Unlimited capacity, advanced group management, and detailed tracking make it seamless.",
-    },
-  ]
+  const profileKeys = ['busy', 'designLovers', 'destination', 'large'] as const
 
   return (
     <section ref={ref} className="py-20 sm:py-32 bg-white relative">
@@ -561,16 +493,16 @@ function ForWhoSection() {
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
-          <p className="text-[10px] tracking-[0.4em] text-[#DDA46F] uppercase mb-4">Perfect For</p>
+          <p className="text-[10px] tracking-[0.4em] text-[#DDA46F] uppercase mb-4">{t('plans.deluxe.forWho.label')}</p>
           <h2 className="text-3xl sm:text-5xl font-serif text-[#420c14] leading-tight">
-            Is Deluxe Right for You?
+            {t('plans.deluxe.forWho.title')}
           </h2>
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {profiles.map((p, i) => (
+          {profileKeys.map((key, i) => (
             <motion.div
-              key={p.title}
+              key={key}
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.2 + i * 0.1 }}
@@ -580,8 +512,8 @@ function ForWhoSection() {
                 <Check className="w-4 h-4 text-[#DDA46F]" />
               </div>
               <div>
-                <h3 className="font-medium text-[#420c14] mb-1">{p.title}</h3>
-                <p className="text-sm text-[#420c14]/50 leading-relaxed">{p.description}</p>
+                <h3 className="font-medium text-[#420c14] mb-1">{t(`plans.deluxe.forWho.profiles.${key}.title`)}</h3>
+                <p className="text-sm text-[#420c14]/50 leading-relaxed">{t(`plans.deluxe.forWho.profiles.${key}.description`)}</p>
               </div>
             </motion.div>
           ))}
@@ -598,49 +530,12 @@ function ForWhoSection() {
 function FAQSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-80px" })
-
-  const faqs = [
-    {
-      q: "What exactly do I get with Deluxe?",
-      a: `Everything. We design and build a completely bespoke wedding page from scratch — custom components, unique design, personalized content, and a dedicated personal agent. All for a one-time payment of ${PRICING.deluxe.priceDisplayMXN}.`,
-    },
-    {
-      q: "How is this different from Premium?",
-      a: "With Premium, you build your website using our premium templates and components, and we provide guidance. With Deluxe, you don't build anything — we handle the entire process. We design bespoke components that don't exist anywhere else, completely personalized to your wedding.",
-    },
-    {
-      q: "Do I need to know anything about web design?",
-      a: "Absolutely not. You just need to tell us about your wedding and your vision. We handle everything — design, development, content, setup, and launch. You review, give feedback, and approve.",
-    },
-    {
-      q: "How long does the process take?",
-      a: "Typically 2-3 weeks from discovery to launch, depending on complexity and revisions. We work on your timeline and can expedite for urgent weddings.",
-    },
-    {
-      q: "How many revisions do I get?",
-      a: "We iterate until you're completely satisfied. Our goal is perfection, and we don't launch until you love every detail of your wedding page.",
-    },
-    {
-      q: "What does 'dedicated personal agent' mean?",
-      a: "You get assigned a specific team member who manages your entire project. They're your single point of contact — you can message them directly, and they'll know every detail about your wedding and preferences.",
-    },
-    {
-      q: "Can I still make changes after launch?",
-      a: "Of course! Your dedicated agent remains available to make adjustments. Need to update RSVPs, add details, or tweak the design? We've got you covered.",
-    },
-    {
-      q: "Is there a guest limit?",
-      a: "No. Deluxe includes unlimited guests and unlimited groups. Whether you're having 50 guests or 1,000, we handle it seamlessly.",
-    },
-    {
-      q: "What if I already have a Premium plan?",
-      a: "You can upgrade to Deluxe and only pay the difference. All your existing content and data carries over — we just redesign and rebuild everything to the Deluxe standard.",
-    },
-    {
-      q: "Is the payment secure?",
-      a: "Yes. We use Stripe for all transactions. For Mexican bank transfers, you'll receive secure SPEI/CLABE details during checkout. Your payment information is never stored on our servers.",
-    },
-  ]
+  const { t, locale } = useTranslation()
+  const translations = getTranslations(locale)
+  const faqs = translations.plans.deluxe.faq.items.map(item => ({
+    q: item.q,
+    a: item.a.replace('{{price}}', PRICING.deluxe.priceDisplayMXN),
+  }))
 
   return (
     <section id="faq" ref={ref} className="py-20 sm:py-32 bg-[#f5f2eb] relative">
@@ -651,8 +546,8 @@ function FAQSection() {
           transition={{ duration: 0.8 }}
           className="text-center mb-12"
         >
-          <p className="text-[10px] tracking-[0.4em] text-[#DDA46F] uppercase mb-4">Questions</p>
-          <h2 className="text-3xl sm:text-4xl font-serif text-[#420c14]">Frequently Asked Questions</h2>
+          <p className="text-[10px] tracking-[0.4em] text-[#DDA46F] uppercase mb-4">{t('plans.deluxe.faq.label')}</p>
+          <h2 className="text-3xl sm:text-4xl font-serif text-[#420c14]">{t('plans.deluxe.faq.title')}</h2>
         </motion.div>
 
         <div className="space-y-4">
@@ -684,6 +579,7 @@ function FAQSection() {
 // ============================================
 
 function FinalCTASection() {
+  const { t } = useTranslation()
   return (
     <section className="py-24 sm:py-36 bg-gradient-to-b from-[#1a0a0d] via-[#420c14] to-[#1a0a0d] relative overflow-hidden">
       {/* Glow effect */}
@@ -700,20 +596,20 @@ function FinalCTASection() {
         >
           <Crown className="w-10 h-10 text-[#DDA46F] mx-auto mb-6" />
           <h2 className="text-3xl sm:text-5xl md:text-6xl font-serif text-[#f5f2eb] mb-6 leading-tight">
-            Your Love Story{" "}
-            <span className="text-[#DDA46F] italic">Deserves</span>{" "}
-            the Best
+            {t('plans.deluxe.finalCta.title')}{" "}
+            <span className="text-[#DDA46F] italic">{t('plans.deluxe.finalCta.highlight')}</span>{" "}
+            {t('plans.deluxe.finalCta.subtitle')}
           </h2>
           <p className="text-lg text-[#f5f2eb]/40 mb-4 max-w-xl mx-auto">
-            A completely bespoke wedding page, designed and built by our team with exceptional attention to every detail.
+            {t('plans.deluxe.finalCta.description')}
           </p>
           <p className="text-3xl sm:text-4xl font-serif text-[#DDA46F] mb-2">
             {PRICING.deluxe.priceDisplayMXN}
           </p>
-          <p className="text-sm text-[#f5f2eb]/30 mb-12">One-time payment • Completely personalized • Yours forever</p>
+          <p className="text-sm text-[#f5f2eb]/30 mb-12">{t('plans.common.oneTimePayment')} • {t('plans.common.completelyPersonalized')} • {t('plans.common.yoursForever')}</p>
           <Link href="/upgrade?plan=deluxe&source=deluxe_page_cta">
             <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] text-lg px-14 py-7 rounded-full font-medium shadow-xl shadow-[#DDA46F]/20 border border-[#DDA46F]/50">
-              Get Deluxe
+              {t('plans.common.getDeluxe')}
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </Link>
@@ -728,6 +624,7 @@ function FinalCTASection() {
 // ============================================
 
 function Footer() {
+  const { t } = useTranslation()
   return (
     <footer className="bg-[#1a0a0d] border-t border-[#DDA46F]/10 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center">
@@ -736,14 +633,13 @@ function Footer() {
           <span className="font-serif text-xl text-[#f5f2eb]">OhMyWedding</span>
         </div>
         <p className="text-[#f5f2eb]/30 text-sm">
-          © {new Date().getFullYear()} OhMyWedding. Made with{" "}
+          © {new Date().getFullYear()} OhMyWedding. {t('plans.common.madeWith')}{" "}
           <Heart className="w-3 h-3 inline text-[#DDA46F] fill-[#DDA46F] mx-0.5" />{" "}
-          for couples in love.
         </p>
         <div className="flex items-center justify-center gap-6 mt-4 text-xs text-[#f5f2eb]/20">
-          <Link href="/privacy" className="hover:text-[#DDA46F] transition-colors">Privacy</Link>
-          <Link href="/terms" className="hover:text-[#DDA46F] transition-colors">Terms</Link>
-          <Link href="/" className="hover:text-[#DDA46F] transition-colors">Home</Link>
+          <Link href="/privacy" className="hover:text-[#DDA46F] transition-colors">{t('plans.common.privacy')}</Link>
+          <Link href="/terms" className="hover:text-[#DDA46F] transition-colors">{t('plans.common.terms')}</Link>
+          <Link href="/" className="hover:text-[#DDA46F] transition-colors">{t('plans.common.home')}</Link>
         </div>
       </div>
     </footer>
@@ -755,6 +651,7 @@ function Footer() {
 // ============================================
 
 function SimpleHeader() {
+  const { t } = useTranslation()
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-[#1a0a0d]/90 backdrop-blur-xl border-b border-[#DDA46F]/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -763,13 +660,14 @@ function SimpleHeader() {
           <span className="font-serif text-lg text-[#f5f2eb]">OhMyWedding</span>
         </Link>
         <div className="flex items-center gap-4">
+          <LanguageSwitcher variant="pill" />
           <Link href="/premium" className="text-xs text-[#f5f2eb]/50 hover:text-[#DDA46F] transition-colors hidden sm:block">
-            Premium Plan
+            {t('plans.common.learnAboutPremium')}
           </Link>
           <Link href="/upgrade?plan=deluxe&source=deluxe_page_nav">
             <Button size="sm" className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] rounded-full text-xs px-5 border border-[#DDA46F]/50">
               <Crown className="w-3 h-3 mr-1" />
-              Get Deluxe
+              {t('plans.common.getDeluxe')}
             </Button>
           </Link>
         </div>

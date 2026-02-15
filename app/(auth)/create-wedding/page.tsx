@@ -17,6 +17,7 @@ import { FONT_PAIRINGS, FONT_PAIRING_CATEGORIES, COLOR_THEMES, COLOR_THEME_CATEG
 import { PAGE_TEMPLATES, TEMPLATE_CATEGORIES, type PageTemplate } from "@/lib/page-templates"
 import { getWeddingPath, getWeddingUrl } from "@/lib/wedding-url"
 import { toast } from "sonner"
+import { useTranslation } from "@/components/contexts/i18n-context"
 
 // Helper to create a light tint of a color for palette display
 function getLightTint(hex: string, tintAmount: number): string {
@@ -114,6 +115,8 @@ const REGISTRY_VARIANTS = [
 ]
 
 export default function CreateWeddingPage() {
+  // i18n
+  const { t } = useTranslation()
   // Templates from database
   const [dbTemplates, setDbTemplates] = useState<any[]>([])
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(true)
@@ -836,7 +839,7 @@ export default function CreateWeddingPage() {
       <Header
         showBackButton
         backHref="/"
-        title="Create Your Wedding"
+        title={t('auth.createWedding.essentialDetails')}
         rightContent={<div className="text-right text-sm font-medium text-primary">One Page Setup</div>}
       />
 
@@ -849,8 +852,8 @@ export default function CreateWeddingPage() {
                 <div className="flex justify-center">
                   <Heart className="w-12 h-12 text-primary animate-pulse" />
                 </div>
-                <h3 className="font-serif text-xl text-foreground">Creating Your Wedding Website</h3>
-                <p className="text-muted-foreground">Please wait while we set up your beautiful website...</p>
+                <h3 className="font-serif text-xl text-foreground">{t('auth.createWedding.creatingWebsite')}</h3>
+                <p className="text-muted-foreground">{t('auth.createWedding.pleaseWait')}</p>
               </div>
             </Card>
           </div>
@@ -860,8 +863,8 @@ export default function CreateWeddingPage() {
           {/* ==================== SECTION 1: CORE INFORMATION ==================== */}
           <Card className="p-8 border border-border shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="mb-8">
-              <h2 className="text-3xl font-bold text-foreground mb-2">Essential Details</h2>
-              <p className="text-muted-foreground">The basic information for your wedding website</p>
+              <h2 className="text-3xl font-bold text-foreground mb-2">{t('auth.createWedding.essentialDetails')}</h2>
+              <p className="text-muted-foreground">{t('auth.createWedding.essentialDetailsDesc')}</p>
             </div>
             
             <div className="space-y-6">
@@ -869,12 +872,12 @@ export default function CreateWeddingPage() {
               <div>
                 <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                   <Heart className="w-5 h-5 text-primary" />
-                  Your Names
+                  {t('auth.createWedding.yourNames')}
                 </h3>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1.5">First Name</label>
+                      <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.createWedding.firstName')}</label>
                       <Input
                         name="partner1FirstName"
                         value={formData.partner1FirstName}
@@ -885,7 +888,7 @@ export default function CreateWeddingPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1.5">Last Name <span className="text-muted-foreground">(optional)</span></label>
+                      <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.createWedding.lastName')} <span className="text-muted-foreground">{t('auth.createWedding.optional')}</span></label>
                       <Input
                         name="partner1LastName"
                         value={formData.partner1LastName}
@@ -897,7 +900,7 @@ export default function CreateWeddingPage() {
                   </div>
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1.5">First Name</label>
+                      <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.createWedding.firstName')}</label>
                       <Input
                         name="partner2FirstName"
                         value={formData.partner2FirstName}
@@ -908,7 +911,7 @@ export default function CreateWeddingPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1.5">Last Name <span className="text-muted-foreground">(optional)</span></label>
+                      <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.createWedding.lastName')} <span className="text-muted-foreground">{t('auth.createWedding.optional')}</span></label>
                       <Input
                         name="partner2LastName"
                         value={formData.partner2LastName}
@@ -926,7 +929,7 @@ export default function CreateWeddingPage() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-primary" />
-                    <span className="font-medium text-foreground">I have a wedding date</span>
+                    <span className="font-medium text-foreground">{t('auth.createWedding.iHaveDate')}</span>
                   </div>
                   <Switch
                     id="hasExistingWedding"
@@ -938,7 +941,7 @@ export default function CreateWeddingPage() {
                 {formData.hasExistingWedding && (
                   <div className="grid md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1.5">Wedding Date</label>
+                      <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.createWedding.weddingDate')}</label>
                       <Input
                         name="weddingDate"
                         type="date"
@@ -949,7 +952,7 @@ export default function CreateWeddingPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1.5">Ceremony Time</label>
+                      <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.createWedding.ceremonyTime')}</label>
                       <Input
                         name="weddingTime"
                         type="time"
@@ -959,7 +962,7 @@ export default function CreateWeddingPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1.5">Reception Time</label>
+                      <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.createWedding.receptionTime')}</label>
                       <Input
                         name="receptionTime"
                         type="time"
@@ -976,7 +979,7 @@ export default function CreateWeddingPage() {
               <div className="border-t border-border pt-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">Website Language</span>
+                    <span className="text-sm font-medium text-foreground">{t('auth.createWedding.websiteLanguage')}</span>
                   </div>
                   <div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
                     <button
@@ -1010,8 +1013,8 @@ export default function CreateWeddingPage() {
           {/* ==================== SECTION 2: CREATION MODE ==================== */}
           <Card className="p-8 border border-border shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Choose Your Starting Point</h2>
-              <p className="text-muted-foreground">Select how you'd like to build your wedding website</p>
+              <h2 className="text-2xl font-bold text-foreground mb-2">{t('auth.createWedding.chooseStartingPoint')}</h2>
+              <p className="text-muted-foreground">{t('auth.createWedding.chooseStartingPointDesc')}</p>
             </div>
 
             {/* AI Design - Elegant gold-themed design */}
@@ -1040,12 +1043,12 @@ export default function CreateWeddingPage() {
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-stone-800 flex items-center gap-2">
-                        AI Design Assistant
+                        {t('auth.createWedding.aiDesignAssistant')}
                         <span className="px-2 py-0.5 text-[10px] font-medium bg-gradient-to-r from-[#DDA46F] to-[#c99560] text-white rounded-full">
-                          NEW
+                          {t('auth.createWedding.newBadge')}
                         </span>
                       </h3>
-                      <p className="text-sm text-stone-600">Describe your dream wedding, and we'll design it for you</p>
+                      <p className="text-sm text-stone-600">{t('auth.createWedding.describeYourDream')}</p>
                     </div>
                   </div>
 
@@ -1069,12 +1072,12 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
                         {isAiGenerating ? (
                           <>
                             <Sparkles className="w-4 h-4 mr-2 animate-spin" />
-                            Designing...
+                            {t('auth.createWedding.designing')}
                           </>
                         ) : (
                           <>
                             <Wand2 className="w-4 h-4 mr-2" />
-                            Design My Site
+                            {t('auth.createWedding.designMySite')}
                           </>
                         )}
                       </Button>
@@ -1115,7 +1118,7 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
             {/* Divider */}
             <div className="relative flex items-center py-4">
               <div className="flex-grow border-t border-border" />
-              <span className="flex-shrink mx-4 text-sm text-muted-foreground">or choose a template</span>
+              <span className="flex-shrink mx-4 text-sm text-muted-foreground">{t('auth.createWedding.orChooseTemplate')}</span>
               <div className="flex-grow border-t border-border" />
             </div>
 
@@ -1131,8 +1134,8 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
                 }`}
               >
                 <LayoutTemplate className={`w-6 h-6 mb-2 ${creationMode === 'template' ? 'text-primary' : 'text-muted-foreground'}`} />
-                <div className="font-medium text-foreground">Browse Templates</div>
-                <div className="text-xs text-muted-foreground">Curated designs ready to use</div>
+                <div className="font-medium text-foreground">{t('auth.createWedding.browseTemplates')}</div>
+                <div className="text-xs text-muted-foreground">{t('auth.createWedding.curatedDesigns')}</div>
               </button>
               <button
                 type="button"
@@ -1144,8 +1147,8 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
                 }`}
               >
                 <Settings className={`w-6 h-6 mb-2 ${creationMode === 'manual' ? 'text-primary' : 'text-muted-foreground'}`} />
-                <div className="font-medium text-foreground">Start from Scratch</div>
-                <div className="text-xs text-muted-foreground">Full customization control</div>
+                <div className="font-medium text-foreground">{t('auth.createWedding.startFromScratch')}</div>
+                <div className="text-xs text-muted-foreground">{t('auth.createWedding.fullCustomization')}</div>
               </button>
             </div>
 
@@ -1335,9 +1338,9 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
                       <Camera className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-foreground mb-1">Add Your Photos</h3>
+                      <h3 className="font-semibold text-foreground mb-1">{t('auth.createWedding.addYourPhotos')}</h3>
                       <p className="text-sm text-muted-foreground">
-                        Upload your wedding photos and we'll automatically distribute them across your template's gallery, hero section, and story pages
+                        {t('auth.createWedding.addYourPhotosDesc')}
                       </p>
                     </div>
                   </div>
@@ -1349,8 +1352,8 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
                       onClick={() => document.getElementById('bulk-photo-input')?.click()}
                     >
                       <Camera className="w-8 h-8 text-primary/40 mx-auto mb-2" />
-                      <p className="text-sm font-medium text-foreground">Click to select photos</p>
-                      <p className="text-xs text-muted-foreground mt-1">Select multiple images at once</p>
+                      <p className="text-sm font-medium text-foreground">{t('auth.createWedding.clickToSelect')}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{t('auth.createWedding.selectMultiple')}</p>
                       <input
                         id="bulk-photo-input"
                         type="file"
@@ -1414,7 +1417,7 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
                     {uploadProgress > 0 && uploadProgress < 100 && (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Uploading photos...</span>
+                          <span className="text-muted-foreground">{t('auth.createWedding.uploadingPhotos')}</span>
                           <span className="font-medium text-primary">{uploadProgress}%</span>
                         </div>
                         <div className="w-full bg-primary/10 rounded-full h-2 overflow-hidden">
@@ -1431,14 +1434,14 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-medium text-foreground">
-                            {uploadedPhotos.length} photo{uploadedPhotos.length !== 1 ? 's' : ''} uploaded
+                            {uploadedPhotos.length} {t('auth.createWedding.uploaded')}
                           </p>
                           <button
                             type="button"
                             onClick={() => setUploadedPhotos([])}
                             className="text-xs text-muted-foreground hover:text-foreground font-medium"
                           >
-                            Clear all
+                            {t('auth.createWedding.clearAll')}
                           </button>
                         </div>
                         <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
@@ -1477,12 +1480,12 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
                       {isDistributingPhotos ? (
                         <>
                           <Sparkles className="w-4 h-4 mr-2 animate-spin" />
-                          Distributing Photos...
+                          {t('auth.createWedding.distributing')}
                         </>
                       ) : (
                         <>
                           <Wand2 className="w-4 h-4 mr-2" />
-                          Auto-Arrange Photos to Sections
+                          {t('auth.createWedding.autoArrange')}
                         </>
                       )}
                     </Button>
@@ -1501,9 +1504,9 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
             {creationMode === 'manual' && (
               <div className="p-4 bg-muted/30 rounded-lg border border-border text-center">
                 <Settings className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-sm text-foreground font-medium">Full Customization Mode</p>
+                <p className="text-sm text-foreground font-medium">{t('auth.createWedding.fullCustomizationMode')}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Configure every detail using the styling and advanced settings below
+                  {t('auth.createWedding.configureEveryDetail')}
                 </p>
               </div>
             )}
@@ -1512,8 +1515,8 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
           {/* ==================== SECTION 3: STYLING ==================== */}
           <Card className="p-8 border border-border shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Style Your Website</h2>
-              <p className="text-muted-foreground">Colors and typography for your wedding theme</p>
+              <h2 className="text-2xl font-bold text-foreground mb-2">{t('auth.createWedding.styleYourWebsite')}</h2>
+              <p className="text-muted-foreground">{t('auth.createWedding.styleYourWebsiteDesc')}</p>
             </div>
 
             <div className="space-y-6">
@@ -1521,7 +1524,7 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
               <div>
                 <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
                   <Palette className="w-4 h-4 text-primary" />
-                  Color Palette
+                  {t('auth.createWedding.colorPalette')}
                 </h3>
                 
                 <Popover>
@@ -1546,7 +1549,7 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
                           </div>
                         ) : (
                           <div className="flex items-center justify-between w-full">
-                            <span className="text-muted-foreground">Select a color palette</span>
+                            <span className="text-muted-foreground">{t('auth.createWedding.selectColorPalette')}</span>
                             <ChevronDown className="w-4 h-4 text-muted-foreground" />
                           </div>
                         )
@@ -1621,7 +1624,7 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
               <div>
                 <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
                   <Type className="w-4 h-4 text-primary" />
-                  Font Style
+                  {t('auth.createWedding.fontStyle')}
                 </h3>
                 
                 <Popover>
@@ -1644,7 +1647,7 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
                           </div>
                         ) : (
                           <div className="flex items-center justify-between w-full">
-                            <span className="text-muted-foreground">Select a font pairing</span>
+                            <span className="text-muted-foreground">{t('auth.createWedding.selectFontPairing')}</span>
                             <ChevronDown className="w-4 h-4 text-muted-foreground" />
                           </div>
                         )
@@ -1721,8 +1724,8 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
               <div className="flex items-center gap-3">
                 <Settings className="w-5 h-5 text-muted-foreground" />
                 <div className="text-left">
-                  <h3 className="font-semibold text-foreground">Page Sections & Settings</h3>
-                  <p className="text-sm text-muted-foreground">Configure individual sections and their layouts</p>
+                  <h3 className="font-semibold text-foreground">{t('auth.createWedding.pageSections')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('auth.createWedding.pageSectionsDesc')}</p>
                 </div>
               </div>
               <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform duration-300 ${showAdvancedSettings ? 'rotate-180' : ''}`} />
@@ -1734,7 +1737,7 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
             <Card className="p-6 border border-border shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-200">
               <div className="mb-4">
                 <p className="text-sm text-muted-foreground">
-                  Drag sections to reorder. Hero section is always first and cannot be moved.
+                  {t('auth.createWedding.dragToReorder')}
                 </p>
               </div>
               <div className="space-y-3">
@@ -2510,13 +2513,13 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
           {/* ==================== SECTION 5: CREATE BUTTON ==================== */}
           <Card className="p-6 border border-primary/20 bg-primary/5 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-foreground">Ready to Create?</h3>
+              <h3 className="text-lg font-semibold text-foreground">{t('auth.createWedding.readyToCreate')}</h3>
               <div className="flex flex-wrap gap-3 mt-2 text-sm text-muted-foreground">
-                <span>✓ {formData.partner1FirstName && formData.partner2FirstName ? `${formData.partner1FirstName} & ${formData.partner2FirstName}` : 'Enter names above'}</span>
+                <span>✓ {formData.partner1FirstName && formData.partner2FirstName ? `${formData.partner1FirstName} & ${formData.partner2FirstName}` : t('auth.createWedding.enterNamesAbove')}</span>
                 {formData.hasExistingWedding && formData.weddingDate && (
                   <span>✓ {formData.weddingDate}</span>
                 )}
-                <span>✓ {componentSections.filter(s => s.enabled).length} sections</span>
+                <span>✓ {componentSections.filter(s => s.enabled).length} {t('auth.createWedding.sections')}</span>
               </div>
             </div>
 
@@ -2534,12 +2537,12 @@ Example: 'A romantic garden ceremony with soft blush colors and elegant serif fo
               {isSubmitting ? (
                 <>
                   <Heart className="w-5 h-5 mr-2 animate-pulse" />
-                  Creating Your Website...
+                  {t('auth.createWedding.creatingWebsite')}
                 </>
               ) : (
                 <>
                   <Heart className="w-5 h-5 mr-2" />
-                  Create Wedding Website
+                  {t('auth.createWedding.createWebsiteBtn')}
                 </>
               )}
             </Button>
