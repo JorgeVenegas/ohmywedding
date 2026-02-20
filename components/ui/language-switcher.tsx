@@ -16,10 +16,10 @@ export function LanguageSwitcher({ variant = 'buttons', className = '', textColo
 
   if (variant === 'pill') {
     return (
-      <div className={`flex items-center rounded-full border border-white/20 overflow-hidden text-xs ${className}`}>
+      <div className={`flex items-center rounded-full border border-white/20 overflow-hidden ${className}`}>
         <button
           onClick={() => setLocale('en')}
-          className={`px-2.5 py-1 transition-colors ${
+          className={`px-2 py-0.5 text-xs transition-colors ${
             locale === 'en' ? 'bg-white/20 text-white font-medium' : 'text-white/60 hover:text-white'
           }`}
           aria-label="Switch to English"
@@ -28,7 +28,7 @@ export function LanguageSwitcher({ variant = 'buttons', className = '', textColo
         </button>
         <button
           onClick={() => setLocale('es')}
-          className={`px-2.5 py-1 transition-colors ${
+          className={`px-2 py-0.5 text-xs transition-colors ${
             locale === 'es' ? 'bg-white/20 text-white font-medium' : 'text-white/60 hover:text-white'
           }`}
           aria-label="Cambiar a Español"

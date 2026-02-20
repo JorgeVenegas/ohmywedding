@@ -34,17 +34,19 @@ export const es: Translations = {
     deleteSection: 'Eliminar Sección',
     deleteConfirmTitle: 'Eliminar Sección',
     deleteConfirmMessage: '¿Estás seguro de que quieres eliminar esta sección? Esta acción no se puede deshacer.',
-    deleteConfirmWarning: 'La sección y todas sus personalizaciones se eliminarán permanentemente de tu página de boda.'
+    deleteConfirmWarning: 'La sección y todas sus personalizaciones se eliminarán permanentemente de tu página de boda.',
+    deleteCollaboratorMessage: '¿Estás seguro de que quieres eliminar este colaborador? Perderá acceso a esta boda.',
+    deleteCollaboratorWarning: 'Esta acción no se puede deshacer. El colaborador necesitará ser invitado nuevamente si cambias de opinión.'
   },
 
   // Navigation
   nav: {
     home: 'Inicio',
-    ourStory: 'Nuestra Historia',
-    eventDetails: 'Detalles del Evento',
+    ourStory: 'Historia',
+    eventDetails: 'Evento',
     gallery: 'Galería',
-    rsvp: 'Confirmar Asistencia',
-    faq: 'Preguntas Frecuentes',
+    rsvp: 'RSVP',
+    faq: 'FAQ',
     schedule: 'Itinerario',
     location: 'Ubicación'
   },
@@ -859,8 +861,8 @@ export const es: Translations = {
     },
     hero: {
       title: 'La Suite Digital para Bodas',
-      subtitle: 'Tu amor',
-      rotatingWords: ['Exhibido', 'Celebrado', 'Inmortalizado', 'Revelado'],
+      subtitle: 'Nuestra Historia',
+      rotatingWords: ['Exhibida', 'Celebrada', 'Inmortalizada', 'Revelada'],
       cta: 'Crea Tu Sitio Web',
       secondary: 'Ver Galería',
       scrollToExplore: 'Desliza para Explorar',

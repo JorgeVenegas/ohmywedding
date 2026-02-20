@@ -7,6 +7,7 @@ import { Input } from './input'
 import { WeddingDetailsForm } from './config-forms/wedding-details-form'
 import { UpdateWeddingNameId } from './update-wedding-name-id'
 import { MetadataSettingsPanel } from './metadata-settings-panel'
+import { CollaboratorManager } from './collaborator-manager'
 import { ColorPicker } from './color-picker'
 import { FONT_PAIRINGS, FONT_PAIRING_CATEGORIES, COLOR_THEMES, COLOR_THEME_CATEGORIES, AVAILABLE_FONTS } from '@/lib/theme-config'
 import { useCollaborators } from '@/hooks/use-auth'
@@ -1272,105 +1273,7 @@ export function SettingsPanel({
               {/* Divider */}
               <div className="border-t border-gray-200 pt-6"></div>
               
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-blue-800 mb-1">Share Access</h3>
-                <p className="text-xs text-blue-700">
-                  Add collaborators who can edit your wedding website. They'll need an account to access it.
-                </p>
-              </div>
-
-              {/* Add Collaborator Form */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Add Collaborator by Email
-                </label>
-                <form 
-                  onSubmit={async (e) => {
-                    e.preventDefault()
-                    if (!newCollaboratorEmail.trim()) return
-                    
-                    setIsAddingCollaborator(true)
-                    setCollaboratorError(null)
-                    
-                    const result = await addCollaborator(newCollaboratorEmail.trim())
-                    
-                    if (result.success) {
-                      setNewCollaboratorEmail('')
-                    } else {
-                      setCollaboratorError(result.error || 'Failed to add collaborator')
-                    }
-                    
-                    setIsAddingCollaborator(false)
-                  }}
-                  className="flex gap-2"
-                >
-                  <Input
-                    type="email"
-                    placeholder="collaborator@email.com"
-                    value={newCollaboratorEmail}
-                    onChange={(e) => setNewCollaboratorEmail(e.target.value)}
-                    className="flex-1"
-                    disabled={isAddingCollaborator}
-                  />
-                  <Button 
-                    type="submit" 
-                    disabled={isAddingCollaborator || !newCollaboratorEmail.trim()}
-                    className="flex items-center gap-2"
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    Add
-                  </Button>
-                </form>
-                {collaboratorError && (
-                  <p className="mt-2 text-sm text-red-600">{collaboratorError}</p>
-                )}
-              </div>
-
-              {/* Collaborators List */}
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-3">
-                  Current Collaborators
-                </h3>
-                
-                {collaboratorsLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                  </div>
-                ) : collaboratorEmails.length === 0 ? (
-                  <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
-                    <Users className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">No collaborators yet</p>
-                    <p className="text-xs text-gray-400 mt-1">Add someone above to share access</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {collaboratorEmails.map((email) => (
-                      <div 
-                        key={email}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
-                      >
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">
-                            {email}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Editor access
-                          </p>
-                        </div>
-                        <button
-                          onClick={async () => {
-                            await removeCollaborator(email)
-                          }}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Remove collaborator"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <CollaboratorManager weddingNameId={weddingNameId} />
             </div>
           ) : null}
         </div>

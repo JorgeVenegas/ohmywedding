@@ -34,7 +34,9 @@ export const en: Translations = {
     deleteSection: 'Delete Section',
     deleteConfirmTitle: 'Delete Section',
     deleteConfirmMessage: 'Are you sure you want to delete this section? This action cannot be undone.',
-    deleteConfirmWarning: 'The section and all its customizations will be permanently removed from your wedding page.'
+    deleteConfirmWarning: 'The section and all its customizations will be permanently removed from your wedding page.',
+    deleteCollaboratorMessage: 'Are you sure you want to remove this collaborator? They will lose access to this wedding.',
+    deleteCollaboratorWarning: 'This action cannot be undone. The collaborator will need to be re-invited if you change your mind.'
   },
 
   // Navigation

@@ -37,6 +37,8 @@ export interface Translations {
     deleteConfirmTitle: string
     deleteConfirmMessage: string
     deleteConfirmWarning: string
+    deleteCollaboratorMessage: string
+    deleteCollaboratorWarning: string
   }
 
   // Navigation

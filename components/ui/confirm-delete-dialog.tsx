@@ -79,10 +79,14 @@ export function ConfirmDeleteDialog({
         {/* Content */}
         <div className="p-6">
           <p className="text-gray-700 mb-4">
-            {t('common.deleteConfirmMessage')}
+            {componentType === 'collaborator' 
+              ? t('common.deleteCollaboratorMessage')
+              : t('common.deleteConfirmMessage')}
           </p>
           <p className="text-sm text-gray-500">
-            {t('common.deleteConfirmWarning')}
+            {componentType === 'collaborator'
+              ? t('common.deleteCollaboratorWarning')
+              : t('common.deleteConfirmWarning')}
           </p>
         </div>
 
@@ -99,7 +103,9 @@ export function ConfirmDeleteDialog({
             onClick={onConfirm}
             className="flex-1 bg-red-600 hover:bg-red-700 text-white"
           >
-            {t('common.deleteSection')}
+            {componentType === 'collaborator'
+              ? t('common.remove')
+              : t('common.deleteSection')}
           </Button>
         </div>
       </div>
