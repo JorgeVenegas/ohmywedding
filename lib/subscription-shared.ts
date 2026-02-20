@@ -20,6 +20,7 @@ export type FeatureKey =
   | 'ticket_support_enabled'
   | 'dedicated_support_enabled'
   | 'registry_commission'
+  | 'seating_enabled'
 
 export interface UserSubscription {
   id: string
@@ -41,6 +42,7 @@ export interface WeddingFeatures {
   gallery_enabled: boolean
   registry_enabled: boolean
   schedule_enabled: boolean
+  seating_enabled: boolean
   plan?: PlanType
 }
 
@@ -165,6 +167,13 @@ export const PLAN_FEATURES: PlanFeature[] = [
     included_premium: false,
     included_deluxe: true,
   },
+  {
+    name: 'Seating Chart',
+    description: 'Interactive floor plan designer with drag-and-drop table arrangement',
+    included_free: false,
+    included_premium: false,
+    included_deluxe: true,
+  },
 ]
 
 // Pricing information
@@ -260,6 +269,7 @@ export const PLAN_CARDS = {
       'Lower registry commission',
       'Dedicated personal support agent',
       'We design & build your entire page',
+      'Interactive seating chart designer',
     ],
     cta: 'Go Deluxe',
     href: '/upgrade?plan=deluxe&source=pricing_deluxe',
@@ -299,6 +309,7 @@ export const COMPARISON_FEATURES = [
     { name: 'Activity reports', free: false, premium: 'Weekly', deluxe: 'Daily' },
     { name: 'Bespoke section components', free: false, premium: false, deluxe: true },
     { name: 'Completely personalized page design', free: false, premium: false, deluxe: true },
+    { name: 'Interactive seating chart', free: false, premium: false, deluxe: true },
   ]},
   { category: 'Experience & Support', features: [
     { name: 'Email support', free: true, premium: true, deluxe: true },
@@ -317,6 +328,7 @@ export function getDefaultFeatures(planType: PlanType): WeddingFeatures {
       gallery_enabled: true,
       registry_enabled: true,
       schedule_enabled: true,
+      seating_enabled: true,
       plan: 'deluxe',
     }
   }
@@ -328,6 +340,7 @@ export function getDefaultFeatures(planType: PlanType): WeddingFeatures {
       gallery_enabled: true,
       registry_enabled: true,
       schedule_enabled: true,
+      seating_enabled: false,
       plan: 'premium',
     }
   }
@@ -338,6 +351,7 @@ export function getDefaultFeatures(planType: PlanType): WeddingFeatures {
     gallery_enabled: true,
     registry_enabled: true,
     schedule_enabled: true,
+    seating_enabled: false,
     plan: 'free',
   }
 }

@@ -1,0 +1,938 @@
+"use client"
+
+import { useRef, useCallback, useEffect, useState } from "react"
+import { Stage, Layer, Rect, Circle, Text, Group, Line, Transformer } from "react-konva"
+import type Konva from "konva"
+import type { ReactElement } from "react"
+import type { TableWithAssignments, VenueElement } from "../types"
+import { VENUE_ELEMENT_LABELS } from "../types"
+import { Copy, Trash2 } from "lucide-react"
+
+interface SeatingCanvasProps {
+  tables: TableWithAssignments[]
+  venueElements: VenueElement[]
+  selectedTableIds: string[]
+  onSelectTables: (ids: string[]) => void
+  onTableDragEnd: (tableId: string, x: number, y: number) => void
+  onTableResize: (tableId: string, width: number, height: number, x: number, y: number) => void
+  onElementDragEnd: (elementId: string, x: number, y: number) => void
+  onElementResize: (elementId: string, width: number, height: number, x: number, y: number, rotation: number) => void
+  onViewTableGuests: (tableId: string) => void
+  zoom: number
+  onZoomChange: (zoom: number) => void
+  onSelectElement?: (id: string | null) => void
+  onTableDelete?: (id: string) => void
+  onTableDuplicate?: (id: string) => void
+}
+
+const GRID_SIZE = 20
+const CANVAS_WIDTH = 3000
+const CANVAS_HEIGHT = 2000
+
+function getTableColor(table: TableWithAssignments): string {
+  if (table.shape === 'sweetheart') return "#fef3c7" // amber-100 (gold)
+  if (table.isOverfilled) return "#fca5a5" // red-300
+  if (table.occupancy >= table.capacity) return "#86efac" // green-300
+  if (table.occupancy > 0) return "#fde68a" // yellow-300
+  return "#e5e7eb" // gray-200
+}
+
+function getTableStroke(table: TableWithAssignments, selected: boolean): string {
+  if (selected) return "#3b82f6" // blue-500
+  if (table.shape === 'sweetheart') return "#d97706" // amber-600 (gold)
+  if (table.isOverfilled) return "#ef4444" // red-500
+  return "#9ca3af" // gray-400
+}
+
+export function SeatingCanvas({
+  tables,
+  venueElements,
+  selectedTableIds,
+  onSelectTables,
+  onTableDragEnd,
+  onTableResize,
+  onElementDragEnd,
+  onElementResize,
+  onViewTableGuests,
+  zoom,
+  onZoomChange,
+  onSelectElement,
+  onTableDelete,
+  onTableDuplicate,
+}: SeatingCanvasProps) {
+  const stageRef = useRef<Konva.Stage>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const transformerRef = useRef<Konva.Transformer>(null)
+  const tableTransformerRef = useRef<Konva.Transformer>(null)
+  const isPanningRef = useRef(false)
+  const lastPanPos = useRef({ x: 0, y: 0 })
+  const isSpaceHeldRef = useRef(false)
+  const isShiftHeldRef = useRef(false)
+  const selectionStartRef = useRef<{ x: number; y: number } | null>(null)
+  const didDragSelectRef = useRef(false)
+  // Group drag: track leader + peer start-centers so all move together
+  const groupDragRef = useRef<{
+    leaderId: string
+    leaderStartCx: number
+    leaderStartCy: number
+    peers: Record<string, { startCx: number; startCy: number }>
+  } | null>(null)
+  const [stageSize, setStageSize] = useState({ width: 800, height: 600 })
+  const [stagePos, setStagePos] = useState({ x: 0, y: 0 })
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(null)
+  const [isPanning, setIsPanning] = useState(false)
+  const [isSpaceHeld, setIsSpaceHeld] = useState(false)
+  const [selectionBox, setSelectionBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
+  const [hoveredTable, setHoveredTable] = useState<{ id: string } | null>(null)
+  const tooltipRef = useRef<HTMLDivElement>(null)
+  const hideMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleTableHover = useCallback((id: string | null) => {
+    if (id) {
+      if (hideMenuTimerRef.current) clearTimeout(hideMenuTimerRef.current)
+      setHoveredTable({ id })
+    } else {
+      hideMenuTimerRef.current = setTimeout(() => setHoveredTable(null), 180)
+    }
+  }, [])
+
+  // Resize handler
+  useEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        setStageSize({
+          width: containerRef.current.offsetWidth,
+          height: containerRef.current.offsetHeight,
+        })
+      }
+    }
+    updateSize()
+    const observer = new ResizeObserver(updateSize)
+    if (containerRef.current) observer.observe(containerRef.current)
+    return () => observer.disconnect()
+  }, [])
+
+  // Keyboard modifiers: Space = pan, Shift tracked for multi-select, Escape = deselect
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') { isSpaceHeldRef.current = true; setIsSpaceHeld(true) }
+      isShiftHeldRef.current = e.shiftKey
+      if (e.code === 'Escape') onSelectTables([])
+    }
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') { isSpaceHeldRef.current = false; setIsSpaceHeld(false) }
+      isShiftHeldRef.current = e.shiftKey
+    }
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('keyup', onKeyUp)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('keyup', onKeyUp)
+    }
+  }, [onSelectTables])
+
+  // Mouse wheel zoom
+  const handleWheel = useCallback(
+    (e: Konva.KonvaEventObject<WheelEvent>) => {
+      e.evt.preventDefault()
+      const stage = stageRef.current
+      if (!stage) return
+
+      const scaleBy = 1.08
+      const oldScale = zoom
+      const pointer = stage.getPointerPosition()
+      if (!pointer) return
+
+      const mousePointTo = {
+        x: (pointer.x - stagePos.x) / oldScale,
+        y: (pointer.y - stagePos.y) / oldScale,
+      }
+
+      const newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy
+      const clampedScale = Math.max(0.25, Math.min(3, newScale))
+
+      onZoomChange(clampedScale)
+      setStagePos({
+        x: pointer.x - mousePointTo.x * clampedScale,
+        y: pointer.y - mousePointTo.y * clampedScale,
+      })
+    },
+    [zoom, stagePos, onZoomChange]
+  )
+
+  // Attach Transformer to selected venue element
+  useEffect(() => {
+    if (!transformerRef.current || !stageRef.current) return
+    if (selectedElementId) {
+      const node = stageRef.current.findOne(`#vel-${selectedElementId}`)
+      if (node) {
+        transformerRef.current.nodes([node as Konva.Node])
+        transformerRef.current.getLayer()?.batchDraw()
+      }
+    } else {
+      transformerRef.current.nodes([])
+      transformerRef.current.getLayer()?.batchDraw()
+    }
+  }, [selectedElementId])
+
+  // Attach Transformer to selected table (only for single selection; multi uses alignment panel)
+  useEffect(() => {
+    if (!tableTransformerRef.current || !stageRef.current) return
+    if (selectedTableIds.length === 1) {
+      const node = stageRef.current.findOne(`#tbl-${selectedTableIds[0]}`)
+      if (node) {
+        tableTransformerRef.current.nodes([node as Konva.Node])
+        tableTransformerRef.current.getLayer()?.batchDraw()
+        return
+      }
+    }
+    tableTransformerRef.current.nodes([])
+    tableTransformerRef.current.getLayer()?.batchDraw()
+  }, [selectedTableIds])
+
+  // Convert screen pointer position to world/canvas coordinate
+  const screenToWorld = (pos: { x: number; y: number }) => ({
+    x: (pos.x - (stageRef.current?.x() ?? stagePos.x)) / zoom,
+    y: (pos.y - (stageRef.current?.y() ?? stagePos.y)) / zoom,
+  })
+
+  // ── Group drag handlers ──
+  // Called when a table drag starts: records start-centers of all selected peers
+  const handleTableDragStart = useCallback((tableId: string, cx: number, cy: number) => {
+    if (!selectedTableIds.includes(tableId) || selectedTableIds.length < 2) return
+    const peers: Record<string, { startCx: number; startCy: number }> = {}
+    for (const id of selectedTableIds) {
+      if (id === tableId) continue
+      const node = stageRef.current?.findOne(`#tbl-${id}`)
+      if (node) peers[id] = { startCx: node.x(), startCy: node.y() }
+    }
+    groupDragRef.current = { leaderId: tableId, leaderStartCx: cx, leaderStartCy: cy, peers }
+  }, [selectedTableIds])
+
+  // Called on every drag-move: moves peer nodes directly in Konva (no React state)
+  const handleTableDragMove = useCallback((tableId: string, cx: number, cy: number) => {
+    const g = groupDragRef.current
+    if (!g || g.leaderId !== tableId) return
+    const dx = cx - g.leaderStartCx
+    const dy = cy - g.leaderStartCy
+    for (const [id, start] of Object.entries(g.peers)) {
+      const node = stageRef.current?.findOne(`#tbl-${id}`)
+      if (node) node.position({ x: start.startCx + dx, y: start.startCy + dy })
+    }
+  }, [])
+
+  // Called when the leading table finishes dragging
+  const handleTableGroupDragEnd = useCallback((tableId: string, snappedX: number, snappedY: number) => {
+    onTableDragEnd(tableId, snappedX, snappedY)
+    const g = groupDragRef.current
+    if (!g || g.leaderId !== tableId) { groupDragRef.current = null; return }
+    // Determine snapped center of the leader
+    const leaderTable = tables.find(t => t.id === tableId)
+    if (!leaderTable) { groupDragRef.current = null; return }
+    const leaderHw = leaderTable.width / 2
+    const leaderHh = leaderTable.shape === 'round' ? leaderHw : leaderTable.height / 2
+    const snappedLeaderCx = snappedX + leaderHw
+    const snappedLeaderCy = snappedY + leaderHh
+    const dcx = snappedLeaderCx - g.leaderStartCx
+    const dcy = snappedLeaderCy - g.leaderStartCy
+    for (const [id, start] of Object.entries(g.peers)) {
+      const peer = tables.find(t => t.id === id)
+      if (!peer) continue
+      const pHw = peer.width / 2
+      const pHh = peer.shape === 'round' ? pHw : peer.height / 2
+      const peerSnapX = Math.round((start.startCx + dcx - pHw) / GRID_SIZE) * GRID_SIZE
+      const peerSnapY = Math.round((start.startCy + dcy - pHh) / GRID_SIZE) * GRID_SIZE
+      const node = stageRef.current?.findOne(`#tbl-${id}`)
+      if (node) node.position({ x: peerSnapX + pHw, y: peerSnapY + pHh })
+      onTableDragEnd(id, peerSnapX, peerSnapY)
+    }
+    groupDragRef.current = null
+  }, [tables, onTableDragEnd])
+
+  // Space+drag = pan; drag on background = lasso selection box
+  const handleStageMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    const target = e.target
+    const isBackground = target.nodeType === 'Stage' || target.name() === "grid"
+    if (!isBackground) return
+    const pos = stageRef.current?.getPointerPosition()
+    if (!pos) return
+    if (isSpaceHeldRef.current) {
+      isPanningRef.current = true
+      setIsPanning(true)
+      lastPanPos.current = pos
+    } else {
+      const world = screenToWorld(pos)
+      selectionStartRef.current = world
+      didDragSelectRef.current = false
+      setSelectionBox({ x: world.x, y: world.y, w: 0, h: 0 })
+    }
+  }
+
+  const handleStageMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    const pos = stageRef.current?.getPointerPosition()
+    if (!pos) return
+    if (isPanningRef.current) {
+      e.evt.preventDefault()
+      const dx = pos.x - lastPanPos.current.x
+      const dy = pos.y - lastPanPos.current.y
+      lastPanPos.current = pos
+      stageRef.current?.position({
+        x: (stageRef.current.x() || 0) + dx,
+        y: (stageRef.current.y() || 0) + dy,
+      })
+      return
+    }
+    if (selectionStartRef.current) {
+      const world = screenToWorld(pos)
+      const newBox = {
+        x: selectionStartRef.current.x,
+        y: selectionStartRef.current.y,
+        w: world.x - selectionStartRef.current.x,
+        h: world.y - selectionStartRef.current.y,
+      }
+      setSelectionBox(newBox)
+      if (Math.abs(newBox.w) > 5 || Math.abs(newBox.h) > 5) {
+        didDragSelectRef.current = true
+      }
+    }
+  }
+
+  const handleStageMouseUp = () => {
+    if (isPanningRef.current) {
+      const pos = stageRef.current?.position()
+      if (pos) setStagePos(pos)
+      isPanningRef.current = false
+      setIsPanning(false)
+      return
+    }
+    if (selectionStartRef.current && selectionBox && didDragSelectRef.current) {
+      const normX = Math.min(selectionBox.x, selectionBox.x + selectionBox.w)
+      const normY = Math.min(selectionBox.y, selectionBox.y + selectionBox.h)
+      const normW = Math.abs(selectionBox.w)
+      const normH = Math.abs(selectionBox.h)
+      const selected = tables.filter((t) =>
+        t.position_x < normX + normW && t.position_x + t.width > normX &&
+        t.position_y < normY + normH && t.position_y + t.height > normY
+      )
+      if (isShiftHeldRef.current) {
+        const ids = new Set(selectedTableIds)
+        selected.forEach(t => ids.add(t.id))
+        onSelectTables([...ids])
+      } else {
+        onSelectTables(selected.map(t => t.id))
+      }
+    }
+    selectionStartRef.current = null
+    setSelectionBox(null)
+  }
+
+  // Click on empty space — deselect all (guard: swallow click that ended a lasso drag)
+  const handleStageClick = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+    if (e.target === e.currentTarget || e.target.name() === "grid") {
+      if (didDragSelectRef.current) { didDragSelectRef.current = false; return }
+      onSelectTables([])
+      setSelectedElementId(null)
+      onSelectElement?.(null)
+    }
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className={`w-full h-full bg-gray-50 relative ${
+        isPanning ? 'cursor-grabbing' :
+        isSpaceHeld ? 'cursor-grab' :
+        selectionBox ? 'cursor-crosshair' :
+        'cursor-default'
+      }`}
+      onMouseMove={(e) => {
+        const rect = containerRef.current?.getBoundingClientRect()
+        if (rect && tooltipRef.current) {
+          tooltipRef.current.style.left = `${e.clientX - rect.left + 16}px`
+          tooltipRef.current.style.top = `${e.clientY - rect.top - 12}px`
+        }
+      }}
+    >
+      {/* Hover Tooltip — position controlled via DOM ref to avoid re-renders on every mouse move */}
+      <div
+        ref={tooltipRef}
+        className={`pointer-events-none absolute z-30 transition-opacity duration-100 ${hoveredTable ? 'opacity-100' : 'opacity-0'}`}
+        style={{ transform: 'translateY(-100%)' }}
+      >
+        {(() => {
+          if (!hoveredTable) return null
+          const t = tables.find(t => t.id === hoveredTable.id)
+          if (!t) return null
+          const pct = t.capacity > 0 ? Math.round((t.occupancy / t.capacity) * 100) : 0
+          return (
+            <div className="bg-white/95 border border-gray-200/80 rounded-xl px-3 py-2.5 shadow-xl backdrop-blur-sm min-w-44 max-w-56">
+              <p className="font-semibold text-sm text-gray-900 truncate mb-1">{t.name}</p>
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      t.isOverfilled ? 'bg-red-400' : pct === 100 ? 'bg-emerald-400' : 'bg-amber-400'
+                    }`}
+                    style={{ width: `${Math.min(pct, 100)}%` }}
+                  />
+                </div>
+                <span className="text-xs font-bold tabular-nums text-gray-700">{t.occupancy}/{t.capacity}</span>
+              </div>
+              <div className="text-xs text-gray-500 space-y-0.5">
+                <p className="capitalize">{t.shape} table · {pct}% full</p>
+                {t.isOverfilled && <p className="text-red-500 font-medium">⚠ Overfilled by {t.occupancy - t.capacity}</p>}
+                {t.shape === 'rectangular' && t.side_a_count != null && (
+                  <p>{t.side_a_count * 2} side seats{t.head_a_count ? ` · ${t.head_a_count * 2} head seats` : ''}</p>
+                )}
+                {t.rotation ? <p>Rotated {t.rotation}°</p> : null}
+              </div>
+            </div>
+          )
+        })()}
+      </div>
+
+      {/* Hover Action Menu — positioned over the hovered table */}
+      {hoveredTable && (() => {
+        const ht = tables.find(t => t.id === hoveredTable.id)
+        if (!ht) return null
+        const screenX = stagePos.x + (ht.position_x + ht.width / 2) * zoom
+        const screenY = stagePos.y + ht.position_y * zoom
+        return (
+          <div
+            className="absolute z-40 flex items-center gap-0.5 bg-white rounded-lg shadow-lg border border-gray-200/70 px-1 py-1"
+            style={{ left: screenX, top: screenY - 8, transform: 'translateX(-50%) translateY(-100%)' }}
+            onMouseEnter={() => { if (hideMenuTimerRef.current) clearTimeout(hideMenuTimerRef.current) }}
+            onMouseLeave={() => setHoveredTable(null)}
+          >
+            <button
+              className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors"
+              onClick={(e) => { e.stopPropagation(); onTableDuplicate?.(hoveredTable.id); setHoveredTable(null) }}
+              title="Duplicate"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              <span className="text-[11px] font-medium">Duplicate</span>
+            </button>
+            <div className="w-px h-4 bg-gray-200" />
+            <button
+              className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+              onClick={(e) => { e.stopPropagation(); onTableDelete?.(hoveredTable.id); setHoveredTable(null) }}
+              title="Delete"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span className="text-[11px] font-medium">Delete</span>
+            </button>
+          </div>
+        )
+      })()}
+      <Stage
+        ref={stageRef}
+        width={stageSize.width}
+        height={stageSize.height}
+        scaleX={zoom}
+        scaleY={zoom}
+        x={stagePos.x}
+        y={stagePos.y}
+        onWheel={handleWheel}
+        onClick={handleStageClick}
+        onTap={handleStageClick}
+        onMouseDown={handleStageMouseDown}
+        onMouseMove={handleStageMouseMove}
+        onMouseUp={handleStageMouseUp}
+        onMouseLeave={handleStageMouseUp}
+      >
+        {/* Grid Layer */}
+        <Layer>
+          <GridBackground width={CANVAS_WIDTH} height={CANVAS_HEIGHT} gridSize={GRID_SIZE} />
+        </Layer>
+
+        {/* Venue Elements Layer */}
+        <Layer>
+          {venueElements.map((element) => (
+            <VenueElementShape
+              key={element.id}
+              element={element}
+              selected={selectedElementId === element.id}
+              onSelect={() => { setSelectedElementId(element.id); onSelectElement?.(element.id); onSelectTables([]) }}
+              onDragEnd={(x, y) => onElementDragEnd(element.id, x, y)}
+              onResize={(w, h, x, y, r) => onElementResize(element.id, w, h, x, y, r)}
+            />
+          ))}
+          <Transformer
+            ref={transformerRef}
+            rotateEnabled={true}
+            borderStroke="#6366f1"
+            borderStrokeWidth={1.5}
+            anchorStroke="#6366f1"
+            anchorFill="#fff"
+            anchorSize={8}
+            anchorCornerRadius={2}
+            keepRatio={false}
+            boundBoxFunc={(oldBox, newBox) => {
+              if (newBox.width < 40 || newBox.height < 40) return oldBox
+              return newBox
+            }}
+          />
+        </Layer>
+
+        {/* Tables Layer */}
+        <Layer>
+          {tables.map((table) => (
+            <TableShape
+              key={table.id}
+              table={table}
+              selected={selectedTableIds.includes(table.id)}
+              onSelect={(shiftKey) => {
+                setSelectedElementId(null)
+                onSelectElement?.(null)
+                if (shiftKey) {
+                  const ids = selectedTableIds.includes(table.id)
+                    ? selectedTableIds.filter(id => id !== table.id)
+                    : [...selectedTableIds, table.id]
+                  onSelectTables(ids)
+                } else {
+                  onSelectTables([table.id])
+                }
+              }}
+              onDragStart={(cx, cy) => handleTableDragStart(table.id, cx, cy)}
+              onDragMove={(cx, cy) => handleTableDragMove(table.id, cx, cy)}
+              onDragEnd={(x, y) => handleTableGroupDragEnd(table.id, x, y)}
+              onResize={(w, h, x, y) => onTableResize(table.id, w, h, x, y)}
+              onDblClick={() => onViewTableGuests(table.id)}
+              onHover={handleTableHover}
+            />
+          ))}
+          <Transformer
+            ref={tableTransformerRef}
+            rotateEnabled={false}
+            borderStroke="#3b82f6"
+            borderStrokeWidth={1.5}
+            anchorStroke="#3b82f6"
+            anchorFill="#fff"
+            anchorSize={8}
+            anchorCornerRadius={2}
+            keepRatio={selectedTableIds.length === 1 && tables.find(t => t.id === selectedTableIds[0])?.shape === 'round'}
+            boundBoxFunc={(oldBox, newBox) => {
+              if (newBox.width < GRID_SIZE || newBox.height < GRID_SIZE) return oldBox
+              return newBox
+            }}
+          />
+        </Layer>
+
+        {/* Lasso Selection Box Layer */}
+        <Layer listening={false}>
+          {selectionBox && (() => {
+            const nx = Math.min(selectionBox.x, selectionBox.x + selectionBox.w)
+            const ny = Math.min(selectionBox.y, selectionBox.y + selectionBox.h)
+            return (
+              <Rect
+                x={nx} y={ny}
+                width={Math.abs(selectionBox.w)}
+                height={Math.abs(selectionBox.h)}
+                fill="rgba(59,130,246,0.07)"
+                stroke="#3b82f6"
+                strokeWidth={1 / zoom}
+                dash={[4 / zoom, 3 / zoom]}
+              />
+            )
+          })()}
+        </Layer>
+      </Stage>
+    </div>
+  )
+}
+
+// Grid Background
+function GridBackground({
+  width,
+  height,
+  gridSize,
+}: {
+  width: number
+  height: number
+  gridSize: number
+}) {
+  const lines: ReactElement[] = []
+
+  // Vertical lines
+  for (let i = 0; i <= width; i += gridSize) {
+    lines.push(
+      <Line
+        key={`v-${i}`}
+        points={[i, 0, i, height]}
+        stroke="#e5e7eb"
+        strokeWidth={0.5}
+        name="grid"
+      />
+    )
+  }
+
+  // Horizontal lines
+  for (let j = 0; j <= height; j += gridSize) {
+    lines.push(
+      <Line
+        key={`h-${j}`}
+        points={[0, j, width, j]}
+        stroke="#e5e7eb"
+        strokeWidth={0.5}
+        name="grid"
+      />
+    )
+  }
+
+  return (
+    <>
+      {/* Background */}
+      <Rect x={0} y={0} width={width} height={height} fill="white" name="grid" />
+      {lines}
+    </>
+  )
+}
+
+// Table Shape Component
+function TableShape({
+  table,
+  selected,
+  onSelect,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
+  onResize,
+  onDblClick,
+  onHover,
+}: {
+  table: TableWithAssignments
+  selected: boolean
+  onSelect: (shiftKey: boolean) => void
+  onDragStart: (cx: number, cy: number) => void
+  onDragMove: (cx: number, cy: number) => void
+  onDragEnd: (x: number, y: number) => void
+  onResize: (width: number, height: number, x: number, y: number) => void
+  onDblClick: () => void
+  onHover: (id: string | null) => void
+}) {
+  const fill = getTableColor(table)
+  const stroke = getTableStroke(table, selected)
+  const strokeWidth = selected ? 3 : 1.5
+
+  // Shared transform-end handler: snaps new size to grid, keeps center in place
+  const makeTransformEnd = (isRound: boolean) => (e: Konva.KonvaEventObject<Event>) => {
+    const node = e.target
+    const scaleX = node.scaleX()
+    const scaleY = node.scaleY()
+    node.scaleX(1)
+    node.scaleY(1)
+    let newW = Math.max(GRID_SIZE, Math.round((table.width * scaleX) / GRID_SIZE) * GRID_SIZE)
+    let newH = Math.max(GRID_SIZE, Math.round((table.height * scaleY) / GRID_SIZE) * GRID_SIZE)
+    if (isRound) newW = newH = Math.max(newW, newH)
+    const centerX = node.x()
+    const centerY = node.y()
+    node.offsetX(newW / 2)
+    node.offsetY(newH / 2)
+    onResize(newW, newH, centerX - newW / 2, centerY - newH / 2)
+  }
+
+  if (table.shape === "round") {
+    const radius = table.width / 2
+    // Position group so pivot is at center; offsetX/Y rotate around center
+    const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
+      const topLeftX = Math.round((e.target.x() - radius) / GRID_SIZE) * GRID_SIZE
+      const topLeftY = Math.round((e.target.y() - radius) / GRID_SIZE) * GRID_SIZE
+      e.target.position({ x: topLeftX + radius, y: topLeftY + radius })
+      onDragEnd(topLeftX, topLeftY)
+    }
+    return (
+      <Group
+        id={`tbl-${table.id}`}
+        x={table.position_x + radius}
+        y={table.position_y + radius}
+        offsetX={radius}
+        offsetY={radius}
+        draggable
+        onClick={(e) => onSelect(e.evt.shiftKey)}
+        onTap={() => onSelect(false)}
+        onDragStart={(e) => onDragStart(e.target.x(), e.target.y())}
+        onDragMove={(e) => onDragMove(e.target.x(), e.target.y())}
+        onDragEnd={handleDragEnd}
+        onTransformEnd={makeTransformEnd(true)}
+        onDblClick={onDblClick}
+        onDblTap={onDblClick}
+        onMouseEnter={() => onHover(table.id)}
+        onMouseLeave={() => onHover(null)}
+      >
+        <Circle
+          x={radius}
+          y={radius}
+          radius={radius}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={strokeWidth}
+          shadowColor="rgba(0,0,0,0.1)"
+          shadowBlur={selected ? 10 : 4}
+          shadowOffset={{ x: 0, y: 2 }}
+        />
+        {Array.from({ length: table.capacity }).map((_, i) => {
+          const angle = (2 * Math.PI * i) / table.capacity - Math.PI / 2
+          const seatX = radius + (radius + 12) * Math.cos(angle)
+          const seatY = radius + (radius + 12) * Math.sin(angle)
+          const occupied = i < table.occupancy
+          return (
+            <Circle key={i} x={seatX} y={seatY} radius={6}
+              fill={occupied ? "#6366f1" : "#d1d5db"}
+              stroke={occupied ? "#4f46e5" : "#9ca3af"} strokeWidth={1} />
+          )
+        })}
+        <Text
+          x={5} y={radius - 14}
+          width={radius * 2 - 10}
+          text={`${table.name}\n${table.occupancy}/${table.capacity}`}
+          fontSize={12} fontFamily="system-ui, sans-serif" fill="#374151" align="center" lineHeight={1.3}
+        />
+      </Group>
+    )
+  }
+
+  // Rectangular table — rotate around center
+  const hw = table.width / 2
+  const hh = table.height / 2
+  const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
+    const topLeftX = Math.round((e.target.x() - hw) / GRID_SIZE) * GRID_SIZE
+    const topLeftY = Math.round((e.target.y() - hh) / GRID_SIZE) * GRID_SIZE
+    e.target.position({ x: topLeftX + hw, y: topLeftY + hh })
+    onDragEnd(topLeftX, topLeftY)
+  }
+
+  // Sweetheart table — small elegant table for 2
+  if (table.shape === "sweetheart") {
+    const sideA = table.side_a_count ?? 2
+    return (
+      <Group
+        id={`tbl-${table.id}`}
+        x={table.position_x + hw}
+        y={table.position_y + hh}
+        offsetX={hw}
+        offsetY={hh}
+        rotation={table.rotation}
+        draggable
+        onClick={(e) => onSelect(e.evt.shiftKey)}
+        onTap={() => onSelect(false)}
+        onDragStart={(e) => onDragStart(e.target.x(), e.target.y())}
+        onDragMove={(e) => onDragMove(e.target.x(), e.target.y())}
+        onDragEnd={handleDragEnd}
+        onTransformEnd={makeTransformEnd(false)}
+        onDblClick={onDblClick}
+        onDblTap={onDblClick}
+        onMouseEnter={() => onHover(table.id)}
+        onMouseLeave={() => onHover(null)}
+      >
+        {/* Table body */}
+        <Rect
+          width={table.width}
+          height={table.height}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={strokeWidth}
+          cornerRadius={10}
+          shadowColor="rgba(217,119,6,0.25)"
+          shadowBlur={selected ? 12 : 6}
+          shadowOffset={{ x: 0, y: 3 }}
+        />
+        {/* Crown / heart */}
+        <Text
+          x={0} y={hh - 13}
+          width={table.width}
+          text="♛"
+          fontSize={14} fontFamily="system-ui, sans-serif" fill="#d97706" align="center"
+        />
+        {/* Name label */}
+        <Text
+          x={4} y={hh + 2}
+          width={table.width - 8}
+          text={`${table.name} · ${table.occupancy}/${table.capacity}`}
+          fontSize={9} fontFamily="system-ui, sans-serif" fill="#78350f" align="center"
+        />
+        {/* Front seats (top side) */}
+        {Array.from({ length: sideA }).map((_, i) => (
+          <Circle key={`sw-${i}`}
+            x={((i + 1) / (sideA + 1)) * table.width}
+            y={-12}
+            radius={6}
+            fill={i < table.occupancy ? "#f59e0b" : "#fde68a"}
+            stroke={i < table.occupancy ? "#d97706" : "#fbbf24"}
+            strokeWidth={1}
+          />
+        ))}
+      </Group>
+    )
+  }
+
+  return (
+    <Group
+      id={`tbl-${table.id}`}
+      x={table.position_x + hw}
+      y={table.position_y + hh}
+      offsetX={hw}
+      offsetY={hh}
+      rotation={table.rotation}
+      draggable
+      onClick={(e) => onSelect(e.evt.shiftKey)}
+      onTap={() => onSelect(false)}
+      onDragStart={(e) => onDragStart(e.target.x(), e.target.y())}
+      onDragMove={(e) => onDragMove(e.target.x(), e.target.y())}
+      onDragEnd={handleDragEnd}
+      onTransformEnd={makeTransformEnd(false)}
+      onDblClick={onDblClick}
+      onDblTap={onDblClick}
+      onMouseEnter={() => onHover(table.id)}
+      onMouseLeave={() => onHover(null)}
+    >
+      <Rect
+        width={table.width}
+        height={table.height}
+        fill={fill}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+        cornerRadius={6}
+        shadowColor="rgba(0,0,0,0.1)"
+        shadowBlur={selected ? 10 : 4}
+        shadowOffset={{ x: 0, y: 2 }}
+      />
+      {renderRectSeats(table)}
+      <Text
+        x={5} y={hh - 14}
+        width={table.width - 10}
+        text={`${table.name}\n${table.occupancy}/${table.capacity}`}
+        fontSize={12} fontFamily="system-ui, sans-serif" fill="#374151" align="center" lineHeight={1.3}
+      />
+    </Group>
+  )
+}
+
+function renderRectSeats(table: TableWithAssignments) {
+  const seats: ReactElement[] = []
+  const sideA = table.side_a_count ?? Math.ceil(table.capacity / 2)
+  const sideB = table.side_b_count ?? Math.floor(table.capacity / 2)
+  const headA = table.head_a_count ?? 0
+  const headB = table.head_b_count ?? 0
+  let seatIdx = 0
+
+  const occupied = (i: number) => i < table.occupancy
+  const seatCircle = (key: string, x: number, y: number, occ: boolean) => (
+    <Circle key={key} x={x} y={y} radius={6}
+      fill={occ ? "#6366f1" : "#d1d5db"}
+      stroke={occ ? "#4f46e5" : "#9ca3af"} strokeWidth={1} />
+  )
+
+  // Side A — top
+  for (let i = 0; i < sideA; i++) {
+    seats.push(seatCircle(`a-${i}`, ((i + 1) / (sideA + 1)) * table.width, -12, occupied(seatIdx++)))
+  }
+  // Side B — bottom
+  for (let i = 0; i < sideB; i++) {
+    seats.push(seatCircle(`b-${i}`, ((i + 1) / (sideB + 1)) * table.width, table.height + 12, occupied(seatIdx++)))
+  }
+  // Head A — left end
+  for (let i = 0; i < headA; i++) {
+    seats.push(seatCircle(`ha-${i}`, -12, ((i + 1) / (headA + 1)) * table.height, occupied(seatIdx++)))
+  }
+  // Head B — right end
+  for (let i = 0; i < headB; i++) {
+    seats.push(seatCircle(`hb-${i}`, table.width + 12, ((i + 1) / (headB + 1)) * table.height, occupied(seatIdx++)))
+  }
+
+  return seats
+}
+
+// Venue Element Shape Component
+function VenueElementShape({
+  element,
+  selected,
+  onSelect,
+  onDragEnd,
+  onResize,
+}: {
+  element: VenueElement
+  selected: boolean
+  onSelect: () => void
+  onDragEnd: (x: number, y: number) => void
+  onResize: (width: number, height: number, x: number, y: number, rotation: number) => void
+}) {
+  const label = VENUE_ELEMENT_LABELS[element.element_type]
+  const hw = element.width / 2
+  const hh = element.height / 2
+
+  // Drag snaps to grid; position stored as top-left corner
+  const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
+    const x = Math.round((e.target.x() - hw) / GRID_SIZE) * GRID_SIZE
+    const y = Math.round((e.target.y() - hh) / GRID_SIZE) * GRID_SIZE
+    e.target.position({ x: x + hw, y: y + hh })
+    onDragEnd(x, y)
+  }
+
+  // Resize: keep center fixed, snap new size to grid, update offset so pivot stays centered
+  const handleTransformEnd = (e: Konva.KonvaEventObject<Event>) => {
+    const node = e.target
+    const scaleX = node.scaleX()
+    const scaleY = node.scaleY()
+    node.scaleX(1)
+    node.scaleY(1)
+    const newWidth = Math.max(40, Math.round((element.width * scaleX) / GRID_SIZE) * GRID_SIZE)
+    const newHeight = Math.max(40, Math.round((element.height * scaleY) / GRID_SIZE) * GRID_SIZE)
+    node.offsetX(newWidth / 2)
+    node.offsetY(newHeight / 2)
+    onResize(newWidth, newHeight, node.x() - newWidth / 2, node.y() - newHeight / 2, node.rotation())
+  }
+
+  const fillColors: Record<string, string> = {
+    dance_floor: "#ddd6fe",    // violet-200
+    stage: "#fbcfe8",          // pink-200
+    entrance: "#bfdbfe",       // blue-200
+    bar: "#fed7aa",            // orange-200
+    dj_booth: "#d9f99d",       // lime-200
+  }
+
+  const strokeColors: Record<string, string> = {
+    dance_floor: "#8b5cf6",
+    stage: "#ec4899",
+    entrance: "#3b82f6",
+    bar: "#f97316",
+    dj_booth: "#84cc16",
+  }
+
+  return (
+    <Group
+      id={`vel-${element.id}`}
+      x={element.position_x + hw}
+      y={element.position_y + hh}
+      offsetX={hw}
+      offsetY={hh}
+      rotation={element.rotation}
+      draggable
+      onClick={onSelect}
+      onTap={onSelect}
+      onDragEnd={handleDragEnd}
+      onTransformEnd={handleTransformEnd}
+    >
+      <Rect
+        width={element.width}
+        height={element.height}
+        fill={element.color ?? fillColors[element.element_type] ?? "#e5e7eb"}
+        stroke={selected ? "#6366f1" : (element.color ?? strokeColors[element.element_type] ?? "#9ca3af")}
+        strokeWidth={selected ? 2.5 : 2}
+        cornerRadius={8}
+        dash={[6, 4]}
+        opacity={0.8}
+      />
+      <Text
+        x={0}
+        y={element.height / 2 - 16}
+        width={element.width}
+        text={`${label.icon}\n${element.label || label.en}`}
+        fontSize={13}
+        fontFamily="system-ui, sans-serif"
+        fill="#374151"
+        align="center"
+        lineHeight={1.4}
+      />
+    </Group>
+  )
+}

@@ -3,7 +3,7 @@ import { use } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { LogOut, ArrowRight, Mail, Gift, Settings } from "lucide-react"
+import { LogOut, ArrowRight, Mail, Gift, Settings, LayoutGrid } from "lucide-react"
 import { Header } from "@/components/header"
 import { ActivityFeed } from "@/components/ui/activity-feed"
 import { InvitationStatsCard } from "@/components/ui/invitation-stats-card"
@@ -34,6 +34,13 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       description: t('admin.dashboard.cards.registry.description'),
       icon: Gift,
       href: getCleanAdminUrl(weddingId, 'registry'),
+      color: "accent",
+    },
+    {
+      title: t('admin.dashboard.cards.seating.title'),
+      description: t('admin.dashboard.cards.seating.description'),
+      icon: LayoutGrid,
+      href: getCleanAdminUrl(weddingId, 'seating'),
       color: "accent",
     },
     {

@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { Crown, Sparkles, Star } from 'lucide-react'
 import { useSubscriptionContext } from '@/components/contexts/subscription-context'
 import { UpgradeModal } from '@/components/ui/upgrade-modal'
+import { usePathname } from 'next/navigation'
 import {
   Tooltip,
   TooltipContent,
@@ -14,6 +15,10 @@ import {
 export function PlanIndicator() {
   const { planType, loading } = useSubscriptionContext()
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const pathname = usePathname()
+
+  // Hide on pages with full-screen canvas editors
+  if (pathname?.includes('/seating')) return null
 
   if (loading) {
     return null

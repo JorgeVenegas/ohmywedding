@@ -1279,6 +1279,7 @@ export interface Translations {
         invitations: { title: string; description: string }
         registry: { title: string; description: string }
         settings: { title: string; description: string }
+        seating: { title: string; description: string }
       }
     }
     layout: {
@@ -1431,6 +1432,94 @@ export interface Translations {
         comingSoon: string
         updated: string
         deleted: string
+      }
+    }
+    seating: {
+      title: string
+      description: string
+      backToDashboard: string
+      toolbar: {
+        addRoundTable: string
+        addRectTable: string
+        addElement: string
+        zoomIn: string
+        zoomOut: string
+        fitToScreen: string
+        autoAssign: string
+        printExport: string
+        save: string
+        saving: string
+        saved: string
+        unsavedChanges: string
+      }
+      stats: {
+        totalGuests: string
+        assigned: string
+        unassigned: string
+        tables: string
+        overfilled: string
+        capacity: string
+      }
+      table: {
+        name: string
+        shape: string
+        round: string
+        rectangular: string
+        capacity: string
+        sideA: string
+        sideB: string
+        rotation: string
+        width: string
+        height: string
+        duplicate: string
+        delete: string
+        deleteConfirm: string
+        deleteWarning: string
+        guests: string
+        noGuests: string
+        overfilled: string
+        overfilledWarning: string
+        moveGuest: string
+        removeGuest: string
+        viewGuests: string
+      }
+      guests: {
+        unassigned: string
+        search: string
+        assignToTable: string
+        assignGroup: string
+        dragToAssign: string
+        allAssigned: string
+        filterConfirmed: string
+        autoAssignTitle: string
+        autoAssignDesc: string
+        keepGroups: string
+        assigned: string
+        guests: string
+        selectTableFirst: string
+      }
+      venueElements: {
+        title: string
+        danceFloor: string
+        stage: string
+        entrance: string
+        bar: string
+        djBooth: string
+        delete: string
+      }
+      print: {
+        title: string
+        guestList: string
+      }
+      notifications: {
+        tableSaved: string
+        tableDeleted: string
+        guestAssigned: string
+        guestMoved: string
+        guestRemoved: string
+        autoAssigned: string
+        layoutSaved: string
+        error: string
       }
     }
   }

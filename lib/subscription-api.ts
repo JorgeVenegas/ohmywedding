@@ -40,8 +40,8 @@ export async function checkSubscription(weddingNameId?: string): Promise<Subscri
     return {
       isAuthenticated: true,
       userId: user.id,
-      planType: 'premium',
-      features: getDefaultFeatures('premium'),
+      planType: 'deluxe',
+      features: getDefaultFeatures('deluxe'),
     }
   }
   

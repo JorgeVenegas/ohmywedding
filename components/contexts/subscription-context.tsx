@@ -99,6 +99,7 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
               gallery_enabled: true,
               registry_enabled: true,
               schedule_enabled: true,
+              seating_enabled: true,
             })
           } else {
             setFeatures(getDefaultFeatures(weddingPlan))
@@ -114,6 +115,7 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
               gallery_enabled: true,
               registry_enabled: true,
               schedule_enabled: true,
+              seating_enabled: true,
             })
           } else {
             // No wedding subscription found, default to free
