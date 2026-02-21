@@ -19,7 +19,7 @@ import { TableGuestsModal } from "./components/table-guests-modal"
 import { PrintView } from "./components/print-view"
 import { UnsavedChangesDialog } from "./components/unsaved-changes-dialog"
 import { toast } from "sonner"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Trash2, Copy } from "lucide-react"
 import type { SeatingTable, VenueElementShape } from "./types"
 import { LOUNGE_SHAPE_LABELS } from "./types"
 
@@ -256,6 +256,16 @@ export default function SeatingPage({ params }: SeatingPageProps) {
     }
   }
 
+  const handleDeleteElement = async (elementId: string) => {
+    await seating.deleteVenueElement(elementId)
+    setSelectedVenueElementIds(ids => ids.filter(id => id !== elementId))
+  }
+
+  const handleDuplicateElement = async (elementId: string) => {
+    const clone = await seating.duplicateVenueElement(elementId)
+    if (clone) setSelectedVenueElementIds([clone.id])
+  }
+
   const handleTableDragEnd = (tableId: string, x: number, y: number) => {
     seating.updateTable(tableId, { position_x: x, position_y: y })
   }
@@ -464,15 +474,17 @@ export default function SeatingPage({ params }: SeatingPageProps) {
                 <>
                   <div className="w-px h-4 bg-gray-200" />
                   <span className="text-[11px] font-medium text-gray-500">Stools</span>
-                  <div className="flex items-center gap-0.5 bg-gray-50 rounded-lg p-0.5">
-                    {[4, 5, 6, 7, 8].map(n => (
-                      <button
-                        key={n}
-                        className={`w-6 h-6 rounded flex items-center justify-center text-[11px] font-bold transition-colors ${(selectedElement.capacity || 4) === n ? 'bg-white shadow text-amber-600' : 'text-gray-400 hover:text-gray-600'}`}
-                        onClick={() => seating.updateVenueElement(selectedElement.id, { capacity: n })}
-                      >{n}</button>
-                    ))}
-                  </div>
+                  <input
+                    type="number"
+                    min={2}
+                    max={20}
+                    value={selectedElement.capacity || 4}
+                    onChange={e => {
+                      const v = parseInt(e.target.value)
+                      if (!isNaN(v) && v >= 2 && v <= 20) seating.updateVenueElement(selectedElement.id, { capacity: v })
+                    }}
+                    className="w-14 text-xs px-2 py-1 rounded-md border border-gray-200 focus:border-amber-400 focus:outline-none text-center"
+                  />
                 </>
               )}
               <div className="w-px h-4 bg-gray-200" />
@@ -507,6 +519,23 @@ export default function SeatingPage({ params }: SeatingPageProps) {
                   >✕</button>
                 )}
               </div>
+              <div className="w-px h-4 bg-gray-200" />
+              {/* Duplicate */}
+              <button
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                title="Duplicate element"
+                onClick={() => handleDuplicateElement(selectedElement.id)}
+              >
+                <Copy className="w-3.5 h-3.5" />
+              </button>
+              {/* Delete */}
+              <button
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                title="Delete element"
+                onClick={() => handleDeleteElement(selectedElement.id)}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
             </motion.div>
           )}
         </AnimatePresence>

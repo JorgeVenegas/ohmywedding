@@ -180,26 +180,33 @@ export async function PUT(request: Request) {
     })
 
     // Step 1: deletes + upsert existing — all in parallel
-    await Promise.all([
+    const [, , upsertTablesResult, upsertElementsResult] = await Promise.all([
       deletedTableIds.length > 0
         ? supabase.from('seating_tables').delete().in('id', deletedTableIds).eq('wedding_id', weddingUuid)
-        : Promise.resolve(),
+        : Promise.resolve({ error: null }),
       deletedElementIds.length > 0
         ? supabase.from('venue_elements').delete().in('id', deletedElementIds).eq('wedding_id', weddingUuid)
-        : Promise.resolve(),
+        : Promise.resolve({ error: null }),
       existingTables.length > 0
         ? supabase.from('seating_tables').upsert(
             existingTables.map((t: typeof tables[number]) => ({ id: t.id, wedding_id: weddingUuid, ...toTableRow(t) })),
             { onConflict: 'id' }
           )
-        : Promise.resolve(),
+        : Promise.resolve({ error: null }),
       existingElements.length > 0
         ? supabase.from('venue_elements').upsert(
             existingElements.map((e: typeof venueElements[number]) => ({ id: e.id, wedding_id: weddingUuid, ...toElementRow(e) })),
             { onConflict: 'id' }
           )
-        : Promise.resolve(),
+        : Promise.resolve({ error: null }),
     ])
+
+    if (upsertTablesResult.error) {
+      return NextResponse.json({ error: `Failed to save tables: ${upsertTablesResult.error.message}` }, { status: 400 })
+    }
+    if (upsertElementsResult.error) {
+      return NextResponse.json({ error: `Failed to save venue elements: ${upsertElementsResult.error.message}` }, { status: 400 })
+    }
 
     // Step 2: batch insert new (temp) items — in parallel, need returned IDs
     const [tempTablesResult, tempElementsResult] = await Promise.all([
@@ -223,22 +230,61 @@ export async function PUT(request: Request) {
       elementIdMap[tempElements[i].id] = row.id
     })
 
-    // Step 3: Bulk sync assignments (only if provided)
+    // Step 3: Differential assignment sync (only if provided)
+    // Never delete-all — only remove assignments that are explicitly gone, only insert truly new ones.
     if (Array.isArray(assignments)) {
-      // Delete all existing assignments for this wedding
-      await supabase
+      const incoming = assignments.map((a: { table_id: string; guest_id: string }) => ({
+        wedding_id: weddingUuid,
+        table_id: tableIdMap[a.table_id] ?? a.table_id,
+        guest_id: a.guest_id,
+      }))
+      const incomingGuestIds = new Set(incoming.map(r => r.guest_id))
+
+      // Fetch current assignments from DB to diff against
+      const { data: existing } = await supabase
         .from('seating_assignments')
-        .delete()
+        .select('guest_id, table_id')
         .eq('wedding_id', weddingUuid)
 
-      // Insert current assignments (resolving temp IDs)
-      if (assignments.length > 0) {
-        const rows = assignments.map((a: { table_id: string; guest_id: string }) => ({
-          wedding_id: weddingUuid,
-          table_id: tableIdMap[a.table_id] ?? a.table_id,
-          guest_id: a.guest_id,
-        }))
-        await supabase.from('seating_assignments').insert(rows)
+      const existingGuestIds = new Set((existing ?? []).map((r: { guest_id: string }) => r.guest_id))
+
+      // Only delete guests that were explicitly removed from the seating plan
+      const toDelete = (existing ?? [])
+        .filter((r: { guest_id: string }) => !incomingGuestIds.has(r.guest_id))
+        .map((r: { guest_id: string }) => r.guest_id)
+
+      // Only insert guests that are genuinely new assignments
+      const toInsert = incoming.filter(r => !existingGuestIds.has(r.guest_id))
+
+      if (toDelete.length > 0) {
+        const { error: delError } = await supabase
+          .from('seating_assignments')
+          .delete()
+          .eq('wedding_id', weddingUuid)
+          .in('guest_id', toDelete)
+        if (delError) {
+          return NextResponse.json({ error: `Failed to remove assignments: ${delError.message}` }, { status: 400 })
+        }
+      }
+
+      if (toInsert.length > 0) {
+        const { error: insertError } = await supabase.from('seating_assignments').insert(toInsert)
+        if (insertError) {
+          return NextResponse.json({ error: `Failed to save assignments: ${insertError.message}` }, { status: 400 })
+        }
+      }
+
+      // Update table_id for guests that moved to a different table
+      const toUpdate = incoming.filter(r => {
+        const prev = (existing ?? []).find((e: { guest_id: string }) => e.guest_id === r.guest_id)
+        return prev && prev.table_id !== r.table_id
+      })
+      for (const row of toUpdate) {
+        await supabase
+          .from('seating_assignments')
+          .update({ table_id: row.table_id })
+          .eq('wedding_id', weddingUuid)
+          .eq('guest_id', row.guest_id)
       }
     }
 

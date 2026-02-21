@@ -1140,39 +1140,81 @@ function VenueElementShape({
             cornerRadius={8}
             opacity={0.35}
           />
-          {/* Table top */}
-          <Circle
-            x={hw}
-            y={hh}
-            radius={periquTableR}
-            fill="#fef9c3"
-            stroke="#d97706"
-            strokeWidth={2}
-            shadowColor="rgba(0,0,0,0.12)"
-            shadowBlur={5}
-          />
-          {/* Inner table highlight ring */}
-          <Circle
-            x={hw}
-            y={hh}
-            radius={periquTableR * 0.62}
-            fill="transparent"
-            stroke="#fbbf24"
-            strokeWidth={1}
-            opacity={0.7}
-          />
-          {/* Bar stools */}
-          {Array.from({ length: periquStoolCount }).map((_, i) => {
-            const angle = (2 * Math.PI * i) / periquStoolCount - Math.PI / 2
-            return (
-              <Group key={i} x={hw + periquStoolDist * Math.cos(angle)} y={hh + periquStoolDist * Math.sin(angle)}>
-                {/* Stool seat */}
-                <Circle radius={7} fill="#fde68a" stroke="#d97706" strokeWidth={1.5} />
-                {/* Stool center post */}
-                <Circle radius={2.5} fill="#92400e" />
-              </Group>
-            )
-          })}
+          {isCircle ? (
+            <>
+              {/* Circular table top */}
+              <Circle
+                x={hw}
+                y={hh}
+                radius={periquTableR}
+                fill="#fef9c3"
+                stroke="#d97706"
+                strokeWidth={2}
+                shadowColor="rgba(0,0,0,0.12)"
+                shadowBlur={5}
+              />
+              {/* Inner table highlight ring */}
+              <Circle
+                x={hw}
+                y={hh}
+                radius={periquTableR * 0.62}
+                fill="transparent"
+                stroke="#fbbf24"
+                strokeWidth={1}
+                opacity={0.7}
+              />
+              {/* Radial bar stools */}
+              {Array.from({ length: periquStoolCount }).map((_, i) => {
+                const angle = (2 * Math.PI * i) / periquStoolCount - Math.PI / 2
+                return (
+                  <Group key={i} x={hw + periquStoolDist * Math.cos(angle)} y={hh + periquStoolDist * Math.sin(angle)}>
+                    <Circle radius={7} fill="#fde68a" stroke="#d97706" strokeWidth={1.5} />
+                    <Circle radius={2.5} fill="#92400e" />
+                  </Group>
+                )
+              })}
+            </>
+          ) : (
+            (() => {
+              const pBarH     = Math.max(16, element.height * 0.28)
+              const pBarX     = loungePad * 1.5
+              const pBarY     = hh - pBarH / 2
+              const pBarW     = element.width - loungePad * 3
+              const pTopCount = Math.ceil(periquStoolCount / 2)
+              const pBotCount = Math.floor(periquStoolCount / 2)
+              const pStoolR   = 6
+              const pTopY     = pBarY - pStoolR - 4
+              const pBotY     = pBarY + pBarH + pStoolR + 4
+              return (
+                <>
+                  {/* Rectangular bar counter */}
+                  <Rect
+                    x={pBarX} y={pBarY} width={pBarW} height={pBarH}
+                    fill="#fef9c3" stroke="#d97706" strokeWidth={2} cornerRadius={4}
+                    shadowColor="rgba(0,0,0,0.12)" shadowBlur={4}
+                  />
+                  <Rect
+                    x={pBarX + 4} y={pBarY + 4} width={pBarW - 8} height={pBarH - 8}
+                    fill="transparent" stroke="#fbbf24" strokeWidth={1} cornerRadius={2} opacity={0.7}
+                  />
+                  {/* Top row stools */}
+                  {Array.from({ length: pTopCount }).map((_, i) => (
+                    <Group key={`t${i}`} x={pBarX + pBarW * (i + 1) / (pTopCount + 1)} y={pTopY}>
+                      <Circle radius={pStoolR} fill="#fde68a" stroke="#d97706" strokeWidth={1.5} />
+                      <Circle radius={2} fill="#92400e" />
+                    </Group>
+                  ))}
+                  {/* Bottom row stools */}
+                  {Array.from({ length: pBotCount }).map((_, i) => (
+                    <Group key={`b${i}`} x={pBarX + pBarW * (i + 1) / (pBotCount + 1)} y={pBotY}>
+                      <Circle radius={pStoolR} fill="#fde68a" stroke="#d97706" strokeWidth={1.5} />
+                      <Circle radius={2} fill="#92400e" />
+                    </Group>
+                  ))}
+                </>
+              )
+            })()
+          )}
           {/* Label */}
           <Text
             x={0}
@@ -1264,12 +1306,18 @@ function VenueElementShape({
               )
             })()
           ) : element.element_shape === 'sofa_l' ? (
-            // L-shape sofa: horizontal piece + vertical piece on left
+            // L-shape sofa: horizontal piece + vertical piece on left + coffee table
             (() => {
               const hBackH  = Math.max(14, element.height * 0.32)
               const hSeatH  = element.height - hBackH - loungePad
               const vBackW  = Math.max(14, element.width * 0.28)
-              const vSeatW  = Math.max(10, vBackW * 0.6)
+              const lGap    = loungePad
+              const lOpenX  = loungePad + vBackW + lGap
+              const lOpenY  = loungePad + hBackH + lGap
+              const lOpenW  = element.width - loungePad * 2 - vBackW - lGap
+              const lOpenH  = hSeatH - lGap * 2
+              const lCW     = Math.max(22, lOpenW * 0.6)
+              const lCH     = Math.max(14, lOpenH * 0.5)
               return (
                 <>
                   {/* Horizontal back */}
@@ -1281,6 +1329,12 @@ function VenueElementShape({
                   {/* Vertical back (left side) */}
                   <Rect x={loungePad} y={loungePad + hBackH} width={vBackW} height={hSeatH}
                     fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[0,0,0,4] as any} />
+                  {/* Coffee table in open corner */}
+                  <Rect
+                    x={lOpenX + (lOpenW - lCW) / 2} y={lOpenY + (lOpenH - lCH) / 2}
+                    width={lCW} height={lCH}
+                    fill="#f3e8ff" stroke="#c084fc" strokeWidth={1.5} cornerRadius={4}
+                  />
                 </>
               )
             })()

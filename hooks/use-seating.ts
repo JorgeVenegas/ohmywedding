@@ -54,6 +54,7 @@ interface UseSeatingReturn {
   addVenueElement: (type: VenueElementType, options?: { position?: { x: number; y: number }; shape?: VenueElementShape; label?: string; capacity?: number }) => Promise<VenueElement | null>
   updateVenueElement: (id: string, updates: Partial<VenueElement>) => void
   deleteVenueElement: (id: string) => Promise<boolean>
+  duplicateVenueElement: (id: string) => Promise<VenueElement | null>
 
   // Save
   saveLayout: () => Promise<boolean>
@@ -544,6 +545,24 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
     return Promise.resolve(true)
   }, [pushHistory])
 
+  const duplicateVenueElement = useCallback((id: string): Promise<VenueElement | null> => {
+    const source = venueElementsRef.current.find(e => e.id === id)
+    if (!source) return Promise.resolve(null)
+    pushHistory()
+    const newId = tempId()
+    const clone: VenueElement = {
+      ...source,
+      id: newId,
+      position_x: source.position_x + 20,
+      position_y: source.position_y + 20,
+      created_at: new Date().toISOString(),
+    }
+    newElementIdsRef.current.add(newId)
+    setVenueElements(prev => [...prev, clone])
+    setHasUnsavedChanges(true)
+    return Promise.resolve(clone)
+  }, [pushHistory])
+
   // ── Save layout ──
 
   const saveLayout = useCallback(async (): Promise<boolean> => {
@@ -616,6 +635,7 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
             element_type: e.element_type,
             element_shape: e.element_shape,
             label: e.label,
+            capacity: e.capacity ?? 4,
             position_x: e.position_x,
             position_y: e.position_y,
             width: e.width,
@@ -716,6 +736,7 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
     addVenueElement,
     updateVenueElement,
     deleteVenueElement,
+    duplicateVenueElement,
     saveLayout,
     discardChanges,
     undo,
