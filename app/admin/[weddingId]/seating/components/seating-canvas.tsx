@@ -741,7 +741,7 @@ function TableShape({
         />
         {/* Occupancy */}
         <Text
-          x={5} y={radius - 2}
+          x={5} y={radius + 5}
           width={radius * 2 - 10}
           text={`${table.occupancy}/${table.capacity}`}
           fontSize={9} fontFamily="system-ui, sans-serif" fill="#a16207" align="center"
@@ -869,7 +869,7 @@ function TableShape({
         fontSize={11} fontFamily="system-ui, sans-serif" fontStyle="bold" fill="#78350f" align="center"
       />
       <Text
-        x={5} y={hh - 2}
+        x={5} y={hh + 5}
         width={table.width - 10}
         text={`${table.occupancy}/${table.capacity}`}
         fontSize={9} fontFamily="system-ui, sans-serif" fill="#a16207" align="center"
