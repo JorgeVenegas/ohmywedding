@@ -1044,6 +1044,14 @@ export const es: Translations = {
       allUpgraded: '¡Todas tus bodas ya están en {{plan}} o superior. No se necesitan actualizaciones!',
       generic: 'Algo salió mal',
     },
+    coupon: {
+      haveCode: '¿Tienes un código de cupón?',
+      placeholder: 'Ingresa el código',
+      apply: 'Aplicar',
+      invalid: 'Código de cupón inválido',
+      expired: 'Este cupón ha expirado',
+      applied: '¡Cupón aplicado!',
+    },
   },
 
   // Planes (páginas premium y deluxe)

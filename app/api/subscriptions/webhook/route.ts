@@ -111,6 +111,38 @@ export async function POST(request: Request) {
             })
             .eq('id', order.id)
           console.log(`[webhook] Updated order ${order.id} with PI ID. Error: ${error?.message || 'none'}`)
+
+          // If a coupon was applied (via Stripe promo code on hosted checkout), track it
+          const totalDiscount = session.total_details?.amount_discount || 0
+          if (totalDiscount > 0 && session.metadata) {
+            const couponId = session.metadata.coupon_id
+            const promotionCodeId = session.metadata.promotion_code_id
+
+            if (couponId) {
+              // Update existing redemption record with discount amounts
+              const { error: redemptionError } = await supabaseAdmin
+                .from('coupon_redemptions')
+                .update({
+                  discount_amount_cents: totalDiscount,
+                  original_amount_cents: (session.amount_total || 0) + totalDiscount,
+                  final_amount_cents: session.amount_total || 0,
+                  subscription_order_id: order.id,
+                  stripe_payment_intent_id: paymentIntentId,
+                })
+                .eq('stripe_checkout_session_id', session.id)
+                .eq('coupon_id', couponId)
+
+              if (redemptionError) {
+                console.error('[webhook] Error updating coupon redemption:', redemptionError)
+              } else {
+                console.log(`[webhook] Updated coupon redemption for session ${session.id}`)
+              }
+            } else {
+              // Coupon was applied on Stripe's hosted checkout page (not from upgrade page)
+              // Try to find the promo code from Stripe session and track it
+              console.log(`[webhook] Discount found ($${totalDiscount / 100}) but no coupon_id in metadata — likely applied on Stripe checkout`)
+            }
+          }
         } else {
           console.warn(`[webhook] No order found for session=${session.id}`)
         }
@@ -204,6 +236,64 @@ export async function POST(request: Request) {
 
         console.log(`[webhook] Updated order ${order.id} → completed. Error: ${error?.message || 'none'}`)
         console.log(`[webhook] ✅ Subscription activated: wedding=${weddingId}, plan=${planType}`)
+
+        // Complete any coupon redemption linked to this order
+        const { error: redemptionError } = await supabaseAdmin
+          .from('coupon_redemptions')
+          .update({
+            status: 'completed',
+            stripe_payment_intent_id: pi.id,
+            subscription_order_id: order.id,
+          })
+          .eq('subscription_order_id', order.id)
+          .eq('status', 'applied')
+
+        if (redemptionError) {
+          console.error('[webhook] Error completing coupon redemption:', redemptionError)
+        }
+
+        // Increment times_redeemed counters on coupons and promo codes
+        const { data: completedRedemptions } = await supabaseAdmin
+          .from('coupon_redemptions')
+          .select('coupon_id, promotion_code_id')
+          .eq('subscription_order_id', order.id)
+          .eq('status', 'completed')
+
+        if (completedRedemptions && completedRedemptions.length > 0) {
+          for (const redemption of completedRedemptions) {
+            // Increment coupon counter
+            const { data: couponData } = await supabaseAdmin
+              .from('coupons')
+              .select('times_redeemed')
+              .eq('id', redemption.coupon_id)
+              .single()
+
+            if (couponData) {
+              await supabaseAdmin
+                .from('coupons')
+                .update({ times_redeemed: (couponData.times_redeemed || 0) + 1 })
+                .eq('id', redemption.coupon_id)
+            }
+
+            // Increment promo code counter
+            if (redemption.promotion_code_id) {
+              const { data: promoData } = await supabaseAdmin
+                .from('coupon_promotion_codes')
+                .select('times_redeemed')
+                .eq('id', redemption.promotion_code_id)
+                .single()
+
+              if (promoData) {
+                await supabaseAdmin
+                  .from('coupon_promotion_codes')
+                  .update({ times_redeemed: (promoData.times_redeemed || 0) + 1 })
+                  .eq('id', redemption.promotion_code_id)
+              }
+            }
+          }
+          console.log(`[webhook] Incremented coupon redemption counters`)
+        }
+
         break
       }
 

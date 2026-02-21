@@ -34,7 +34,7 @@ export async function POST(
       )
     }
 
-    const { planType, source, leadId } = await request.json()
+    const { planType, source, leadId, promotionCodeId, couponId, promoCodeDbId } = await request.json()
     const { weddingId } = await params
 
     // Validate plan
@@ -149,7 +149,8 @@ export async function POST(
 
     const planInfo = planDetails[validatedPlanType]
 
-    const checkoutSession = await stripe.checkout.sessions.create({
+    // Build checkout session params
+    const checkoutParams: any = {
       customer: customerId,
       payment_method_types: ["customer_balance"],
       payment_method_options: {
@@ -180,11 +181,24 @@ export async function POST(
         wedding_name_id: wedding.wedding_name_id,
         source: leadSource,
         from_plan: currentPlan,
+        ...(couponId ? { coupon_id: couponId } : {}),
+        ...(promoCodeDbId ? { promotion_code_id: promoCodeDbId } : {}),
       },
       mode: 'payment',
       success_url: `${request.headers.get('origin')}/upgrade/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${request.headers.get('origin')}/upgrade`,
-    })
+      // Allow users to enter promo codes on Stripe's checkout page as well
+      allow_promotion_codes: true,
+    }
+
+    // If a specific promotion code was provided (from upgrade page), apply it as a discount
+    if (promotionCodeId) {
+      checkoutParams.discounts = [{ promotion_code: promotionCodeId }]
+      // When using discounts, allow_promotion_codes must be removed
+      delete checkoutParams.allow_promotion_codes
+    }
+
+    const checkoutSession = await stripe.checkout.sessions.create(checkoutParams)
 
     // Update existing order or create a new one (checkout_started stage)
     const paymentIntentId = checkoutSession.payment_intent as string | null
@@ -205,7 +219,28 @@ export async function POST(
       metadata: {
         wedding_name_id: wedding.wedding_name_id,
         couple: coupleDisplay,
+        ...(couponId ? { coupon_id: couponId } : {}),
+        ...(promoCodeDbId ? { promotion_code_id: promoCodeDbId } : {}),
       },
+    }
+
+    // If a coupon was applied from the upgrade page, create a redemption record
+    if (couponId && promoCodeDbId) {
+      try {
+        await supabaseAdmin.from('coupon_redemptions').insert({
+          coupon_id: couponId,
+          promotion_code_id: promoCodeDbId,
+          wedding_id: resolvedWeddingId,
+          user_id: user.id,
+          stripe_checkout_session_id: checkoutSession.id,
+          original_amount_cents: priceInCents,
+          plan_type: validatedPlanType,
+          status: 'applied',
+        })
+      } catch (redemptionErr) {
+        console.error('Error creating coupon redemption record:', redemptionErr)
+        // Non-blocking — don't fail the checkout
+      }
     }
 
     if (leadId) {

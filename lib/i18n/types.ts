@@ -1001,6 +1001,14 @@ export interface Translations {
       allUpgraded: string
       generic: string
     }
+    coupon: {
+      haveCode: string
+      placeholder: string
+      apply: string
+      invalid: string
+      expired: string
+      applied: string
+    }
   }
 
   // Plans (shared for premium & deluxe pages)

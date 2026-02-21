@@ -1048,6 +1048,14 @@ export const en: Translations = {
       allUpgraded: 'All your weddings are already on {{plan}} or higher. No upgrades needed!',
       generic: 'Something went wrong',
     },
+    coupon: {
+      haveCode: 'Have a coupon code?',
+      placeholder: 'Enter coupon code',
+      apply: 'Apply',
+      invalid: 'Invalid coupon code',
+      expired: 'This coupon has expired',
+      applied: 'Coupon applied!',
+    },
   },
 
   // Plans (premium & deluxe pages)

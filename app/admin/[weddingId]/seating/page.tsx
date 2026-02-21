@@ -360,7 +360,7 @@ export default function SeatingPage({ params }: SeatingPageProps) {
         </AnimatePresence>
 
         {/* Floating Toolbar — bottom center, constrained to viewport */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 pointer-events-auto w-max max-w-[calc(100vw-1.5rem)]">
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-50 pointer-events-auto w-max max-w-[calc(100vw-1.5rem)]">
             <SeatingToolbar
               onAddRoundTable={() => handleAddTable('round')}
               onAddRectTable={() => handleAddTable('rectangular')}

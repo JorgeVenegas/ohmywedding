@@ -23,6 +23,7 @@ import {
   RotateCcw,
 } from "lucide-react"
 import { useState, useRef, useEffect, useCallback } from "react"
+import { createPortal } from "react-dom"
 import type { VenueElementType, VenueElementShape } from "../types"
 import { VENUE_ELEMENT_LABELS } from "../types"
 
@@ -75,9 +76,17 @@ export function SeatingToolbar({
   const [confirmDiscard, setConfirmDiscard] = useState(false)
   const [customLabelInput, setCustomLabelInput] = useState('')
   const [showCustomInput, setShowCustomInput] = useState(false)
+  const [addDropdownPos, setAddDropdownPos] = useState({ bottom: 0, left: 0 })
+  const [actionsMenuPos, setActionsMenuPos] = useState({ bottom: 0, right: 0 })
   const addDropdownRef = useRef<HTMLDivElement>(null)
+  const addButtonRef = useRef<HTMLButtonElement>(null)
+  const addPortalRef = useRef<HTMLDivElement>(null)
   const actionsMenuRef = useRef<HTMLDivElement>(null)
+  const actionsButtonRef = useRef<HTMLButtonElement>(null)
+  const actionsPortalRef = useRef<HTMLDivElement>(null)
   const discardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
 
   const handleAddElement = useCallback((type: VenueElementType, shape: VenueElementShape = 'rect', label?: string) => {
     onAddVenueElement(type, { shape, label })
@@ -117,12 +126,11 @@ export function SeatingToolbar({
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (addDropdownRef.current && !addDropdownRef.current.contains(e.target as Node)) {
-        setShowAddDropdown(false)
-      }
-      if (actionsMenuRef.current && !actionsMenuRef.current.contains(e.target as Node)) {
-        setShowActionsMenu(false)
-      }
+      const t = e.target as Node
+      const insideAdd = addDropdownRef.current?.contains(t) || addPortalRef.current?.contains(t)
+      if (!insideAdd) setShowAddDropdown(false)
+      const insideActions = actionsMenuRef.current?.contains(t) || actionsPortalRef.current?.contains(t)
+      if (!insideActions) setShowActionsMenu(false)
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
@@ -164,17 +172,28 @@ export function SeatingToolbar({
       {/* Add Items Dropdown */}
       <div className="relative" ref={addDropdownRef}>
         <Button
+          ref={addButtonRef}
           variant="outline"
           size="sm"
           className="h-8 gap-1 border-gray-200 hover:border-gray-300 text-gray-700 font-medium text-xs shadow-sm px-2.5"
-          onClick={() => setShowAddDropdown(!showAddDropdown)}
+          onClick={() => {
+            if (addButtonRef.current) {
+              const rect = addButtonRef.current.getBoundingClientRect()
+              setAddDropdownPos({ bottom: window.innerHeight - rect.top + 8, left: rect.left })
+            }
+            setShowAddDropdown(v => !v)
+          }}
         >
           <Plus className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Add</span>
           <ChevronDown className="w-3 h-3 text-gray-400" />
         </Button>
-        {showAddDropdown && (
-          <div className="absolute bottom-full left-0 mb-1.5 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50 min-w-52 animate-in fade-in slide-in-from-bottom-1 duration-150">
+        {mounted && showAddDropdown && createPortal(
+          <div
+            ref={addPortalRef}
+            className="bg-white rounded-xl shadow-xl border border-gray-100 py-1 min-w-52 animate-in fade-in slide-in-from-bottom-1 duration-150"
+            style={{ position: 'fixed', bottom: addDropdownPos.bottom, left: addDropdownPos.left, zIndex: 9999 }}
+          >
             <p className="px-3 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Tables</p>
             {[
               { icon: <Circle className="w-3.5 h-3.5 text-indigo-500" />, bg: 'bg-indigo-50', label: t('admin.seating.toolbar.addRoundTable'), action: onAddRoundTable },
@@ -250,7 +269,8 @@ export function SeatingToolbar({
                 </div>
               )
             })}
-          </div>
+          </div>,
+          document.body
         )}
       </div>
 
@@ -289,12 +309,22 @@ export function SeatingToolbar({
 
       {/* Collapsed actions menu for smaller screens */}
       <div className="xl:hidden relative" ref={actionsMenuRef}>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-500 hover:text-gray-900"
-          onClick={() => setShowActionsMenu(!showActionsMenu)} title="More actions">
+        <Button ref={actionsButtonRef} variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-500 hover:text-gray-900"
+          onClick={() => {
+            if (actionsButtonRef.current) {
+              const rect = actionsButtonRef.current.getBoundingClientRect()
+              setActionsMenuPos({ bottom: window.innerHeight - rect.top + 8, right: window.innerWidth - rect.right })
+            }
+            setShowActionsMenu(v => !v)
+          }} title="More actions">
           <MoreHorizontal className="w-4 h-4" />
         </Button>
-        {showActionsMenu && (
-          <div className="absolute bottom-full right-0 mb-1.5 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50 min-w-44 animate-in fade-in slide-in-from-bottom-1 duration-150">
+        {mounted && showActionsMenu && createPortal(
+          <div
+            ref={actionsPortalRef}
+            className="bg-white rounded-xl shadow-xl border border-gray-100 py-1 min-w-44 animate-in fade-in slide-in-from-bottom-1 duration-150"
+            style={{ position: 'fixed', bottom: actionsMenuPos.bottom, right: actionsMenuPos.right, zIndex: 9999 }}
+          >
             <button className="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2.5 text-sm transition-colors"
               onClick={() => { onAutoAssign(); setShowActionsMenu(false) }}>
               <Wand2 className="w-4 h-4 text-gray-500" />
@@ -305,7 +335,8 @@ export function SeatingToolbar({
               <Printer className="w-4 h-4 text-gray-500" />
               <span className="text-gray-700">{t('admin.seating.toolbar.printExport')}</span>
             </button>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
 

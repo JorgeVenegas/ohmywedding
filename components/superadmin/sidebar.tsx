@@ -11,7 +11,8 @@ import {
   Activity,
   Crown,
   LogOut,
-  ExternalLink
+  ExternalLink,
+  Ticket
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase-client"
@@ -41,6 +42,11 @@ const navItems = [
     title: "Subscriptions",
     href: "/superadmin/subscriptions",
     icon: CreditCard,
+  },
+  {
+    title: "Coupons",
+    href: "/superadmin/coupons",
+    icon: Ticket,
   },
   {
     title: "Activity Log",

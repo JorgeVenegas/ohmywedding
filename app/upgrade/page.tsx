@@ -15,7 +15,9 @@ import {
   ArrowLeft,
   Shield,
   Loader2,
-  X
+  X,
+  Tag,
+  CheckCircle2
 } from "lucide-react"
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
 import { useTranslation } from "@/components/contexts/i18n-context"
@@ -70,6 +72,24 @@ function UpgradePageContent() {
   const preselectedWeddingId = searchParams.get("weddingId") || null
   // Lead tracking: store the lead ID for this session
   const [leadId, setLeadId] = useState<string | null>(null)
+
+  // Coupon state
+  const [couponCode, setCouponCode] = useState("")
+  const [couponLoading, setCouponLoading] = useState(false)
+  const [couponError, setCouponError] = useState<string | null>(null)
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string
+    discountType: string
+    discountValue: number
+    discountAmount: number
+    originalPrice: number
+    finalPrice: number
+    couponName: string
+    stripePromotionCodeId: string
+    couponId: string
+    promotionCodeId: string
+  } | null>(null)
+  const [showCouponInput, setShowCouponInput] = useState(false)
 
   // Create/reuse a lead as soon as the user visits the upgrade page
   useEffect(() => {
@@ -217,6 +237,57 @@ function UpgradePageContent() {
     }
   }
 
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return
+
+    setCouponLoading(true)
+    setCouponError(null)
+
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode.trim(), planType: selectedPlan }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setCouponError(data.error || 'Failed to validate coupon')
+        return
+      }
+
+      if (data.valid) {
+        setAppliedCoupon({
+          code: couponCode.toUpperCase().trim(),
+          discountType: data.discountType,
+          discountValue: data.discountValue,
+          discountAmount: data.discountAmount,
+          originalPrice: data.originalPrice,
+          finalPrice: data.finalPrice,
+          couponName: data.couponName,
+          stripePromotionCodeId: data.stripePromotionCodeId,
+          couponId: data.couponId,
+          promotionCodeId: data.promotionCodeId,
+        })
+        setCouponError(null)
+      } else {
+        setCouponError(data.reason || 'Invalid coupon code')
+        setAppliedCoupon(null)
+      }
+    } catch {
+      setCouponError('Failed to validate coupon')
+    } finally {
+      setCouponLoading(false)
+    }
+  }
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null)
+    setCouponCode("")
+    setCouponError(null)
+  }
+
   const proceedToCheckout = async (planType: "premium" | "deluxe", weddingId: string) => {
     try {
       setIsProcessing(true)
@@ -234,10 +305,19 @@ function UpgradePageContent() {
         }
       }
 
+      const checkoutBody: Record<string, any> = { planType, source: leadSource, leadId }
+
+      // If a coupon was applied from this page, pass it to the checkout endpoint
+      if (appliedCoupon) {
+        checkoutBody.promotionCodeId = appliedCoupon.stripePromotionCodeId
+        checkoutBody.couponId = appliedCoupon.couponId
+        checkoutBody.promoCodeDbId = appliedCoupon.promotionCodeId
+      }
+
       const checkoutResponse = await fetch(`/api/weddings/${weddingId}/subscription/checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planType, source: leadSource, leadId }),
+        body: JSON.stringify(checkoutBody),
       })
 
       const checkoutData = await checkoutResponse.json()
@@ -465,6 +545,104 @@ function UpgradePageContent() {
             </motion.div>
           ))}
         </div>
+
+        {/* Coupon Code Section */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="max-w-md mx-auto mb-12 sm:mb-16"
+        >
+          {!showCouponInput && !appliedCoupon ? (
+            <button
+              onClick={() => setShowCouponInput(true)}
+              className="w-full text-center text-sm text-[#420c14]/50 hover:text-[#420c14] transition-colors flex items-center justify-center gap-2"
+            >
+              <Tag className="w-4 h-4" />
+              {t('upgrade.coupon.haveCode')}
+            </button>
+          ) : appliedCoupon ? (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-green-800">
+                      {appliedCoupon.couponName}
+                    </p>
+                    <p className="text-xs text-green-600 mt-0.5">
+                      Code: <span className="font-mono uppercase">{appliedCoupon.code}</span>
+                      {" — "}
+                      {appliedCoupon.discountType === "percent"
+                        ? `${appliedCoupon.discountValue}% off`
+                        : `$${(appliedCoupon.discountValue / 100).toLocaleString()} MXN off`}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleRemoveCoupon}
+                  className="text-green-600 hover:text-green-800 transition-colors p-1"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="mt-3 pt-3 border-t border-green-200 flex items-center justify-between text-sm">
+                <span className="text-green-700">
+                  <span className="line-through text-green-600/60">
+                    ${(appliedCoupon.originalPrice / 100).toLocaleString()} MXN
+                  </span>
+                </span>
+                <span className="text-green-800 font-semibold text-base">
+                  ${(appliedCoupon.finalPrice / 100).toLocaleString()} MXN
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-[#420c14]/10 p-4">
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder={t('upgrade.coupon.placeholder')}
+                    value={couponCode}
+                    onChange={(e) => {
+                      setCouponCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))
+                      setCouponError(null)
+                    }}
+                    className="w-full px-3 py-2.5 rounded-lg border border-[#420c14]/15 text-sm font-mono uppercase tracking-wider placeholder:text-[#420c14]/30 placeholder:tracking-normal placeholder:font-sans placeholder:normal-case focus:outline-none focus:ring-2 focus:ring-[#DDA46F]/30 focus:border-[#DDA46F]"
+                    maxLength={30}
+                    onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
+                  />
+                </div>
+                <Button
+                  onClick={handleApplyCoupon}
+                  disabled={couponLoading || !couponCode.trim()}
+                  variant="outline"
+                  className="border-[#420c14]/15 text-[#420c14] hover:bg-[#420c14]/5 shrink-0"
+                >
+                  {couponLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    t('upgrade.coupon.apply')
+                  )}
+                </Button>
+                <button
+                  onClick={() => {
+                    setShowCouponInput(false)
+                    setCouponCode("")
+                    setCouponError(null)
+                  }}
+                  className="text-[#420c14]/40 hover:text-[#420c14] transition-colors p-1"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              {couponError && (
+                <p className="text-xs text-red-600 mt-2">{couponError}</p>
+              )}
+            </div>
+          )}
+        </motion.div>
 
         {/* Comparison Table */}
         <motion.div
