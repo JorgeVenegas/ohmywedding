@@ -999,6 +999,20 @@ function VenueElementShape({
   const displayIcon = labelInfo?.icon ?? "📦"
   const isCircle = element.element_shape === 'circle'
 
+  // Lounge proportional layout values
+  const loungeArmWidth   = Math.max(16, Math.min(26, element.width  * 0.14))
+  const loungeArmHeight  = Math.max(16, Math.min(26, element.height * 0.14))
+  const loungePad        = Math.max(8,  Math.min(14, Math.min(element.width, element.height) * 0.08))
+  const loungeBackH      = loungeArmHeight
+  const loungeSideH      = element.height - loungePad * 2 - loungeBackH
+  const loungeCoffeeW    = Math.max(30, (element.width  - loungePad * 2 - loungeArmWidth  * 2) * 0.55)
+  const loungeCoffeeH    = Math.max(20, (element.height - loungePad * 2 - loungeBackH) * 0.45)
+
+  // Periquera stool count (proportional to size)
+  const periquStoolCount = element.width >= 160 ? 6 : 4
+  const periquTableR     = Math.min(hw, hh) * 0.32
+  const periquStoolDist  = Math.min(hw, hh) * 0.68
+
   return (
     <Group
       id={`vel-${element.id}`}
@@ -1013,51 +1027,183 @@ function VenueElementShape({
       onDragEnd={handleDragEnd}
       onTransformEnd={handleTransformEnd}
     >
-      {isCircle ? (
-        <Ellipse
-          x={hw}
-          y={hh}
-          radiusX={hw}
-          radiusY={hh}
-          fill={baseFill}
-          stroke={selected ? "#6366f1" : baseStroke}
-          strokeWidth={selected ? 2.5 : 2}
-          dash={[6, 4]}
-          opacity={0.85}
-        />
+      {element.element_type === 'periquera' ? (
+        <>
+          {/* Background area */}
+          <Rect
+            width={element.width}
+            height={element.height}
+            fill={baseFill}
+            stroke={baseStroke}
+            strokeWidth={selected ? 2.5 : 1.5}
+            cornerRadius={8}
+            opacity={0.35}
+          />
+          {/* Table top */}
+          <Circle
+            x={hw}
+            y={hh}
+            radius={periquTableR}
+            fill="#fef9c3"
+            stroke="#d97706"
+            strokeWidth={2}
+            shadowColor="rgba(0,0,0,0.12)"
+            shadowBlur={5}
+          />
+          {/* Inner table highlight ring */}
+          <Circle
+            x={hw}
+            y={hh}
+            radius={periquTableR * 0.62}
+            fill="transparent"
+            stroke="#fbbf24"
+            strokeWidth={1}
+            opacity={0.7}
+          />
+          {/* Bar stools */}
+          {Array.from({ length: periquStoolCount }).map((_, i) => {
+            const angle = (2 * Math.PI * i) / periquStoolCount - Math.PI / 2
+            return (
+              <Group key={i} x={hw + periquStoolDist * Math.cos(angle)} y={hh + periquStoolDist * Math.sin(angle)}>
+                {/* Stool seat */}
+                <Circle radius={7} fill="#fde68a" stroke="#d97706" strokeWidth={1.5} />
+                {/* Stool center post */}
+                <Circle radius={2.5} fill="#92400e" />
+              </Group>
+            )
+          })}
+          {/* Label */}
+          <Text
+            x={0}
+            y={element.height - 16}
+            width={element.width}
+            text={displayLabel}
+            fontSize={10}
+            fontStyle="bold"
+            fontFamily="system-ui, sans-serif"
+            fill="#92400e"
+            align="center"
+          />
+        </>
+      ) : element.element_type === 'lounge' ? (
+        <>
+          {/* Background area */}
+          <Rect
+            width={element.width}
+            height={element.height}
+            fill={baseFill}
+            stroke={baseStroke}
+            strokeWidth={selected ? 2.5 : 1.5}
+            cornerRadius={10}
+            opacity={0.45}
+          />
+          {/* Back sofa (top edge) */}
+          <Rect
+            x={loungePad}
+            y={loungePad}
+            width={element.width - loungePad * 2}
+            height={loungeBackH}
+            fill="#d8b4fe"
+            stroke="#a855f7"
+            strokeWidth={1.5}
+            cornerRadius={[5, 5, 0, 0] as any}
+          />
+          {/* Left arm */}
+          <Rect
+            x={loungePad}
+            y={loungePad + loungeBackH}
+            width={loungeArmWidth}
+            height={loungeSideH}
+            fill="#d8b4fe"
+            stroke="#a855f7"
+            strokeWidth={1.5}
+            cornerRadius={[0, 0, 0, 5] as any}
+          />
+          {/* Right arm */}
+          <Rect
+            x={element.width - loungePad - loungeArmWidth}
+            y={loungePad + loungeBackH}
+            width={loungeArmWidth}
+            height={loungeSideH}
+            fill="#d8b4fe"
+            stroke="#a855f7"
+            strokeWidth={1.5}
+            cornerRadius={[0, 0, 5, 0] as any}
+          />
+          {/* Coffee table */}
+          <Rect
+            x={hw - loungeCoffeeW / 2}
+            y={loungePad + loungeBackH + (loungeSideH - loungeCoffeeH) / 2}
+            width={loungeCoffeeW}
+            height={loungeCoffeeH}
+            fill="#f3e8ff"
+            stroke="#c084fc"
+            strokeWidth={1.5}
+            cornerRadius={5}
+          />
+          {/* Label */}
+          <Text
+            x={0}
+            y={element.height - 16}
+            width={element.width}
+            text={displayLabel}
+            fontSize={10}
+            fontStyle="bold"
+            fontFamily="system-ui, sans-serif"
+            fill="#6b21a8"
+            align="center"
+          />
+        </>
       ) : (
-        <Rect
-          width={element.width}
-          height={element.height}
-          fill={baseFill}
-          stroke={baseStroke}
-          strokeWidth={selected ? 2.5 : 2}
-          cornerRadius={8}
-          dash={[6, 4]}
-          opacity={0.85}
-        />
+        <>
+          {/* Generic element rendering */}
+          {isCircle ? (
+            <Ellipse
+              x={hw}
+              y={hh}
+              radiusX={hw}
+              radiusY={hh}
+              fill={baseFill}
+              stroke={selected ? "#6366f1" : baseStroke}
+              strokeWidth={selected ? 2.5 : 2}
+              dash={[6, 4]}
+              opacity={0.85}
+            />
+          ) : (
+            <Rect
+              width={element.width}
+              height={element.height}
+              fill={baseFill}
+              stroke={baseStroke}
+              strokeWidth={selected ? 2.5 : 2}
+              cornerRadius={8}
+              dash={[6, 4]}
+              opacity={0.85}
+            />
+          )}
+          <Text
+            x={0}
+            y={element.height / 2 - 18}
+            width={element.width}
+            text={displayIcon}
+            fontSize={18}
+            fontFamily="system-ui, sans-serif"
+            fill="#374151"
+            align="center"
+          />
+          <Text
+            x={4}
+            y={element.height / 2 + 2}
+            width={element.width - 8}
+            text={displayLabel}
+            fontSize={12}
+            fontStyle="bold"
+            fontFamily="system-ui, sans-serif"
+            fill="#374151"
+            align="center"
+          />
+        </>
       )}
-      <Text
-        x={0}
-        y={element.height / 2 - 18}
-        width={element.width}
-        text={displayIcon}
-        fontSize={18}
-        fontFamily="system-ui, sans-serif"
-        fill="#374151"
-        align="center"
-      />
-      <Text
-        x={4}
-        y={element.height / 2 + 2}
-        width={element.width - 8}
-        text={displayLabel}
-        fontSize={12}
-        fontStyle="bold"
-        fontFamily="system-ui, sans-serif"
-        fill="#374151"
-        align="center"
-      />
     </Group>
   )
 }
