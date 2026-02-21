@@ -525,6 +525,7 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
       rotation: 0,
       color: null,
       locked: false,
+      show_front: true,
       created_at: new Date().toISOString(),
     }
     newElementIdsRef.current.add(id)

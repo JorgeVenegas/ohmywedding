@@ -54,6 +54,7 @@ export interface VenueElement {
   rotation: number
   color: string | null
   locked: boolean
+  show_front?: boolean
   created_at: string
 }
 

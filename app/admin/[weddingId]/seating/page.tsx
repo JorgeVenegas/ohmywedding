@@ -19,7 +19,7 @@ import { TableGuestsModal } from "./components/table-guests-modal"
 import { PrintView } from "./components/print-view"
 import { UnsavedChangesDialog } from "./components/unsaved-changes-dialog"
 import { toast } from "sonner"
-import { ArrowLeft, Trash2, Copy, Lock, Unlock, FlipHorizontal, FlipVertical, RotateCcw, RotateCw } from "lucide-react"
+import { ArrowLeft, Trash2, Copy, Lock, Unlock, FlipHorizontal, FlipVertical, RotateCcw, RotateCw, Navigation } from "lucide-react"
 import type { SeatingTable, VenueElementShape } from "./types"
 import { LOUNGE_SHAPE_LABELS } from "./types"
 
@@ -601,6 +601,18 @@ export default function SeatingPage({ params }: SeatingPageProps) {
                 )}
               </div>
               <div className="w-px h-4 bg-gray-200" />
+              {/* Show/Hide front indicator */}
+              <button
+                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                  selectedElement.show_front !== false
+                    ? 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                }`}
+                title={selectedElement.show_front !== false ? 'Hide front indicator' : 'Show front indicator'}
+                onClick={() => seating.updateVenueElement(selectedElement.id, { show_front: selectedElement.show_front === false })}
+              >
+                <Navigation className="w-3.5 h-3.5" />
+              </button>
               {/* Lock / Unlock */}
               <button
                 className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${

@@ -52,6 +52,7 @@ create table "venue_elements" (
   "rotation" double precision not null default 0,
   "color" text,
   "locked" boolean not null default false,
+  "show_front" boolean not null default true,
   "created_at" timestamp with time zone default now()
 );
 

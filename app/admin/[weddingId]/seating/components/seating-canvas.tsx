@@ -262,9 +262,11 @@ export function SeatingCanvas({
 
   // Called on every drag-move: moves peer nodes directly in Konva (no React state)
   const handleTableDragMove = useCallback((tableId: string, cx: number, cy: number) => {
-    // Keep this table's chairs in sync during drag
+    // Keep this table's chairs + labels siblings in sync during drag
     const ownChairs = stageRef.current?.findOne(`#tbl-chairs-${tableId}`)
     if (ownChairs) ownChairs.position({ x: cx, y: cy })
+    const ownLabels = stageRef.current?.findOne(`#tbl-labels-${tableId}`)
+    if (ownLabels) ownLabels.position({ x: cx, y: cy })
 
     const g = groupDragRef.current
     if (!g || g.leaderId !== tableId) return
@@ -273,9 +275,11 @@ export function SeatingCanvas({
     for (const [id, start] of Object.entries(g.peers)) {
       const node = stageRef.current?.findOne(`#tbl-${id}`)
       if (node) node.position({ x: start.startCx + dx, y: start.startCy + dy })
-      // Also keep peer chairs in sync
+      // Also keep peer chairs + labels in sync
       const peerChairs = stageRef.current?.findOne(`#tbl-chairs-${id}`)
       if (peerChairs) peerChairs.position({ x: start.startCx + dx, y: start.startCy + dy })
+      const peerLabels = stageRef.current?.findOne(`#tbl-labels-${id}`)
+      if (peerLabels) peerLabels.position({ x: start.startCx + dx, y: start.startCy + dy })
     }
   }, [])
 
@@ -302,6 +306,8 @@ export function SeatingCanvas({
       const peerSnapY = Math.round((start.startCy + dcy - pHh) / GRID_SIZE) * GRID_SIZE
       const node = stageRef.current?.findOne(`#tbl-${id}`)
       if (node) node.position({ x: peerSnapX + pHw, y: peerSnapY + pHh })
+      const peerLabels = stageRef.current?.findOne(`#tbl-labels-${id}`)
+      if (peerLabels) peerLabels.position({ x: peerSnapX + pHw, y: peerSnapY + pHh })
       onTableDragEnd(id, peerSnapX, peerSnapY)
     }
     groupDragRef.current = null
@@ -880,7 +886,7 @@ function TableShape({
             )
           })}
         </Group>
-        {/* Table body — Transformer target; tight bounding box = table rect only */}
+        {/* Table body — Transformer target; tight bounding box = Rect + status dot only */}
         <Group
           id={`tbl-${table.id}`}
           x={swCx} y={swCy} offsetX={hw} offsetY={hh}
@@ -897,11 +903,18 @@ function TableShape({
         >
           <Rect width={table.width} height={table.height} fill={fill} stroke={stroke} strokeWidth={strokeWidth}
             cornerRadius={12} shadowColor="rgba(217,119,6,0.2)" shadowBlur={selected ? 14 : 8} shadowOffset={{ x: 0, y: 3 }} />
+          <Circle x={table.width - 8} y={8} radius={4} fill={getStatusColor(table)} stroke="white" strokeWidth={1.5} />
+        </Group>
+        {/* Labels sibling — same transform, counter-rotated text stays screen-horizontal */}
+        <Group
+          id={`tbl-labels-${table.id}`}
+          x={swCx} y={swCy} offsetX={hw} offsetY={hh}
+          rotation={table.rotation} listening={false}
+        >
           <Group x={hw} y={hh} rotation={-table.rotation}>
             <Text x={-hw} y={-13} width={table.width} text="♛" fontSize={14} fontFamily="system-ui, sans-serif" fill="#d97706" align="center" />
             <Text x={-hw + 4} y={2} width={table.width - 8} text={`${table.name} · ${table.occupancy}/${table.capacity}`} fontSize={9} fontFamily="system-ui, sans-serif" fill="#78350f" align="center" />
           </Group>
-          <Circle x={table.width - 8} y={8} radius={4} fill={getStatusColor(table)} stroke="white" strokeWidth={1.5} />
         </Group>
       </>
     )
@@ -919,7 +932,7 @@ function TableShape({
       >
         {renderRectSeats(table)}
       </Group>
-      {/* Table body — Transformer target; tight bounding box = table rect only */}
+      {/* Table body — Transformer target; tight bounding box = Rect + status dot only */}
       <Group
         id={`tbl-${table.id}`}
         x={rectCx} y={rectCy} offsetX={hw} offsetY={hh}
@@ -936,13 +949,20 @@ function TableShape({
       >
         <Rect width={table.width} height={table.height} fill={fill} stroke={stroke} strokeWidth={strokeWidth}
           cornerRadius={8} shadowColor="rgba(0,0,0,0.10)" shadowBlur={selected ? 14 : 8} shadowOffset={{ x: 0, y: 3 }} />
+        <Circle x={table.width - 8} y={8} radius={5} fill={getStatusColor(table)} stroke="white" strokeWidth={1.5} />
+      </Group>
+      {/* Labels sibling — same transform, counter-rotated text stays screen-horizontal */}
+      <Group
+        id={`tbl-labels-${table.id}`}
+        x={rectCx} y={rectCy} offsetX={hw} offsetY={hh}
+        rotation={table.rotation} listening={false}
+      >
         <Group x={hw} y={hh} rotation={-table.rotation}>
           <Text x={-(table.width - 10) / 2} y={-15} width={table.width - 10} text={table.name}
             fontSize={11} fontFamily="system-ui, sans-serif" fontStyle="bold" fill="#78350f" align="center" />
           <Text x={-(table.width - 10) / 2} y={5} width={table.width - 10} text={`${table.occupancy}/${table.capacity}`}
             fontSize={9} fontFamily="system-ui, sans-serif" fill="#a16207" align="center" />
         </Group>
-        <Circle x={table.width - 8} y={8} radius={5} fill={getStatusColor(table)} stroke="white" strokeWidth={1.5} />
       </Group>
     </>
   )
@@ -1113,56 +1133,10 @@ function VenueElementShape({
     />
   )
 
+
   return (
     <>
-      {/* ── Labels sibling ── same transform, listening=false so clicks/mousedown pass through */}
-      <Group
-        id={`vel-labels-${element.id}`}
-        x={cx} y={cy}
-        offsetX={hw} offsetY={hh}
-        rotation={element.rotation}
-        listening={false}
-      >
-        {/* Counter-rotate so text stays screen-horizontal */}
-        <Group x={hw} y={hh} rotation={-element.rotation}>
-          {element.element_type === 'area' ? (
-            <Text
-              x={10 - hw}
-              y={10 - hh}
-              width={element.width - 20}
-              text={displayLabel}
-              fontSize={Math.min(18, Math.max(11, element.height * 0.1))}
-              fontStyle="bold"
-              fontFamily="system-ui, sans-serif"
-              fill={labelFill}
-              align="left"
-              opacity={0.85}
-            />
-          ) : (
-            <Text
-              x={-hw + 4}
-              y={-8}
-              width={element.width - 8}
-              text={displayLabel}
-              fontSize={element.element_type === 'lounge' || element.element_type === 'periquera' ? 10 : 12}
-              fontStyle="bold"
-              fontFamily="system-ui, sans-serif"
-              fill={labelFill}
-              align="center"
-            />
-          )}
-          {/* Lock icon — top-right corner */}
-          {element.locked && (
-            <Group x={hw - 16} y={-hh + 4}>
-              <Rect x={0} y={4} width={10} height={7} cornerRadius={1.5} fill="rgba(107,114,128,0.92)" />
-              <Line points={[2, 4, 2, 1.5, 8, 1.5, 8, 4]} stroke="rgba(107,114,128,0.92)" strokeWidth={1.8} lineCap="round" lineJoin="round" />
-              <Circle x={5} y={8} radius={1.5} fill="#fff" opacity={0.7} />
-            </Group>
-          )}
-        </Group>
-      </Group>
-
-      {/* ── Body group ── Transformer attaches here; contains ONLY visual shapes + front indicator */}
+      {/* ── Body group ── Transformer target; visual shapes + front indicator */}
       {/* listening=false when locked: mousedown passes through to Stage so lasso can start */}
       <Group
         id={`vel-${element.id}`}
@@ -1225,7 +1199,7 @@ function VenueElementShape({
                 )
               })()
             )}
-            {frontIndicatorNode}
+            {element.show_front !== false && frontIndicatorNode}
           </>
         ) : element.element_type === 'area' ? (
           <>
@@ -1234,7 +1208,7 @@ function VenueElementShape({
               fill={baseFill} stroke={baseStroke} strokeWidth={selected ? 2.5 : 2}
               cornerRadius={6} dash={[14, 7]} opacity={0.35}
             />
-            {frontIndicatorNode}
+            {element.show_front !== false && frontIndicatorNode}
           </>
         ) : element.element_type === 'lounge' ? (
           <>
@@ -1293,7 +1267,7 @@ function VenueElementShape({
                 <Rect x={hw - loungeCoffeeW / 2} y={loungePad + loungeBackH + (loungeSideH - loungeCoffeeH) / 2} width={loungeCoffeeW} height={loungeCoffeeH} fill="#f3e8ff" stroke="#c084fc" strokeWidth={1.5} cornerRadius={5} />
               </>
             )}
-            {frontIndicatorNode}
+            {element.show_front !== false && frontIndicatorNode}
           </>
         ) : (
           /* Generic: dance_floor, stage, entrance, bar, dj_booth, custom */
@@ -1303,11 +1277,68 @@ function VenueElementShape({
             ) : (
               <Rect width={element.width} height={element.height} fill={baseFill} stroke={baseStroke} strokeWidth={selected ? 2.5 : 2} cornerRadius={8} dash={[6, 4]} opacity={0.85} />
             )}
-            {frontIndicatorNode}
+            {element.show_front !== false && frontIndicatorNode}
           </>
         )}
+      </Group>
+
+      {/* ── Labels sibling ── counter-rotated text, renders ON TOP of body fill */}
+      <Group
+        id={`vel-labels-${element.id}`}
+        x={cx} y={cy}
+        offsetX={hw} offsetY={hh}
+        rotation={element.rotation}
+        listening={false}
+      >
+        <Group x={hw} y={hh} rotation={-element.rotation}>
+          {element.element_type === 'area' ? (
+            <Text
+              x={10 - hw}
+              y={10 - hh}
+              width={element.width - 20}
+              text={displayLabel}
+              fontSize={Math.min(18, Math.max(11, element.height * 0.1))}
+              fontStyle="bold"
+              fontFamily="system-ui, sans-serif"
+              fill={labelFill}
+              align="left"
+              opacity={0.85}
+            />
+          ) : element.element_type === 'periquera' || element.element_type === 'lounge' ? (
+            <Text
+              x={-hw + 4}
+              y={hh - 18}
+              width={element.width - 8}
+              text={displayLabel}
+              fontSize={10}
+              fontStyle="bold"
+              fontFamily="system-ui, sans-serif"
+              fill={labelFill}
+              align="center"
+            />
+          ) : (
+            <Text
+              x={-hw + 4}
+              y={-8}
+              width={element.width - 8}
+              text={displayLabel}
+              fontSize={12}
+              fontStyle="bold"
+              fontFamily="system-ui, sans-serif"
+              fill={labelFill}
+              align="center"
+            />
+          )}
+          {/* Lock icon — top-right corner */}
+          {element.locked && (
+            <Group x={hw - 16} y={-hh + 4}>
+              <Rect x={0} y={4} width={10} height={7} cornerRadius={1.5} fill="rgba(107,114,128,0.92)" />
+              <Line points={[2, 4, 2, 1.5, 8, 1.5, 8, 4]} stroke="rgba(107,114,128,0.92)" strokeWidth={1.8} lineCap="round" lineJoin="round" />
+              <Circle x={5} y={8} radius={1.5} fill="#fff" opacity={0.7} />
+            </Group>
+          )}
+        </Group>
       </Group>
     </>
   )
 }
-
