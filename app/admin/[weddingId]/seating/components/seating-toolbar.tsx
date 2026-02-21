@@ -104,7 +104,7 @@ export function SeatingToolbar({
   onRedo,
   canRedo,
 }: SeatingToolbarProps) {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
   const [showAddDropdown, setShowAddDropdown] = useState(false)
   const [showActionsMenu, setShowActionsMenu] = useState(false)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
@@ -261,7 +261,7 @@ export function SeatingToolbar({
                         if (isLounge) { handleAddElement(type, 'sofa_u'); return }
                         handleAddElement(type, 'rect')
                       }}>
-                      {info.en}
+                      {info[locale as 'en' | 'es'] ?? info.en}
                     </button>
                     {isLounge && (
                       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">

@@ -6,6 +6,7 @@ import type Konva from "konva"
 import type { ReactElement } from "react"
 import type { TableWithAssignments, VenueElement } from "../types"
 import { VENUE_ELEMENT_LABELS } from "../types"
+import { useTranslation } from "@/components/contexts/i18n-context"
 import { Copy, Trash2 } from "lucide-react"
 
 interface SeatingCanvasProps {
@@ -1040,6 +1041,7 @@ function VenueElementShape({
   onDragEnd: (x: number, y: number) => void
   onResize: (width: number, height: number, x: number, y: number, rotation: number) => void
 }) {
+  const { locale } = useTranslation()
   const hw = element.width / 2
   const hh = element.height / 2
   const cx = element.position_x + hw
@@ -1097,7 +1099,7 @@ function VenueElementShape({
   const baseFill = element.color ?? fillColors[element.element_type] ?? "#e5e7eb"
   const baseStroke = selected ? "#6366f1" : (element.color ? element.color : (strokeColors[element.element_type] ?? "#9ca3af"))
   const labelInfo = VENUE_ELEMENT_LABELS[element.element_type]
-  const displayLabel = element.label || labelInfo?.en || element.element_type
+  const displayLabel = element.label || (labelInfo?.[locale as 'en' | 'es'] ?? labelInfo?.en ?? element.element_type)
   const isCircle = element.element_shape === 'circle'
 
   // Lounge proportional layout values
@@ -1124,15 +1126,25 @@ function VenueElementShape({
   // Rotates WITH the element — always shows which physical edge is "front"
   // Uses a stable non-selection-dependent stroke so it's always visible
   const frontStroke = element.color ?? strokeColors[element.element_type] ?? "#4b5563"
-  const frontIndicatorW = Math.min(32, element.width * 0.28)
+  const frontIndicatorW = Math.min(36, element.width * 0.32)
   const frontIndicatorNode = (
-    <Line
-      points={[hw - frontIndicatorW / 2, 3, hw + frontIndicatorW / 2, 3]}
-      stroke={frontStroke}
-      strokeWidth={3.5}
-      lineCap="round"
-      opacity={1}
-    />
+    <Group>
+      {/* White backing for contrast against any fill color */}
+      <Line
+        points={[hw - frontIndicatorW / 2, 3, hw + frontIndicatorW / 2, 3]}
+        stroke="#ffffff"
+        strokeWidth={7}
+        lineCap="round"
+        opacity={0.85}
+      />
+      <Line
+        points={[hw - frontIndicatorW / 2, 3, hw + frontIndicatorW / 2, 3]}
+        stroke={frontStroke}
+        strokeWidth={4.5}
+        lineCap="round"
+        opacity={1}
+      />
+    </Group>
   )
 
 
