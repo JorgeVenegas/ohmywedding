@@ -326,6 +326,9 @@ export function SeatingCanvas({
   }, [selectedVenueElementIds, venueElements])
 
   const handleElementDragMove = useCallback((elementId: string, cx: number, cy: number) => {
+    // Sync leader's labels sibling to follow its body during drag
+    const leaderLabels = stageRef.current?.findOne(`#vel-labels-${elementId}`)
+    if (leaderLabels) leaderLabels.position({ x: cx, y: cy })
     const g = elementGroupDragRef.current
     if (!g || g.leaderId !== elementId) return
     const dcx = cx - g.leaderStartCx
@@ -333,6 +336,8 @@ export function SeatingCanvas({
     for (const [id, start] of Object.entries(g.peers)) {
       const node = stageRef.current?.findOne(`#vel-${id}`)
       if (node) node.position({ x: start.startCx + dcx, y: start.startCy + dcy })
+      const peerLabels = stageRef.current?.findOne(`#vel-labels-${id}`)
+      if (peerLabels) peerLabels.position({ x: start.startCx + dcx, y: start.startCy + dcy })
     }
   }, [])
 
@@ -359,6 +364,8 @@ export function SeatingCanvas({
       const peerSnapY = Math.round((start.startCy + dcy - pHh) / GRID_SIZE) * GRID_SIZE
       const node = stageRef.current?.findOne(`#vel-${id}`)
       if (node) node.position({ x: peerSnapX + pHw, y: peerSnapY + pHh })
+      const peerLabels = stageRef.current?.findOne(`#vel-labels-${id}`)
+      if (peerLabels) peerLabels.position({ x: peerSnapX + pHw, y: peerSnapY + pHh })
       onElementDragEnd(id, peerSnapX, peerSnapY)
     }
     elementGroupDragRef.current = null
@@ -993,6 +1000,9 @@ function renderRectSeats(table: TableWithAssignments) {
 }
 
 // Venue Element Shape Component
+// Rendered as TWO sibling groups (like table body+chairs split):
+//   #vel-${id}        — body: visual shapes + front indicator; Transformer attaches here; tight bbox
+//   #vel-labels-${id} — labels sibling: counter-rotated text + lock icon; listening=false
 function VenueElementShape({
   element,
   selected,
@@ -1012,12 +1022,17 @@ function VenueElementShape({
 }) {
   const hw = element.width / 2
   const hh = element.height / 2
+  const cx = element.position_x + hw
+  const cy = element.position_y + hh
 
   // Drag snaps to grid; position stored as top-left corner
   const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
     const x = Math.round((e.target.x() - hw) / GRID_SIZE) * GRID_SIZE
     const y = Math.round((e.target.y() - hh) / GRID_SIZE) * GRID_SIZE
     e.target.position({ x: x + hw, y: y + hh })
+    // Keep labels sibling in sync
+    const labels = e.target.getLayer()?.findOne(`#vel-labels-${element.id}`)
+    if (labels) labels.position({ x: x + hw, y: y + hh })
     onDragEnd(x, y)
   }
 
@@ -1074,150 +1089,43 @@ function VenueElementShape({
   const loungeCoffeeW    = Math.max(30, (element.width  - loungePad * 2 - loungeArmWidth  * 2) * 0.55)
   const loungeCoffeeH    = Math.max(20, (element.height - loungePad * 2 - loungeBackH) * 0.45)
 
-  // Periquera stool count — use capacity if set, else fallback to size-based default
+  // Periquera stool count
   const periquStoolCount = element.capacity || (element.width >= 160 ? 6 : 4)
   const periquTableR     = Math.min(hw, hh) * 0.32
   const periquStoolDist  = Math.min(hw, hh) * 0.68
 
+  // Label color per type
+  const labelFill = element.element_type === 'periquera' ? '#92400e'
+    : element.element_type === 'area' ? baseStroke
+    : element.element_type === 'lounge' ? '#6b21a8'
+    : '#374151'
+
+  // Front-edge indicator: thick colored segment at top-center of the element body
+  // Rotates WITH the element — always shows which physical edge is "front"
+  const frontIndicatorW = Math.min(32, element.width * 0.28)
+  const frontIndicatorNode = (
+    <Line
+      points={[hw - frontIndicatorW / 2, 3, hw + frontIndicatorW / 2, 3]}
+      stroke={baseStroke}
+      strokeWidth={3.5}
+      lineCap="round"
+      opacity={0.9}
+    />
+  )
+
   return (
-    <Group
-      id={`vel-${element.id}`}
-      x={element.position_x + hw}
-      y={element.position_y + hh}
-      offsetX={hw}
-      offsetY={hh}
-      rotation={element.rotation}
-      draggable={!element.locked}
-      onClick={(e: Konva.KonvaEventObject<MouseEvent>) => onSelect(e.evt.shiftKey)}
-      onTap={() => onSelect(false)}
-      onDragStart={(e) => onDragStart?.(e.target.x(), e.target.y())}
-      onDragMove={(e) => onDragMove?.(e.target.x(), e.target.y())}
-      onDragEnd={handleDragEnd}
-      onTransformEnd={handleTransformEnd}
-    >
-      {element.element_type === 'periquera' ? (
-        <>
-          {/* Background area */}
-          <Rect
-            width={element.width}
-            height={element.height}
-            fill={baseFill}
-            stroke={baseStroke}
-            strokeWidth={selected ? 2.5 : 1.5}
-            cornerRadius={8}
-            opacity={0.35}
-          />
-          {isCircle ? (
-            <>
-              {/* Circular table top */}
-              <Circle
-                x={hw}
-                y={hh}
-                radius={periquTableR}
-                fill="#fef9c3"
-                stroke="#d97706"
-                strokeWidth={2}
-                shadowColor="rgba(0,0,0,0.12)"
-                shadowBlur={5}
-              />
-              {/* Inner table highlight ring */}
-              <Circle
-                x={hw}
-                y={hh}
-                radius={periquTableR * 0.62}
-                fill="transparent"
-                stroke="#fbbf24"
-                strokeWidth={1}
-                opacity={0.7}
-              />
-              {/* Radial bar stools */}
-              {Array.from({ length: periquStoolCount }).map((_, i) => {
-                const angle = (2 * Math.PI * i) / periquStoolCount - Math.PI / 2
-                return (
-                  <Group key={i} x={hw + periquStoolDist * Math.cos(angle)} y={hh + periquStoolDist * Math.sin(angle)}>
-                    <Circle radius={7} fill="#fde68a" stroke="#d97706" strokeWidth={1.5} />
-                    <Circle radius={2.5} fill="#92400e" />
-                  </Group>
-                )
-              })}
-            </>
-          ) : (
-            (() => {
-              const pBarH     = Math.max(16, element.height * 0.28)
-              const pBarX     = loungePad * 1.5
-              const pBarY     = hh - pBarH / 2
-              const pBarW     = element.width - loungePad * 3
-              const pTopCount = Math.ceil(periquStoolCount / 2)
-              const pBotCount = Math.floor(periquStoolCount / 2)
-              const pStoolR   = 6
-              const pTopY     = pBarY - pStoolR - 4
-              const pBotY     = pBarY + pBarH + pStoolR + 4
-              return (
-                <>
-                  {/* Rectangular bar counter */}
-                  <Rect
-                    x={pBarX} y={pBarY} width={pBarW} height={pBarH}
-                    fill="#fef9c3" stroke="#d97706" strokeWidth={2} cornerRadius={4}
-                    shadowColor="rgba(0,0,0,0.12)" shadowBlur={4}
-                  />
-                  <Rect
-                    x={pBarX + 4} y={pBarY + 4} width={pBarW - 8} height={pBarH - 8}
-                    fill="transparent" stroke="#fbbf24" strokeWidth={1} cornerRadius={2} opacity={0.7}
-                  />
-                  {/* Top row stools */}
-                  {Array.from({ length: pTopCount }).map((_, i) => (
-                    <Group key={`t${i}`} x={pBarX + pBarW * (i + 1) / (pTopCount + 1)} y={pTopY}>
-                      <Circle radius={pStoolR} fill="#fde68a" stroke="#d97706" strokeWidth={1.5} />
-                      <Circle radius={2} fill="#92400e" />
-                    </Group>
-                  ))}
-                  {/* Bottom row stools */}
-                  {Array.from({ length: pBotCount }).map((_, i) => (
-                    <Group key={`b${i}`} x={pBarX + pBarW * (i + 1) / (pBotCount + 1)} y={pBotY}>
-                      <Circle radius={pStoolR} fill="#fde68a" stroke="#d97706" strokeWidth={1.5} />
-                      <Circle radius={2} fill="#92400e" />
-                    </Group>
-                  ))}
-                </>
-              )
-            })()
-          )}
-          {/* Label — counter-rotated to stay horizontal */}
-          <Group x={hw} y={hh} rotation={-element.rotation}>
-            <Text
-              x={-hw}
-              y={hh - 16}
-              width={element.width}
-              text={displayLabel}
-              fontSize={10}
-              fontStyle="bold"
-              fontFamily="system-ui, sans-serif"
-              fill="#92400e"
-              align="center"
-            />
-            {element.locked && (
-              <Group x={hw - 16} y={-hh + 3}>
-                <Rect x={0} y={4} width={10} height={7} cornerRadius={1.5} fill="rgba(107,114,128,0.9)" />
-                <Line points={[2, 4, 2, 1.5, 8, 1.5, 8, 4]} stroke="rgba(107,114,128,0.9)" strokeWidth={1.8} lineCap="round" lineJoin="round" />
-                <Circle x={5} y={8} radius={1.5} fill="#fff" opacity={0.7} />
-              </Group>
-            )}
-          </Group>
-        </>
-      ) : element.element_type === 'area' ? (
-        <>
-          {/* Area zone: large labeled dashed rectangle */}
-          <Rect
-            width={element.width}
-            height={element.height}
-            fill={baseFill}
-            stroke={baseStroke}
-            strokeWidth={selected ? 2.5 : 2}
-            cornerRadius={6}
-            dash={[14, 7]}
-            opacity={0.35}
-          />
-          <Group x={hw} y={hh} rotation={-element.rotation}>
+    <>
+      {/* ── Labels sibling ── same transform, listening=false so clicks/mousedown pass through */}
+      <Group
+        id={`vel-labels-${element.id}`}
+        x={cx} y={cy}
+        offsetX={hw} offsetY={hh}
+        rotation={element.rotation}
+        listening={false}
+      >
+        {/* Counter-rotate so text stays screen-horizontal */}
+        <Group x={hw} y={hh} rotation={-element.rotation}>
+          {element.element_type === 'area' ? (
             <Text
               x={10 - hw}
               y={10 - hh}
@@ -1226,234 +1134,180 @@ function VenueElementShape({
               fontSize={Math.min(18, Math.max(11, element.height * 0.1))}
               fontStyle="bold"
               fontFamily="system-ui, sans-serif"
-              fill={baseStroke}
+              fill={labelFill}
               align="left"
               opacity={0.85}
             />
-            {element.locked && (
-              <Group x={hw - 16} y={-hh + 3}>
-                <Rect x={0} y={4} width={10} height={7} cornerRadius={1.5} fill="rgba(107,114,128,0.9)" />
-                <Line points={[2, 4, 2, 1.5, 8, 1.5, 8, 4]} stroke="rgba(107,114,128,0.9)" strokeWidth={1.8} lineCap="round" lineJoin="round" />
-                <Circle x={5} y={8} radius={1.5} fill="#fff" opacity={0.7} />
-              </Group>
-            )}
-          </Group>
-        </>
-      ) : element.element_type === 'lounge' ? (
-        <>
-          {/* Background */}
-          <Rect
-            width={element.width}
-            height={element.height}
-            fill={baseFill}
-            stroke={baseStroke}
-            strokeWidth={selected ? 2.5 : 1.5}
-            cornerRadius={10}
-            opacity={0.45}
-          />
-          {element.element_shape === 'sofa_circle' ? (
-            // Circle lounge: outer ring + open center + coffee table
-            (() => {
-              const r = Math.min(hw, hh)
-              const outerR = r * 0.85
-              const innerR = r * 0.52
-              const coffeeR = r * 0.22
-              return (
-                <>
-                  <Circle x={hw} y={hh} radius={outerR} fill="#d8b4fe" stroke="#a855f7" strokeWidth={2} />
-                  <Circle x={hw} y={hh} radius={innerR} fill={baseFill} stroke="#c084fc" strokeWidth={1} opacity={0.9} />
-                  <Circle x={hw} y={hh} radius={coffeeR} fill="#f3e8ff" stroke="#c084fc" strokeWidth={1.5} />
-                </>
-              )
-            })()
-          ) : element.element_shape === 'sofa_single' ? (
-            // Single sofa: back + seat + two armrests
-            (() => {
-              const backH = Math.max(14, element.height * 0.32)
-              const armW  = Math.max(12, element.width * 0.10)
-              const seatH = element.height - backH - loungePad
-              return (
-                <>
-                  {/* Back */}
-                  <Rect x={loungePad} y={loungePad} width={element.width - loungePad * 2} height={backH}
-                    fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[5,5,0,0] as any} />
-                  {/* Seat */}
-                  <Rect x={loungePad + armW} y={loungePad + backH}
-                    width={element.width - loungePad * 2 - armW * 2} height={seatH}
-                    fill="#e9d5ff" stroke="#a855f7" strokeWidth={1} />
-                  {/* Left arm */}
-                  <Rect x={loungePad} y={loungePad + backH} width={armW} height={seatH}
-                    fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[0,0,0,4] as any} />
-                  {/* Right arm */}
-                  <Rect x={element.width - loungePad - armW} y={loungePad + backH} width={armW} height={seatH}
-                    fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[0,0,4,0] as any} />
-                </>
-              )
-            })()
-          ) : element.element_shape === 'sofa_l' ? (
-            // L-shape sofa: horizontal piece + vertical piece on left + coffee table
-            (() => {
-              const hBackH  = Math.max(14, element.height * 0.32)
-              const hSeatH  = element.height - hBackH - loungePad
-              const vBackW  = Math.max(14, element.width * 0.28)
-              const lGap    = loungePad
-              const lOpenX  = loungePad + vBackW + lGap
-              const lOpenY  = loungePad + hBackH + lGap
-              const lOpenW  = element.width - loungePad * 2 - vBackW - lGap
-              const lOpenH  = hSeatH - lGap * 2
-              const lCW     = Math.max(22, lOpenW * 0.6)
-              const lCH     = Math.max(14, lOpenH * 0.5)
-              return (
-                <>
-                  {/* Horizontal back */}
-                  <Rect x={loungePad} y={loungePad} width={element.width - loungePad * 2} height={hBackH}
-                    fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[5,5,0,0] as any} />
-                  {/* Horizontal seat */}
-                  <Rect x={loungePad} y={loungePad + hBackH} width={element.width - loungePad * 2} height={hSeatH}
-                    fill="#e9d5ff" stroke="#a855f7" strokeWidth={1} />
-                  {/* Vertical back (left side) */}
-                  <Rect x={loungePad} y={loungePad + hBackH} width={vBackW} height={hSeatH}
-                    fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[0,0,0,4] as any} />
-                  {/* Coffee table in open corner */}
-                  <Rect
-                    x={lOpenX + (lOpenW - lCW) / 2} y={lOpenY + (lOpenH - lCH) / 2}
-                    width={lCW} height={lCH}
-                    fill="#f3e8ff" stroke="#c084fc" strokeWidth={1.5} cornerRadius={4}
-                  />
-                </>
-              )
-            })()
           ) : (
-            // Default U-shape sofa
-            <>
-              {/* Back sofa (top edge) */}
-              <Rect
-                x={loungePad}
-                y={loungePad}
-                width={element.width - loungePad * 2}
-                height={loungeBackH}
-                fill="#d8b4fe"
-                stroke="#a855f7"
-                strokeWidth={1.5}
-                cornerRadius={[5, 5, 0, 0] as any}
-              />
-              {/* Left arm */}
-              <Rect
-                x={loungePad}
-                y={loungePad + loungeBackH}
-                width={loungeArmWidth}
-                height={loungeSideH}
-                fill="#d8b4fe"
-                stroke="#a855f7"
-                strokeWidth={1.5}
-                cornerRadius={[0, 0, 0, 5] as any}
-              />
-              {/* Right arm */}
-              <Rect
-                x={element.width - loungePad - loungeArmWidth}
-                y={loungePad + loungeBackH}
-                width={loungeArmWidth}
-                height={loungeSideH}
-                fill="#d8b4fe"
-                stroke="#a855f7"
-                strokeWidth={1.5}
-                cornerRadius={[0, 0, 5, 0] as any}
-              />
-              {/* Coffee table */}
-              <Rect
-                x={hw - loungeCoffeeW / 2}
-                y={loungePad + loungeBackH + (loungeSideH - loungeCoffeeH) / 2}
-                width={loungeCoffeeW}
-                height={loungeCoffeeH}
-                fill="#f3e8ff"
-                stroke="#c084fc"
-                strokeWidth={1.5}
-                cornerRadius={5}
-              />
-            </>
-          )}
-          {/* Label — counter-rotated to stay horizontal */}
-          <Group x={hw} y={hh} rotation={-element.rotation}>
             <Text
-              x={-hw}
-              y={hh - 16}
-              width={element.width}
-              text={displayLabel}
-              fontSize={10}
-              fontStyle="bold"
-              fontFamily="system-ui, sans-serif"
-              fill="#6b21a8"
-              align="center"
-            />
-            {element.locked && (
-              <Group x={hw - 16} y={-hh + 3}>
-                <Rect x={0} y={4} width={10} height={7} cornerRadius={1.5} fill="rgba(107,114,128,0.9)" />
-                <Line points={[2, 4, 2, 1.5, 8, 1.5, 8, 4]} stroke="rgba(107,114,128,0.9)" strokeWidth={1.8} lineCap="round" lineJoin="round" />
-                <Circle x={5} y={8} radius={1.5} fill="#fff" opacity={0.7} />
-              </Group>
-            )}
-          </Group>
-        </>
-      ) : (
-        <>
-          {/* Generic element rendering */}
-          {isCircle ? (
-            <Ellipse
-              x={hw}
-              y={hh}
-              radiusX={hw}
-              radiusY={hh}
-              fill={baseFill}
-              stroke={selected ? "#6366f1" : baseStroke}
-              strokeWidth={selected ? 2.5 : 2}
-              dash={[6, 4]}
-              opacity={0.85}
-            />
-          ) : (
-            <Rect
-              width={element.width}
-              height={element.height}
-              fill={baseFill}
-              stroke={baseStroke}
-              strokeWidth={selected ? 2.5 : 2}
-              cornerRadius={8}
-              dash={[6, 4]}
-              opacity={0.85}
-            />
-          )}
-          {/* Custom element: front direction indicator (top-center chevron) */}
-          {element.element_type === 'custom' && (
-            <Line
-              points={[hw - 6, 8, hw, 2, hw + 6, 8]}
-              stroke={baseStroke}
-              strokeWidth={2}
-              lineCap="round"
-              lineJoin="round"
-              opacity={0.75}
-            />
-          )}
-          <Group x={hw} y={hh} rotation={-element.rotation}>
-            <Text
-              x={4 - hw}
+              x={-hw + 4}
               y={-8}
               width={element.width - 8}
               text={displayLabel}
-              fontSize={12}
+              fontSize={element.element_type === 'lounge' || element.element_type === 'periquera' ? 10 : 12}
               fontStyle="bold"
               fontFamily="system-ui, sans-serif"
-              fill="#374151"
+              fill={labelFill}
               align="center"
             />
-            {element.locked && (
-              <Group x={hw - 16} y={-hh + 3}>
-                <Rect x={0} y={4} width={10} height={7} cornerRadius={1.5} fill="rgba(107,114,128,0.9)" />
-                <Line points={[2, 4, 2, 1.5, 8, 1.5, 8, 4]} stroke="rgba(107,114,128,0.9)" strokeWidth={1.8} lineCap="round" lineJoin="round" />
-                <Circle x={5} y={8} radius={1.5} fill="#fff" opacity={0.7} />
-              </Group>
+          )}
+          {/* Lock icon — top-right corner */}
+          {element.locked && (
+            <Group x={hw - 16} y={-hh + 4}>
+              <Rect x={0} y={4} width={10} height={7} cornerRadius={1.5} fill="rgba(107,114,128,0.92)" />
+              <Line points={[2, 4, 2, 1.5, 8, 1.5, 8, 4]} stroke="rgba(107,114,128,0.92)" strokeWidth={1.8} lineCap="round" lineJoin="round" />
+              <Circle x={5} y={8} radius={1.5} fill="#fff" opacity={0.7} />
+            </Group>
+          )}
+        </Group>
+      </Group>
+
+      {/* ── Body group ── Transformer attaches here; contains ONLY visual shapes + front indicator */}
+      {/* listening=false when locked: mousedown passes through to Stage so lasso can start */}
+      <Group
+        id={`vel-${element.id}`}
+        x={cx} y={cy}
+        offsetX={hw} offsetY={hh}
+        rotation={element.rotation}
+        draggable={!element.locked}
+        listening={!element.locked}
+        onClick={(e: Konva.KonvaEventObject<MouseEvent>) => onSelect(e.evt.shiftKey)}
+        onTap={() => onSelect(false)}
+        onDragStart={(e) => onDragStart?.(e.target.x(), e.target.y())}
+        onDragMove={(e) => onDragMove?.(e.target.x(), e.target.y())}
+        onDragEnd={handleDragEnd}
+        onTransformEnd={handleTransformEnd}
+      >
+        {element.element_type === 'periquera' ? (
+          <>
+            <Rect
+              width={element.width} height={element.height}
+              fill={baseFill} stroke={baseStroke} strokeWidth={selected ? 2.5 : 1.5}
+              cornerRadius={8} opacity={0.35}
+            />
+            {isCircle ? (
+              <>
+                <Circle x={hw} y={hh} radius={periquTableR} fill="#fef9c3" stroke="#d97706" strokeWidth={2} shadowColor="rgba(0,0,0,0.12)" shadowBlur={5} />
+                <Circle x={hw} y={hh} radius={periquTableR * 0.62} fill="transparent" stroke="#fbbf24" strokeWidth={1} opacity={0.7} />
+                {Array.from({ length: periquStoolCount }).map((_, i) => {
+                  const angle = (2 * Math.PI * i) / periquStoolCount - Math.PI / 2
+                  return (
+                    <Group key={i} x={hw + periquStoolDist * Math.cos(angle)} y={hh + periquStoolDist * Math.sin(angle)}>
+                      <Circle radius={7} fill="#fde68a" stroke="#d97706" strokeWidth={1.5} />
+                      <Circle radius={2.5} fill="#92400e" />
+                    </Group>
+                  )
+                })}
+              </>
+            ) : (
+              (() => {
+                const pBarH = Math.max(16, element.height * 0.28)
+                const pBarX = loungePad * 1.5, pBarY = hh - pBarH / 2, pBarW = element.width - loungePad * 3
+                const pTopCount = Math.ceil(periquStoolCount / 2), pBotCount = Math.floor(periquStoolCount / 2)
+                const pStoolR = 6, pTopY = pBarY - pStoolR - 4, pBotY = pBarY + pBarH + pStoolR + 4
+                return (
+                  <>
+                    <Rect x={pBarX} y={pBarY} width={pBarW} height={pBarH} fill="#fef9c3" stroke="#d97706" strokeWidth={2} cornerRadius={4} shadowColor="rgba(0,0,0,0.12)" shadowBlur={4} />
+                    <Rect x={pBarX + 4} y={pBarY + 4} width={pBarW - 8} height={pBarH - 8} fill="transparent" stroke="#fbbf24" strokeWidth={1} cornerRadius={2} opacity={0.7} />
+                    {Array.from({ length: pTopCount }).map((_, i) => (
+                      <Group key={`t${i}`} x={pBarX + pBarW * (i + 1) / (pTopCount + 1)} y={pTopY}>
+                        <Circle radius={pStoolR} fill="#fde68a" stroke="#d97706" strokeWidth={1.5} />
+                        <Circle radius={2} fill="#92400e" />
+                      </Group>
+                    ))}
+                    {Array.from({ length: pBotCount }).map((_, i) => (
+                      <Group key={`b${i}`} x={pBarX + pBarW * (i + 1) / (pBotCount + 1)} y={pBotY}>
+                        <Circle radius={pStoolR} fill="#fde68a" stroke="#d97706" strokeWidth={1.5} />
+                        <Circle radius={2} fill="#92400e" />
+                      </Group>
+                    ))}
+                  </>
+                )
+              })()
             )}
-          </Group>
-        </>
-      )}
-    </Group>
+            {frontIndicatorNode}
+          </>
+        ) : element.element_type === 'area' ? (
+          <>
+            <Rect
+              width={element.width} height={element.height}
+              fill={baseFill} stroke={baseStroke} strokeWidth={selected ? 2.5 : 2}
+              cornerRadius={6} dash={[14, 7]} opacity={0.35}
+            />
+            {frontIndicatorNode}
+          </>
+        ) : element.element_type === 'lounge' ? (
+          <>
+            <Rect
+              width={element.width} height={element.height}
+              fill={baseFill} stroke={baseStroke} strokeWidth={selected ? 2.5 : 1.5}
+              cornerRadius={10} opacity={0.45}
+            />
+            {element.element_shape === 'sofa_circle' ? (
+              (() => {
+                const r = Math.min(hw, hh)
+                const outerR = r * 0.85, innerR = r * 0.52, coffeeR = r * 0.22
+                return (
+                  <>
+                    <Circle x={hw} y={hh} radius={outerR} fill="#d8b4fe" stroke="#a855f7" strokeWidth={2} />
+                    <Circle x={hw} y={hh} radius={innerR} fill={baseFill} stroke="#c084fc" strokeWidth={1} opacity={0.9} />
+                    <Circle x={hw} y={hh} radius={coffeeR} fill="#f3e8ff" stroke="#c084fc" strokeWidth={1.5} />
+                  </>
+                )
+              })()
+            ) : element.element_shape === 'sofa_single' ? (
+              (() => {
+                const backH = Math.max(14, element.height * 0.32), armW = Math.max(12, element.width * 0.10)
+                const seatH = element.height - backH - loungePad
+                return (
+                  <>
+                    <Rect x={loungePad} y={loungePad} width={element.width - loungePad * 2} height={backH} fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[5,5,0,0] as any} />
+                    <Rect x={loungePad + armW} y={loungePad + backH} width={element.width - loungePad * 2 - armW * 2} height={seatH} fill="#e9d5ff" stroke="#a855f7" strokeWidth={1} />
+                    <Rect x={loungePad} y={loungePad + backH} width={armW} height={seatH} fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[0,0,0,4] as any} />
+                    <Rect x={element.width - loungePad - armW} y={loungePad + backH} width={armW} height={seatH} fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[0,0,4,0] as any} />
+                  </>
+                )
+              })()
+            ) : element.element_shape === 'sofa_l' ? (
+              (() => {
+                const hBackH = Math.max(14, element.height * 0.32), hSeatH = element.height - hBackH - loungePad
+                const vBackW = Math.max(14, element.width * 0.28), lGap = loungePad
+                const lOpenX = loungePad + vBackW + lGap, lOpenY = loungePad + hBackH + lGap
+                const lOpenW = element.width - loungePad * 2 - vBackW - lGap, lOpenH = hSeatH - lGap * 2
+                const lCW = Math.max(22, lOpenW * 0.6), lCH = Math.max(14, lOpenH * 0.5)
+                return (
+                  <>
+                    <Rect x={loungePad} y={loungePad} width={element.width - loungePad * 2} height={hBackH} fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[5,5,0,0] as any} />
+                    <Rect x={loungePad} y={loungePad + hBackH} width={element.width - loungePad * 2} height={hSeatH} fill="#e9d5ff" stroke="#a855f7" strokeWidth={1} />
+                    <Rect x={loungePad} y={loungePad + hBackH} width={vBackW} height={hSeatH} fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[0,0,0,4] as any} />
+                    <Rect x={lOpenX + (lOpenW - lCW) / 2} y={lOpenY + (lOpenH - lCH) / 2} width={lCW} height={lCH} fill="#f3e8ff" stroke="#c084fc" strokeWidth={1.5} cornerRadius={4} />
+                  </>
+                )
+              })()
+            ) : (
+              /* Default U-shape sofa */
+              <>
+                <Rect x={loungePad} y={loungePad} width={element.width - loungePad * 2} height={loungeBackH} fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[5,5,0,0] as any} />
+                <Rect x={loungePad} y={loungePad + loungeBackH} width={loungeArmWidth} height={loungeSideH} fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[0,0,0,5] as any} />
+                <Rect x={element.width - loungePad - loungeArmWidth} y={loungePad + loungeBackH} width={loungeArmWidth} height={loungeSideH} fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[0,0,5,0] as any} />
+                <Rect x={hw - loungeCoffeeW / 2} y={loungePad + loungeBackH + (loungeSideH - loungeCoffeeH) / 2} width={loungeCoffeeW} height={loungeCoffeeH} fill="#f3e8ff" stroke="#c084fc" strokeWidth={1.5} cornerRadius={5} />
+              </>
+            )}
+            {frontIndicatorNode}
+          </>
+        ) : (
+          /* Generic: dance_floor, stage, entrance, bar, dj_booth, custom */
+          <>
+            {isCircle ? (
+              <Ellipse x={hw} y={hh} radiusX={hw} radiusY={hh} fill={baseFill} stroke={selected ? "#6366f1" : baseStroke} strokeWidth={selected ? 2.5 : 2} dash={[6, 4]} opacity={0.85} />
+            ) : (
+              <Rect width={element.width} height={element.height} fill={baseFill} stroke={baseStroke} strokeWidth={selected ? 2.5 : 2} cornerRadius={8} dash={[6, 4]} opacity={0.85} />
+            )}
+            {frontIndicatorNode}
+          </>
+        )}
+      </Group>
+    </>
   )
 }
+
