@@ -19,7 +19,7 @@ import { TableGuestsModal } from "./components/table-guests-modal"
 import { PrintView } from "./components/print-view"
 import { UnsavedChangesDialog } from "./components/unsaved-changes-dialog"
 import { toast } from "sonner"
-import { ArrowLeft, Trash2, Copy, Lock, Unlock, FlipHorizontal, FlipVertical } from "lucide-react"
+import { ArrowLeft, Trash2, Copy, Lock, Unlock, FlipHorizontal, FlipVertical, RotateCcw, RotateCw } from "lucide-react"
 import type { SeatingTable, VenueElementShape } from "./types"
 import { LOUNGE_SHAPE_LABELS } from "./types"
 
@@ -517,6 +517,57 @@ export default function SeatingPage({ params }: SeatingPageProps) {
                   />
                 </>
               )}
+              <div className="w-px h-4 bg-gray-200" />
+              {/* Rotation controls */}
+              <div className="flex items-center gap-1">
+                <button
+                  className="w-6 h-6 rounded flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                  title="Rotate -90°"
+                  onClick={() => seating.updateVenueElement(selectedElement.id, { rotation: ((selectedElement.rotation - 90) % 360 + 360) % 360 })}
+                >
+                  <RotateCcw className="w-3 h-3" />
+                </button>
+                <button
+                  className="w-6 h-6 rounded flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                  title="Rotate -45°"
+                  onClick={() => seating.updateVenueElement(selectedElement.id, { rotation: ((selectedElement.rotation - 45) % 360 + 360) % 360 })}
+                >
+                  <span className="text-[10px] font-bold">-45</span>
+                </button>
+                <input
+                  type="number"
+                  min={0}
+                  max={359}
+                  value={Math.round(selectedElement.rotation)}
+                  onChange={e => {
+                    const v = parseInt(e.target.value)
+                    if (!isNaN(v)) seating.updateVenueElement(selectedElement.id, { rotation: ((v % 360) + 360) % 360 })
+                  }}
+                  className="w-12 text-xs px-1 py-1 rounded-md border border-gray-200 focus:border-indigo-400 focus:outline-none text-center tabular-nums"
+                  title="Rotation in degrees"
+                />
+                <button
+                  className="w-6 h-6 rounded flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                  title="Rotate +45°"
+                  onClick={() => seating.updateVenueElement(selectedElement.id, { rotation: (selectedElement.rotation + 45) % 360 })}
+                >
+                  <span className="text-[10px] font-bold">+45</span>
+                </button>
+                <button
+                  className="w-6 h-6 rounded flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                  title="Rotate +90°"
+                  onClick={() => seating.updateVenueElement(selectedElement.id, { rotation: (selectedElement.rotation + 90) % 360 })}
+                >
+                  <RotateCw className="w-3 h-3" />
+                </button>
+                {selectedElement.rotation !== 0 && (
+                  <button
+                    className="h-6 px-1.5 rounded text-[10px] text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                    title="Reset rotation to 0°"
+                    onClick={() => seating.updateVenueElement(selectedElement.id, { rotation: 0 })}
+                  >0°</button>
+                )}
+              </div>
               <div className="w-px h-4 bg-gray-200" />
               {/* Color picker */}
               <span className="text-[11px] font-medium text-gray-500">Color</span>
