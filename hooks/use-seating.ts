@@ -55,6 +55,8 @@ interface UseSeatingReturn {
   updateVenueElement: (id: string, updates: Partial<VenueElement>) => void
   deleteVenueElement: (id: string) => Promise<boolean>
   duplicateVenueElement: (id: string) => Promise<VenueElement | null>
+  duplicateVenueElements: (ids: string[]) => Promise<VenueElement[]>
+  mirrorDuplicateVenueElements: (ids: string[], axis: 'h' | 'v') => VenueElement[]
 
   // Save
   saveLayout: () => Promise<boolean>
@@ -522,6 +524,7 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
       height: defs.h,
       rotation: 0,
       color: null,
+      locked: false,
       created_at: new Date().toISOString(),
     }
     newElementIdsRef.current.add(id)
@@ -563,6 +566,61 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
     return Promise.resolve(clone)
   }, [pushHistory])
 
+  const duplicateVenueElements = useCallback((ids: string[]): Promise<VenueElement[]> => {
+    const sources = venueElementsRef.current.filter(e => ids.includes(e.id))
+    if (!sources.length) return Promise.resolve([])
+    pushHistory()
+    const clones: VenueElement[] = sources.map(source => {
+      const newId = tempId()
+      const clone: VenueElement = {
+        ...source,
+        id: newId,
+        position_x: source.position_x + 20,
+        position_y: source.position_y + 20,
+        created_at: new Date().toISOString(),
+      }
+      newElementIdsRef.current.add(newId)
+      return clone
+    })
+    setVenueElements(prev => [...prev, ...clones])
+    setHasUnsavedChanges(true)
+    return Promise.resolve(clones)
+  }, [pushHistory])
+
+  const mirrorDuplicateVenueElements = useCallback((ids: string[], axis: 'h' | 'v'): VenueElement[] => {
+    const sources = venueElementsRef.current.filter(e => ids.includes(e.id))
+    if (!sources.length) return []
+    pushHistory()
+    const minX = Math.min(...sources.map(e => e.position_x))
+    const minY = Math.min(...sources.map(e => e.position_y))
+    const maxX = Math.max(...sources.map(e => e.position_x + e.width))
+    const maxY = Math.max(...sources.map(e => e.position_y + e.height))
+    const cx = (minX + maxX) / 2
+    const cy = (minY + maxY) / 2
+    const GRID = 20
+    const clones: VenueElement[] = sources.map(source => {
+      const newId = tempId()
+      const newX = axis === 'h' ? 2 * cx - source.position_x - source.width : source.position_x
+      const newY = axis === 'v' ? 2 * cy - source.position_y - source.height : source.position_y
+      const newRotation = axis === 'h'
+        ? (-source.rotation + 360) % 360
+        : (180 - source.rotation + 360) % 360
+      const clone: VenueElement = {
+        ...source,
+        id: newId,
+        position_x: Math.round(newX / GRID) * GRID,
+        position_y: Math.round(newY / GRID) * GRID,
+        rotation: newRotation,
+        created_at: new Date().toISOString(),
+      }
+      newElementIdsRef.current.add(newId)
+      return clone
+    })
+    setVenueElements(prev => [...prev, ...clones])
+    setHasUnsavedChanges(true)
+    return clones
+  }, [pushHistory])
+
   // ── Save layout ──
 
   const saveLayout = useCallback(async (): Promise<boolean> => {
@@ -599,7 +657,8 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
           e.position_x !== saved.position_x || e.position_y !== saved.position_y ||
           e.rotation !== saved.rotation || e.width !== saved.width || e.height !== saved.height ||
           e.label !== saved.label || e.color !== saved.color || e.element_type !== saved.element_type ||
-          e.element_shape !== saved.element_shape || e.capacity !== saved.capacity
+          e.element_shape !== saved.element_shape || e.capacity !== saved.capacity ||
+          Boolean(e.locked) !== Boolean(saved.locked)
         )
       })
       const newElements = allElements.filter(e => e.id.startsWith('temp_'))
@@ -642,6 +701,7 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
             height: e.height,
             rotation: e.rotation,
             color: e.color ?? null,
+            locked: e.locked ?? false,
           })),
           deletedTableIds: [...deletedTableIdsRef.current],
           deletedElementIds: [...deletedElementIdsRef.current],
@@ -737,6 +797,8 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
     updateVenueElement,
     deleteVenueElement,
     duplicateVenueElement,
+    duplicateVenueElements,
+    mirrorDuplicateVenueElements,
     saveLayout,
     discardChanges,
     undo,

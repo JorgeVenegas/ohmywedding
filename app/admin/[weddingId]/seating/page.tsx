@@ -19,7 +19,7 @@ import { TableGuestsModal } from "./components/table-guests-modal"
 import { PrintView } from "./components/print-view"
 import { UnsavedChangesDialog } from "./components/unsaved-changes-dialog"
 import { toast } from "sonner"
-import { ArrowLeft, Trash2, Copy } from "lucide-react"
+import { ArrowLeft, Trash2, Copy, Lock, Unlock, FlipHorizontal, FlipVertical } from "lucide-react"
 import type { SeatingTable, VenueElementShape } from "./types"
 import { LOUNGE_SHAPE_LABELS } from "./types"
 
@@ -264,6 +264,36 @@ export default function SeatingPage({ params }: SeatingPageProps) {
   const handleDuplicateElement = async (elementId: string) => {
     const clone = await seating.duplicateVenueElement(elementId)
     if (clone) setSelectedVenueElementIds([clone.id])
+  }
+
+  const handleDuplicateSelectedElements = async () => {
+    const clones = await seating.duplicateVenueElements(selectedVenueElementIds)
+    if (clones.length) {
+      setSelectedVenueElementIds(clones.map(e => e.id))
+      toast.success(`${clones.length} element${clones.length > 1 ? 's' : ''} duplicated`)
+    }
+  }
+
+  const handleMirrorDuplicateElements = (axis: 'h' | 'v') => {
+    const clones = seating.mirrorDuplicateVenueElements(selectedVenueElementIds, axis)
+    if (clones.length) {
+      setSelectedVenueElementIds(clones.map(e => e.id))
+      toast.success(`${clones.length} element${clones.length > 1 ? 's' : ''} mirrored`)
+    }
+  }
+
+  const handleDeleteSelectedElements = async () => {
+    for (const id of selectedVenueElementIds) {
+      await seating.deleteVenueElement(id)
+    }
+    setSelectedVenueElementIds([])
+    toast.success('Elements deleted')
+  }
+
+  const handleToggleLockElement = (elementId: string) => {
+    const el = seating.venueElements.find(e => e.id === elementId)
+    if (!el) return
+    seating.updateVenueElement(elementId, { locked: !el.locked })
   }
 
   const handleTableDragEnd = (tableId: string, x: number, y: number) => {
@@ -520,6 +550,18 @@ export default function SeatingPage({ params }: SeatingPageProps) {
                 )}
               </div>
               <div className="w-px h-4 bg-gray-200" />
+              {/* Lock / Unlock */}
+              <button
+                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                  selectedElement.locked
+                    ? 'text-amber-600 bg-amber-50 hover:bg-amber-100'
+                    : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50'
+                }`}
+                title={selectedElement.locked ? 'Unlock element' : 'Lock element (click-through)'}
+                onClick={() => handleToggleLockElement(selectedElement.id)}
+              >
+                {selectedElement.locked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+              </button>
               {/* Duplicate */}
               <button
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
@@ -535,6 +577,59 @@ export default function SeatingPage({ params }: SeatingPageProps) {
                 onClick={() => handleDeleteElement(selectedElement.id)}
               >
                 <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Multi-element floating bar — shown when 2+ venue elements are selected */}
+        <AnimatePresence>
+          {selectedVenueElementIds.length >= 2 && (
+            <motion.div
+              key="multi-el-bar"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.15 }}
+              className="absolute top-20 left-1/2 -translate-x-1/2 z-20 bg-white rounded-xl shadow-lg border border-gray-200/60 px-3 py-2 flex items-center gap-1.5"
+            >
+              <span className="text-xs font-semibold text-gray-500 px-1 whitespace-nowrap">
+                {selectedVenueElementIds.length} elements
+              </span>
+              <div className="w-px h-4 bg-gray-200" />
+              <button
+                className="flex items-center gap-1 px-2 h-7 rounded-lg text-xs text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                title="Duplicate all selected"
+                onClick={handleDuplicateSelectedElements}
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Duplicate</span>
+              </button>
+              <div className="w-px h-4 bg-gray-200" />
+              <button
+                className="flex items-center gap-1 px-2 h-7 rounded-lg text-xs text-gray-600 hover:text-violet-600 hover:bg-violet-50 transition-colors"
+                title="Mirror horizontally (flip left↔right)"
+                onClick={() => handleMirrorDuplicateElements('h')}
+              >
+                <FlipHorizontal className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Mirror H</span>
+              </button>
+              <button
+                className="flex items-center gap-1 px-2 h-7 rounded-lg text-xs text-gray-600 hover:text-violet-600 hover:bg-violet-50 transition-colors"
+                title="Mirror vertically (flip top↔bottom)"
+                onClick={() => handleMirrorDuplicateElements('v')}
+              >
+                <FlipVertical className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Mirror V</span>
+              </button>
+              <div className="w-px h-4 bg-gray-200" />
+              <button
+                className="flex items-center gap-1 px-2 h-7 rounded-lg text-xs text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                title="Delete all selected elements"
+                onClick={handleDeleteSelectedElements}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Delete all</span>
               </button>
             </motion.div>
           )}

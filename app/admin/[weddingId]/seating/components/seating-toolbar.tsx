@@ -44,6 +44,18 @@ const VENUE_ELEMENT_ICONS: Record<string, LucideIcon> = {
   area: MapPin,
   custom: PenLine,
 }
+
+const VENUE_ELEMENT_ICON_STYLES: Record<string, { bg: string; color: string }> = {
+  dance_floor: { bg: 'bg-violet-50', color: 'text-violet-500' },
+  stage:       { bg: 'bg-pink-50',   color: 'text-pink-500' },
+  entrance:    { bg: 'bg-blue-50',   color: 'text-blue-500' },
+  bar:         { bg: 'bg-orange-50', color: 'text-orange-500' },
+  dj_booth:    { bg: 'bg-lime-50',   color: 'text-lime-600' },
+  periquera:   { bg: 'bg-amber-50',  color: 'text-amber-600' },
+  lounge:      { bg: 'bg-fuchsia-50',color: 'text-fuchsia-500' },
+  area:        { bg: 'bg-sky-50',    color: 'text-sky-600' },
+  custom:      { bg: 'bg-gray-100',  color: 'text-gray-500' },
+}
 import { useState, useRef, useEffect, useCallback } from "react"
 import { createPortal } from "react-dom"
 import type { VenueElementType, VenueElementShape } from "../types"
@@ -240,8 +252,8 @@ export function SeatingToolbar({
               return (
                 <div key={type}>
                   <div className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 transition-colors group">
-                    <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
-                      {(() => { const Icon = VENUE_ELEMENT_ICONS[type]; return Icon ? <Icon className="w-3.5 h-3.5 text-gray-500" /> : null })()}
+                    <div className={`w-7 h-7 rounded-lg ${VENUE_ELEMENT_ICON_STYLES[type]?.bg ?? 'bg-gray-50'} flex items-center justify-center flex-shrink-0`}>
+                      {(() => { const Icon = VENUE_ELEMENT_ICONS[type]; return Icon ? <Icon className={`w-3.5 h-3.5 ${VENUE_ELEMENT_ICON_STYLES[type]?.color ?? 'text-gray-500'}`} /> : null })()}
                     </div>
                     <button className="flex-1 text-left text-sm text-gray-700"
                       onClick={() => {

@@ -210,21 +210,21 @@ export function SeatingCanvas({
     [zoom, stagePos, onZoomChange]
   )
 
-  // Attach Transformer to selected venue element (only when exactly one is selected)
+  // Attach Transformer to selected venue elements (supports multi-select resize)
   useEffect(() => {
     if (!transformerRef.current || !stageRef.current) return
-    const focusId = selectedVenueElementIds.length === 1 ? selectedVenueElementIds[0] : null
-    if (focusId) {
-      const node = stageRef.current.findOne(`#vel-${focusId}`)
-      if (node) {
-        transformerRef.current.nodes([node as Konva.Node])
-        transformerRef.current.getLayer()?.batchDraw()
-      }
+    if (selectedVenueElementIds.length > 0) {
+      const nodes = selectedVenueElementIds
+        .filter(id => !venueElements.find(e => e.id === id)?.locked)
+        .map(id => stageRef.current!.findOne(`#vel-${id}`))
+        .filter(Boolean) as Konva.Node[]
+      transformerRef.current.nodes(nodes)
+      transformerRef.current.getLayer()?.batchDraw()
     } else {
       transformerRef.current.nodes([])
       transformerRef.current.getLayer()?.batchDraw()
     }
-  }, [selectedVenueElementIds])
+  }, [selectedVenueElementIds, venueElements])
 
   // Attach Transformer to selected table (only for single selection; multi uses alignment panel)
   useEffect(() => {
@@ -1087,7 +1087,7 @@ function VenueElementShape({
       offsetX={hw}
       offsetY={hh}
       rotation={element.rotation}
-      draggable
+      draggable={!element.locked}
       onClick={(e: Konva.KonvaEventObject<MouseEvent>) => onSelect(e.evt.shiftKey)}
       onTap={() => onSelect(false)}
       onDragStart={(e) => onDragStart?.(e.target.x(), e.target.y())}
@@ -1182,18 +1182,27 @@ function VenueElementShape({
               )
             })()
           )}
-          {/* Label */}
-          <Text
-            x={0}
-            y={element.height - 16}
-            width={element.width}
-            text={displayLabel}
-            fontSize={10}
-            fontStyle="bold"
-            fontFamily="system-ui, sans-serif"
-            fill="#92400e"
-            align="center"
-          />
+          {/* Label — counter-rotated to stay horizontal */}
+          <Group x={hw} y={hh} rotation={-element.rotation}>
+            <Text
+              x={-hw}
+              y={hh - 16}
+              width={element.width}
+              text={displayLabel}
+              fontSize={10}
+              fontStyle="bold"
+              fontFamily="system-ui, sans-serif"
+              fill="#92400e"
+              align="center"
+            />
+            {element.locked && (
+              <Group x={hw - 16} y={-hh + 3}>
+                <Rect x={0} y={4} width={10} height={7} cornerRadius={1.5} fill="rgba(107,114,128,0.9)" />
+                <Line points={[2, 4, 2, 1.5, 8, 1.5, 8, 4]} stroke="rgba(107,114,128,0.9)" strokeWidth={1.8} lineCap="round" lineJoin="round" />
+                <Circle x={5} y={8} radius={1.5} fill="#fff" opacity={0.7} />
+              </Group>
+            )}
+          </Group>
         </>
       ) : element.element_type === 'area' ? (
         <>
@@ -1208,18 +1217,27 @@ function VenueElementShape({
             dash={[14, 7]}
             opacity={0.35}
           />
-          <Text
-            x={10}
-            y={10}
-            width={element.width - 20}
-            text={displayLabel}
-            fontSize={Math.min(18, Math.max(11, element.height * 0.1))}
-            fontStyle="bold"
-            fontFamily="system-ui, sans-serif"
-            fill={baseStroke}
-            align="left"
-            opacity={0.85}
-          />
+          <Group x={hw} y={hh} rotation={-element.rotation}>
+            <Text
+              x={10 - hw}
+              y={10 - hh}
+              width={element.width - 20}
+              text={displayLabel}
+              fontSize={Math.min(18, Math.max(11, element.height * 0.1))}
+              fontStyle="bold"
+              fontFamily="system-ui, sans-serif"
+              fill={baseStroke}
+              align="left"
+              opacity={0.85}
+            />
+            {element.locked && (
+              <Group x={hw - 16} y={-hh + 3}>
+                <Rect x={0} y={4} width={10} height={7} cornerRadius={1.5} fill="rgba(107,114,128,0.9)" />
+                <Line points={[2, 4, 2, 1.5, 8, 1.5, 8, 4]} stroke="rgba(107,114,128,0.9)" strokeWidth={1.8} lineCap="round" lineJoin="round" />
+                <Circle x={5} y={8} radius={1.5} fill="#fff" opacity={0.7} />
+              </Group>
+            )}
+          </Group>
         </>
       ) : element.element_type === 'lounge' ? (
         <>
@@ -1354,18 +1372,27 @@ function VenueElementShape({
               />
             </>
           )}
-          {/* Label */}
-          <Text
-            x={0}
-            y={element.height - 16}
-            width={element.width}
-            text={displayLabel}
-            fontSize={10}
-            fontStyle="bold"
-            fontFamily="system-ui, sans-serif"
-            fill="#6b21a8"
-            align="center"
-          />
+          {/* Label — counter-rotated to stay horizontal */}
+          <Group x={hw} y={hh} rotation={-element.rotation}>
+            <Text
+              x={-hw}
+              y={hh - 16}
+              width={element.width}
+              text={displayLabel}
+              fontSize={10}
+              fontStyle="bold"
+              fontFamily="system-ui, sans-serif"
+              fill="#6b21a8"
+              align="center"
+            />
+            {element.locked && (
+              <Group x={hw - 16} y={-hh + 3}>
+                <Rect x={0} y={4} width={10} height={7} cornerRadius={1.5} fill="rgba(107,114,128,0.9)" />
+                <Line points={[2, 4, 2, 1.5, 8, 1.5, 8, 4]} stroke="rgba(107,114,128,0.9)" strokeWidth={1.8} lineCap="round" lineJoin="round" />
+                <Circle x={5} y={8} radius={1.5} fill="#fff" opacity={0.7} />
+              </Group>
+            )}
+          </Group>
         </>
       ) : (
         <>
@@ -1394,17 +1421,37 @@ function VenueElementShape({
               opacity={0.85}
             />
           )}
-          <Text
-            x={4}
-            y={element.height / 2 - 8}
-            width={element.width - 8}
-            text={displayLabel}
-            fontSize={12}
-            fontStyle="bold"
-            fontFamily="system-ui, sans-serif"
-            fill="#374151"
-            align="center"
-          />
+          {/* Custom element: front direction indicator (top-center chevron) */}
+          {element.element_type === 'custom' && (
+            <Line
+              points={[hw - 6, 8, hw, 2, hw + 6, 8]}
+              stroke={baseStroke}
+              strokeWidth={2}
+              lineCap="round"
+              lineJoin="round"
+              opacity={0.75}
+            />
+          )}
+          <Group x={hw} y={hh} rotation={-element.rotation}>
+            <Text
+              x={4 - hw}
+              y={-8}
+              width={element.width - 8}
+              text={displayLabel}
+              fontSize={12}
+              fontStyle="bold"
+              fontFamily="system-ui, sans-serif"
+              fill="#374151"
+              align="center"
+            />
+            {element.locked && (
+              <Group x={hw - 16} y={-hh + 3}>
+                <Rect x={0} y={4} width={10} height={7} cornerRadius={1.5} fill="rgba(107,114,128,0.9)" />
+                <Line points={[2, 4, 2, 1.5, 8, 1.5, 8, 4]} stroke="rgba(107,114,128,0.9)" strokeWidth={1.8} lineCap="round" lineJoin="round" />
+                <Circle x={5} y={8} radius={1.5} fill="#fff" opacity={0.7} />
+              </Group>
+            )}
+          </Group>
         </>
       )}
     </Group>

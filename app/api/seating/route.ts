@@ -177,6 +177,7 @@ export async function PUT(request: Request) {
       height: e.height,
       rotation: e.rotation,
       color: e.color ?? null,
+      locked: e.locked ?? false,
     })
 
     // Step 1: deletes + upsert existing — all in parallel

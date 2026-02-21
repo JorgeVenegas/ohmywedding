@@ -53,6 +53,7 @@ export interface VenueElement {
   height: number
   rotation: number
   color: string | null
+  locked: boolean
   created_at: string
 }
 

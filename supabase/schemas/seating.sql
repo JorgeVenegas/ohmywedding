@@ -51,6 +51,7 @@ create table "venue_elements" (
   "height" double precision not null default 150,
   "rotation" double precision not null default 0,
   "color" text,
+  "locked" boolean not null default false,
   "created_at" timestamp with time zone default now()
 );
 
