@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useCallback, useEffect, useState } from "react"
-import { Stage, Layer, Rect, Circle, Text, Group, Line, Transformer } from "react-konva"
+import { Stage, Layer, Rect, Circle, Ellipse, Text, Group, Line, Transformer } from "react-konva"
 import type Konva from "konva"
 import type { ReactElement } from "react"
 import type { TableWithAssignments, VenueElement } from "../types"
@@ -23,6 +23,7 @@ interface SeatingCanvasProps {
   onSelectElement?: (id: string | null) => void
   onTableDelete?: (id: string) => void
   onTableDuplicate?: (id: string) => void
+  fitToScreenTrigger?: number
 }
 
 const GRID_SIZE = 20
@@ -30,18 +31,21 @@ const CANVAS_WIDTH = 3000
 const CANVAS_HEIGHT = 2000
 
 function getTableColor(table: TableWithAssignments): string {
-  if (table.shape === 'sweetheart') return "#fef3c7" // amber-100 (gold)
-  if (table.isOverfilled) return "#fca5a5" // red-300
-  if (table.occupancy >= table.capacity) return "#86efac" // green-300
-  if (table.occupancy > 0) return "#fde68a" // yellow-300
-  return "#e5e7eb" // gray-200
+  if (table.shape === 'sweetheart') return "#fef9ee" // warm cream for sweetheart
+  return "#faf7f3" // consistent warm off-white for all tables
+}
+
+function getStatusColor(table: TableWithAssignments): string {
+  if (table.isOverfilled) return "#ef4444"       // red
+  if (table.occupancy >= table.capacity) return "#22c55e"  // green
+  if (table.occupancy > 0) return "#f59e0b"      // amber
+  return "#d1d5db"                                // gray (empty)
 }
 
 function getTableStroke(table: TableWithAssignments, selected: boolean): string {
-  if (selected) return "#3b82f6" // blue-500
-  if (table.shape === 'sweetheart') return "#d97706" // amber-600 (gold)
-  if (table.isOverfilled) return "#ef4444" // red-500
-  return "#9ca3af" // gray-400
+  if (selected) return "#3b82f6"
+  if (table.shape === 'sweetheart') return "#d97706"
+  return "#d4a574" // warm rose gold border for all tables
 }
 
 export function SeatingCanvas({
@@ -59,6 +63,7 @@ export function SeatingCanvas({
   onSelectElement,
   onTableDelete,
   onTableDuplicate,
+  fitToScreenTrigger,
 }: SeatingCanvasProps) {
   const stageRef = useRef<Konva.Stage>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -111,6 +116,43 @@ export function SeatingCanvas({
     if (containerRef.current) observer.observe(containerRef.current)
     return () => observer.disconnect()
   }, [])
+
+  // Fit-to-screen: calculate bounding box of all tables & elements, zoom to fit
+  useEffect(() => {
+    if (fitToScreenTrigger === undefined || fitToScreenTrigger === 0) return
+    const allItems = [
+      ...tables.map(t => ({
+        x: t.position_x, y: t.position_y,
+        w: t.width, h: t.shape === 'round' ? t.width : t.height
+      })),
+      ...venueElements.map(e => ({
+        x: e.position_x, y: e.position_y, w: e.width, h: e.height
+      })),
+    ]
+    if (allItems.length === 0) {
+      onZoomChange(1)
+      setStagePos({ x: 0, y: 0 })
+      return
+    }
+    const PADDING = 80 // px padding around the bounding box
+    const minX = Math.min(...allItems.map(i => i.x)) - PADDING
+    const minY = Math.min(...allItems.map(i => i.y)) - PADDING
+    const maxX = Math.max(...allItems.map(i => i.x + i.w)) + PADDING
+    const maxY = Math.max(...allItems.map(i => i.y + i.h)) + PADDING
+    const bboxW = maxX - minX
+    const bboxH = maxY - minY
+    const scaleX = stageSize.width / bboxW
+    const scaleY = stageSize.height / bboxH
+    const newZoom = Math.max(0.25, Math.min(2, Math.min(scaleX, scaleY)))
+    const newX = (stageSize.width - bboxW * newZoom) / 2 - minX * newZoom
+    const newY = (stageSize.height - bboxH * newZoom) / 2 - minY * newZoom
+    onZoomChange(newZoom)
+    setStagePos({ x: newX, y: newY })
+    if (stageRef.current) {
+      stageRef.current.position({ x: newX, y: newY })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitToScreenTrigger])
 
   // Keyboard modifiers: Space = pan, Shift tracked for multi-select, Escape = deselect
   useEffect(() => {
@@ -666,27 +708,46 @@ function TableShape({
           fill={fill}
           stroke={stroke}
           strokeWidth={strokeWidth}
-          shadowColor="rgba(0,0,0,0.1)"
-          shadowBlur={selected ? 10 : 4}
-          shadowOffset={{ x: 0, y: 2 }}
+          shadowColor="rgba(0,0,0,0.10)"
+          shadowBlur={selected ? 14 : 8}
+          shadowOffset={{ x: 0, y: 3 }}
         />
+        {/* Chairs */}
         {Array.from({ length: table.capacity }).map((_, i) => {
           const angle = (2 * Math.PI * i) / table.capacity - Math.PI / 2
-          const seatX = radius + (radius + 12) * Math.cos(angle)
-          const seatY = radius + (radius + 12) * Math.sin(angle)
+          const seatX = radius + (radius + 14) * Math.cos(angle)
+          const seatY = radius + (radius + 14) * Math.sin(angle)
           const occupied = i < table.occupancy
+          // Chair faces OUTWARD: local +y points away from table center
+          const chairRotation = (angle * 180 / Math.PI) + 90
+          const seatFill = occupied ? "#c4b5fd" : "#f5efe6"
+          const seatStroke = occupied ? "#7c3aed" : "#c4a87a"
+          const backFill = occupied ? "#a78bfa" : "#e8d9c5"
           return (
-            <Circle key={i} x={seatX} y={seatY} radius={6}
-              fill={occupied ? "#6366f1" : "#d1d5db"}
-              stroke={occupied ? "#4f46e5" : "#9ca3af"} strokeWidth={1} />
+            <Group key={i} x={seatX} y={seatY} rotation={chairRotation}>
+              {/* Seat cushion — farther from table */}
+              <Rect x={-5.5} y={2} width={11} height={9} cornerRadius={[2, 2, 3, 3]} fill={seatFill} stroke={seatStroke} strokeWidth={1} />
+              {/* Backrest — between seat and table edge */}
+              <Rect x={-6} y={-6} width={12} height={7} cornerRadius={[2, 2, 0, 0]} fill={backFill} stroke={seatStroke} strokeWidth={1} />
+            </Group>
           )
         })}
+        {/* Table name */}
         <Text
-          x={5} y={radius - 14}
+          x={5} y={radius - 15}
           width={radius * 2 - 10}
-          text={`${table.name}\n${table.occupancy}/${table.capacity}`}
-          fontSize={12} fontFamily="system-ui, sans-serif" fill="#374151" align="center" lineHeight={1.3}
+          text={table.name}
+          fontSize={11} fontFamily="system-ui, sans-serif" fontStyle="bold" fill="#78350f" align="center"
         />
+        {/* Occupancy */}
+        <Text
+          x={5} y={radius - 2}
+          width={radius * 2 - 10}
+          text={`${table.occupancy}/${table.capacity}`}
+          fontSize={9} fontFamily="system-ui, sans-serif" fill="#a16207" align="center"
+        />
+        {/* Status indicator dot — top-right inside the table circle */}
+        <Circle x={radius * 1.55} y={radius * 0.45} radius={5} fill={getStatusColor(table)} stroke="white" strokeWidth={1.5} />
       </Group>
     )
   }
@@ -731,9 +792,9 @@ function TableShape({
           fill={fill}
           stroke={stroke}
           strokeWidth={strokeWidth}
-          cornerRadius={10}
-          shadowColor="rgba(217,119,6,0.25)"
-          shadowBlur={selected ? 12 : 6}
+          cornerRadius={12}
+          shadowColor="rgba(217,119,6,0.2)"
+          shadowBlur={selected ? 14 : 8}
           shadowOffset={{ x: 0, y: 3 }}
         />
         {/* Crown / heart */}
@@ -750,17 +811,21 @@ function TableShape({
           text={`${table.name} · ${table.occupancy}/${table.capacity}`}
           fontSize={9} fontFamily="system-ui, sans-serif" fill="#78350f" align="center"
         />
+        {/* Status indicator dot */}
+        <Circle x={table.width - 8} y={8} radius={4} fill={getStatusColor(table)} stroke="white" strokeWidth={1.5} />
         {/* Front seats (top side) */}
-        {Array.from({ length: sideA }).map((_, i) => (
-          <Circle key={`sw-${i}`}
-            x={((i + 1) / (sideA + 1)) * table.width}
-            y={-12}
-            radius={6}
-            fill={i < table.occupancy ? "#f59e0b" : "#fde68a"}
-            stroke={i < table.occupancy ? "#d97706" : "#fbbf24"}
-            strokeWidth={1}
-          />
-        ))}
+        {Array.from({ length: sideA }).map((_, i) => {
+          const occ = i < table.occupancy
+          const seatFill = occ ? "#c4b5fd" : "#fef9c3"
+          const seatStroke = occ ? "#7c3aed" : "#d97706"
+          const backFill = occ ? "#a78bfa" : "#fde68a"
+          return (
+            <Group key={`sw-${i}`} x={((i + 1) / (sideA + 1)) * table.width} y={-14} rotation={180}>
+              <Rect x={-5.5} y={-9} width={11} height={9} cornerRadius={[2, 2, 3, 3]} fill={seatFill} stroke={seatStroke} strokeWidth={1} />
+              <Rect x={-6} y={1} width={12} height={5} cornerRadius={[0, 0, 2, 2]} fill={backFill} stroke={seatStroke} strokeWidth={1} />
+            </Group>
+          )
+        })}
       </Group>
     )
   }
@@ -791,18 +856,26 @@ function TableShape({
         fill={fill}
         stroke={stroke}
         strokeWidth={strokeWidth}
-        cornerRadius={6}
-        shadowColor="rgba(0,0,0,0.1)"
-        shadowBlur={selected ? 10 : 4}
-        shadowOffset={{ x: 0, y: 2 }}
+        cornerRadius={8}
+        shadowColor="rgba(0,0,0,0.10)"
+        shadowBlur={selected ? 14 : 8}
+        shadowOffset={{ x: 0, y: 3 }}
       />
       {renderRectSeats(table)}
       <Text
-        x={5} y={hh - 14}
+        x={5} y={hh - 15}
         width={table.width - 10}
-        text={`${table.name}\n${table.occupancy}/${table.capacity}`}
-        fontSize={12} fontFamily="system-ui, sans-serif" fill="#374151" align="center" lineHeight={1.3}
+        text={table.name}
+        fontSize={11} fontFamily="system-ui, sans-serif" fontStyle="bold" fill="#78350f" align="center"
       />
+      <Text
+        x={5} y={hh - 2}
+        width={table.width - 10}
+        text={`${table.occupancy}/${table.capacity}`}
+        fontSize={9} fontFamily="system-ui, sans-serif" fill="#a16207" align="center"
+      />
+      {/* Status indicator dot */}
+      <Circle x={table.width - 8} y={8} radius={5} fill={getStatusColor(table)} stroke="white" strokeWidth={1.5} />
     </Group>
   )
 }
@@ -816,27 +889,43 @@ function renderRectSeats(table: TableWithAssignments) {
   let seatIdx = 0
 
   const occupied = (i: number) => i < table.occupancy
-  const seatCircle = (key: string, x: number, y: number, occ: boolean) => (
-    <Circle key={key} x={x} y={y} radius={6}
-      fill={occ ? "#6366f1" : "#d1d5db"}
-      stroke={occ ? "#4f46e5" : "#9ca3af"} strokeWidth={1} />
-  )
 
-  // Side A — top
+  // Render a chair at the given position with a rotation matching the table side
+  // rotation=0: seat faces down (backrest toward +y in local = outward), e.g. side B
+  // chairRotation lookup for each side matches `90 - angle_deg` formula:
+  //   side A (top)    angle=-90deg → rotation=90-(-90)=180
+  //   side B (bottom) angle=+90deg → rotation=90-90=0
+  //   head A (left)   angle=180deg → rotation=90-180=-90
+  //   head B (right)  angle=0deg   → rotation=90-0=90
+  const chairGroup = (key: string, x: number, y: number, occ: boolean, rotation: number) => {
+    const seatFill = occ ? "#c4b5fd" : "#f5efe6"
+    const seatStroke = occ ? "#7c3aed" : "#c4a87a"
+    const backFill = occ ? "#a78bfa" : "#e8d9c5"
+    return (
+      <Group key={key} x={x} y={y} rotation={rotation}>
+        {/* Seat cushion */}
+        <Rect x={-5.5} y={-9} width={11} height={9} cornerRadius={[2, 2, 3, 3]} fill={seatFill} stroke={seatStroke} strokeWidth={1} />
+        {/* Backrest */}
+        <Rect x={-6} y={1} width={12} height={5} cornerRadius={[0, 0, 2, 2]} fill={backFill} stroke={seatStroke} strokeWidth={1} />
+      </Group>
+    )
+  }
+
+  // Side A — top (outward = up, rotation=180)
   for (let i = 0; i < sideA; i++) {
-    seats.push(seatCircle(`a-${i}`, ((i + 1) / (sideA + 1)) * table.width, -12, occupied(seatIdx++)))
+    seats.push(chairGroup(`a-${i}`, ((i + 1) / (sideA + 1)) * table.width, -14, occupied(seatIdx++), 180))
   }
-  // Side B — bottom
+  // Side B — bottom (outward = down, rotation=0)
   for (let i = 0; i < sideB; i++) {
-    seats.push(seatCircle(`b-${i}`, ((i + 1) / (sideB + 1)) * table.width, table.height + 12, occupied(seatIdx++)))
+    seats.push(chairGroup(`b-${i}`, ((i + 1) / (sideB + 1)) * table.width, table.height + 14, occupied(seatIdx++), 0))
   }
-  // Head A — left end
+  // Head A — left end (outward = left, rotation=+90)
   for (let i = 0; i < headA; i++) {
-    seats.push(seatCircle(`ha-${i}`, -12, ((i + 1) / (headA + 1)) * table.height, occupied(seatIdx++)))
+    seats.push(chairGroup(`ha-${i}`, -14, ((i + 1) / (headA + 1)) * table.height, occupied(seatIdx++), 90))
   }
-  // Head B — right end
+  // Head B — right end (outward = right, rotation=-90)
   for (let i = 0; i < headB; i++) {
-    seats.push(seatCircle(`hb-${i}`, table.width + 12, ((i + 1) / (headB + 1)) * table.height, occupied(seatIdx++)))
+    seats.push(chairGroup(`hb-${i}`, table.width + 14, ((i + 1) / (headB + 1)) * table.height, occupied(seatIdx++), -90))
   }
 
   return seats
@@ -856,7 +945,6 @@ function VenueElementShape({
   onDragEnd: (x: number, y: number) => void
   onResize: (width: number, height: number, x: number, y: number, rotation: number) => void
 }) {
-  const label = VENUE_ELEMENT_LABELS[element.element_type]
   const hw = element.width / 2
   const hh = element.height / 2
 
@@ -883,11 +971,14 @@ function VenueElementShape({
   }
 
   const fillColors: Record<string, string> = {
-    dance_floor: "#ddd6fe",    // violet-200
-    stage: "#fbcfe8",          // pink-200
-    entrance: "#bfdbfe",       // blue-200
-    bar: "#fed7aa",            // orange-200
-    dj_booth: "#d9f99d",       // lime-200
+    dance_floor: "#ddd6fe",
+    stage: "#fbcfe8",
+    entrance: "#bfdbfe",
+    bar: "#fed7aa",
+    dj_booth: "#d9f99d",
+    periquera: "#fde68a",
+    lounge: "#f5d0fe",
+    custom: "#e5e7eb",
   }
 
   const strokeColors: Record<string, string> = {
@@ -896,7 +987,17 @@ function VenueElementShape({
     entrance: "#3b82f6",
     bar: "#f97316",
     dj_booth: "#84cc16",
+    periquera: "#d97706",
+    lounge: "#a855f7",
+    custom: "#6b7280",
   }
+
+  const baseFill = element.color ?? fillColors[element.element_type] ?? "#e5e7eb"
+  const baseStroke = selected ? "#6366f1" : (element.color ? element.color : (strokeColors[element.element_type] ?? "#9ca3af"))
+  const labelInfo = VENUE_ELEMENT_LABELS[element.element_type]
+  const displayLabel = element.label || labelInfo?.en || element.element_type
+  const displayIcon = labelInfo?.icon ?? "📦"
+  const isCircle = element.element_shape === 'circle'
 
   return (
     <Group
@@ -912,26 +1013,50 @@ function VenueElementShape({
       onDragEnd={handleDragEnd}
       onTransformEnd={handleTransformEnd}
     >
-      <Rect
-        width={element.width}
-        height={element.height}
-        fill={element.color ?? fillColors[element.element_type] ?? "#e5e7eb"}
-        stroke={selected ? "#6366f1" : (element.color ?? strokeColors[element.element_type] ?? "#9ca3af")}
-        strokeWidth={selected ? 2.5 : 2}
-        cornerRadius={8}
-        dash={[6, 4]}
-        opacity={0.8}
-      />
+      {isCircle ? (
+        <Ellipse
+          x={hw}
+          y={hh}
+          radiusX={hw}
+          radiusY={hh}
+          fill={baseFill}
+          stroke={selected ? "#6366f1" : baseStroke}
+          strokeWidth={selected ? 2.5 : 2}
+          dash={[6, 4]}
+          opacity={0.85}
+        />
+      ) : (
+        <Rect
+          width={element.width}
+          height={element.height}
+          fill={baseFill}
+          stroke={baseStroke}
+          strokeWidth={selected ? 2.5 : 2}
+          cornerRadius={8}
+          dash={[6, 4]}
+          opacity={0.85}
+        />
+      )}
       <Text
         x={0}
-        y={element.height / 2 - 16}
+        y={element.height / 2 - 18}
         width={element.width}
-        text={`${label.icon}\n${element.label || label.en}`}
-        fontSize={13}
+        text={displayIcon}
+        fontSize={18}
         fontFamily="system-ui, sans-serif"
         fill="#374151"
         align="center"
-        lineHeight={1.4}
+      />
+      <Text
+        x={4}
+        y={element.height / 2 + 2}
+        width={element.width - 8}
+        text={displayLabel}
+        fontSize={12}
+        fontStyle="bold"
+        fontFamily="system-ui, sans-serif"
+        fill="#374151"
+        align="center"
       />
     </Group>
   )

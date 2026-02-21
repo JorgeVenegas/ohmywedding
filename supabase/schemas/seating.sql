@@ -41,7 +41,8 @@ create index "idx_seating_assignments_table" on seating_assignments (table_id);
 create table "venue_elements" (
   "id" uuid primary key default gen_random_uuid(),
   "wedding_id" uuid not null references weddings(id) on delete cascade,
-  "element_type" text not null check ("element_type" in ('dance_floor', 'stage', 'entrance', 'bar', 'dj_booth')),
+  "element_type" text not null check ("element_type" in ('dance_floor', 'stage', 'entrance', 'bar', 'dj_booth', 'periquera', 'lounge', 'custom')),
+  "element_shape" text not null default 'rect' check ("element_shape" in ('rect', 'circle')),
   "label" text,
   "position_x" double precision not null default 0,
   "position_y" double precision not null default 0,

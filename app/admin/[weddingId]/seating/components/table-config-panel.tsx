@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { useTranslation } from "@/components/contexts/i18n-context"
 import { X, Copy, Trash2, Eye, UserMinus, ArrowRight, ChevronDown, ChevronRight } from "lucide-react"
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
+import { MoveGuestDialog } from "./move-guest-dialog"
 import type { TableWithAssignments, SeatingTable } from "../types"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -47,7 +48,7 @@ function computeRectSize(side_a: number, head_a: number): { width: number; heigh
 
 /**
  * When capacity changes, distribute seats smartly:
- * - If heads currently > 0: maintain side/head ratio
+ * - If heads currently > 0: preserve existing head count, put remaining on sides
  * - Otherwise: put everything on long sides
  */
 function smartDistribute(
@@ -58,11 +59,17 @@ function smartDistribute(
   if (currentHead <= 0) {
     return { side: Math.max(1, Math.round(capacity / 2)), head: 0 }
   }
-  const total = currentSide * 2 + currentHead * 2
-  const sideRatio = total > 0 ? (currentSide * 2) / total : 0.8
-  const newSide = Math.max(1, Math.round(capacity * sideRatio / 2))
-  const newHead = Math.max(0, Math.round((capacity - newSide * 2) / 2))
-  return { side: newSide, head: newHead }
+  // Keep heads at their current value, distribute the rest to sides
+  const headTotal = currentHead * 2
+  const remaining = capacity - headTotal
+  if (remaining <= 0) {
+    // Not enough capacity for current heads — scale heads down
+    const newHead = Math.max(0, Math.floor(capacity / 2))
+    const leftover = capacity - newHead * 2
+    return { side: Math.max(leftover > 0 ? Math.ceil(leftover / 2) : 0, 0), head: newHead }
+  }
+  const newSide = Math.max(1, Math.round(remaining / 2))
+  return { side: newSide, head: currentHead }
 }
 
 export function TableConfigPanel({
@@ -79,7 +86,8 @@ export function TableConfigPanel({
 }: TableConfigPanelProps) {
   const { t } = useTranslation()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [movingGuestId, setMovingGuestId] = useState<string | null>(null)
+  const [showMoveDialog, setShowMoveDialog] = useState(false)
+  const [moveInitialGuestId, setMoveInitialGuestId] = useState<string | null>(null)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [advancedSeats, setAdvancedSeats] = useState(false)
 
@@ -180,16 +188,10 @@ export function TableConfigPanel({
                   onClick={() => {
                     const side = Math.ceil(table.capacity / 2)
                     const { width, height } = computeRectSize(side, 0)
-                    onUpdateTable({ shape: 'rectangular', side_a_count: side, side_b_count: side, head_a_count: 0, head_b_count: 0, width, height })
+                    onUpdateTable({ shape: 'rectangular', side_a_count: side, side_b_count: side, head_a_count: 0, head_b_count: 0, width, height, rotation: 0 })
                   }}
                   className="flex-1 text-xs h-8"
                 >{t('admin.seating.table.rectangular')}</Button>
-                <Button
-                  variant={table.shape === 'sweetheart' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => onUpdateTable({ shape: 'sweetheart', width: 160, height: 40, capacity: 2, side_a_count: 2, side_b_count: 0 })}
-                  className="flex-1 text-xs h-8 gap-0.5"
-                >♥</Button>
               </div>
             </div>
 
@@ -380,54 +382,48 @@ export function TableConfigPanel({
           </div>
 
           {/* Guests */}
-          <div className="border-t border-gray-50 px-4 py-3">
+          <div className="border-t border-gray-50 px-4 py-3 flex flex-col min-h-0 flex-1">
             <div className="flex items-center justify-between mb-2">
               <p className="text-[11px] font-medium text-gray-500">
                 {t('admin.seating.table.guests')}
                 <span className="text-gray-400 font-normal ml-1">({table.occupancy})</span>
               </p>
-              {table.occupancy > 0 && (
-                <button onClick={onViewGuests} className="flex items-center gap-1 text-[10px] text-indigo-500 hover:text-indigo-700 font-medium">
-                  <Eye className="w-3 h-3" />
-                  {t('admin.seating.table.viewGuests')}
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {table.occupancy > 1 && (
+                  <button onClick={() => { setMoveInitialGuestId(null); setShowMoveDialog(true) }} className="flex items-center gap-1 text-[10px] text-amber-600 hover:text-amber-700 font-medium">
+                    <ArrowRight className="w-3 h-3" />
+                    {t('admin.seating.table.moveGuest')}
+                  </button>
+                )}
+                {table.occupancy > 0 && (
+                  <button onClick={onViewGuests} className="flex items-center gap-1 text-[10px] text-indigo-500 hover:text-indigo-700 font-medium">
+                    <Eye className="w-3 h-3" />
+                    {t('admin.seating.table.viewGuests')}
+                  </button>
+                )}
+              </div>
             </div>
 
             {table.assignedGuests.length === 0 ? (
               <p className="text-[11px] text-gray-400 py-1">{t('admin.seating.table.noGuests')}</p>
             ) : (
-              <div className="space-y-1 max-h-44 overflow-y-auto">
+              <div className="space-y-1 flex-1 overflow-y-auto">
                 {table.assignedGuests.map((a) => (
-                  <div key={a.id} className="flex items-center gap-1 text-xs bg-gray-50 rounded-lg px-2.5 py-1.5">
-                    <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                      <span className="text-[9px] font-bold text-indigo-600 uppercase">
+                  <div key={a.id} className="flex items-center gap-1.5 text-xs bg-gray-50 rounded-lg px-2.5 py-2">
+                    <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-[10px] font-bold text-indigo-600 uppercase">
                         {(a.guests?.name || 'U').charAt(0)}
                       </span>
                     </div>
-                    <span className="flex-1 truncate text-gray-700">{a.guests?.name || 'Unknown'}</span>
-                    {movingGuestId === a.guest_id ? (
-                      <div className="flex flex-wrap gap-0.5 max-w-28">
-                        {otherTables.map((ot) => (
-                          <button key={ot.id}
-                            className="text-[9px] px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100 truncate max-w-20"
-                            onClick={() => { onMoveGuest(a.guest_id, ot.id); setMovingGuestId(null) }}
-                          >→ {ot.name}</button>
-                        ))}
-                        <button className="text-[9px] text-gray-400 hover:text-gray-600" onClick={() => setMovingGuestId(null)}>✕</button>
-                      </div>
-                    ) : (
-                      <>
-                        <button className="p-0.5 text-gray-300 hover:text-indigo-500 transition-colors"
-                          onClick={() => setMovingGuestId(a.guest_id)} title={t('admin.seating.table.moveGuest')}>
-                          <ArrowRight className="w-3 h-3" />
-                        </button>
-                        <button className="p-0.5 text-gray-300 hover:text-red-400 transition-colors"
-                          onClick={() => onUnassignGuest(a.guest_id)} title={t('admin.seating.table.removeGuest')}>
-                          <UserMinus className="w-3 h-3" />
-                        </button>
-                      </>
-                    )}
+                    <span className="flex-1 truncate text-gray-700 font-medium">{a.guests?.name || 'Unknown'}</span>
+                    <button className="p-1 text-gray-300 hover:text-indigo-500 transition-colors"
+                      onClick={() => { setMoveInitialGuestId(a.guest_id); setShowMoveDialog(true) }} title={t('admin.seating.table.moveGuest')}>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                    <button className="p-1 text-gray-300 hover:text-red-400 transition-colors"
+                      onClick={() => onUnassignGuest(a.guest_id)} title={t('admin.seating.table.removeGuest')}>
+                      <UserMinus className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -455,6 +451,20 @@ export function TableConfigPanel({
         onConfirm={() => { onDeleteTable(); setShowDeleteConfirm(false) }}
         onCancel={() => setShowDeleteConfirm(false)}
         componentType="table"
+      />
+
+      <MoveGuestDialog
+        isOpen={showMoveDialog}
+        currentTable={{ id: table.id, name: table.name }}
+        guests={table.assignedGuests.map(a => ({
+          id: a.id,
+          name: a.guests?.name || 'Unknown',
+          guest_id: a.guest_id,
+        }))}
+        initialGuestId={moveInitialGuestId}
+        tables={tables}
+        onMoveGuest={onMoveGuest}
+        onClose={() => { setShowMoveDialog(false); setMoveInitialGuestId(null) }}
       />
     </>
   )

@@ -2,7 +2,8 @@
 
 export type TableShape = 'round' | 'rectangular' | 'sweetheart'
 
-export type VenueElementType = 'dance_floor' | 'stage' | 'entrance' | 'bar' | 'dj_booth'
+export type VenueElementType = 'dance_floor' | 'stage' | 'entrance' | 'bar' | 'dj_booth' | 'periquera' | 'lounge' | 'custom'
+export type VenueElementShape = 'rect' | 'circle'
 
 export interface SeatingTable {
   id: string
@@ -43,6 +44,7 @@ export interface VenueElement {
   id: string
   wedding_id: string
   element_type: VenueElementType
+  element_shape: VenueElementShape
   label: string | null
   position_x: number
   position_y: number
@@ -74,6 +76,9 @@ export const VENUE_ELEMENT_LABELS: Record<VenueElementType, { en: string; es: st
   entrance: { en: 'Entrance', es: 'Entrada', icon: '🚪' },
   bar: { en: 'Bar', es: 'Bar', icon: '🍸' },
   dj_booth: { en: 'DJ Booth', es: 'Cabina DJ', icon: '🎧' },
+  periquera: { en: 'High Table', es: 'Periquera', icon: '🪑' },
+  lounge: { en: 'Lounge', es: 'Lounge', icon: '🛋️' },
+  custom: { en: 'Custom', es: 'Personalizado', icon: '✏️' },
 }
 
 export const TABLE_DEFAULTS = {

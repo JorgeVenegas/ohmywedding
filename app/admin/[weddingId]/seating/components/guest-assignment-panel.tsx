@@ -4,11 +4,14 @@ import { useState, useMemo } from "react"
 import { Input } from "@/components/ui/input"
 import { useTranslation } from "@/components/contexts/i18n-context"
 import { Search, UserPlus, Check, Users2, ChevronDown, ChevronRight } from "lucide-react"
-import type { SeatingGuest, SeatingTable } from "../types"
+import type { SeatingGuest, SeatingTable, SeatingAssignment } from "../types"
+
+type FilterMode = 'all' | 'unassigned' | 'assigned'
 
 interface GuestAssignmentPanelProps {
   guests: SeatingGuest[]
   allGuests: SeatingGuest[]
+  assignments: SeatingAssignment[]
   selectedTableId: string | null
   onAssignGuest: (guestId: string, tableId: string) => void
   tables: SeatingTable[]
@@ -17,6 +20,7 @@ interface GuestAssignmentPanelProps {
 export function GuestAssignmentPanel({
   guests,
   allGuests,
+  assignments,
   selectedTableId,
   onAssignGuest,
   tables,
@@ -24,20 +28,46 @@ export function GuestAssignmentPanel({
   const { t } = useTranslation()
   const [search, setSearch] = useState("")
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+  const [filter, setFilter] = useState<FilterMode>('all')
+
+  // Build a map of guestId → table for quick lookup
+  const guestTableMap = useMemo(() => {
+    const map = new Map<string, SeatingTable>()
+    for (const a of assignments) {
+      const table = tables.find(t => t.id === a.table_id)
+      if (table) map.set(a.guest_id, table)
+    }
+    return map
+  }, [assignments, tables])
+
+  // Assigned guest IDs
+  const assignedIds = useMemo(() => new Set(assignments.map(a => a.guest_id)), [assignments])
 
   // Only show confirmed unassigned guests
   const filteredGuests = useMemo(() => {
-    let list = guests.filter((g) => g.confirmation_status === "confirmed")
+    let list = allGuests.filter((g) => g.confirmation_status === "confirmed")
+
+    // Apply filter
+    if (filter === 'unassigned') {
+      list = list.filter(g => !assignedIds.has(g.id))
+    } else if (filter === 'assigned') {
+      list = list.filter(g => assignedIds.has(g.id))
+    }
+
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(
         (g) =>
           g.name.toLowerCase().includes(q) ||
-          (g.group_name && g.group_name.toLowerCase().includes(q))
+          (g.group_name && g.group_name.toLowerCase().includes(q)) ||
+          (() => {
+            const table = guestTableMap.get(g.id)
+            return table && table.name.toLowerCase().includes(q)
+          })()
       )
     }
     return list
-  }, [guests, search])
+  }, [allGuests, search, filter, assignedIds, guestTableMap])
 
   // Group guests by their guest_group_id
   const groupedGuests = useMemo(() => {
@@ -73,11 +103,24 @@ export function GuestAssignmentPanel({
   const handleAssignGroup = (groupGuests: SeatingGuest[]) => {
     if (!selectedTableId) return
     for (const guest of groupGuests) {
-      onAssignGuest(guest.id, selectedTableId)
+      if (!assignedIds.has(guest.id)) {
+        onAssignGuest(guest.id, selectedTableId)
+      }
     }
   }
 
   const selectedTable = tables.find(t => t.id === selectedTableId)
+
+  // Count for filter pills
+  const confirmedAll = allGuests.filter(g => g.confirmation_status === "confirmed")
+  const unassignedCount = confirmedAll.filter(g => !assignedIds.has(g.id)).length
+  const assignedCount = confirmedAll.length - unassignedCount
+
+  const filters: { key: FilterMode; label: string; count: number }[] = [
+    { key: 'all', label: t('admin.seating.guests.filterAll'), count: confirmedAll.length },
+    { key: 'unassigned', label: t('admin.seating.stats.unassigned'), count: unassignedCount },
+    { key: 'assigned', label: t('admin.seating.stats.assigned'), count: assignedCount },
+  ]
 
   return (
     <div className="w-full h-full bg-white flex flex-col overflow-hidden rounded-2xl shadow-xl border border-gray-100/80">
@@ -86,7 +129,7 @@ export function GuestAssignmentPanel({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-semibold text-sm text-gray-900">
-              {t('admin.seating.guests.unassigned')}
+              {t('admin.seating.guests.guestList')}
             </h3>
             <p className="text-[11px] text-gray-400 mt-0.5">
               {filteredGuests.length} {t('admin.seating.guests.guests')}
@@ -103,6 +146,23 @@ export function GuestAssignmentPanel({
             placeholder={t('admin.seating.guests.search')}
             className="h-8 text-xs pl-8 bg-gray-50 border-gray-100 focus:bg-white focus:border-gray-300 rounded-lg"
           />
+        </div>
+
+        {/* Filter pills */}
+        <div className="flex gap-1">
+          {filters.map(f => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={`flex-1 text-[10px] font-medium px-2 py-1.5 rounded-lg transition-colors ${
+                filter === f.key
+                  ? 'bg-primary/10 text-primary border border-primary/20'
+                  : 'bg-gray-50 text-gray-500 border border-transparent hover:bg-gray-100'
+              }`}
+            >
+              {f.label} <span className="font-bold">{f.count}</span>
+            </button>
+          ))}
         </div>
 
         {/* Selected table indicator */}
@@ -129,13 +189,27 @@ export function GuestAssignmentPanel({
             <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mb-3">
               <Check className="w-6 h-6 text-emerald-500" />
             </div>
-            <p className="text-sm font-medium text-gray-600">{t('admin.seating.guests.allAssigned')}</p>
+            <p className="text-sm font-medium text-gray-600">
+              {filter === 'unassigned'
+                ? t('admin.seating.guests.allAssigned')
+                : t('admin.seating.guests.noResults')}
+            </p>
           </div>
         ) : (
           <div>
             {/* Grouped guests */}
             {Object.entries(groupedGuests.groups).map(([groupId, group]) => {
               const isCollapsed = collapsedGroups.has(groupId)
+              const groupTableName = (() => {
+                const tableNames = new Set<string>()
+                for (const g of group.guests) {
+                  const tbl = guestTableMap.get(g.id)
+                  if (tbl) tableNames.add(tbl.name)
+                }
+                return tableNames.size === 1 ? [...tableNames][0] : null
+              })()
+              const unassignedInGroup = group.guests.filter(g => !assignedIds.has(g.id)).length
+
               return (
                 <div key={groupId} className="border-b border-gray-100">
                   {/* Group header */}
@@ -144,27 +218,32 @@ export function GuestAssignmentPanel({
                     style={{ borderLeftColor: '#d4a574' }}
                   >
                     <button
-                      className="flex items-center gap-1.5 flex-1 text-left pl-2.5"
+                      className="flex items-center gap-1.5 flex-1 text-left pl-2.5 min-w-0"
                       onClick={() => toggleGroupCollapse(groupId)}
                     >
                       {isCollapsed ? (
-                        <ChevronRight className="w-3 h-3 text-gray-500" />
+                        <ChevronRight className="w-3 h-3 text-gray-500 flex-shrink-0" />
                       ) : (
-                        <ChevronDown className="w-3 h-3 text-gray-500" />
+                        <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
                       )}
-                      <Users2 className="w-3 h-3 text-[#b8895e] opacity-80" />
-                      <span className="text-[11px] font-semibold text-[#7a5a3a] tracking-wide">
+                      <Users2 className="w-3 h-3 text-[#b8895e] opacity-80 flex-shrink-0" />
+                      <span className="text-[11px] font-semibold text-[#7a5a3a] tracking-wide truncate">
                         {group.name}
                       </span>
-                      <span className="text-[10px] font-semibold ml-auto mr-1 px-1.5 py-0.5 rounded-full bg-[#d4a574]/20 text-[#8a6040]">
+                      {groupTableName && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 font-medium flex-shrink-0 truncate max-w-20">
+                          {groupTableName}
+                        </span>
+                      )}
+                      <span className="text-[10px] font-semibold ml-auto mr-1 px-1.5 py-0.5 rounded-full bg-[#d4a574]/20 text-[#8a6040] flex-shrink-0">
                         {group.guests.length}
                       </span>
                     </button>
 
                     {/* Assign entire group button */}
-                    {selectedTableId && (
+                    {selectedTableId && unassignedInGroup > 0 && (
                       <button
-                        className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded transition-colors"
+                        className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded transition-colors flex-shrink-0"
                         onClick={() => handleAssignGroup(group.guests)}
                         title={t('admin.seating.guests.assignGroup')}
                       >
@@ -184,6 +263,8 @@ export function GuestAssignmentPanel({
                           selectedTableId={selectedTableId}
                           onAssign={onAssignGuest}
                           tables={tables}
+                          assignedTable={guestTableMap.get(guest.id)}
+                          isAssigned={assignedIds.has(guest.id)}
                           indent
                         />
                       ))}
@@ -208,6 +289,8 @@ export function GuestAssignmentPanel({
                 selectedTableId={selectedTableId}
                 onAssign={onAssignGuest}
                 tables={tables}
+                assignedTable={guestTableMap.get(guest.id)}
+                isAssigned={assignedIds.has(guest.id)}
               />
             ))}
           </div>
@@ -222,17 +305,22 @@ function GuestItem({
   selectedTableId,
   onAssign,
   tables,
+  assignedTable,
+  isAssigned,
   indent,
 }: {
   guest: SeatingGuest
   selectedTableId: string | null
   onAssign: (guestId: string, tableId: string) => void
   tables: SeatingTable[]
+  assignedTable?: SeatingTable
+  isAssigned: boolean
   indent?: boolean
 }) {
   const [showTablePicker, setShowTablePicker] = useState(false)
 
   const handleClick = () => {
+    if (isAssigned) return // Don't allow re-assigning from here
     if (selectedTableId) {
       onAssign(guest.id, selectedTableId)
     } else {
@@ -243,25 +331,42 @@ function GuestItem({
   return (
     <div className="border-b border-gray-50 last:border-0">
       <button
-        className={`w-full text-left px-3 py-2 hover:bg-indigo-50/50 flex items-center gap-2 text-xs group transition-colors ${indent ? 'pl-8' : ''}`}
+        className={`w-full text-left px-3 py-2 flex items-center gap-2 text-xs group transition-colors ${indent ? 'pl-8' : ''} ${
+          isAssigned
+            ? 'bg-gray-50/50 cursor-default'
+            : 'hover:bg-indigo-50/50 cursor-pointer'
+        }`}
         onClick={handleClick}
       >
         {/* Avatar circle */}
-        <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-          <span className="text-[10px] font-semibold text-gray-500 uppercase">
+        <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+          isAssigned ? 'bg-emerald-100' : 'bg-gray-100'
+        }`}>
+          <span className={`text-[10px] font-semibold uppercase ${
+            isAssigned ? 'text-emerald-600' : 'text-gray-500'
+          }`}>
             {guest.name.charAt(0)}
           </span>
         </div>
 
-        <span className="flex-1 truncate text-gray-700 font-medium">{guest.name}</span>
+        <span className={`flex-1 truncate font-medium ${isAssigned ? 'text-gray-500' : 'text-gray-700'}`}>
+          {guest.name}
+        </span>
 
-        {selectedTableId && (
-          <UserPlus className="w-3.5 h-3.5 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+        {/* Show assigned table badge */}
+        {isAssigned && assignedTable && (
+          <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 font-medium truncate max-w-24 flex-shrink-0">
+            {assignedTable.name}
+          </span>
+        )}
+
+        {!isAssigned && selectedTableId && (
+          <UserPlus className="w-3.5 h-3.5 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
         )}
       </button>
 
       {/* Table picker dropdown (when no table selected on canvas) */}
-      {showTablePicker && !selectedTableId && (
+      {showTablePicker && !selectedTableId && !isAssigned && (
         <div className="px-3 pb-2 pt-1 bg-gray-50/50">
           <div className="flex flex-wrap gap-1">
             {tables.map((table) => (

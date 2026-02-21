@@ -22,15 +22,15 @@ import {
   MoreHorizontal,
   RotateCcw,
 } from "lucide-react"
-import { useState, useRef, useEffect } from "react"
-import type { VenueElementType } from "../types"
+import { useState, useRef, useEffect, useCallback } from "react"
+import type { VenueElementType, VenueElementShape } from "../types"
 import { VENUE_ELEMENT_LABELS } from "../types"
 
 interface SeatingToolbarProps {
   onAddRoundTable: () => void
   onAddRectTable: () => void
   onAddSweetheart: () => void
-  onAddVenueElement: (type: VenueElementType) => Promise<unknown>
+  onAddVenueElement: (type: VenueElementType, options?: { shape?: VenueElementShape; label?: string }) => Promise<unknown>
   onAutoAssign: () => void
   onPrint: () => void
   onSave: () => void
@@ -73,9 +73,18 @@ export function SeatingToolbar({
   const [showAddDropdown, setShowAddDropdown] = useState(false)
   const [showActionsMenu, setShowActionsMenu] = useState(false)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
+  const [customLabelInput, setCustomLabelInput] = useState('')
+  const [showCustomInput, setShowCustomInput] = useState(false)
   const addDropdownRef = useRef<HTMLDivElement>(null)
   const actionsMenuRef = useRef<HTMLDivElement>(null)
   const discardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleAddElement = useCallback((type: VenueElementType, shape: VenueElementShape = 'rect', label?: string) => {
+    onAddVenueElement(type, { shape, label })
+    setShowAddDropdown(false)
+    setShowCustomInput(false)
+    setCustomLabelInput('')
+  }, [onAddVenueElement])
 
   // Format last saved time
   const [, setTick] = useState(0)
@@ -122,9 +131,12 @@ export function SeatingToolbar({
   const savedAgoText = formatSavedAgo(lastSavedAt)
 
   return (
-    <div className="flex items-center gap-1 px-2 py-1.5 bg-white rounded-2xl shadow-lg border border-gray-200/50 backdrop-blur-sm">
+    <div
+      className="flex items-center gap-1 px-2 py-1.5 bg-white rounded-2xl shadow-lg border border-gray-200/50 backdrop-blur-sm overflow-x-auto"
+      style={{ scrollbarWidth: 'none' }}
+    >
       {/* OMW Logo */}
-      <div className="flex items-center gap-1.5 pl-1.5 pr-3">
+      <div className="flex items-center gap-1.5 pl-1 pr-2 flex-shrink-0">
         <Image
           src="/images/logos/OMW Logo Gold.png"
           alt="OhMyWedding"
@@ -132,7 +144,7 @@ export function SeatingToolbar({
           height={18}
           className="h-[18px] w-auto flex-shrink-0 opacity-90"
         />
-        <span className="text-[11px] font-serif text-gray-500 hidden md:inline tracking-wide">OhMyWedding</span>
+        <span className="text-[11px] font-serif text-gray-500 hidden xl:inline tracking-wide whitespace-nowrap">OhMyWedding</span>
       </div>
 
       <div className="w-px h-5 bg-gray-200 mx-0.5" />
@@ -178,13 +190,64 @@ export function SeatingToolbar({
             <div className="h-px bg-gray-100 my-1" />
             <p className="px-3 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Venue</p>
             {(Object.keys(VENUE_ELEMENT_LABELS) as VenueElementType[]).map((type) => {
-              const label = VENUE_ELEMENT_LABELS[type]
+              const info = VENUE_ELEMENT_LABELS[type]
+              const isCustom = type === 'custom'
+              // These types can be circular
+              const showShapePicker = ['dance_floor', 'stage', 'dj_booth', 'lounge', 'custom'].includes(type)
               return (
-                <button key={type} className="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2.5 text-sm transition-colors"
-                  onClick={() => { onAddVenueElement(type); setShowAddDropdown(false) }}>
-                  <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center text-sm">{label.icon}</div>
-                  <span className="text-gray-700">{label.en}</span>
-                </button>
+                <div key={type}>
+                  <div className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 transition-colors group">
+                    <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center text-sm flex-shrink-0">{info.icon}</div>
+                    <button className="flex-1 text-left text-sm text-gray-700"
+                      onClick={() => {
+                        if (isCustom) { setShowCustomInput(true); return }
+                        handleAddElement(type, 'rect')
+                      }}>
+                      {info.en}
+                    </button>
+                    {showShapePicker && !isCustom && (
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          className="w-6 h-6 rounded flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 text-[10px] font-bold transition-colors"
+                          title="Add as rectangle"
+                          onClick={() => handleAddElement(type, 'rect')}
+                        >□</button>
+                        <button
+                          className="w-6 h-6 rounded flex items-center justify-center text-gray-400 hover:text-violet-600 hover:bg-violet-50 text-[10px] font-bold transition-colors"
+                          title="Add as circle"
+                          onClick={() => handleAddElement(type, 'circle')}
+                        >○</button>
+                      </div>
+                    )}
+                  </div>
+                  {isCustom && showCustomInput && (
+                    <div className="px-3 pb-2 pt-1">
+                      <div className="flex gap-1.5">
+                        <input
+                          autoFocus
+                          className="flex-1 text-xs px-2 py-1.5 rounded-md border border-gray-200 focus:border-indigo-400 focus:outline-none"
+                          placeholder="Section name…"
+                          value={customLabelInput}
+                          onChange={e => setCustomLabelInput(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') handleAddElement('custom', 'rect', customLabelInput || 'Custom')
+                            if (e.key === 'Escape') { setShowCustomInput(false); setCustomLabelInput('') }
+                          }}
+                        />
+                        <button
+                          className="w-6 h-6 rounded flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 text-[10px] font-bold"
+                          title="Add as rectangle"
+                          onClick={() => handleAddElement('custom', 'rect', customLabelInput || 'Custom')}
+                        >□</button>
+                        <button
+                          className="w-6 h-6 rounded flex items-center justify-center text-gray-400 hover:text-violet-600 hover:bg-violet-50 text-[10px] font-bold"
+                          title="Add as circle"
+                          onClick={() => handleAddElement('custom', 'circle', customLabelInput || 'Custom')}
+                        >○</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )
             })}
           </div>
@@ -253,7 +316,7 @@ export function SeatingToolbar({
           <Loader2 className="w-3.5 h-3.5 text-primary/70 animate-spin" />
         )}
         {!hasUnsavedChanges && !saving && savedAgoText && (
-          <span className="text-[10px] text-gray-400 hidden sm:block whitespace-nowrap">{savedAgoText}</span>
+          <span className="text-[10px] text-gray-400 hidden xl:block whitespace-nowrap">{savedAgoText}</span>
         )}
         {!hasUnsavedChanges && !saving && (
           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
@@ -287,7 +350,7 @@ export function SeatingToolbar({
           className="h-8 px-3.5 text-xs font-semibold shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg disabled:opacity-40 transition-colors"
         >
           {saving ? (
-            <>{t('admin.seating.toolbar.saving')}</>
+            <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />{t('admin.seating.toolbar.saving')}</>
           ) : (
             <><Save className="w-3.5 h-3.5 mr-1.5" />{t('admin.seating.toolbar.save')}</>
           )}

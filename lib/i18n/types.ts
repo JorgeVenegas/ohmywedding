@@ -1497,6 +1497,29 @@ export interface Translations {
         assigned: string
         guests: string
         selectTableFirst: string
+        guestList: string
+        filterAll: string
+        noResults: string
+      }
+      moveDialog: {
+        from: string
+        selectGuests: string
+        selectTable: string
+        selectAll: string
+        deselectAll: string
+        selected: string
+        cancel: string
+        move: string
+        addMore: string
+        searchTables: string
+        noTablesFound: string
+      }
+      unsavedDialog: {
+        title: string
+        message: string
+        save: string
+        discard: string
+        cancel: string
       }
       venueElements: {
         title: string

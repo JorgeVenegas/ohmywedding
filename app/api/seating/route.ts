@@ -168,6 +168,7 @@ export async function PUT(request: Request) {
 
     const toElementRow = (e: typeof venueElements[number]) => ({
       element_type: e.element_type,
+      element_shape: e.element_shape ?? 'rect',
       label: e.label,
       position_x: e.position_x,
       position_y: e.position_y,

@@ -9,6 +9,7 @@ import type {
   SeatingGuest,
   TableShape,
   VenueElementType,
+  VenueElementShape,
 } from '@/app/admin/[weddingId]/seating/types'
 import { TABLE_DEFAULTS } from '@/app/admin/[weddingId]/seating/types'
 
@@ -50,7 +51,7 @@ interface UseSeatingReturn {
   autoAssign: (keepGroupsTogether?: boolean) => Promise<number>
 
   // Venue element operations
-  addVenueElement: (type: VenueElementType, position?: { x: number; y: number }) => Promise<VenueElement | null>
+  addVenueElement: (type: VenueElementType, options?: { position?: { x: number; y: number }; shape?: VenueElementShape; label?: string }) => Promise<VenueElement | null>
   updateVenueElement: (id: string, updates: Partial<VenueElement>) => void
   deleteVenueElement: (id: string) => Promise<boolean>
 
@@ -114,6 +115,13 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
   const newTableIdsRef = useRef<Set<string>>(new Set())
   const newElementIdsRef = useRef<Set<string>>(new Set())
 
+  // Saved state snapshot — for instant discard without refetch
+  const savedStateRef = useRef<{
+    tables: SeatingTable[]
+    venueElements: VenueElement[]
+    assignments: SeatingAssignment[]
+  } | null>(null)
+
   // Autosave refs
   const hasUnsavedRef = useRef(false)
   const saveLayoutRef = useRef<() => Promise<boolean>>(() => Promise.resolve(false))
@@ -144,7 +152,19 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
 
       setTables(seatingData.tables || [])
       setAssignments(seatingData.assignments || [])
-      setVenueElements(seatingData.venueElements || [])
+      // Ensure element_shape is always set (fallback for pre-migration rows)
+      const mappedElements = (seatingData.venueElements || []).map((e: VenueElement) => ({
+        ...e,
+        element_shape: e.element_shape ?? 'rect',
+      }))
+      setVenueElements(mappedElements)
+
+      // Store the clean saved state for instant discard
+      savedStateRef.current = {
+        tables: seatingData.tables || [],
+        venueElements: mappedElements,
+        assignments: seatingData.assignments || [],
+      }
 
       // Build a group name lookup
       const groupNameMap: Record<string, string> = {}
@@ -233,6 +253,17 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
     setCanRedo(false)
   }, [])
 
+  /** Returns true when the given snapshot exactly matches the persisted saved state. */
+  const isAtSavedState = (snap: { tables: SeatingTable[]; venueElements: VenueElement[]; assignments: SeatingAssignment[] }) => {
+    const s = savedStateRef.current
+    if (!s) return false
+    return (
+      JSON.stringify(snap.tables) === JSON.stringify(s.tables) &&
+      JSON.stringify(snap.venueElements) === JSON.stringify(s.venueElements) &&
+      JSON.stringify(snap.assignments) === JSON.stringify(s.assignments)
+    )
+  }
+
   const undo = useCallback(() => {
     const prev = historyRef.current[historyRef.current.length - 1]
     if (!prev) return
@@ -249,10 +280,10 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
     setTables(prev.tables)
     setVenueElements(prev.venueElements)
     setAssignments(prev.assignments)
-    setHasUnsavedChanges(true)
+    setHasUnsavedChanges(!isAtSavedState(prev))
     setCanUndo(historyRef.current.length > 0)
     setCanRedo(true)
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const redo = useCallback(() => {
     const next = redoRef.current[redoRef.current.length - 1]
@@ -270,10 +301,10 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
     setTables(next.tables)
     setVenueElements(next.venueElements)
     setAssignments(next.assignments)
-    setHasUnsavedChanges(true)
+    setHasUnsavedChanges(!isAtSavedState(next))
     setCanUndo(true)
     setCanRedo(redoRef.current.length > 0)
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Table operations (optimistic / local-only — synced on save) ──
 
@@ -465,16 +496,17 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
 
   // ── Venue element operations (optimistic / local-only) ──
 
-  const addVenueElement = useCallback((type: VenueElementType, position?: { x: number; y: number }): Promise<VenueElement | null> => {
+  const addVenueElement = useCallback((type: VenueElementType, options?: { position?: { x: number; y: number }; shape?: VenueElementShape; label?: string }): Promise<VenueElement | null> => {
     pushHistory()
     const id = tempId()
     const newElement: VenueElement = {
       id,
       wedding_id: '',
       element_type: type,
-      label: null,
-      position_x: position?.x ?? 300,
-      position_y: position?.y ?? 300,
+      element_shape: options?.shape ?? 'rect',
+      label: options?.label ?? null,
+      position_x: options?.position?.x ?? 300,
+      position_y: options?.position?.y ?? 300,
       width: 150,
       height: 100,
       rotation: 0,
@@ -507,11 +539,53 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
   const saveLayout = useCallback(async (): Promise<boolean> => {
     try {
       setSaving(true)
+      const snap = savedStateRef.current
+
+      // Only send existing tables/elements that actually changed since last save
+      const allTables = tables
+      const allElements = venueElements
+
+      const changedExistingTables = allTables.filter(t => {
+        if (!t.id || t.id.startsWith('temp_')) return false // new tables sent as-is below
+        if (!snap) return true
+        const saved = snap.tables.find(s => s.id === t.id)
+        if (!saved) return true
+        return (
+          t.position_x !== saved.position_x || t.position_y !== saved.position_y ||
+          t.rotation !== saved.rotation || t.name !== saved.name ||
+          t.capacity !== saved.capacity || t.width !== saved.width || t.height !== saved.height ||
+          t.shape !== saved.shape || t.side_a_count !== saved.side_a_count ||
+          t.side_b_count !== saved.side_b_count || t.head_a_count !== saved.head_a_count ||
+          t.head_b_count !== saved.head_b_count || t.display_order !== saved.display_order
+        )
+      })
+      const newTables = allTables.filter(t => t.id.startsWith('temp_'))
+
+      const changedExistingElements = allElements.filter(e => {
+        if (!e.id || e.id.startsWith('temp_')) return false
+        if (!snap) return true
+        const saved = snap.venueElements.find(s => s.id === e.id)
+        if (!saved) return true
+        return (
+          e.position_x !== saved.position_x || e.position_y !== saved.position_y ||
+          e.rotation !== saved.rotation || e.width !== saved.width || e.height !== saved.height ||
+          e.label !== saved.label || e.color !== saved.color || e.element_type !== saved.element_type ||
+          e.element_shape !== saved.element_shape
+        )
+      })
+      const newElements = allElements.filter(e => e.id.startsWith('temp_'))
+
+      // Only sync assignments when they actually changed or when new tables exist
+      // (new tables need temp→real ID mapping before assignments can be correctly written)
+      const assignmentsChanged = newTables.length > 0 || !snap ||
+        assignments.length !== snap.assignments.length ||
+        !assignments.every(a => snap.assignments.some(s => s.table_id === a.table_id && s.guest_id === a.guest_id))
+
       const res = await fetch(`/api/seating?weddingId=${encodeURIComponent(weddingId)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tables: tables.map(t => ({
+          tables: [...changedExistingTables, ...newTables].map(t => ({
             id: t.id,
             name: t.name,
             shape: t.shape,
@@ -527,9 +601,10 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
             height: t.height,
             display_order: t.display_order,
           })),
-          venueElements: venueElements.map(e => ({
+          venueElements: [...changedExistingElements, ...newElements].map(e => ({
             id: e.id,
             element_type: e.element_type,
+            element_shape: e.element_shape,
             label: e.label,
             position_x: e.position_x,
             position_y: e.position_y,
@@ -538,12 +613,15 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
             rotation: e.rotation,
             color: e.color ?? null,
           })),
-          assignments: assignments.map(a => ({
-            table_id: a.table_id,
-            guest_id: a.guest_id,
-          })),
           deletedTableIds: [...deletedTableIdsRef.current],
           deletedElementIds: [...deletedElementIdsRef.current],
+          // Only send assignments payload when they actually changed
+          ...(assignmentsChanged ? {
+            assignments: assignments.map(a => ({
+              table_id: a.table_id,
+              guest_id: a.guest_id,
+            })),
+          } : {}),
         }),
       })
 
@@ -564,6 +642,16 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
       deletedTableIdsRef.current = new Set()
       deletedElementIdsRef.current = new Set()
       setHasUnsavedChanges(false)
+
+      // Compute post-idmap state to store as the saved snapshot
+      const tableMap = idMaps?.tables ?? {}
+      const elementMap = idMaps?.elements ?? {}
+      savedStateRef.current = {
+        tables: tables.map(t => ({ ...t, id: tableMap[t.id] ?? t.id })),
+        venueElements: venueElements.map(e => ({ ...e, id: elementMap[e.id] ?? e.id })),
+        assignments: assignments.map(a => ({ ...a, table_id: tableMap[a.table_id] ?? a.table_id })),
+      }
+
       return true
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save layout')
@@ -575,6 +663,24 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
 
   // Keep autosave ref current
   saveLayoutRef.current = saveLayout
+
+  // Instant discard: restore the last saved snapshot (no network call)
+  const discardChanges = useCallback(() => {
+    const saved = savedStateRef.current
+    if (!saved) return
+    setTables(saved.tables)
+    setVenueElements(saved.venueElements)
+    setAssignments(saved.assignments)
+    deletedTableIdsRef.current = new Set()
+    deletedElementIdsRef.current = new Set()
+    newTableIdsRef.current = new Set()
+    newElementIdsRef.current = new Set()
+    historyRef.current = []
+    redoRef.current = []
+    setCanUndo(false)
+    setCanRedo(false)
+    setHasUnsavedChanges(false)
+  }, [])
 
   return {
     tables,
@@ -601,7 +707,7 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
     updateVenueElement,
     deleteVenueElement,
     saveLayout,
-    discardChanges: fetchData,
+    discardChanges,
     undo,
     canUndo,
     redo,
