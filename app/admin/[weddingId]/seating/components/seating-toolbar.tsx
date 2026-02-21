@@ -25,13 +25,13 @@ import {
 import { useState, useRef, useEffect, useCallback } from "react"
 import { createPortal } from "react-dom"
 import type { VenueElementType, VenueElementShape } from "../types"
-import { VENUE_ELEMENT_LABELS } from "../types"
+import { VENUE_ELEMENT_LABELS, LOUNGE_SHAPE_LABELS } from "../types"
 
 interface SeatingToolbarProps {
   onAddRoundTable: () => void
   onAddRectTable: () => void
   onAddSweetheart: () => void
-  onAddVenueElement: (type: VenueElementType, options?: { shape?: VenueElementShape; label?: string }) => Promise<unknown>
+  onAddVenueElement: (type: VenueElementType, options?: { shape?: VenueElementShape; label?: string; capacity?: number }) => Promise<unknown>
   onAutoAssign: () => void
   onPrint: () => void
   onSave: () => void
@@ -88,8 +88,8 @@ export function SeatingToolbar({
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
-  const handleAddElement = useCallback((type: VenueElementType, shape: VenueElementShape = 'rect', label?: string) => {
-    onAddVenueElement(type, { shape, label })
+  const handleAddElement = useCallback((type: VenueElementType, shape: VenueElementShape = 'rect', label?: string, capacity?: number) => {
+    onAddVenueElement(type, { shape, label, capacity })
     setShowAddDropdown(false)
     setShowCustomInput(false)
     setCustomLabelInput('')
@@ -211,8 +211,10 @@ export function SeatingToolbar({
             {(Object.keys(VENUE_ELEMENT_LABELS) as VenueElementType[]).map((type) => {
               const info = VENUE_ELEMENT_LABELS[type]
               const isCustom = type === 'custom'
-              // These types can be circular
-              const showShapePicker = ['dance_floor', 'stage', 'dj_booth', 'lounge', 'custom'].includes(type)
+              const isLounge = type === 'lounge'
+              const isPeriquera = type === 'periquera'
+              // These types can be circular (non-lounge, non-periquera)
+              const showCirclePicker = ['dance_floor', 'stage', 'dj_booth', 'custom'].includes(type)
               return (
                 <div key={type}>
                   <div className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 transition-colors group">
@@ -220,11 +222,36 @@ export function SeatingToolbar({
                     <button className="flex-1 text-left text-sm text-gray-700"
                       onClick={() => {
                         if (isCustom) { setShowCustomInput(true); return }
+                        if (isLounge) { handleAddElement(type, 'sofa_u'); return }
                         handleAddElement(type, 'rect')
                       }}>
                       {info.en}
                     </button>
-                    {showShapePicker && !isCustom && (
+                    {isLounge && (
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {(Object.entries(LOUNGE_SHAPE_LABELS) as [VenueElementShape, { en: string; icon: string }][]).map(([shape, sInfo]) => (
+                          <button
+                            key={shape}
+                            className="px-1 h-6 rounded flex items-center justify-center text-gray-400 hover:text-violet-600 hover:bg-violet-50 text-[11px] font-bold transition-colors"
+                            title={sInfo.en}
+                            onClick={() => handleAddElement(type, shape)}
+                          >{sInfo.icon}</button>
+                        ))}
+                      </div>
+                    )}
+                    {isPeriquera && (
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {[4, 6, 8].map(n => (
+                          <button
+                            key={n}
+                            className="w-6 h-6 rounded flex items-center justify-center text-gray-400 hover:text-amber-600 hover:bg-amber-50 text-[10px] font-bold transition-colors"
+                            title={`${n} stools`}
+                            onClick={() => handleAddElement(type, 'rect', undefined, n)}
+                          >{n}</button>
+                        ))}
+                      </div>
+                    )}
+                    {showCirclePicker && !isCustom && (
                       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           className="w-6 h-6 rounded flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 text-[10px] font-bold transition-colors"

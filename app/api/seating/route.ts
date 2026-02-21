@@ -170,6 +170,7 @@ export async function PUT(request: Request) {
       element_type: e.element_type,
       element_shape: e.element_shape ?? 'rect',
       label: e.label,
+      capacity: e.capacity ?? 4,
       position_x: e.position_x,
       position_y: e.position_y,
       width: e.width,

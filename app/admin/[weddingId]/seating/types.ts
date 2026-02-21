@@ -2,8 +2,8 @@
 
 export type TableShape = 'round' | 'rectangular' | 'sweetheart'
 
-export type VenueElementType = 'dance_floor' | 'stage' | 'entrance' | 'bar' | 'dj_booth' | 'periquera' | 'lounge' | 'custom'
-export type VenueElementShape = 'rect' | 'circle'
+export type VenueElementType = 'dance_floor' | 'stage' | 'entrance' | 'bar' | 'dj_booth' | 'periquera' | 'lounge' | 'custom' | 'area'
+export type VenueElementShape = 'rect' | 'circle' | 'sofa_single' | 'sofa_l' | 'sofa_u' | 'sofa_circle'
 
 export interface SeatingTable {
   id: string
@@ -46,6 +46,7 @@ export interface VenueElement {
   element_type: VenueElementType
   element_shape: VenueElementShape
   label: string | null
+  capacity: number
   position_x: number
   position_y: number
   width: number
@@ -78,7 +79,15 @@ export const VENUE_ELEMENT_LABELS: Record<VenueElementType, { en: string; es: st
   dj_booth: { en: 'DJ Booth', es: 'Cabina DJ', icon: '🎧' },
   periquera: { en: 'High Table', es: 'Periquera', icon: '🪑' },
   lounge: { en: 'Lounge', es: 'Lounge', icon: '🛋️' },
+  area: { en: 'Area / Zone', es: 'Área / Zona', icon: '📍' },
   custom: { en: 'Custom', es: 'Personalizado', icon: '✏️' },
+}
+
+export const LOUNGE_SHAPE_LABELS: Record<string, { en: string; icon: string }> = {
+  sofa_single: { en: 'Single Sofa',  icon: '🛋' },
+  sofa_l:      { en: 'L-Shape',      icon: '⌐' },
+  sofa_u:      { en: 'U-Shape',      icon: '∪' },
+  sofa_circle: { en: 'Circle',       icon: '○' },
 }
 
 export const TABLE_DEFAULTS = {

@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { element_type, label, position_x, position_y, width, height, rotation } = body
+    const { element_type, element_shape, label, capacity, position_x, position_y, width, height, rotation } = body
 
     if (!element_type) {
       return NextResponse.json({ error: "element_type is required" }, { status: 400 })
@@ -47,7 +47,9 @@ export async function POST(request: Request) {
       .insert({
         wedding_id: weddingUuid,
         element_type,
+        element_shape: element_shape ?? 'rect',
         label: label || null,
+        capacity: capacity ?? 4,
         position_x: position_x ?? 200,
         position_y: position_y ?? 200,
         width: width ?? 150,

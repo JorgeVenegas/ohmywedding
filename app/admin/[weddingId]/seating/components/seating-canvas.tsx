@@ -13,6 +13,8 @@ interface SeatingCanvasProps {
   venueElements: VenueElement[]
   selectedTableIds: string[]
   onSelectTables: (ids: string[]) => void
+  selectedVenueElementIds: string[]
+  onSelectVenueElements: (ids: string[]) => void
   onTableDragEnd: (tableId: string, x: number, y: number) => void
   onTableResize: (tableId: string, width: number, height: number, x: number, y: number) => void
   onElementDragEnd: (elementId: string, x: number, y: number) => void
@@ -20,7 +22,6 @@ interface SeatingCanvasProps {
   onViewTableGuests: (tableId: string) => void
   zoom: number
   onZoomChange: (zoom: number) => void
-  onSelectElement?: (id: string | null) => void
   onTableDelete?: (id: string) => void
   onTableDuplicate?: (id: string) => void
   fitToScreenTrigger?: number
@@ -53,6 +54,8 @@ export function SeatingCanvas({
   venueElements,
   selectedTableIds,
   onSelectTables,
+  selectedVenueElementIds,
+  onSelectVenueElements,
   onTableDragEnd,
   onTableResize,
   onElementDragEnd,
@@ -60,7 +63,6 @@ export function SeatingCanvas({
   onViewTableGuests,
   zoom,
   onZoomChange,
-  onSelectElement,
   onTableDelete,
   onTableDuplicate,
   fitToScreenTrigger,
@@ -82,9 +84,15 @@ export function SeatingCanvas({
     leaderStartCy: number
     peers: Record<string, { startCx: number; startCy: number }>
   } | null>(null)
+  // Element group drag: same pattern for venue elements
+  const elementGroupDragRef = useRef<{
+    leaderId: string
+    leaderStartCx: number
+    leaderStartCy: number
+    peers: Record<string, { startCx: number; startCy: number }>
+  } | null>(null)
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 })
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 })
-  const [selectedElementId, setSelectedElementId] = useState<string | null>(null)
   const [isPanning, setIsPanning] = useState(false)
   const [isSpaceHeld, setIsSpaceHeld] = useState(false)
   const [selectionBox, setSelectionBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
@@ -202,11 +210,12 @@ export function SeatingCanvas({
     [zoom, stagePos, onZoomChange]
   )
 
-  // Attach Transformer to selected venue element
+  // Attach Transformer to selected venue element (only when exactly one is selected)
   useEffect(() => {
     if (!transformerRef.current || !stageRef.current) return
-    if (selectedElementId) {
-      const node = stageRef.current.findOne(`#vel-${selectedElementId}`)
+    const focusId = selectedVenueElementIds.length === 1 ? selectedVenueElementIds[0] : null
+    if (focusId) {
+      const node = stageRef.current.findOne(`#vel-${focusId}`)
       if (node) {
         transformerRef.current.nodes([node as Konva.Node])
         transformerRef.current.getLayer()?.batchDraw()
@@ -215,7 +224,7 @@ export function SeatingCanvas({
       transformerRef.current.nodes([])
       transformerRef.current.getLayer()?.batchDraw()
     }
-  }, [selectedElementId])
+  }, [selectedVenueElementIds])
 
   // Attach Transformer to selected table (only for single selection; multi uses alignment panel)
   useEffect(() => {
@@ -291,6 +300,75 @@ export function SeatingCanvas({
     groupDragRef.current = null
   }, [tables, onTableDragEnd])
 
+  // Element group drag: same pattern as table group drag
+  const handleElementDragStart = useCallback((elementId: string, cx: number, cy: number) => {
+    if (!selectedVenueElementIds.includes(elementId) || selectedVenueElementIds.length < 2) {
+      elementGroupDragRef.current = null
+      return
+    }
+    const peers: Record<string, { startCx: number; startCy: number }> = {}
+    for (const id of selectedVenueElementIds) {
+      if (id === elementId) continue
+      const el = venueElements.find(e => e.id === id)
+      if (!el) continue
+      const node = stageRef.current?.findOne(`#vel-${id}`)
+      if (node) peers[id] = { startCx: node.x(), startCy: node.y() }
+      else peers[id] = { startCx: el.position_x + el.width / 2, startCy: el.position_y + el.height / 2 }
+    }
+    elementGroupDragRef.current = { leaderId: elementId, leaderStartCx: cx, leaderStartCy: cy, peers }
+  }, [selectedVenueElementIds, venueElements])
+
+  const handleElementDragMove = useCallback((elementId: string, cx: number, cy: number) => {
+    const g = elementGroupDragRef.current
+    if (!g || g.leaderId !== elementId) return
+    const dcx = cx - g.leaderStartCx
+    const dcy = cy - g.leaderStartCy
+    for (const [id, start] of Object.entries(g.peers)) {
+      const node = stageRef.current?.findOne(`#vel-${id}`)
+      if (node) node.position({ x: start.startCx + dcx, y: start.startCy + dcy })
+    }
+  }, [])
+
+  const handleElementGroupDragEnd = useCallback((elementId: string, x: number, y: number) => {
+    const snappedX = Math.round(x / GRID_SIZE) * GRID_SIZE
+    const snappedY = Math.round(y / GRID_SIZE) * GRID_SIZE
+    onElementDragEnd(elementId, snappedX, snappedY)
+    const g = elementGroupDragRef.current
+    if (!g || g.leaderId !== elementId) return
+    const leaderEl = venueElements.find(e => e.id === elementId)
+    if (!leaderEl) { elementGroupDragRef.current = null; return }
+    const leaderHw = leaderEl.width / 2
+    const leaderHh = leaderEl.height / 2
+    const snappedLeaderCx = snappedX + leaderHw
+    const snappedLeaderCy = snappedY + leaderHh
+    const dcx = snappedLeaderCx - g.leaderStartCx
+    const dcy = snappedLeaderCy - g.leaderStartCy
+    for (const [id, start] of Object.entries(g.peers)) {
+      const el = venueElements.find(e => e.id === id)
+      if (!el) continue
+      const pHw = el.width / 2
+      const pHh = el.height / 2
+      const peerSnapX = Math.round((start.startCx + dcx - pHw) / GRID_SIZE) * GRID_SIZE
+      const peerSnapY = Math.round((start.startCy + dcy - pHh) / GRID_SIZE) * GRID_SIZE
+      const node = stageRef.current?.findOne(`#vel-${id}`)
+      if (node) node.position({ x: peerSnapX + pHw, y: peerSnapY + pHh })
+      onElementDragEnd(id, peerSnapX, peerSnapY)
+    }
+    elementGroupDragRef.current = null
+  }, [venueElements, onElementDragEnd])
+
+  const handleElementSelect = useCallback((elementId: string, shiftKey: boolean) => {
+    onSelectTables([])
+    if (shiftKey) {
+      const ids = selectedVenueElementIds.includes(elementId)
+        ? selectedVenueElementIds.filter(id => id !== elementId)
+        : [...selectedVenueElementIds, elementId]
+      onSelectVenueElements(ids)
+    } else {
+      onSelectVenueElements([elementId])
+    }
+  }, [selectedVenueElementIds, onSelectVenueElements, onSelectTables])
+
   // Space+drag = pan; drag on background = lasso selection box
   const handleStageMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const target = e.target
@@ -352,16 +430,24 @@ export function SeatingCanvas({
       const normY = Math.min(selectionBox.y, selectionBox.y + selectionBox.h)
       const normW = Math.abs(selectionBox.w)
       const normH = Math.abs(selectionBox.h)
-      const selected = tables.filter((t) =>
+      const selectedTables = tables.filter((t) =>
         t.position_x < normX + normW && t.position_x + t.width > normX &&
         t.position_y < normY + normH && t.position_y + t.height > normY
       )
+      const selectedElems = venueElements.filter((e) =>
+        e.position_x < normX + normW && e.position_x + e.width > normX &&
+        e.position_y < normY + normH && e.position_y + e.height > normY
+      )
       if (isShiftHeldRef.current) {
-        const ids = new Set(selectedTableIds)
-        selected.forEach(t => ids.add(t.id))
-        onSelectTables([...ids])
+        const tIds = new Set(selectedTableIds)
+        selectedTables.forEach(t => tIds.add(t.id))
+        onSelectTables([...tIds])
+        const eIds = new Set(selectedVenueElementIds)
+        selectedElems.forEach(e => eIds.add(e.id))
+        onSelectVenueElements([...eIds])
       } else {
-        onSelectTables(selected.map(t => t.id))
+        onSelectTables(selectedTables.map(t => t.id))
+        onSelectVenueElements(selectedElems.map(e => e.id))
       }
     }
     selectionStartRef.current = null
@@ -373,8 +459,7 @@ export function SeatingCanvas({
     if (e.target === e.currentTarget || e.target.name() === "grid") {
       if (didDragSelectRef.current) { didDragSelectRef.current = false; return }
       onSelectTables([])
-      setSelectedElementId(null)
-      onSelectElement?.(null)
+      onSelectVenueElements([])
     }
   }
 
@@ -489,13 +574,16 @@ export function SeatingCanvas({
 
         {/* Venue Elements Layer */}
         <Layer>
-          {venueElements.map((element) => (
+          {[...venueElements.filter(e => e.element_type === 'area'), ...venueElements.filter(e => e.element_type !== 'area')]
+            .map((element) => (
             <VenueElementShape
               key={element.id}
               element={element}
-              selected={selectedElementId === element.id}
-              onSelect={() => { setSelectedElementId(element.id); onSelectElement?.(element.id); onSelectTables([]) }}
-              onDragEnd={(x, y) => onElementDragEnd(element.id, x, y)}
+              selected={selectedVenueElementIds.includes(element.id)}
+              onSelect={(shiftKey) => handleElementSelect(element.id, shiftKey)}
+              onDragStart={(cx, cy) => handleElementDragStart(element.id, cx, cy)}
+              onDragMove={(cx, cy) => handleElementDragMove(element.id, cx, cy)}
+              onDragEnd={(x, y) => handleElementGroupDragEnd(element.id, x, y)}
               onResize={(w, h, x, y, r) => onElementResize(element.id, w, h, x, y, r)}
             />
           ))}
@@ -524,8 +612,7 @@ export function SeatingCanvas({
               table={table}
               selected={selectedTableIds.includes(table.id)}
               onSelect={(shiftKey) => {
-                setSelectedElementId(null)
-                onSelectElement?.(null)
+                onSelectVenueElements([])
                 if (shiftKey) {
                   const ids = selectedTableIds.includes(table.id)
                     ? selectedTableIds.filter(id => id !== table.id)
@@ -798,19 +885,22 @@ function TableShape({
           shadowOffset={{ x: 0, y: 3 }}
         />
         {/* Crown / heart */}
-        <Text
-          x={0} y={hh - 13}
-          width={table.width}
-          text="♛"
-          fontSize={14} fontFamily="system-ui, sans-serif" fill="#d97706" align="center"
-        />
-        {/* Name label */}
-        <Text
-          x={4} y={hh + 2}
-          width={table.width - 8}
-          text={`${table.name} · ${table.occupancy}/${table.capacity}`}
-          fontSize={9} fontFamily="system-ui, sans-serif" fill="#78350f" align="center"
-        />
+        {/* Labels counter-rotated to stay readable at any table rotation */}
+        <Group x={hw} y={hh} rotation={-table.rotation}>
+          <Text
+            x={-hw} y={-13}
+            width={table.width}
+            text="♛"
+            fontSize={14} fontFamily="system-ui, sans-serif" fill="#d97706" align="center"
+          />
+          {/* Name label */}
+          <Text
+            x={-hw + 4} y={2}
+            width={table.width - 8}
+            text={`${table.name} · ${table.occupancy}/${table.capacity}`}
+            fontSize={9} fontFamily="system-ui, sans-serif" fill="#78350f" align="center"
+          />
+        </Group>
         {/* Status indicator dot */}
         <Circle x={table.width - 8} y={8} radius={4} fill={getStatusColor(table)} stroke="white" strokeWidth={1.5} />
         {/* Front seats (top side) */}
@@ -862,18 +952,21 @@ function TableShape({
         shadowOffset={{ x: 0, y: 3 }}
       />
       {renderRectSeats(table)}
-      <Text
-        x={5} y={hh - 15}
-        width={table.width - 10}
-        text={table.name}
-        fontSize={11} fontFamily="system-ui, sans-serif" fontStyle="bold" fill="#78350f" align="center"
-      />
-      <Text
-        x={5} y={hh + 5}
-        width={table.width - 10}
-        text={`${table.occupancy}/${table.capacity}`}
-        fontSize={9} fontFamily="system-ui, sans-serif" fill="#a16207" align="center"
-      />
+      {/* Labels counter-rotated to stay readable at any table rotation */}
+      <Group x={hw} y={hh} rotation={-table.rotation}>
+        <Text
+          x={-(table.width - 10) / 2} y={-15}
+          width={table.width - 10}
+          text={table.name}
+          fontSize={11} fontFamily="system-ui, sans-serif" fontStyle="bold" fill="#78350f" align="center"
+        />
+        <Text
+          x={-(table.width - 10) / 2} y={5}
+          width={table.width - 10}
+          text={`${table.occupancy}/${table.capacity}`}
+          fontSize={9} fontFamily="system-ui, sans-serif" fill="#a16207" align="center"
+        />
+      </Group>
       {/* Status indicator dot */}
       <Circle x={table.width - 8} y={8} radius={5} fill={getStatusColor(table)} stroke="white" strokeWidth={1.5} />
     </Group>
@@ -936,12 +1029,16 @@ function VenueElementShape({
   element,
   selected,
   onSelect,
+  onDragStart,
+  onDragMove,
   onDragEnd,
   onResize,
 }: {
   element: VenueElement
   selected: boolean
-  onSelect: () => void
+  onSelect: (shiftKey: boolean) => void
+  onDragStart?: (cx: number, cy: number) => void
+  onDragMove?: (cx: number, cy: number) => void
   onDragEnd: (x: number, y: number) => void
   onResize: (width: number, height: number, x: number, y: number, rotation: number) => void
 }) {
@@ -978,6 +1075,7 @@ function VenueElementShape({
     dj_booth: "#d9f99d",
     periquera: "#fde68a",
     lounge: "#f5d0fe",
+    area: "#e0f2fe",
     custom: "#e5e7eb",
   }
 
@@ -989,6 +1087,7 @@ function VenueElementShape({
     dj_booth: "#84cc16",
     periquera: "#d97706",
     lounge: "#a855f7",
+    area: "#0369a1",
     custom: "#6b7280",
   }
 
@@ -1008,8 +1107,8 @@ function VenueElementShape({
   const loungeCoffeeW    = Math.max(30, (element.width  - loungePad * 2 - loungeArmWidth  * 2) * 0.55)
   const loungeCoffeeH    = Math.max(20, (element.height - loungePad * 2 - loungeBackH) * 0.45)
 
-  // Periquera stool count (proportional to size)
-  const periquStoolCount = element.width >= 160 ? 6 : 4
+  // Periquera stool count — use capacity if set, else fallback to size-based default
+  const periquStoolCount = element.capacity || (element.width >= 160 ? 6 : 4)
   const periquTableR     = Math.min(hw, hh) * 0.32
   const periquStoolDist  = Math.min(hw, hh) * 0.68
 
@@ -1022,8 +1121,10 @@ function VenueElementShape({
       offsetY={hh}
       rotation={element.rotation}
       draggable
-      onClick={onSelect}
-      onTap={onSelect}
+      onClick={(e: Konva.KonvaEventObject<MouseEvent>) => onSelect(e.evt.shiftKey)}
+      onTap={() => onSelect(false)}
+      onDragStart={(e) => onDragStart?.(e.target.x(), e.target.y())}
+      onDragMove={(e) => onDragMove?.(e.target.x(), e.target.y())}
       onDragEnd={handleDragEnd}
       onTransformEnd={handleTransformEnd}
     >
@@ -1085,9 +1186,35 @@ function VenueElementShape({
             align="center"
           />
         </>
+      ) : element.element_type === 'area' ? (
+        <>
+          {/* Area zone: large labeled dashed rectangle */}
+          <Rect
+            width={element.width}
+            height={element.height}
+            fill={baseFill}
+            stroke={baseStroke}
+            strokeWidth={selected ? 2.5 : 2}
+            cornerRadius={6}
+            dash={[14, 7]}
+            opacity={0.35}
+          />
+          <Text
+            x={10}
+            y={10}
+            width={element.width - 20}
+            text={displayLabel}
+            fontSize={Math.min(18, Math.max(11, element.height * 0.1))}
+            fontStyle="bold"
+            fontFamily="system-ui, sans-serif"
+            fill={baseStroke}
+            align="left"
+            opacity={0.85}
+          />
+        </>
       ) : element.element_type === 'lounge' ? (
         <>
-          {/* Background area */}
+          {/* Background */}
           <Rect
             width={element.width}
             height={element.height}
@@ -1097,50 +1224,115 @@ function VenueElementShape({
             cornerRadius={10}
             opacity={0.45}
           />
-          {/* Back sofa (top edge) */}
-          <Rect
-            x={loungePad}
-            y={loungePad}
-            width={element.width - loungePad * 2}
-            height={loungeBackH}
-            fill="#d8b4fe"
-            stroke="#a855f7"
-            strokeWidth={1.5}
-            cornerRadius={[5, 5, 0, 0] as any}
-          />
-          {/* Left arm */}
-          <Rect
-            x={loungePad}
-            y={loungePad + loungeBackH}
-            width={loungeArmWidth}
-            height={loungeSideH}
-            fill="#d8b4fe"
-            stroke="#a855f7"
-            strokeWidth={1.5}
-            cornerRadius={[0, 0, 0, 5] as any}
-          />
-          {/* Right arm */}
-          <Rect
-            x={element.width - loungePad - loungeArmWidth}
-            y={loungePad + loungeBackH}
-            width={loungeArmWidth}
-            height={loungeSideH}
-            fill="#d8b4fe"
-            stroke="#a855f7"
-            strokeWidth={1.5}
-            cornerRadius={[0, 0, 5, 0] as any}
-          />
-          {/* Coffee table */}
-          <Rect
-            x={hw - loungeCoffeeW / 2}
-            y={loungePad + loungeBackH + (loungeSideH - loungeCoffeeH) / 2}
-            width={loungeCoffeeW}
-            height={loungeCoffeeH}
-            fill="#f3e8ff"
-            stroke="#c084fc"
-            strokeWidth={1.5}
-            cornerRadius={5}
-          />
+          {element.element_shape === 'sofa_circle' ? (
+            // Circle lounge: outer ring + open center + coffee table
+            (() => {
+              const r = Math.min(hw, hh)
+              const outerR = r * 0.85
+              const innerR = r * 0.52
+              const coffeeR = r * 0.22
+              return (
+                <>
+                  <Circle x={hw} y={hh} radius={outerR} fill="#d8b4fe" stroke="#a855f7" strokeWidth={2} />
+                  <Circle x={hw} y={hh} radius={innerR} fill={baseFill} stroke="#c084fc" strokeWidth={1} opacity={0.9} />
+                  <Circle x={hw} y={hh} radius={coffeeR} fill="#f3e8ff" stroke="#c084fc" strokeWidth={1.5} />
+                </>
+              )
+            })()
+          ) : element.element_shape === 'sofa_single' ? (
+            // Single sofa: back + seat + two armrests
+            (() => {
+              const backH = Math.max(14, element.height * 0.32)
+              const armW  = Math.max(12, element.width * 0.10)
+              const seatH = element.height - backH - loungePad
+              return (
+                <>
+                  {/* Back */}
+                  <Rect x={loungePad} y={loungePad} width={element.width - loungePad * 2} height={backH}
+                    fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[5,5,0,0] as any} />
+                  {/* Seat */}
+                  <Rect x={loungePad + armW} y={loungePad + backH}
+                    width={element.width - loungePad * 2 - armW * 2} height={seatH}
+                    fill="#e9d5ff" stroke="#a855f7" strokeWidth={1} />
+                  {/* Left arm */}
+                  <Rect x={loungePad} y={loungePad + backH} width={armW} height={seatH}
+                    fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[0,0,0,4] as any} />
+                  {/* Right arm */}
+                  <Rect x={element.width - loungePad - armW} y={loungePad + backH} width={armW} height={seatH}
+                    fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[0,0,4,0] as any} />
+                </>
+              )
+            })()
+          ) : element.element_shape === 'sofa_l' ? (
+            // L-shape sofa: horizontal piece + vertical piece on left
+            (() => {
+              const hBackH  = Math.max(14, element.height * 0.32)
+              const hSeatH  = element.height - hBackH - loungePad
+              const vBackW  = Math.max(14, element.width * 0.28)
+              const vSeatW  = Math.max(10, vBackW * 0.6)
+              return (
+                <>
+                  {/* Horizontal back */}
+                  <Rect x={loungePad} y={loungePad} width={element.width - loungePad * 2} height={hBackH}
+                    fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[5,5,0,0] as any} />
+                  {/* Horizontal seat */}
+                  <Rect x={loungePad} y={loungePad + hBackH} width={element.width - loungePad * 2} height={hSeatH}
+                    fill="#e9d5ff" stroke="#a855f7" strokeWidth={1} />
+                  {/* Vertical back (left side) */}
+                  <Rect x={loungePad} y={loungePad + hBackH} width={vBackW} height={hSeatH}
+                    fill="#d8b4fe" stroke="#a855f7" strokeWidth={1.5} cornerRadius={[0,0,0,4] as any} />
+                </>
+              )
+            })()
+          ) : (
+            // Default U-shape sofa
+            <>
+              {/* Back sofa (top edge) */}
+              <Rect
+                x={loungePad}
+                y={loungePad}
+                width={element.width - loungePad * 2}
+                height={loungeBackH}
+                fill="#d8b4fe"
+                stroke="#a855f7"
+                strokeWidth={1.5}
+                cornerRadius={[5, 5, 0, 0] as any}
+              />
+              {/* Left arm */}
+              <Rect
+                x={loungePad}
+                y={loungePad + loungeBackH}
+                width={loungeArmWidth}
+                height={loungeSideH}
+                fill="#d8b4fe"
+                stroke="#a855f7"
+                strokeWidth={1.5}
+                cornerRadius={[0, 0, 0, 5] as any}
+              />
+              {/* Right arm */}
+              <Rect
+                x={element.width - loungePad - loungeArmWidth}
+                y={loungePad + loungeBackH}
+                width={loungeArmWidth}
+                height={loungeSideH}
+                fill="#d8b4fe"
+                stroke="#a855f7"
+                strokeWidth={1.5}
+                cornerRadius={[0, 0, 5, 0] as any}
+              />
+              {/* Coffee table */}
+              <Rect
+                x={hw - loungeCoffeeW / 2}
+                y={loungePad + loungeBackH + (loungeSideH - loungeCoffeeH) / 2}
+                width={loungeCoffeeW}
+                height={loungeCoffeeH}
+                fill="#f3e8ff"
+                stroke="#c084fc"
+                strokeWidth={1.5}
+                cornerRadius={5}
+              />
+            </>
+          )}
           {/* Label */}
           <Text
             x={0}

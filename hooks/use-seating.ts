@@ -51,7 +51,7 @@ interface UseSeatingReturn {
   autoAssign: (keepGroupsTogether?: boolean) => Promise<number>
 
   // Venue element operations
-  addVenueElement: (type: VenueElementType, options?: { position?: { x: number; y: number }; shape?: VenueElementShape; label?: string }) => Promise<VenueElement | null>
+  addVenueElement: (type: VenueElementType, options?: { position?: { x: number; y: number }; shape?: VenueElementShape; label?: string; capacity?: number }) => Promise<VenueElement | null>
   updateVenueElement: (id: string, updates: Partial<VenueElement>) => void
   deleteVenueElement: (id: string) => Promise<boolean>
 
@@ -496,19 +496,29 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
 
   // ── Venue element operations (optimistic / local-only) ──
 
-  const addVenueElement = useCallback((type: VenueElementType, options?: { position?: { x: number; y: number }; shape?: VenueElementShape; label?: string }): Promise<VenueElement | null> => {
+  const addVenueElement = useCallback((type: VenueElementType, options?: { position?: { x: number; y: number }; shape?: VenueElementShape; label?: string; capacity?: number }): Promise<VenueElement | null> => {
     pushHistory()
     const id = tempId()
+    // Per-type defaults: size, default shape, default capacity
+    const typeDefaults: Partial<Record<VenueElementType, { w: number; h: number; cap: number; shape: VenueElementShape }>> = {
+      area:      { w: 400, h: 300, cap: 0,  shape: 'rect' },
+      periquera: { w: 160, h: 160, cap: 4,  shape: 'rect' },
+      lounge:    { w: 180, h: 140, cap: 0,  shape: 'sofa_u' },
+      dance_floor: { w: 200, h: 150, cap: 0, shape: 'rect' },
+      stage:     { w: 240, h: 100, cap: 0,  shape: 'rect' },
+    }
+    const defs = typeDefaults[type] ?? { w: 150, h: 100, cap: 0, shape: 'rect' as VenueElementShape }
     const newElement: VenueElement = {
       id,
       wedding_id: '',
       element_type: type,
-      element_shape: options?.shape ?? 'rect',
+      element_shape: options?.shape ?? defs.shape,
       label: options?.label ?? null,
+      capacity: options?.capacity ?? defs.cap,
       position_x: options?.position?.x ?? 300,
       position_y: options?.position?.y ?? 300,
-      width: 150,
-      height: 100,
+      width: defs.w,
+      height: defs.h,
       rotation: 0,
       color: null,
       created_at: new Date().toISOString(),
@@ -570,7 +580,7 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
           e.position_x !== saved.position_x || e.position_y !== saved.position_y ||
           e.rotation !== saved.rotation || e.width !== saved.width || e.height !== saved.height ||
           e.label !== saved.label || e.color !== saved.color || e.element_type !== saved.element_type ||
-          e.element_shape !== saved.element_shape
+          e.element_shape !== saved.element_shape || e.capacity !== saved.capacity
         )
       })
       const newElements = allElements.filter(e => e.id.startsWith('temp_'))

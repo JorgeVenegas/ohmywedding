@@ -20,7 +20,8 @@ import { PrintView } from "./components/print-view"
 import { UnsavedChangesDialog } from "./components/unsaved-changes-dialog"
 import { toast } from "sonner"
 import { ArrowLeft } from "lucide-react"
-import type { SeatingTable } from "./types"
+import type { SeatingTable, VenueElementShape } from "./types"
+import { LOUNGE_SHAPE_LABELS } from "./types"
 
 // Dynamic import for canvas (SSR incompatible)
 const SeatingCanvas = dynamic(() => import("./components/seating-canvas").then(m => ({ default: m.SeatingCanvas })), {
@@ -50,7 +51,7 @@ export default function SeatingPage({ params }: SeatingPageProps) {
   const [showPrintView, setShowPrintView] = useState(false)
   const [showGuestPanel, setShowGuestPanel] = useState(true)
   const [zoom, setZoom] = useState(1)
-  const [selectedElementId, setSelectedElementId] = useState<string | null>(null)
+  const [selectedVenueElementIds, setSelectedVenueElementIds] = useState<string[]>([])
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
@@ -60,7 +61,7 @@ export default function SeatingPage({ params }: SeatingPageProps) {
   // For single-table operations: only valid when exactly one table is selected
   const selectedTableId = selectedTableIds.length === 1 ? selectedTableIds[0] : null
   const selectedTable = selectedTableId ? (seating.tablesWithAssignments.find(t => t.id === selectedTableId) || null) : null
-  const selectedElement = selectedElementId ? (seating.venueElements.find(e => e.id === selectedElementId) || null) : null
+  const selectedElement = selectedVenueElementIds.length === 1 ? (seating.venueElements.find(e => e.id === selectedVenueElementIds[0]) || null) : null
 
   // Feature gate
   if (!subLoading && !canAccessFeature('seating_enabled')) {
@@ -397,7 +398,9 @@ export default function SeatingPage({ params }: SeatingPageProps) {
               tables={seating.tablesWithAssignments}
               venueElements={seating.venueElements}
               selectedTableIds={selectedTableIds.filter(id => validIds.includes(id))}
-              onSelectTables={(ids) => { setSelectedTableIds(ids); if (ids.length) setSelectedElementId(null) }}
+              onSelectTables={(ids) => { setSelectedTableIds(ids); if (ids.length) setSelectedVenueElementIds([]) }}
+              selectedVenueElementIds={selectedVenueElementIds}
+              onSelectVenueElements={(ids) => { setSelectedVenueElementIds(ids); if (ids.length) setSelectedTableIds([]) }}
               onTableDragEnd={handleTableDragEnd}
               onTableResize={handleTableResize}
               onElementDragEnd={handleElementDragEnd}
@@ -405,7 +408,6 @@ export default function SeatingPage({ params }: SeatingPageProps) {
               onViewTableGuests={handleViewTableGuests}
               zoom={zoom}
               onZoomChange={setZoom}
-              onSelectElement={(id) => { setSelectedElementId(id); if (id) setSelectedTableIds([]) }}
               onTableDelete={handleDeleteTable}
               onTableDuplicate={handleDuplicateTable}
               fitToScreenTrigger={fitToScreenTrigger}
@@ -431,19 +433,48 @@ export default function SeatingPage({ params }: SeatingPageProps) {
                 onChange={e => seating.updateVenueElement(selectedElement.id, { label: e.target.value || null })}
               />
               <div className="w-px h-4 bg-gray-200" />
-              {/* Shape toggle */}
+              {/* Shape toggle — for lounge: 4 variants; for others: rect/circle */}
               <div className="flex items-center gap-0.5 bg-gray-50 rounded-lg p-0.5">
-                <button
-                  className={`w-6 h-6 rounded flex items-center justify-center text-[11px] font-bold transition-colors ${selectedElement.element_shape === 'rect' ? 'bg-white shadow text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
-                  title="Rectangle shape"
-                  onClick={() => seating.updateVenueElement(selectedElement.id, { element_shape: 'rect' })}
-                >□</button>
-                <button
-                  className={`w-6 h-6 rounded flex items-center justify-center text-[11px] font-bold transition-colors ${selectedElement.element_shape === 'circle' ? 'bg-white shadow text-violet-600' : 'text-gray-400 hover:text-gray-600'}`}
-                  title="Circle shape"
-                  onClick={() => seating.updateVenueElement(selectedElement.id, { element_shape: 'circle' })}
-                >○</button>
+                {selectedElement.element_type === 'lounge' ? (
+                  (Object.entries(LOUNGE_SHAPE_LABELS) as [VenueElementShape, { en: string; icon: string }][]).map(([shape, info]) => (
+                    <button
+                      key={shape}
+                      className={`px-1.5 h-6 rounded flex items-center justify-center text-[11px] font-bold transition-colors ${selectedElement.element_shape === shape ? 'bg-white shadow text-violet-600' : 'text-gray-400 hover:text-gray-600'}`}
+                      title={info.en}
+                      onClick={() => seating.updateVenueElement(selectedElement.id, { element_shape: shape })}
+                    >{info.icon}</button>
+                  ))
+                ) : (
+                  <>
+                    <button
+                      className={`w-6 h-6 rounded flex items-center justify-center text-[11px] font-bold transition-colors ${selectedElement.element_shape === 'rect' ? 'bg-white shadow text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
+                      title="Rectangle shape"
+                      onClick={() => seating.updateVenueElement(selectedElement.id, { element_shape: 'rect' })}
+                    >□</button>
+                    <button
+                      className={`w-6 h-6 rounded flex items-center justify-center text-[11px] font-bold transition-colors ${selectedElement.element_shape === 'circle' ? 'bg-white shadow text-violet-600' : 'text-gray-400 hover:text-gray-600'}`}
+                      title="Circle shape"
+                      onClick={() => seating.updateVenueElement(selectedElement.id, { element_shape: 'circle' })}
+                    >○</button>
+                  </>
+                )}
               </div>
+              {/* Periquera: stool count */}
+              {selectedElement.element_type === 'periquera' && (
+                <>
+                  <div className="w-px h-4 bg-gray-200" />
+                  <span className="text-[11px] font-medium text-gray-500">Stools</span>
+                  <div className="flex items-center gap-0.5 bg-gray-50 rounded-lg p-0.5">
+                    {[4, 5, 6, 7, 8].map(n => (
+                      <button
+                        key={n}
+                        className={`w-6 h-6 rounded flex items-center justify-center text-[11px] font-bold transition-colors ${(selectedElement.capacity || 4) === n ? 'bg-white shadow text-amber-600' : 'text-gray-400 hover:text-gray-600'}`}
+                        onClick={() => seating.updateVenueElement(selectedElement.id, { capacity: n })}
+                      >{n}</button>
+                    ))}
+                  </div>
+                </>
+              )}
               <div className="w-px h-4 bg-gray-200" />
               {/* Color picker */}
               <span className="text-[11px] font-medium text-gray-500">Color</span>
