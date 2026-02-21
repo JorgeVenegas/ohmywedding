@@ -1122,14 +1122,16 @@ function VenueElementShape({
 
   // Front-edge indicator: thick colored segment at top-center of the element body
   // Rotates WITH the element — always shows which physical edge is "front"
+  // Uses a stable non-selection-dependent stroke so it's always visible
+  const frontStroke = element.color ?? strokeColors[element.element_type] ?? "#4b5563"
   const frontIndicatorW = Math.min(32, element.width * 0.28)
   const frontIndicatorNode = (
     <Line
       points={[hw - frontIndicatorW / 2, 3, hw + frontIndicatorW / 2, 3]}
-      stroke={baseStroke}
+      stroke={frontStroke}
       strokeWidth={3.5}
       lineCap="round"
-      opacity={0.9}
+      opacity={1}
     />
   )
 
