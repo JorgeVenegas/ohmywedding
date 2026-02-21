@@ -262,6 +262,10 @@ export function SeatingCanvas({
 
   // Called on every drag-move: moves peer nodes directly in Konva (no React state)
   const handleTableDragMove = useCallback((tableId: string, cx: number, cy: number) => {
+    // Keep this table's chairs in sync during drag
+    const ownChairs = stageRef.current?.findOne(`#tbl-chairs-${tableId}`)
+    if (ownChairs) ownChairs.position({ x: cx, y: cy })
+
     const g = groupDragRef.current
     if (!g || g.leaderId !== tableId) return
     const dx = cx - g.leaderStartCx
@@ -269,6 +273,9 @@ export function SeatingCanvas({
     for (const [id, start] of Object.entries(g.peers)) {
       const node = stageRef.current?.findOne(`#tbl-${id}`)
       if (node) node.position({ x: start.startCx + dx, y: start.startCy + dy })
+      // Also keep peer chairs in sync
+      const peerChairs = stageRef.current?.findOne(`#tbl-chairs-${id}`)
+      if (peerChairs) peerChairs.position({ x: start.startCx + dx, y: start.startCy + dy })
     }
   }, [])
 
@@ -769,73 +776,64 @@ function TableShape({
       e.target.position({ x: topLeftX + radius, y: topLeftY + radius })
       onDragEnd(topLeftX, topLeftY)
     }
+    const roundCx = table.position_x + radius
+    const roundCy = table.position_y + radius
     return (
-      <Group
-        id={`tbl-${table.id}`}
-        x={table.position_x + radius}
-        y={table.position_y + radius}
-        offsetX={radius}
-        offsetY={radius}
-        draggable
-        onClick={(e) => onSelect(e.evt.shiftKey)}
-        onTap={() => onSelect(false)}
-        onDragStart={(e) => onDragStart(e.target.x(), e.target.y())}
-        onDragMove={(e) => onDragMove(e.target.x(), e.target.y())}
-        onDragEnd={handleDragEnd}
-        onTransformEnd={makeTransformEnd(true)}
-        onDblClick={onDblClick}
-        onDblTap={onDblClick}
-        onMouseEnter={() => onHover(table.id)}
-        onMouseLeave={() => onHover(null)}
-      >
-        <Circle
-          x={radius}
-          y={radius}
-          radius={radius}
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={strokeWidth}
-          shadowColor="rgba(0,0,0,0.10)"
-          shadowBlur={selected ? 14 : 8}
-          shadowOffset={{ x: 0, y: 3 }}
-        />
-        {/* Chairs */}
-        {Array.from({ length: table.capacity }).map((_, i) => {
-          const angle = (2 * Math.PI * i) / table.capacity - Math.PI / 2
-          const seatX = radius + (radius + 14) * Math.cos(angle)
-          const seatY = radius + (radius + 14) * Math.sin(angle)
-          const occupied = i < table.occupancy
-          // Chair faces OUTWARD: local +y points away from table center
-          const chairRotation = (angle * 180 / Math.PI) + 90
-          const seatFill = occupied ? "#c4b5fd" : "#f5efe6"
-          const seatStroke = occupied ? "#7c3aed" : "#c4a87a"
-          const backFill = occupied ? "#a78bfa" : "#e8d9c5"
-          return (
-            <Group key={i} x={seatX} y={seatY} rotation={chairRotation}>
-              {/* Seat cushion — farther from table */}
-              <Rect x={-5.5} y={2} width={11} height={9} cornerRadius={[2, 2, 3, 3]} fill={seatFill} stroke={seatStroke} strokeWidth={1} />
-              {/* Backrest — between seat and table edge */}
-              <Rect x={-6} y={-6} width={12} height={7} cornerRadius={[2, 2, 0, 0]} fill={backFill} stroke={seatStroke} strokeWidth={1} />
-            </Group>
-          )
-        })}
-        {/* Table name */}
-        <Text
-          x={5} y={radius - 15}
-          width={radius * 2 - 10}
-          text={table.name}
-          fontSize={11} fontFamily="system-ui, sans-serif" fontStyle="bold" fill="#78350f" align="center"
-        />
-        {/* Occupancy */}
-        <Text
-          x={5} y={radius + 5}
-          width={radius * 2 - 10}
-          text={`${table.occupancy}/${table.capacity}`}
-          fontSize={9} fontFamily="system-ui, sans-serif" fill="#a16207" align="center"
-        />
-        {/* Status indicator dot — top-right inside the table circle */}
-        <Circle x={radius * 1.55} y={radius * 0.45} radius={5} fill={getStatusColor(table)} stroke="white" strokeWidth={1.5} />
-      </Group>
+      <>
+        {/* Chairs — sibling group, same transform, excluded from Transformer bounding box */}
+        <Group
+          id={`tbl-chairs-${table.id}`}
+          x={roundCx} y={roundCy}
+          offsetX={radius} offsetY={radius}
+          listening={false}
+        >
+          {Array.from({ length: table.capacity }).map((_, i) => {
+            const angle = (2 * Math.PI * i) / table.capacity - Math.PI / 2
+            const seatX = radius + (radius + 14) * Math.cos(angle)
+            const seatY = radius + (radius + 14) * Math.sin(angle)
+            const occupied = i < table.occupancy
+            const chairRotation = (angle * 180 / Math.PI) + 90
+            const seatFill = occupied ? "#c4b5fd" : "#f5efe6"
+            const seatStroke = occupied ? "#7c3aed" : "#c4a87a"
+            const backFill = occupied ? "#a78bfa" : "#e8d9c5"
+            return (
+              <Group key={i} x={seatX} y={seatY} rotation={chairRotation}>
+                <Rect x={-5.5} y={2} width={11} height={9} cornerRadius={[2, 2, 3, 3]} fill={seatFill} stroke={seatStroke} strokeWidth={1} />
+                <Rect x={-6} y={-6} width={12} height={7} cornerRadius={[2, 2, 0, 0]} fill={backFill} stroke={seatStroke} strokeWidth={1} />
+              </Group>
+            )
+          })}
+        </Group>
+        {/* Table body — Transformer attaches here; tight bounding box = circle only */}
+        <Group
+          id={`tbl-${table.id}`}
+          x={roundCx} y={roundCy}
+          offsetX={radius} offsetY={radius}
+          draggable
+          onClick={(e) => onSelect(e.evt.shiftKey)}
+          onTap={() => onSelect(false)}
+          onDragStart={(e) => onDragStart(e.target.x(), e.target.y())}
+          onDragMove={(e) => onDragMove(e.target.x(), e.target.y())}
+          onDragEnd={handleDragEnd}
+          onTransformEnd={makeTransformEnd(true)}
+          onDblClick={onDblClick}
+          onDblTap={onDblClick}
+          onMouseEnter={() => onHover(table.id)}
+          onMouseLeave={() => onHover(null)}
+        >
+          <Circle
+            x={radius} y={radius}
+            radius={radius}
+            fill={fill} stroke={stroke} strokeWidth={strokeWidth}
+            shadowColor="rgba(0,0,0,0.10)" shadowBlur={selected ? 14 : 8} shadowOffset={{ x: 0, y: 3 }}
+          />
+          <Text x={5} y={radius - 15} width={radius * 2 - 10} text={table.name}
+            fontSize={11} fontFamily="system-ui, sans-serif" fontStyle="bold" fill="#78350f" align="center" />
+          <Text x={5} y={radius + 5} width={radius * 2 - 10} text={`${table.occupancy}/${table.capacity}`}
+            fontSize={9} fontFamily="system-ui, sans-serif" fill="#a16207" align="center" />
+          <Circle x={radius * 1.55} y={radius * 0.45} radius={5} fill={getStatusColor(table)} stroke="white" strokeWidth={1.5} />
+        </Group>
+      </>
     )
   }
 
@@ -852,124 +850,94 @@ function TableShape({
   // Sweetheart table — small elegant table for 2
   if (table.shape === "sweetheart") {
     const sideA = table.side_a_count ?? 2
+    const swCx = table.position_x + hw
+    const swCy = table.position_y + hh
     return (
+      <>
+        {/* Chairs — sibling, same transform, excluded from Transformer bbox */}
+        <Group
+          id={`tbl-chairs-${table.id}`}
+          x={swCx} y={swCy} offsetX={hw} offsetY={hh}
+          rotation={table.rotation} listening={false}
+        >
+          {Array.from({ length: sideA }).map((_, i) => {
+            const occ = i < table.occupancy
+            const seatFill = occ ? "#c4b5fd" : "#fef9c3"
+            const seatStroke = occ ? "#7c3aed" : "#d97706"
+            const backFill = occ ? "#a78bfa" : "#fde68a"
+            return (
+              <Group key={`sw-${i}`} x={((i + 1) / (sideA + 1)) * table.width} y={-14} rotation={180}>
+                <Rect x={-5.5} y={-9} width={11} height={9} cornerRadius={[2, 2, 3, 3]} fill={seatFill} stroke={seatStroke} strokeWidth={1} />
+                <Rect x={-6} y={1} width={12} height={5} cornerRadius={[0, 0, 2, 2]} fill={backFill} stroke={seatStroke} strokeWidth={1} />
+              </Group>
+            )
+          })}
+        </Group>
+        {/* Table body — Transformer target; tight bounding box = table rect only */}
+        <Group
+          id={`tbl-${table.id}`}
+          x={swCx} y={swCy} offsetX={hw} offsetY={hh}
+          rotation={table.rotation} draggable
+          onClick={(e) => onSelect(e.evt.shiftKey)}
+          onTap={() => onSelect(false)}
+          onDragStart={(e) => onDragStart(e.target.x(), e.target.y())}
+          onDragMove={(e) => onDragMove(e.target.x(), e.target.y())}
+          onDragEnd={handleDragEnd}
+          onTransformEnd={makeTransformEnd(false)}
+          onDblClick={onDblClick} onDblTap={onDblClick}
+          onMouseEnter={() => onHover(table.id)}
+          onMouseLeave={() => onHover(null)}
+        >
+          <Rect width={table.width} height={table.height} fill={fill} stroke={stroke} strokeWidth={strokeWidth}
+            cornerRadius={12} shadowColor="rgba(217,119,6,0.2)" shadowBlur={selected ? 14 : 8} shadowOffset={{ x: 0, y: 3 }} />
+          <Group x={hw} y={hh} rotation={-table.rotation}>
+            <Text x={-hw} y={-13} width={table.width} text="♛" fontSize={14} fontFamily="system-ui, sans-serif" fill="#d97706" align="center" />
+            <Text x={-hw + 4} y={2} width={table.width - 8} text={`${table.name} · ${table.occupancy}/${table.capacity}`} fontSize={9} fontFamily="system-ui, sans-serif" fill="#78350f" align="center" />
+          </Group>
+          <Circle x={table.width - 8} y={8} radius={4} fill={getStatusColor(table)} stroke="white" strokeWidth={1.5} />
+        </Group>
+      </>
+    )
+  }
+
+  const rectCx = table.position_x + hw
+  const rectCy = table.position_y + hh
+  return (
+    <>
+      {/* Chairs — sibling, same transform, excluded from Transformer bbox */}
+      <Group
+        id={`tbl-chairs-${table.id}`}
+        x={rectCx} y={rectCy} offsetX={hw} offsetY={hh}
+        rotation={table.rotation} listening={false}
+      >
+        {renderRectSeats(table)}
+      </Group>
+      {/* Table body — Transformer target; tight bounding box = table rect only */}
       <Group
         id={`tbl-${table.id}`}
-        x={table.position_x + hw}
-        y={table.position_y + hh}
-        offsetX={hw}
-        offsetY={hh}
-        rotation={table.rotation}
-        draggable
+        x={rectCx} y={rectCy} offsetX={hw} offsetY={hh}
+        rotation={table.rotation} draggable
         onClick={(e) => onSelect(e.evt.shiftKey)}
         onTap={() => onSelect(false)}
         onDragStart={(e) => onDragStart(e.target.x(), e.target.y())}
         onDragMove={(e) => onDragMove(e.target.x(), e.target.y())}
         onDragEnd={handleDragEnd}
         onTransformEnd={makeTransformEnd(false)}
-        onDblClick={onDblClick}
-        onDblTap={onDblClick}
+        onDblClick={onDblClick} onDblTap={onDblClick}
         onMouseEnter={() => onHover(table.id)}
         onMouseLeave={() => onHover(null)}
       >
-        {/* Table body */}
-        <Rect
-          width={table.width}
-          height={table.height}
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={strokeWidth}
-          cornerRadius={12}
-          shadowColor="rgba(217,119,6,0.2)"
-          shadowBlur={selected ? 14 : 8}
-          shadowOffset={{ x: 0, y: 3 }}
-        />
-        {/* Crown / heart */}
-        {/* Labels counter-rotated to stay readable at any table rotation */}
+        <Rect width={table.width} height={table.height} fill={fill} stroke={stroke} strokeWidth={strokeWidth}
+          cornerRadius={8} shadowColor="rgba(0,0,0,0.10)" shadowBlur={selected ? 14 : 8} shadowOffset={{ x: 0, y: 3 }} />
         <Group x={hw} y={hh} rotation={-table.rotation}>
-          <Text
-            x={-hw} y={-13}
-            width={table.width}
-            text="♛"
-            fontSize={14} fontFamily="system-ui, sans-serif" fill="#d97706" align="center"
-          />
-          {/* Name label */}
-          <Text
-            x={-hw + 4} y={2}
-            width={table.width - 8}
-            text={`${table.name} · ${table.occupancy}/${table.capacity}`}
-            fontSize={9} fontFamily="system-ui, sans-serif" fill="#78350f" align="center"
-          />
+          <Text x={-(table.width - 10) / 2} y={-15} width={table.width - 10} text={table.name}
+            fontSize={11} fontFamily="system-ui, sans-serif" fontStyle="bold" fill="#78350f" align="center" />
+          <Text x={-(table.width - 10) / 2} y={5} width={table.width - 10} text={`${table.occupancy}/${table.capacity}`}
+            fontSize={9} fontFamily="system-ui, sans-serif" fill="#a16207" align="center" />
         </Group>
-        {/* Status indicator dot */}
-        <Circle x={table.width - 8} y={8} radius={4} fill={getStatusColor(table)} stroke="white" strokeWidth={1.5} />
-        {/* Front seats (top side) */}
-        {Array.from({ length: sideA }).map((_, i) => {
-          const occ = i < table.occupancy
-          const seatFill = occ ? "#c4b5fd" : "#fef9c3"
-          const seatStroke = occ ? "#7c3aed" : "#d97706"
-          const backFill = occ ? "#a78bfa" : "#fde68a"
-          return (
-            <Group key={`sw-${i}`} x={((i + 1) / (sideA + 1)) * table.width} y={-14} rotation={180}>
-              <Rect x={-5.5} y={-9} width={11} height={9} cornerRadius={[2, 2, 3, 3]} fill={seatFill} stroke={seatStroke} strokeWidth={1} />
-              <Rect x={-6} y={1} width={12} height={5} cornerRadius={[0, 0, 2, 2]} fill={backFill} stroke={seatStroke} strokeWidth={1} />
-            </Group>
-          )
-        })}
+        <Circle x={table.width - 8} y={8} radius={5} fill={getStatusColor(table)} stroke="white" strokeWidth={1.5} />
       </Group>
-    )
-  }
-
-  return (
-    <Group
-      id={`tbl-${table.id}`}
-      x={table.position_x + hw}
-      y={table.position_y + hh}
-      offsetX={hw}
-      offsetY={hh}
-      rotation={table.rotation}
-      draggable
-      onClick={(e) => onSelect(e.evt.shiftKey)}
-      onTap={() => onSelect(false)}
-      onDragStart={(e) => onDragStart(e.target.x(), e.target.y())}
-      onDragMove={(e) => onDragMove(e.target.x(), e.target.y())}
-      onDragEnd={handleDragEnd}
-      onTransformEnd={makeTransformEnd(false)}
-      onDblClick={onDblClick}
-      onDblTap={onDblClick}
-      onMouseEnter={() => onHover(table.id)}
-      onMouseLeave={() => onHover(null)}
-    >
-      <Rect
-        width={table.width}
-        height={table.height}
-        fill={fill}
-        stroke={stroke}
-        strokeWidth={strokeWidth}
-        cornerRadius={8}
-        shadowColor="rgba(0,0,0,0.10)"
-        shadowBlur={selected ? 14 : 8}
-        shadowOffset={{ x: 0, y: 3 }}
-      />
-      {renderRectSeats(table)}
-      {/* Labels counter-rotated to stay readable at any table rotation */}
-      <Group x={hw} y={hh} rotation={-table.rotation}>
-        <Text
-          x={-(table.width - 10) / 2} y={-15}
-          width={table.width - 10}
-          text={table.name}
-          fontSize={11} fontFamily="system-ui, sans-serif" fontStyle="bold" fill="#78350f" align="center"
-        />
-        <Text
-          x={-(table.width - 10) / 2} y={5}
-          width={table.width - 10}
-          text={`${table.occupancy}/${table.capacity}`}
-          fontSize={9} fontFamily="system-ui, sans-serif" fill="#a16207" align="center"
-        />
-      </Group>
-      {/* Status indicator dot */}
-      <Circle x={table.width - 8} y={8} radius={5} fill={getStatusColor(table)} stroke="white" strokeWidth={1.5} />
-    </Group>
+    </>
   )
 }
 
@@ -1095,7 +1063,6 @@ function VenueElementShape({
   const baseStroke = selected ? "#6366f1" : (element.color ? element.color : (strokeColors[element.element_type] ?? "#9ca3af"))
   const labelInfo = VENUE_ELEMENT_LABELS[element.element_type]
   const displayLabel = element.label || labelInfo?.en || element.element_type
-  const displayIcon = labelInfo?.icon ?? "📦"
   const isCircle = element.element_shape === 'circle'
 
   // Lounge proportional layout values
@@ -1428,18 +1395,8 @@ function VenueElementShape({
             />
           )}
           <Text
-            x={0}
-            y={element.height / 2 - 18}
-            width={element.width}
-            text={displayIcon}
-            fontSize={18}
-            fontFamily="system-ui, sans-serif"
-            fill="#374151"
-            align="center"
-          />
-          <Text
             x={4}
-            y={element.height / 2 + 2}
+            y={element.height / 2 - 8}
             width={element.width - 8}
             text={displayLabel}
             fontSize={12}

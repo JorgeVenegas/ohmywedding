@@ -21,7 +21,29 @@ import {
   CheckCircle2,
   MoreHorizontal,
   RotateCcw,
+  Music2,
+  Mic2,
+  DoorOpen,
+  Wine,
+  Headphones,
+  Armchair,
+  Sofa,
+  MapPin,
+  PenLine,
 } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+
+const VENUE_ELEMENT_ICONS: Record<string, LucideIcon> = {
+  dance_floor: Music2,
+  stage: Mic2,
+  entrance: DoorOpen,
+  bar: Wine,
+  dj_booth: Headphones,
+  periquera: Armchair,
+  lounge: Sofa,
+  area: MapPin,
+  custom: PenLine,
+}
 import { useState, useRef, useEffect, useCallback } from "react"
 import { createPortal } from "react-dom"
 import type { VenueElementType, VenueElementShape } from "../types"
@@ -218,7 +240,9 @@ export function SeatingToolbar({
               return (
                 <div key={type}>
                   <div className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 transition-colors group">
-                    <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center text-sm flex-shrink-0">{info.icon}</div>
+                    <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
+                      {(() => { const Icon = VENUE_ELEMENT_ICONS[type]; return Icon ? <Icon className="w-3.5 h-3.5 text-gray-500" /> : null })()}
+                    </div>
                     <button className="flex-1 text-left text-sm text-gray-700"
                       onClick={() => {
                         if (isCustom) { setShowCustomInput(true); return }

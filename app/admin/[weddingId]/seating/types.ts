@@ -71,20 +71,20 @@ export interface TableWithAssignments extends SeatingTable {
   isOverfilled: boolean
 }
 
-export const VENUE_ELEMENT_LABELS: Record<VenueElementType, { en: string; es: string; icon: string }> = {
-  dance_floor: { en: 'Dance Floor', es: 'Pista de Baile', icon: '💃' },
-  stage: { en: 'Stage', es: 'Escenario', icon: '🎤' },
-  entrance: { en: 'Entrance', es: 'Entrada', icon: '🚪' },
-  bar: { en: 'Bar', es: 'Bar', icon: '🍸' },
-  dj_booth: { en: 'DJ Booth', es: 'Cabina DJ', icon: '🎧' },
-  periquera: { en: 'High Table', es: 'Periquera', icon: '🪑' },
-  lounge: { en: 'Lounge', es: 'Lounge', icon: '🛋️' },
-  area: { en: 'Area / Zone', es: 'Área / Zona', icon: '📍' },
-  custom: { en: 'Custom', es: 'Personalizado', icon: '✏️' },
+export const VENUE_ELEMENT_LABELS: Record<VenueElementType, { en: string; es: string }> = {
+  dance_floor: { en: 'Dance Floor', es: 'Pista de Baile' },
+  stage: { en: 'Stage', es: 'Escenario' },
+  entrance: { en: 'Entrance', es: 'Entrada' },
+  bar: { en: 'Bar', es: 'Bar' },
+  dj_booth: { en: 'DJ Booth', es: 'Cabina DJ' },
+  periquera: { en: 'High Table', es: 'Periquera' },
+  lounge: { en: 'Lounge', es: 'Lounge' },
+  area: { en: 'Area / Zone', es: 'Área / Zona' },
+  custom: { en: 'Custom', es: 'Personalizado' },
 }
 
 export const LOUNGE_SHAPE_LABELS: Record<string, { en: string; icon: string }> = {
-  sofa_single: { en: 'Single Sofa',  icon: '🛋' },
+  sofa_single: { en: 'Single Sofa',  icon: '—' },
   sofa_l:      { en: 'L-Shape',      icon: '⌐' },
   sofa_u:      { en: 'U-Shape',      icon: '∪' },
   sofa_circle: { en: 'Circle',       icon: '○' },
