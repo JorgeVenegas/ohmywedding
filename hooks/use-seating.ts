@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useTranslation } from '@/components/contexts/i18n-context'
 import type {
   SeatingTable,
   SeatingAssignment,
@@ -80,6 +81,7 @@ interface UseSeatingReturn {
 }
 
 export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
+  const { locale } = useTranslation()
   const [tables, setTables] = useState<SeatingTable[]>([])
   const [assignments, setAssignments] = useState<SeatingAssignment[]>([])
   const [venueElements, setVenueElements] = useState<VenueElement[]>([])
@@ -319,7 +321,7 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
     const newTable: SeatingTable = {
       id,
       wedding_id: '',
-      name: shape === 'sweetheart' ? 'Sweetheart Table' : `Table ${count + 1}`,
+      name: shape === 'sweetheart' ? (locale === 'es' ? 'Mesa de Novios' : 'Sweetheart Table') : `Table ${count + 1}`,
       shape,
       capacity: defaults.capacity,
       side_a_count: shape === 'sweetheart' ? 2 : null,
@@ -339,7 +341,7 @@ export function useSeating({ weddingId }: UseSeatingProps): UseSeatingReturn {
     setTables(prev => [...prev, newTable])
     setHasUnsavedChanges(true)
     return Promise.resolve(newTable)
-  }, [tables.length, pushHistory])
+  }, [tables.length, pushHistory, locale])
 
   const updateTable = useCallback((id: string, updates: Partial<SeatingTable>) => {
     pushHistory()

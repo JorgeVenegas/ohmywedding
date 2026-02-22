@@ -232,7 +232,7 @@ export function SeatingToolbar({
             {[
               { icon: <Circle className="w-3.5 h-3.5 text-indigo-500" />, bg: 'bg-indigo-50', label: t('admin.seating.toolbar.addRoundTable'), action: onAddRoundTable },
               { icon: <RectangleHorizontal className="w-3.5 h-3.5 text-violet-500" />, bg: 'bg-violet-50', label: t('admin.seating.toolbar.addRectTable'), action: onAddRectTable },
-              { icon: <Heart className="w-3.5 h-3.5 text-rose-500" />, bg: 'bg-rose-50', label: 'Sweetheart Table', action: onAddSweetheart },
+              { icon: <Heart className="w-3.5 h-3.5 text-rose-500" />, bg: 'bg-rose-50', label: t('admin.seating.toolbar.addSweetheartTable'), action: onAddSweetheart },
             ].map(({ icon, bg, label, action }) => (
               <button key={label} className="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2.5 text-sm transition-colors"
                 onClick={() => { action(); setShowAddDropdown(false) }}>

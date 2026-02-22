@@ -1449,6 +1449,7 @@ export interface Translations {
       toolbar: {
         addRoundTable: string
         addRectTable: string
+        addSweetheartTable: string
         addElement: string
         zoomIn: string
         zoomOut: string

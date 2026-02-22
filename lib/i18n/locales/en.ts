@@ -1520,6 +1520,7 @@ export const en: Translations = {
       toolbar: {
         addRoundTable: 'Round Table',
         addRectTable: 'Rectangular Table',
+        addSweetheartTable: 'Sweetheart Table',
         addElement: 'Add Element',
         zoomIn: 'Zoom In',
         zoomOut: 'Zoom Out',

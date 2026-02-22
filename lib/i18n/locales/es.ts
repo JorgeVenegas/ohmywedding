@@ -1516,6 +1516,7 @@ export const es: Translations = {
       toolbar: {
         addRoundTable: 'Mesa Redonda',
         addRectTable: 'Mesa Rectangular',
+        addSweetheartTable: 'Mesa de Novios',
         addElement: 'Agregar Elemento',
         zoomIn: 'Acercar',
         zoomOut: 'Alejar',
