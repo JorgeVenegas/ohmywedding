@@ -1623,6 +1623,9 @@ export interface Translations {
       guestsSelected: string
       chooseGroup: string
       chooseTable: string
+      members: string
+      noGroups: string
+      noTables: string
       assign: string
       dish: string
       dishPlural: string
@@ -1703,11 +1706,11 @@ export interface Translations {
         totalGuests: string
         confirmed: string
         tables: string
-        dishes: string
+        menus: string
       }
       sections: {
         venueMap: string
-        dishes: string
+        menus: string
         seatingAssignments: string
         itinerary: string
       }
@@ -1715,15 +1718,14 @@ export interface Translations {
       columns: {
         guest: string
         group: string
-        dish: string
+        menu: string
         dietary: string
       }
-      servings: string
-      totalServings: string
       noVenueData: string
-      noDishData: string
+      noMenuData: string
       noSeatingData: string
       noItineraryData: string
+      totalAssigned: string
     }
   }
 

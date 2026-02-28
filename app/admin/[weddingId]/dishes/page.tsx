@@ -33,6 +33,17 @@ interface GuestInfo {
   groupName?: string
 }
 
+interface GroupInfo {
+  id: string
+  name: string
+}
+
+interface TableInfo {
+  id: string
+  name: string
+  capacity: number
+}
+
 interface DishesPageProps {
   params: Promise<{ weddingId: string }>
 }
@@ -47,6 +58,10 @@ export default function DishesPage({ params }: DishesPageProps) {
   const [guests, setGuests] = useState<GuestInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [groups, setGroups] = useState<GroupInfo[]>([])
+  const [tables, setTables] = useState<TableInfo[]>([])
+  const [seatAssignments, setSeatAssignments] = useState<{ table_id: string; guest_id: string }[]>([])
+  const [activeTab, setActiveTab] = useState<'guests' | 'group' | 'table'>('guests')
 
   const [showMenuModal, setShowMenuModal] = useState(false)
   const [editingMenu, setEditingMenu] = useState<Menu | null>(null)
@@ -62,22 +77,31 @@ export default function DishesPage({ params }: DishesPageProps) {
 
   const fetchData = useCallback(async () => {
     try {
-      const [menusRes, assignmentsRes, guestsRes, groupsRes] = await Promise.all([
+      const [menusRes, assignmentsRes, guestsRes, groupsRes, seatingRes] = await Promise.all([
         fetch(`/api/menus?weddingId=${encodeURIComponent(decodedWeddingId)}`),
         fetch(`/api/menus/assignments?weddingId=${encodeURIComponent(decodedWeddingId)}`),
         fetch(`/api/guests?weddingId=${encodeURIComponent(decodedWeddingId)}`),
         fetch(`/api/guest-groups?weddingId=${encodeURIComponent(decodedWeddingId)}`),
+        fetch(`/api/seating?weddingId=${encodeURIComponent(decodedWeddingId)}`),
       ])
-      const [menusData, assignmentsData, guestsData, groupsData] = await Promise.all([
-        menusRes.json(), assignmentsRes.json(), guestsRes.json(), groupsRes.json(),
+      const [menusData, assignmentsData, guestsData, groupsData, seatingData] = await Promise.all([
+        menusRes.json(), assignmentsRes.json(), guestsRes.json(), groupsRes.json(), seatingRes.json(),
       ])
       setMenus(menusData.menus || [])
       setAssignments(assignmentsData.assignments || [])
-      const allGroups = groupsData.groups || groupsData.data || []
+      const allGroups: GroupInfo[] = groupsData.groups || groupsData.data || []
+      setGroups(allGroups)
+      setTables(seatingData.tables || [])
+      setSeatAssignments(
+        (seatingData.assignments || []).map((a: { table_id: string; guest_id: string }) => ({
+          table_id: a.table_id,
+          guest_id: a.guest_id,
+        }))
+      )
       setGuests(
         (guestsData.guests || guestsData.data || []).map((g: GuestInfo) => ({
           ...g,
-          groupName: allGroups.find((grp: { id: string; name: string }) => grp.id === g.guest_group_id)?.name,
+          groupName: allGroups.find((grp) => grp.id === g.guest_group_id)?.name,
         }))
       )
     } catch {
@@ -118,6 +142,30 @@ export default function DishesPage({ params }: DishesPageProps) {
       await fetch(`/api/menus?weddingId=${encodeURIComponent(decodedWeddingId)}&menuId=${deletingMenuId}`, { method: 'DELETE' })
       toast.success(t('admin.dishes.notifications.menuDeleted'))
       setDeletingMenuId(null)
+      fetchData()
+    } catch {
+      toast.error(t('admin.seating.notifications.error'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // ── Bulk assignment (by group or table) ────────────────────────────────────
+
+  const handleBulkAssign = async (menuId: string, opts: { groupId?: string; tableId?: string }) => {
+    setSaving(true)
+    try {
+      const body: Record<string, unknown> = { menu_id: menuId }
+      if (opts.groupId) body.group_id = opts.groupId
+      if (opts.tableId) body.table_id = opts.tableId
+      const res = await fetch(`/api/menus/assignments?weddingId=${encodeURIComponent(decodedWeddingId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) throw new Error()
+      const data = await res.json()
+      toast.success(t('admin.dishes.notifications.menuAssigned').replace('{{count}}', String(data.count || 0)))
       fetchData()
     } catch {
       toast.error(t('admin.seating.notifications.error'))
@@ -169,6 +217,15 @@ export default function DishesPage({ params }: DishesPageProps) {
   }, [menus, assignments])
 
   const totalAssigned = useMemo(() => confirmedGuests.filter(g => assignmentMap[g.id]).length, [confirmedGuests, assignmentMap])
+
+  const tableGuestMap = useMemo(
+    () => seatAssignments.reduce((acc, a) => {
+      if (!acc[a.table_id]) acc[a.table_id] = []
+      acc[a.table_id].push(a.guest_id)
+      return acc
+    }, {} as Record<string, string[]>),
+    [seatAssignments]
+  )
 
   if (loading) {
     return (
@@ -315,9 +372,10 @@ export default function DishesPage({ params }: DishesPageProps) {
           </div>
         )}
 
-        {/* ── Guest assignment table ─────────────────────────────────────────── */}
+        {/* ── Assignments section ─────────────────────────────────────────────── */}
         {menus.length > 0 && (
           <div>
+            {/* Header row: title + legend */}
             <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
               <div>
                 <h2 className="text-base font-semibold">{t('admin.dishes.guestAssignments')}</h2>
@@ -325,7 +383,6 @@ export default function DishesPage({ params }: DishesPageProps) {
                   {totalAssigned}/{confirmedGuests.length} {t('admin.dishes.stats.assigned').toLowerCase()}
                 </p>
               </div>
-              {/* Menu color legend */}
               <div className="flex flex-wrap gap-2">
                 {menus.map((menu, i) => {
                   const colors = MENU_COLORS[i % MENU_COLORS.length]
@@ -339,80 +396,225 @@ export default function DishesPage({ params }: DishesPageProps) {
               </div>
             </div>
 
-            {/* Filters */}
-            <div className="flex gap-2 mb-3">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t('admin.dishes.searchGuests')}
-                  className="pl-9 h-9"
-                />
-              </div>
-              <Button
-                variant={showAllGuests ? "default" : "outline"}
-                size="sm"
-                onClick={() => setShowAllGuests(p => !p)}
-                className="h-9 gap-1.5"
-              >
-                <Users className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{showAllGuests ? t('admin.dishes.confirmedOnly') : t('admin.dishes.showAllGuests')}</span>
-              </Button>
+            {/* Tab switcher */}
+            <div className="flex gap-1 mb-4 p-1 bg-muted/50 rounded-lg w-fit">
+              {(['guests', 'group', 'table'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`text-sm px-3 py-1.5 rounded-md font-medium transition-all ${
+                    activeTab === tab
+                      ? 'bg-background shadow-sm text-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {tab === 'guests' ? t('admin.dishes.byGuests')
+                    : tab === 'group' ? t('admin.dishes.byGroup')
+                    : t('admin.dishes.byTable')}
+                </button>
+              ))}
             </div>
 
-            {displayGuests.length === 0 ? (
-              <Card className="p-8 text-center text-muted-foreground text-sm">
-                {searchQuery ? t('admin.dishes.noGuestsFound') : t('admin.dishes.noGuestsFound')}
-              </Card>
-            ) : (
-              <Card className="divide-y overflow-hidden">
-                {displayGuests.map(guest => {
-                  const assignedMenuId = assignmentMap[guest.id]
-                  const isConfirmed = guest.confirmation_status === 'confirmed'
-                  return (
-                    <div
-                      key={guest.id}
-                      className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/20 ${!isConfirmed ? 'opacity-60' : ''}`}
-                    >
-                      {/* Assignment check indicator */}
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        assignedMenuId ? MENU_COLORS[menus.findIndex(m => m.id === assignedMenuId) % MENU_COLORS.length].stripe : 'bg-muted'
-                      }`}>
-                        {assignedMenuId && <Check className="w-3 h-3 text-white" />}
-                      </div>
+            {/* ── By Guests ── */}
+            {activeTab === 'guests' && (
+              <>
+                <div className="flex gap-2 mb-3">
+                  <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={t('admin.dishes.searchGuests')}
+                      className="pl-9 h-9"
+                    />
+                  </div>
+                  <Button
+                    variant={showAllGuests ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowAllGuests(p => !p)}
+                    className="h-9 gap-1.5"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{showAllGuests ? t('admin.dishes.confirmedOnly') : t('admin.dishes.showAllGuests')}</span>
+                  </Button>
+                </div>
 
-                      {/* Name + group */}
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium text-sm">{guest.name}</span>
-                        {guest.groupName && (
-                          <span className="text-xs text-muted-foreground ml-2">{guest.groupName}</span>
-                        )}
-                      </div>
+                {displayGuests.length === 0 ? (
+                  <Card className="p-8 text-center text-muted-foreground text-sm">
+                    {t('admin.dishes.noGuestsFound')}
+                  </Card>
+                ) : (
+                  <Card className="divide-y overflow-hidden">
+                    {displayGuests.map(guest => {
+                      const assignedMenuId = assignmentMap[guest.id]
+                      const isConfirmed = guest.confirmation_status === 'confirmed'
+                      return (
+                        <div
+                          key={guest.id}
+                          className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/20 ${!isConfirmed ? 'opacity-60' : ''}`}
+                        >
+                          <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                            assignedMenuId ? MENU_COLORS[menus.findIndex(m => m.id === assignedMenuId) % MENU_COLORS.length].stripe : 'bg-muted'
+                          }`}>
+                            {assignedMenuId && <Check className="w-3 h-3 text-white" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="font-medium text-sm">{guest.name}</span>
+                            {guest.groupName && (
+                              <span className="text-xs text-muted-foreground ml-2">{guest.groupName}</span>
+                            )}
+                          </div>
+                          <div className="flex gap-1.5 flex-shrink-0">
+                            {menus.map((menu, i) => {
+                              const isAssigned = assignedMenuId === menu.id
+                              const colors = MENU_COLORS[i % MENU_COLORS.length]
+                              return (
+                                <button
+                                  key={menu.id}
+                                  onClick={() => handleToggleAssignment(guest.id, menu.id)}
+                                  className={`w-7 h-7 rounded-full text-xs font-bold border transition-all active:scale-95 ${
+                                    isAssigned ? colors.pill : colors.ghost
+                                  }`}
+                                  title={menu.name}
+                                >
+                                  {MENU_LETTERS[i]}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </Card>
+                )}
+              </>
+            )}
 
-                      {/* Menu pill buttons */}
-                      <div className="flex gap-1.5 flex-shrink-0">
-                        {menus.map((menu, i) => {
-                          const isAssigned = assignedMenuId === menu.id
-                          const colors = MENU_COLORS[i % MENU_COLORS.length]
-                          return (
-                            <button
-                              key={menu.id}
-                              onClick={() => handleToggleAssignment(guest.id, menu.id)}
-                              className={`w-7 h-7 rounded-full text-xs font-bold border transition-all active:scale-95 ${
-                                isAssigned ? colors.pill : colors.ghost
-                              }`}
-                              title={menu.name}
-                            >
-                              {MENU_LETTERS[i]}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                })}
-              </Card>
+            {/* ── By Group ── */}
+            {activeTab === 'group' && (
+              <>
+                {groups.length === 0 ? (
+                  <Card className="p-8 text-center text-muted-foreground text-sm">
+                    {t('admin.dishes.noGroups')}
+                  </Card>
+                ) : (
+                  <div className="space-y-2">
+                    {groups.map(group => {
+                      const groupGuests = confirmedGuests.filter(g => g.guest_group_id === group.id)
+                      if (groupGuests.length === 0) return null
+                      const unassigned = groupGuests.filter(g => !assignmentMap[g.id]).length
+                      return (
+                        <Card key={group.id} className="px-4 py-3 flex items-center gap-3 flex-wrap sm:flex-nowrap">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm">{group.name}</div>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <span className="text-xs text-muted-foreground">{groupGuests.length} {t('admin.dishes.members')}</span>
+                              {menus.map((menu, i) => {
+                                const count = groupGuests.filter(g => assignmentMap[g.id] === menu.id).length
+                                if (count === 0) return null
+                                const colors = MENU_COLORS[i % MENU_COLORS.length]
+                                return (
+                                  <span key={menu.id} className={`text-xs px-1.5 py-0.5 rounded font-medium ${colors.badge}`}>
+                                    {MENU_LETTERS[i]}: {count}
+                                  </span>
+                                )
+                              })}
+                              {unassigned > 0 && (
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">
+                                  {unassigned} {t('admin.dishes.stats.unassigned').toLowerCase()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-1.5 flex-shrink-0">
+                            {menus.map((menu, i) => {
+                              const colors = MENU_COLORS[i % MENU_COLORS.length]
+                              const allAssigned = groupGuests.every(g => assignmentMap[g.id] === menu.id)
+                              return (
+                                <button
+                                  key={menu.id}
+                                  onClick={() => handleBulkAssign(menu.id, { groupId: group.id })}
+                                  disabled={saving}
+                                  className={`w-8 h-8 rounded-full text-xs font-bold border transition-all active:scale-95 disabled:opacity-50 ${
+                                    allAssigned ? colors.pill : colors.ghost
+                                  }`}
+                                  title={menu.name}
+                                >
+                                  {MENU_LETTERS[i]}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* ── By Table ── */}
+            {activeTab === 'table' && (
+              <>
+                {tables.length === 0 ? (
+                  <Card className="p-8 text-center text-muted-foreground text-sm">
+                    {t('admin.dishes.noTables')}
+                  </Card>
+                ) : (
+                  <div className="space-y-2">
+                    {tables.map(table => {
+                      const guestIds = tableGuestMap[table.id] || []
+                      const tableGuests = guests.filter(g => guestIds.includes(g.id))
+                      if (tableGuests.length === 0) return null
+                      const unassigned = tableGuests.filter(g => !assignmentMap[g.id]).length
+                      return (
+                        <Card key={table.id} className="px-4 py-3 flex items-center gap-3 flex-wrap sm:flex-nowrap">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm">{table.name}</div>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <span className="text-xs text-muted-foreground">{tableGuests.length} {t('admin.dishes.members')}</span>
+                              {menus.map((menu, i) => {
+                                const count = tableGuests.filter(g => assignmentMap[g.id] === menu.id).length
+                                if (count === 0) return null
+                                const colors = MENU_COLORS[i % MENU_COLORS.length]
+                                return (
+                                  <span key={menu.id} className={`text-xs px-1.5 py-0.5 rounded font-medium ${colors.badge}`}>
+                                    {MENU_LETTERS[i]}: {count}
+                                  </span>
+                                )
+                              })}
+                              {unassigned > 0 && (
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">
+                                  {unassigned} {t('admin.dishes.stats.unassigned').toLowerCase()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-1.5 flex-shrink-0">
+                            {menus.map((menu, i) => {
+                              const colors = MENU_COLORS[i % MENU_COLORS.length]
+                              const allAssigned = tableGuests.every(g => assignmentMap[g.id] === menu.id)
+                              return (
+                                <button
+                                  key={menu.id}
+                                  onClick={() => handleBulkAssign(menu.id, { tableId: table.id })}
+                                  disabled={saving}
+                                  className={`w-8 h-8 rounded-full text-xs font-bold border transition-all active:scale-95 disabled:opacity-50 ${
+                                    allAssigned ? colors.pill : colors.ghost
+                                  }`}
+                                  title={menu.name}
+                                >
+                                  {MENU_LETTERS[i]}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}

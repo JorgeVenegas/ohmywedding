@@ -10,6 +10,24 @@ import { BaseEventDetailsProps, buildEventList, getMapUrl, getColorScheme, getEv
 import { useI18n } from '@/components/contexts/i18n-context'
 import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
+function AnimatedTimelineItem({ index, children }: { index: number; children: React.ReactNode }) {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+  const hiddenTranslate = index % 2 === 0 ? '-translate-x-8' : 'translate-x-8'
+  return (
+    <div
+      ref={ref}
+      className={`relative flex items-start gap-4 sm:gap-6 md:gap-8 mb-6 sm:mb-8 transition-all duration-500 ${
+        index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
+      } ${
+        isVisible ? 'opacity-100 translate-x-0' : `opacity-0 ${hiddenTranslate}`
+      }`}
+      style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
+    >
+      {children}
+    </div>
+  )
+}
+
 export function EventDetailsTimelineVariant(props: BaseEventDetailsProps) {
   const {
     wedding,
@@ -98,19 +116,8 @@ export function EventDetailsTimelineVariant(props: BaseEventDetailsProps) {
             style={{ backgroundColor: timelineColor, opacity: 0.3 }}
           />
 
-          {events.map((event, index) => {
-            const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
-            return (
-            <div 
-              key={event.id}
-              ref={ref}
-              className={`relative flex items-start gap-4 sm:gap-6 md:gap-8 mb-6 sm:mb-8 transition-all duration-500 ${
-                index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
-              } ${
-                isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 ' + (index % 2 === 0 ? '-translate-x-8' : 'translate-x-8')
-              }`}
-              style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
-            >
+          {events.map((event, index) => (
+            <AnimatedTimelineItem key={event.id} index={index}>
               {/* Timeline dot */}
               <div 
                 className="absolute left-8 md:left-1/2 w-12 h-12 rounded-full flex items-center justify-center -translate-x-1/2 z-10 shadow-lg"
@@ -232,9 +239,8 @@ export function EventDetailsTimelineVariant(props: BaseEventDetailsProps) {
 
               {/* Hidden spacer for desktop alternating layout */}
               <div className="hidden md:block md:w-[calc(50%-3rem)]" />
-            </div>
-            )
-          })}
+            </AnimatedTimelineItem>
+          ))}
 
           {/* End dot */}
           <div 

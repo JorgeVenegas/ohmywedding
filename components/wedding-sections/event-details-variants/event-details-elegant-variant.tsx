@@ -10,6 +10,21 @@ import { BaseEventDetailsProps, buildEventList, getMapUrl, getColorScheme, getEv
 import { useI18n } from '@/components/contexts/i18n-context'
 import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
+function AnimatedEventItem({ index, children }: { index: number; children: React.ReactNode }) {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+  return (
+    <div
+      ref={ref}
+      className={`relative transition-all duration-500 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}
+      style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
+    >
+      {children}
+    </div>
+  )
+}
+
 export function EventDetailsElegantVariant(props: BaseEventDetailsProps) {
   const {
     wedding,
@@ -99,17 +114,8 @@ export function EventDetailsElegantVariant(props: BaseEventDetailsProps) {
 
         {/* Events in elegant layout */}
         <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 mb-6 sm:mb-8">
-          {events.map((event, index) => {
-            const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
-            return (
-            <div 
-              key={event.id}
-              ref={ref}
-              className={`relative transition-all duration-500 ${
-                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-              }`}
-              style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
-            >
+          {events.map((event, index) => (
+            <AnimatedEventItem key={event.id} index={index}>
               {/* Decorative connector line */}
               {index < events.length - 1 && (
                 <div 
@@ -251,9 +257,8 @@ export function EventDetailsElegantVariant(props: BaseEventDetailsProps) {
                 )}
                 </div>
               </div>
-            </div>
-            )
-          })}
+            </AnimatedEventItem>
+          ))}
         </div>
 
         {/* Embedded Map */}

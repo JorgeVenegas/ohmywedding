@@ -48,8 +48,8 @@ export async function GET(request: Request) {
       tablesResult,
       assignmentsResult,
       elementsResult,
-      dishesResult,
-      dishAssignmentsResult,
+      menusResult,
+      menuAssignmentsResult,
       itineraryResult,
     ] = await Promise.all([
       supabase.from('weddings').select('id, wedding_name_id, partner1_first_name, partner1_last_name, partner2_first_name, partner2_last_name, wedding_date, wedding_time, reception_time, ceremony_venue_name, ceremony_venue_address, reception_venue_name, reception_venue_address').eq('id', weddingUuid).single(),
@@ -58,8 +58,8 @@ export async function GET(request: Request) {
       supabase.from('seating_tables').select('*').eq('wedding_id', weddingUuid).order('display_order', { ascending: true }),
       supabase.from('seating_assignments').select('*').eq('wedding_id', weddingUuid),
       supabase.from('venue_elements').select('*').eq('wedding_id', weddingUuid),
-      supabase.from('dishes').select('*').eq('wedding_id', weddingUuid).order('display_order', { ascending: true }),
-      supabase.from('guest_dish_assignments').select('*, dishes(id, name, category)').eq('wedding_id', weddingUuid),
+      supabase.from('menus').select('*, menu_courses(*)').eq('wedding_id', weddingUuid).order('display_order', { ascending: true }),
+      supabase.from('menu_assignments').select('*').eq('wedding_id', weddingUuid),
       supabase.from('itinerary_events').select('*').eq('wedding_id', weddingUuid).order('start_time', { ascending: true }),
     ])
 
@@ -72,15 +72,16 @@ export async function GET(request: Request) {
     const tables = tablesResult.data || []
     const seatAssignments = assignmentsResult.data || []
     const venueElements = elementsResult.data || []
-    const dishes = dishesResult.data || []
-    const dishAssignments = dishAssignmentsResult.data || []
+    const menus = menusResult.data || []
+    const menuAssignments = menuAssignmentsResult.data || []
     const itineraryEvents = itineraryResult.data || []
 
     // Build group lookup
     const groupMap = new Map(groups.map(g => [g.id, g.name]))
 
-    // Build dish assignment lookup (guest_id -> dish info)
-    const dishMap = new Map(dishAssignments.map(da => [da.guest_id, da.dishes]))
+    // Build menu assignment lookup (guest_id -> menu_id)
+    const menuAssignmentMap = new Map(menuAssignments.map((ma: { guest_id: string; menu_id: string }) => [ma.guest_id, ma.menu_id]))
+    const menuNameMap = new Map(menus.map(m => [m.id as string, m.name as string]))
 
     // Build seating data: tables with their assigned guests
     const seatingData = tables.map((table, idx) => {
@@ -88,13 +89,13 @@ export async function GET(request: Request) {
       const tableGuests = tableAssignments.map(a => {
         const guest = guests.find(g => g.id === a.guest_id)
         if (!guest) return null
-        const dish = dishMap.get(guest.id)
+        const menuId = menuAssignmentMap.get(guest.id)
         return {
           name: guest.name,
           groupName: guest.guest_group_id ? groupMap.get(guest.guest_group_id) || null : null,
           status: guest.confirmation_status,
           dietaryRestrictions: guest.dietary_restrictions,
-          dish: dish ? { name: (dish as { name: string }).name, category: (dish as { category: string }).category } : null,
+          menu: menuId ? { name: menuNameMap.get(menuId) || '' } : null,
           seatNumber: a.seat_number,
         }
       }).filter(Boolean)
@@ -114,18 +115,17 @@ export async function GET(request: Request) {
       }
     })
 
-    // Dish counts
-    const dishCounts = dishes.map(dish => {
-      const count = dishAssignments.filter(da => da.dish_id === dish.id).length
+    // Menu data with assignment counts
+    const menuData = menus.map(menu => {
+      const count = menuAssignments.filter((ma: { menu_id: string }) => ma.menu_id === menu.id).length
+      const courses = ((menu.menu_courses || []) as Array<{ id: string; course_number: number; course_name: string | null; dish_name: string | null }>)
+        .sort((a, b) => a.course_number - b.course_number)
       return {
-        id: dish.id,
-        name: dish.name,
-        category: dish.category,
-        description: dish.description,
-        is_vegetarian: dish.is_vegetarian,
-        is_vegan: dish.is_vegan,
-        is_gluten_free: dish.is_gluten_free,
-        allergens: dish.allergens,
+        id: menu.id as string,
+        name: menu.name as string,
+        description: menu.description as string | null,
+        image_url: menu.image_url as string | null,
+        courses: courses.map(c => ({ id: c.id, course_number: c.course_number, course_name: c.course_name, dish_name: c.dish_name })),
         count,
       }
     })
@@ -154,12 +154,12 @@ export async function GET(request: Request) {
         totalTables: tables.length,
         assignedGuests,
         unassignedGuests,
-        totalDishes: dishes.length,
+        totalMenus: menus.length,
         totalCapacity: tables.reduce((sum, t) => sum + t.capacity, 0),
       },
       seating: seatingData,
       venueElements,
-      dishes: dishCounts,
+      menus: menuData,
       itinerary: itineraryTree,
     })
   } catch {

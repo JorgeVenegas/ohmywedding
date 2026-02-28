@@ -9,6 +9,21 @@ import { BaseEventDetailsProps, buildEventList, getMapUrl, getColorScheme, getEv
 import { useI18n } from '@/components/contexts/i18n-context'
 import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
+function AnimatedEventItem({ index, children }: { index: number; children: React.ReactNode }) {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+  return (
+    <div
+      ref={ref}
+      className={`relative transition-all duration-500 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}
+      style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
+    >
+      {children}
+    </div>
+  )
+}
+
 export function EventDetailsMinimalVariant(props: BaseEventDetailsProps) {
   const {
     wedding,
@@ -90,17 +105,8 @@ export function EventDetailsMinimalVariant(props: BaseEventDetailsProps) {
         {/* Events Grid */}
         <div className="max-w-5xl mx-auto mb-6 sm:mb-8">
           <div className={`grid gap-6 sm:gap-8 ${events.length === 1 ? 'max-w-md mx-auto' : 'md:grid-cols-2'}`}>
-            {events.map((event, index) => {
-              const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
-              return (
-              <div 
-                key={event.id} 
-                ref={ref}
-                className={`relative transition-all duration-500 ${
-                  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                }`}
-                style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
-              >
+            {events.map((event, index) => (
+              <AnimatedEventItem key={event.id} index={index}>
                 {/* Event Image - show if imageUrl exists */}
                 {event.imageUrl && (
                   <div className="aspect-[4/3] mb-6 overflow-hidden rounded-lg bg-gray-100">
@@ -191,9 +197,8 @@ export function EventDetailsMinimalVariant(props: BaseEventDetailsProps) {
                     </a>
                   )}
                 </div>
-              </div>
-              )
-            })}
+              </AnimatedEventItem>
+            ))}
           </div>
         </div>
 

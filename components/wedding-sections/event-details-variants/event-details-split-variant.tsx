@@ -8,6 +8,54 @@ import { BaseEventDetailsProps, buildEventList, getMapUrl, getColorScheme, getEv
 import { useI18n } from '@/components/contexts/i18n-context'
 import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
+function AnimatedEventItem({
+  index,
+  className,
+  style,
+  children,
+}: {
+  index: number
+  className?: string
+  style?: React.CSSProperties
+  children: React.ReactNode
+}) {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-500 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      } ${className || ''}`}
+      style={{ ...style, transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function AnimatedEventItemFull({
+  index,
+  bgStyle,
+  children,
+}: {
+  index: number
+  bgStyle?: React.CSSProperties
+  children: React.ReactNode
+}) {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+  return (
+    <div
+      ref={ref}
+      className={`w-full transition-all duration-700 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}
+      style={{ ...bgStyle, transitionDelay: isVisible ? `${index * 150}ms` : '0ms' }}
+    >
+      {children}
+    </div>
+  )
+}
+
 export function EventDetailsSplitVariant(props: BaseEventDetailsProps) {
   const {
     wedding,
@@ -150,18 +198,14 @@ export function EventDetailsSplitVariant(props: BaseEventDetailsProps) {
                   : 'grid-cols-1 md:grid-cols-2'
               }`}>
                 {events.map((event, index) => {
-                  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
                   const eventAlignment = getEventAlignment(event.type)
                   const alignClasses = getAlignmentClasses(eventAlignment)
                   
                   return (
-                  <div 
+                  <AnimatedEventItem
                     key={event.id}
-                    ref={ref}
-                    className={`${alignClasses.text} transition-all duration-500 ${
-                      isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                    }`}
-                    style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
+                    index={index}
+                    className={alignClasses.text}
                   >
                     {/* Event Icon */}
                     <div className={`flex ${alignClasses.flex} gap-3 mb-3 sm:mb-4`}>
@@ -251,7 +295,7 @@ export function EventDetailsSplitVariant(props: BaseEventDetailsProps) {
                         <span className="ml-1">→</span>
                       </a>
                     )}
-                  </div>
+                  </AnimatedEventItem>
                   )
                 })}
               </div>
@@ -261,22 +305,15 @@ export function EventDetailsSplitVariant(props: BaseEventDetailsProps) {
 
         // Original full-width side-by-side layout with photos
         return events.map((event, index) => {
-          const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
           const isImageRight = index % 2 === 1
           const eventAlignment = getEventAlignment(event.type)
           const alignClasses = getAlignmentClasses(eventAlignment)
 
           return (
-            <div 
+            <AnimatedEventItemFull
               key={event.id}
-              ref={ref}
-              className={`w-full transition-all duration-700 ${
-                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-              }`}
-              style={{ 
-                backgroundColor: isColored ? bgColor : (index % 2 === 0 ? '#ffffff' : (theme?.colors?.muted ? `${theme.colors.muted}08` : '#fafafa')),
-                transitionDelay: isVisible ? `${index * 150}ms` : '0ms'
-              }}
+              index={index}
+              bgStyle={{ backgroundColor: isColored ? bgColor : (index % 2 === 0 ? '#ffffff' : (theme?.colors?.muted ? `${theme.colors.muted}08` : '#fafafa')) }}
             >
               <div className={`flex flex-col lg:flex-row ${isImageRight ? 'lg:flex-row-reverse' : ''}`}>
                 {/* Image Side */}
@@ -418,7 +455,7 @@ export function EventDetailsSplitVariant(props: BaseEventDetailsProps) {
                   </div>
                 </div>
               </div>
-            </div>
+            </AnimatedEventItemFull>
           )
         })
       })()}

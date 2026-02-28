@@ -38,7 +38,7 @@ interface SummaryData {
     totalTables: number
     assignedGuests: number
     unassignedGuests: number
-    totalDishes: number
+    totalMenus: number
     totalCapacity: number
   }
   seating: Array<{
@@ -57,7 +57,7 @@ interface SummaryData {
       groupName: string | null
       status: string
       dietaryRestrictions: string | null
-      dish: { name: string; category: string } | null
+      menu: { name: string } | null
       seatNumber: number | null
     }>
   }>
@@ -72,15 +72,17 @@ interface SummaryData {
     rotation: number
     color: string | null
   }>
-  dishes: Array<{
+  menus: Array<{
     id: string
     name: string
-    category: string
     description: string | null
-    is_vegetarian: boolean
-    is_vegan: boolean
-    is_gluten_free: boolean
-    allergens: string | null
+    image_url: string | null
+    courses: Array<{
+      id: string
+      course_number: number
+      course_name: string | null
+      dish_name: string | null
+    }>
     count: number
   }>
   itinerary: Array<{
@@ -304,7 +306,7 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
 
   if (!data) return null
 
-  const { wedding, stats, seating, dishes, itinerary, venueElements } = data
+  const { wedding, stats, seating, menus, itinerary, venueElements } = data
 
   return (
     <main className="min-h-screen bg-background">
@@ -360,8 +362,8 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
               <div className="text-sm text-muted-foreground">{t('admin.summary.stats.tables')}</div>
             </Card>
             <Card className="p-4 border">
-              <div className="text-2xl font-bold">{stats.totalDishes}</div>
-              <div className="text-sm text-muted-foreground">{t('admin.summary.stats.dishes')}</div>
+              <div className="text-2xl font-bold">{stats.totalMenus}</div>
+              <div className="text-sm text-muted-foreground">{t('admin.summary.stats.menus')}</div>
             </Card>
           </div>
 
@@ -384,40 +386,54 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
 
           {/* Dishes Section */}
           <SectionHeader
-            title={t('admin.summary.sections.dishes')}
+            title={t('admin.summary.sections.menus')}
             icon={<UtensilsCrossed className="w-5 h-5" />}
             expanded={expandedSections.has('dishes')}
             onToggle={() => toggleSection('dishes')}
           />
           {expandedSections.has('dishes') && (
             <Card className="mb-6 border overflow-hidden">
-              {dishes.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6">{t('admin.summary.noDishData')}</p>
+              {menus.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">{t('admin.summary.noMenuData')}</p>
               ) : (
                 <div className="divide-y">
-                  {dishes.map(dish => (
-                    <div key={dish.id} className="flex items-center justify-between p-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium">{dish.name}</span>
-                          <span className="px-2 py-0.5 rounded-full text-xs bg-muted">{dish.category}</span>
-                          {dish.is_vegetarian && <span className="text-xs">🌿</span>}
-                          {dish.is_vegan && <span className="text-xs">🌱</span>}
-                          {dish.is_gluten_free && <span className="text-xs font-medium text-yellow-600">GF</span>}
+                  {menus.map((menu) => (
+                    <div key={menu.id} className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <span className="font-semibold">{menu.name}</span>
+                          {menu.description && <p className="text-sm text-muted-foreground mt-0.5">{menu.description}</p>}
+                          {menu.courses.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              {menu.courses.map(course => (
+                                <div key={course.id} className="flex items-baseline gap-2 text-sm">
+                                  <span className="w-4 h-4 rounded-full bg-muted text-muted-foreground text-[9px] font-semibold flex items-center justify-center flex-shrink-0 translate-y-[1px]">{course.course_number}</span>
+                                  <span className="text-xs text-muted-foreground shrink-0">{course.course_name || `${t('admin.dishes.course')} ${course.course_number}`}</span>
+                                  {course.dish_name && (
+                                    <>
+                                      <span className="text-muted-foreground/40 text-xs shrink-0">·</span>
+                                      <span className="text-xs font-medium truncate">{course.dish_name}</span>
+                                    </>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        {dish.description && <p className="text-sm text-muted-foreground mt-0.5">{dish.description}</p>}
-                        {dish.allergens && <p className="text-xs text-orange-600 mt-0.5">{t('admin.dishes.allergens')}: {dish.allergens}</p>}
-                      </div>
-                      <div className="text-right ml-4">
-                        <div className="text-lg font-bold">{dish.count}</div>
-                        <div className="text-xs text-muted-foreground">{t('admin.summary.servings')}</div>
+                        <div className="text-right ml-4 flex-shrink-0">
+                          <div className="text-xl font-bold">{menu.count}</div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
+                            <Users className="w-3 h-3" />
+                            {t('admin.dishes.stats.assigned').toLowerCase()}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}
                   <div className="p-4 bg-muted/30">
                     <div className="flex justify-between font-medium">
-                      <span>{t('admin.summary.totalServings')}</span>
-                      <span>{dishes.reduce((sum, d) => sum + d.count, 0)}</span>
+                      <span>{t('admin.summary.totalAssigned')}</span>
+                      <span>{menus.reduce((sum, m) => sum + m.count, 0)}</span>
                     </div>
                   </div>
                 </div>
@@ -455,7 +471,7 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
                               <tr className="border-b bg-muted/10">
                                 <th className="text-left px-4 py-2 font-medium text-muted-foreground">{t('admin.summary.columns.guest')}</th>
                                 <th className="text-left px-4 py-2 font-medium text-muted-foreground">{t('admin.summary.columns.group')}</th>
-                                <th className="text-left px-4 py-2 font-medium text-muted-foreground">{t('admin.summary.columns.dish')}</th>
+                                <th className="text-left px-4 py-2 font-medium text-muted-foreground">{t('admin.summary.columns.menu')}</th>
                                 <th className="text-left px-4 py-2 font-medium text-muted-foreground">{t('admin.summary.columns.dietary')}</th>
                               </tr>
                             </thead>
@@ -464,7 +480,7 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
                                 <tr key={gi} className="hover:bg-muted/20">
                                   <td className="px-4 py-2">{guest.name}</td>
                                   <td className="px-4 py-2 text-muted-foreground">{guest.groupName || '—'}</td>
-                                  <td className="px-4 py-2">{guest.dish?.name || '—'}</td>
+                                  <td className="px-4 py-2">{guest.menu?.name || '—'}</td>
                                   <td className="px-4 py-2 text-muted-foreground text-xs">{guest.dietaryRestrictions || '—'}</td>
                                 </tr>
                               ))}

@@ -9,6 +9,37 @@ import { BaseEventDetailsProps, buildEventList, getMapUrl, getColorScheme, getEv
 import { useI18n } from '@/components/contexts/i18n-context'
 import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 
+function AnimatedCard({
+  index,
+  isColored,
+  cardBg,
+  children,
+}: {
+  index: number
+  isColored: boolean
+  cardBg?: string
+  children: React.ReactNode
+}) {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+  return (
+    <Card
+      ref={ref}
+      className={`overflow-hidden hover:shadow-xl transition-all duration-500 text-center w-full ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}
+      style={isColored ? {
+        backgroundColor: cardBg,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+        transitionDelay: isVisible ? `${index * 100}ms` : '0ms'
+      } : {
+        transitionDelay: isVisible ? `${index * 100}ms` : '0ms'
+      }}
+    >
+      {children}
+    </Card>
+  )
+}
+
 export function EventDetailsClassicVariant(props: BaseEventDetailsProps) {
   const { 
     wedding,
@@ -101,23 +132,8 @@ export function EventDetailsClassicVariant(props: BaseEventDetailsProps) {
           ? 'md:grid-cols-2 max-w-4xl mx-auto' 
           : 'md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto'
       }`}>
-        {events.map((event, index) => {
-          const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
-          return (
-          <Card 
-            key={event.id}
-            ref={ref}
-            className={`overflow-hidden hover:shadow-xl transition-all duration-500 text-center w-full ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}
-            style={isColored ? { 
-              backgroundColor: cardBg,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-              transitionDelay: isVisible ? `${index * 100}ms` : '0ms'
-            } : {
-              transitionDelay: isVisible ? `${index * 100}ms` : '0ms'
-            }}
-          >
+        {events.map((event, index) => (
+          <AnimatedCard key={event.id} index={index} isColored={isColored} cardBg={cardBg}>
             {/* Event Image - show if imageUrl exists */}
             {event.imageUrl && (
               <div className="aspect-[16/10] overflow-hidden bg-gray-100">
@@ -231,8 +247,8 @@ export function EventDetailsClassicVariant(props: BaseEventDetailsProps) {
               </a>
             )}
             </div>
-          </Card>
-        )})
+          </AnimatedCard>
+        ))
         }
       </div>
 
