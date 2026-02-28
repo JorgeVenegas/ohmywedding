@@ -38,7 +38,7 @@ import {
   X,
 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
-import { getWeddingUrl, type WeddingPlan } from "@/lib/wedding-url"
+import { type WeddingPlan } from "@/lib/wedding-url"
 import { PLAN_CARDS, COMPARISON_FEATURES } from "@/lib/subscription-shared"
 import { Suspense } from "react"
 import { motion, useScroll, useTransform, useInView, AnimatePresence, useSpring } from "framer-motion"
@@ -107,6 +107,7 @@ type UserWedding = {
   partner1_first_name: string
   partner2_first_name: string
   wedding_date: string | null
+  has_website: boolean
   plan?: WeddingPlan
 }
 
@@ -175,14 +176,14 @@ function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
               <p className="text-xs text-[#f5f2eb]/50 font-semibold mb-2">{t('landing.nav.yourWeddings')} ({userWeddings.length})</p>
               <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
                 {userWeddings.map(wedding => (
-                  <a
+                  <Link
                     key={wedding.id}
-                    href={getWeddingUrl(wedding.wedding_name_id, '', wedding.plan || 'free')}
+                    href={`/admin/${wedding.wedding_name_id}/dashboard`}
                     className="block px-3 py-2 text-sm text-[#f5f2eb]/80 hover:text-[#f5f2eb] bg-[#f5f2eb]/5 hover:bg-[#f5f2eb]/10 rounded-md transition-colors duration-150"
                   >
                     <div className="font-medium truncate">{wedding.partner1_first_name} & {wedding.partner2_first_name}</div>
                     {wedding.wedding_date && <div className="text-xs text-[#f5f2eb]/50 mt-0.5">{new Date(wedding.wedding_date).toLocaleDateString()}</div>}
-                  </a>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -193,12 +194,12 @@ function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
             {weddingsLoading ? (
               <div className="h-12 w-full bg-[#420c14]/20 animate-pulse rounded-md" />
             ) : hasWedding ? (
-              <a href={getWeddingUrl(firstWedding.wedding_name_id, '', firstWedding.plan || 'free')} className="w-full">
+              <Link href={userWeddings.length === 1 ? `/admin/${firstWedding.wedding_name_id}/dashboard` : '/admin'} className="w-full">
                 <Button className="w-full bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
                   <Edit3 className="w-4 h-4 mr-2" />
-                  {t('landing.nav.editWedding')}
+                  {t('landing.nav.dashboard')}
                 </Button>
-              </a>
+              </Link>
             ) : (
               <Link href="/create-wedding" className="w-full">
                 <Button className="w-full bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
@@ -247,15 +248,15 @@ function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
                 <div className="border-b border-[#DDA46F]/10 max-h-[280px] overflow-y-auto">
                   <p className="px-4 py-2 text-xs text-[#f5f2eb]/50 font-semibold sticky top-0 bg-[#420c14]/98">{t('landing.nav.yourWeddings')}</p>
                   {userWeddings.map(wedding => (
-                    <a
+                    <Link
                       key={wedding.id}
-                      href={getWeddingUrl(wedding.wedding_name_id, '', wedding.plan || 'free')}
+                      href={`/admin/${wedding.wedding_name_id}/dashboard`}
                       onClick={() => setShowUserMenu(false)}
                       className="block px-4 py-3 text-sm text-[#f5f2eb]/80 hover:text-[#f5f2eb] hover:bg-[#f5f2eb]/10 transition-colors duration-150 border-l-2 border-transparent hover:border-[#DDA46F]"
                     >
                       <div className="font-medium">{wedding.partner1_first_name} & {wedding.partner2_first_name}</div>
                       {wedding.wedding_date && <div className="text-xs text-[#f5f2eb]/50 mt-0.5">{new Date(wedding.wedding_date).toLocaleDateString()}</div>}
-                    </a>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -274,12 +275,12 @@ function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
         {weddingsLoading ? (
           <div className="h-10 w-32 bg-[#420c14]/20 animate-pulse rounded-md" />
         ) : hasWedding ? (
-          <a href={getWeddingUrl(firstWedding.wedding_name_id, '', firstWedding.plan || 'free')}>
+          <Link href={userWeddings.length === 1 ? `/admin/${firstWedding.wedding_name_id}/dashboard` : '/admin'}>
             <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
               <Edit3 className="w-4 h-4 mr-2" />
-              {t('landing.nav.editWedding')}
+              {t('landing.nav.dashboard')}
             </Button>
-          </a>
+          </Link>
         ) : (
           <Link href="/create-wedding">
             <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
@@ -1338,6 +1339,7 @@ function PricingSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: false, margin: "-100px" })
   const { t } = useTranslation()
+  const [giftMode, setGiftMode] = useState(false)
 
   const plans = [
     {
@@ -1357,8 +1359,8 @@ function PricingSection() {
       tagline: PLAN_CARDS.premium.tagline,
       description: PLAN_CARDS.premium.description,
       features: PLAN_CARDS.premium.features.map(text => ({ text, included: true })),
-      cta: PLAN_CARDS.premium.cta,
-      href: `/upgrade?source=landing_pricing_premium`,
+      cta: giftMode ? 'Gift Premium' : PLAN_CARDS.premium.cta,
+      href: giftMode ? `/gift?plan=premium&source=landing` : `/upgrade?source=landing_pricing_premium`,
       featured: true,
     },
     {
@@ -1368,8 +1370,8 @@ function PricingSection() {
       tagline: PLAN_CARDS.deluxe.tagline,
       description: PLAN_CARDS.deluxe.description,
       features: PLAN_CARDS.deluxe.features.map(text => ({ text, included: true })),
-      cta: PLAN_CARDS.deluxe.cta,
-      href: `/upgrade?plan=deluxe&source=landing_pricing_deluxe`,
+      cta: giftMode ? 'Gift Deluxe' : PLAN_CARDS.deluxe.cta,
+      href: giftMode ? `/gift?plan=deluxe&source=landing` : `/upgrade?plan=deluxe&source=landing_pricing_deluxe`,
       featured: false,
       isDeluxe: true,
     },
@@ -1413,6 +1415,38 @@ function PricingSection() {
           <p className="text-[#420c14]/60 text-sm sm:text-lg max-w-2xl mx-auto px-2">
             {t('landing.pricing.description')}
           </p>
+        </motion.div>
+
+        {/* For me / Gift toggle */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="flex justify-center mb-8 sm:mb-12"
+        >
+          <div className="inline-flex items-center rounded-full bg-white border border-[#420c14]/10 shadow-sm p-1">
+            <button
+              onClick={() => setGiftMode(false)}
+              className={`px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
+                !giftMode
+                  ? 'bg-[#420c14] text-white shadow-sm'
+                  : 'text-[#420c14]/60 hover:text-[#420c14]'
+              }`}
+            >
+              For me
+            </button>
+            <button
+              onClick={() => setGiftMode(true)}
+              className={`px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 flex items-center gap-1.5 ${
+                giftMode
+                  ? 'bg-[#DDA46F] text-white shadow-sm'
+                  : 'text-[#420c14]/60 hover:text-[#420c14]'
+              }`}
+            >
+              <Gift className="w-3.5 h-3.5" />
+              As a gift
+            </button>
+          </div>
         </motion.div>
 
         {/* Pricing Cards */}

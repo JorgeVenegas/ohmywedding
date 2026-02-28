@@ -311,8 +311,10 @@ export async function POST(request: NextRequest) {
         message: message || null,
         stripe_checkout_session_id: session.id,
         stripe_payment_intent_id: session.payment_intent as string || null,
+        stripe_customer_id: customerId,
         payment_status: "pending",
         guest_covers_fee: guestCoversFee,
+        original_requested_amount: totalAmountCentavos / 100,
       })
       .select()
       .single()

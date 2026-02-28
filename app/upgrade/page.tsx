@@ -17,7 +17,8 @@ import {
   Loader2,
   X,
   Tag,
-  CheckCircle2
+  CheckCircle2,
+  Gift
 } from "lucide-react"
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
 import { useTranslation } from "@/components/contexts/i18n-context"
@@ -416,6 +417,29 @@ function UpgradePageContent() {
             {error}
           </motion.div>
         )}
+
+        {/* Gift callouts */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="max-w-xl mx-auto mb-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-sm text-[#420c14]/50"
+        >
+          <span className="inline-flex items-center gap-1.5">
+            Buying as a gift?{' '}
+            <Link href="/gift" className="text-[#DDA46F] hover:text-[#c99560] hover:underline font-medium inline-flex items-center gap-1 transition-colors">
+              <Gift className="w-3.5 h-3.5" />
+              Gift a subscription
+            </Link>
+          </span>
+          <span className="hidden sm:block text-[#420c14]/20">·</span>
+          <span className="inline-flex items-center gap-1.5">
+            Have a gift code?{' '}
+            <Link href="/gift/redeem" className="text-[#DDA46F] hover:text-[#c99560] hover:underline font-medium transition-colors">
+              Redeem it here →
+            </Link>
+          </span>
+        </motion.div>
 
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-4xl mx-auto mb-16 sm:mb-24">

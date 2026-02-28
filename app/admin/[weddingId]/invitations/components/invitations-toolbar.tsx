@@ -259,7 +259,7 @@ export function InvitationsToolbarContent({
             </Button>
             {showColumnMenu && (
               <div className="absolute top-full left-0 mt-1 bg-background border border-border rounded-md shadow-lg z-10 min-w-[140px]">
-                {(['phone', 'group', 'tags', 'status', 'invitedBy', 'inviteSent', 'travelInfo'] as const).map((key) => (
+                {(['phone', 'group', 'tags', 'status', 'invitedBy', 'inviteSent', 'travelInfo', 'seating', 'dish'] as const).map((key) => (
                   <button
                     key={key}
                     className="w-full px-3 py-1.5 text-left text-xs hover:bg-muted flex items-center gap-2"
@@ -272,6 +272,8 @@ export function InvitationsToolbarContent({
                       {key === 'inviteSent' ? 'Invite Sent' :
                         key === 'invitedBy' ? 'Invited By' :
                           key === 'travelInfo' ? 'Travel Info' :
+                          key === 'seating' ? 'Seating Table' :
+                          key === 'dish' ? 'Dish' :
                             key}
                     </span>
                   </button>

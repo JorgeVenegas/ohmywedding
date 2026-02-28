@@ -13,20 +13,45 @@ export async function GET(
     const supabase = await createServerSupabaseClient()
     const { weddingId } = await params
 
-    const { data: wedding, error } = await supabase
+    // First, get the wedding to resolve ID and get colors
+    const { data: wedding, error: weddingError } = await supabase
       .from('weddings')
-      .select('page_config, primary_color, secondary_color, accent_color, og_title, og_description, og_image_url')
+      .select('id, primary_color, secondary_color, accent_color, og_title, og_description, og_image_url, has_website')
       .eq('wedding_name_id', weddingId)
       .single()
 
-    if (error) {
+    if (weddingError || !wedding) {
       return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
     }
 
+    let pageConfig: Record<string, any> = {}
+    let isLegacy = false
+
+    // Try to read from wedding_websites table first
+    const { data: websiteData } = await supabase
+      .from('wedding_websites')
+      .select('page_config')
+      .eq('wedding_id', wedding.id)
+      .single()
+
+    if (websiteData) {
+      pageConfig = websiteData.page_config || {}
+      isLegacy = false
+    } else {
+      // Fallback: read from legacy weddings.page_config column
+      const { data: legacyWedding } = await supabase
+        .from('weddings')
+        .select('page_config')
+        .eq('id', wedding.id)
+        .single()
+
+      if (legacyWedding?.page_config && typeof legacyWedding.page_config === 'object' && Object.keys(legacyWedding.page_config).length > 0) {
+        pageConfig = legacyWedding.page_config
+        isLegacy = true
+      }
+    }
+
     // Merge wedding colors into the page config if they exist
-    const pageConfig = wedding.page_config || {}
-    
-    // If the page config doesn't have colors set, use the wedding's colors
     if (!pageConfig.siteSettings?.theme?.colors || 
         (!pageConfig.siteSettings.theme.colors.primary && 
          !pageConfig.siteSettings.theme.colors.secondary && 
@@ -43,6 +68,7 @@ export async function GET(
 
     return NextResponse.json({
       config: pageConfig,
+      isLegacy,
       wedding: {
         og_title: wedding.og_title,
         og_description: wedding.og_description,
@@ -150,28 +176,55 @@ export async function PUT(
       return feature?.enabled || false
     }
 
-    const { data: updatedWeddings, error } = await supabase
-      .from('weddings')
-      .update({
+    const { data: updatedWebsite, error: upsertError } = await supabase
+      .from('wedding_websites')
+      .upsert({
+        wedding_id: existingWedding.id,
         page_config: config,
         updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'wedding_id'
       })
-      .eq('wedding_name_id', weddingId)
-      .select('id, page_config')
+      .select('page_config, is_legacy')
+      .single()
 
-    if (error) {
-      return NextResponse.json({ error: 'Failed to save configuration' }, { status: 500 })
+    if (upsertError) {
+      // Fallback: try updating the legacy weddings.page_config column
+      const { data: updatedWeddings, error: legacyError } = await supabase
+        .from('weddings')
+        .update({
+          page_config: config,
+          updated_at: new Date().toISOString()
+        })
+        .eq('wedding_name_id', weddingId)
+        .select('id, page_config')
+
+      if (legacyError) {
+        return NextResponse.json({ error: 'Failed to save configuration' }, { status: 500 })
+      }
+
+      if (!updatedWeddings || updatedWeddings.length === 0) {
+        return NextResponse.json({ error: 'Wedding not found or update failed' }, { status: 404 })
+      }
+
+      return NextResponse.json({
+        success: true,
+        config: updatedWeddings[0].page_config,
+        isLegacy: true,
+        message: 'Configuration saved successfully (legacy)'
+      })
     }
 
-    if (!updatedWeddings || updatedWeddings.length === 0) {
-      return NextResponse.json({ error: 'Wedding not found or update failed' }, { status: 404 })
-    }
-
-    const wedding = updatedWeddings[0]
+    // Ensure has_website is set to true
+    await supabase
+      .from('weddings')
+      .update({ has_website: true, updated_at: new Date().toISOString() })
+      .eq('id', existingWedding.id)
 
     return NextResponse.json({
       success: true,
-      config: wedding.page_config,
+      config: updatedWebsite?.page_config || config,
+      isLegacy: updatedWebsite?.is_legacy || false,
       message: 'Configuration saved successfully'
     })
 

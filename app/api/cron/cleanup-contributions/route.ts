@@ -6,11 +6,14 @@ export const dynamic = "force-dynamic"
 
 /**
  * Cron job: Clean up stale abandoned contributions
- * Runs daily at midnight (configured in vercel.json)
+ * Runs daily at 18:00 UTC (configured in vercel.json)
  * 
  * Marks contributions as "incomplete" based on their payment status and age:
  * - "pending" (checkout created but user never clicked pay) → incomplete after 2 days
  * - "requires_action" (user clicked pay but never completed bank transfer) → incomplete after 7 days
+ * 
+ * IMPORTANT: "partially_funded" contributions are NOT cleaned up here.
+ * They have real money received and are handled by the reconcile-payments cron.
  * 
  * Completed contributions are ignored (user actually paid)
  * No refunds needed since these are unpaid contributions

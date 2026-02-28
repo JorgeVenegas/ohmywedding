@@ -27,6 +27,7 @@ create table "weddings" (
   "stripe_account_id" text, -- Stripe Connect Express account ID for receiving registry payments
   "stripe_onboarding_completed" boolean default false, -- Whether the couple has completed Stripe Connect onboarding
   "payouts_enabled" boolean default false, -- Whether the connected account can receive payouts
+  "has_website" boolean not null default false, -- Whether the wedding has a website configured in wedding_websites
   "created_at" timestamp with time zone default now(),
   "updated_at" timestamp with time zone default now()
 );

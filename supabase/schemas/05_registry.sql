@@ -53,8 +53,11 @@ create table "registry_contributions" (
   "stripe_payment_intent_id" text unique,
   "stripe_checkout_session_id" text unique,
   "stripe_charge_id" text unique,
+  "stripe_customer_id" text,
   "payment_status" text default 'pending',
   "guest_covers_fee" boolean default false,
+  "original_requested_amount" decimal(10,2),
+  "parent_contribution_id" uuid references registry_contributions(id) on delete set null,
   "created_at" timestamp with time zone default now()
 );
 

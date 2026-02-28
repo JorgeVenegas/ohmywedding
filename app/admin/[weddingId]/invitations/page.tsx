@@ -177,6 +177,12 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   // Wedding/Partner info
   const [partnerNames, setPartnerNames] = useState<{ partner1: string; partner2: string }>({ partner1: '', partner2: '' })
 
+  // Seating table map: guestId -> tableName
+  const [seatingTableMap, setSeatingTableMap] = useState<Record<string, string>>({})
+
+  // Dish assignment map: guestId -> dishName
+  const [dishAssignmentMap, setDishAssignmentMap] = useState<Record<string, string>>({})
+
   // Multi-select states
   const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set())
   const [showAssignGroupModal, setShowAssignGroupModal] = useState(false)
@@ -196,6 +202,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       invitedBy: true,
       inviteSent: true,
       travelInfo: true,
+      seating: false,
+      dish: false,
     }
 
     if (typeof window !== 'undefined') {
@@ -397,7 +405,48 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     fetchUngroupedGuests()
     fetchWeddingData()
     fetchAllTimelineData() // Fetch all timeline data once
+    fetchSeatingData()
+    fetchDishAssignments()
   }, [weddingId])
+
+  // Fetch seating assignments and build guestId -> tableName map
+  const fetchSeatingData = async () => {
+    try {
+      const res = await fetch(`/api/seating?weddingId=${encodeURIComponent(weddingId)}`)
+      if (!res.ok) return
+      const { tables, assignments } = await res.json()
+      const map: Record<string, string> = {}
+      assignments.forEach((a: { guest_id: string; table_id: string }) => {
+        const table = tables.find((t: { id: string; name: string }) => t.id === a.table_id)
+        if (table) map[a.guest_id] = table.name
+      })
+      setSeatingTableMap(map)
+    } catch {
+      // Non-critical, ignore seating fetch errors
+    }
+  }
+
+  // Fetch dish assignments and build guestId -> dishName map
+  const fetchDishAssignments = async () => {
+    try {
+      const [assignRes, dishesRes] = await Promise.all([
+        fetch(`/api/dishes/assignments?weddingId=${encodeURIComponent(weddingId)}`),
+        fetch(`/api/dishes?weddingId=${encodeURIComponent(weddingId)}`),
+      ])
+      if (!assignRes.ok || !dishesRes.ok) return
+      const { assignments } = await assignRes.json()
+      const { dishes } = await dishesRes.json()
+      const dishMap: Record<string, string> = {}
+      dishes.forEach((d: { id: string; name: string }) => { dishMap[d.id] = d.name })
+      const map: Record<string, string> = {}
+      assignments.forEach((a: { guest_id: string; dish_id: string }) => {
+        if (dishMap[a.dish_id]) map[a.guest_id] = dishMap[a.dish_id]
+      })
+      setDishAssignmentMap(map)
+    } catch {
+      // Non-critical, ignore dish fetch errors
+    }
+  }
 
   // Fetch ALL timeline data once (no filtering on server)
   const fetchAllTimelineData = async () => {
@@ -2507,7 +2556,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         guests.push({
           ...guest,
           groupName: group.name || undefined,
-          allTags: guest.tags || []
+          allTags: guest.tags || [],
+          seating_table_name: seatingTableMap[guest.id] || null,
+          dish_name: dishAssignmentMap[guest.id] || null,
         })
       })
     })
@@ -2517,12 +2568,14 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       guests.push({
         ...guest,
         groupName: undefined,
-        allTags: guest.tags || []
+        allTags: guest.tags || [],
+        seating_table_name: seatingTableMap[guest.id] || null,
+        dish_name: dishAssignmentMap[guest.id] || null,
       })
     })
 
     return guests
-  }, [normalizedGroups, normalizedUngroupedGuests])
+  }, [normalizedGroups, normalizedUngroupedGuests, seatingTableMap, dishAssignmentMap])
 
   // Filter and sort guests based on current filters
   const filteredGuests = useMemo(() => {

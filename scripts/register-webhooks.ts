@@ -22,8 +22,14 @@ const WEBHOOK_EVENTS = [
   "charge.succeeded",
   "charge.failed",
   "charge.refunded",
+  "payment_intent.created",
+  "payment_intent.requires_action",
+  "payment_intent.partially_funded",
+  "payment_intent.processing",
   "payment_intent.succeeded",
   "payment_intent.payment_failed",
+  "checkout.session.completed",
+  "checkout.session.expired",
 ] as const
 
 async function registerWebhooksOnExistingAccounts() {

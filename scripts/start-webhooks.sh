@@ -11,6 +11,14 @@
 #    - checkout.session.completed
 #
 # 2. Registry webhook (connected account - registry checkout tracking):
+#    - checkout.session.completed
+#    - checkout.session.expired
+#    - payment_intent.created
+#    - payment_intent.requires_action
+#    - payment_intent.partially_funded
+#    - payment_intent.processing
+#    - payment_intent.succeeded
+#    - payment_intent.payment_failed
 #    - charge.succeeded
 #    - charge.failed
 #    - charge.refunded
@@ -89,7 +97,7 @@ start_webhook "subscriptions" "/api/subscriptions/webhook" "STRIPE_SUBSCRIPTIONS
 
 # Registry: checkout tracking (connected account events)
 start_webhook "registry" "/api/registry/webhook" "STRIPE_REGISTRY_WEBHOOK_SECRET" \
-    "charge.succeeded,charge.failed,charge.refunded"
+    "checkout.session.completed,checkout.session.expired,payment_intent.created,payment_intent.requires_action,payment_intent.partially_funded,payment_intent.processing,payment_intent.succeeded,payment_intent.payment_failed,charge.succeeded,charge.failed,charge.refunded"
 
 # Connect: connected account lifecycle events
 start_webhook "connect" "/api/connect/webhook" "STRIPE_CONNECT_WEBHOOK_SECRET" \
@@ -121,6 +129,8 @@ echo ""
 echo "${BLUE}Registry (connected account):${NC}"
 echo "  stripe trigger charge.succeeded"
 echo "  stripe trigger charge.refunded"
+echo "  stripe trigger payment_intent.succeeded"
+echo "  stripe trigger payment_intent.payment_failed"
 echo ""
 echo "${BLUE}Connect (connected account):${NC}"
 echo "  stripe trigger account.updated"

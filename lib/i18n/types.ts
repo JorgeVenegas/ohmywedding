@@ -855,6 +855,7 @@ export interface Translations {
       createWedding: string
       yourWeddings: string
       editWedding: string
+      dashboard: string
       signOut: string
       signedInAs: string
     }
@@ -1284,11 +1285,25 @@ export interface Translations {
       manageDescription: string
       management: string
       cards: {
+        website: {
+          titleCreate: string
+          titleEdit: string
+          descriptionCreate: string
+          descriptionEdit: string
+        }
         invitations: { title: string; description: string }
         registry: { title: string; description: string }
         settings: { title: string; description: string }
         seating: { title: string; description: string }
+        dishes: { title: string; description: string }
+        itinerary: { title: string; description: string }
+        summary: { title: string; description: string }
       }
+    }
+    selector: {
+      title: string
+      description: string
+      createNew: string
     }
     layout: {
       verifyingAccess: string
@@ -1553,6 +1568,162 @@ export interface Translations {
         layoutSaved: string
         error: string
       }
+    }
+    dishes: {
+      title: string
+      // Menus
+      addMenu: string
+      editMenu: string
+      menuName: string
+      menuNamePlaceholder: string
+      menuDescription: string
+      menuDescriptionPlaceholder: string
+      menuImage: string
+      coursesCount: string
+      course: string
+      courseName: string
+      courseNamePlaceholder: string
+      dishNamePlaceholder: string
+      selectDishForCourse: string
+      defaultCourses: {
+        appetizer: string
+        soupSalad: string
+        starter: string
+        mainCourse: string
+        dessert: string
+      }
+      noDishSelected: string
+      assignMenu: string
+      selectMenu: string
+      chooseMenu: string
+      guestAssignments: string
+      showAllGuests: string
+      confirmedOnly: string
+      noGuestsFound: string
+      // Dishes
+      addDish: string
+      editDish: string
+      manageDishes: string
+      name: string
+      namePlaceholder: string
+      description: string
+      descriptionPlaceholder: string
+      category: string
+      dietaryInfo: string
+      vegetarian: string
+      vegan: string
+      glutenFree: string
+      allergens: string
+      allergensPlaceholder: string
+      // Shared
+      byGuests: string
+      byGroup: string
+      byTable: string
+      searchGuests: string
+      guestsSelected: string
+      chooseGroup: string
+      chooseTable: string
+      assign: string
+      dish: string
+      dishPlural: string
+      menu: string
+      menuPlural: string
+      stats: {
+        totalMenus: string
+        totalDishes: string
+        assigned: string
+        unassigned: string
+        confirmedGuests: string
+      }
+      empty: {
+        title: string
+        description: string
+        dishesTitle: string
+        dishesDescription: string
+      }
+      notifications: {
+        menuCreated: string
+        menuUpdated: string
+        menuDeleted: string
+        menuAssigned: string
+        created: string
+        updated: string
+        deleted: string
+        assigned: string
+      }
+      categories: {
+        appetizer: string
+        soup: string
+        salad: string
+        main: string
+        dessert: string
+        drink: string
+        other: string
+      }
+    }
+    itinerary: {
+      title: string
+      description: string
+      addEvent: string
+      editEvent: string
+      addSubEvent: string
+      eventTitle: string
+      eventTitlePlaceholder: string
+      icon: string
+      date: string
+      weddingDay: string
+      otherDay: string
+      descriptionLabel: string
+      descriptionPlaceholder: string
+      location: string
+      locationPlaceholder: string
+      startTime: string
+      endTime: string
+      details: string
+      detailsPlaceholder: string
+      subEvents: string
+      subEventTitlePlaceholder: string
+      removeSubEvent: string
+      empty: {
+        title: string
+        description: string
+      }
+      notifications: {
+        created: string
+        updated: string
+        deleted: string
+      }
+    }
+    summary: {
+      title: string
+      exportPDF: string
+      exporting: string
+      exported: string
+      stats: {
+        totalGuests: string
+        confirmed: string
+        tables: string
+        dishes: string
+      }
+      sections: {
+        venueMap: string
+        dishes: string
+        seatingAssignments: string
+        itinerary: string
+      }
+      tableNumber: string
+      columns: {
+        guest: string
+        group: string
+        dish: string
+        dietary: string
+      }
+      servings: string
+      totalServings: string
+      noVenueData: string
+      noDishData: string
+      noSeatingData: string
+      noItineraryData: string
     }
   }
 

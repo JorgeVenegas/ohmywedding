@@ -1,12 +1,12 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server"
+import { createClient } from "@supabase/supabase-js"
 import { generateWeddingIds } from "@/lib/wedding-id-generator"
-import { createDefaultPageConfig } from "@/lib/page-config"
 import { NextResponse } from "next/server"
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-// Handle GET requests - return user's weddings
+// Handle GET requests - return user's weddings with plan and website info
 export async function GET() {
   try {
     const supabase = await createServerSupabaseClient()
@@ -17,10 +17,10 @@ export async function GET() {
       return NextResponse.json({ weddings: [] })
     }
     
-    // Get weddings owned by the user
+    // Get weddings owned by the user - include has_website and join with wedding_subscriptions
     const { data: ownedWeddings, error: ownedError } = await supabase
       .from('weddings')
-      .select('id, wedding_name_id, partner1_first_name, partner2_first_name, wedding_date')
+      .select('id, wedding_name_id, partner1_first_name, partner2_first_name, wedding_date, has_website, wedding_subscriptions(plan)')
       .eq('owner_id', user.id)
       .order('created_at', { ascending: false })
     
@@ -34,7 +34,7 @@ export async function GET() {
       try {
         const { data } = await supabase
           .from('weddings')
-          .select('id, wedding_name_id, partner1_first_name, partner2_first_name, wedding_date')
+          .select('id, wedding_name_id, partner1_first_name, partner2_first_name, wedding_date, has_website, wedding_subscriptions(plan)')
           .contains('collaborator_emails', [user.email.toLowerCase()])
           .order('created_at', { ascending: false })
         
@@ -54,24 +54,21 @@ export async function GET() {
       }
     }
     
-    // Enrich weddings with plan info from wedding_subscriptions
-    const weddingIds = allWeddings.map(w => w.id)
-    let planMap: Record<string, string> = {}
-    if (weddingIds.length > 0) {
-      const { data: subscriptions } = await supabase
-        .from('wedding_subscriptions')
-        .select('wedding_id, plan')
-        .in('wedding_id', weddingIds)
-      
-      if (subscriptions) {
-        planMap = Object.fromEntries(subscriptions.map(s => [s.wedding_id, s.plan || 'free']))
+    // Flatten the joined data
+    const weddingsWithPlan = allWeddings.map(w => {
+      const sub = Array.isArray(w.wedding_subscriptions) 
+        ? w.wedding_subscriptions[0] 
+        : w.wedding_subscriptions
+      return {
+        id: w.id,
+        wedding_name_id: w.wedding_name_id,
+        partner1_first_name: w.partner1_first_name,
+        partner2_first_name: w.partner2_first_name,
+        wedding_date: w.wedding_date,
+        has_website: w.has_website,
+        plan: sub?.plan || 'free',
       }
-    }
-    
-    const weddingsWithPlan = allWeddings.map(w => ({
-      ...w,
-      plan: planMap[w.id] || 'free',
-    }))
+    })
     
     return NextResponse.json({ weddings: weddingsWithPlan })
   } catch (error) {
@@ -79,6 +76,8 @@ export async function GET() {
   }
 }
 
+// Simplified POST - creates a wedding with minimal info (names, date, location)
+// Website creation is now a separate step via POST /api/weddings/[weddingId]/website
 export async function POST(request: Request) {
   try {
     const supabase = await createServerSupabaseClient()
@@ -88,12 +87,11 @@ export async function POST(request: Request) {
       data: { user },
     } = await supabase.auth.getUser()
 
-    // Require authentication to create a wedding
     if (!user) {
       return NextResponse.json({ error: "Unauthorized - please log in to create a wedding" }, { status: 401 })
     }
 
-    // Safely parse the request body
+    // Parse request body
     let body
     try {
       const text = await request.text()
@@ -101,7 +99,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Request body is empty" }, { status: 400 })
       }
       body = JSON.parse(text)
-    } catch (parseError) {
+    } catch {
       return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 })
     }
 
@@ -110,46 +108,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Partner names are required" }, { status: 400 })
     }
 
-    // Generate wedding IDs
+    // Generate unique wedding IDs
     const { dateId, weddingNameId } = await generateWeddingIds(
       body.partner1FirstName,
       body.partner2FirstName,
       body.partner1LastName,
       body.partner2LastName,
-      body.weddingDate, // Pass the date string directly to avoid timezone issues
+      body.weddingDate,
     )
 
-    // Create page configuration from user selections
-    const defaultPageConfig = createDefaultPageConfig()
-    
-    // Use components from the form if provided, otherwise use defaults
-    const pageConfig = {
-      ...defaultPageConfig,
-      components: body.components || defaultPageConfig.components,
-      // Include sectionConfigs from the form - this contains variant settings, content, etc.
-      sectionConfigs: body.sectionConfigs || defaultPageConfig.sectionConfigs,
-      siteSettings: {
-        ...defaultPageConfig.siteSettings,
-        locale: body.locale || defaultPageConfig.siteSettings?.locale,
-        showLanguageSwitcher: true,
-        theme: {
-          ...defaultPageConfig.siteSettings?.theme,
-          colors: {
-            primary: body.primaryColor,
-            secondary: body.secondaryColor,
-            accent: body.accentColor,
-            foreground: defaultPageConfig.siteSettings?.theme?.colors?.foreground || '#1f2937',
-            background: defaultPageConfig.siteSettings?.theme?.colors?.background || '#ffffff',
-            muted: defaultPageConfig.siteSettings?.theme?.colors?.muted || '#6b7280'
-          },
-          fonts: body.fontPairing || defaultPageConfig.siteSettings?.theme?.fonts
-        }
-      },
-      version: '1.0',
-      lastModified: new Date().toISOString()
-    }
-
-    // Create wedding record
+    // Create wedding record with minimal data
     const weddingData = {
       date_id: dateId,
       wedding_name_id: weddingNameId,
@@ -158,26 +126,70 @@ export async function POST(request: Request) {
       partner2_first_name: body.partner2FirstName,
       partner2_last_name: body.partner2LastName || null,
       wedding_date: body.weddingDate || null,
-      wedding_time: body.weddingTime || null,
-      reception_time: body.receptionTime || null,
-      primary_color: body.primaryColor,
-      secondary_color: body.secondaryColor,
-      accent_color: body.accentColor,
-      ceremony_venue_name: body.venue1Name,
-      ceremony_venue_address: body.venue1Address,
-      reception_venue_name: body.venue2Name,
-      reception_venue_address: body.venue2Address,
-      page_config: pageConfig,
-      owner_id: user.id, // Set to authenticated user's ID
+      ceremony_venue_name: body.location || null,
+      owner_id: user.id,
+      has_website: false,
     }
 
-    const { data, error } = await supabase.from("weddings").insert([weddingData])
+    const { data, error } = await supabase
+      .from("weddings")
+      .insert([weddingData])
+      .select('id, wedding_name_id')
+      .single()
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json({ dateId, weddingNameId, data })
+    // Handle gift code redemption if provided
+    if (body.giftCode) {
+      const adminClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      )
+
+      // Validate the gift code
+      const { data: gift, error: giftError } = await adminClient
+        .from('gift_subscriptions')
+        .select('*')
+        .eq('code', body.giftCode.trim().toUpperCase())
+        .eq('status', 'active')
+        .is('wedding_id', null)
+        .single()
+
+      if (giftError || !gift) {
+        // Wedding was created but gift code is invalid - still return success
+        // The wedding is created, user can try redeeming later
+        return NextResponse.json({ 
+          weddingId: data.id, 
+          weddingNameId: data.wedding_name_id,
+          giftCodeError: 'Invalid or already redeemed gift code'
+        })
+      }
+
+      // Redeem the gift: create wedding_subscription + update gift_subscription
+      await adminClient
+        .from('wedding_subscriptions')
+        .upsert({
+          wedding_id: data.id,
+          plan: gift.plan,
+        })
+
+      await adminClient
+        .from('gift_subscriptions')
+        .update({
+          status: 'redeemed',
+          redeemed_at: new Date().toISOString(),
+          redeemed_by_user_id: user.id,
+          wedding_id: data.id,
+        })
+        .eq('id', gift.id)
+    }
+
+    return NextResponse.json({ 
+      weddingId: data.id, 
+      weddingNameId: data.wedding_name_id 
+    })
   } catch (error) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }

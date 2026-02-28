@@ -22,6 +22,8 @@ export interface Guest {
   // Extended fields for flat view
   groupName?: string
   allTags?: string[]
+  seating_table_name?: string | null
+  dish_name?: string | null
 }
 
 export interface GuestGroup {
@@ -83,6 +85,8 @@ export interface ColumnVisibility {
   invitedBy: boolean
   inviteSent: boolean
   travelInfo: boolean
+  seating: boolean
+  dish: boolean
 }
 
 export interface GroupTravelForm {

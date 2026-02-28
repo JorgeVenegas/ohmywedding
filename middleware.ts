@@ -104,6 +104,38 @@ async function getWeddingPlan(weddingNameId: string): Promise<'free' | 'premium'
   }
 }
 
+// UUID regex for detecting weddingId path segments
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+// Helper to look up a wedding by UUID and return { weddingNameId, plan }
+// Used for redirecting /admin/{uuid}/... to the correct subdomain
+async function getWeddingByUuid(weddingId: string): Promise<{ weddingNameId: string; plan: 'free' | 'premium' | 'deluxe' } | null> {
+  try {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { cookies: { getAll: () => [], setAll: () => {} } }
+    )
+
+    const { data: wedding, error } = await supabase
+      .from('weddings')
+      .select('wedding_name_id, wedding_subscriptions(plan)')
+      .eq('id', weddingId)
+      .single()
+
+    if (error || !wedding) return null
+
+    const sub = Array.isArray(wedding.wedding_subscriptions)
+      ? wedding.wedding_subscriptions[0]
+      : wedding.wedding_subscriptions
+    const plan = (sub?.plan as 'free' | 'premium' | 'deluxe') || 'free'
+
+    return { weddingNameId: wedding.wedding_name_id, plan }
+  } catch {
+    return null
+  }
+}
+
 // English-speaking countries (default to English)
 const ENGLISH_COUNTRIES = new Set(['US', 'CA', 'GB', 'AU', 'NZ', 'IE'])
 
@@ -181,6 +213,34 @@ export async function middleware(request: NextRequest) {
           return NextResponse.redirect(redirectTarget)
         }
         // Free plan: DON'T redirect to subdomain, continue with normal path-based routing
+        }
+      }
+    }
+
+    // =========================================================================
+    // ADMIN PATHS: /admin/{weddingNameId}/... on main domain
+    // Redirect to subdomain for premium/deluxe weddings
+    // =========================================================================
+    if (first === 'admin') {
+      const weddingNameId = segments[1]
+      if (weddingNameId && !UUID_RE.test(weddingNameId)) {
+        const hostWithoutPort = hostname.split(':')[0]
+        const port = hostname.includes(':') ? `:${hostname.split(':')[1]}` : ''
+        const normalizedHost = hostWithoutPort.replace(/^www\./, '')
+
+        if (normalizedHost === 'ohmy.local' || normalizedHost === 'ohmy.wedding') {
+          const plan = await getWeddingPlan(weddingNameId)
+
+          if (plan === 'premium' || plan === 'deluxe') {
+            const protocol = request.nextUrl.protocol || 'http:'
+            const targetHost = normalizedHost === 'ohmy.local'
+              ? `${weddingNameId}.ohmy.local${port}`
+              : `${weddingNameId}.ohmy.wedding`
+            // Strip /admin/{weddingNameId} and reconstruct as /admin{rest}
+            const rest = pathname.slice(`/admin/${weddingNameId}`.length)
+            const targetPath = rest ? `/admin${rest}` : '/admin/dashboard'
+            return NextResponse.redirect(`${protocol}//${targetHost}${targetPath}`)
+          }
         }
       }
     }

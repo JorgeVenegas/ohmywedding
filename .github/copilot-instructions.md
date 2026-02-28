@@ -17,6 +17,21 @@ Never do psql
 
 Avoid doing supabase db reset, instead create new migrations and apply them with supabase migration up
 
+## CRITICAL: Destructive Supabase Commands - ABSOLUTELY FORBIDDEN
+The following commands destroy local data and must NEVER be used under any circumstances:
+- `supabase stop --no-backup` — This deletes Docker volumes and ALL local DB data permanently
+- `supabase db reset` — This wipes and recreates the database from scratch
+- `supabase db reset --linked` — Even worse, targets the remote DB
+- `docker volume rm` on any supabase volume — Same effect as --no-backup
+
+If Supabase has container conflicts or startup issues, the correct approach is:
+1. `npx supabase stop` (WITHOUT --no-backup) to preserve data
+2. `npx supabase start` to restart
+3. If a specific container is stuck, restart only that container with `docker restart <container_name>`
+4. If migrations fail, fix the migration SQL and run `npx supabase migration up` — never reset
+
+Data integrity is the #1 priority. Losing local dev data means losing test scenarios, seed data, and development progress. There is NO recovery from --no-backup.
+
 at the end of every chat, do the npm run build to verify no build errors exist
 
 you should aim to reduce the amount of code thorugh simplificaitons, reutilizations, standardizaiton and use of compoents. Avoid repeating yourself
@@ -42,6 +57,8 @@ Fors super large files, you should aim to extract components and logic into smal
 For animations try to use framer motion whenever possible to keep consistency across the app
 
 NEVER use native browser dialogs (alert, confirm, prompt). Always use the reusable modal components from components/ui (ConfirmDeleteDialog, etc) to maintain consistent styling and better UX. All confirmations should use modals with proper animations and styling that match the app design.
+
+All modals must have smooth open/close animations. For shadcn Dialog components, do NOT use slide-in-from / slide-out-to classes — these create disorienting movement. Use only fade + subtle scale: `data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-[0.97] data-[state=open]:zoom-in-[0.97] duration-300`. For Framer Motion modals, use `initial={{ opacity: 0, scale: 0.96, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96, y: 12 }}` with `transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}`. Backdrop should be `bg-black/60 backdrop-blur-sm` with a fade of `duration-300`.
 
 Securituy is top priority, always follow best practices to avoid vulnerabilities. Avoid APIs that can expose sensitive data or operations to unauthorized users. Always limit what information is sent to the client. 
 

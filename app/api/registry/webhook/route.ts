@@ -145,13 +145,14 @@ export async function POST(request: NextRequest) {
     // Since checkout sessions and payment intents are created ON the
     // connected account, we receive the full lifecycle here:
     //
-    // Flow: pending → processing → requires_action → processing → completed
+    // Flow: pending → processing → requires_action → partially_funded → processing → completed
     //
     // Events handled:
     // - checkout.session.completed       → link PI to contribution, mark processing
     // - checkout.session.expired         → mark expired
     // - payment_intent.created           → store PI id, mark processing
-    // - payment_intent.requires_action   → mark requires_action
+    // - payment_intent.requires_action   → mark requires_action (awaiting SPEI transfer)
+    // - payment_intent.partially_funded  → mark partially_funded (partial SPEI received)
     // - payment_intent.processing        → mark processing
     // - payment_intent.succeeded         → mark completed
     // - payment_intent.payment_failed    → mark failed
@@ -249,6 +250,12 @@ export async function POST(request: NextRequest) {
 
       console.log('Webhook: payment_intent.created | PI:', pi.id)
 
+      // Skip PIs created by the reconciliation cron (they have reconciled/sweep metadata)
+      if (pi.metadata?.reconciled === "true" || pi.metadata?.sweep === "true") {
+        console.log('Webhook: Skipping reconciled/sweep PI', pi.id)
+        return NextResponse.json({ received: true })
+      }
+
       // Try to find the contribution and store the PI id
       const contribution = await findContribution(supabase, stripe, pi.id, connectedAccountId)
       if (contribution) {
@@ -274,11 +281,37 @@ export async function POST(request: NextRequest) {
 
       const contribution = await findContribution(supabase, stripe, pi.id, connectedAccountId)
       if (contribution && !["completed", "refunded"].includes(contribution.payment_status)) {
+        const updateData: Record<string, unknown> = { payment_status: "requires_action" }
+        // Store stripe_customer_id if not already stored
+        if (pi.customer && !contribution.stripe_customer_id) {
+          updateData.stripe_customer_id = typeof pi.customer === 'string' ? pi.customer : pi.customer.id
+        }
         await supabase
           .from("registry_contributions")
-          .update({ payment_status: "requires_action" })
+          .update(updateData)
           .eq("id", contribution.id)
         console.log('Webhook: Updated contribution', contribution.id, 'to requires_action')
+      }
+    }
+
+    // --- payment_intent.partially_funded ---
+    else if (event.type === "payment_intent.partially_funded") {
+      const pi = event.data.object as Stripe.PaymentIntent
+
+      console.log('Webhook: payment_intent.partially_funded | PI:', pi.id, '| Amount received:', pi.amount_received, '| Amount requested:', pi.amount)
+
+      const contribution = await findContribution(supabase, stripe, pi.id, connectedAccountId)
+      if (contribution && !["completed", "refunded"].includes(contribution.payment_status)) {
+        const updateData: Record<string, unknown> = { payment_status: "partially_funded" }
+        // Store stripe_customer_id if not already stored
+        if (pi.customer && !contribution.stripe_customer_id) {
+          updateData.stripe_customer_id = typeof pi.customer === 'string' ? pi.customer : pi.customer.id
+        }
+        await supabase
+          .from("registry_contributions")
+          .update(updateData)
+          .eq("id", contribution.id)
+        console.log('Webhook: Updated contribution', contribution.id, 'to partially_funded (received:', pi.amount_received, 'of', pi.amount, ')')
       }
     }
 
@@ -304,7 +337,21 @@ export async function POST(request: NextRequest) {
 
       console.log('Webhook: payment_intent.succeeded | PI:', pi.id)
 
-      const contribution = await findContribution(supabase, stripe, pi.id, connectedAccountId)
+      let contribution = await findContribution(supabase, stripe, pi.id, connectedAccountId)
+
+      // Reconciled PIs store the original contribution ID in metadata — use it as fallback
+      if (!contribution && pi.metadata?.contributionId) {
+        const { data: byMeta } = await supabase
+          .from("registry_contributions")
+          .select("*")
+          .eq("id", pi.metadata.contributionId)
+          .single()
+        if (byMeta) {
+          contribution = byMeta
+          console.log('Webhook: Found contribution via reconciled PI metadata:', contribution.id)
+        }
+      }
+
       if (!contribution) {
         console.warn('Webhook: Contribution not found for PI:', pi.id)
         return NextResponse.json({ received: true })
@@ -319,6 +366,26 @@ export async function POST(request: NextRequest) {
       const chargeId = pi.latest_charge as string || undefined
       await markContributionCompleted(supabase, contribution, pi.id, chargeId)
       console.log('Webhook: SUCCESS - Payment completed!')
+
+      // Check for excess customer balance and log it for the reconciliation cron
+      if (pi.customer && connectedAccountId) {
+        try {
+          const customerId = typeof pi.customer === 'string' ? pi.customer : pi.customer.id
+          const customerBalance = await stripe.customers.retrieve(
+            customerId,
+            { expand: ['cash_balance'] },
+            { stripeAccount: connectedAccountId }
+          ) as Stripe.Customer
+          
+          const mxnBalance = customerBalance.cash_balance?.available?.mxn || 0
+          if (mxnBalance < 0) {
+            // Negative balance = credit (overpayment). Values are in centavos.
+            console.log(`Webhook: Customer ${customerId} has excess balance of ${Math.abs(mxnBalance)} centavos on account ${connectedAccountId} — will be swept by reconciliation cron`)
+          }
+        } catch (balanceErr) {
+          console.warn('Webhook: Could not check customer balance:', balanceErr)
+        }
+      }
     }
 
     // --- payment_intent.payment_failed ---

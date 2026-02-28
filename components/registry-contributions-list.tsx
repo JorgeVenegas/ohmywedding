@@ -16,6 +16,7 @@ interface Contribution {
   created_at: string
   custom_registry_item_id: string
   stripe_payment_intent_id: string | null
+  original_requested_amount: number | null
 }
 
 interface RegistryItem {
@@ -61,7 +62,7 @@ export function RegistryContributionsList({
         .from("registry_contributions")
         .select("*")
         .eq("wedding_id", weddingId)
-        .notIn("payment_status", ["pending", "incomplete"])
+        .notIn("payment_status", ["pending", "incomplete", "partially_funded"])
         .order("created_at", { ascending: false })
 
       if (error) throw error
@@ -85,6 +86,8 @@ export function RegistryContributionsList({
         return "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200/60 dark:border-blue-800/60"
       case "requires_action":
         return "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200/60 dark:border-amber-800/60"
+      case "partially_funded":
+        return "bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200/60 dark:border-orange-800/60"
       case "failed":
         return "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200/60 dark:border-red-800/60"
       case "refunded":
@@ -225,9 +228,17 @@ export function RegistryContributionsList({
 
                 {/* Column 3: Amount + Status */}
                 <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-2">
-                  <p className="text-xl font-semibold text-secondary">
-                    ${Number(contribution.amount).toFixed(2)}
-                  </p>
+                  <div className="text-right">
+                    <p className="text-xl font-semibold text-secondary">
+                      ${Number(contribution.amount).toFixed(2)}
+                    </p>
+                    {contribution.original_requested_amount &&
+                      Number(contribution.original_requested_amount) > Number(contribution.amount) && (
+                        <p className="text-[10px] text-muted-foreground line-through">
+                          ${Number(contribution.original_requested_amount).toFixed(2)}
+                        </p>
+                    )}
+                  </div>
                   <span
                     className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border leading-none ${getStatusColor(
                       contribution.payment_status

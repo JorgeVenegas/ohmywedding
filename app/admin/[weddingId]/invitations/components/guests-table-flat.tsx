@@ -13,6 +13,7 @@ import {
   X,
   Edit2,
   Trash2,
+  LayoutGrid,
 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -181,6 +182,16 @@ export function GuestsTableFlat({
                 {visibleColumns.travelInfo && (
                   <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Travel Info
+                  </th>
+                )}
+                {visibleColumns.seating && (
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Table
+                  </th>
+                )}
+                {visibleColumns.dish && (
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Dish
                   </th>
                 )}
                 <th className="px-3 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -370,6 +381,29 @@ export function GuestsTableFlat({
                         </TooltipProvider>
                       ) : (
                         <span className="text-muted-foreground text-[10px]">-</span>
+                      )}
+                    </td>
+                  )}
+                  {visibleColumns.seating && (
+                    <td className="px-3 py-2">
+                      {guest.seating_table_name ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-violet-100 text-violet-700 border border-violet-200">
+                          <LayoutGrid className="w-3 h-3" />
+                          {guest.seating_table_name}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground text-[10px]">—</span>
+                      )}
+                    </td>
+                  )}
+                  {visibleColumns.dish && (
+                    <td className="px-3 py-2">
+                      {guest.dish_name ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-100 text-orange-700 border border-orange-200">
+                          {guest.dish_name}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground text-[10px]">—</span>
                       )}
                     </td>
                   )}
