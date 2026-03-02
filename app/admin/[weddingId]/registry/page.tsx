@@ -10,7 +10,7 @@ import { UpgradeModal } from "@/components/ui/upgrade-modal"
 import { Plus, Edit, Trash2, DollarSign, X, AlertCircle, CheckCircle2, Crown, Lock, LayoutGrid, Filter, ArrowUpDown, Search, ExternalLink } from "lucide-react"
 import { Header } from "@/components/header"
 import { getCleanAdminUrl } from "@/lib/admin-url"
-import { createBrowserClient } from "@supabase/ssr"
+import { createClient } from "@/lib/supabase-client"
 import { ImageUpload } from "@/components/ui/image-upload"
 import { useImageUpload } from "@/hooks/use-image-upload"
 import { StripeConnectCard } from "@/components/stripe-connect-card"
@@ -100,10 +100,7 @@ export default function RegistryPage({ params }: RegistryPageProps) {
   const [contributionSortBy, setContributionSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
   const [contributionStats, setContributionStats] = useState({ count: 0, amount: 0 })
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const supabase = createClient()
   
   const customRegistryEnabled = isFeatureEnabled(features, 'custom_registry_enabled')
 

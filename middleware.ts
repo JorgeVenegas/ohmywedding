@@ -364,37 +364,29 @@ async function handleSupabaseAuth(request: NextRequest, response: NextResponse) 
   )
 
   // Refresh session if expired - required for Server Components
-  // CRITICAL: Handle refresh token errors to prevent infinite error loops
+  // CRITICAL: Clear stale auth cookies on ANY auth error to prevent infinite redirect loops.
+  // Without this, expired tokens persist across requests and the user gets stuck.
   let user = null
   try {
     const { data, error } = await supabase.auth.getUser()
     if (error) {
-      // If refresh token is invalid/expired, clear all auth cookies immediately
-      // This prevents the error from repeating on every subsequent request
-      if (
-        error.message?.includes('Refresh Token') ||
-        (error as any).code === 'refresh_token_not_found' ||
-        error.message?.includes('Invalid Refresh Token') ||
-        error.status === 400
-      ) {
-        const allCookies = request.cookies.getAll()
-        for (const cookie of allCookies) {
-          if (cookie.name.startsWith('sb-') || cookie.name.includes('supabase')) {
-            // Delete with no domain (covers main domain cookies)
+      // Any auth error means the session is invalid — clear all auth cookies.
+      // This covers: expired refresh tokens, revoked tokens, corrupted sessions, etc.
+      const allCookies = request.cookies.getAll()
+      for (const cookie of allCookies) {
+        if (cookie.name.startsWith('sb-') || cookie.name.includes('supabase')) {
+          response.cookies.set(cookie.name, '', {
+            path: '/',
+            expires: new Date(0),
+            maxAge: 0,
+          })
+          if (cookieDomain) {
             response.cookies.set(cookie.name, '', {
+              domain: cookieDomain,
               path: '/',
               expires: new Date(0),
               maxAge: 0,
             })
-            // Also delete with explicit domain (covers subdomain cookies)
-            if (cookieDomain) {
-              response.cookies.set(cookie.name, '', {
-                domain: cookieDomain,
-                path: '/',
-                expires: new Date(0),
-                maxAge: 0,
-              })
-            }
           }
         }
       }
@@ -403,7 +395,25 @@ async function handleSupabaseAuth(request: NextRequest, response: NextResponse) 
       user = data.user
     }
   } catch {
-    // If getUser throws unexpectedly, treat as unauthenticated
+    // If getUser throws unexpectedly, treat as unauthenticated and clear cookies
+    const allCookies = request.cookies.getAll()
+    for (const cookie of allCookies) {
+      if (cookie.name.startsWith('sb-') || cookie.name.includes('supabase')) {
+        response.cookies.set(cookie.name, '', {
+          path: '/',
+          expires: new Date(0),
+          maxAge: 0,
+        })
+        if (cookieDomain) {
+          response.cookies.set(cookie.name, '', {
+            domain: cookieDomain,
+            path: '/',
+            expires: new Date(0),
+            maxAge: 0,
+          })
+        }
+      }
+    }
     user = null
   }
 

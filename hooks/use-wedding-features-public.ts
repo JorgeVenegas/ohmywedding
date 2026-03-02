@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import { createClient } from '@/lib/supabase-client'
 
 interface Feature {
   feature_key: string
@@ -18,10 +18,7 @@ export function useWeddingFeaturesPublic(weddingNameId: string) {
   useEffect(() => {
     async function fetchFeatures() {
       try {
-        const supabase = createBrowserClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        )
+        const supabase = createClient()
 
         // Get wedding ID from wedding_name_id
         const { data: wedding, error: weddingError } = await supabase

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Heart } from "lucide-react"
-import { createBrowserClient } from "@supabase/ssr"
+import { createClient } from "@/lib/supabase-client"
 import { useEffect, useState } from "react"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 
@@ -21,10 +21,7 @@ export function WeddingFooter({ weddingNameId, ownerId, collaboratorEmails }: We
       if (!weddingNameId) return
 
       try {
-        const supabase = createBrowserClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        )
+        const supabase = createClient()
 
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {

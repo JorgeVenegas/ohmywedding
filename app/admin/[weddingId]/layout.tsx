@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { createBrowserClient } from "@supabase/ssr"
+import { createClient } from "@/lib/supabase-client"
 import { SubscriptionProvider } from "@/components/contexts/subscription-context"
 import { PlanIndicator } from "@/components/plan-indicator"
 import { getCleanAdminUrl } from "@/lib/admin-url"
@@ -28,15 +28,23 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
         const decodedWeddingId = decodeURIComponent(resolvedParams.weddingId)
         setWeddingId(decodedWeddingId)
         
-        const supabase = createBrowserClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        )
+        const supabase = createClient()
 
-        // Get current user
-        const { data: { user }, error: userError } = await supabase.auth.getUser()
+        // Get current user — if stale tokens exist, clear them and redirect to login
+        let user = null
+        try {
+          const { data, error: userError } = await supabase.auth.getUser()
+          if (userError) {
+            // Stale session — clear everything before redirecting
+            await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
+          }
+          user = data?.user ?? null
+        } catch {
+          // Auth request failed entirely — clear and redirect
+          await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
+        }
         
-        if (userError || !user) {
+        if (!user) {
           // Not logged in - redirect to login on main domain
           const hostname = window.location.hostname
           const isSubdomain = hostname.includes('ohmy.local') || hostname.includes('ohmy.wedding')

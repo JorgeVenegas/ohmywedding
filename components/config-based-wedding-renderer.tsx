@@ -4,7 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
-import { createBrowserClient } from '@supabase/ssr'
+import { createClient } from '@/lib/supabase-client'
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
 import { Wedding } from '@/lib/wedding-data'
 import { getCleanAdminUrl } from '@/lib/admin-url'
@@ -70,10 +70,7 @@ function ConfigBasedWeddingRendererContent({
   React.useEffect(() => {
     async function checkAuthorization() {
       try {
-        const supabase = createBrowserClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        )
+        const supabase = createClient()
         
         const { data: { user } } = await supabase.auth.getUser()
         

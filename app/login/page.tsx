@@ -32,38 +32,39 @@ function LoginForm() {
   const isFullUrl = redirectTo.startsWith('http://') || redirectTo.startsWith('https://')
   const finalRedirectUrl = isFullUrl ? redirectTo : redirectTo
 
-  // Clear any stale auth tokens on mount to prevent refresh_token_not_found errors
+  // ALWAYS clear all stale auth state on login page mount.
+  // This prevents infinite redirect loops when expired tokens remain in storage/cookies.
+  // Using scope: 'local' avoids a server call (which would fail with expired tokens).
   useEffect(() => {
-    const supabase = createClient()
-    // Sign out to clear any stale server-side tokens
-    supabase.auth.getSession().then(({ error }) => {
-      if (error) {
-        // Stale session detected - clean up everything
-        supabase.auth.signOut().catch(() => {})
-        // Clear localStorage/sessionStorage
-        try {
-          Object.keys(localStorage).forEach((key) => {
-            if (key.startsWith('sb-') || key.includes('supabase')) {
-              localStorage.removeItem(key)
-            }
-          })
-          Object.keys(sessionStorage).forEach((key) => {
-            if (key.startsWith('sb-') || key.includes('supabase')) {
-              sessionStorage.removeItem(key)
-            }
-          })
-        } catch {}
-        // Clear cookies
-        document.cookie.split(';').forEach(c => {
-          const name = c.trim().split('=')[0]
-          if (name.startsWith('sb-') || name.includes('supabase')) {
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.wedding`
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.local`
+    const cleanup = async () => {
+      const supabase = createClient()
+      // Sign out locally — clears localStorage session without needing a valid token
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
+      // Also manually clear any remaining cookies and storage
+      try {
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith('sb-') || key.includes('supabase')) {
+            localStorage.removeItem(key)
           }
         })
-      }
-    })
+        Object.keys(sessionStorage).forEach((key) => {
+          if (key.startsWith('sb-') || key.includes('supabase')) {
+            sessionStorage.removeItem(key)
+          }
+        })
+      } catch {}
+      // Clear cookies across all potential domains
+      document.cookie.split(';').forEach(c => {
+        const name = c.trim().split('=')[0]
+        if (name.startsWith('sb-') || name.includes('supabase')) {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.wedding`
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.local`
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`
+        }
+      })
+    }
+    cleanup()
   }, [])
 
   // Show error from URL params (e.g., OAuth callback errors)

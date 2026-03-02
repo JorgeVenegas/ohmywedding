@@ -77,18 +77,28 @@ export function useAuth() {
   useEffect(() => {
     const supabase = createClient()
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        // Handle refresh token errors by clearing all cookies and session
-        if (error.message?.includes('Refresh Token') || (error as any).code === 'refresh_token_not_found') {
-          console.warn('Refresh token error, clearing all auth cookies')
+    // Validate session with the server using getUser() instead of getSession().
+    // getSession() reads from local cache and may return stale/expired tokens
+    // without erroring. getUser() actually validates against the Supabase server.
+    supabase.auth.getUser().then(({ data: { user: validatedUser }, error }) => {
+      if (error || !validatedUser) {
+        // Check if we have stale auth data lingering in storage/cookies
+        const hasAuthData = typeof document !== 'undefined' && (
+          document.cookie.split(';').some(c => {
+            const name = c.trim().split('=')[0]
+            return name.startsWith('sb-') || name.includes('supabase')
+          }) ||
+          Object.keys(localStorage).some(k => k.startsWith('sb-') || k.includes('supabase'))
+        )
+
+        if (hasAuthData) {
+          console.warn('Stale auth state detected, clearing all auth data')
           clearAllAuthStorage()
-          supabase.auth.signOut().catch(() => {})
-          setUser(null)
+          supabase.auth.signOut({ scope: 'local' }).catch(() => {})
         }
+        setUser(null)
       } else {
-        setUser(session?.user ?? null)
+        setUser(validatedUser)
       }
       setLoading(false)
     })
@@ -96,19 +106,19 @@ export function useAuth() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        // Only update state on meaningful auth events to prevent unnecessary re-renders
         if (event === 'TOKEN_REFRESHED') {
           // Token refresh - don't update state as user data hasn't changed
-          // This prevents page reloads during automatic token refresh
           if (!session) {
-            // Token refresh failed, clear all cookies
+            // Token refresh failed, clear all cookies and storage
             clearAllAuthStorage()
+            supabase.auth.signOut({ scope: 'local' }).catch(() => {})
             setUser(null)
           }
-          // Don't update user state on successful token refresh
         } else if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
-          // Update user state only on actual sign in/out or user updates
           setUser(session?.user ?? null)
+        } else if (event === 'INITIAL_SESSION' && !session) {
+          // Initial session load found no valid session — ensure stale data is cleared
+          clearAllAuthStorage()
         }
         setLoading(false)
       }

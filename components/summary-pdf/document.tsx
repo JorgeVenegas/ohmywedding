@@ -92,6 +92,26 @@ const C = {
   white:     '#ffffff',
 }
 
+// Distinct colors for menu identification
+const MENU_COLORS = [
+  '#C17547', // terracotta
+  '#7B9E6B', // sage
+  '#B07B94', // dusty rose
+  '#6B8BA4', // slate blue
+  '#C4A34D', // goldenrod
+  '#8B6B8A', // plum
+  '#5F9E9E', // teal
+  '#C27C6B', // coral
+  '#8A9460', // olive
+  '#A45A68', // cranberry
+]
+
+function buildMenuColorMap(menus: Array<{ id: string; name: string }>): Record<string, string> {
+  const map: Record<string, string> = {}
+  menus.forEach((m, i) => { map[m.name] = MENU_COLORS[i % MENU_COLORS.length] })
+  return map
+}
+
 // ─────────────────────────────────────────────
 // StyleSheet (structural / non-brand-colored)
 // ─────────────────────────────────────────────
@@ -503,7 +523,7 @@ function OverviewPage({ stats, wedding, locale, weddingName, pal, t }: {
 // ─────────────────────────────────────────────
 // Menus Pages
 // ─────────────────────────────────────────────
-function MenusPage({ menus, weddingName, pal, t }: {
+function MenusPage({ menus, weddingName, pal, t, menuColorMap }: {
   menus: Array<{
     id: string; name: string; description: string | null; count: number
     courses: Array<{ id: string; course_number: number; course_name: string | null; dish_name: string | null }>
@@ -511,6 +531,7 @@ function MenusPage({ menus, weddingName, pal, t }: {
   weddingName: string
   pal: BrandPalette
   t: (k: string, p?: Record<string, string>) => string
+  menuColorMap: Record<string, string>
 }) {
   return (
     <Page size="A4" style={s.page}>
@@ -523,7 +544,9 @@ function MenusPage({ menus, weddingName, pal, t }: {
         <View style={{ height: 1, backgroundColor: pal.accent, width: 40, marginBottom: 12 }} />
       </View>
 
-      {menus.map((menu, mi) => (
+      {menus.map((menu, mi) => {
+        const menuColor = menuColorMap[menu.name] || pal.accent
+        return (
         <View key={menu.id} wrap={false} style={{
           backgroundColor: C.warmWhite,
           borderRadius: 4,
@@ -533,17 +556,17 @@ function MenusPage({ menus, weddingName, pal, t }: {
           marginLeft: 14,
           overflow: 'hidden',
         }}>
-          {/* Accent left bar */}
-          <View style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 4, backgroundColor: pal.accent }} />
+          {/* Accent left bar — unique per menu */}
+          <View style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 4, backgroundColor: menuColor }} />
 
           {/* Header */}
           <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10, paddingLeft: 14 }}>
-            {/* Index badge */}
+            {/* Color-coded index badge */}
             <View style={{
-              width: 20, height: 20, borderRadius: 10, backgroundColor: C.cream,
-              borderWidth: 0.5, borderColor: C.border, alignItems: 'center', justifyContent: 'center', marginRight: 8,
+              width: 20, height: 20, borderRadius: 10, backgroundColor: menuColor,
+              alignItems: 'center', justifyContent: 'center', marginRight: 8,
             }}>
-              <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: C.charcoal }}>{String(mi + 1)}</Text>
+              <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#ffffff' }}>{String(mi + 1)}</Text>
             </View>
             {/* Name */}
             <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: C.charcoal, flex: 1 }}>{menu.name}</Text>
@@ -576,12 +599,12 @@ function MenusPage({ menus, weddingName, pal, t }: {
                   borderLeftWidth: 0, borderBottomColor: C.border,
                   backgroundColor: ci % 2 === 0 ? C.warmWhite : C.muted,
                 }}>
-                  {/* Course number */}
+                  {/* Course number — tinted with menu color */}
                   <View style={{
-                    width: 16, height: 16, borderRadius: 8, backgroundColor: C.muted,
+                    width: 16, height: 16, borderRadius: 8, backgroundColor: lightenHex(menuColor, 0.85),
                     alignItems: 'center', justifyContent: 'center', marginRight: 8,
                   }}>
-                    <Text style={{ fontSize: 5.5, fontFamily: 'Helvetica-Bold', color: C.textMuted }}>
+                    <Text style={{ fontSize: 5.5, fontFamily: 'Helvetica-Bold', color: menuColor }}>
                       {String(course.course_number)}
                     </Text>
                   </View>
@@ -600,7 +623,26 @@ function MenusPage({ menus, weddingName, pal, t }: {
             </View>
           )}
         </View>
-      ))}
+        )
+      })}
+
+      {/* Menu legend */}
+      <View style={{
+        flexDirection: 'row', flexWrap: 'wrap', gap: 8,
+        marginLeft: 14, marginTop: 4, marginBottom: 12,
+        padding: 8, backgroundColor: C.cream, borderRadius: 3,
+        borderWidth: 0.5, borderColor: C.border,
+      }}>
+        {menus.map((menu) => {
+          const mc = menuColorMap[menu.name] || pal.accent
+          return (
+            <View key={menu.id} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 10 }}>
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: mc, marginRight: 4 }} />
+              <Text style={{ fontSize: 7, fontFamily: 'Helvetica', color: C.charcoal }}>{menu.name}</Text>
+            </View>
+          )
+        })}
+      </View>
 
       {/* Total row */}
       <View style={{
@@ -624,7 +666,7 @@ function MenusPage({ menus, weddingName, pal, t }: {
 // ─────────────────────────────────────────────
 // Seating Pages
 // ─────────────────────────────────────────────
-function SeatingPage({ seating, weddingName, pal, t }: {
+function SeatingPage({ seating, weddingName, pal, t, menuColorMap }: {
   seating: Array<{
     tableNumber: number; tableName: string; shape: string; capacity: number; occupancy: number
     guests: Array<{ name: string; groupName: string | null; status: string; dietaryRestrictions: string | null; menu: { name: string } | null; seatNumber: number | null }>
@@ -632,6 +674,7 @@ function SeatingPage({ seating, weddingName, pal, t }: {
   weddingName: string
   pal: BrandPalette
   t: (k: string, p?: Record<string, string>) => string
+  menuColorMap: Record<string, string>
 }) {
   return (
     <Page size="A4" style={s.page}>
@@ -707,9 +750,17 @@ function SeatingPage({ seating, weddingName, pal, t }: {
                   <Text style={{ flex: 1.5, fontSize: 7.5, fontFamily: 'Helvetica', color: C.charcoal, padding: 4 }}>
                     {guest.groupName || '—'}
                   </Text>
-                  <Text style={{ flex: 1.5, fontSize: 7.5, fontFamily: 'Helvetica', color: pal.medium, padding: 4 }}>
-                    {guest.menu?.name || '—'}
-                  </Text>
+                  <View style={{ flex: 1.5, flexDirection: 'row', alignItems: 'center', padding: 4 }}>
+                    {guest.menu?.name && (
+                      <View style={{
+                        width: 6, height: 6, borderRadius: 3, marginRight: 4,
+                        backgroundColor: menuColorMap[guest.menu.name] || pal.medium,
+                      }} />
+                    )}
+                    <Text style={{ fontSize: 7.5, fontFamily: 'Helvetica', color: guest.menu?.name ? (menuColorMap[guest.menu.name] || pal.medium) : C.textLight }}>
+                      {guest.menu?.name || '—'}
+                    </Text>
+                  </View>
                 </View>
               ))}
             </View>
@@ -960,6 +1011,7 @@ function WeddingPDFDoc({ data, t }: { data: WeddingPDFData; t: (k: string, p?: R
   const locale = data.wedding.locale || 'en'
   const pal = buildPalette(data.wedding.primary_color, data.wedding.secondary_color, data.wedding.accent_color)
   const show = (key: string) => !data.selectedSections || data.selectedSections.includes(key)
+  const menuColorMap = buildMenuColorMap(data.menus)
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   const p1 = data.wedding.partner1_first_name ?? ''
@@ -1024,7 +1076,7 @@ function WeddingPDFDoc({ data, t }: { data: WeddingPDFData; t: (k: string, p?: R
             pal={pal}
             weddingName={weddingName}
           />
-          <MenusPage menus={data.menus} weddingName={weddingName} pal={pal} t={t} />
+          <MenusPage menus={data.menus} weddingName={weddingName} pal={pal} t={t} menuColorMap={menuColorMap} />
         </>
       )}
 
@@ -1039,7 +1091,7 @@ function WeddingPDFDoc({ data, t }: { data: WeddingPDFData; t: (k: string, p?: R
             pal={pal}
             weddingName={weddingName}
           />
-          <SeatingPage seating={data.seating} weddingName={weddingName} pal={pal} t={t} />
+          <SeatingPage seating={data.seating} weddingName={weddingName} pal={pal} t={t} menuColorMap={menuColorMap} />
         </>
       )}
 

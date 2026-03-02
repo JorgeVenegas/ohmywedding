@@ -78,6 +78,26 @@ export interface WeddingPDFData {
 const PAGE_W = 794
 const PAGE_H = 1123
 const CONTENT_TOP = 48
+
+// Distinct colors for menu identification
+const MENU_COLORS = [
+  '#C17547', // terracotta
+  '#7B9E6B', // sage
+  '#B07B94', // dusty rose
+  '#6B8BA4', // slate blue
+  '#C4A34D', // goldenrod
+  '#8B6B8A', // plum
+  '#5F9E9E', // teal
+  '#C27C6B', // coral
+  '#8A9460', // olive
+  '#A45A68', // cranberry
+]
+
+function buildMenuColorMap(menus: Array<{ id: string; name: string }>): Record<string, string> {
+  const map: Record<string, string> = {}
+  menus.forEach((m, i) => { map[m.name] = MENU_COLORS[i % MENU_COLORS.length] })
+  return map
+}
 const CONTENT_BOTTOM = 60
 
 // ─────────────────────────────────────────────
@@ -406,9 +426,10 @@ function SectionDividerPage({ title, subtitle, iconType, pal, weddingName }: {
 // ─────────────────────────────────────────────
 // Menus Page — minimalist
 // ─────────────────────────────────────────────
-function MenusPage({ menus, weddingName, pal, t }: {
+function MenusPage({ menus, weddingName, pal, t, menuColorMap }: {
   menus: WeddingPDFData['menus']; weddingName: string; pal: BrandPalette
   t: (k: string, p?: Record<string, string>) => string
+  menuColorMap: Record<string, string>
 }) {
   return (
     <PageShell>
@@ -421,14 +442,25 @@ function MenusPage({ menus, weddingName, pal, t }: {
         </h2>
         <Ornament color={pal.accent} width={100} />
         <div style={{ marginTop: 24 }}>
-          {menus.map((menu, mi) => (
+          {menus.map((menu, mi) => {
+            const menuColor = menuColorMap[menu.name] || pal.accent
+            return (
             <div key={menu.id} style={{
               marginBottom: 28, paddingBottom: 28,
               borderBottom: mi < menus.length - 1 ? `1px solid #e9e5e0` : 'none',
+              borderLeft: `4px solid ${menuColor}`,
+              paddingLeft: 16,
             }}>
               {/* Menu header row */}
               <div className="flex items-baseline justify-between" style={{ marginBottom: menu.courses.length > 0 ? 12 : 0 }}>
-                <div>
+                <div className="flex items-center" style={{ gap: 10 }}>
+                  {/* Color-coded index badge */}
+                  <div style={{
+                    width: 22, height: 22, borderRadius: '50%', backgroundColor: menuColor,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>{mi + 1}</span>
+                  </div>
                   <span style={{
                     fontFamily: "'Macker', serif", fontSize: 20, color: pal.dark,
                     letterSpacing: 0.5,
@@ -442,8 +474,8 @@ function MenusPage({ menus, weddingName, pal, t }: {
                   )}
                 </div>
                 <span style={{
-                  fontSize: 10, color: pal.accent, letterSpacing: 1,
-                  flexShrink: 0, marginLeft: 16,
+                  fontSize: 10, color: menuColor, letterSpacing: 1,
+                  flexShrink: 0, marginLeft: 16, fontWeight: 600,
                 }}>
                   {menu.count} pax
                 </span>
@@ -455,7 +487,7 @@ function MenusPage({ menus, weddingName, pal, t }: {
                   {menu.courses.map((course) => (
                     <div key={course.id} className="flex items-baseline" style={{ paddingLeft: 0 }}>
                       <span style={{
-                        fontSize: 9, color: pal.accent, width: 22, flexShrink: 0,
+                        fontSize: 9, color: menuColor, width: 22, flexShrink: 0,
                         fontWeight: 600, letterSpacing: 0.5,
                       }}>
                         {course.course_number}.
@@ -473,7 +505,25 @@ function MenusPage({ menus, weddingName, pal, t }: {
                 </div>
               )}
             </div>
-          ))}
+            )
+          })}
+
+          {/* Menu legend */}
+          <div className="flex flex-wrap items-center" style={{
+            gap: 14, padding: '10px 12px', marginBottom: 16,
+            backgroundColor: '#f5f2eb', borderRadius: 4,
+            border: '1px solid #e9e5e0',
+          }}>
+            {menus.map((menu) => {
+              const mc = menuColorMap[menu.name] || pal.accent
+              return (
+                <div key={menu.id} className="flex items-center" style={{ gap: 5 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: mc, flexShrink: 0 }} />
+                  <span style={{ fontSize: 9, color: '#2c2c2c' }}>{menu.name}</span>
+                </div>
+              )
+            })}
+          </div>
 
           {/* Total row */}
           <div className="flex items-center justify-between" style={{
@@ -501,9 +551,10 @@ function MenusPage({ menus, weddingName, pal, t }: {
 // ─────────────────────────────────────────────
 // Seating Pages — auto-paginate across multiple A4 pages
 // ─────────────────────────────────────────────
-function SeatingPages({ seating, weddingName, pal, t }: {
+function SeatingPages({ seating, weddingName, pal, t, menuColorMap }: {
   seating: WeddingPDFData['seating']; weddingName: string; pal: BrandPalette
   t: (k: string, p?: Record<string, string>) => string
+  menuColorMap: Record<string, string>
 }) {
   const sorted = [...seating].sort((a, b) => {
     const sw = (tbl: typeof seating[0]) =>
@@ -640,7 +691,13 @@ function SeatingPages({ seating, weddingName, pal, t }: {
                           <span style={{ flex: 1.5, fontSize: 9, color: '#2c2c2c', padding: '4px 8px' }}>
                             {guest.groupName || '—'}
                           </span>
-                          <span style={{ flex: 1.5, fontSize: 9, color: pal.medium, padding: '4px 8px' }}>
+                          <span className="flex items-center" style={{ flex: 1.5, fontSize: 9, color: guest.menu?.name ? (menuColorMap[guest.menu.name] || pal.medium) : '#a0988c', padding: '4px 8px', gap: 4, fontWeight: guest.menu?.name ? 600 : 400 }}>
+                            {guest.menu?.name && (
+                              <span style={{
+                                display: 'inline-block', width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                                backgroundColor: menuColorMap[guest.menu.name] || pal.medium,
+                              }} />
+                            )}
                             {guest.menu?.name || '—'}
                           </span>
                         </div>
@@ -961,6 +1018,7 @@ export function WebPDFDocument({ data, t }: {
     ),
   )
   const show = (key: string) => !data.selectedSections || data.selectedSections.includes(key)
+  const menuColorMap = buildMenuColorMap(data.menus)
   const p1 = data.wedding.partner1_first_name ?? ''
   const p2 = data.wedding.partner2_first_name ?? ''
   const partnerNames = `${p1} & ${p2}`
@@ -996,7 +1054,7 @@ export function WebPDFDocument({ data, t }: {
             subtitle={`${data.menus.length} ${data.menus.length === 1 ? 'menu' : 'menus'}`}
             iconType="menus" pal={pal} weddingName={weddingName}
           />
-          <MenusPage menus={data.menus} weddingName={weddingName} pal={pal} t={t} />
+          <MenusPage menus={data.menus} weddingName={weddingName} pal={pal} t={t} menuColorMap={menuColorMap} />
         </>
       )}
       {show('seating') && data.seating.length > 0 && (
@@ -1006,7 +1064,7 @@ export function WebPDFDocument({ data, t }: {
             subtitle={`${data.seating.length} tables · ${data.stats.confirmed} guests`}
             iconType="seating" pal={pal} weddingName={weddingName}
           />
-          <SeatingPages seating={data.seating} weddingName={weddingName} pal={pal} t={t} />
+          <SeatingPages seating={data.seating} weddingName={weddingName} pal={pal} t={t} menuColorMap={menuColorMap} />
         </>
       )}
       {show('itinerary') && data.itinerary.length > 0 && (
