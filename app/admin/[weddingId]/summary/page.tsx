@@ -230,15 +230,45 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
           await new Promise(r => setTimeout(r, 400))
           const mapWrapper = printRef.current.querySelector('[data-floor-plan]') as HTMLElement
           if (mapWrapper) {
+            const svg = mapWrapper.querySelector('svg') as SVGSVGElement | null
+            const viewBox = svg?.getAttribute('viewBox')?.split(' ').map(Number)
+
+            // Temporarily shrink the wrapper to fit the SVG content tightly,
+            // eliminating empty side-space from the w-full container
+            const origStyles = {
+              width: mapWrapper.style.width,
+              overflow: mapWrapper.style.overflow,
+              display: mapWrapper.style.display,
+            }
+            if (svg && viewBox && viewBox.length === 4) {
+              const [, , vbW, vbH] = viewBox
+              const svgRect = svg.getBoundingClientRect()
+              // SVG preserveAspectRatio (meet) means the content fits within the constrained dim.
+              // Actual content width = rendered height * (viewBox width / viewBox height)
+              const contentW = Math.ceil(svgRect.height * (vbW / vbH))
+              mapWrapper.style.width = `${contentW}px`
+              mapWrapper.style.overflow = 'hidden'
+              // Force layout recalc
+              mapWrapper.offsetHeight
+            }
+
             const { toPng } = await import('html-to-image')
             venueMapDataUrl = await toPng(mapWrapper, {
               pixelRatio: 2,
               backgroundColor: '#f9f7f3',
               filter: (node: HTMLElement) => !node?.hasAttribute?.('data-no-export'),
             })
+
             // Detect if the map is wider than tall (horizontal orientation)
-            const rect = mapWrapper.getBoundingClientRect()
-            venueMapIsHorizontal = rect.width > rect.height * 1.3
+            const capturedRect = mapWrapper.getBoundingClientRect()
+            venueMapIsHorizontal = viewBox
+              ? viewBox[2] > viewBox[3] * 1.3
+              : capturedRect.width > capturedRect.height * 1.3
+
+            // Restore original styles
+            mapWrapper.style.width = origStyles.width
+            mapWrapper.style.overflow = origStyles.overflow
+            mapWrapper.style.display = origStyles.display
           }
         } catch (mapErr) {
           console.warn('Venue map capture skipped:', mapErr)
