@@ -1568,18 +1568,27 @@ function VenueMapPage({ mapDataUrl, venueName, weddingName, pal, t, isHorizontal
 }) {
   // For horizontal seating maps: rotate entire content 90° so wide map fills the page
   if (isHorizontal) {
-    const rW = PAGE_H - MAP_PAD * 2 - MAP_HEADER_H - MAP_FOOTER_H - 8
-    const rH = PAGE_W - MAP_PAD * 2
+    // Rotated container: swap W/H so landscape content fills portrait page
+    const containerW = PAGE_H - MAP_PAD * 2   // 1099px (horizontal extent)
+    const containerH = PAGE_W - MAP_PAD * 2   // 770px  (vertical extent)
+    // Image area inside rotated container
+    const imgAreaTop = MAP_HEADER_H + 6        // 52px
+    const imgAreaBottom = containerH - MAP_FOOTER_H - 6  // 742px
+    const imgAreaH = imgAreaBottom - imgAreaTop // 690px
+
     return (
       <PageShell>
         <div style={{
           position: 'absolute', top: '50%', left: '50%',
-          width: PAGE_H - MAP_PAD * 2, height: PAGE_W - MAP_PAD * 2,
+          width: containerW, height: containerH,
           transform: 'translate(-50%, -50%) rotate(90deg)',
-          display: 'flex', flexDirection: 'column', gap: 6,
         }}>
           {/* Header */}
-          <div style={{ height: MAP_HEADER_H, display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <div style={{
+            position: 'absolute', top: 0, left: 0, right: 0,
+            height: MAP_HEADER_H,
+            display: 'flex', alignItems: 'center', gap: 10,
+          }}>
             <div style={{ width: 3, height: 28, backgroundColor: pal.accent, borderRadius: 2, flexShrink: 0 }} />
             <div style={{ minWidth: 0 }}>
               <span style={{ fontFamily: "'Macker', serif", fontSize: 18, color: '#2c2c2c', display: 'block', lineHeight: 1.2 }}>
@@ -1590,13 +1599,27 @@ function VenueMapPage({ mapDataUrl, venueName, weddingName, pal, t, isHorizontal
               )}
             </div>
           </div>
-          {/* Map image */}
-          <div style={{ width: '100%', height: rW, flexShrink: 0, border: '1px solid #e9e5e0', borderRadius: 6, overflow: 'hidden', backgroundColor: '#fefdfb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* Map image — fills remaining area, centered */}
+          <div style={{
+            position: 'absolute',
+            top: imgAreaTop, left: 0, right: 0, height: imgAreaH,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={mapDataUrl} alt="Venue map" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <img src={mapDataUrl} alt="Venue map" style={{
+              maxWidth: '100%', maxHeight: '100%',
+              width: '100%', height: '100%',
+              objectFit: 'contain',
+              borderRadius: 6, border: '1px solid #e9e5e0',
+              display: 'block',
+            }} />
           </div>
-          {/* Footer strip */}
-          <div style={{ height: rH, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          {/* Footer */}
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0,
+            height: MAP_FOOTER_H,
+            display: 'flex', alignItems: 'center',
+          }}>
             <span style={{ fontSize: 8, color: '#c8c0b8', letterSpacing: 3, textTransform: 'uppercase' }}>{weddingName}</span>
           </div>
         </div>
@@ -1604,19 +1627,17 @@ function VenueMapPage({ mapDataUrl, venueName, weddingName, pal, t, isHorizontal
     )
   }
 
-  // Explicit pixel positions for portrait layout
-  const headerTop    = MAP_PAD
-  const headerBottom = MAP_PAD + MAP_HEADER_H
-  const footerTop    = PAGE_H - MAP_PAD - MAP_FOOTER_H
-  const imgTop       = headerBottom + 6
-  const imgBottom    = footerTop - 6
+  // Portrait layout — absolute positioning for pixel-perfect placement
+  const imgAreaTop    = MAP_PAD + MAP_HEADER_H + 6   // 64px
+  const imgAreaH      = PAGE_H - MAP_PAD * 2 - MAP_HEADER_H - MAP_FOOTER_H - 12  // 1075px
+  const imgAreaW      = PAGE_W - MAP_PAD * 2   // 770px
 
   return (
     <PageShell>
-      {/* Compact header strip — absolutely positioned */}
+      {/* Compact header strip */}
       <div style={{
         position: 'absolute',
-        top: headerTop, left: MAP_PAD, right: MAP_PAD,
+        top: MAP_PAD, left: MAP_PAD, right: MAP_PAD,
         height: MAP_HEADER_H,
         display: 'flex', alignItems: 'center', gap: 10,
       }}>
@@ -1631,11 +1652,11 @@ function VenueMapPage({ mapDataUrl, venueName, weddingName, pal, t, isHorizontal
         </div>
       </div>
 
-      {/* Map image — fills the entire remaining area, centered */}
+      {/* Map image — fills entire remaining space, centered */}
       <div style={{
         position: 'absolute',
-        top: imgTop, bottom: PAGE_H - imgBottom,
-        left: MAP_PAD, right: MAP_PAD,
+        top: imgAreaTop, left: MAP_PAD,
+        width: imgAreaW, height: imgAreaH,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1643,10 +1664,8 @@ function VenueMapPage({ mapDataUrl, venueName, weddingName, pal, t, isHorizontal
           src={mapDataUrl}
           alt="Venue map"
           style={{
-            maxWidth: '100%',
-            maxHeight: '100%',
-            width: 'auto',
-            height: 'auto',
+            width: '100%', height: '100%',
+            objectFit: 'contain',
             borderRadius: 8,
             border: '1px solid #e9e5e0',
             display: 'block',
@@ -1654,10 +1673,10 @@ function VenueMapPage({ mapDataUrl, venueName, weddingName, pal, t, isHorizontal
         />
       </div>
 
-      {/* Footer strip — absolutely positioned */}
+      {/* Footer strip */}
       <div style={{
         position: 'absolute',
-        top: footerTop, left: MAP_PAD, right: MAP_PAD,
+        bottom: MAP_PAD, left: MAP_PAD, right: MAP_PAD,
         height: MAP_FOOTER_H,
         display: 'flex', alignItems: 'center',
       }}>
