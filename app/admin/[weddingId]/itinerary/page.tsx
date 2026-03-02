@@ -2,12 +2,11 @@
 
 import { use, useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { Header } from "@/components/header"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { useTranslation } from "@/components/contexts/i18n-context"
 import { toast } from "sonner"
-import { Plus, Edit2, Trash2, CalendarDays, MapPin, Clock, ChevronDown, ChevronRight, StickyNote } from "lucide-react"
+import { Plus, Edit2, Trash2, CalendarDays, MapPin } from "lucide-react"
 import { AddEditEventModal } from "./components"
 import type { ItineraryEvent, ItineraryEventWithChildren, SubEventInput } from "./types"
 import { getEventIcon, getIconColor } from "./icon-map"
@@ -17,7 +16,8 @@ interface ItineraryPageProps {
 }
 
 function formatTime(dateStr: string) {
-  return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const d = new Date(dateStr)
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
 function formatDateHeading(dateStr: string) {
@@ -35,7 +35,6 @@ export default function ItineraryPage({ params }: ItineraryPageProps) {
   const [saving, setSaving] = useState(false)
   const [showEventModal, setShowEventModal] = useState(false)
   const [editingEvent, setEditingEvent] = useState<ItineraryEventWithChildren | null>(null)
-  const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set())
 
   const fetchData = useCallback(async () => {
     try {
@@ -44,7 +43,6 @@ export default function ItineraryPage({ params }: ItineraryPageProps) {
       const allEvents: ItineraryEvent[] = data.events || []
       setEvents(allEvents)
       setWeddingDate(data.wedding_date || null)
-      setExpandedEvents(new Set(allEvents.filter(e => !e.parent_id).map(e => e.id)))
     } catch {
       toast.error(t('admin.seating.notifications.error'))
     } finally {
@@ -53,15 +51,6 @@ export default function ItineraryPage({ params }: ItineraryPageProps) {
   }, [decodedWeddingId, t])
 
   useEffect(() => { fetchData() }, [fetchData])
-
-  const toggleExpanded = (eventId: string) => {
-    setExpandedEvents(prev => {
-      const next = new Set(prev)
-      if (next.has(eventId)) next.delete(eventId)
-      else next.add(eventId)
-      return next
-    })
-  }
 
   const handleSaveEvent = async (eventData: Partial<ItineraryEvent> & { subEvents?: SubEventInput[] }) => {
     setSaving(true)
@@ -114,10 +103,13 @@ export default function ItineraryPage({ params }: ItineraryPageProps) {
     ),
   }))
 
+  const lastMainEvent = mainEvents[mainEvents.length - 1] || null
+
   const weddingDateShort = weddingDate?.slice(0, 10) ?? null
   const grouped: Record<string, ItineraryEventWithChildren[]> = {}
   for (const ev of eventTree) {
-    const day = new Date(ev.start_time).toISOString().slice(0, 10)
+    const d = new Date(ev.start_time)
+    const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     if (!grouped[day]) grouped[day] = []
     grouped[day].push(ev)
   }
@@ -153,143 +145,182 @@ export default function ItineraryPage({ params }: ItineraryPageProps) {
           </Button>
         }
       />
-      <div className="page-container">
-        <p className="text-muted-foreground mb-8">{t('admin.itinerary.description')}</p>
+      <div className="page-container max-w-2xl">
+        <p className="text-muted-foreground mb-10">{t('admin.itinerary.description')}</p>
 
         {eventTree.length === 0 ? (
-          <Card className="p-12 text-center">
-            <CalendarDays className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">{t('admin.itinerary.empty.title')}</h3>
-            <p className="text-muted-foreground mb-6">{t('admin.itinerary.empty.description')}</p>
-            <Button onClick={openAddModal}>
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-5">
+              <CalendarDays className="w-6 h-6 text-muted-foreground" />
+            </div>
+            <h3 className="text-base font-semibold mb-1">{t('admin.itinerary.empty.title')}</h3>
+            <p className="text-sm text-muted-foreground mb-6 max-w-xs">{t('admin.itinerary.empty.description')}</p>
+            <Button onClick={openAddModal} variant="outline" size="sm">
               <Plus className="w-4 h-4 mr-2" />
               {t('admin.itinerary.addEvent')}
             </Button>
-          </Card>
+          </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-10">
             {sortedDays.map(day => {
               const isWeddingDay = day === weddingDateShort
               return (
                 <div key={day}>
-                  <div className="flex items-center gap-3 mb-3">
-                    <h2 className="text-base font-semibold">{formatDateHeading(day)}</h2>
+                  {/* Day heading */}
+                  <div className="flex items-center gap-3 mb-6">
+                    <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                      {formatDateHeading(day)}
+                    </span>
                     {isWeddingDay && (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-primary/10 text-primary border border-primary/20">
                         {t('admin.itinerary.weddingDay')}
                       </span>
                     )}
+                    <div className="flex-1 h-px bg-border" />
                   </div>
 
-                  <div className="space-y-3">
-                    {grouped[day].map(event => {
-                      const EventIcon = getEventIcon(event.icon)
-                      const isExpanded = expandedEvents.has(event.id)
-                      const hasChildren = event.children.length > 0
-                      return (
-                        <Card key={event.id} className="overflow-hidden">
-                          <div className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                              {hasChildren ? (
-                                <button onClick={() => toggleExpanded(event.id)} className="p-1 hover:bg-muted rounded flex-shrink-0">
-                                  {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                                </button>
-                              ) : (
-                                <div className="w-6 flex-shrink-0" />
-                              )}
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${getIconColor(event.icon).bg}`}>
-                                <EventIcon className={`w-4 h-4 ${getIconColor(event.icon).text}`} />
+                  {/* Timeline */}
+                  <div className="relative">
+                    {/* Vertical line */}
+                    <div className="absolute left-[4.5rem] top-3 bottom-3 w-px bg-border" aria-hidden="true" />
+
+                    <div className="space-y-0">
+                      {grouped[day].map((event, idx) => {
+                        const EventIcon = getEventIcon(event.icon)
+                        const iconColor = getIconColor(event.icon)
+                        const hasChildren = event.children.length > 0
+                        const isLast = idx === grouped[day].length - 1
+
+                        return (
+                          <div key={event.id} className={`relative flex gap-6 ${isLast ? '' : 'pb-6'}`}>
+                            {/* Time */}
+                            <div className="w-14 flex-shrink-0 text-right pt-0.5">
+                              <span className="text-sm tabular-nums text-muted-foreground font-medium">
+                                {formatTime(event.start_time)}
+                              </span>
+                            </div>
+
+                            {/* Dot */}
+                            <div className="relative flex-shrink-0 z-10">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${iconColor.bg} ring-2 ring-background`}>
+                                <EventIcon className={`w-3.5 h-3.5 ${iconColor.text}`} />
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="font-semibold text-base">{event.title}</div>
-                                <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap mt-0.5">
-                                  <span className="flex items-center gap-1">
-                                    <Clock className="w-3.5 h-3.5" />
-                                    {formatTime(event.start_time)}
-                                    {event.end_time && <> — {formatTime(event.end_time)}</>}
-                                  </span>
-                                  {event.location && (
-                                    <span className="flex items-center gap-1">
-                                      <MapPin className="w-3.5 h-3.5" />
-                                      {event.location}
-                                    </span>
+                            </div>
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0 group">
+                              <div className="flex items-start justify-between gap-2 -mt-0.5">
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-semibold text-sm leading-tight">{event.title}</div>
+                                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
+                                    {event.end_time && (
+                                      <span className="text-xs text-muted-foreground tabular-nums">
+                                        → {formatTime(event.end_time)}
+                                      </span>
+                                    )}
+                                    {event.location && (
+                                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                        <MapPin className="w-3 h-3 flex-shrink-0" />
+                                        {event.location}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {event.description && (
+                                    <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{event.description}</p>
+                                  )}
+                                  {event.notes && (
+                                    <p className="text-xs text-muted-foreground/70 mt-1 italic">{event.notes}</p>
                                   )}
                                 </div>
-                                {event.description && <p className="text-sm text-muted-foreground mt-1">{event.description}</p>}
-                                {event.notes && (
-                                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                                    <StickyNote className="w-3 h-3" /> {event.notes}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                              <Button variant="ghost" size="icon" className="h-8 w-8"
-                                onClick={() => { setEditingEvent(event); setShowEventModal(true) }}>
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
-                                onClick={() => handleDeleteEvent(event.id)}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
 
-                          {isExpanded && hasChildren && (
-                            <div className="border-t bg-muted/20">
-                              {event.children.map(child => {
-                                const ChildIcon = getEventIcon(child.icon)
-                                return (
-                                  <div key={child.id} className="flex items-center justify-between px-4 py-3 pl-14 border-b last:border-b-0 hover:bg-muted/30">
-                                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                                      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${getIconColor(child.icon).bg}`}>
-                                        <ChildIcon className={`w-3 h-3 ${getIconColor(child.icon).text}`} />
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <div className="font-medium text-sm">{child.title}</div>
-                                        <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap mt-0.5">
-                                          <span className="flex items-center gap-1">
-                                            <Clock className="w-3 h-3" />
-                                            {formatTime(child.start_time)}
-                                            {child.end_time && <> — {formatTime(child.end_time)}</>}
-                                          </span>
-                                          {child.location && (
-                                            <span className="flex items-center gap-1">
-                                              <MapPin className="w-3 h-3" />
-                                              {child.location}
+                                {/* Actions — visible on hover */}
+                                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                  <button
+                                    onClick={() => { setEditingEvent(event); setShowEventModal(true) }}
+                                    className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                  >
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteEvent(event.id)}
+                                    className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Sub-events */}
+                              {hasChildren && (
+                                <div className="mt-3 space-y-2 pl-2 border-l-2 border-border/60 ml-1">
+                                  {event.children.map(child => {
+                                    const ChildIcon = getEventIcon(child.icon)
+                                    const childColor = getIconColor(child.icon)
+                                    return (
+                                      <div key={child.id} className="flex items-start gap-2.5 group/child">
+                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${childColor.bg}`}>
+                                          <ChildIcon className={`w-2.5 h-2.5 ${childColor.text}`} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-xs tabular-nums text-muted-foreground font-medium w-9 flex-shrink-0">
+                                              {formatTime(child.start_time)}
                                             </span>
+                                            <span className="text-xs font-medium truncate">{child.title}</span>
+                                          </div>
+                                          {(child.location || child.description) && (
+                                            <div className="ml-11 flex flex-col gap-0.5 mt-0.5">
+                                              {child.location && (
+                                                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                                                  <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
+                                                  {child.location}
+                                                </span>
+                                              )}
+                                              {child.description && (
+                                                <span className="text-[11px] text-muted-foreground">{child.description}</span>
+                                              )}
+                                            </div>
                                           )}
                                         </div>
-                                        {child.description && <p className="text-xs text-muted-foreground mt-0.5">{child.description}</p>}
-                                        {child.notes && (
-                                          <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
-                                            <StickyNote className="w-2.5 h-2.5" /> {child.notes}
-                                          </p>
-                                        )}
+                                        <div className="flex items-center gap-0.5 opacity-0 group-hover/child:opacity-100 transition-opacity flex-shrink-0">
+                                          <button
+                                            onClick={() => { setEditingEvent(child as ItineraryEventWithChildren); setShowEventModal(true) }}
+                                            className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                          >
+                                            <Edit2 className="w-3 h-3" />
+                                          </button>
+                                          <button
+                                            onClick={() => handleDeleteEvent(child.id)}
+                                            className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                                          >
+                                            <Trash2 className="w-3 h-3" />
+                                          </button>
+                                        </div>
                                       </div>
-                                    </div>
-                                    <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                                      <Button variant="ghost" size="icon" className="h-7 w-7"
-                                        onClick={() => { setEditingEvent(child as ItineraryEventWithChildren); setShowEventModal(true) }}>
-                                        <Edit2 className="w-3.5 h-3.5" />
-                                      </Button>
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"
-                                        onClick={() => handleDeleteEvent(child.id)}>
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                )
-                              })}
+                                    )
+                                  })}
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </Card>
-                      )
-                    })}
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
               )
             })}
+
+            {/* Add event inline CTA */}
+            <button
+              onClick={openAddModal}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+            >
+              <div className="w-6 h-6 rounded-full border-2 border-dashed border-muted-foreground/40 group-hover:border-primary/60 flex items-center justify-center transition-colors">
+                <Plus className="w-3 h-3" />
+              </div>
+              {t('admin.itinerary.addEvent')}
+            </button>
           </div>
         )}
       </div>
@@ -303,6 +334,7 @@ export default function ItineraryPage({ params }: ItineraryPageProps) {
           existingChildren={editingEvent && !editingEvent.parent_id ? editingEvent.children ?? [] : []}
           saving={saving}
           weddingDate={weddingDate}
+          previousEvent={editingEvent ? null : lastMainEvent}
         />
       )}
     </main>

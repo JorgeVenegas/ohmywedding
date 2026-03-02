@@ -13,7 +13,7 @@ import { WebPDFDocument, type WeddingPDFData } from "@/components/summary-pdf/we
 import { captureAndAssemblePDF, downloadBlob } from "@/components/summary-pdf/pdf-capture"
 import {
   Download, FileText, UtensilsCrossed, CalendarDays,
-  LayoutGrid, MapPin, Clock, Users, ChevronDown, ChevronRight,
+  LayoutGrid, MapPin, Clock, Users, ChevronDown, ChevronRight, Handshake,
 } from "lucide-react"
 
 interface SummaryPageProps {
@@ -115,6 +115,23 @@ interface SummaryData {
       icon: string | null
     }>
   }>
+  suppliers: Array<{
+    id: string
+    name: string
+    category: string
+    contact_info: string | null
+    contact_type: string
+    contract_url: string | null
+    total_amount: number
+    notes: string | null
+    covered_amount: number
+    payments: Array<{
+      id: string
+      amount: number
+      payment_date: string
+      notes: string | null
+    }>
+  }>
 }
 
 const EVENT_EMOJI_MAP: Record<string, string> = {
@@ -140,7 +157,7 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
 
   const [data, setData] = useState<SummaryData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['seating', 'dishes', 'itinerary', 'venue']))
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['seating', 'dishes', 'itinerary', 'venue', 'suppliers']))
   const [exportProgress, setExportProgress] = useState<number | null>(null)
   const [showExportModal, setShowExportModal] = useState(false)
   const [pdfRenderData, setPdfRenderData] = useState<WeddingPDFData | null>(null)
@@ -190,7 +207,7 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
       let venueMapIsHorizontal = false
       if (printRef.current && (data.venueElements.length > 0 || data.seating.length > 0)) {
         try {
-          setExpandedSections(new Set(['seating', 'dishes', 'itinerary', 'venue']))
+          setExpandedSections(new Set(['seating', 'dishes', 'itinerary', 'venue', 'suppliers']))
           await new Promise(r => setTimeout(r, 400))
           const mapWrapper = printRef.current.querySelector('[data-floor-plan]') as HTMLElement
           if (mapWrapper) {
@@ -264,7 +281,7 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
 
   if (!data) return null
 
-  const { wedding, stats, seating, menus, itinerary, venueElements } = data
+  const { wedding, stats, seating, menus, itinerary, venueElements, suppliers = [] } = data
 
   return (
     <main className="min-h-screen bg-background">
@@ -514,6 +531,77 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
               )}
             </Card>
           )}
+
+          {/* Suppliers Section */}
+          <SectionHeader
+            title={t('admin.summary.sections.suppliers')}
+            icon={<Handshake className="w-5 h-5" />}
+            expanded={expandedSections.has('suppliers')}
+            onToggle={() => toggleSection('suppliers')}
+          />
+          {expandedSections.has('suppliers') && (
+            <Card className="mb-6 border overflow-hidden">
+              {suppliers.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">{t('admin.summary.noSuppliersData')}</p>
+              ) : (
+                <div className="divide-y">
+                  {suppliers.map(supplier => {
+                    const percent = supplier.total_amount > 0 ? Math.min(100, Math.round((supplier.covered_amount / supplier.total_amount) * 100)) : 0
+                    const formatCurr = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(v)
+                    return (
+                      <div key={supplier.id} className="p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold">{supplier.name}</div>
+                            <div className="text-xs text-muted-foreground capitalize mt-0.5">{supplier.category}</div>
+                            {supplier.contact_info && (
+                              <div className="text-sm text-muted-foreground mt-1">{supplier.contact_info}</div>
+                            )}
+                            {supplier.notes && <p className="text-xs text-muted-foreground mt-1 italic">{supplier.notes}</p>}
+                            {/* Payments */}
+                            {supplier.payments.length > 0 && (
+                              <div className="mt-2 space-y-1">
+                                {supplier.payments.map(p => (
+                                  <div key={p.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-primary/50 flex-shrink-0" />
+                                    <span>{formatCurr(p.amount)}</span>
+                                    <span>·</span>
+                                    <span>{new Date(p.payment_date + 'T12:00:00').toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                    {p.notes && <span className="italic">— {p.notes}</span>}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {/* Progress bar */}
+                            {supplier.total_amount > 0 && (
+                              <div className="mt-2">
+                                <div className="h-1.5 bg-muted rounded-full overflow-hidden w-48">
+                                  <div className="h-full bg-primary rounded-full" style={{ width: `${percent}%` }} />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-right flex-shrink-0 ml-4">
+                            <div className="text-base font-bold">{formatCurr(supplier.covered_amount)}</div>
+                            <div className="text-xs text-muted-foreground">/ {formatCurr(supplier.total_amount)}</div>
+                            <div className={`text-xs mt-0.5 font-medium ${percent >= 100 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                              {percent}%
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                  <div className="p-4 bg-muted/30">
+                    <div className="flex justify-between font-medium">
+                      <span>{t('admin.suppliers.covered')}</span>
+                      <span>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(suppliers.reduce((s, sup) => s + sup.covered_amount, 0))} / {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(suppliers.reduce((s, sup) => s + sup.total_amount, 0))}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Card>
+          )}
         </div>
       </div>
 
@@ -531,6 +619,7 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
           { key: 'menus', label: t('admin.summary.sections.menus'), available: menus.length > 0 },
           { key: 'seating', label: t('admin.summary.sections.seatingAssignments'), available: seating.length > 0 },
           { key: 'itinerary', label: t('admin.summary.sections.itinerary'), available: itinerary.length > 0 },
+          { key: 'suppliers', label: t('admin.summary.sections.suppliers'), available: suppliers.length > 0 },
           { key: 'venue', label: t('admin.summary.sections.venueMap'), available: venueElements.length > 0 || seating.length > 0 },
         ]}
         onExport={(options) => handleExportPDF(options)}

@@ -51,6 +51,8 @@ export async function GET(request: Request) {
       menusResult,
       menuAssignmentsResult,
       itineraryResult,
+      suppliersResult,
+      paymentsResult,
     ] = await Promise.all([
       supabase.from('weddings').select('id, wedding_name_id, partner1_first_name, partner1_last_name, partner2_first_name, partner2_last_name, wedding_date, wedding_time, reception_time, ceremony_venue_name, ceremony_venue_address, reception_venue_name, reception_venue_address, page_config').eq('id', weddingUuid).single(),
       supabase.from('guests').select('id, name, guest_group_id, confirmation_status, dietary_restrictions, notes').eq('wedding_id', weddingUuid),
@@ -61,6 +63,8 @@ export async function GET(request: Request) {
       supabase.from('menus').select('*, menu_courses(*)').eq('wedding_id', weddingUuid).order('display_order', { ascending: true }),
       supabase.from('guest_menu_assignments').select('*').eq('wedding_id', weddingUuid),
       supabase.from('itinerary_events').select('*').eq('wedding_id', weddingUuid).order('start_time', { ascending: true }),
+      supabase.from('suppliers').select('*').eq('wedding_id', weddingUuid).order('display_order', { ascending: true }),
+      supabase.from('supplier_payments').select('*').eq('wedding_id', weddingUuid).order('payment_date', { ascending: true }),
     ])
 
     const wedding = weddingResult.data
@@ -75,6 +79,8 @@ export async function GET(request: Request) {
     const menus = menusResult.data || []
     const menuAssignments = menuAssignmentsResult.data || []
     const itineraryEvents = itineraryResult.data || []
+    const supplierRows = suppliersResult.data || []
+    const paymentRows = paymentsResult.data || []
 
     // Build group lookup
     const groupMap = new Map(groups.map(g => [g.id, g.name]))
@@ -135,6 +141,29 @@ export async function GET(request: Request) {
     const itineraryTree = mainEvents.map(event => ({
       ...event,
       children: itineraryEvents.filter(e => e.parent_id === event.id).sort((a, b) => a.display_order - b.display_order),
+    }))
+
+    // Build suppliers with payments
+    const suppliersData = supplierRows.map(s => ({
+      id: s.id,
+      name: s.name,
+      category: s.category,
+      contact_info: s.contact_info,
+      contact_type: s.contact_type,
+      contract_url: s.contract_url,
+      total_amount: Number(s.total_amount),
+      notes: s.notes,
+      payments: paymentRows
+        .filter(p => p.supplier_id === s.id)
+        .map(p => ({
+          id: p.id,
+          amount: Number(p.amount),
+          payment_date: p.payment_date,
+          notes: p.notes,
+        })),
+      covered_amount: paymentRows
+        .filter(p => p.supplier_id === s.id)
+        .reduce((sum, p) => sum + Number(p.amount), 0),
     }))
 
     // Guest stats
@@ -198,6 +227,7 @@ export async function GET(request: Request) {
       venueElements,
       menus: menuData,
       itinerary: itineraryTree,
+      suppliers: suppliersData,
     })
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

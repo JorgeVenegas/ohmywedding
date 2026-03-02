@@ -2,7 +2,7 @@
 
 import React from 'react'
 import {
-  UtensilsCrossed, LayoutGrid, MapPin, CalendarDays,
+  UtensilsCrossed, LayoutGrid, MapPin, CalendarDays, Handshake,
 } from 'lucide-react'
 
 // ─────────────────────────────────────────────
@@ -66,6 +66,7 @@ export interface WeddingPDFData {
   menus: Array<{ id: string; name: string; description: string | null; image_url: string | null; count: number; courses: Array<{ id: string; course_number: number; course_name: string | null; dish_name: string | null }> }>
   seating: Array<{ tableNumber: number; tableName: string; shape: string; capacity: number; occupancy: number; position_x: number; position_y: number; width: number; height: number; rotation: number; guests: Array<{ name: string; groupName: string | null; status: string; dietaryRestrictions: string | null; menu: { name: string } | null; seatNumber: number | null }> }>
   itinerary: Array<{ id: string; title: string; description: string | null; location: string | null; start_time: string; end_time: string | null; notes: string | null; icon: string | null; children: Array<{ id: string; title: string; description: string | null; location: string | null; start_time: string; end_time: string | null; notes: string | null; icon: string | null }> }>
+  suppliers?: Array<{ id: string; name: string; category: string; contact_info: string | null; contact_type: string; contract_url: string | null; total_amount: number; covered_amount: number; notes: string | null; payments: Array<{ id: string; amount: number; payment_date: string; notes: string | null }> }>
   venueMapDataUrl?: string; coverImageUrl?: string; selectedSections?: string[]
   venueMapIsHorizontal?: boolean
   bgSource?: 'primary' | 'accent'
@@ -378,7 +379,7 @@ function IndexPage({ wedding, weddingName, pal, t, locale, selectedSections, sta
 // Section Divider — colored rectangle + light bg
 // ─────────────────────────────────────────────
 const SECTION_ICONS: Record<string, React.FC<{size?: number; color?: string; strokeWidth?: number}>> = {
-  menus: UtensilsCrossed, seating: LayoutGrid, itinerary: CalendarDays, venue: MapPin,
+  menus: UtensilsCrossed, seating: LayoutGrid, itinerary: CalendarDays, venue: MapPin, suppliers: Handshake,
 }
 
 function SectionDividerPage({ title, subtitle, iconType, pal, weddingName }: {
@@ -822,6 +823,144 @@ function ItineraryPage({ itinerary, locale, weddingName, pal, t }: {
 }
 
 // ─────────────────────────────────────────────
+// Suppliers Page
+// ─────────────────────────────────────────────
+const SUPPLIER_CATEGORY_LABELS: Record<string, string> = {
+  catering: 'Catering', dj: 'DJ', band: 'Band', photographer: 'Photography',
+  videographer: 'Videography', florist: 'Florist', venue: 'Venue', cake: 'Cake',
+  transportation: 'Transport', hair_makeup: 'Hair & Makeup', officiant: 'Officiant',
+  decoration: 'Decor', other: 'Other',
+}
+
+function SuppliersPage({ suppliers, weddingName, pal, t }: {
+  suppliers: NonNullable<WeddingPDFData['suppliers']>; weddingName: string; pal: BrandPalette
+  t: (k: string, p?: Record<string, string>) => string
+}) {
+  const fmt = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+  const totalBudget = suppliers.reduce((s, sup) => s + (sup.total_amount ?? 0), 0)
+  const totalCovered = suppliers.reduce((s, sup) => s + (sup.covered_amount ?? 0), 0)
+
+  // Split into pages: ~5 suppliers per page to avoid overflow
+  const ITEMS_PER_PAGE = 5
+  const pages: typeof suppliers[] = []
+  for (let i = 0; i < suppliers.length; i += ITEMS_PER_PAGE) {
+    pages.push(suppliers.slice(i, i + ITEMS_PER_PAGE))
+  }
+
+  return (
+    <>
+      {pages.map((pageSuppliers, pi) => (
+        <PageShell key={pi}>
+          <div style={{ padding: '48px 56px 60px 56px' }}>
+            {pi === 0 && (
+              <>
+                <h2 style={{ fontFamily: "'Macker', serif", fontSize: 26, color: pal.dark, marginBottom: 2, letterSpacing: 1 }}>
+                  {t('admin.summary.sections.suppliers')}
+                </h2>
+                <Ornament color={pal.accent} width={100} />
+                {/* Summary totals row */}
+                <div className="flex" style={{ gap: 16, marginTop: 16, marginBottom: 20 }}>
+                  <div style={{ flex: 1, backgroundColor: `${pal.accent}18`, borderRadius: 6, padding: '8px 12px', borderLeft: `3px solid ${pal.accent}` }}>
+                    <span style={{ fontSize: 8, color: '#a0988c', textTransform: 'uppercase', letterSpacing: 0.6, display: 'block' }}>{t('admin.suppliers.stats.totalSuppliers')}</span>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: pal.dark, fontFamily: "'Macker', serif" }}>{suppliers.length}</span>
+                  </div>
+                  <div style={{ flex: 1, backgroundColor: `${pal.accent}18`, borderRadius: 6, padding: '8px 12px', borderLeft: `3px solid ${pal.accent}` }}>
+                    <span style={{ fontSize: 8, color: '#a0988c', textTransform: 'uppercase', letterSpacing: 0.6, display: 'block' }}>{t('admin.suppliers.stats.totalBudget')}</span>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: pal.dark, fontFamily: "'Macker', serif" }}>{fmt(totalBudget)}</span>
+                  </div>
+                  <div style={{ flex: 1, backgroundColor: `${pal.accent}18`, borderRadius: 6, padding: '8px 12px', borderLeft: `3px solid ${pal.accent}` }}>
+                    <span style={{ fontSize: 8, color: '#a0988c', textTransform: 'uppercase', letterSpacing: 0.6, display: 'block' }}>{t('admin.suppliers.stats.totalPaid')}</span>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: pal.dark, fontFamily: "'Macker', serif" }}>{fmt(totalCovered)}</span>
+                  </div>
+                  <div style={{ flex: 1, backgroundColor: `${pal.accent}18`, borderRadius: 6, padding: '8px 12px', borderLeft: `3px solid ${pal.accent}` }}>
+                    <span style={{ fontSize: 8, color: '#a0988c', textTransform: 'uppercase', letterSpacing: 0.6, display: 'block' }}>{t('admin.suppliers.stats.remaining')}</span>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: pal.dark, fontFamily: "'Macker', serif" }}>{fmt(totalBudget - totalCovered)}</span>
+                  </div>
+                </div>
+              </>
+            )}
+            {pi > 0 && (
+              <div style={{ marginBottom: 20 }}>
+                <h2 style={{ fontFamily: "'Macker', serif", fontSize: 20, color: pal.dark, marginBottom: 4, letterSpacing: 1 }}>
+                  {t('admin.summary.sections.suppliers')} ({pi + 1})
+                </h2>
+                <div style={{ height: 2, width: 40, backgroundColor: pal.accent }} />
+              </div>
+            )}
+
+            {/* Supplier rows */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {pageSuppliers.map((sup, si) => {
+                const pct = sup.total_amount > 0 ? Math.min(100, (sup.covered_amount / sup.total_amount) * 100) : 0
+                const fullyPaid = sup.total_amount > 0 && sup.covered_amount >= sup.total_amount
+                return (
+                  <div key={sup.id} style={{
+                    border: '1px solid #e9e5e0', borderRadius: 8, padding: '10px 12px',
+                    borderLeft: `3px solid ${fullyPaid ? '#22c55e' : pal.accent}`,
+                    backgroundColor: si % 2 === 0 ? '#fefdfb' : '#f8f6f2',
+                  }}>
+                    {/* Header row */}
+                    <div className="flex items-center" style={{ justifyContent: 'space-between', marginBottom: 5 }}>
+                      <div>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: pal.dark, letterSpacing: 0.5 }}>{sup.name}</span>
+                        <span style={{
+                          fontSize: 8, marginLeft: 8, padding: '1px 5px', borderRadius: 9,
+                          backgroundColor: `${pal.accent}22`, color: pal.accentDark,
+                          fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5,
+                        }}>
+                          {SUPPLIER_CATEGORY_LABELS[sup.category] ?? sup.category}
+                        </span>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: fullyPaid ? '#16a34a' : pal.dark }}>
+                          {fmt(sup.covered_amount)} / {fmt(sup.total_amount)}
+                        </span>
+                      </div>
+                    </div>
+                    {/* Progress bar */}
+                    <div style={{ height: 4, backgroundColor: '#e9e5e0', borderRadius: 2, marginBottom: 5 }}>
+                      <div style={{ height: 4, borderRadius: 2, width: `${pct}%`, backgroundColor: fullyPaid ? '#22c55e' : pal.accent }} />
+                    </div>
+                    {/* Contact + notes */}
+                    {sup.contact_info && (
+                      <span style={{ fontSize: 9, color: '#787167', display: 'block', marginBottom: 3 }}>
+                        {sup.contact_info}
+                      </span>
+                    )}
+                    {sup.notes && (
+                      <span style={{ fontSize: 9, fontStyle: 'italic', color: '#a0988c', display: 'block', marginBottom: 3 }}>
+                        {sup.notes}
+                      </span>
+                    )}
+                    {/* Payments */}
+                    {sup.payments?.length > 0 && (
+                      <div style={{ marginTop: 5, paddingTop: 5, borderTop: '1px dashed #e9e5e0' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                          {sup.payments.map((pay) => (
+                            <span key={pay.id} style={{
+                              fontSize: 8, backgroundColor: '#f0ede6', borderRadius: 4,
+                              padding: '2px 6px', color: '#5c5550',
+                            }}>
+                              {pay.payment_date ? pay.payment_date.split('T')[0] : '—'}: <strong>{fmt(pay.amount)}</strong>
+                              {pay.notes ? ` · ${pay.notes}` : ''}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+          <PageFooter weddingName={weddingName} />
+        </PageShell>
+      ))}
+    </>
+  )
+}
+
+// ─────────────────────────────────────────────
 // Venue Map Page
 // ─────────────────────────────────────────────
 function VenueMapPage({ mapDataUrl, venueName, weddingName, pal, t, isHorizontal = false }: {
@@ -1075,6 +1214,16 @@ export function WebPDFDocument({ data, t }: {
             iconType="itinerary" pal={pal} weddingName={weddingName}
           />
           <ItineraryPage itinerary={data.itinerary} locale={locale} weddingName={weddingName} pal={pal} t={t} />
+        </>
+      )}
+      {show('suppliers') && data.suppliers && data.suppliers.length > 0 && (
+        <>
+          <SectionDividerPage
+            title={t('admin.summary.sections.suppliers')}
+            subtitle={`${data.suppliers.length} ${data.suppliers.length === 1 ? 'supplier' : 'suppliers'}`}
+            iconType="suppliers" pal={pal} weddingName={weddingName}
+          />
+          <SuppliersPage suppliers={data.suppliers} weddingName={weddingName} pal={pal} t={t} />
         </>
       )}
       {show('venue') && data.venueMapDataUrl && (

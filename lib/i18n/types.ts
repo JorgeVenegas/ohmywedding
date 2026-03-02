@@ -1297,6 +1297,7 @@ export interface Translations {
         seating: { title: string; description: string }
         dishes: { title: string; description: string }
         itinerary: { title: string; description: string }
+        suppliers: { title: string; description: string }
         summary: { title: string; description: string }
       }
     }
@@ -1713,6 +1714,7 @@ export interface Translations {
         menus: string
         seatingAssignments: string
         itinerary: string
+        suppliers: string
         overview: string
       }
       weddingDate: string
@@ -1729,6 +1731,7 @@ export interface Translations {
       noMenuData: string
       noSeatingData: string
       noItineraryData: string
+      noSuppliersData: string
       totalAssigned: string
       exportModal: {
         title: string
@@ -1761,6 +1764,84 @@ export interface Translations {
         backgrounds: string
         highlights: string
         swapColors: string
+      }
+    }
+    suppliers: {
+      title: string
+      description: string
+      addSupplier: string
+      editSupplier: string
+      supplier: string
+      payment: string
+      saveChanges: string
+      supplierName: string
+      namePlaceholder: string
+      category: string
+      contactType: string
+      contactInfo: string
+      contactInfoPlaceholder: string
+      contract: string
+      contractUrl: string
+      contractUrlHint: string
+      uploadFile: string
+      uploadFileHint: string
+      uploading: string
+      viewContract: string
+      totalAmount: string
+      notes: string
+      notesPlaceholder: string
+      covered: string
+      paid: string
+      remaining: string
+      fullyPaid: string
+      payments: string
+      addPayment: string
+      editPayment: string
+      noPayments: string
+      paymentAmount: string
+      paymentDate: string
+      paymentNotes: string
+      paymentNotesPlaceholder: string
+      contactTypes: {
+        email: string
+        phone: string
+        website: string
+        other: string
+      }
+      categories: {
+        catering: string
+        photography: string
+        videography: string
+        music: string
+        flowers: string
+        venue: string
+        transport: string
+        decoration: string
+        cake: string
+        beauty: string
+        officiant: string
+        lighting: string
+        other: string
+      }
+      stats: {
+        total: string
+        budget: string
+        covered: string
+        remaining: string
+        fullyPaid: string
+      }
+      empty: {
+        title: string
+        description: string
+      }
+      notifications: {
+        created: string
+        updated: string
+        deleted: string
+        paymentAdded: string
+        paymentUpdated: string
+        paymentDeleted: string
+        error: string
       }
     }
   }

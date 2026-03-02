@@ -3,7 +3,7 @@ import { use, useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { LogOut, ArrowRight, Mail, Gift, Settings, LayoutGrid, Globe, Sparkles, UtensilsCrossed, CalendarDays, FileText } from "lucide-react"
+import { LogOut, ArrowRight, Mail, Gift, Settings, LayoutGrid, Globe, Sparkles, UtensilsCrossed, CalendarDays, FileText, Handshake } from "lucide-react"
 import { Header } from "@/components/header"
 import { ActivityFeed } from "@/components/ui/activity-feed"
 import { InvitationStatsCard } from "@/components/ui/invitation-stats-card"
@@ -100,6 +100,13 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       description: t('admin.dashboard.cards.itinerary.description'),
       icon: CalendarDays,
       href: getCleanAdminUrl(weddingId, 'itinerary'),
+      color: "accent" as const,
+    },
+    {
+      title: t('admin.dashboard.cards.suppliers.title'),
+      description: t('admin.dashboard.cards.suppliers.description'),
+      icon: Handshake,
+      href: getCleanAdminUrl(weddingId, 'suppliers'),
       color: "accent" as const,
     },
     {

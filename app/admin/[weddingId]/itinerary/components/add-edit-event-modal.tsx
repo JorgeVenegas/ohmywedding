@@ -34,13 +34,17 @@ interface AddEditEventModalProps {
   parentId?: string | null
   saving?: boolean
   weddingDate?: string | null
+  previousEvent?: ItineraryEvent | null
 }
 
 function isoToDateTimeParts(isoStr: string) {
-  const iso = new Date(isoStr).toISOString()
-  const date = iso.slice(0, 10)
-  const hour = iso.slice(11, 13)
-  const rawMin = parseInt(iso.slice(14, 16))
+  const d = new Date(isoStr)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const date = `${year}-${month}-${day}`
+  const hour = String(d.getHours()).padStart(2, '0')
+  const rawMin = d.getMinutes()
   const minute = String(Math.min(Math.round(rawMin / 5) * 5, 55)).padStart(2, '0')
   return { date, hour, minute }
 }
@@ -50,7 +54,7 @@ function formatTime(h: string, m: string) {
 }
 
 export function AddEditEventModal({
-  open, onClose, onSave, event, existingChildren, parentEvent, parentId, saving, weddingDate
+  open, onClose, onSave, event, existingChildren, parentEvent, parentId, saving, weddingDate, previousEvent
 }: AddEditEventModalProps) {
   const { t } = useTranslation()
   const weddingDateShort = weddingDate?.slice(0, 10) ?? null
@@ -134,7 +138,16 @@ export function AddEditEventModal({
         const { date, hour, minute } = isoToDateTimeParts(parentEvent.start_time)
         setCustomDate(date)
         setIsWeddingDay(date === weddingDateShort)
-        const totalMin = parseInt(hour) * 60 + parseInt(minute) + 30
+        const totalMin = parseInt(hour) * 60 + parseInt(minute) + 15
+        const h = String(Math.floor(totalMin / 60) % 24).padStart(2, '0')
+        const m = String(Math.round((totalMin % 60) / 5) * 5 % 60).padStart(2, '0')
+        setStartHour(h)
+        setStartMinute(m)
+      } else if (previousEvent?.start_time) {
+        const { date, hour, minute } = isoToDateTimeParts(previousEvent.start_time)
+        setCustomDate(date)
+        setIsWeddingDay(date === weddingDateShort)
+        const totalMin = parseInt(hour) * 60 + parseInt(minute) + 15
         const h = String(Math.floor(totalMin / 60) % 24).padStart(2, '0')
         const m = String(Math.round((totalMin % 60) / 5) * 5 % 60).padStart(2, '0')
         setStartHour(h)
@@ -147,7 +160,7 @@ export function AddEditEventModal({
       }
     }
     setSubIconPickerFor(null)
-  }, [event, open, weddingDateShort, parentEvent, existingChildren])
+  }, [event, open, weddingDateShort, parentEvent, previousEvent, existingChildren])
 
   const getActiveDate = () => isWeddingDay ? (weddingDateShort || customDate) : customDate
   const buildIso = (date: string, hour: string, minute: string) =>
@@ -187,14 +200,24 @@ export function AddEditEventModal({
   // Sub-event row helpers
   const addSubEventRow = () => {
     const tempId = `new-${Date.now()}`
-    setSubEventRows(prev => [...prev, {
-      tempId,
-      title: '',
-      startHour: startHour,
-      startMinute: startMinute,
-      icon: 'other',
-      isEditing: true,
-    }])
+    setSubEventRows(prev => {
+      const lastRow = prev[prev.length - 1]
+      let newHour = startHour
+      let newMinute = startMinute
+      if (lastRow) {
+        const totalMin = parseInt(lastRow.startHour) * 60 + parseInt(lastRow.startMinute) + 15
+        newHour = String(Math.floor(totalMin / 60) % 24).padStart(2, '0')
+        newMinute = String(Math.round((totalMin % 60) / 5) * 5 % 60).padStart(2, '0')
+      }
+      return [...prev, {
+        tempId,
+        title: '',
+        startHour: newHour,
+        startMinute: newMinute,
+        icon: 'other',
+        isEditing: true,
+      }]
+    })
   }
 
   const updateSubRow = (tempId: string, updates: Partial<SubEventRow>) =>
