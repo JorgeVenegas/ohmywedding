@@ -1863,6 +1863,8 @@ export const en: Translations = {
         options: 'Options',
         showFinancialInfo: 'Include financial details',
         showFinancialInfoDesc: 'Show budgets, payments, and progress bars for suppliers',
+        showDeclinedGuests: 'Include declined guests',
+        showDeclinedGuestsDesc: 'Add a section listing guests who declined the invitation',
       },
     },
     suppliers: {

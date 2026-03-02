@@ -71,6 +71,7 @@ export interface WeddingPDFData {
   venueMapDataUrl?: string; coverImageUrl?: string; closingImageUrl?: string; selectedSections?: string[]
   venueMapIsHorizontal?: boolean
   showSuppliersFinancial?: boolean
+  showDeclinedGuests?: boolean
   bgSource?: 'primary' | 'accent'
   bgVariant?: 'original' | 'light' | 'lighter'
   hlSource?: 'primary' | 'accent'
@@ -744,16 +745,16 @@ function SeatingPages({ seating, weddingName, pal, t, menuColorMap }: {
                           backgroundColor: gi % 2 === 0 ? '#fefdfb' : '#f8f6f2',
                           borderBottom: gi < (entry.endGuest - entry.startGuest) - 1 ? '1px solid #f0ede6' : 'none',
                         }}>
-                          <span style={{ flex: colFlex[0], fontSize: 9, fontWeight: 600, color: '#2c2c2c', padding: '3px 6px', ...truncStyle }}>
+                          <span style={{ flex: colFlex[0], fontSize: 9, fontWeight: 600, color: '#2c2c2c', padding: '3px 6px', minWidth: 0, ...truncStyle }}>
                             {guest.name}
                           </span>
-                          <span style={{ flex: colFlex[1], fontSize: 8, color: '#2c2c2c', padding: '3px 6px', ...truncStyle }}>
+                          <span style={{ flex: colFlex[1], fontSize: 8, color: '#2c2c2c', padding: '3px 6px', minWidth: 0, ...truncStyle }}>
                             {guest.groupName || '—'}
                           </span>
-                          <span style={{ flex: colFlex[2], fontSize: 8, color: guest.menu?.name ? (menuColorMap[guest.menu.name] || pal.medium) : '#a0988c', padding: '3px 6px', display: 'flex', alignItems: 'center', gap: 3, fontWeight: guest.menu?.name ? 600 : 400, ...truncStyle }}>
+                          <span style={{ flex: colFlex[2], fontSize: 8, color: guest.menu?.name ? (menuColorMap[guest.menu.name] || pal.medium) : '#a0988c', padding: '3px 6px', fontWeight: guest.menu?.name ? 600 : 400, minWidth: 0, ...truncStyle }}>
                             {guest.menu?.name && (
                               <span style={{
-                                display: 'inline-block', width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
+                                display: 'inline-block', width: 5, height: 5, borderRadius: '50%', verticalAlign: 'middle', marginRight: 3,
                                 backgroundColor: menuColorMap[guest.menu.name] || pal.medium,
                               }} />
                             )}
@@ -897,11 +898,11 @@ function GuestsByGroupPages({ guestList, weddingName, pal, t, menuColorMap }: {
                         backgroundColor: gi % 2 === 0 ? '#fefdfb' : '#f8f6f2',
                         borderBottom: gi < block.guests.length - 1 ? '1px solid #f0ede6' : 'none',
                       }}>
-                        <span style={{ flex: colFlex[0], fontSize: 9, fontWeight: 600, color: '#2c2c2c', padding: '3px 6px', ...truncStyle }}>{guest.name}</span>
-                        <span style={{ flex: colFlex[1], fontSize: 8, color: '#787167', padding: '3px 6px', ...truncStyle }}>{guest.phone || '—'}</span>
-                        <span style={{ flex: colFlex[2], fontSize: 8, color: '#2c2c2c', padding: '3px 6px', ...truncStyle }}>{fmtTable(guest)}</span>
-                        <span style={{ flex: colFlex[3], fontSize: 8, color: guest.menuName ? (menuColorMap[guest.menuName] || pal.medium) : '#a0988c', padding: '3px 6px', fontWeight: guest.menuName ? 600 : 400, display: 'flex', alignItems: 'center', gap: 3, ...truncStyle }}>
-                          {guest.menuName && <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', flexShrink: 0, backgroundColor: menuColorMap[guest.menuName] || pal.medium }} />}
+                        <span style={{ flex: colFlex[0], fontSize: 9, fontWeight: 600, color: '#2c2c2c', padding: '3px 6px', minWidth: 0, ...truncStyle }}>{guest.name}</span>
+                        <span style={{ flex: colFlex[1], fontSize: 8, color: '#787167', padding: '3px 6px', minWidth: 0, ...truncStyle }}>{guest.phone || '—'}</span>
+                        <span style={{ flex: colFlex[2], fontSize: 8, color: '#2c2c2c', padding: '3px 6px', minWidth: 0, ...truncStyle }}>{fmtTable(guest)}</span>
+                        <span style={{ flex: colFlex[3], fontSize: 8, color: guest.menuName ? (menuColorMap[guest.menuName] || pal.medium) : '#a0988c', padding: '3px 6px', fontWeight: guest.menuName ? 600 : 400, minWidth: 0, ...truncStyle }}>
+                          {guest.menuName && <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', verticalAlign: 'middle', marginRight: 3, backgroundColor: menuColorMap[guest.menuName] || pal.medium }} />}
                           {guest.menuName || '—'}
                         </span>
                       </div>
@@ -1701,7 +1702,7 @@ export function WebPDFDocument({ data, t }: {
           wedding={data.wedding} weddingName={weddingName}
           locale={locale} pal={pal} t={t} stats={data.stats}
           selectedSections={data.selectedSections}
-          hasDeclinedGuests={declinedNames.length > 0}
+          hasDeclinedGuests={declinedNames.length > 0 && data.showDeclinedGuests !== false}
         />
       )}
       {show('menus') && data.menus.length > 0 && (
@@ -1745,7 +1746,7 @@ export function WebPDFDocument({ data, t }: {
         </>
       )}
       {/* Declined guests list — shown after any guest view */}
-      {anyGuestSection && declinedNames.length > 0 && (
+      {anyGuestSection && declinedNames.length > 0 && data.showDeclinedGuests !== false && (
         <DeclinedGuestsPage declinedNames={declinedNames} weddingName={weddingName} pal={pal} t={t} />
       )}
       {show('itinerary') && data.itinerary.length > 0 && (

@@ -251,6 +251,7 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
         closingImageUrl: options?.closingImageUrl,
         selectedSections: options?.selectedSections,
         showSuppliersFinancial: options?.showSuppliersFinancial ?? true,
+        showDeclinedGuests: options?.showDeclinedGuests ?? true,
         bgSource: options?.bgSource,
         bgVariant: options?.bgVariant,
         hlSource: options?.hlSource,

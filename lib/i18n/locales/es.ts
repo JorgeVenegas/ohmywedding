@@ -1859,6 +1859,8 @@ export const es: Translations = {
         options: 'Opciones',
         showFinancialInfo: 'Incluir detalles financieros',
         showFinancialInfoDesc: 'Mostrar presupuestos, pagos y barras de progreso de proveedores',
+        showDeclinedGuests: 'Incluir invitados que declinaron',
+        showDeclinedGuestsDesc: 'Agregar una seccion con los invitados que rechazaron la invitacion',
       },
     },
     suppliers: {

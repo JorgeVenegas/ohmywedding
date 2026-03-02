@@ -39,6 +39,7 @@ export interface ExportOptions {
   hlSource: ColorSource
   hlVariant: PaletteVariant
   showSuppliersFinancial: boolean
+  showDeclinedGuests: boolean
 }
 
 // ─────────────────────────────────────────────
@@ -294,18 +295,34 @@ export function ExportModal({
 }: ExportModalProps) {
   const { t } = useI18n()
 
+  // Persistence key per wedding
+  const storageKey = `export-settings-${weddingNameId}`
+
+  // Load saved settings from localStorage (once)
+  const savedSettings = useMemo(() => {
+    if (typeof window === 'undefined') return null
+    try {
+      const raw = localStorage.getItem(storageKey)
+      return raw ? JSON.parse(raw) as Partial<ExportOptions> : null
+    } catch { return null }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey])
+
+  const defaultSections = useMemo(() => availableSections.filter(s => s.available).map(s => s.key), [availableSections])
+
   const [coverImageUrl, setCoverImageUrl] = useState<string | undefined>(heroImageUrl ?? undefined)
-  const [closingImageUrl, setClosingImageUrl] = useState<string | undefined>(undefined)
+  const [closingImageUrl, setClosingImageUrl] = useState<string | undefined>(savedSettings?.closingImageUrl)
   const [selectedSections, setSelectedSections] = useState<string[]>(
-    availableSections.filter(s => s.available).map(s => s.key)
+    savedSettings?.selectedSections?.filter(k => availableSections.some(s => s.key === k && s.available)) ?? defaultSections
   )
-  const [bgSource, setBgSource] = useState<ColorSource>('primary')
-  const [bgVariant, setBgVariant] = useState<PaletteVariant>('original')
-  const [hlSource, setHlSource] = useState<ColorSource>('accent')
-  const [hlVariant, setHlVariant] = useState<PaletteVariant>('original')
+  const [bgSource, setBgSource] = useState<ColorSource>(savedSettings?.bgSource ?? 'primary')
+  const [bgVariant, setBgVariant] = useState<PaletteVariant>(savedSettings?.bgVariant ?? 'original')
+  const [hlSource, setHlSource] = useState<ColorSource>(savedSettings?.hlSource ?? 'accent')
+  const [hlVariant, setHlVariant] = useState<PaletteVariant>(savedSettings?.hlVariant ?? 'original')
   const [showImagePicker, setShowImagePicker] = useState(false)
   const [showClosingImagePicker, setShowClosingImagePicker] = useState(false)
-  const [showSuppliersFinancial, setShowSuppliersFinancial] = useState(false)
+  const [showSuppliersFinancial, setShowSuppliersFinancial] = useState(savedSettings?.showSuppliersFinancial ?? false)
+  const [showDeclinedGuests, setShowDeclinedGuests] = useState(savedSettings?.showDeclinedGuests ?? true)
 
   const resolveColor = (source: ColorSource, variant: PaletteVariant) => {
     const base = source === 'primary' ? primaryColor : accentColor
@@ -320,14 +337,8 @@ export function ExportModal({
   useEffect(() => {
     if (isOpen) {
       setCoverImageUrl(heroImageUrl ?? undefined)
-      setClosingImageUrl(undefined)
-      setSelectedSections(availableSections.filter(s => s.available).map(s => s.key))
-      setBgSource('primary')
-      setBgVariant('original')
-      setHlSource('accent')
-      setHlVariant('original')
     }
-  }, [isOpen, heroImageUrl, availableSections])
+  }, [isOpen, heroImageUrl])
 
   const toggleSection = (key: string) => {
     setSelectedSections(prev =>
@@ -336,7 +347,14 @@ export function ExportModal({
   }
 
   const handleExport = () => {
-    onExport({ coverImageUrl, closingImageUrl, selectedSections, bgSource, bgVariant, hlSource, hlVariant, showSuppliersFinancial })
+    const opts: ExportOptions = { coverImageUrl, closingImageUrl, selectedSections, bgSource, bgVariant, hlSource, hlVariant, showSuppliersFinancial, showDeclinedGuests }
+    // Persist settings for next export
+    try {
+      localStorage.setItem(storageKey, JSON.stringify({
+        closingImageUrl, selectedSections, bgSource, bgVariant, hlSource, hlVariant, showSuppliersFinancial, showDeclinedGuests,
+      }))
+    } catch { /* ignore quota errors */ }
+    onExport(opts)
   }
 
   return (
@@ -612,31 +630,56 @@ export function ExportModal({
                         )}
                       </div>
 
-                      {/* Supplier financial toggle */}
-                      {selectedSections.includes('suppliers') && (
+                      {/* Options */}
+                      {(selectedSections.includes('suppliers') || selectedSections.some(k => k.startsWith('guestsBy'))) && (
                         <div>
                           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
                             {t('admin.summary.exportModal.options')}
                           </p>
-                          <label className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
-                            showSuppliersFinancial ? 'border-primary/40 bg-primary/5' : 'border-border hover:border-border/80'
-                          }`}>
-                            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                              showSuppliersFinancial ? 'border-primary bg-primary' : 'border-muted-foreground/40'
-                            }`}>
-                              {showSuppliersFinancial && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
-                            </div>
-                            <div>
-                              <span className="text-sm text-foreground">{t('admin.summary.exportModal.showFinancialInfo')}</span>
-                              <span className="text-xs text-muted-foreground block">{t('admin.summary.exportModal.showFinancialInfoDesc')}</span>
-                            </div>
-                            <input
-                              type="checkbox"
-                              className="sr-only"
-                              checked={showSuppliersFinancial}
-                              onChange={() => setShowSuppliersFinancial(prev => !prev)}
-                            />
-                          </label>
+                          <div className="space-y-2">
+                            {selectedSections.includes('suppliers') && (
+                              <label className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                                showSuppliersFinancial ? 'border-primary/40 bg-primary/5' : 'border-border hover:border-border/80'
+                              }`}>
+                                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                                  showSuppliersFinancial ? 'border-primary bg-primary' : 'border-muted-foreground/40'
+                                }`}>
+                                  {showSuppliersFinancial && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                                </div>
+                                <div>
+                                  <span className="text-sm text-foreground">{t('admin.summary.exportModal.showFinancialInfo')}</span>
+                                  <span className="text-xs text-muted-foreground block">{t('admin.summary.exportModal.showFinancialInfoDesc')}</span>
+                                </div>
+                                <input
+                                  type="checkbox"
+                                  className="sr-only"
+                                  checked={showSuppliersFinancial}
+                                  onChange={() => setShowSuppliersFinancial(prev => !prev)}
+                                />
+                              </label>
+                            )}
+                            {selectedSections.some(k => k.startsWith('guestsBy')) && (
+                              <label className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                                showDeclinedGuests ? 'border-primary/40 bg-primary/5' : 'border-border hover:border-border/80'
+                              }`}>
+                                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                                  showDeclinedGuests ? 'border-primary bg-primary' : 'border-muted-foreground/40'
+                                }`}>
+                                  {showDeclinedGuests && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                                </div>
+                                <div>
+                                  <span className="text-sm text-foreground">{t('admin.summary.exportModal.showDeclinedGuests')}</span>
+                                  <span className="text-xs text-muted-foreground block">{t('admin.summary.exportModal.showDeclinedGuestsDesc')}</span>
+                                </div>
+                                <input
+                                  type="checkbox"
+                                  className="sr-only"
+                                  checked={showDeclinedGuests}
+                                  onChange={() => setShowDeclinedGuests(prev => !prev)}
+                                />
+                              </label>
+                            )}
+                          </div>
                         </div>
                       )}
 

@@ -1791,6 +1791,8 @@ export interface Translations {
         options: string
         showFinancialInfo: string
         showFinancialInfoDesc: string
+        showDeclinedGuests: string
+        showDeclinedGuestsDesc: string
       }
     }
     suppliers: {
