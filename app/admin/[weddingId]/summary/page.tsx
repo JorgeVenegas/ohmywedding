@@ -231,7 +231,11 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
           const mapWrapper = printRef.current.querySelector('[data-floor-plan]') as HTMLElement
           if (mapWrapper) {
             const { toPng } = await import('html-to-image')
-            venueMapDataUrl = await toPng(mapWrapper, { pixelRatio: 2, backgroundColor: '#f9f7f3' })
+            venueMapDataUrl = await toPng(mapWrapper, {
+              pixelRatio: 2,
+              backgroundColor: '#f9f7f3',
+              filter: (node: HTMLElement) => !node?.hasAttribute?.('data-no-export'),
+            })
             // Detect if the map is wider than tall (horizontal orientation)
             const rect = mapWrapper.getBoundingClientRect()
             venueMapIsHorizontal = rect.width > rect.height * 1.3
@@ -760,7 +764,7 @@ function FloorPlanMap({
   venueElements: FloorElementItem[]
 }) {
   const CHAIR_EXTRA = 20 // space around tables for chairs
-  const BORDER     = 50 // canvas border padding
+  const BORDER     = 24 // tight border around items for PDF capture
 
   // Compute bounding box in original canvas coords, accounting for chairs
   const allBoxes = [
@@ -833,13 +837,8 @@ function FloorPlanMap({
         style={{ display: 'block', maxHeight: `${SVG_H}px` }}
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Grid */}
-        <defs>
-          <pattern id="fp-grid" width={20} height={20} patternUnits="userSpaceOnUse">
-            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e5e0d8" strokeWidth="0.5" />
-          </pattern>
-        </defs>
-        <rect x={originX} y={originY} width={dataW} height={dataH} fill="url(#fp-grid)" />
+        {/* Clean background — no grid for a cleaner PDF capture */}
+        <rect x={originX} y={originY} width={dataW} height={dataH} fill="#f9f7f3" />
 
         {/* ── Venue elements ── */}
         {venueElements.map((el, i) => {
@@ -1069,8 +1068,8 @@ function FloorPlanMap({
         })}
       </svg>
 
-      {/* Legend */}
-      <div className="flex items-center gap-4 px-4 py-2.5 border-t border-stone-200 text-xs text-muted-foreground flex-wrap bg-white">
+      {/* Legend — excluded from PDF capture via data-no-export */}
+      <div data-no-export className="flex items-center gap-4 px-4 py-2.5 border-t border-stone-200 text-xs text-muted-foreground flex-wrap bg-white">
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full border-2 inline-block" style={{ borderColor: '#d1d5db' }} />
           Empty
