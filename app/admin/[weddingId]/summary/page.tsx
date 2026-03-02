@@ -1,12 +1,16 @@
 "use client"
 
 import { use, useState, useEffect, useCallback, useRef } from "react"
+import { flushSync } from "react-dom"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Header } from "@/components/header"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { useTranslation } from "@/components/contexts/i18n-context"
 import { toast } from "sonner"
+import { ExportModal, ExportOptions } from "@/components/summary-pdf/export-modal"
+import { WebPDFDocument, type WeddingPDFData } from "@/components/summary-pdf/web-pdf-document"
+import { captureAndAssemblePDF, downloadBlob } from "@/components/summary-pdf/pdf-capture"
 import {
   Download, FileText, UtensilsCrossed, CalendarDays,
   LayoutGrid, MapPin, Clock, Users, ChevronDown, ChevronRight,
@@ -22,6 +26,7 @@ interface SummaryData {
     partner1_last_name: string
     partner2_first_name: string
     partner2_last_name: string
+    wedding_name_id: string
     wedding_date: string
     wedding_time: string
     reception_time: string
@@ -29,6 +34,11 @@ interface SummaryData {
     ceremony_venue_address: string
     reception_venue_name: string
     reception_venue_address: string
+    locale: string
+    primary_color: string
+    secondary_color: string
+    accent_color: string
+    hero_image_url: string | null
   }
   stats: {
     totalGuests: number
@@ -132,6 +142,9 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
   const [loading, setLoading] = useState(true)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['seating', 'dishes', 'itinerary', 'venue']))
   const [exportProgress, setExportProgress] = useState<number | null>(null)
+  const [showExportModal, setShowExportModal] = useState(false)
+  const [pdfRenderData, setPdfRenderData] = useState<WeddingPDFData | null>(null)
+  const pdfContainerRef = useRef<HTMLDivElement>(null)
 
   const fetchData = useCallback(async () => {
     try {
@@ -161,125 +174,68 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
     })
   }
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = async (options?: ExportOptions) => {
     if (exportProgress !== null) return
-    if (!printRef.current) {
-      toast.error('Print container not ready, please try again')
-      return
-    }
     if (!data?.wedding) {
       toast.error(t('admin.seating.notifications.error'))
-      console.error('handleExportPDF: data.wedding is null/undefined', { data })
       return
     }
     setExportProgress(5)
 
     try {
-      // Dynamic import for client-side only
-      const [{ toPng }, { default: jsPDF }] = await Promise.all([
-        import('html-to-image'),
-        import('jspdf'),
-      ])
+      setExportProgress(10)
 
-      setExportProgress(15)
+      // ── Capture venue map if rendered ──
+      let venueMapDataUrl: string | undefined
+      let venueMapIsHorizontal = false
+      if (printRef.current && (data.venueElements.length > 0 || data.seating.length > 0)) {
+        try {
+          setExpandedSections(new Set(['seating', 'dishes', 'itinerary', 'venue']))
+          await new Promise(r => setTimeout(r, 400))
+          const mapWrapper = printRef.current.querySelector('[data-floor-plan]') as HTMLElement
+          if (mapWrapper) {
+            const { toPng } = await import('html-to-image')
+            venueMapDataUrl = await toPng(mapWrapper, { pixelRatio: 2, backgroundColor: '#f9f7f3' })
+            // Detect if the map is wider than tall (horizontal orientation)
+            const rect = mapWrapper.getBoundingClientRect()
+            venueMapIsHorizontal = rect.width > rect.height * 1.3
+          }
+        } catch (mapErr) {
+          console.warn('Venue map capture skipped:', mapErr)
+        }
+      }
+      setExportProgress(20)
 
-      // Expand all sections so nothing is clipped
-      setExpandedSections(new Set(['seating', 'dishes', 'itinerary', 'venue']))
-      await new Promise(r => setTimeout(r, 250))
+      // ── Render web-based PDF pages into hidden container ──
+      const pdfData: WeddingPDFData = {
+        ...data,
+        venueMapDataUrl,
+        venueMapIsHorizontal,
+        coverImageUrl: options?.coverImageUrl,
+        selectedSections: options?.selectedSections,
+        bgSource: options?.bgSource,
+        bgVariant: options?.bgVariant,
+        hlSource: options?.hlSource,
+        hlVariant: options?.hlVariant,
+      }
+      flushSync(() => setPdfRenderData(pdfData))
+
+      // Wait for React to render + fonts/images to settle
+      await new Promise(r => setTimeout(r, 800))
       setExportProgress(30)
 
-      const element = printRef.current!
-      // html-to-image handles modern CSS color functions (oklch/lab) that html2canvas cannot parse
-      const imgData = await toPng(element, {
-        pixelRatio: 2,
-        backgroundColor: '#ffffff',
-        cacheBust: true,
+      // ── Capture pages and assemble PDF ──
+      if (!pdfContainerRef.current) throw new Error('PDF container not ready')
+
+      const blob = await captureAndAssemblePDF(pdfContainerRef.current, (pct, _step) => {
+        // Map capture progress (0-100) to our range (30-90)
+        setExportProgress(30 + Math.round(pct * 0.6))
       })
-      setExportProgress(65)
-
-      // Derive canvas dimensions from the data URL by drawing to an off-screen image
-      const img = new Image()
-      await new Promise<void>((res) => { img.onload = () => res(); img.src = imgData })
-      const canvasWidth  = img.naturalWidth
-      const canvasHeight = img.naturalHeight
-      setExportProgress(70)
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-
-      // Header branding
-      pdf.setFillColor(24, 24, 27) // zinc-900
-      pdf.rect(0, 0, pdfWidth, 28, 'F')
-      pdf.setTextColor(255, 255, 255)
-      pdf.setFont('helvetica', 'bold')
-      pdf.setFontSize(18)
-      pdf.text('OhMyWedding', 15, 14)
-      pdf.setFontSize(10)
-      pdf.setFont('helvetica', 'normal')
-      pdf.text(t('admin.summary.title'), 15, 22)
-
-      // Wedding info
-      const couple = `${data.wedding.partner1_first_name ?? ''} & ${data.wedding.partner2_first_name ?? ''}`
-      pdf.setTextColor(24, 24, 27)
-      pdf.setFont('helvetica', 'bold')
-      pdf.setFontSize(14)
-      pdf.text(couple, 15, 38)
-      if (data.wedding.wedding_date) {
-        pdf.setFont('helvetica', 'normal')
-        pdf.setFontSize(10)
-        pdf.text(formatDate(data.wedding.wedding_date), 15, 45)
-      }
-
-      // Content image
-      const imgWidth = pdfWidth - 30
-      let yPos = 52
-
-      // If content exceeds one page, split across pages
-      const pageContentHeight = pdfHeight - 35 // Leave margin at bottom
-      let srcY = 0
-      const srcWidth = canvasWidth
-      const srcHeight = canvasHeight
-
-      while (srcY < srcHeight) {
-        const remainingImgHeight = ((srcHeight - srcY) * imgWidth) / srcWidth
-        const drawHeight = Math.min(remainingImgHeight, pageContentHeight - yPos)
-        const drawSrcHeight = (drawHeight * srcWidth) / imgWidth
-
-        // Create a canvas slice from the img element
-        const sliceCanvas = document.createElement('canvas')
-        sliceCanvas.width = srcWidth
-        sliceCanvas.height = drawSrcHeight
-        const ctx = sliceCanvas.getContext('2d')
-        if (ctx) {
-          ctx.drawImage(img, 0, srcY, srcWidth, drawSrcHeight, 0, 0, srcWidth, drawSrcHeight)
-          const sliceImg = sliceCanvas.toDataURL('image/png')
-          pdf.addImage(sliceImg, 'PNG', 15, yPos, imgWidth, drawHeight)
-        }
-
-        srcY += drawSrcHeight
-        if (srcY < srcHeight) {
-          pdf.addPage()
-
-          // Footer on each page
-          pdf.setFillColor(24, 24, 27)
-          pdf.rect(0, pdfHeight - 8, pdfWidth, 8, 'F')
-          pdf.setTextColor(160, 160, 170)
-          pdf.setFontSize(7)
-          pdf.text('ohmy.wedding', pdfWidth - 30, pdfHeight - 3)
-
-          yPos = 15
-        }
-      }
-
-      // Footer on last page
-      pdf.setFillColor(24, 24, 27)
-      pdf.rect(0, pdfHeight - 8, pdfWidth, 8, 'F')
-      pdf.setTextColor(160, 160, 170)
-      pdf.setFontSize(7)
-      pdf.text('ohmy.wedding', pdfWidth - 30, pdfHeight - 3)
-
       setExportProgress(95)
-      pdf.save(`wedding-summary-${decodedWeddingId}.pdf`)
+
+      // ── Download ──
+      downloadBlob(blob, `wedding-summary-${decodedWeddingId}.pdf`)
+
       setExportProgress(100)
       await new Promise(r => setTimeout(r, 600))
       toast.success(t('admin.summary.exported'))
@@ -287,7 +243,9 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
       console.error('PDF export error:', err)
       toast.error(t('admin.seating.notifications.error'))
     } finally {
+      setPdfRenderData(null)
       setExportProgress(null)
+      setShowExportModal(false)
     }
   }
 
@@ -318,7 +276,7 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
           <div className="relative">
             <Button
               size="sm"
-              onClick={handleExportPDF}
+              onClick={() => setShowExportModal(true)}
               disabled={exportProgress !== null}
               className="min-w-[120px] relative overflow-hidden"
             >
@@ -348,11 +306,7 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
         {/* Print-friendly content */}
         <div ref={printRef} className="bg-white text-zinc-900">
           {/* Overview Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <Card className="p-4 border">
-              <div className="text-2xl font-bold">{stats.totalGuests}</div>
-              <div className="text-sm text-muted-foreground">{t('admin.summary.stats.totalGuests')}</div>
-            </Card>
+          <div className="grid grid-cols-3 gap-4 mb-8">
             <Card className="p-4 border">
               <div className="text-2xl font-bold text-green-600">{stats.confirmed}</div>
               <div className="text-sm text-muted-foreground">{t('admin.summary.stats.confirmed')}</div>
@@ -466,22 +420,25 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
                       </div>
                       {table.guests.length > 0 ? (
                         <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
+                          <table className="w-full text-sm table-fixed">
+                            <colgroup>
+                              <col className="w-[38%]" />
+                              <col className="w-[32%]" />
+                              <col className="w-[30%]" />
+                            </colgroup>
                             <thead>
                               <tr className="border-b bg-muted/10">
                                 <th className="text-left px-4 py-2 font-medium text-muted-foreground">{t('admin.summary.columns.guest')}</th>
                                 <th className="text-left px-4 py-2 font-medium text-muted-foreground">{t('admin.summary.columns.group')}</th>
                                 <th className="text-left px-4 py-2 font-medium text-muted-foreground">{t('admin.summary.columns.menu')}</th>
-                                <th className="text-left px-4 py-2 font-medium text-muted-foreground">{t('admin.summary.columns.dietary')}</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y">
                               {table.guests.map((guest, gi) => (
                                 <tr key={gi} className="hover:bg-muted/20">
-                                  <td className="px-4 py-2">{guest.name}</td>
-                                  <td className="px-4 py-2 text-muted-foreground">{guest.groupName || '—'}</td>
-                                  <td className="px-4 py-2">{guest.menu?.name || '—'}</td>
-                                  <td className="px-4 py-2 text-muted-foreground text-xs">{guest.dietaryRestrictions || '—'}</td>
+                                  <td className="px-4 py-2 truncate">{guest.name}</td>
+                                  <td className="px-4 py-2 text-muted-foreground truncate">{guest.groupName || '—'}</td>
+                                  <td className="px-4 py-2 truncate">{guest.menu?.name || '—'}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -559,6 +516,44 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
           )}
         </div>
       </div>
+
+      {/* PDF Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        weddingNameId={wedding.wedding_name_id}
+        heroImageUrl={wedding.hero_image_url}
+        primaryColor={wedding.primary_color}
+        secondaryColor={wedding.secondary_color}
+        accentColor={wedding.accent_color}
+        availableSections={[
+          { key: 'overview', label: t('admin.summary.sections.overview'), available: true },
+          { key: 'menus', label: t('admin.summary.sections.menus'), available: menus.length > 0 },
+          { key: 'seating', label: t('admin.summary.sections.seatingAssignments'), available: seating.length > 0 },
+          { key: 'itinerary', label: t('admin.summary.sections.itinerary'), available: itinerary.length > 0 },
+          { key: 'venue', label: t('admin.summary.sections.venueMap'), available: venueElements.length > 0 || seating.length > 0 },
+        ]}
+        onExport={(options) => handleExportPDF(options)}
+        isExporting={exportProgress !== null}
+        exportProgress={exportProgress ?? 0}
+      />
+
+      {/* Hidden container for web-based PDF rendering & capture */}
+      {pdfRenderData && (
+        <div
+          ref={pdfContainerRef}
+          style={{
+            position: 'fixed',
+            left: -9999,
+            top: 0,
+            zIndex: -1,
+            opacity: 1, // Must be 1 for html-to-image to capture correctly
+            pointerEvents: 'none',
+          }}
+        >
+          <WebPDFDocument data={pdfRenderData} t={t} />
+        </div>
+      )}
     </main>
   )
 }
@@ -695,7 +690,7 @@ function FloorPlanMap({
   }
 
   return (
-    <div className="w-full overflow-x-auto bg-[#f9f7f3]">
+    <div data-floor-plan className="w-full overflow-x-auto bg-[#f9f7f3]">
       <svg
         viewBox={VB}
         width="100%"

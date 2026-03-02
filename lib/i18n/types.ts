@@ -1713,7 +1713,11 @@ export interface Translations {
         menus: string
         seatingAssignments: string
         itinerary: string
+        overview: string
       }
+      weddingDate: string
+      ceremony: string
+      reception: string
       tableNumber: string
       columns: {
         guest: string
@@ -1726,6 +1730,38 @@ export interface Translations {
       noSeatingData: string
       noItineraryData: string
       totalAssigned: string
+      exportModal: {
+        title: string
+        weddingColors: string
+        primary: string
+        secondary: string
+        accent: string
+        colorsNote: string
+        coverImage: string
+        previewOverlay: string
+        changeImage: string
+        removeImage: string
+        selectImage: string
+        noImageNote: string
+        sections: string
+        noData: string
+        exportButton: string
+        exportSteps: {
+          preparing: string
+          capturing: string
+          assembling: string
+          finishing: string
+          complete: string
+        }
+        paletteLabel: string
+        paletteOriginal: string
+        paletteLight: string
+        paletteLighter: string
+        preview: string
+        backgrounds: string
+        highlights: string
+        swapColors: string
+      }
     }
   }
 

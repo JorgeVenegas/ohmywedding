@@ -444,47 +444,62 @@ export default function DishesPage({ params }: DishesPageProps) {
                     {t('admin.dishes.noGuestsFound')}
                   </Card>
                 ) : (
-                  <Card className="divide-y overflow-hidden">
-                    {displayGuests.map(guest => {
-                      const assignedMenuId = assignmentMap[guest.id]
-                      const isConfirmed = guest.confirmation_status === 'confirmed'
-                      return (
-                        <div
-                          key={guest.id}
-                          className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/20 ${!isConfirmed ? 'opacity-60' : ''}`}
-                        >
-                          <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                            assignedMenuId ? MENU_COLORS[menus.findIndex(m => m.id === assignedMenuId) % MENU_COLORS.length].stripe : 'bg-muted'
-                          }`}>
-                            {assignedMenuId && <Check className="w-3 h-3 text-white" />}
+                  <Card className="overflow-hidden border">
+                    {/* Table header */}
+                    <div className="hidden sm:grid sm:grid-cols-[1fr_auto] gap-3 px-4 py-2.5 bg-muted/40 border-b text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      <span>{t('admin.summary.columns.guest')}</span>
+                      <span className="text-right">{t('admin.summary.columns.menu')}</span>
+                    </div>
+                    <div className="divide-y">
+                      {displayGuests.map(guest => {
+                        const assignedMenuId = assignmentMap[guest.id]
+                        const isConfirmed = guest.confirmation_status === 'confirmed'
+                        const assignedIndex = menus.findIndex(m => m.id === assignedMenuId)
+                        return (
+                          <div
+                            key={guest.id}
+                            className={`flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/20 ${!isConfirmed ? 'opacity-50' : ''}`}
+                          >
+                            {/* Guest info */}
+                            <div className="flex-1 min-w-0 flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                                assignedMenuId
+                                  ? MENU_COLORS[assignedIndex % MENU_COLORS.length].stripe
+                                  : 'bg-muted-foreground/20'
+                              }`} />
+                              <div className="min-w-0">
+                                <span className="font-medium text-sm truncate block">{guest.name}</span>
+                                {guest.groupName && (
+                                  <span className="text-xs text-muted-foreground">{guest.groupName}</span>
+                                )}
+                              </div>
+                            </div>
+                            {/* Segmented menu selector */}
+                            <div className="flex gap-0.5 flex-shrink-0 bg-muted/50 rounded-lg p-0.5">
+                              {menus.map((menu, i) => {
+                                const isAssigned = assignedMenuId === menu.id
+                                const colors = MENU_COLORS[i % MENU_COLORS.length]
+                                return (
+                                  <button
+                                    key={menu.id}
+                                    onClick={() => handleToggleAssignment(guest.id, menu.id)}
+                                    className={`relative px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all active:scale-95 ${
+                                      isAssigned
+                                        ? `${colors.stripe} text-white shadow-sm`
+                                        : 'text-muted-foreground hover:text-foreground hover:bg-background'
+                                    }`}
+                                    title={menu.name}
+                                  >
+                                    {MENU_LETTERS[i]}
+                                    {isAssigned && <Check className="w-2.5 h-2.5 ml-0.5 inline-block" />}
+                                  </button>
+                                )
+                              })}
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <span className="font-medium text-sm">{guest.name}</span>
-                            {guest.groupName && (
-                              <span className="text-xs text-muted-foreground ml-2">{guest.groupName}</span>
-                            )}
-                          </div>
-                          <div className="flex gap-1.5 flex-shrink-0">
-                            {menus.map((menu, i) => {
-                              const isAssigned = assignedMenuId === menu.id
-                              const colors = MENU_COLORS[i % MENU_COLORS.length]
-                              return (
-                                <button
-                                  key={menu.id}
-                                  onClick={() => handleToggleAssignment(guest.id, menu.id)}
-                                  className={`w-7 h-7 rounded-full text-xs font-bold border transition-all active:scale-95 ${
-                                    isAssigned ? colors.pill : colors.ghost
-                                  }`}
-                                  title={menu.name}
-                                >
-                                  {MENU_LETTERS[i]}
-                                </button>
-                              )
-                            })}
-                          </div>
-                        </div>
-                      )
-                    })}
+                        )
+                      })}
+                    </div>
                   </Card>
                 )}
               </>
@@ -498,50 +513,80 @@ export default function DishesPage({ params }: DishesPageProps) {
                     {t('admin.dishes.noGroups')}
                   </Card>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {groups.map(group => {
                       const groupGuests = confirmedGuests.filter(g => g.guest_group_id === group.id)
                       if (groupGuests.length === 0) return null
                       const unassigned = groupGuests.filter(g => !assignmentMap[g.id]).length
                       return (
-                        <Card key={group.id} className="px-4 py-3 flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm">{group.name}</div>
-                            <div className="flex items-center gap-2 mt-1 flex-wrap">
-                              <span className="text-xs text-muted-foreground">{groupGuests.length} {t('admin.dishes.members')}</span>
-                              {menus.map((menu, i) => {
-                                const count = groupGuests.filter(g => assignmentMap[g.id] === menu.id).length
-                                if (count === 0) return null
-                                const colors = MENU_COLORS[i % MENU_COLORS.length]
-                                return (
-                                  <span key={menu.id} className={`text-xs px-1.5 py-0.5 rounded font-medium ${colors.badge}`}>
-                                    {MENU_LETTERS[i]}: {count}
+                        <Card key={group.id} className="overflow-hidden border">
+                          {/* Group header */}
+                          <div className="flex items-center gap-3 px-4 py-3 bg-muted/30 border-b flex-wrap sm:flex-nowrap">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-sm">{group.name}</div>
+                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                <span className="text-xs text-muted-foreground">{groupGuests.length} {t('admin.dishes.members')}</span>
+                                {unassigned > 0 && (
+                                  <span className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">
+                                    {unassigned} {t('admin.dishes.stats.unassigned').toLowerCase()}
                                   </span>
+                                )}
+                              </div>
+                            </div>
+                            {/* Bulk assign buttons */}
+                            <div className="flex gap-1 flex-shrink-0 text-xs">
+                              <span className="text-muted-foreground self-center mr-1 hidden sm:inline">{t('admin.dishes.assign')}:</span>
+                              {menus.map((menu, i) => {
+                                const colors = MENU_COLORS[i % MENU_COLORS.length]
+                                const allAssigned = groupGuests.every(g => assignmentMap[g.id] === menu.id)
+                                return (
+                                  <button
+                                    key={menu.id}
+                                    onClick={() => handleBulkAssign(menu.id, { groupId: group.id })}
+                                    disabled={saving}
+                                    className={`px-2.5 py-1.5 rounded-md font-bold border transition-all active:scale-95 disabled:opacity-50 ${
+                                      allAssigned ? `${colors.stripe} text-white border-transparent` : colors.ghost
+                                    }`}
+                                    title={menu.name}
+                                  >
+                                    {MENU_LETTERS[i]}
+                                  </button>
                                 )
                               })}
-                              {unassigned > 0 && (
-                                <span className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">
-                                  {unassigned} {t('admin.dishes.stats.unassigned').toLowerCase()}
-                                </span>
-                              )}
                             </div>
                           </div>
-                          <div className="flex gap-1.5 flex-shrink-0">
-                            {menus.map((menu, i) => {
-                              const colors = MENU_COLORS[i % MENU_COLORS.length]
-                              const allAssigned = groupGuests.every(g => assignmentMap[g.id] === menu.id)
+                          {/* Guest list within group */}
+                          <div className="divide-y">
+                            {groupGuests.map(guest => {
+                              const assignedMenuId = assignmentMap[guest.id]
+                              const assignedIndex = menus.findIndex(m => m.id === assignedMenuId)
                               return (
-                                <button
-                                  key={menu.id}
-                                  onClick={() => handleBulkAssign(menu.id, { groupId: group.id })}
-                                  disabled={saving}
-                                  className={`w-8 h-8 rounded-full text-xs font-bold border transition-all active:scale-95 disabled:opacity-50 ${
-                                    allAssigned ? colors.pill : colors.ghost
-                                  }`}
-                                  title={menu.name}
-                                >
-                                  {MENU_LETTERS[i]}
-                                </button>
+                                <div key={guest.id} className="flex items-center gap-3 px-4 py-2 hover:bg-muted/20 transition-colors">
+                                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                                    assignedMenuId
+                                      ? MENU_COLORS[assignedIndex % MENU_COLORS.length].stripe
+                                      : 'bg-muted-foreground/20'
+                                  }`} />
+                                  <span className="flex-1 text-sm">{guest.name}</span>
+                                  <div className="flex gap-0.5 flex-shrink-0 bg-muted/50 rounded-md p-0.5">
+                                    {menus.map((menu, i) => {
+                                      const isAssigned = assignedMenuId === menu.id
+                                      const colors = MENU_COLORS[i % MENU_COLORS.length]
+                                      return (
+                                        <button
+                                          key={menu.id}
+                                          onClick={() => handleToggleAssignment(guest.id, menu.id)}
+                                          className={`w-6 h-6 rounded text-[10px] font-bold transition-all active:scale-95 ${
+                                            isAssigned ? `${colors.stripe} text-white` : 'text-muted-foreground hover:text-foreground hover:bg-background'
+                                          }`}
+                                          title={menu.name}
+                                        >
+                                          {MENU_LETTERS[i]}
+                                        </button>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
                               )
                             })}
                           </div>
@@ -561,51 +606,84 @@ export default function DishesPage({ params }: DishesPageProps) {
                     {t('admin.dishes.noTables')}
                   </Card>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {tables.map(table => {
                       const guestIds = tableGuestMap[table.id] || []
                       const tableGuests = guests.filter(g => guestIds.includes(g.id))
                       if (tableGuests.length === 0) return null
                       const unassigned = tableGuests.filter(g => !assignmentMap[g.id]).length
                       return (
-                        <Card key={table.id} className="px-4 py-3 flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm">{table.name}</div>
-                            <div className="flex items-center gap-2 mt-1 flex-wrap">
-                              <span className="text-xs text-muted-foreground">{tableGuests.length} {t('admin.dishes.members')}</span>
-                              {menus.map((menu, i) => {
-                                const count = tableGuests.filter(g => assignmentMap[g.id] === menu.id).length
-                                if (count === 0) return null
-                                const colors = MENU_COLORS[i % MENU_COLORS.length]
-                                return (
-                                  <span key={menu.id} className={`text-xs px-1.5 py-0.5 rounded font-medium ${colors.badge}`}>
-                                    {MENU_LETTERS[i]}: {count}
+                        <Card key={table.id} className="overflow-hidden border">
+                          {/* Table header */}
+                          <div className="flex items-center gap-3 px-4 py-3 bg-muted/30 border-b flex-wrap sm:flex-nowrap">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-sm">{table.name}</div>
+                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                <span className="text-xs text-muted-foreground">{tableGuests.length} {t('admin.dishes.members')}</span>
+                                {unassigned > 0 && (
+                                  <span className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">
+                                    {unassigned} {t('admin.dishes.stats.unassigned').toLowerCase()}
                                   </span>
+                                )}
+                              </div>
+                            </div>
+                            {/* Bulk assign buttons */}
+                            <div className="flex gap-1 flex-shrink-0 text-xs">
+                              <span className="text-muted-foreground self-center mr-1 hidden sm:inline">{t('admin.dishes.assign')}:</span>
+                              {menus.map((menu, i) => {
+                                const colors = MENU_COLORS[i % MENU_COLORS.length]
+                                const allAssigned = tableGuests.every(g => assignmentMap[g.id] === menu.id)
+                                return (
+                                  <button
+                                    key={menu.id}
+                                    onClick={() => handleBulkAssign(menu.id, { tableId: table.id })}
+                                    disabled={saving}
+                                    className={`px-2.5 py-1.5 rounded-md font-bold border transition-all active:scale-95 disabled:opacity-50 ${
+                                      allAssigned ? `${colors.stripe} text-white border-transparent` : colors.ghost
+                                    }`}
+                                    title={menu.name}
+                                  >
+                                    {MENU_LETTERS[i]}
+                                  </button>
                                 )
                               })}
-                              {unassigned > 0 && (
-                                <span className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">
-                                  {unassigned} {t('admin.dishes.stats.unassigned').toLowerCase()}
-                                </span>
-                              )}
                             </div>
                           </div>
-                          <div className="flex gap-1.5 flex-shrink-0">
-                            {menus.map((menu, i) => {
-                              const colors = MENU_COLORS[i % MENU_COLORS.length]
-                              const allAssigned = tableGuests.every(g => assignmentMap[g.id] === menu.id)
+                          {/* Guest list within table */}
+                          <div className="divide-y">
+                            {tableGuests.map(guest => {
+                              const assignedMenuId = assignmentMap[guest.id]
+                              const assignedIndex = menus.findIndex(m => m.id === assignedMenuId)
                               return (
-                                <button
-                                  key={menu.id}
-                                  onClick={() => handleBulkAssign(menu.id, { tableId: table.id })}
-                                  disabled={saving}
-                                  className={`w-8 h-8 rounded-full text-xs font-bold border transition-all active:scale-95 disabled:opacity-50 ${
-                                    allAssigned ? colors.pill : colors.ghost
-                                  }`}
-                                  title={menu.name}
-                                >
-                                  {MENU_LETTERS[i]}
-                                </button>
+                                <div key={guest.id} className="flex items-center gap-3 px-4 py-2 hover:bg-muted/20 transition-colors">
+                                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                                    assignedMenuId
+                                      ? MENU_COLORS[assignedIndex % MENU_COLORS.length].stripe
+                                      : 'bg-muted-foreground/20'
+                                  }`} />
+                                  <span className="flex-1 text-sm">{guest.name}</span>
+                                  {guest.groupName && (
+                                    <span className="text-xs text-muted-foreground hidden sm:inline">{guest.groupName}</span>
+                                  )}
+                                  <div className="flex gap-0.5 flex-shrink-0 bg-muted/50 rounded-md p-0.5">
+                                    {menus.map((menu, i) => {
+                                      const isAssigned = assignedMenuId === menu.id
+                                      const colors = MENU_COLORS[i % MENU_COLORS.length]
+                                      return (
+                                        <button
+                                          key={menu.id}
+                                          onClick={() => handleToggleAssignment(guest.id, menu.id)}
+                                          className={`w-6 h-6 rounded text-[10px] font-bold transition-all active:scale-95 ${
+                                            isAssigned ? `${colors.stripe} text-white` : 'text-muted-foreground hover:text-foreground hover:bg-background'
+                                          }`}
+                                          title={menu.name}
+                                        >
+                                          {MENU_LETTERS[i]}
+                                        </button>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
                               )
                             })}
                           </div>

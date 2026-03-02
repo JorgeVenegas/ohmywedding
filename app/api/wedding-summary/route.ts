@@ -52,14 +52,14 @@ export async function GET(request: Request) {
       menuAssignmentsResult,
       itineraryResult,
     ] = await Promise.all([
-      supabase.from('weddings').select('id, wedding_name_id, partner1_first_name, partner1_last_name, partner2_first_name, partner2_last_name, wedding_date, wedding_time, reception_time, ceremony_venue_name, ceremony_venue_address, reception_venue_name, reception_venue_address').eq('id', weddingUuid).single(),
+      supabase.from('weddings').select('id, wedding_name_id, partner1_first_name, partner1_last_name, partner2_first_name, partner2_last_name, wedding_date, wedding_time, reception_time, ceremony_venue_name, ceremony_venue_address, reception_venue_name, reception_venue_address, page_config').eq('id', weddingUuid).single(),
       supabase.from('guests').select('id, name, guest_group_id, confirmation_status, dietary_restrictions, notes').eq('wedding_id', weddingUuid),
       supabase.from('guest_groups').select('id, name').eq('wedding_id', weddingUuid),
       supabase.from('seating_tables').select('*').eq('wedding_id', weddingUuid).order('display_order', { ascending: true }),
       supabase.from('seating_assignments').select('*').eq('wedding_id', weddingUuid),
       supabase.from('venue_elements').select('*').eq('wedding_id', weddingUuid),
       supabase.from('menus').select('*, menu_courses(*)').eq('wedding_id', weddingUuid).order('display_order', { ascending: true }),
-      supabase.from('menu_assignments').select('*').eq('wedding_id', weddingUuid),
+      supabase.from('guest_menu_assignments').select('*').eq('wedding_id', weddingUuid),
       supabase.from('itinerary_events').select('*').eq('wedding_id', weddingUuid).order('start_time', { ascending: true }),
     ])
 
@@ -144,8 +144,45 @@ export async function GET(request: Request) {
     const assignedGuests = seatAssignments.length
     const unassignedGuests = confirmed - assignedGuests
 
+    // Extract locale, theme colors, and hero image from page_config
+    const pageConfig = wedding.page_config as Record<string, unknown> | null
+    const siteSettings = (pageConfig?.siteSettings as Record<string, unknown>) || {}
+    const themeColors = ((siteSettings?.theme as Record<string, unknown>)?.colors as Record<string, string>) || {}
+    const locale = (siteSettings.locale as string) || 'en'
+    const primary_color = themeColors.primary || '#420c14'
+    const secondary_color = themeColors.secondary || '#732c2c'
+    const accent_color = themeColors.accent || '#DDA46F'
+
+    // Extract hero image from sectionConfigs.hero.heroImageUrl
+    let hero_image_url: string | null = null
+    const sectionConfigs = (pageConfig?.sectionConfigs as Record<string, Record<string, unknown>>) || {}
+    if (sectionConfigs?.hero?.heroImageUrl && typeof sectionConfigs.hero.heroImageUrl === 'string') {
+      hero_image_url = sectionConfigs.hero.heroImageUrl
+    }
+
+    // Build enriched wedding object (omit raw page_config from response)
+    const weddingData = {
+      partner1_first_name: wedding.partner1_first_name,
+      partner1_last_name: wedding.partner1_last_name,
+      partner2_first_name: wedding.partner2_first_name,
+      partner2_last_name: wedding.partner2_last_name,
+      wedding_name_id: wedding.wedding_name_id,
+      wedding_date: wedding.wedding_date,
+      wedding_time: wedding.wedding_time,
+      reception_time: wedding.reception_time,
+      ceremony_venue_name: wedding.ceremony_venue_name,
+      ceremony_venue_address: wedding.ceremony_venue_address,
+      reception_venue_name: wedding.reception_venue_name,
+      reception_venue_address: wedding.reception_venue_address,
+      locale,
+      primary_color,
+      secondary_color,
+      accent_color,
+      hero_image_url,
+    }
+
     return NextResponse.json({
-      wedding,
+      wedding: weddingData,
       stats: {
         totalGuests: guests.length,
         confirmed,
