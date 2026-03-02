@@ -25,7 +25,16 @@ export async function initializeStorageBucket() {
     // Try to create the bucket (will silently fail if it already exists)
     const { data: bucketData, error: bucketError } = await supabase.storage.createBucket('wedding-images', {
       public: true,
-      allowedMimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'],
+      allowedMimeTypes: [
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/webp',
+        'image/gif',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ],
       fileSizeLimit: 52428800 // 50MB
     })
 
