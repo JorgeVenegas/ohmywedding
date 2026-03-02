@@ -801,75 +801,110 @@ function GuestsByGroupPages({ guestList, weddingName, pal, t, menuColorMap }: {
   }
   const groupEntries = [...grouped.entries()].sort((a, b) => a[0].localeCompare(b[0]))
 
-  // Paginate
-  const GROUP_HEADER_H = 30
-  const GUEST_ROW_H = 20
-  const COL_HEADER_H = 20
-  const GAP = 8
-  const TITLE_AREA_H = 54
-  const usableH = PAGE_H - CONTENT_TOP - CONTENT_BOTTOM - TITLE_AREA_H - 20 // extra margin
+  // ── Pixel-perfect height constants ───────────────────────────
+  // Every rendered element uses explicit height + boxSizing:'border-box'
+  // so the CSS layout EXACTLY matches these numbers. No accumulation drift.
+  const HEADER_H = 34       // group name header (includes 1px border + padding)
+  const COL_HDR_H = 22      // column header row (includes border-bottom)
+  const ROW_H = 20           // guest data row
+  const BLOCK_EXTRA = 2      // data wrapper bottom border + border-radius extra
+  const GAP = 10             // gap between group blocks
+  const FIRST_TITLE_H = 56   // h2 + divider + spacing on first page
+  const CONT_TITLE_H = 30    // continuation header on subsequent pages
+  const SAFETY = 30          // extra safety margin — overflow is never acceptable
+
+  const contentBox = PAGE_H - CONTENT_TOP - CONTENT_BOTTOM
+  const usableFirst = contentBox - FIRST_TITLE_H - SAFETY
+  const usableRest = contentBox - CONT_TITLE_H - SAFETY
+
+  // Height of one group block with N guests
+  const blockH = (n: number) => HEADER_H + COL_HDR_H + n * ROW_H + BLOCK_EXTRA + GAP
+
   const columns = [t('admin.summary.columns.guest'), t('admin.summary.pdf.phone'), t('admin.summary.pdf.table'), t('admin.summary.columns.menu')]
   const colFlex = [2.2, 1, 1.2, 1]
 
+  // ── Pagination ───────────────────────────────────────────────
   type PageBlock = { groupName: string; guests: GuestItem[]; isStart: boolean }
   const pages: PageBlock[][] = []
   let currentPage: PageBlock[] = []
   let currentH = 0
+  let isFirstPage = true
+  const usable = () => isFirstPage ? usableFirst : usableRest
 
   for (const [groupName, guests] of groupEntries) {
-    const totalH = GROUP_HEADER_H + COL_HEADER_H + guests.length * GUEST_ROW_H + GAP
-    if (currentH + totalH <= usableH) {
+    const totalH = blockH(guests.length)
+    if (currentH + totalH <= usable()) {
       currentPage.push({ groupName, guests, isStart: true })
       currentH += totalH
     } else {
-      // Split across pages
+      // Won't fit as a whole — split across pages
       let idx = 0
       while (idx < guests.length) {
-        const hdrH = GROUP_HEADER_H + COL_HEADER_H
-        const availH = (currentPage.length === 0 ? usableH : usableH - currentH) - hdrH - GAP
-        const fit = Math.max(1, Math.floor(availH / GUEST_ROW_H))
-        const end = Math.min(idx + fit, guests.length)
+        const hdrH = HEADER_H + COL_HDR_H + BLOCK_EXTRA
+        const availH = usable() - currentH - hdrH - GAP
+        const fit = Math.floor(availH / ROW_H)
+
+        if (fit < 1 && currentPage.length > 0) {
+          // Not enough room for even 1 guest — push current page and start fresh
+          pages.push(currentPage)
+          currentPage = []
+          currentH = 0
+          isFirstPage = false
+          continue
+        }
+
+        const rowsFit = Math.max(1, fit)
+        const end = Math.min(idx + rowsFit, guests.length)
         currentPage.push({ groupName, guests: guests.slice(idx, end), isStart: idx === 0 })
-        currentH += hdrH + (end - idx) * GUEST_ROW_H + GAP
+        currentH += hdrH + (end - idx) * ROW_H + GAP
         idx = end
-        if (idx < guests.length) { pages.push(currentPage); currentPage = []; currentH = 0 }
+        if (idx < guests.length) {
+          pages.push(currentPage)
+          currentPage = []
+          currentH = 0
+          isFirstPage = false
+        }
       }
     }
   }
   if (currentPage.length > 0) pages.push(currentPage)
 
+  // ── Shared styles ────────────────────────────────────────────
   const truncStyle: React.CSSProperties = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+  const boxFix: React.CSSProperties = { boxSizing: 'border-box' }
 
   return (
     <>
       {pages.map((pageBlocks, pi) => (
         <PageShell key={`gbg-${pi}`}>
-          <div style={{ padding: `${CONTENT_TOP}px 56px ${CONTENT_BOTTOM}px 56px`, overflow: 'hidden', height: PAGE_H - 0, boxSizing: 'border-box' }}>
+          <div style={{ padding: `${CONTENT_TOP}px 56px ${CONTENT_BOTTOM}px 56px`, overflow: 'hidden', height: PAGE_H, ...boxFix }}>
             {pi === 0 && (
-              <>
-                <h2 style={{ fontFamily: "'Macker', serif", fontSize: 22, color: pal.accent, marginBottom: 4 }}>
+              <div style={{ height: FIRST_TITLE_H, ...boxFix, overflow: 'hidden' }}>
+                <h2 style={{ fontFamily: "'Macker', serif", fontSize: 22, color: pal.accent, marginBottom: 4, margin: 0, marginBlockStart: 0, marginBlockEnd: 4 }}>
                   {t('admin.summary.sections.guestsByGroup')}
                 </h2>
                 <div style={{ height: 3, width: 44, backgroundColor: pal.accent, marginBottom: 20 }} />
-              </>
+              </div>
             )}
             {pi > 0 && (
-              <div style={{ marginBottom: 12 }}>
+              <div style={{ height: CONT_TITLE_H, ...boxFix, overflow: 'hidden', display: 'flex', alignItems: 'flex-end', paddingBottom: 8 }}>
                 <span style={{ fontSize: 9, color: '#a0988c', letterSpacing: 1, textTransform: 'uppercase' }}>
                   {t('admin.summary.sections.guestsByGroup')} — {pi + 1}
                 </span>
               </div>
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: GAP }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: GAP, overflow: 'hidden' }}>
               {pageBlocks.map((block, bi) => (
                 <div key={`${block.groupName}-${bi}`} style={{ borderRadius: 6, overflow: 'hidden' }}>
+                  {/* Group header — explicit height */}
                   <div style={{
+                    height: HEADER_H, ...boxFix,
                     display: 'flex', alignItems: 'center', position: 'relative', overflow: 'hidden',
                     backgroundColor: '#f5f2eb', border: '1px solid #e9e5e0',
-                    borderRadius: '6px 6px 0 0', padding: '6px 12px 6px 16px',
+                    borderRadius: '6px 6px 0 0', padding: '0 12px 0 16px',
                   }}>
                     <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 3, backgroundColor: pal.accent }} />
-                    <span style={{ flex: 1, fontSize: 10, fontWeight: 700, color: pal.dark, paddingLeft: 4, ...truncStyle }}>
+                    <span style={{ flex: 1, fontSize: 10, fontWeight: 700, color: pal.dark, paddingLeft: 4, minWidth: 0, ...truncStyle }}>
                       {block.groupName}
                     </span>
                     {block.isStart && (
@@ -880,28 +915,36 @@ function GuestsByGroupPages({ guestList, weddingName, pal, t, menuColorMap }: {
                       </div>
                     )}
                   </div>
+                  {/* Data section */}
                   <div style={{ border: '1px solid #e9e5e0', borderTop: 'none', borderRadius: '0 0 6px 6px', overflow: 'hidden' }}>
-                    <div style={{ display: 'flex', backgroundColor: '#f8f6f2', borderBottom: '1px solid #e9e5e0' }}>
+                    {/* Column headers — explicit height */}
+                    <div style={{
+                      height: COL_HDR_H, ...boxFix,
+                      display: 'flex', alignItems: 'center',
+                      backgroundColor: '#f8f6f2', borderBottom: '1px solid #e9e5e0',
+                    }}>
                       {columns.map((col, ci) => (
                         <span key={ci} style={{
                           flex: colFlex[ci], fontSize: 7, fontWeight: 700,
-                          color: '#787167', padding: '4px 6px',
+                          color: '#787167', padding: '0 6px', minWidth: 0,
                           textTransform: 'uppercase', letterSpacing: 0.5, ...truncStyle,
                         }}>
                           {col}
                         </span>
                       ))}
                     </div>
+                    {/* Guest rows — explicit height */}
                     {block.guests.map((guest, gi) => (
                       <div key={gi} style={{
+                        height: ROW_H, ...boxFix,
                         display: 'flex', alignItems: 'center',
                         backgroundColor: gi % 2 === 0 ? '#fefdfb' : '#f8f6f2',
                         borderBottom: gi < block.guests.length - 1 ? '1px solid #f0ede6' : 'none',
                       }}>
-                        <span style={{ flex: colFlex[0], fontSize: 9, fontWeight: 600, color: '#2c2c2c', padding: '3px 6px', minWidth: 0, ...truncStyle }}>{guest.name}</span>
-                        <span style={{ flex: colFlex[1], fontSize: 8, color: '#787167', padding: '3px 6px', minWidth: 0, ...truncStyle }}>{guest.phone || '—'}</span>
-                        <span style={{ flex: colFlex[2], fontSize: 8, color: '#2c2c2c', padding: '3px 6px', minWidth: 0, ...truncStyle }}>{fmtTable(guest)}</span>
-                        <span style={{ flex: colFlex[3], fontSize: 8, color: guest.menuName ? (menuColorMap[guest.menuName] || pal.medium) : '#a0988c', padding: '3px 6px', fontWeight: guest.menuName ? 600 : 400, minWidth: 0, ...truncStyle }}>
+                        <span style={{ flex: colFlex[0], fontSize: 9, fontWeight: 600, color: '#2c2c2c', padding: '0 6px', minWidth: 0, ...truncStyle }}>{guest.name}</span>
+                        <span style={{ flex: colFlex[1], fontSize: 8, color: '#787167', padding: '0 6px', minWidth: 0, ...truncStyle }}>{guest.phone || '—'}</span>
+                        <span style={{ flex: colFlex[2], fontSize: 8, color: '#2c2c2c', padding: '0 6px', minWidth: 0, ...truncStyle }}>{fmtTable(guest)}</span>
+                        <span style={{ flex: colFlex[3], fontSize: 8, color: guest.menuName ? (menuColorMap[guest.menuName] || pal.medium) : '#a0988c', padding: '0 6px', fontWeight: guest.menuName ? 600 : 400, minWidth: 0, ...truncStyle }}>
                           {guest.menuName && <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', verticalAlign: 'middle', marginRight: 3, backgroundColor: menuColorMap[guest.menuName] || pal.medium }} />}
                           {guest.menuName || '—'}
                         </span>
