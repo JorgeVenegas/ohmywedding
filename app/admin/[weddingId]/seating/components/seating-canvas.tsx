@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useCallback, useEffect, useState } from "react"
+import { useRef, useCallback, useEffect, useState, useMemo } from "react"
 import { Stage, Layer, Rect, Circle, Ellipse, Text, Group, Line, Transformer } from "react-konva"
 import type Konva from "konva"
 import type { ReactElement } from "react"
@@ -100,6 +100,16 @@ export function SeatingCanvas({
   const [hoveredTable, setHoveredTable] = useState<{ id: string } | null>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
   const hideMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Sweetheart table is always #1; remaining tables sorted by display_order
+  const tableNumberMap = useMemo(() => {
+    const sorted = [...tables].sort((a, b) => {
+      if (a.shape === 'sweetheart' && b.shape !== 'sweetheart') return -1
+      if (a.shape !== 'sweetheart' && b.shape === 'sweetheart') return 1
+      return (a.display_order ?? 0) - (b.display_order ?? 0)
+    })
+    return new Map(sorted.map((t, i) => [t.id, i + 1]))
+  }, [tables])
 
   const handleTableHover = useCallback((id: string | null) => {
     if (id) {
@@ -631,6 +641,7 @@ export function SeatingCanvas({
             <TableShape
               key={table.id}
               table={table}
+              tableNumber={tableNumberMap.get(table.id) ?? 0}
               selected={selectedTableIds.includes(table.id)}
               onSelect={(shiftKey) => {
                 onSelectVenueElements([])
@@ -741,6 +752,7 @@ function GridBackground({
 // Table Shape Component
 function TableShape({
   table,
+  tableNumber,
   selected,
   onSelect,
   onDragStart,
@@ -751,6 +763,7 @@ function TableShape({
   onHover,
 }: {
   table: TableWithAssignments
+  tableNumber: number
   selected: boolean
   onSelect: (shiftKey: boolean) => void
   onDragStart: (cx: number, cy: number) => void
@@ -841,8 +854,10 @@ function TableShape({
             fill={fill} stroke={stroke} strokeWidth={strokeWidth}
             shadowColor="rgba(0,0,0,0.10)" shadowBlur={selected ? 14 : 8} shadowOffset={{ x: 0, y: 3 }}
           />
-          <Text x={5} y={radius - 15} width={radius * 2 - 10} text={table.name}
-            fontSize={11} fontFamily="system-ui, sans-serif" fontStyle="bold" fill="#78350f" align="center" />
+          <Text x={5} y={radius - 22} width={radius * 2 - 10} text={`#${tableNumber}`}
+            fontSize={9} fontFamily="system-ui, sans-serif" fontStyle="bold" fill="#a16207" align="center" />
+          <Text x={5} y={radius - 9} width={radius * 2 - 10} text={table.name}
+            fontSize={10} fontFamily="system-ui, sans-serif" fontStyle="bold" fill="#78350f" align="center" />
           <Text x={5} y={radius + 5} width={radius * 2 - 10} text={`${table.occupancy}/${table.capacity}`}
             fontSize={9} fontFamily="system-ui, sans-serif" fill="#a16207" align="center" />
           <Circle x={radius * 1.55} y={radius * 0.45} radius={5} fill={getStatusColor(table)} stroke="white" strokeWidth={1.5} />
@@ -914,7 +929,7 @@ function TableShape({
         >
           <Group x={hw} y={hh} rotation={-table.rotation}>
             <Text x={-hw} y={-13} width={table.width} text="♛" fontSize={14} fontFamily="system-ui, sans-serif" fill="#d97706" align="center" />
-            <Text x={-hw + 4} y={2} width={table.width - 8} text={`${table.name} · ${table.occupancy}/${table.capacity}`} fontSize={9} fontFamily="system-ui, sans-serif" fill="#78350f" align="center" />
+            <Text x={-hw + 4} y={2} width={table.width - 8} text={`#${tableNumber} · ${table.name} · ${table.occupancy}/${table.capacity}`} fontSize={9} fontFamily="system-ui, sans-serif" fill="#78350f" align="center" />
           </Group>
         </Group>
       </>
@@ -959,7 +974,9 @@ function TableShape({
         rotation={table.rotation} listening={false}
       >
         <Group x={hw} y={hh} rotation={-table.rotation}>
-          <Text x={-(table.width - 10) / 2} y={-15} width={table.width - 10} text={table.name}
+          <Text x={-(table.width - 10) / 2} y={-24} width={table.width - 10} text={`#${tableNumber}`}
+            fontSize={9} fontFamily="system-ui, sans-serif" fontStyle="bold" fill="#a16207" align="center" />
+          <Text x={-(table.width - 10) / 2} y={-11} width={table.width - 10} text={table.name}
             fontSize={11} fontFamily="system-ui, sans-serif" fontStyle="bold" fill="#78350f" align="center" />
           <Text x={-(table.width - 10) / 2} y={5} width={table.width - 10} text={`${table.occupancy}/${table.capacity}`}
             fontSize={9} fontFamily="system-ui, sans-serif" fill="#a16207" align="center" />

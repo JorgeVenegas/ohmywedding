@@ -74,6 +74,12 @@ export async function GET(request: Request) {
     const guests = guestsResult.data || []
     const groups = groupsResult.data || []
     const tables = tablesResult.data || []
+    // Sweetheart table is always #1 — sort it first, then by display_order
+    const numberedTables = [...tables].sort((a, b) => {
+      if (a.shape === 'sweetheart' && b.shape !== 'sweetheart') return -1
+      if (a.shape !== 'sweetheart' && b.shape === 'sweetheart') return 1
+      return (a.display_order ?? 0) - (b.display_order ?? 0)
+    })
     const seatAssignments = assignmentsResult.data || []
     const venueElements = elementsResult.data || []
     const menus = menusResult.data || []
@@ -90,7 +96,7 @@ export async function GET(request: Request) {
     const menuNameMap = new Map(menus.map(m => [m.id as string, m.name as string]))
 
     // Build seating data: tables with their assigned guests
-    const seatingData = tables.map((table, idx) => {
+    const seatingData = numberedTables.map((table, idx) => {
       const tableAssignments = seatAssignments.filter(a => a.table_id === table.id)
       const tableGuests = tableAssignments.map(a => {
         const guest = guests.find(g => g.id === a.guest_id)
@@ -213,11 +219,12 @@ export async function GET(request: Request) {
     }
 
     // Build table lookup from seating assignments (name + number)
+    // Uses the same sweetheart-first ordering so numbers match the seating pages
     const guestTableMap = new Map<string, { name: string; number: number }>()
     for (const a of seatAssignments) {
-      const tableIdx = tables.findIndex(t => t.id === a.table_id)
+      const tableIdx = numberedTables.findIndex(t => t.id === a.table_id)
       if (tableIdx >= 0) {
-        const table = tables[tableIdx]
+        const table = numberedTables[tableIdx]
         guestTableMap.set(a.guest_id, { name: table.name, number: tableIdx + 1 })
       }
     }

@@ -14,7 +14,12 @@ interface PrintViewProps {
 export function PrintView({ tables, venueElements, onClose }: PrintViewProps) {
   const { t } = useTranslation()
 
-  const sortedTables = [...tables].sort((a, b) => a.display_order - b.display_order)
+  const sortedTables = [...tables].sort((a, b) => {
+    if (a.shape === 'sweetheart' && b.shape !== 'sweetheart') return -1
+    if (a.shape !== 'sweetheart' && b.shape === 'sweetheart') return 1
+    return (a.display_order ?? 0) - (b.display_order ?? 0)
+  })
+  const tableNumberMap = new Map(sortedTables.map((t, i) => [t.id, i + 1]))
 
   const handlePrint = () => {
     window.print()
@@ -49,7 +54,10 @@ export function PrintView({ tables, venueElements, onClose }: PrintViewProps) {
               className="border rounded-lg p-4 break-inside-avoid"
             >
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-lg">{table.name}</h3>
+                <h3 className="font-semibold text-lg">
+                  <span className="text-muted-foreground font-normal text-base mr-1.5">#{tableNumberMap.get(table.id)}</span>
+                  {table.name}
+                </h3>
                 <span className={`text-sm ${table.isOverfilled ? 'text-red-600 font-semibold' : 'text-muted-foreground'}`}>
                   {table.occupancy}/{table.capacity}
                 </span>
@@ -96,7 +104,10 @@ export function PrintView({ tables, venueElements, onClose }: PrintViewProps) {
                         1}
                     </td>
                     <td className="py-1.5 pr-4">{a.guests?.name || 'Unknown'}</td>
-                    <td className="py-1.5">{table.name}</td>
+                    <td className="py-1.5">
+                      <span className="text-muted-foreground mr-1">#{tableNumberMap.get(table.id)}</span>
+                      {table.name}
+                    </td>
                   </tr>
                 ))
               )}
