@@ -1566,10 +1566,6 @@ function VenueMapPage({ mapDataUrl, venueName, weddingName, pal, t, isHorizontal
   mapDataUrl: string; venueName?: string; weddingName: string; pal: BrandPalette
   t: (k: string, p?: Record<string, string>) => string; isHorizontal?: boolean
 }) {
-  // Image area dimensions for portrait
-  const imgW = PAGE_W - MAP_PAD * 2
-  const imgH = PAGE_H - MAP_PAD * 2 - MAP_HEADER_H - MAP_FOOTER_H - 8
-
   // For horizontal seating maps: rotate entire content 90° so wide map fills the page
   if (isHorizontal) {
     const rW = PAGE_H - MAP_PAD * 2 - MAP_HEADER_H - MAP_FOOTER_H - 8
@@ -1610,7 +1606,7 @@ function VenueMapPage({ mapDataUrl, venueName, weddingName, pal, t, isHorizontal
 
   return (
     <PageShell>
-      <div style={{ position: 'absolute', inset: MAP_PAD, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, boxSizing: 'border-box' }}>
+      <div style={{ position: 'absolute', inset: MAP_PAD, display: 'flex', flexDirection: 'column', gap: 6, boxSizing: 'border-box' }}>
         {/* Compact header strip */}
         <div style={{ width: '100%', height: MAP_HEADER_H, display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           <div style={{ width: 3, height: 28, backgroundColor: pal.accent, borderRadius: 2, flexShrink: 0 }} />
@@ -1623,23 +1619,24 @@ function VenueMapPage({ mapDataUrl, venueName, weddingName, pal, t, isHorizontal
             )}
           </div>
         </div>
-        {/* Map image — centered, auto-sized to its aspect ratio, capped at available space */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={mapDataUrl}
-          alt="Venue map"
-          style={{
-            maxWidth: imgW,
-            maxHeight: imgH,
-            width: 'auto',
-            height: 'auto',
-            objectFit: 'contain',
-            borderRadius: 8,
-            border: '1px solid #e9e5e0',
-            display: 'block',
-            flexShrink: 0,
-          }}
-        />
+        {/* Map image — fills all remaining space, centered both axes */}
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={mapDataUrl}
+            alt="Venue map"
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              width: 'auto',
+              height: 'auto',
+              objectFit: 'contain',
+              borderRadius: 8,
+              border: '1px solid #e9e5e0',
+              display: 'block',
+            }}
+          />
+        </div>
         {/* Footer strip */}
         <div style={{ width: '100%', height: MAP_FOOTER_H, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
           <span style={{ fontSize: 8, color: '#c8c0b8', letterSpacing: 3, textTransform: 'uppercase' }}>{weddingName}</span>
