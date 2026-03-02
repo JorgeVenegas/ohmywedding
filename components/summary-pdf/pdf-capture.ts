@@ -7,6 +7,9 @@ const A4_H_MM = 297
 
 export type ProgressCallback = (progress: number, step: string) => void
 
+/** Yield to the browser so it can repaint (keeps animations alive). */
+const yieldToBrowser = () => new Promise<void>(r => setTimeout(r, 0))
+
 /**
  * Captures all [data-pdf-page] divs inside a container,
  * converts each to a high-resolution PNG, and assembles
@@ -19,7 +22,8 @@ export async function captureAndAssemblePDF(
   const pages = container.querySelectorAll<HTMLElement>('[data-pdf-page]')
   if (pages.length === 0) throw new Error('No PDF pages found')
 
-  const totalSteps = pages.length + 1 // capture each + assemble
+  // Two phases (capture + assemble), each counts as one step per page
+  const totalSteps = pages.length * 2
   let completed = 0
 
   const report = (step: string) => {
@@ -27,12 +31,12 @@ export async function captureAndAssemblePDF(
     onProgress?.(Math.round((completed / totalSteps) * 100), step)
   }
 
-  // Step 1: Capture each page as a high-res PNG
+  // Phase 1: Capture each page as a high-res PNG
   const images: string[] = []
   for (let i = 0; i < pages.length; i++) {
     const page = pages[i]
 
-    // Give a small delay for rendering to settle (fonts, images)
+    // 80ms pause: lets fonts/images settle AND allows the browser to repaint the spinner
     await new Promise(r => setTimeout(r, 80))
 
     const dataUrl = await toPng(page, {
@@ -40,9 +44,7 @@ export async function captureAndAssemblePDF(
       quality: 1.0,
       cacheBust: true,
       skipAutoScale: true,
-      // Filter out cross-origin resources that would taint the capture
       filter: (node) => {
-        // Skip hidden elements
         if (node instanceof HTMLElement && node.style.display === 'none') return false
         return true
       },
@@ -51,7 +53,9 @@ export async function captureAndAssemblePDF(
     report(`Captured page ${i + 1} of ${pages.length}`)
   }
 
-  // Step 2: Assemble into PDF with jsPDF
+  // Phase 2: Assemble into PDF with jsPDF
+  // Each addImage call is CPU-heavy (PNG encoding), so we yield between pages
+  // to keep the animation alive and give React a chance to update the progress bar.
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -60,11 +64,12 @@ export async function captureAndAssemblePDF(
   })
 
   for (let i = 0; i < images.length; i++) {
+    // Yield before each addImage so the browser can repaint
+    await yieldToBrowser()
     if (i > 0) pdf.addPage()
     pdf.addImage(images[i], 'PNG', 0, 0, A4_W_MM, A4_H_MM, undefined, 'FAST')
+    report(`Assembling page ${i + 1} of ${images.length}`)
   }
-
-  report('Assembling PDF')
 
   return pdf.output('blob')
 }

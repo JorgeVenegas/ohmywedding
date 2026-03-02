@@ -1198,108 +1198,153 @@ function DeclinedGuestsPage({ declinedNames, weddingName, pal, t }: {
 }
 
 // ─────────────────────────────────────────────
-// Itinerary Page — minimalist two-column
+// Itinerary Pages — paginated, pixel-perfect, no overflow
 // ─────────────────────────────────────────────
-function ItineraryPage({ itinerary, locale, weddingName, pal, t }: {
+function ItineraryPages({ itinerary, locale, weddingName, pal, t }: {
   itinerary: WeddingPDFData['itinerary']; locale: string; weddingName: string; pal: BrandPalette
   t: (k: string, p?: Record<string, string>) => string
 }) {
   const formatTime = (d: string) => new Date(d).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
 
+  // ── Pixel-accurate height constants ─────────────────────────
+  // Every element below is rendered with these exact heights.
+  const EVENT_PAD_V = 28     // paddingTop 12 + paddingBottom 12 + border 1 + buffer 3
+  const TITLE_H = 20         // 12px uppercase bold, ~1.5 line-height
+  const ENDTIME_H = 17       // 9px end_time line
+  const LOCATION_H = 20      // 9px + pin icon row
+  const DESC_H = 18          // 10px italic description
+  const NOTES_H = 16         // 9px notes
+  const CHILDREN_TOP_H = 12  // marginTop:8 + extra
+  const CHILD_ROW_H = 17     // per child row (9px × ~1.8)
+
+  // Ornament = 8px margin-top + 8px element + 8px margin-bottom = 24
+  const FIRST_TITLE_H = 34 + 24 + 26   // h2 (26px lineHeight≈34) + Ornament + gap below
+  const CONT_TITLE_H = 32
+  const SAFETY = 44
+  const contentBox = PAGE_H - CONTENT_TOP - CONTENT_BOTTOM
+  const usableFirst = contentBox - FIRST_TITLE_H - SAFETY
+  const usableRest = contentBox - CONT_TITLE_H - SAFETY
+
+  const estimateH = (ev: typeof itinerary[0]) => {
+    let h = EVENT_PAD_V + TITLE_H
+    if (ev.end_time) h += ENDTIME_H
+    if (ev.location) h += LOCATION_H
+    if (ev.description) h += DESC_H
+    if (ev.notes) h += NOTES_H
+    if (ev.children?.length > 0) h += CHILDREN_TOP_H + ev.children.length * CHILD_ROW_H
+    return h
+  }
+
+  // ── Pagination ───────────────────────────────────────────────
+  const pages: (typeof itinerary[number])[][] = []
+  let currentPage: typeof itinerary = []
+  let currentH = 0
+  let isFirst = true
+
+  for (const event of itinerary) {
+    const evH = estimateH(event)
+    const usable = isFirst ? usableFirst : usableRest
+    if (currentH + evH <= usable) {
+      currentPage.push(event)
+      currentH += evH
+    } else {
+      if (currentPage.length > 0) {
+        pages.push(currentPage)
+        isFirst = false
+      }
+      currentPage = [event]
+      currentH = evH
+    }
+  }
+  if (currentPage.length > 0) pages.push(currentPage)
+
+  const boxFix: React.CSSProperties = { boxSizing: 'border-box' }
+  const truncStyle: React.CSSProperties = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+
   return (
-    <PageShell>
-      <div style={{ padding: '48px 56px 60px 56px' }}>
-        <h2 style={{
-          fontFamily: "'Macker', serif", fontSize: 26, color: pal.accent,
-          marginBottom: 2, letterSpacing: 1,
-        }}>
-          {t('admin.summary.sections.itinerary')}
-        </h2>
-        <Ornament color={pal.accent} width={100} />
-        <div style={{ marginTop: 24 }}>
-          {itinerary.map((event, ei) => (
-            <div key={event.id} className="flex" style={{ minHeight: 0 }}>
-              {/* Time column — right-aligned Macker */}
-              <div style={{
-                width: 88, paddingRight: 20, textAlign: 'right',
-                flexShrink: 0, paddingTop: 16,
-              }}>
-                <span style={{
-                  fontFamily: "'Macker', serif",
-                  fontSize: 14, color: pal.dark,
-                  display: 'block', lineHeight: 1,
+    <>
+      {pages.map((pageEvents, pi) => (
+        <PageShell key={`itin-${pi}`}>
+          <div style={{ padding: `${CONTENT_TOP}px 56px ${CONTENT_BOTTOM}px 56px`, overflow: 'hidden', height: PAGE_H, ...boxFix }}>
+            {pi === 0 ? (
+              <div style={{ height: FIRST_TITLE_H, overflow: 'hidden', ...boxFix }}>
+                <h2 style={{
+                  fontFamily: "'Macker', serif", fontSize: 26, color: pal.accent,
+                  marginBottom: 2, letterSpacing: 1,
+                  margin: 0, marginBlockStart: 0, marginBlockEnd: 2,
                 }}>
-                  {formatTime(event.start_time)}
-                </span>
-                {event.end_time && (
-                  <span style={{ fontSize: 9, color: '#a0988c', display: 'block', marginTop: 2 }}>
-                    {formatTime(event.end_time)}
-                  </span>
-                )}
+                  {t('admin.summary.sections.itinerary')}
+                </h2>
+                <Ornament color={pal.accent} width={100} />
               </div>
-
-              {/* Vertical accent line */}
-              <div style={{
-                width: 1, backgroundColor: `${pal.accent}35`,
-                flexShrink: 0, marginTop: 12,
-              }} />
-
-              {/* Event content */}
-              <div style={{
-                flex: 1, padding: '12px 0 12px 20px',
-                borderBottom: ei < itinerary.length - 1 ? '1px solid #f0ede6' : 'none',
-              }}>
-                <span style={{
-                  fontSize: 12, fontWeight: 700, color: pal.dark,
-                  letterSpacing: 0.8, textTransform: 'uppercase', display: 'block',
-                }}>
-                  {event.title}
+            ) : (
+              <div style={{ height: CONT_TITLE_H, overflow: 'hidden', ...boxFix, display: 'flex', alignItems: 'flex-end', paddingBottom: 8 }}>
+                <span style={{ fontSize: 9, color: '#a0988c', letterSpacing: 1, textTransform: 'uppercase' }}>
+                  {t('admin.summary.sections.itinerary')} — {pi + 1}
                 </span>
-                {event.location && (
-                  <span style={{
-                    fontSize: 9, color: '#a0988c', display: 'flex',
-                    alignItems: 'center', gap: 3, marginTop: 3,
-                  }}>
-                    <MapPin size={8} color="#a0988c" strokeWidth={1.5} />
-                    {event.location}
-                  </span>
-                )}
-                {event.description && (
-                  <span style={{
-                    fontSize: 10, fontStyle: 'italic', color: '#787167',
-                    display: 'block', marginTop: 3,
-                  }}>
-                    {event.description}
-                  </span>
-                )}
-                {event.notes && (
-                  <span style={{ fontSize: 9, color: '#a0988c', display: 'block', marginTop: 3 }}>
-                    {event.notes}
-                  </span>
-                )}
-                {event.children?.length > 0 && (
-                  <div style={{ marginTop: 8 }}>
-                    {event.children.map((child) => (
-                      <div key={child.id} className="flex items-baseline" style={{ marginBottom: 4 }}>
-                        <span style={{
-                          fontSize: 9, color: pal.accent,
-                          width: 48, marginRight: 8, flexShrink: 0,
-                          fontFamily: "'Macker', serif",
-                        }}>
-                          {formatTime(child.start_time)}
-                        </span>
-                        <span style={{ fontSize: 9, color: '#5c5550' }}>{child.title}</span>
-                      </div>
-                    ))}
+              </div>
+            )}
+            <div style={{ overflow: 'hidden' }}>
+              {pageEvents.map((event, ei) => (
+                <div key={event.id} style={{ display: 'flex', minHeight: 0 }}>
+                  {/* Time column */}
+                  <div style={{ width: 88, paddingRight: 20, textAlign: 'right', flexShrink: 0, paddingTop: 12 }}>
+                    <span style={{ fontFamily: "'Macker', serif", fontSize: 14, color: pal.dark, display: 'block', lineHeight: '1' }}>
+                      {formatTime(event.start_time)}
+                    </span>
+                    {event.end_time && (
+                      <span style={{ fontSize: 9, color: '#a0988c', display: 'block', marginTop: 2 }}>
+                        {formatTime(event.end_time)}
+                      </span>
+                    )}
                   </div>
-                )}
-              </div>
+                  {/* Accent line */}
+                  <div style={{ width: 1, backgroundColor: `${pal.accent}35`, flexShrink: 0, marginTop: 12 }} />
+                  {/* Content */}
+                  <div style={{
+                    flex: 1, padding: '12px 0 12px 20px', minWidth: 0,
+                    borderBottom: ei < pageEvents.length - 1 ? '1px solid #f0ede6' : 'none',
+                  }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: pal.dark, letterSpacing: 0.8, textTransform: 'uppercase', display: 'block', ...truncStyle }}>
+                      {event.title}
+                    </span>
+                    {event.location && (
+                      <span style={{ fontSize: 9, color: '#a0988c', display: 'flex', alignItems: 'center', gap: 3, marginTop: 3, ...truncStyle }}>
+                        <MapPin size={8} color="#a0988c" strokeWidth={1.5} />
+                        {event.location}
+                      </span>
+                    )}
+                    {event.description && (
+                      <span style={{ fontSize: 10, fontStyle: 'italic', color: '#787167', display: 'block', marginTop: 3, ...truncStyle }}>
+                        {event.description}
+                      </span>
+                    )}
+                    {event.notes && (
+                      <span style={{ fontSize: 9, color: '#a0988c', display: 'block', marginTop: 3, ...truncStyle }}>
+                        {event.notes}
+                      </span>
+                    )}
+                    {event.children?.length > 0 && (
+                      <div style={{ marginTop: 8 }}>
+                        {event.children.map((child) => (
+                          <div key={child.id} style={{ display: 'flex', alignItems: 'baseline', marginBottom: 4 }}>
+                            <span style={{ fontSize: 9, color: pal.accent, width: 48, marginRight: 8, flexShrink: 0, fontFamily: "'Macker', serif" }}>
+                              {formatTime(child.start_time)}
+                            </span>
+                            <span style={{ fontSize: 9, color: '#5c5550', flex: 1, minWidth: 0, ...truncStyle }}>{child.title}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
-      <PageFooter weddingName={weddingName} />
-    </PageShell>
+          </div>
+          <PageFooter weddingName={weddingName} />
+        </PageShell>
+      ))}
+    </>
   )
 }
 
@@ -1511,43 +1556,52 @@ function SuppliersPage({ suppliers, weddingName, pal, t, showFinancial = true }:
 }
 
 // ─────────────────────────────────────────────
-// Venue Map Page
+// Venue Map Page — full-bleed maximized map
 // ─────────────────────────────────────────────
+const MAP_PAD = 12          // outer page inset
+const MAP_HEADER_H = 46     // compact title strip height
+const MAP_FOOTER_H = 22     // tiny bottom attribution strip
+
 function VenueMapPage({ mapDataUrl, venueName, weddingName, pal, t, isHorizontal = false }: {
   mapDataUrl: string; venueName?: string; weddingName: string; pal: BrandPalette
   t: (k: string, p?: Record<string, string>) => string; isHorizontal?: boolean
 }) {
-  // For horizontal maps, rotate the content 90° to maximize page usage
+  // Image area dimensions for portrait
+  const imgW = PAGE_W - MAP_PAD * 2
+  const imgH = PAGE_H - MAP_PAD * 2 - MAP_HEADER_H - MAP_FOOTER_H - 8
+
+  // For horizontal seating maps: rotate entire content 90° so wide map fills the page
   if (isHorizontal) {
+    const rW = PAGE_H - MAP_PAD * 2 - MAP_HEADER_H - MAP_FOOTER_H - 8
+    const rH = PAGE_W - MAP_PAD * 2
     return (
       <PageShell>
-        {/* Rotated container: swap width/height, rotate contents */}
         <div style={{
           position: 'absolute', top: '50%', left: '50%',
-          width: PAGE_H - 80, height: PAGE_W - 80,
+          width: PAGE_H - MAP_PAD * 2, height: PAGE_W - MAP_PAD * 2,
           transform: 'translate(-50%, -50%) rotate(90deg)',
-          display: 'flex', flexDirection: 'column',
+          display: 'flex', flexDirection: 'column', gap: 6,
         }}>
-          <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-            <div>
-              <h2 style={{ fontFamily: "'Macker', serif", fontSize: 22, color: '#2c2c2c', marginBottom: 2 }}>
+          {/* Header */}
+          <div style={{ height: MAP_HEADER_H, display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+            <div style={{ width: 3, height: 28, backgroundColor: pal.accent, borderRadius: 2, flexShrink: 0 }} />
+            <div style={{ minWidth: 0 }}>
+              <span style={{ fontFamily: "'Macker', serif", fontSize: 18, color: '#2c2c2c', display: 'block', lineHeight: 1.2 }}>
                 {t('admin.summary.sections.venueMap')}
-              </h2>
+              </span>
               {venueName && (
-                <p style={{ fontSize: 10, fontStyle: 'italic', color: '#787167' }}>{venueName}</p>
+                <span style={{ fontSize: 9, color: '#a0988c', display: 'block', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{venueName}</span>
               )}
             </div>
-            <div style={{ height: 2, width: 40, backgroundColor: pal.accent }} />
           </div>
-          <div style={{
-            flex: 1, border: '1px solid #e9e5e0', borderRadius: 8,
-            overflow: 'hidden', padding: 6, backgroundColor: '#fefdfb',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
+          {/* Map image */}
+          <div style={{ width: '100%', height: rW, flexShrink: 0, border: '1px solid #e9e5e0', borderRadius: 6, overflow: 'hidden', backgroundColor: '#fefdfb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={mapDataUrl} alt="Venue map" style={{
-              maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 4,
-            }} />
+            <img src={mapDataUrl} alt="Venue map" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
+          {/* Footer strip */}
+          <div style={{ height: rH, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: 8, color: '#c8c0b8', letterSpacing: 3, textTransform: 'uppercase' }}>{weddingName}</span>
           </div>
         </div>
       </PageShell>
@@ -1556,27 +1610,34 @@ function VenueMapPage({ mapDataUrl, venueName, weddingName, pal, t, isHorizontal
 
   return (
     <PageShell>
-      <div style={{ padding: '48px 40px 60px 40px' }}>
-        <h2 style={{ fontFamily: "'Macker', serif", fontSize: 22, color: '#2c2c2c', marginBottom: 4 }}>
-          {t('admin.summary.sections.venueMap')}
-        </h2>
-        {venueName && (
-          <p style={{ fontSize: 11, fontStyle: 'italic', color: '#787167', marginTop: 2 }}>{venueName}</p>
-        )}
-        <div style={{ height: 2, width: 40, backgroundColor: pal.accent, marginBottom: 16 }} />
+      <div style={{ position: 'absolute', inset: MAP_PAD, display: 'flex', flexDirection: 'column', gap: 6, boxSizing: 'border-box' }}>
+        {/* Compact header strip */}
+        <div style={{ height: MAP_HEADER_H, display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <div style={{ width: 3, height: 28, backgroundColor: pal.accent, borderRadius: 2, flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ fontFamily: "'Macker', serif", fontSize: 20, color: '#2c2c2c', display: 'block', lineHeight: 1.2 }}>
+              {t('admin.summary.sections.venueMap')}
+            </span>
+            {venueName && (
+              <span style={{ fontSize: 10, fontStyle: 'italic', color: '#a0988c', display: 'block', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{venueName}</span>
+            )}
+          </div>
+        </div>
+        {/* Full-bleed map image — uses all remaining space */}
         <div style={{
+          width: imgW, height: imgH, flexShrink: 0,
           border: '1px solid #e9e5e0', borderRadius: 8,
-          overflow: 'hidden', padding: 6, backgroundColor: '#fefdfb',
+          overflow: 'hidden', backgroundColor: '#fefdfb',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          minHeight: PAGE_H - 240,
         }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={mapDataUrl} alt="Venue map" style={{
-            maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 4,
-          }} />
+          <img src={mapDataUrl} alt="Venue map" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+        </div>
+        {/* Footer strip */}
+        <div style={{ height: MAP_FOOTER_H, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          <span style={{ fontSize: 8, color: '#c8c0b8', letterSpacing: 3, textTransform: 'uppercase' }}>{weddingName}</span>
         </div>
       </div>
-      <PageFooter weddingName={weddingName} />
     </PageShell>
   )
 }
@@ -1810,7 +1871,7 @@ export function WebPDFDocument({ data, t }: {
             subtitle={pl(data.itinerary.length, 'events')}
             iconType="itinerary" pal={pal} weddingName={weddingName}
           />
-          <ItineraryPage itinerary={data.itinerary} locale={locale} weddingName={weddingName} pal={pal} t={t} />
+          <ItineraryPages itinerary={data.itinerary} locale={locale} weddingName={weddingName} pal={pal} t={t} />
         </>
       )}
       {show('suppliers') && data.suppliers && data.suppliers.length > 0 && (
