@@ -158,6 +158,8 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
             {sections.map((section, index) => {
               const Icon = section.icon
               const badge = 'badge' in section ? section.badge : undefined
+              const isWebsiteCard = index === 0
+              const isWebsiteLoading = isWebsiteCard && hasWebsite === null
               const colorClasses = {
                 primary: "border-primary/20 hover:border-primary/50 hover:bg-primary/5",
                 secondary: "border-secondary/20 hover:border-secondary/50 hover:bg-secondary/5",
@@ -168,40 +170,52 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
                 secondary: "text-secondary",
                 accent: "text-accent",
               }
-              return (
-                <Link key={index} href={section.href}>
-                  <Card
-                    className={`p-6 border transition-all duration-300 cursor-pointer h-full ${
-                      colorClasses[section.color as keyof typeof colorClasses]
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div
-                        className={`p-3 rounded-lg ${
-                          section.color === "primary"
-                            ? "bg-primary/10"
-                            : section.color === "secondary"
-                              ? "bg-secondary/10"
-                              : "bg-accent/10"
-                        }`}
-                      >
-                        <Icon
-                          className={`w-6 h-6 ${iconColorClasses[section.color as keyof typeof iconColorClasses]}`}
-                        />
-                      </div>
-                      <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              const cardContent = (
+                <Card
+                  className={`p-6 border transition-all duration-300 h-full ${
+                    isWebsiteLoading ? 'border-primary/20' : `cursor-pointer ${colorClasses[section.color as keyof typeof colorClasses]}`
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div
+                      className={`p-3 rounded-lg ${
+                        section.color === "primary"
+                          ? "bg-primary/10"
+                          : section.color === "secondary"
+                            ? "bg-secondary/10"
+                            : "bg-accent/10"
+                      }`}
+                    >
+                      <Icon
+                        className={`w-6 h-6 ${iconColorClasses[section.color as keyof typeof iconColorClasses]}`}
+                      />
                     </div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">
-                      {section.title}
-                      {badge && (
-                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground uppercase tracking-wider">
-                          {badge}
-                        </span>
-                      )}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">{section.description}</p>
-                  </Card>
-                </Link>
+                    {!isWebsiteLoading && <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />}
+                  </div>
+                  {isWebsiteLoading ? (
+                    <>
+                      <div className="h-5 w-36 bg-muted animate-pulse rounded mb-2" />
+                      <div className="h-4 w-full bg-muted/60 animate-pulse rounded" />
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="text-lg font-semibold text-foreground mb-2">
+                        {section.title}
+                        {badge && (
+                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground uppercase tracking-wider">
+                            {badge}
+                          </span>
+                        )}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">{section.description}</p>
+                    </>
+                  )}
+                </Card>
+              )
+              return isWebsiteLoading ? (
+                <div key={index}>{cardContent}</div>
+              ) : (
+                <Link key={index} href={section.href}>{cardContent}</Link>
               )
             })}
           </div>
