@@ -1822,6 +1822,8 @@ export const en: Translations = {
         groups: { one: 'group', other: 'groups' },
         phone: 'Phone',
         table: 'Table',
+        declinedGuests: 'Declined Guests',
+        confirmedOnly: 'confirmed',
       },
       closingImage: 'Closing Image',
       closingImageNote: 'Choose a different image for the last page, or leave it to use the cover image.',

@@ -1818,6 +1818,8 @@ export const es: Translations = {
         groups: { one: 'grupo', other: 'grupos' },
         phone: 'Teléfono',
         table: 'Mesa',
+        declinedGuests: 'Invitados que Declinaron',
+        confirmedOnly: 'confirmados',
       },
       closingImage: 'Imagen de Cierre',
       closingImageNote: 'Elige una imagen diferente para la última página, o déjala para usar la de portada.',

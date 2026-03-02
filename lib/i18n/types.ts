@@ -1750,6 +1750,8 @@ export interface Translations {
         groups: { one: string; other: string }
         phone: string
         table: string
+        declinedGuests: string
+        confirmedOnly: string
       }
       closingImage: string
       closingImageNote: string

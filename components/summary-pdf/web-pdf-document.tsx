@@ -1036,6 +1036,78 @@ function GuestsByTablePages({ seating, weddingName, pal, t, menuColorMap }: {
 }
 
 // ─────────────────────────────────────────────
+// Declined Guests Page — simple name list
+// ─────────────────────────────────────────────
+function DeclinedGuestsPage({ declinedNames, weddingName, pal, t }: {
+  declinedNames: string[]; weddingName: string; pal: BrandPalette
+  t: (k: string, p?: Record<string, string>) => string
+}) {
+  const sorted = [...declinedNames].sort((a, b) => a.localeCompare(b))
+  const ROW_H = 20
+  const TITLE_AREA_H = 54
+  const usableH = PAGE_H - CONTENT_TOP - CONTENT_BOTTOM - TITLE_AREA_H
+  const COLS = 2
+  const perCol = Math.floor(usableH / ROW_H)
+  const perPage = perCol * COLS
+
+  const pages: string[][] = []
+  for (let i = 0; i < sorted.length; i += perPage) {
+    pages.push(sorted.slice(i, i + perPage))
+  }
+
+  return (
+    <>
+      {pages.map((pageNames, pi) => {
+        const col1 = pageNames.slice(0, perCol)
+        const col2 = pageNames.slice(perCol)
+        return (
+          <PageShell key={`declined-${pi}`}>
+            <div style={{ padding: `${CONTENT_TOP}px 56px ${CONTENT_BOTTOM}px 56px` }}>
+              {pi === 0 && (
+                <>
+                  <h2 style={{ fontFamily: "'Macker', serif", fontSize: 22, color: '#a0988c', marginBottom: 4 }}>
+                    {t('admin.summary.pdf.declinedGuests')}
+                  </h2>
+                  <div style={{ height: 3, width: 44, backgroundColor: '#d4cfc8', marginBottom: 6 }} />
+                  <p style={{ fontSize: 10, color: '#a0988c', marginBottom: 20 }}>
+                    {sorted.length} {sorted.length === 1 ? t('admin.summary.pdf.guests.one') : t('admin.summary.pdf.guests.other')}
+                  </p>
+                </>
+              )}
+              {pi > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <span style={{ fontSize: 9, color: '#a0988c', letterSpacing: 1, textTransform: 'uppercase' }}>
+                    {t('admin.summary.pdf.declinedGuests')} — {pi + 1}
+                  </span>
+                </div>
+              )}
+              <div className="flex" style={{ gap: 24 }}>
+                {[col1, col2].map((col, ci) => (
+                  <div key={ci} className="flex-1 flex flex-col">
+                    {col.map((name, ni) => (
+                      <div key={ni} style={{
+                        padding: '4px 8px',
+                        fontSize: 10,
+                        color: '#787167',
+                        borderBottom: ni < col.length - 1 ? '1px solid #f0ede6' : 'none',
+                        backgroundColor: ni % 2 === 0 ? '#fefdfb' : '#f8f6f2',
+                      }}>
+                        {name}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <PageFooter weddingName={weddingName} />
+          </PageShell>
+        )
+      })}
+    </>
+  )
+}
+
+// ─────────────────────────────────────────────
 // Itinerary Page — minimalist two-column
 // ─────────────────────────────────────────────
 function ItineraryPage({ itinerary, locale, weddingName, pal, t }: {
@@ -1563,6 +1635,24 @@ export function WebPDFDocument({ data, t }: {
   // Plural helper
   const pl = (count: number, key: string) => `${count} ${t(`admin.summary.pdf.${key}.${count === 1 ? 'one' : 'other'}`)}`
 
+  // Filter guests: confirmed only for main views, collect declined names
+  const confirmedGuestList = data.guestList?.filter(g => g.status === 'confirmed') ?? []
+  const declinedNames = data.guestList?.filter(g => g.status === 'declined').map(g => g.name) ?? []
+
+  // Filter seating: only confirmed guests per table, skip empty tables
+  const confirmedSeating = data.seating
+    .map(table => ({
+      ...table,
+      guests: table.guests.filter(g => g.status === 'confirmed'),
+      occupancy: table.guests.filter(g => g.status === 'confirmed').length,
+    }))
+    .filter(table => table.guests.length > 0)
+
+  // Whether any guest section is shown (for declined list placement)
+  const anyGuestSection = (show('guestsByGroup') && confirmedGuestList.length > 0) ||
+    (show('guestsByMenu') && confirmedGuestList.length > 0 && data.menus.length > 0) ||
+    (show('guestsByTable') && confirmedSeating.length > 0)
+
   return (
     <div data-pdf-container>
       <CoverPage
@@ -1589,35 +1679,39 @@ export function WebPDFDocument({ data, t }: {
           <MenusPage menus={data.menus} weddingName={weddingName} pal={pal} t={t} menuColorMap={menuColorMap} />
         </>
       )}
-      {show('guestsByGroup') && data.guestList && data.guestList.length > 0 && (
+      {show('guestsByGroup') && confirmedGuestList.length > 0 && (
         <>
           <SectionDividerPage
             title={t('admin.summary.sections.guestsByGroup')}
-            subtitle={`${pl(data.guestList.length, 'guests')} · ${pl(new Set(data.guestList.map(g => g.groupName || '—')).size, 'groups')}`}
+            subtitle={`${pl(confirmedGuestList.length, 'guests')} ${t('admin.summary.pdf.confirmedOnly')} · ${pl(new Set(confirmedGuestList.map(g => g.groupName || '—')).size, 'groups')}`}
             iconType="seating" pal={pal} weddingName={weddingName}
           />
-          <GuestsByGroupPages guestList={data.guestList} weddingName={weddingName} pal={pal} t={t} menuColorMap={menuColorMap} />
+          <GuestsByGroupPages guestList={confirmedGuestList} weddingName={weddingName} pal={pal} t={t} menuColorMap={menuColorMap} />
         </>
       )}
-      {show('guestsByMenu') && data.guestList && data.guestList.length > 0 && data.menus.length > 0 && (
+      {show('guestsByMenu') && confirmedGuestList.length > 0 && data.menus.length > 0 && (
         <>
           <SectionDividerPage
             title={t('admin.summary.sections.guestsByMenu')}
-            subtitle={`${pl(data.guestList.length, 'guests')} · ${pl(data.menus.length, 'menus')}`}
+            subtitle={`${pl(confirmedGuestList.length, 'guests')} ${t('admin.summary.pdf.confirmedOnly')} · ${pl(data.menus.length, 'menus')}`}
             iconType="menus" pal={pal} weddingName={weddingName}
           />
-          <GuestsByMenuPages guestList={data.guestList} weddingName={weddingName} pal={pal} t={t} menuColorMap={menuColorMap} />
+          <GuestsByMenuPages guestList={confirmedGuestList} weddingName={weddingName} pal={pal} t={t} menuColorMap={menuColorMap} />
         </>
       )}
-      {show('guestsByTable') && data.seating.length > 0 && (
+      {show('guestsByTable') && confirmedSeating.length > 0 && (
         <>
           <SectionDividerPage
             title={t('admin.summary.sections.guestsByTable')}
-            subtitle={`${pl(data.seating.length, 'tables')} · ${pl(data.stats.confirmed, 'guests')}`}
+            subtitle={`${pl(confirmedSeating.length, 'tables')} · ${pl(confirmedSeating.reduce((sum, t) => sum + t.guests.length, 0), 'guests')} ${t('admin.summary.pdf.confirmedOnly')}`}
             iconType="seating" pal={pal} weddingName={weddingName}
           />
-          <GuestsByTablePages seating={data.seating} weddingName={weddingName} pal={pal} t={t} menuColorMap={menuColorMap} />
+          <GuestsByTablePages seating={confirmedSeating} weddingName={weddingName} pal={pal} t={t} menuColorMap={menuColorMap} />
         </>
+      )}
+      {/* Declined guests list — shown after any guest view */}
+      {anyGuestSection && declinedNames.length > 0 && (
+        <DeclinedGuestsPage declinedNames={declinedNames} weddingName={weddingName} pal={pal} t={t} />
       )}
       {show('itinerary') && data.itinerary.length > 0 && (
         <>
