@@ -137,6 +137,15 @@ interface SummaryData {
       notes: string | null
     }>
   }>
+  guestList?: Array<{
+    name: string
+    groupName: string | null
+    groupId: string | null
+    status: string
+    phone: string | null
+    menuName: string | null
+    tableName: string | null
+  }>
 }
 
 type LucideIconFC = FC<{ className?: string }>
@@ -238,6 +247,7 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
         venueMapDataUrl,
         venueMapIsHorizontal,
         coverImageUrl: options?.coverImageUrl,
+        closingImageUrl: options?.closingImageUrl,
         selectedSections: options?.selectedSections,
         showSuppliersFinancial: options?.showSuppliersFinancial ?? true,
         bgSource: options?.bgSource,
@@ -648,7 +658,9 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
         availableSections={[
           { key: 'overview', label: t('admin.summary.sections.overview'), available: true },
           { key: 'menus', label: t('admin.summary.sections.menus'), available: menus.length > 0 },
-          { key: 'seating', label: t('admin.summary.sections.seatingAssignments'), available: seating.length > 0 },
+          { key: 'guestsByGroup', label: t('admin.summary.sections.guestsByGroup'), available: (data.guestList?.length ?? 0) > 0 },
+          { key: 'guestsByMenu', label: t('admin.summary.sections.guestsByMenu'), available: (data.guestList?.length ?? 0) > 0 && menus.length > 0 },
+          { key: 'guestsByTable', label: t('admin.summary.sections.guestsByTable'), available: seating.length > 0 },
           { key: 'itinerary', label: t('admin.summary.sections.itinerary'), available: itinerary.length > 0 },
           { key: 'suppliers', label: t('admin.summary.sections.suppliers'), available: suppliers.length > 0 },
           { key: 'venue', label: t('admin.summary.sections.venueMap'), available: venueElements.length > 0 || seating.length > 0 },

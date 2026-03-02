@@ -32,6 +32,7 @@ export type ColorSource = 'primary' | 'accent'
 
 export interface ExportOptions {
   coverImageUrl?: string
+  closingImageUrl?: string
   selectedSections: string[]
   bgSource: ColorSource
   bgVariant: PaletteVariant
@@ -272,7 +273,7 @@ function ExportProgressOverlay({ progress, primaryColor, accentColor, t }: {
 
       {/* Subtle tip */}
       <p className="text-xs text-muted-foreground/60 mt-6 text-center">
-        {progress < 100 ? 'Please wait while we craft your PDF...' : 'Download starting...'}
+        {progress < 100 ? t('admin.summary.exportModal.exportSteps.pleaseWait') : t('admin.summary.exportModal.exportSteps.downloadStarting')}
       </p>
     </div>
   )
@@ -294,6 +295,7 @@ export function ExportModal({
   const { t } = useI18n()
 
   const [coverImageUrl, setCoverImageUrl] = useState<string | undefined>(heroImageUrl ?? undefined)
+  const [closingImageUrl, setClosingImageUrl] = useState<string | undefined>(undefined)
   const [selectedSections, setSelectedSections] = useState<string[]>(
     availableSections.filter(s => s.available).map(s => s.key)
   )
@@ -302,6 +304,7 @@ export function ExportModal({
   const [hlSource, setHlSource] = useState<ColorSource>('accent')
   const [hlVariant, setHlVariant] = useState<PaletteVariant>('original')
   const [showImagePicker, setShowImagePicker] = useState(false)
+  const [showClosingImagePicker, setShowClosingImagePicker] = useState(false)
   const [showSuppliersFinancial, setShowSuppliersFinancial] = useState(true)
 
   const resolveColor = (source: ColorSource, variant: PaletteVariant) => {
@@ -317,6 +320,7 @@ export function ExportModal({
   useEffect(() => {
     if (isOpen) {
       setCoverImageUrl(heroImageUrl ?? undefined)
+      setClosingImageUrl(undefined)
       setSelectedSections(availableSections.filter(s => s.available).map(s => s.key))
       setBgSource('primary')
       setBgVariant('original')
@@ -332,7 +336,7 @@ export function ExportModal({
   }
 
   const handleExport = () => {
-    onExport({ coverImageUrl, selectedSections, bgSource, bgVariant, hlSource, hlVariant, showSuppliersFinancial })
+    onExport({ coverImageUrl, closingImageUrl, selectedSections, bgSource, bgVariant, hlSource, hlVariant, showSuppliersFinancial })
   }
 
   return (
@@ -564,6 +568,50 @@ export function ExportModal({
                         )}
                       </div>
 
+                      {/* Closing image */}
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
+                          {t('admin.summary.closingImage')}
+                        </p>
+                        {closingImageUrl ? (
+                          <div className="relative rounded-lg overflow-hidden border border-border aspect-video">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={closingImageUrl} alt="Closing" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0" style={{ backgroundColor: primaryColor, opacity: 0.55 }} />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-white/80 text-xs font-medium drop-shadow">
+                                {t('admin.summary.exportModal.previewOverlay')}
+                              </span>
+                            </div>
+                            <div className="absolute top-2 right-2 flex gap-1.5">
+                              <button
+                                onClick={() => setShowClosingImagePicker(true)}
+                                className="bg-black/50 hover:bg-black/70 text-white rounded-md p-1.5 transition-colors"
+                                title={t('admin.summary.exportModal.changeImage')}
+                              >
+                                <ImageIcon className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => setClosingImageUrl(undefined)}
+                                className="bg-black/50 hover:bg-destructive/80 text-white rounded-md p-1.5 transition-colors"
+                                title={t('admin.summary.exportModal.removeImage')}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setShowClosingImagePicker(true)}
+                            className="w-full border-2 border-dashed border-border hover:border-primary/50 rounded-lg py-4 flex flex-col items-center gap-1.5 transition-colors text-muted-foreground hover:text-foreground"
+                          >
+                            <ImageIcon className="w-5 h-5 opacity-50" />
+                            <span className="text-sm">{t('admin.summary.exportModal.selectImage')}</span>
+                            <span className="text-xs opacity-60">{t('admin.summary.closingImageNote')}</span>
+                          </button>
+                        )}
+                      </div>
+
                       {/* Supplier financial toggle */}
                       {selectedSections.includes('suppliers') && (
                         <div>
@@ -671,6 +719,17 @@ export function ExportModal({
         onSelectImage={urls => {
           if (urls[0]) setCoverImageUrl(urls[0])
           setShowImagePicker(false)
+        }}
+        weddingNameId={weddingNameId}
+        mode="both"
+      />
+
+      <ImageGalleryDialog
+        isOpen={showClosingImagePicker}
+        onClose={() => setShowClosingImagePicker(false)}
+        onSelectImage={urls => {
+          if (urls[0]) setClosingImageUrl(urls[0])
+          setShowClosingImagePicker(false)
         }}
         weddingNameId={weddingNameId}
         mode="both"

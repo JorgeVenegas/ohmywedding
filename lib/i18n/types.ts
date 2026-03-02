@@ -1717,6 +1717,9 @@ export interface Translations {
         venueMap: string
         menus: string
         seatingAssignments: string
+        guestsByGroup: string
+        guestsByMenu: string
+        guestsByTable: string
         itinerary: string
         suppliers: string
         overview: string
@@ -1737,6 +1740,19 @@ export interface Translations {
       noItineraryData: string
       noSuppliersData: string
       totalAssigned: string
+      pdf: {
+        menus: { one: string; other: string }
+        suppliers: { one: string; other: string }
+        categories: { one: string; other: string }
+        guests: { one: string; other: string }
+        tables: { one: string; other: string }
+        events: { one: string; other: string }
+        groups: { one: string; other: string }
+        phone: string
+        table: string
+      }
+      closingImage: string
+      closingImageNote: string
       exportModal: {
         title: string
         weddingColors: string
@@ -1759,6 +1775,8 @@ export interface Translations {
           assembling: string
           finishing: string
           complete: string
+          pleaseWait: string
+          downloadStarting: string
         }
         paletteLabel: string
         paletteOriginal: string

@@ -67,7 +67,8 @@ export interface WeddingPDFData {
   seating: Array<{ tableNumber: number; tableName: string; shape: string; capacity: number; occupancy: number; position_x: number; position_y: number; width: number; height: number; rotation: number; guests: Array<{ name: string; groupName: string | null; status: string; dietaryRestrictions: string | null; menu: { name: string } | null; seatNumber: number | null }> }>
   itinerary: Array<{ id: string; title: string; description: string | null; location: string | null; start_time: string; end_time: string | null; notes: string | null; icon: string | null; children: Array<{ id: string; title: string; description: string | null; location: string | null; start_time: string; end_time: string | null; notes: string | null; icon: string | null }> }>
   suppliers?: Array<{ id: string; name: string; category: string; contact_info: string | null; contact_type: string; contract_url: string | null; total_amount: number; covered_amount: number; notes: string | null; payments: Array<{ id: string; amount: number; payment_date: string; notes: string | null }> }>
-  venueMapDataUrl?: string; coverImageUrl?: string; selectedSections?: string[]
+  guestList?: Array<{ name: string; groupName: string | null; groupId: string | null; status: string; phone: string | null; menuName: string | null; tableName: string | null }>
+  venueMapDataUrl?: string; coverImageUrl?: string; closingImageUrl?: string; selectedSections?: string[]
   venueMapIsHorizontal?: boolean
   showSuppliersFinancial?: boolean
   bgSource?: 'primary' | 'accent'
@@ -283,13 +284,19 @@ function IndexPage({ wedding, weddingName, pal, t, locale, selectedSections, sta
     return local.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   }
 
-  const sectionOrder = ['menus', 'seating', 'itinerary', 'suppliers', 'venue'] as const
+  const sectionOrder = ['menus', 'guestsByGroup', 'guestsByMenu', 'guestsByTable', 'itinerary', 'suppliers', 'venue'] as const
   const sectionLabels: Record<string, string> = {
     menus: t('admin.summary.sections.menus'),
-    seating: t('admin.summary.sections.seatingAssignments'),
+    guestsByGroup: t('admin.summary.sections.guestsByGroup'),
+    guestsByMenu: t('admin.summary.sections.guestsByMenu'),
+    guestsByTable: t('admin.summary.sections.guestsByTable'),
     itinerary: t('admin.summary.sections.itinerary'),
     suppliers: t('admin.summary.sections.suppliers'),
     venue: t('admin.summary.sections.venueMap'),
+  }
+  const sectionIconKeys: Record<string, string> = {
+    menus: 'menus', guestsByGroup: 'seating', guestsByMenu: 'menus',
+    guestsByTable: 'seating', itinerary: 'itinerary', suppliers: 'suppliers', venue: 'venue',
   }
   const visibleSections = sectionOrder.filter(k => !selectedSections || selectedSections.includes(k))
 
@@ -344,20 +351,21 @@ function IndexPage({ wedding, weddingName, pal, t, locale, selectedSections, sta
       {/* Section list */}
       <div className="absolute" style={{ top: 340, left: 56, right: 56, bottom: 70 }}>
         {visibleSections.map((key, i) => {
-          const Icon = SECTION_ICONS[key as keyof typeof SECTION_ICONS] || CalendarDays
+          const iconKey = sectionIconKeys[key] || key
+          const Icon = SECTION_ICONS[iconKey as keyof typeof SECTION_ICONS] || CalendarDays
           return (
             <div key={key} className="flex items-center" style={{
-              padding: '22px 0',
+              padding: '16px 0',
               borderBottom: i < visibleSections.length - 1 ? '1px solid #e9e5e0' : 'none',
             }}>
               <div className="flex items-center justify-center flex-shrink-0" style={{
-                width: 44, height: 44, borderRadius: 22,
-                border: `1.5px solid ${pal.accent}`, marginRight: 24,
+                width: 36, height: 36, borderRadius: 18,
+                border: `1.5px solid ${pal.accent}`, marginRight: 20,
               }}>
-                <Icon size={20} color={pal.accent} strokeWidth={1.5} />
+                <Icon size={17} color={pal.accent} strokeWidth={1.5} />
               </div>
               <span style={{
-                fontFamily: "'Macker', serif", fontSize: 24, color: pal.dark,
+                fontFamily: "'Macker', serif", fontSize: 20, color: pal.dark,
                 flex: 1, letterSpacing: 0.5,
               }}>
                 {sectionLabels[key]}
@@ -450,7 +458,7 @@ function SectionDividerPage({ title, subtitle, iconType, pal, weddingName }: {
           <div style={{ height: 1, width: 22, backgroundColor: pal.accent, opacity: 0.3, borderRadius: 1 }} />
         </div>
         {subtitle && (
-          <p style={{ fontSize: 13, color: '#787167', fontStyle: 'italic', textAlign: 'right' }}>{subtitle}</p>
+          <p style={{ fontFamily: "'Sinera', serif", fontSize: 15, color: pal.accent, textAlign: 'right', opacity: 0.85 }}>{subtitle}</p>
         )}
       </div>
 
@@ -752,6 +760,282 @@ function SeatingPages({ seating, weddingName, pal, t, menuColorMap }: {
 }
 
 // ─────────────────────────────────────────────
+// Guests by Group — grouped guest list with phone, table, menu
+// ─────────────────────────────────────────────
+type GuestItem = NonNullable<WeddingPDFData['guestList']>[number]
+
+function GuestsByGroupPages({ guestList, weddingName, pal, t, menuColorMap }: {
+  guestList: GuestItem[]; weddingName: string; pal: BrandPalette
+  t: (k: string, p?: Record<string, string>) => string
+  menuColorMap: Record<string, string>
+}) {
+  // Group by groupName (ungrouped = no group)
+  const grouped = new Map<string, GuestItem[]>()
+  for (const g of guestList) {
+    const key = g.groupName || '—'
+    if (!grouped.has(key)) grouped.set(key, [])
+    grouped.get(key)!.push(g)
+  }
+  const groupEntries = [...grouped.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+
+  // Paginate
+  const GROUP_HEADER_H = 32
+  const GUEST_ROW_H = 22
+  const COL_HEADER_H = 22
+  const GAP = 10
+  const TITLE_AREA_H = 54
+  const usableH = PAGE_H - CONTENT_TOP - CONTENT_BOTTOM - TITLE_AREA_H
+  const columns = [t('admin.summary.columns.guest'), t('admin.summary.pdf.phone'), t('admin.summary.pdf.table'), t('admin.summary.columns.menu')]
+
+  type PageBlock = { groupName: string; guests: GuestItem[]; isStart: boolean }
+  const pages: PageBlock[][] = []
+  let currentPage: PageBlock[] = []
+  let currentH = 0
+
+  for (const [groupName, guests] of groupEntries) {
+    const totalH = GROUP_HEADER_H + COL_HEADER_H + guests.length * GUEST_ROW_H + GAP
+    if (currentH + totalH <= usableH) {
+      currentPage.push({ groupName, guests, isStart: true })
+      currentH += totalH
+    } else {
+      // Split across pages
+      let idx = 0
+      while (idx < guests.length) {
+        const hdrH = GROUP_HEADER_H + COL_HEADER_H
+        const availH = (currentPage.length === 0 ? usableH : usableH - currentH) - hdrH - GAP
+        const fit = Math.max(1, Math.floor(availH / GUEST_ROW_H))
+        const end = Math.min(idx + fit, guests.length)
+        currentPage.push({ groupName, guests: guests.slice(idx, end), isStart: idx === 0 })
+        currentH += hdrH + (end - idx) * GUEST_ROW_H + GAP
+        idx = end
+        if (idx < guests.length) { pages.push(currentPage); currentPage = []; currentH = 0 }
+      }
+    }
+  }
+  if (currentPage.length > 0) pages.push(currentPage)
+
+  return (
+    <>
+      {pages.map((pageBlocks, pi) => (
+        <PageShell key={`gbg-${pi}`}>
+          <div style={{ padding: `${CONTENT_TOP}px 56px ${CONTENT_BOTTOM}px 56px` }}>
+            {pi === 0 && (
+              <>
+                <h2 style={{ fontFamily: "'Macker', serif", fontSize: 22, color: pal.accent, marginBottom: 4 }}>
+                  {t('admin.summary.sections.guestsByGroup')}
+                </h2>
+                <div style={{ height: 3, width: 44, backgroundColor: pal.accent, marginBottom: 24 }} />
+              </>
+            )}
+            {pi > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <span style={{ fontSize: 9, color: '#a0988c', letterSpacing: 1, textTransform: 'uppercase' }}>
+                  {t('admin.summary.sections.guestsByGroup')} — {pi + 1}
+                </span>
+              </div>
+            )}
+            <div className="flex flex-col" style={{ gap: GAP }}>
+              {pageBlocks.map((block, bi) => (
+                <div key={`${block.groupName}-${bi}`} style={{ borderRadius: 6, overflow: 'hidden' }}>
+                  <div className="flex items-center relative overflow-hidden" style={{
+                    backgroundColor: '#f5f2eb', border: '1px solid #e9e5e0',
+                    borderRadius: '6px 6px 0 0', padding: '8px 12px 8px 16px',
+                  }}>
+                    <div className="absolute top-0 bottom-0 left-0" style={{ width: 3, backgroundColor: pal.accent }} />
+                    <span className="flex-1" style={{ fontSize: 11, fontWeight: 700, color: pal.dark, paddingLeft: 4 }}>
+                      {block.groupName}
+                    </span>
+                    {block.isStart && (
+                      <div style={{ backgroundColor: '#f8f6f2', borderRadius: 4, padding: '2px 10px', border: '1px solid #e9e5e0' }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: pal.dark }}>
+                          {grouped.get(block.groupName)?.length ?? block.guests.length}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ border: '1px solid #e9e5e0', borderTop: 'none', borderRadius: '0 0 6px 6px', overflow: 'hidden' }}>
+                    <div className="flex" style={{ backgroundColor: '#f8f6f2', borderBottom: '1px solid #e9e5e0' }}>
+                      {columns.map((col, ci) => (
+                        <span key={ci} style={{
+                          flex: ci === 0 ? 2 : 1.2, fontSize: 8, fontWeight: 700,
+                          color: '#787167', padding: '5px 8px',
+                          textTransform: 'uppercase', letterSpacing: 0.5,
+                        }}>
+                          {col}
+                        </span>
+                      ))}
+                    </div>
+                    {block.guests.map((guest, gi) => (
+                      <div key={gi} className="flex items-center" style={{
+                        backgroundColor: gi % 2 === 0 ? '#fefdfb' : '#f8f6f2',
+                        borderBottom: gi < block.guests.length - 1 ? '1px solid #f0ede6' : 'none',
+                      }}>
+                        <span style={{ flex: 2, fontSize: 10, fontWeight: 600, color: '#2c2c2c', padding: '4px 8px' }}>{guest.name}</span>
+                        <span style={{ flex: 1.2, fontSize: 9, color: '#787167', padding: '4px 8px' }}>{guest.phone || '—'}</span>
+                        <span style={{ flex: 1.2, fontSize: 9, color: '#2c2c2c', padding: '4px 8px' }}>{guest.tableName || '—'}</span>
+                        <span className="flex items-center" style={{ flex: 1.2, fontSize: 9, color: guest.menuName ? (menuColorMap[guest.menuName] || pal.medium) : '#a0988c', padding: '4px 8px', gap: 4, fontWeight: guest.menuName ? 600 : 400 }}>
+                          {guest.menuName && <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', flexShrink: 0, backgroundColor: menuColorMap[guest.menuName] || pal.medium }} />}
+                          {guest.menuName || '—'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <PageFooter weddingName={weddingName} />
+        </PageShell>
+      ))}
+    </>
+  )
+}
+
+// ─────────────────────────────────────────────
+// Guests by Menu — grouped by menu with table and group columns
+// ─────────────────────────────────────────────
+function GuestsByMenuPages({ guestList, weddingName, pal, t, menuColorMap }: {
+  guestList: GuestItem[]; weddingName: string; pal: BrandPalette
+  t: (k: string, p?: Record<string, string>) => string
+  menuColorMap: Record<string, string>
+}) {
+  // Group by menuName (no menu = last)
+  const grouped = new Map<string, GuestItem[]>()
+  for (const g of guestList) {
+    const key = g.menuName || '—'
+    if (!grouped.has(key)) grouped.set(key, [])
+    grouped.get(key)!.push(g)
+  }
+  const menuEntries = [...grouped.entries()].sort((a, b) => {
+    if (a[0] === '—') return 1
+    if (b[0] === '—') return -1
+    return a[0].localeCompare(b[0])
+  })
+
+  const MENU_HEADER_H = 32
+  const GUEST_ROW_H = 22
+  const COL_HEADER_H = 22
+  const GAP = 10
+  const TITLE_AREA_H = 54
+  const usableH = PAGE_H - CONTENT_TOP - CONTENT_BOTTOM - TITLE_AREA_H
+  const columns = [t('admin.summary.columns.guest'), t('admin.summary.columns.group'), t('admin.summary.pdf.table')]
+
+  type PageBlock = { menuName: string; guests: GuestItem[]; isStart: boolean }
+  const pages: PageBlock[][] = []
+  let currentPage: PageBlock[] = []
+  let currentH = 0
+
+  for (const [menuName, guests] of menuEntries) {
+    const totalH = MENU_HEADER_H + COL_HEADER_H + guests.length * GUEST_ROW_H + GAP
+    if (currentH + totalH <= usableH) {
+      currentPage.push({ menuName, guests, isStart: true })
+      currentH += totalH
+    } else {
+      let idx = 0
+      while (idx < guests.length) {
+        const hdrH = MENU_HEADER_H + COL_HEADER_H
+        const availH = (currentPage.length === 0 ? usableH : usableH - currentH) - hdrH - GAP
+        const fit = Math.max(1, Math.floor(availH / GUEST_ROW_H))
+        const end = Math.min(idx + fit, guests.length)
+        currentPage.push({ menuName, guests: guests.slice(idx, end), isStart: idx === 0 })
+        currentH += hdrH + (end - idx) * GUEST_ROW_H + GAP
+        idx = end
+        if (idx < guests.length) { pages.push(currentPage); currentPage = []; currentH = 0 }
+      }
+    }
+  }
+  if (currentPage.length > 0) pages.push(currentPage)
+
+  return (
+    <>
+      {pages.map((pageBlocks, pi) => (
+        <PageShell key={`gbm-${pi}`}>
+          <div style={{ padding: `${CONTENT_TOP}px 56px ${CONTENT_BOTTOM}px 56px` }}>
+            {pi === 0 && (
+              <>
+                <h2 style={{ fontFamily: "'Macker', serif", fontSize: 22, color: pal.accent, marginBottom: 4 }}>
+                  {t('admin.summary.sections.guestsByMenu')}
+                </h2>
+                <div style={{ height: 3, width: 44, backgroundColor: pal.accent, marginBottom: 24 }} />
+              </>
+            )}
+            {pi > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <span style={{ fontSize: 9, color: '#a0988c', letterSpacing: 1, textTransform: 'uppercase' }}>
+                  {t('admin.summary.sections.guestsByMenu')} — {pi + 1}
+                </span>
+              </div>
+            )}
+            <div className="flex flex-col" style={{ gap: GAP }}>
+              {pageBlocks.map((block, bi) => {
+                const menuColor = block.menuName !== '—' ? (menuColorMap[block.menuName] || pal.accent) : '#a0988c'
+                return (
+                  <div key={`${block.menuName}-${bi}`} style={{ borderRadius: 6, overflow: 'hidden' }}>
+                    <div className="flex items-center relative overflow-hidden" style={{
+                      backgroundColor: '#f5f2eb', border: '1px solid #e9e5e0',
+                      borderRadius: '6px 6px 0 0', padding: '8px 12px 8px 16px',
+                    }}>
+                      <div className="absolute top-0 bottom-0 left-0" style={{ width: 3, backgroundColor: menuColor }} />
+                      <div className="flex items-center gap-2 flex-1" style={{ paddingLeft: 4 }}>
+                        <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: menuColor, flexShrink: 0 }} />
+                        <span style={{ fontSize: 11, fontWeight: 700, color: pal.dark }}>{block.menuName}</span>
+                      </div>
+                      {block.isStart && (
+                        <div style={{ backgroundColor: '#f8f6f2', borderRadius: 4, padding: '2px 10px', border: '1px solid #e9e5e0' }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: pal.dark }}>
+                            {grouped.get(block.menuName)?.length ?? block.guests.length}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ border: '1px solid #e9e5e0', borderTop: 'none', borderRadius: '0 0 6px 6px', overflow: 'hidden' }}>
+                      <div className="flex" style={{ backgroundColor: '#f8f6f2', borderBottom: '1px solid #e9e5e0' }}>
+                        {columns.map((col, ci) => (
+                          <span key={ci} style={{
+                            flex: ci === 0 ? 2 : 1.5, fontSize: 8, fontWeight: 700,
+                            color: '#787167', padding: '5px 8px',
+                            textTransform: 'uppercase', letterSpacing: 0.5,
+                          }}>
+                            {col}
+                          </span>
+                        ))}
+                      </div>
+                      {block.guests.map((guest, gi) => (
+                        <div key={gi} className="flex items-center" style={{
+                          backgroundColor: gi % 2 === 0 ? '#fefdfb' : '#f8f6f2',
+                          borderBottom: gi < block.guests.length - 1 ? '1px solid #f0ede6' : 'none',
+                        }}>
+                          <span style={{ flex: 2, fontSize: 10, fontWeight: 600, color: '#2c2c2c', padding: '4px 8px' }}>{guest.name}</span>
+                          <span style={{ flex: 1.5, fontSize: 9, color: '#787167', padding: '4px 8px' }}>{guest.groupName || '—'}</span>
+                          <span style={{ flex: 1.5, fontSize: 9, color: '#2c2c2c', padding: '4px 8px' }}>{guest.tableName || '—'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+          <PageFooter weddingName={weddingName} />
+        </PageShell>
+      ))}
+    </>
+  )
+}
+
+// ─────────────────────────────────────────────
+// Guests by Table — same as seating but with i18n-aware headers
+// ─────────────────────────────────────────────
+function GuestsByTablePages({ seating, weddingName, pal, t, menuColorMap }: {
+  seating: WeddingPDFData['seating']; weddingName: string; pal: BrandPalette
+  t: (k: string, p?: Record<string, string>) => string
+  menuColorMap: Record<string, string>
+}) {
+  // Reuse the existing SeatingPages for "by table" view
+  return <SeatingPages seating={seating} weddingName={weddingName} pal={pal} t={t} menuColorMap={menuColorMap} />
+}
+
+// ─────────────────────────────────────────────
 // Itinerary Page — minimalist two-column
 // ─────────────────────────────────────────────
 function ItineraryPage({ itinerary, locale, weddingName, pal, t }: {
@@ -860,11 +1144,17 @@ function ItineraryPage({ itinerary, locale, weddingName, pal, t }: {
 // ─────────────────────────────────────────────
 // Suppliers Page
 // ─────────────────────────────────────────────
-const SUPPLIER_CATEGORY_LABELS: Record<string, string> = {
-  catering: 'Catering', dj: 'DJ', band: 'Band', photographer: 'Photography',
-  videographer: 'Videography', florist: 'Florist', venue: 'Venue', cake: 'Cake',
-  transportation: 'Transport', hair_makeup: 'Hair & Makeup', officiant: 'Officiant',
-  decoration: 'Decor', other: 'Other',
+// Map DB category keys to i18n keys
+const SUPPLIER_CATEGORY_I18N: Record<string, string> = {
+  catering: 'catering', dj: 'music', band: 'music', photographer: 'photography',
+  videographer: 'videography', florist: 'flowers', venue: 'venue', cake: 'cake',
+  transportation: 'transport', hair_makeup: 'beauty', officiant: 'officiant',
+  decoration: 'decoration', lighting: 'lighting', other: 'other',
+}
+
+function getSupplierCategoryLabel(category: string, t: (k: string) => string): string {
+  const i18nKey = SUPPLIER_CATEGORY_I18N[category] ?? 'other'
+  return t(`admin.suppliers.categories.${i18nKey}`)
 }
 
 function SuppliersPage({ suppliers, weddingName, pal, t, showFinancial = true }: {
@@ -932,16 +1222,16 @@ function SuppliersPage({ suppliers, weddingName, pal, t, showFinancial = true }:
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: showFinancial ? 16 : 20 }}>
                   <Ornament color={pal.accent} width={100} />
                   <span style={{ fontSize: 9, color: '#a0988c', letterSpacing: 0.5 }}>
-                    {suppliers.length} {suppliers.length === 1 ? 'supplier' : 'suppliers'} · {categories.length} {categories.length === 1 ? 'category' : 'categories'}
+                    {suppliers.length} {t(`admin.summary.pdf.suppliers.${suppliers.length === 1 ? 'one' : 'other'}`)} · {categories.length} {t(`admin.summary.pdf.categories.${categories.length === 1 ? 'one' : 'other'}`)}
                   </span>
                 </div>
                 {/* Summary totals row — only when financial is shown */}
                 {showFinancial && (
                   <div className="flex" style={{ gap: 12, marginBottom: 22 }}>
                     {[
-                      { label: t('admin.suppliers.stats.totalSuppliers'), value: String(suppliers.length), color: pal.accent },
-                      { label: t('admin.suppliers.stats.totalBudget'), value: fmt(totalBudget), color: pal.accent },
-                      { label: t('admin.suppliers.stats.totalPaid'), value: fmt(totalCovered), color: '#22c55e' },
+                      { label: t('admin.suppliers.stats.total'), value: String(suppliers.length), color: pal.accent },
+                      { label: t('admin.suppliers.stats.budget'), value: fmt(totalBudget), color: pal.accent },
+                      { label: t('admin.suppliers.stats.covered'), value: fmt(totalCovered), color: '#22c55e' },
                       { label: t('admin.suppliers.stats.remaining'), value: fmt(totalBudget - totalCovered), color: totalBudget - totalCovered > 0 ? '#e11d48' : '#22c55e' },
                     ].map((stat, i) => (
                       <div key={i} style={{ flex: 1, backgroundColor: `${stat.color}10`, borderRadius: 8, padding: '10px 12px', borderBottom: `3px solid ${stat.color}` }}>
@@ -974,10 +1264,10 @@ function SuppliersPage({ suppliers, weddingName, pal, t, showFinancial = true }:
                       paddingBottom: 4, borderBottom: `1.5px solid ${pal.accent}30`,
                     }}>
                       <div style={{ width: 16, height: 16, borderRadius: '50%', backgroundColor: `${pal.accent}30`, border: `1.5px solid ${pal.accent}60`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: pal.accentDark, flexShrink: 0 }}>
-                        {(SUPPLIER_CATEGORY_LABELS[row.category] ?? row.category).charAt(0).toUpperCase()}
+                        {getSupplierCategoryLabel(row.category, t).charAt(0).toUpperCase()}
                       </div>
                       <span style={{ fontSize: 11, fontWeight: 700, color: pal.dark, textTransform: 'uppercase', letterSpacing: 1 }}>
-                        {SUPPLIER_CATEGORY_LABELS[row.category] ?? row.category}
+                        {getSupplierCategoryLabel(row.category, t)}
                       </span>
                       <span style={{ fontSize: 9, color: '#a0988c', marginLeft: 4 }}>({row.count})</span>
                     </div>
@@ -1137,11 +1427,11 @@ function VenueMapPage({ mapDataUrl, venueName, weddingName, pal, t, isHorizontal
 const CLOSING_DISC: Record<string, [string, string]> = {
   es: [
     'Este documento fue generado con OhMyWedding',
-    'La plataforma de gestión de bodas para listas, asientos, menús e itinerario',
+    'La plataforma de gestión de bodas',
   ],
   en: [
     'This document was generated with OhMyWedding',
-    'The wedding management platform for guest lists, seating, menus & itinerary',
+    'The wedding management platform',
   ],
 }
 
@@ -1270,6 +1560,9 @@ export function WebPDFDocument({ data, t }: {
   }
   const formattedDate = data.wedding.wedding_date ? formatDate(data.wedding.wedding_date) : undefined
 
+  // Plural helper
+  const pl = (count: number, key: string) => `${count} ${t(`admin.summary.pdf.${key}.${count === 1 ? 'one' : 'other'}`)}`
+
   return (
     <div data-pdf-container>
       <CoverPage
@@ -1290,27 +1583,47 @@ export function WebPDFDocument({ data, t }: {
         <>
           <SectionDividerPage
             title={t('admin.summary.sections.menus')}
-            subtitle={`${data.menus.length} ${data.menus.length === 1 ? 'menu' : 'menus'}`}
+            subtitle={pl(data.menus.length, 'menus')}
             iconType="menus" pal={pal} weddingName={weddingName}
           />
           <MenusPage menus={data.menus} weddingName={weddingName} pal={pal} t={t} menuColorMap={menuColorMap} />
         </>
       )}
-      {show('seating') && data.seating.length > 0 && (
+      {show('guestsByGroup') && data.guestList && data.guestList.length > 0 && (
         <>
           <SectionDividerPage
-            title={t('admin.summary.sections.seatingAssignments')}
-            subtitle={`${data.seating.length} tables · ${data.stats.confirmed} guests`}
+            title={t('admin.summary.sections.guestsByGroup')}
+            subtitle={`${pl(data.guestList.length, 'guests')} · ${pl(new Set(data.guestList.map(g => g.groupName || '—')).size, 'groups')}`}
             iconType="seating" pal={pal} weddingName={weddingName}
           />
-          <SeatingPages seating={data.seating} weddingName={weddingName} pal={pal} t={t} menuColorMap={menuColorMap} />
+          <GuestsByGroupPages guestList={data.guestList} weddingName={weddingName} pal={pal} t={t} menuColorMap={menuColorMap} />
+        </>
+      )}
+      {show('guestsByMenu') && data.guestList && data.guestList.length > 0 && data.menus.length > 0 && (
+        <>
+          <SectionDividerPage
+            title={t('admin.summary.sections.guestsByMenu')}
+            subtitle={`${pl(data.guestList.length, 'guests')} · ${pl(data.menus.length, 'menus')}`}
+            iconType="menus" pal={pal} weddingName={weddingName}
+          />
+          <GuestsByMenuPages guestList={data.guestList} weddingName={weddingName} pal={pal} t={t} menuColorMap={menuColorMap} />
+        </>
+      )}
+      {show('guestsByTable') && data.seating.length > 0 && (
+        <>
+          <SectionDividerPage
+            title={t('admin.summary.sections.guestsByTable')}
+            subtitle={`${pl(data.seating.length, 'tables')} · ${pl(data.stats.confirmed, 'guests')}`}
+            iconType="seating" pal={pal} weddingName={weddingName}
+          />
+          <GuestsByTablePages seating={data.seating} weddingName={weddingName} pal={pal} t={t} menuColorMap={menuColorMap} />
         </>
       )}
       {show('itinerary') && data.itinerary.length > 0 && (
         <>
           <SectionDividerPage
             title={t('admin.summary.sections.itinerary')}
-            subtitle={`${data.itinerary.length} events`}
+            subtitle={pl(data.itinerary.length, 'events')}
             iconType="itinerary" pal={pal} weddingName={weddingName}
           />
           <ItineraryPage itinerary={data.itinerary} locale={locale} weddingName={weddingName} pal={pal} t={t} />
@@ -1320,7 +1633,7 @@ export function WebPDFDocument({ data, t }: {
         <>
           <SectionDividerPage
             title={t('admin.summary.sections.suppliers')}
-            subtitle={`${data.suppliers.length} ${data.suppliers.length === 1 ? 'supplier' : 'suppliers'}`}
+            subtitle={pl(data.suppliers.length, 'suppliers')}
             iconType="suppliers" pal={pal} weddingName={weddingName}
           />
           <SuppliersPage suppliers={data.suppliers} weddingName={weddingName} pal={pal} t={t} showFinancial={data.showSuppliersFinancial !== false} />
@@ -1341,7 +1654,7 @@ export function WebPDFDocument({ data, t }: {
       )}
       <ClosingPage
         partnerNames={partnerNames} date={formattedDate} pal={pal}
-        coverImageUrl={data.coverImageUrl} locale={locale}
+        coverImageUrl={data.closingImageUrl || data.coverImageUrl} locale={locale}
       />
     </div>
   )

@@ -55,7 +55,7 @@ export async function GET(request: Request) {
       paymentsResult,
     ] = await Promise.all([
       supabase.from('weddings').select('id, wedding_name_id, partner1_first_name, partner1_last_name, partner2_first_name, partner2_last_name, wedding_date, wedding_time, reception_time, ceremony_venue_name, ceremony_venue_address, reception_venue_name, reception_venue_address, page_config').eq('id', weddingUuid).single(),
-      supabase.from('guests').select('id, name, guest_group_id, confirmation_status, dietary_restrictions, notes').eq('wedding_id', weddingUuid),
+      supabase.from('guests').select('id, name, guest_group_id, confirmation_status, dietary_restrictions, notes, phone_number').eq('wedding_id', weddingUuid),
       supabase.from('guest_groups').select('id, name').eq('wedding_id', weddingUuid),
       supabase.from('seating_tables').select('*').eq('wedding_id', weddingUuid).order('display_order', { ascending: true }),
       supabase.from('seating_assignments').select('*').eq('wedding_id', weddingUuid),
@@ -212,6 +212,27 @@ export async function GET(request: Request) {
       hero_image_url,
     }
 
+    // Build table name lookup from seating assignments
+    const guestTableMap = new Map<string, string>()
+    for (const a of seatAssignments) {
+      const table = tables.find(t => t.id === a.table_id)
+      if (table) guestTableMap.set(a.guest_id, table.name)
+    }
+
+    // Build enriched guest list for group/menu/table views
+    const guestList = guests.map(g => {
+      const menuId = menuAssignmentMap.get(g.id)
+      return {
+        name: g.name,
+        groupName: g.guest_group_id ? groupMap.get(g.guest_group_id) || null : null,
+        groupId: g.guest_group_id || null,
+        status: g.confirmation_status,
+        phone: (g as Record<string, unknown>).phone_number as string | null,
+        menuName: menuId ? menuNameMap.get(menuId) || null : null,
+        tableName: guestTableMap.get(g.id) || null,
+      }
+    })
+
     return NextResponse.json({
       wedding: weddingData,
       stats: {
@@ -230,6 +251,7 @@ export async function GET(request: Request) {
       menus: menuData,
       itinerary: itineraryTree,
       suppliers: suppliersData,
+      guestList,
     })
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
