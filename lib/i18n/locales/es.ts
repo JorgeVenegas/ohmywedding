@@ -1774,8 +1774,12 @@ export const es: Translations = {
       stats: {
         totalGuests: 'Total de Invitados',
         confirmed: 'Confirmados',
+        declined: 'Rechazados',
+        pending: 'Pendientes',
         tables: 'Mesas',
         menus: 'Menús',
+        assigned: 'Con asiento',
+        unassigned: 'Sin asiento',
       },
       sections: {
         venueMap: 'Mapa del Salón',

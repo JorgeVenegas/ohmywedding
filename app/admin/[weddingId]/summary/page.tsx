@@ -333,18 +333,30 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
         {/* Print-friendly content */}
         <div ref={printRef} className="bg-white text-zinc-900">
           {/* Overview Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            <Card className="p-4 border">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-8">
+            <Card className="p-4 border-b-2 border-b-green-500">
               <div className="text-2xl font-bold text-green-600">{stats.confirmed}</div>
-              <div className="text-sm text-muted-foreground">{t('admin.summary.stats.confirmed')}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{t('admin.summary.stats.confirmed')}</div>
             </Card>
-            <Card className="p-4 border">
+            <Card className="p-4 border-b-2 border-b-red-500">
+              <div className="text-2xl font-bold text-red-500">{stats.declined}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{t('admin.summary.stats.declined')}</div>
+            </Card>
+            <Card className="p-4 border-b-2 border-b-amber-400">
+              <div className="text-2xl font-bold text-amber-500">{stats.pending}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{t('admin.summary.stats.pending')}</div>
+            </Card>
+            <Card className="p-4 border-b-2 border-b-primary/50">
               <div className="text-2xl font-bold">{stats.totalTables}</div>
-              <div className="text-sm text-muted-foreground">{t('admin.summary.stats.tables')}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{t('admin.summary.stats.tables')}</div>
             </Card>
-            <Card className="p-4 border">
-              <div className="text-2xl font-bold">{stats.totalMenus}</div>
-              <div className="text-sm text-muted-foreground">{t('admin.summary.stats.menus')}</div>
+            <Card className="p-4 border-b-2 border-b-green-400/60">
+              <div className="text-2xl font-bold text-green-600">{stats.assignedGuests}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{t('admin.summary.stats.assigned')}</div>
+            </Card>
+            <Card className={`p-4 border-b-2 ${stats.unassignedGuests > 0 ? 'border-b-red-400' : 'border-b-muted'}`}>
+              <div className={`text-2xl font-bold ${stats.unassignedGuests > 0 ? 'text-red-500' : ''}`}>{stats.unassignedGuests}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{t('admin.summary.stats.unassigned')}</div>
             </Card>
           </div>
 
@@ -437,14 +449,23 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
                 <div className="divide-y">
                   {seating.map(table => (
                     <div key={table.tableNumber}>
-                      <div className="px-4 py-3 bg-muted/30 flex items-center justify-between">
-                        <div className="font-semibold">
-                          {t('admin.summary.tableNumber', { number: String(table.tableNumber) })}: {table.tableName}
-                        </div>
-                        <span className="text-sm text-muted-foreground">
-                          {table.guests.length}/{table.capacity}
-                        </span>
-                      </div>
+                      {(() => {
+                        const over = table.guests.length > table.capacity
+                        const full = table.guests.length === table.capacity && table.capacity > 0
+                        const borderColor = over ? 'border-l-red-500' : full ? 'border-l-green-500' : 'border-l-primary/40'
+                        const bgColor = over ? 'bg-red-50/40' : full ? 'bg-green-50/30' : 'bg-muted/20'
+                        const countColor = over ? 'text-red-600 font-bold' : full ? 'text-green-600 font-bold' : 'text-muted-foreground'
+                        return (
+                          <div className={`px-4 py-3 border-l-4 ${borderColor} ${bgColor} flex items-center justify-between`}>
+                            <div className="font-semibold text-sm">
+                              <span className="text-primary font-bold mr-1">#</span>{table.tableNumber}: {table.tableName}
+                            </div>
+                            <span className={`text-sm ${countColor}`}>
+                              {table.guests.length}/{table.capacity}
+                            </span>
+                          </div>
+                        )
+                      })()}
                       {table.guests.length > 0 ? (
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm table-fixed">
@@ -462,7 +483,7 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
                             </thead>
                             <tbody className="divide-y">
                               {table.guests.map((guest, gi) => (
-                                <tr key={gi} className={`hover:bg-muted/30 ${gi % 2 === 1 ? 'bg-muted/10' : ''}`}>
+                                <tr key={gi} className={`hover:bg-muted/30 ${gi % 2 === 1 ? 'bg-muted/20' : ''}`}>
                                   <td className="px-4 py-2 truncate">{guest.name}</td>
                                   <td className="px-4 py-2 text-muted-foreground truncate">{guest.groupName || '—'}</td>
                                   <td className="px-4 py-2 truncate">{guest.menu?.name || '—'}</td>
@@ -1071,12 +1092,14 @@ function SectionHeader({ title, icon, expanded, onToggle }: {
       onClick={onToggle}
       className="w-full flex items-center gap-3 mb-3 group"
     >
-      <div className="flex items-center gap-2 text-lg font-semibold">
-        {icon}
-        {title}
+      <div className="flex items-center gap-2.5">
+        <div className="p-1.5 rounded-md bg-primary/10 text-primary group-hover:bg-primary/15 transition-colors flex-shrink-0">
+          {icon}
+        </div>
+        <span className="text-base font-semibold text-foreground group-hover:text-primary transition-colors tracking-tight">{title}</span>
       </div>
-      <div className="flex-1 border-b border-dashed" />
-      {expanded ? <ChevronDown className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
+      <div className="flex-1 border-b border-dashed border-primary/20" />
+      {expanded ? <ChevronDown className="w-5 h-5 text-primary/60" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
     </button>
   )
 }

@@ -1778,8 +1778,12 @@ export const en: Translations = {
       stats: {
         totalGuests: 'Total Guests',
         confirmed: 'Confirmed',
+        declined: 'Declined',
+        pending: 'Pending',
         tables: 'Tables',
         menus: 'Menus',
+        assigned: 'Seated',
+        unassigned: 'Unseated',
       },
       sections: {
         venueMap: 'Venue Map',

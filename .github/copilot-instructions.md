@@ -99,3 +99,9 @@ stripe trigger payment_intent.requires_action
 ```
 
 Keep the webhook script running in a separate terminal while testing.
+
+## NEVER Use Emojis in Code
+
+NEVER use emojis in any code, JSX, strings, comments, or output — including PDFs, UI components, labels, icons, or any visible text. Emojis render inconsistently across platforms, look unprofessional in PDFs, and can cause encoding issues.
+
+Always use Lucide React icons or styled HTML/CSS elements (e.g., colored dots, SVGs) instead of emoji characters for visual indicators.

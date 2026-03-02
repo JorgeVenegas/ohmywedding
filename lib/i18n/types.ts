@@ -1706,8 +1706,12 @@ export interface Translations {
       stats: {
         totalGuests: string
         confirmed: string
+        declined: string
+        pending: string
         tables: string
         menus: string
+        assigned: string
+        unassigned: string
       }
       sections: {
         venueMap: string

@@ -867,13 +867,6 @@ const SUPPLIER_CATEGORY_LABELS: Record<string, string> = {
   decoration: 'Decor', other: 'Other',
 }
 
-const SUPPLIER_CATEGORY_ICONS: Record<string, string> = {
-  catering: '🍽', dj: '🎧', band: '🎵', photographer: '📷',
-  videographer: '🎬', florist: '💐', venue: '🏛', cake: '🎂',
-  transportation: '🚗', hair_makeup: '💄', officiant: '📜',
-  decoration: '✨', other: '📋',
-}
-
 function SuppliersPage({ suppliers, weddingName, pal, t, showFinancial = true }: {
   suppliers: NonNullable<WeddingPDFData['suppliers']>; weddingName: string; pal: BrandPalette
   t: (k: string, p?: Record<string, string>) => string; showFinancial?: boolean
@@ -974,14 +967,15 @@ function SuppliersPage({ suppliers, weddingName, pal, t, showFinancial = true }:
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {page.rows.map((row, ri) => {
                 if (row.type === 'category') {
-                  const icon = SUPPLIER_CATEGORY_ICONS[row.category] ?? '📋'
                   return (
                     <div key={`cat-${row.category}`} style={{
                       display: 'flex', alignItems: 'center', gap: 8,
                       marginTop: ri > 0 ? 8 : 0, marginBottom: 2,
                       paddingBottom: 4, borderBottom: `1.5px solid ${pal.accent}30`,
                     }}>
-                      <span style={{ fontSize: 12 }}>{icon}</span>
+                      <div style={{ width: 16, height: 16, borderRadius: '50%', backgroundColor: `${pal.accent}30`, border: `1.5px solid ${pal.accent}60`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: pal.accentDark, flexShrink: 0 }}>
+                        {(SUPPLIER_CATEGORY_LABELS[row.category] ?? row.category).charAt(0).toUpperCase()}
+                      </div>
                       <span style={{ fontSize: 11, fontWeight: 700, color: pal.dark, textTransform: 'uppercase', letterSpacing: 1 }}>
                         {SUPPLIER_CATEGORY_LABELS[row.category] ?? row.category}
                       </span>
@@ -1026,13 +1020,15 @@ function SuppliersPage({ suppliers, weddingName, pal, t, showFinancial = true }:
                     {/* Contact + notes in a compact row */}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
                       {sup.contact_info && (
-                        <span style={{ fontSize: 9, color: '#787167', display: 'flex', alignItems: 'center', gap: 3 }}>
-                          <span style={{ fontSize: 8, opacity: 0.6 }}>📞</span> {sup.contact_info}
+                        <span style={{ fontSize: 9, color: '#787167', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: pal.accent, flexShrink: 0, opacity: 0.7, display: 'inline-block' }} />
+                          {sup.contact_info}
                         </span>
                       )}
                       {sup.notes && (
-                        <span style={{ fontSize: 9, fontStyle: 'italic', color: '#a0988c', display: 'flex', alignItems: 'center', gap: 3 }}>
-                          <span style={{ fontSize: 8, opacity: 0.6 }}>📝</span> {sup.notes}
+                        <span style={{ fontSize: 9, fontStyle: 'italic', color: '#a0988c', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: '#a0988c', flexShrink: 0, opacity: 0.6, display: 'inline-block' }} />
+                          {sup.notes}
                         </span>
                       )}
                     </div>
