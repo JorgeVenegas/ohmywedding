@@ -67,7 +67,7 @@ export interface WeddingPDFData {
   seating: Array<{ tableNumber: number; tableName: string; shape: string; capacity: number; occupancy: number; position_x: number; position_y: number; width: number; height: number; rotation: number; guests: Array<{ name: string; groupName: string | null; status: string; dietaryRestrictions: string | null; menu: { name: string } | null; seatNumber: number | null }> }>
   itinerary: Array<{ id: string; title: string; description: string | null; location: string | null; start_time: string; end_time: string | null; notes: string | null; icon: string | null; children: Array<{ id: string; title: string; description: string | null; location: string | null; start_time: string; end_time: string | null; notes: string | null; icon: string | null }> }>
   suppliers?: Array<{ id: string; name: string; category: string; contact_info: string | null; contact_type: string; contract_url: string | null; total_amount: number; covered_amount: number; notes: string | null; payments: Array<{ id: string; amount: number; payment_date: string; notes: string | null }> }>
-  guestList?: Array<{ name: string; groupName: string | null; groupId: string | null; status: string; phone: string | null; menuName: string | null; tableName: string | null }>
+  guestList?: Array<{ name: string; groupName: string | null; groupId: string | null; status: string; phone: string | null; menuName: string | null; tableName: string | null; tableNumber: number | null }>
   venueMapDataUrl?: string; coverImageUrl?: string; closingImageUrl?: string; selectedSections?: string[]
   venueMapIsHorizontal?: boolean
   showSuppliersFinancial?: boolean
@@ -273,10 +273,11 @@ function CoverPage({ partnerNames, weddingDate, locale, ceremonyVenue, reception
 // ─────────────────────────────────────────────
 // Index Page (Table of Contents)
 // ─────────────────────────────────────────────
-function IndexPage({ wedding, weddingName, pal, t, locale, selectedSections, stats }: {
+function IndexPage({ wedding, weddingName, pal, t, locale, selectedSections, stats, hasDeclinedGuests }: {
   wedding: WeddingPDFData['wedding']; weddingName: string; pal: BrandPalette
   t: (k: string, p?: Record<string, string>) => string
   locale: string; selectedSections?: string[]; stats: WeddingPDFData['stats']
+  hasDeclinedGuests?: boolean
 }) {
   const formatDate = (d: string) => {
     const parts = d.split('T')[0].split('-').map(Number)
@@ -284,21 +285,30 @@ function IndexPage({ wedding, weddingName, pal, t, locale, selectedSections, sta
     return local.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   }
 
-  const sectionOrder = ['menus', 'guestsByGroup', 'guestsByMenu', 'guestsByTable', 'itinerary', 'suppliers', 'venue'] as const
+  const sectionOrder = ['menus', 'guestsByGroup', 'guestsByMenu', 'guestsByTable', 'declinedGuests', 'itinerary', 'suppliers', 'venue'] as const
   const sectionLabels: Record<string, string> = {
     menus: t('admin.summary.sections.menus'),
     guestsByGroup: t('admin.summary.sections.guestsByGroup'),
     guestsByMenu: t('admin.summary.sections.guestsByMenu'),
     guestsByTable: t('admin.summary.sections.guestsByTable'),
+    declinedGuests: t('admin.summary.pdf.declinedGuests'),
     itinerary: t('admin.summary.sections.itinerary'),
     suppliers: t('admin.summary.sections.suppliers'),
     venue: t('admin.summary.sections.venueMap'),
   }
   const sectionIconKeys: Record<string, string> = {
     menus: 'menus', guestsByGroup: 'seating', guestsByMenu: 'menus',
-    guestsByTable: 'seating', itinerary: 'itinerary', suppliers: 'suppliers', venue: 'venue',
+    guestsByTable: 'seating', declinedGuests: 'seating', itinerary: 'itinerary', suppliers: 'suppliers', venue: 'venue',
   }
-  const visibleSections = sectionOrder.filter(k => !selectedSections || selectedSections.includes(k))
+  const visibleSections = sectionOrder.filter(k => {
+    if (k === 'declinedGuests') {
+      // Show in index only if declined guests exist AND any guest section is visible
+      if (!hasDeclinedGuests) return false
+      const guestSections = ['guestsByGroup', 'guestsByMenu', 'guestsByTable']
+      return guestSections.some(gs => !selectedSections || selectedSections.includes(gs))
+    }
+    return !selectedSections || selectedSections.includes(k)
+  })
 
   return (
     <PageShell>
@@ -611,12 +621,13 @@ function SeatingPages({ seating, weddingName, pal, t, menuColorMap }: {
     return a.tableNumber - b.tableNumber
   })
 
-  const TABLE_HEADER_H = 34
-  const GUEST_ROW_H = 22
-  const TABLE_COL_HEADER_H = 22
-  const TABLE_GAP = 12
+  const TABLE_HEADER_H = 30
+  const GUEST_ROW_H = 20
+  const TABLE_COL_HEADER_H = 20
+  const TABLE_GAP = 8
   const TITLE_AREA_H = 54
-  const usableH = PAGE_H - CONTENT_TOP - CONTENT_BOTTOM - TITLE_AREA_H
+  const usableH = PAGE_H - CONTENT_TOP - CONTENT_BOTTOM - TITLE_AREA_H - 20
+  const colFlex = [2.2, 1.2, 1.2]
 
   type PageEntry = {
     table: typeof sorted[0]
@@ -665,44 +676,47 @@ function SeatingPages({ seating, weddingName, pal, t, menuColorMap }: {
   }
   if (currentPage.length > 0) pages.push(currentPage)
 
+  const truncStyle: React.CSSProperties = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+
   return (
     <>
       {pages.map((pageContent, pi) => (
         <PageShell key={`seating-${pi}`}>
-          <div style={{ padding: `${CONTENT_TOP}px 56px ${CONTENT_BOTTOM}px 56px` }}>
+          <div style={{ padding: `${CONTENT_TOP}px 56px ${CONTENT_BOTTOM}px 56px`, overflow: 'hidden', height: PAGE_H - 0, boxSizing: 'border-box' }}>
             {pi === 0 && (
               <>
                 <h2 style={{ fontFamily: "'Macker', serif", fontSize: 22, color: pal.accent, marginBottom: 4 }}>
                   {t('admin.summary.sections.seatingAssignments')}
                 </h2>
-                <div style={{ height: 3, width: 44, backgroundColor: pal.accent, marginBottom: 24 }} />
+                <div style={{ height: 3, width: 44, backgroundColor: pal.accent, marginBottom: 20 }} />
               </>
             )}
             {pi > 0 && (
-              <div style={{ marginBottom: 16 }}>
+              <div style={{ marginBottom: 12 }}>
                 <span style={{ fontSize: 9, color: '#a0988c', letterSpacing: 1, textTransform: 'uppercase' }}>
                   {t('admin.summary.sections.seatingAssignments')} — {pi + 1}
                 </span>
               </div>
             )}
-            <div className="flex flex-col" style={{ gap: TABLE_GAP }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: TABLE_GAP }}>
               {pageContent.map((entry, ei) => (
                 <div key={`${entry.table.tableNumber}-${entry.startGuest}-${ei}`} style={{ borderRadius: 6, overflow: 'hidden' }}>
                   {entry.isHeader && (
-                    <div className="flex items-center relative overflow-hidden" style={{
+                    <div style={{
+                      display: 'flex', alignItems: 'center', position: 'relative', overflow: 'hidden',
                       backgroundColor: '#f5f2eb', border: '1px solid #e9e5e0',
                       borderRadius: (entry.endGuest - entry.startGuest) > 0 ? '6px 6px 0 0' : '6px',
-                      padding: '8px 12px 8px 16px',
+                      padding: '6px 12px 6px 16px',
                     }}>
-                      <div className="absolute top-0 bottom-0 left-0" style={{ width: 3, backgroundColor: pal.accent }} />
-                      <span className="flex-1" style={{ fontSize: 11, fontWeight: 700, color: pal.dark, paddingLeft: 4 }}>
+                      <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 3, backgroundColor: pal.accent }} />
+                      <span style={{ flex: 1, fontSize: 10, fontWeight: 700, color: pal.dark, paddingLeft: 4, ...truncStyle }}>
                         {t('admin.summary.tableNumber', { number: String(entry.table.tableNumber) })}: {entry.table.tableName}
                       </span>
                       <div style={{
                         backgroundColor: '#f8f6f2', borderRadius: 4,
-                        padding: '2px 10px', border: '1px solid #e9e5e0',
+                        padding: '1px 8px', border: '1px solid #e9e5e0', flexShrink: 0,
                       }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: pal.dark }}>
+                        <span style={{ fontSize: 9, fontWeight: 700, color: pal.dark }}>
                           {entry.table.guests.length}
                         </span>
                       </div>
@@ -713,32 +727,33 @@ function SeatingPages({ seating, weddingName, pal, t, menuColorMap }: {
                       border: '1px solid #e9e5e0', borderTop: entry.isHeader ? 'none' : '1px solid #e9e5e0',
                       borderRadius: entry.isHeader ? '0 0 6px 6px' : '6px', overflow: 'hidden',
                     }}>
-                      <div className="flex" style={{ backgroundColor: '#f8f6f2', borderBottom: '1px solid #e9e5e0' }}>
+                      <div style={{ display: 'flex', backgroundColor: '#f8f6f2', borderBottom: '1px solid #e9e5e0' }}>
                         {[t('admin.summary.columns.guest'), t('admin.summary.columns.group'), t('admin.summary.columns.menu')].map((col, ci) => (
                           <span key={ci} style={{
-                            flex: ci === 0 ? 2 : 1.5, fontSize: 8, fontWeight: 700,
-                            color: '#787167', padding: '5px 8px',
-                            textTransform: 'uppercase', letterSpacing: 0.5,
+                            flex: colFlex[ci], fontSize: 7, fontWeight: 700,
+                            color: '#787167', padding: '4px 6px',
+                            textTransform: 'uppercase', letterSpacing: 0.5, ...truncStyle,
                           }}>
                             {col}
                           </span>
                         ))}
                       </div>
                       {entry.table.guests.slice(entry.startGuest, entry.endGuest).map((guest, gi) => (
-                        <div key={gi} className="flex items-center" style={{
+                        <div key={gi} style={{
+                          display: 'flex', alignItems: 'center',
                           backgroundColor: gi % 2 === 0 ? '#fefdfb' : '#f8f6f2',
                           borderBottom: gi < (entry.endGuest - entry.startGuest) - 1 ? '1px solid #f0ede6' : 'none',
                         }}>
-                          <span style={{ flex: 2, fontSize: 10, fontWeight: 600, color: '#2c2c2c', padding: '4px 8px' }}>
+                          <span style={{ flex: colFlex[0], fontSize: 9, fontWeight: 600, color: '#2c2c2c', padding: '3px 6px', ...truncStyle }}>
                             {guest.name}
                           </span>
-                          <span style={{ flex: 1.5, fontSize: 9, color: '#2c2c2c', padding: '4px 8px' }}>
+                          <span style={{ flex: colFlex[1], fontSize: 8, color: '#2c2c2c', padding: '3px 6px', ...truncStyle }}>
                             {guest.groupName || '—'}
                           </span>
-                          <span className="flex items-center" style={{ flex: 1.5, fontSize: 9, color: guest.menu?.name ? (menuColorMap[guest.menu.name] || pal.medium) : '#a0988c', padding: '4px 8px', gap: 4, fontWeight: guest.menu?.name ? 600 : 400 }}>
+                          <span style={{ flex: colFlex[2], fontSize: 8, color: guest.menu?.name ? (menuColorMap[guest.menu.name] || pal.medium) : '#a0988c', padding: '3px 6px', display: 'flex', alignItems: 'center', gap: 3, fontWeight: guest.menu?.name ? 600 : 400, ...truncStyle }}>
                             {guest.menu?.name && (
                               <span style={{
-                                display: 'inline-block', width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                                display: 'inline-block', width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
                                 backgroundColor: menuColorMap[guest.menu.name] || pal.medium,
                               }} />
                             )}
@@ -764,6 +779,13 @@ function SeatingPages({ seating, weddingName, pal, t, menuColorMap }: {
 // ─────────────────────────────────────────────
 type GuestItem = NonNullable<WeddingPDFData['guestList']>[number]
 
+/** Format table display: "# - Name" when name exists, otherwise just "#" */
+function fmtTable(g: GuestItem): string {
+  if (!g.tableNumber) return '—'
+  if (g.tableName) return `${g.tableNumber} - ${g.tableName}`
+  return String(g.tableNumber)
+}
+
 function GuestsByGroupPages({ guestList, weddingName, pal, t, menuColorMap }: {
   guestList: GuestItem[]; weddingName: string; pal: BrandPalette
   t: (k: string, p?: Record<string, string>) => string
@@ -779,13 +801,14 @@ function GuestsByGroupPages({ guestList, weddingName, pal, t, menuColorMap }: {
   const groupEntries = [...grouped.entries()].sort((a, b) => a[0].localeCompare(b[0]))
 
   // Paginate
-  const GROUP_HEADER_H = 32
-  const GUEST_ROW_H = 22
-  const COL_HEADER_H = 22
-  const GAP = 10
+  const GROUP_HEADER_H = 30
+  const GUEST_ROW_H = 20
+  const COL_HEADER_H = 20
+  const GAP = 8
   const TITLE_AREA_H = 54
-  const usableH = PAGE_H - CONTENT_TOP - CONTENT_BOTTOM - TITLE_AREA_H
+  const usableH = PAGE_H - CONTENT_TOP - CONTENT_BOTTOM - TITLE_AREA_H - 20 // extra margin
   const columns = [t('admin.summary.columns.guest'), t('admin.summary.pdf.phone'), t('admin.summary.pdf.table'), t('admin.summary.columns.menu')]
+  const colFlex = [2.2, 1, 1.2, 1]
 
   type PageBlock = { groupName: string; guests: GuestItem[]; isStart: boolean }
   const pages: PageBlock[][] = []
@@ -814,67 +837,71 @@ function GuestsByGroupPages({ guestList, weddingName, pal, t, menuColorMap }: {
   }
   if (currentPage.length > 0) pages.push(currentPage)
 
+  const truncStyle: React.CSSProperties = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+
   return (
     <>
       {pages.map((pageBlocks, pi) => (
         <PageShell key={`gbg-${pi}`}>
-          <div style={{ padding: `${CONTENT_TOP}px 56px ${CONTENT_BOTTOM}px 56px` }}>
+          <div style={{ padding: `${CONTENT_TOP}px 56px ${CONTENT_BOTTOM}px 56px`, overflow: 'hidden', height: PAGE_H - 0, boxSizing: 'border-box' }}>
             {pi === 0 && (
               <>
                 <h2 style={{ fontFamily: "'Macker', serif", fontSize: 22, color: pal.accent, marginBottom: 4 }}>
                   {t('admin.summary.sections.guestsByGroup')}
                 </h2>
-                <div style={{ height: 3, width: 44, backgroundColor: pal.accent, marginBottom: 24 }} />
+                <div style={{ height: 3, width: 44, backgroundColor: pal.accent, marginBottom: 20 }} />
               </>
             )}
             {pi > 0 && (
-              <div style={{ marginBottom: 16 }}>
+              <div style={{ marginBottom: 12 }}>
                 <span style={{ fontSize: 9, color: '#a0988c', letterSpacing: 1, textTransform: 'uppercase' }}>
                   {t('admin.summary.sections.guestsByGroup')} — {pi + 1}
                 </span>
               </div>
             )}
-            <div className="flex flex-col" style={{ gap: GAP }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: GAP }}>
               {pageBlocks.map((block, bi) => (
                 <div key={`${block.groupName}-${bi}`} style={{ borderRadius: 6, overflow: 'hidden' }}>
-                  <div className="flex items-center relative overflow-hidden" style={{
+                  <div style={{
+                    display: 'flex', alignItems: 'center', position: 'relative', overflow: 'hidden',
                     backgroundColor: '#f5f2eb', border: '1px solid #e9e5e0',
-                    borderRadius: '6px 6px 0 0', padding: '8px 12px 8px 16px',
+                    borderRadius: '6px 6px 0 0', padding: '6px 12px 6px 16px',
                   }}>
-                    <div className="absolute top-0 bottom-0 left-0" style={{ width: 3, backgroundColor: pal.accent }} />
-                    <span className="flex-1" style={{ fontSize: 11, fontWeight: 700, color: pal.dark, paddingLeft: 4 }}>
+                    <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 3, backgroundColor: pal.accent }} />
+                    <span style={{ flex: 1, fontSize: 10, fontWeight: 700, color: pal.dark, paddingLeft: 4, ...truncStyle }}>
                       {block.groupName}
                     </span>
                     {block.isStart && (
-                      <div style={{ backgroundColor: '#f8f6f2', borderRadius: 4, padding: '2px 10px', border: '1px solid #e9e5e0' }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: pal.dark }}>
+                      <div style={{ backgroundColor: '#f8f6f2', borderRadius: 4, padding: '1px 8px', border: '1px solid #e9e5e0', flexShrink: 0 }}>
+                        <span style={{ fontSize: 9, fontWeight: 700, color: pal.dark }}>
                           {grouped.get(block.groupName)?.length ?? block.guests.length}
                         </span>
                       </div>
                     )}
                   </div>
                   <div style={{ border: '1px solid #e9e5e0', borderTop: 'none', borderRadius: '0 0 6px 6px', overflow: 'hidden' }}>
-                    <div className="flex" style={{ backgroundColor: '#f8f6f2', borderBottom: '1px solid #e9e5e0' }}>
+                    <div style={{ display: 'flex', backgroundColor: '#f8f6f2', borderBottom: '1px solid #e9e5e0' }}>
                       {columns.map((col, ci) => (
                         <span key={ci} style={{
-                          flex: ci === 0 ? 2 : 1.2, fontSize: 8, fontWeight: 700,
-                          color: '#787167', padding: '5px 8px',
-                          textTransform: 'uppercase', letterSpacing: 0.5,
+                          flex: colFlex[ci], fontSize: 7, fontWeight: 700,
+                          color: '#787167', padding: '4px 6px',
+                          textTransform: 'uppercase', letterSpacing: 0.5, ...truncStyle,
                         }}>
                           {col}
                         </span>
                       ))}
                     </div>
                     {block.guests.map((guest, gi) => (
-                      <div key={gi} className="flex items-center" style={{
+                      <div key={gi} style={{
+                        display: 'flex', alignItems: 'center',
                         backgroundColor: gi % 2 === 0 ? '#fefdfb' : '#f8f6f2',
                         borderBottom: gi < block.guests.length - 1 ? '1px solid #f0ede6' : 'none',
                       }}>
-                        <span style={{ flex: 2, fontSize: 10, fontWeight: 600, color: '#2c2c2c', padding: '4px 8px' }}>{guest.name}</span>
-                        <span style={{ flex: 1.2, fontSize: 9, color: '#787167', padding: '4px 8px' }}>{guest.phone || '—'}</span>
-                        <span style={{ flex: 1.2, fontSize: 9, color: '#2c2c2c', padding: '4px 8px' }}>{guest.tableName || '—'}</span>
-                        <span className="flex items-center" style={{ flex: 1.2, fontSize: 9, color: guest.menuName ? (menuColorMap[guest.menuName] || pal.medium) : '#a0988c', padding: '4px 8px', gap: 4, fontWeight: guest.menuName ? 600 : 400 }}>
-                          {guest.menuName && <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', flexShrink: 0, backgroundColor: menuColorMap[guest.menuName] || pal.medium }} />}
+                        <span style={{ flex: colFlex[0], fontSize: 9, fontWeight: 600, color: '#2c2c2c', padding: '3px 6px', ...truncStyle }}>{guest.name}</span>
+                        <span style={{ flex: colFlex[1], fontSize: 8, color: '#787167', padding: '3px 6px', ...truncStyle }}>{guest.phone || '—'}</span>
+                        <span style={{ flex: colFlex[2], fontSize: 8, color: '#2c2c2c', padding: '3px 6px', ...truncStyle }}>{fmtTable(guest)}</span>
+                        <span style={{ flex: colFlex[3], fontSize: 8, color: guest.menuName ? (menuColorMap[guest.menuName] || pal.medium) : '#a0988c', padding: '3px 6px', fontWeight: guest.menuName ? 600 : 400, display: 'flex', alignItems: 'center', gap: 3, ...truncStyle }}>
+                          {guest.menuName && <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', flexShrink: 0, backgroundColor: menuColorMap[guest.menuName] || pal.medium }} />}
                           {guest.menuName || '—'}
                         </span>
                       </div>
@@ -912,13 +939,14 @@ function GuestsByMenuPages({ guestList, weddingName, pal, t, menuColorMap }: {
     return a[0].localeCompare(b[0])
   })
 
-  const MENU_HEADER_H = 32
-  const GUEST_ROW_H = 22
-  const COL_HEADER_H = 22
-  const GAP = 10
+  const MENU_HEADER_H = 30
+  const GUEST_ROW_H = 20
+  const COL_HEADER_H = 20
+  const GAP = 8
   const TITLE_AREA_H = 54
-  const usableH = PAGE_H - CONTENT_TOP - CONTENT_BOTTOM - TITLE_AREA_H
+  const usableH = PAGE_H - CONTENT_TOP - CONTENT_BOTTOM - TITLE_AREA_H - 20
   const columns = [t('admin.summary.columns.guest'), t('admin.summary.columns.group'), t('admin.summary.pdf.table')]
+  const colFlex = [2.2, 1.2, 1.2]
 
   type PageBlock = { menuName: string; guests: GuestItem[]; isStart: boolean }
   const pages: PageBlock[][] = []
@@ -946,68 +974,72 @@ function GuestsByMenuPages({ guestList, weddingName, pal, t, menuColorMap }: {
   }
   if (currentPage.length > 0) pages.push(currentPage)
 
+  const truncStyle: React.CSSProperties = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+
   return (
     <>
       {pages.map((pageBlocks, pi) => (
         <PageShell key={`gbm-${pi}`}>
-          <div style={{ padding: `${CONTENT_TOP}px 56px ${CONTENT_BOTTOM}px 56px` }}>
+          <div style={{ padding: `${CONTENT_TOP}px 56px ${CONTENT_BOTTOM}px 56px`, overflow: 'hidden', height: PAGE_H - 0, boxSizing: 'border-box' }}>
             {pi === 0 && (
               <>
                 <h2 style={{ fontFamily: "'Macker', serif", fontSize: 22, color: pal.accent, marginBottom: 4 }}>
                   {t('admin.summary.sections.guestsByMenu')}
                 </h2>
-                <div style={{ height: 3, width: 44, backgroundColor: pal.accent, marginBottom: 24 }} />
+                <div style={{ height: 3, width: 44, backgroundColor: pal.accent, marginBottom: 20 }} />
               </>
             )}
             {pi > 0 && (
-              <div style={{ marginBottom: 16 }}>
+              <div style={{ marginBottom: 12 }}>
                 <span style={{ fontSize: 9, color: '#a0988c', letterSpacing: 1, textTransform: 'uppercase' }}>
                   {t('admin.summary.sections.guestsByMenu')} — {pi + 1}
                 </span>
               </div>
             )}
-            <div className="flex flex-col" style={{ gap: GAP }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: GAP }}>
               {pageBlocks.map((block, bi) => {
                 const menuColor = block.menuName !== '—' ? (menuColorMap[block.menuName] || pal.accent) : '#a0988c'
                 return (
                   <div key={`${block.menuName}-${bi}`} style={{ borderRadius: 6, overflow: 'hidden' }}>
-                    <div className="flex items-center relative overflow-hidden" style={{
+                    <div style={{
+                      display: 'flex', alignItems: 'center', position: 'relative', overflow: 'hidden',
                       backgroundColor: '#f5f2eb', border: '1px solid #e9e5e0',
-                      borderRadius: '6px 6px 0 0', padding: '8px 12px 8px 16px',
+                      borderRadius: '6px 6px 0 0', padding: '6px 12px 6px 16px',
                     }}>
-                      <div className="absolute top-0 bottom-0 left-0" style={{ width: 3, backgroundColor: menuColor }} />
-                      <div className="flex items-center gap-2 flex-1" style={{ paddingLeft: 4 }}>
-                        <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: menuColor, flexShrink: 0 }} />
-                        <span style={{ fontSize: 11, fontWeight: 700, color: pal.dark }}>{block.menuName}</span>
+                      <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 3, backgroundColor: menuColor }} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, paddingLeft: 4, overflow: 'hidden' }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: menuColor, flexShrink: 0 }} />
+                        <span style={{ fontSize: 10, fontWeight: 700, color: pal.dark, ...truncStyle }}>{block.menuName}</span>
                       </div>
                       {block.isStart && (
-                        <div style={{ backgroundColor: '#f8f6f2', borderRadius: 4, padding: '2px 10px', border: '1px solid #e9e5e0' }}>
-                          <span style={{ fontSize: 10, fontWeight: 700, color: pal.dark }}>
+                        <div style={{ backgroundColor: '#f8f6f2', borderRadius: 4, padding: '1px 8px', border: '1px solid #e9e5e0', flexShrink: 0 }}>
+                          <span style={{ fontSize: 9, fontWeight: 700, color: pal.dark }}>
                             {grouped.get(block.menuName)?.length ?? block.guests.length}
                           </span>
                         </div>
                       )}
                     </div>
                     <div style={{ border: '1px solid #e9e5e0', borderTop: 'none', borderRadius: '0 0 6px 6px', overflow: 'hidden' }}>
-                      <div className="flex" style={{ backgroundColor: '#f8f6f2', borderBottom: '1px solid #e9e5e0' }}>
+                      <div style={{ display: 'flex', backgroundColor: '#f8f6f2', borderBottom: '1px solid #e9e5e0' }}>
                         {columns.map((col, ci) => (
                           <span key={ci} style={{
-                            flex: ci === 0 ? 2 : 1.5, fontSize: 8, fontWeight: 700,
-                            color: '#787167', padding: '5px 8px',
-                            textTransform: 'uppercase', letterSpacing: 0.5,
+                            flex: colFlex[ci], fontSize: 7, fontWeight: 700,
+                            color: '#787167', padding: '4px 6px',
+                            textTransform: 'uppercase', letterSpacing: 0.5, ...truncStyle,
                           }}>
                             {col}
                           </span>
                         ))}
                       </div>
                       {block.guests.map((guest, gi) => (
-                        <div key={gi} className="flex items-center" style={{
+                        <div key={gi} style={{
+                          display: 'flex', alignItems: 'center',
                           backgroundColor: gi % 2 === 0 ? '#fefdfb' : '#f8f6f2',
                           borderBottom: gi < block.guests.length - 1 ? '1px solid #f0ede6' : 'none',
                         }}>
-                          <span style={{ flex: 2, fontSize: 10, fontWeight: 600, color: '#2c2c2c', padding: '4px 8px' }}>{guest.name}</span>
-                          <span style={{ flex: 1.5, fontSize: 9, color: '#787167', padding: '4px 8px' }}>{guest.groupName || '—'}</span>
-                          <span style={{ flex: 1.5, fontSize: 9, color: '#2c2c2c', padding: '4px 8px' }}>{guest.tableName || '—'}</span>
+                          <span style={{ flex: colFlex[0], fontSize: 9, fontWeight: 600, color: '#2c2c2c', padding: '3px 6px', ...truncStyle }}>{guest.name}</span>
+                          <span style={{ flex: colFlex[1], fontSize: 8, color: '#787167', padding: '3px 6px', ...truncStyle }}>{guest.groupName || '—'}</span>
+                          <span style={{ flex: colFlex[2], fontSize: 8, color: '#2c2c2c', padding: '3px 6px', ...truncStyle }}>{fmtTable(guest)}</span>
                         </div>
                       ))}
                     </div>
@@ -1045,7 +1077,7 @@ function DeclinedGuestsPage({ declinedNames, weddingName, pal, t }: {
   const sorted = [...declinedNames].sort((a, b) => a.localeCompare(b))
   const ROW_H = 20
   const TITLE_AREA_H = 54
-  const usableH = PAGE_H - CONTENT_TOP - CONTENT_BOTTOM - TITLE_AREA_H
+  const usableH = PAGE_H - CONTENT_TOP - CONTENT_BOTTOM - TITLE_AREA_H - 20
   const COLS = 2
   const perCol = Math.floor(usableH / ROW_H)
   const perPage = perCol * COLS
@@ -1055,6 +1087,8 @@ function DeclinedGuestsPage({ declinedNames, weddingName, pal, t }: {
     pages.push(sorted.slice(i, i + perPage))
   }
 
+  const truncStyle: React.CSSProperties = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+
   return (
     <>
       {pages.map((pageNames, pi) => {
@@ -1062,35 +1096,36 @@ function DeclinedGuestsPage({ declinedNames, weddingName, pal, t }: {
         const col2 = pageNames.slice(perCol)
         return (
           <PageShell key={`declined-${pi}`}>
-            <div style={{ padding: `${CONTENT_TOP}px 56px ${CONTENT_BOTTOM}px 56px` }}>
+            <div style={{ padding: `${CONTENT_TOP}px 56px ${CONTENT_BOTTOM}px 56px`, overflow: 'hidden', height: PAGE_H - 0, boxSizing: 'border-box' }}>
               {pi === 0 && (
                 <>
                   <h2 style={{ fontFamily: "'Macker', serif", fontSize: 22, color: '#a0988c', marginBottom: 4 }}>
                     {t('admin.summary.pdf.declinedGuests')}
                   </h2>
                   <div style={{ height: 3, width: 44, backgroundColor: '#d4cfc8', marginBottom: 6 }} />
-                  <p style={{ fontSize: 10, color: '#a0988c', marginBottom: 20 }}>
+                  <p style={{ fontSize: 10, color: '#a0988c', marginBottom: 16 }}>
                     {sorted.length} {sorted.length === 1 ? t('admin.summary.pdf.guests.one') : t('admin.summary.pdf.guests.other')}
                   </p>
                 </>
               )}
               {pi > 0 && (
-                <div style={{ marginBottom: 16 }}>
+                <div style={{ marginBottom: 12 }}>
                   <span style={{ fontSize: 9, color: '#a0988c', letterSpacing: 1, textTransform: 'uppercase' }}>
                     {t('admin.summary.pdf.declinedGuests')} — {pi + 1}
                   </span>
                 </div>
               )}
-              <div className="flex" style={{ gap: 24 }}>
+              <div style={{ display: 'flex', gap: 20 }}>
                 {[col1, col2].map((col, ci) => (
-                  <div key={ci} className="flex-1 flex flex-col">
+                  <div key={ci} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                     {col.map((name, ni) => (
                       <div key={ni} style={{
-                        padding: '4px 8px',
-                        fontSize: 10,
+                        padding: '3px 6px',
+                        fontSize: 9,
                         color: '#787167',
                         borderBottom: ni < col.length - 1 ? '1px solid #f0ede6' : 'none',
                         backgroundColor: ni % 2 === 0 ? '#fefdfb' : '#f8f6f2',
+                        ...truncStyle,
                       }}>
                         {name}
                       </div>
@@ -1216,17 +1251,15 @@ function ItineraryPage({ itinerary, locale, weddingName, pal, t }: {
 // ─────────────────────────────────────────────
 // Suppliers Page
 // ─────────────────────────────────────────────
-// Map DB category keys to i18n keys
-const SUPPLIER_CATEGORY_I18N: Record<string, string> = {
-  catering: 'catering', dj: 'music', band: 'music', photographer: 'photography',
-  videographer: 'videography', florist: 'flowers', venue: 'venue', cake: 'cake',
-  transportation: 'transport', hair_makeup: 'beauty', officiant: 'officiant',
-  decoration: 'decoration', lighting: 'lighting', other: 'other',
-}
+// DB category values match i18n keys directly
+const VALID_SUPPLIER_CATEGORIES = new Set([
+  'catering', 'photography', 'videography', 'music', 'flowers', 'venue',
+  'transport', 'decoration', 'cake', 'beauty', 'officiant', 'lighting', 'other',
+])
 
 function getSupplierCategoryLabel(category: string, t: (k: string) => string): string {
-  const i18nKey = SUPPLIER_CATEGORY_I18N[category] ?? 'other'
-  return t(`admin.suppliers.categories.${i18nKey}`)
+  const key = VALID_SUPPLIER_CATEGORIES.has(category) ? category : 'other'
+  return t(`admin.suppliers.categories.${key}`)
 }
 
 function SuppliersPage({ suppliers, weddingName, pal, t, showFinancial = true }: {
@@ -1636,7 +1669,8 @@ export function WebPDFDocument({ data, t }: {
   const pl = (count: number, key: string) => `${count} ${t(`admin.summary.pdf.${key}.${count === 1 ? 'one' : 'other'}`)}`
 
   // Filter guests: confirmed only for main views, collect declined names
-  const confirmedGuestList = data.guestList?.filter(g => g.status === 'confirmed') ?? []
+  // Exclude guests with no table AND no menu assignment
+  const confirmedGuestList = data.guestList?.filter(g => g.status === 'confirmed' && (g.tableName || g.menuName)) ?? []
   const declinedNames = data.guestList?.filter(g => g.status === 'declined').map(g => g.name) ?? []
 
   // Filter seating: only confirmed guests per table, skip empty tables
@@ -1667,6 +1701,7 @@ export function WebPDFDocument({ data, t }: {
           wedding={data.wedding} weddingName={weddingName}
           locale={locale} pal={pal} t={t} stats={data.stats}
           selectedSections={data.selectedSections}
+          hasDeclinedGuests={declinedNames.length > 0}
         />
       )}
       {show('menus') && data.menus.length > 0 && (

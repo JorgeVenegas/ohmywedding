@@ -212,16 +212,20 @@ export async function GET(request: Request) {
       hero_image_url,
     }
 
-    // Build table name lookup from seating assignments
-    const guestTableMap = new Map<string, string>()
+    // Build table lookup from seating assignments (name + number)
+    const guestTableMap = new Map<string, { name: string; number: number }>()
     for (const a of seatAssignments) {
-      const table = tables.find(t => t.id === a.table_id)
-      if (table) guestTableMap.set(a.guest_id, table.name)
+      const tableIdx = tables.findIndex(t => t.id === a.table_id)
+      if (tableIdx >= 0) {
+        const table = tables[tableIdx]
+        guestTableMap.set(a.guest_id, { name: table.name, number: tableIdx + 1 })
+      }
     }
 
     // Build enriched guest list for group/menu/table views
     const guestList = guests.map(g => {
       const menuId = menuAssignmentMap.get(g.id)
+      const tableInfo = guestTableMap.get(g.id)
       return {
         name: g.name,
         groupName: g.guest_group_id ? groupMap.get(g.guest_group_id) || null : null,
@@ -229,7 +233,8 @@ export async function GET(request: Request) {
         status: g.confirmation_status,
         phone: (g as Record<string, unknown>).phone_number as string | null,
         menuName: menuId ? menuNameMap.get(menuId) || null : null,
-        tableName: guestTableMap.get(g.id) || null,
+        tableName: tableInfo?.name || null,
+        tableNumber: tableInfo?.number || null,
       }
     })
 

@@ -305,7 +305,7 @@ export function ExportModal({
   const [hlVariant, setHlVariant] = useState<PaletteVariant>('original')
   const [showImagePicker, setShowImagePicker] = useState(false)
   const [showClosingImagePicker, setShowClosingImagePicker] = useState(false)
-  const [showSuppliersFinancial, setShowSuppliersFinancial] = useState(true)
+  const [showSuppliersFinancial, setShowSuppliersFinancial] = useState(false)
 
   const resolveColor = (source: ColorSource, variant: PaletteVariant) => {
     const base = source === 'primary' ? primaryColor : accentColor

@@ -145,6 +145,7 @@ interface SummaryData {
     phone: string | null
     menuName: string | null
     tableName: string | null
+    tableNumber: number | null
   }>
 }
 
