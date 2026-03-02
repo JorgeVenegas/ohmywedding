@@ -1,6 +1,7 @@
 "use client"
 
 import { use, useState, useEffect, useCallback, useRef } from "react"
+import type { FC } from "react"
 import { flushSync } from "react-dom"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -14,6 +15,8 @@ import { captureAndAssemblePDF, downloadBlob } from "@/components/summary-pdf/pd
 import {
   Download, FileText, UtensilsCrossed, CalendarDays,
   LayoutGrid, MapPin, Clock, Users, ChevronDown, ChevronRight, Handshake,
+  Church, PartyPopper, Wine, GlassWater, DoorOpen, Cake, Camera,
+  Music2, Bus, Sparkles, Flower2, Heart, StickyNote,
 } from "lucide-react"
 
 interface SummaryPageProps {
@@ -57,6 +60,8 @@ interface SummaryData {
     shape: string
     capacity: number
     occupancy: number
+    side_a_count: number | null
+    head_a_count: number | null
     position_x: number
     position_y: number
     width: number
@@ -134,11 +139,15 @@ interface SummaryData {
   }>
 }
 
-const EVENT_EMOJI_MAP: Record<string, string> = {
-  ceremony: '💒', reception: '🎉', cocktail: '🍸', dinner: '🍽️',
-  dancing: '💃', firstDance: '💕', entrance: '🚪', toast: '🥂',
-  cake: '🎂', bouquet: '💐', photo: '📸', music: '🎵',
-  transport: '🚐', preparation: '💄', other: '📋',
+type LucideIconFC = FC<{ className?: string }>
+const EVENT_ICON_MAP: Record<string, LucideIconFC> = {
+  ceremony: Church, reception: PartyPopper, cocktail: Wine, dinner: UtensilsCrossed,
+  dancing: Music2, firstDance: Heart, entrance: DoorOpen, toast: GlassWater,
+  cake: Cake, bouquet: Flower2, photo: Camera, music: Music2,
+  transport: Bus, preparation: Sparkles, other: CalendarDays,
+}
+function getEventIcon(icon: string | null): LucideIconFC {
+  return EVENT_ICON_MAP[icon || 'other'] ?? CalendarDays
 }
 
 function formatTime(dateStr: string) {
@@ -452,7 +461,7 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
                             </thead>
                             <tbody className="divide-y">
                               {table.guests.map((guest, gi) => (
-                                <tr key={gi} className="hover:bg-muted/20">
+                                <tr key={gi} className={`hover:bg-muted/30 ${gi % 2 === 1 ? 'bg-muted/10' : ''}`}>
                                   <td className="px-4 py-2 truncate">{guest.name}</td>
                                   <td className="px-4 py-2 text-muted-foreground truncate">{guest.groupName || '—'}</td>
                                   <td className="px-4 py-2 truncate">{guest.menu?.name || '—'}</td>
@@ -488,7 +497,7 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
                     <div key={event.id}>
                       <div className="p-4">
                         <div className="flex items-center gap-3">
-                          <span className="text-xl">{EVENT_EMOJI_MAP[event.icon || 'other'] || '📋'}</span>
+                          {(() => { const EIcon = getEventIcon(event.icon); return <EIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" /> })()}
                           <div className="flex-1">
                             <div className="font-semibold">{event.title}</div>
                             <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5 flex-wrap">
@@ -505,7 +514,7 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
                               )}
                             </div>
                             {event.description && <p className="text-sm text-muted-foreground mt-1">{event.description}</p>}
-                            {event.notes && <p className="text-xs text-muted-foreground mt-1 italic">📝 {event.notes}</p>}
+                            {event.notes && <p className="text-xs text-muted-foreground mt-1 italic flex items-center gap-1"><StickyNote className="w-3 h-3 shrink-0" />{event.notes}</p>}
                           </div>
                         </div>
                       </div>
@@ -513,7 +522,7 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
                         <div className="bg-muted/20 border-t">
                           {event.children.map(child => (
                             <div key={child.id} className="flex items-center gap-3 px-4 py-2.5 pl-12 border-b last:border-b-0">
-                              <span className="text-base">{EVENT_EMOJI_MAP[child.icon || 'other'] || '📋'}</span>
+                              {(() => { const CIcon = getEventIcon(child.icon); return <CIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" /> })()}
                               <div className="flex-1 min-w-0">
                                 <div className="text-sm font-medium">{child.title}</div>
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -655,6 +664,8 @@ interface FloorTableItem {
   shape: string
   capacity: number
   occupancy: number
+  side_a_count: number | null
+  head_a_count: number | null
   position_x: number
   position_y: number
   width: number
@@ -969,10 +980,12 @@ function FloorPlanMap({
                 </>
               ) : (
                 <>
-                  {/* Rect table chairs — side A top, side B bottom */}
+                  {/* Rect table chairs — side A top, side B bottom, head A left, head B right */}
                   {(() => {
-                    const sideA = Math.ceil(table.capacity / 2)
-                    const sideB = Math.floor(table.capacity / 2)
+                    const sideA = table.side_a_count ?? Math.ceil(table.capacity / 2)
+                    const sideB = table.side_a_count != null ? sideA : Math.floor(table.capacity / 2)
+                    const headA = table.head_a_count ?? 0
+                    const headB = headA
                     const occupied = (i: number) => i < table.occupancy
                     let idx = 0
                     const chairs = []
@@ -981,6 +994,12 @@ function FloorPlanMap({
                     }
                     for (let i = 0; i < sideB; i++) {
                       chairs.push(<RectChair key={`b${i}`} x={table.position_x + ((i + 1) / (sideB + 1)) * table.width} y={table.position_y + table.height + 14} rotation={0} occupied={occupied(idx++)} />)
+                    }
+                    for (let i = 0; i < headA; i++) {
+                      chairs.push(<RectChair key={`ha${i}`} x={table.position_x - 14} y={table.position_y + ((i + 1) / (headA + 1)) * table.height} rotation={90} occupied={occupied(idx++)} />)
+                    }
+                    for (let i = 0; i < headB; i++) {
+                      chairs.push(<RectChair key={`hb${i}`} x={table.position_x + table.width + 14} y={table.position_y + ((i + 1) / (headB + 1)) * table.height} rotation={-90} occupied={occupied(idx++)} />)
                     }
                     return chairs
                   })()}

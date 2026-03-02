@@ -112,6 +112,8 @@ export async function GET(request: Request) {
         shape: table.shape,
         capacity: table.capacity,
         occupancy: tableAssignments.length,
+        side_a_count: (table.side_a_count as number | null) ?? null,
+        head_a_count: (table.head_a_count as number | null) ?? null,
         position_x: table.position_x,
         position_y: table.position_y,
         width: table.width,

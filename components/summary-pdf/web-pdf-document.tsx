@@ -69,6 +69,7 @@ export interface WeddingPDFData {
   suppliers?: Array<{ id: string; name: string; category: string; contact_info: string | null; contact_type: string; contract_url: string | null; total_amount: number; covered_amount: number; notes: string | null; payments: Array<{ id: string; amount: number; payment_date: string; notes: string | null }> }>
   venueMapDataUrl?: string; coverImageUrl?: string; selectedSections?: string[]
   venueMapIsHorizontal?: boolean
+  showSuppliersFinancial?: boolean
   bgSource?: 'primary' | 'accent'
   bgVariant?: 'original' | 'light' | 'lighter'
   hlSource?: 'primary' | 'accent'
@@ -282,11 +283,12 @@ function IndexPage({ wedding, weddingName, pal, t, locale, selectedSections, sta
     return local.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   }
 
-  const sectionOrder = ['menus', 'seating', 'itinerary', 'venue'] as const
+  const sectionOrder = ['menus', 'seating', 'itinerary', 'suppliers', 'venue'] as const
   const sectionLabels: Record<string, string> = {
     menus: t('admin.summary.sections.menus'),
     seating: t('admin.summary.sections.seatingAssignments'),
     itinerary: t('admin.summary.sections.itinerary'),
+    suppliers: t('admin.summary.sections.suppliers'),
     venue: t('admin.summary.sections.venueMap'),
   }
   const visibleSections = sectionOrder.filter(k => !selectedSections || selectedSections.includes(k))
@@ -389,36 +391,69 @@ function SectionDividerPage({ title, subtitle, iconType, pal, weddingName }: {
 
   return (
     <PageShell style={{ backgroundColor: '#f8f6f2' }}>
-      {/* Clean dark column on the left — no diagonal */}
+      {/* Dark column on the left */}
       <div className="absolute top-0 bottom-0 left-0" style={{ width: '45%', backgroundColor: pal.dark }} />
 
-      {/* Thin accent line separating panels */}
-      <div className="absolute top-0 bottom-0" style={{ left: '45%', width: 2, backgroundColor: pal.accent, opacity: 0.6 }} />
+      {/* Dot pattern overlay on dark panel */}
+      <svg className="absolute top-0 left-0" style={{ width: '45%', height: '100%', overflow: 'hidden', pointerEvents: 'none' }} aria-hidden="true">
+        <defs>
+          <pattern id="divider-dots" x="0" y="0" width="22" height="22" patternUnits="userSpaceOnUse">
+            <circle cx="11" cy="11" r="1.2" fill="white" opacity="0.12" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#divider-dots)" />
+      </svg>
 
-      {/* Content bottom-right */}
-      <div className="absolute flex flex-col items-end" style={{
-        bottom: 100, left: '50%', right: 56,
-      }}>
+      {/* Corner bracket — top-left of dark panel */}
+      <div className="absolute" style={{ top: 48, left: 36 }}>
+        <div style={{ width: 28, height: 3, backgroundColor: pal.accent, opacity: 0.7, borderRadius: 2 }} />
+        <div style={{ width: 3, height: 28, backgroundColor: pal.accent, opacity: 0.7, borderRadius: 2 }} />
+      </div>
+      {/* Corner bracket — bottom-left of dark panel */}
+      <div className="absolute" style={{ bottom: 48, left: 36 }}>
+        <div style={{ width: 3, height: 28, backgroundColor: pal.accent, opacity: 0.7, borderRadius: 2 }} />
+        <div style={{ width: 28, height: 3, backgroundColor: pal.accent, opacity: 0.7, borderRadius: 2, marginTop: 0 }} />
+      </div>
+
+      {/* Ornament centered on dark panel */}
+      <div className="absolute" style={{ left: 24, width: '42%', top: '50%', transform: 'translateY(-50%)' }}>
+        <Ornament color={`${pal.accent}55`} width={180} />
+      </div>
+
+      {/* Thick accent separator */}
+      <div className="absolute top-0 bottom-0" style={{ left: '45%', width: 5, backgroundColor: pal.accent }} />
+      {/* Soft glow to the right of separator */}
+      <div className="absolute top-0 bottom-0" style={{ left: 'calc(45% + 5px)', width: 48, background: `linear-gradient(to right, ${pal.accent}28, transparent)` }} />
+
+      {/* Content — right panel */}
+      <div className="absolute flex flex-col items-end" style={{ bottom: 120, left: '52%', right: 56 }}>
+        {/* Icon circle — with accent fill */}
         <div className="flex items-center justify-center" style={{
-          width: 52, height: 52, borderRadius: 26,
-          border: `1.5px solid ${pal.accent}`, marginBottom: 20,
+          width: 68, height: 68, borderRadius: 34,
+          backgroundColor: `${pal.accent}22`,
+          border: `2.5px solid ${pal.accent}`,
+          marginBottom: 26,
         }}>
-          <Icon size={22} color={pal.accent} strokeWidth={1.5} />
+          <Icon size={30} color={pal.accent} strokeWidth={1.5} />
         </div>
         <h2 style={{
-          fontFamily: "'Macker', serif", fontSize: 44, color: pal.dark,
-          lineHeight: 1.1, letterSpacing: 1, marginBottom: 8,
+          fontFamily: "'Macker', serif", fontSize: 48, color: pal.dark,
+          lineHeight: 1.05, letterSpacing: 1, marginBottom: 14,
           textAlign: 'right',
         }}>
           {title}
         </h2>
-        <div style={{ height: 2, width: 44, backgroundColor: pal.accent, marginBottom: 12 }} />
+        {/* Tiered accent lines */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, marginBottom: subtitle ? 14 : 0 }}>
+          <div style={{ height: 3, width: 60, backgroundColor: pal.accent, borderRadius: 2 }} />
+          <div style={{ height: 1.5, width: 40, backgroundColor: pal.accent, opacity: 0.5, borderRadius: 1 }} />
+          <div style={{ height: 1, width: 22, backgroundColor: pal.accent, opacity: 0.3, borderRadius: 1 }} />
+        </div>
         {subtitle && (
           <p style={{ fontSize: 13, color: '#787167', fontStyle: 'italic', textAlign: 'right' }}>{subtitle}</p>
         )}
       </div>
 
-      {/* PageFooter handles the vertical name; nameOnDark since it sits over the dark left panel */}
       <PageFooter weddingName={weddingName} nameOnDark />
     </PageShell>
   )
@@ -436,7 +471,7 @@ function MenusPage({ menus, weddingName, pal, t, menuColorMap }: {
     <PageShell>
       <div style={{ padding: '48px 56px 60px 56px' }}>
         <h2 style={{
-          fontFamily: "'Macker', serif", fontSize: 26, color: pal.dark,
+          fontFamily: "'Macker', serif", fontSize: 26, color: pal.accent,
           marginBottom: 2, letterSpacing: 1,
         }}>
           {t('admin.summary.sections.menus')}
@@ -629,10 +664,10 @@ function SeatingPages({ seating, weddingName, pal, t, menuColorMap }: {
           <div style={{ padding: `${CONTENT_TOP}px 56px ${CONTENT_BOTTOM}px 56px` }}>
             {pi === 0 && (
               <>
-                <h2 style={{ fontFamily: "'Macker', serif", fontSize: 22, color: '#2c2c2c', marginBottom: 4 }}>
+                <h2 style={{ fontFamily: "'Macker', serif", fontSize: 22, color: pal.accent, marginBottom: 4 }}>
                   {t('admin.summary.sections.seatingAssignments')}
                 </h2>
-                <div style={{ height: 2, width: 40, backgroundColor: pal.accent, marginBottom: 24 }} />
+                <div style={{ height: 3, width: 44, backgroundColor: pal.accent, marginBottom: 24 }} />
               </>
             )}
             {pi > 0 && (
@@ -729,7 +764,7 @@ function ItineraryPage({ itinerary, locale, weddingName, pal, t }: {
     <PageShell>
       <div style={{ padding: '48px 56px 60px 56px' }}>
         <h2 style={{
-          fontFamily: "'Macker', serif", fontSize: 26, color: pal.dark,
+          fontFamily: "'Macker', serif", fontSize: 26, color: pal.accent,
           marginBottom: 2, letterSpacing: 1,
         }}>
           {t('admin.summary.sections.itinerary')}
@@ -854,7 +889,7 @@ function SuppliersPage({ suppliers, weddingName, pal, t }: {
           <div style={{ padding: '48px 56px 60px 56px' }}>
             {pi === 0 && (
               <>
-                <h2 style={{ fontFamily: "'Macker', serif", fontSize: 26, color: pal.dark, marginBottom: 2, letterSpacing: 1 }}>
+                <h2 style={{ fontFamily: "'Macker', serif", fontSize: 26, color: pal.accent, marginBottom: 2, letterSpacing: 1 }}>
                   {t('admin.summary.sections.suppliers')}
                 </h2>
                 <Ornament color={pal.accent} width={100} />
