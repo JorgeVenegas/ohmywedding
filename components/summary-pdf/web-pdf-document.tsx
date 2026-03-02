@@ -1604,43 +1604,64 @@ function VenueMapPage({ mapDataUrl, venueName, weddingName, pal, t, isHorizontal
     )
   }
 
+  // Explicit pixel positions for portrait layout
+  const headerTop    = MAP_PAD
+  const headerBottom = MAP_PAD + MAP_HEADER_H
+  const footerTop    = PAGE_H - MAP_PAD - MAP_FOOTER_H
+  const imgTop       = headerBottom + 6
+  const imgBottom    = footerTop - 6
+
   return (
     <PageShell>
-      <div style={{ position: 'absolute', inset: MAP_PAD, display: 'flex', flexDirection: 'column', gap: 6, boxSizing: 'border-box' }}>
-        {/* Compact header strip */}
-        <div style={{ width: '100%', height: MAP_HEADER_H, display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <div style={{ width: 3, height: 28, backgroundColor: pal.accent, borderRadius: 2, flexShrink: 0 }} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ fontFamily: "'Macker', serif", fontSize: 20, color: '#2c2c2c', display: 'block', lineHeight: 1.2 }}>
-              {t('admin.summary.sections.venueMap')}
-            </span>
-            {venueName && (
-              <span style={{ fontSize: 10, fontStyle: 'italic', color: '#a0988c', display: 'block', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{venueName}</span>
-            )}
-          </div>
+      {/* Compact header strip — absolutely positioned */}
+      <div style={{
+        position: 'absolute',
+        top: headerTop, left: MAP_PAD, right: MAP_PAD,
+        height: MAP_HEADER_H,
+        display: 'flex', alignItems: 'center', gap: 10,
+      }}>
+        <div style={{ width: 3, height: 28, backgroundColor: pal.accent, borderRadius: 2, flexShrink: 0 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ fontFamily: "'Macker', serif", fontSize: 20, color: '#2c2c2c', display: 'block', lineHeight: 1.2 }}>
+            {t('admin.summary.sections.venueMap')}
+          </span>
+          {venueName && (
+            <span style={{ fontSize: 10, fontStyle: 'italic', color: '#a0988c', display: 'block', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{venueName}</span>
+          )}
         </div>
-        {/* Map image — fills all remaining space, centered both axes */}
-        <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={mapDataUrl}
-            alt="Venue map"
-            style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
-              width: 'auto',
-              height: 'auto',
-              objectFit: 'contain',
-              borderRadius: 8,
-              border: '1px solid #e9e5e0',
-              display: 'block',
-            }}
-          />
-        </div>
-        {/* Footer strip */}
-        <div style={{ width: '100%', height: MAP_FOOTER_H, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-          <span style={{ fontSize: 8, color: '#c8c0b8', letterSpacing: 3, textTransform: 'uppercase' }}>{weddingName}</span>
-        </div>
+      </div>
+
+      {/* Map image — fills the entire remaining area, centered */}
+      <div style={{
+        position: 'absolute',
+        top: imgTop, bottom: PAGE_H - imgBottom,
+        left: MAP_PAD, right: MAP_PAD,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={mapDataUrl}
+          alt="Venue map"
+          style={{
+            maxWidth: '100%',
+            maxHeight: '100%',
+            width: 'auto',
+            height: 'auto',
+            borderRadius: 8,
+            border: '1px solid #e9e5e0',
+            display: 'block',
+          }}
+        />
+      </div>
+
+      {/* Footer strip — absolutely positioned */}
+      <div style={{
+        position: 'absolute',
+        top: footerTop, left: MAP_PAD, right: MAP_PAD,
+        height: MAP_FOOTER_H,
+        display: 'flex', alignItems: 'center',
+      }}>
+        <span style={{ fontSize: 8, color: '#c8c0b8', letterSpacing: 3, textTransform: 'uppercase' }}>{weddingName}</span>
       </div>
     </PageShell>
   )
