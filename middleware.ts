@@ -366,31 +366,41 @@ async function handleSupabaseAuth(request: NextRequest, response: NextResponse) 
   // Refresh session if expired - required for Server Components
   // CRITICAL: Clear stale auth cookies on ANY auth error to prevent infinite redirect loops.
   // Without this, expired tokens persist across requests and the user gets stuck.
+  // EXCEPTION: refresh_token_already_used — the browser already refreshed the token and the new
+  // cookies are on their way. Don't destroy them; treat this request as unauthenticated and let
+  // the next request (with fresh cookies) succeed.
   let user = null
   try {
     const { data, error } = await supabase.auth.getUser()
     if (error) {
-      // Any auth error means the session is invalid — clear all auth cookies.
-      // This covers: expired refresh tokens, revoked tokens, corrupted sessions, etc.
-      const allCookies = request.cookies.getAll()
-      for (const cookie of allCookies) {
-        if (cookie.name.startsWith('sb-') || cookie.name.includes('supabase')) {
-          response.cookies.set(cookie.name, '', {
-            path: '/',
-            expires: new Date(0),
-            maxAge: 0,
-          })
-          if (cookieDomain) {
+      if ((error as any).code === 'refresh_token_already_used') {
+        // Race condition: the browser-side client refreshed the token first.
+        // The browser holds the new tokens; they'll arrive on the next request.
+        // Do NOT clear cookies here — that would destroy the valid session.
+        user = null
+      } else {
+        // Any other auth error means the session is truly invalid — clear all auth cookies.
+        // This covers: expired refresh tokens, revoked tokens, corrupted sessions, etc.
+        const allCookies = request.cookies.getAll()
+        for (const cookie of allCookies) {
+          if (cookie.name.startsWith('sb-') || cookie.name.includes('supabase')) {
             response.cookies.set(cookie.name, '', {
-              domain: cookieDomain,
               path: '/',
               expires: new Date(0),
               maxAge: 0,
             })
+            if (cookieDomain) {
+              response.cookies.set(cookie.name, '', {
+                domain: cookieDomain,
+                path: '/',
+                expires: new Date(0),
+                maxAge: 0,
+              })
+            }
           }
         }
+        user = null
       }
-      user = null
     } else {
       user = data.user
     }

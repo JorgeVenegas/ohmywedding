@@ -1832,6 +1832,9 @@ export const es: Translations = {
         backgrounds: 'Fondos',
         highlights: 'Destacados',
         swapColors: 'Intercambiar',
+        options: 'Opciones',
+        showFinancialInfo: 'Incluir detalles financieros',
+        showFinancialInfoDesc: 'Mostrar presupuestos, pagos y barras de progreso de proveedores',
       },
     },
     suppliers: {

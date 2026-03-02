@@ -1764,6 +1764,9 @@ export interface Translations {
         backgrounds: string
         highlights: string
         swapColors: string
+        options: string
+        showFinancialInfo: string
+        showFinancialInfoDesc: string
       }
     }
     suppliers: {

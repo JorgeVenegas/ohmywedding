@@ -867,110 +867,179 @@ const SUPPLIER_CATEGORY_LABELS: Record<string, string> = {
   decoration: 'Decor', other: 'Other',
 }
 
-function SuppliersPage({ suppliers, weddingName, pal, t }: {
+const SUPPLIER_CATEGORY_ICONS: Record<string, string> = {
+  catering: '🍽', dj: '🎧', band: '🎵', photographer: '📷',
+  videographer: '🎬', florist: '💐', venue: '🏛', cake: '🎂',
+  transportation: '🚗', hair_makeup: '💄', officiant: '📜',
+  decoration: '✨', other: '📋',
+}
+
+function SuppliersPage({ suppliers, weddingName, pal, t, showFinancial = true }: {
   suppliers: NonNullable<WeddingPDFData['suppliers']>; weddingName: string; pal: BrandPalette
-  t: (k: string, p?: Record<string, string>) => string
+  t: (k: string, p?: Record<string, string>) => string; showFinancial?: boolean
 }) {
   const fmt = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
   const totalBudget = suppliers.reduce((s, sup) => s + (sup.total_amount ?? 0), 0)
   const totalCovered = suppliers.reduce((s, sup) => s + (sup.covered_amount ?? 0), 0)
 
-  // Split into pages: ~5 suppliers per page to avoid overflow
-  const ITEMS_PER_PAGE = 5
-  const pages: typeof suppliers[] = []
-  for (let i = 0; i < suppliers.length; i += ITEMS_PER_PAGE) {
-    pages.push(suppliers.slice(i, i + ITEMS_PER_PAGE))
+  // Group suppliers by category for better organization
+  const grouped = suppliers.reduce<Record<string, typeof suppliers>>((acc, sup) => {
+    const cat = sup.category || 'other'
+    if (!acc[cat]) acc[cat] = []
+    acc[cat].push(sup)
+    return acc
+  }, {})
+  const categories = Object.keys(grouped).sort((a, b) => {
+    const order = ['venue', 'catering', 'photographer', 'videographer', 'florist', 'dj', 'band', 'cake', 'decoration', 'hair_makeup', 'officiant', 'transportation', 'other']
+    return (order.indexOf(a) === -1 ? 99 : order.indexOf(a)) - (order.indexOf(b) === -1 ? 99 : order.indexOf(b))
+  })
+
+  // Build flat list with category headers for pagination
+  type Row = { type: 'category'; category: string; count: number } | { type: 'supplier'; supplier: typeof suppliers[number]; index: number }
+  const rows: Row[] = []
+  categories.forEach(cat => {
+    rows.push({ type: 'category', category: cat, count: grouped[cat].length })
+    grouped[cat].forEach((sup, i) => rows.push({ type: 'supplier', supplier: sup, index: i }))
+  })
+
+  // Estimate row heights and paginate (header area ~120px, each supplier ~85-120px depending on financial, category header ~28px)
+  const PAGE_CONTENT_H = 980
+  const HEADER_H = showFinancial ? 140 : 60
+  const CATEGORY_ROW_H = 32
+  const SUPPLIER_ROW_H = showFinancial ? 110 : 60
+  const CONTINUATION_HEADER_H = 40
+
+  type PageContent = { rows: Row[]; isFirst: boolean }
+  const pages: PageContent[] = []
+  let currentPage: Row[] = []
+  let currentH = HEADER_H
+
+  for (const row of rows) {
+    const rowH = row.type === 'category' ? CATEGORY_ROW_H : SUPPLIER_ROW_H
+    if (currentH + rowH > PAGE_CONTENT_H && currentPage.length > 0) {
+      pages.push({ rows: currentPage, isFirst: pages.length === 0 })
+      currentPage = []
+      currentH = CONTINUATION_HEADER_H
+    }
+    currentPage.push(row)
+    currentH += rowH
   }
+  if (currentPage.length > 0) pages.push({ rows: currentPage, isFirst: pages.length === 0 })
 
   return (
     <>
-      {pages.map((pageSuppliers, pi) => (
+      {pages.map((page, pi) => (
         <PageShell key={pi}>
           <div style={{ padding: '48px 56px 60px 56px' }}>
-            {pi === 0 && (
+            {page.isFirst && (
               <>
                 <h2 style={{ fontFamily: "'Macker', serif", fontSize: 26, color: pal.accent, marginBottom: 2, letterSpacing: 1 }}>
                   {t('admin.summary.sections.suppliers')}
                 </h2>
-                <Ornament color={pal.accent} width={100} />
-                {/* Summary totals row */}
-                <div className="flex" style={{ gap: 16, marginTop: 16, marginBottom: 20 }}>
-                  <div style={{ flex: 1, backgroundColor: `${pal.accent}18`, borderRadius: 6, padding: '8px 12px', borderLeft: `3px solid ${pal.accent}` }}>
-                    <span style={{ fontSize: 8, color: '#a0988c', textTransform: 'uppercase', letterSpacing: 0.6, display: 'block' }}>{t('admin.suppliers.stats.totalSuppliers')}</span>
-                    <span style={{ fontSize: 16, fontWeight: 700, color: pal.dark, fontFamily: "'Macker', serif" }}>{suppliers.length}</span>
-                  </div>
-                  <div style={{ flex: 1, backgroundColor: `${pal.accent}18`, borderRadius: 6, padding: '8px 12px', borderLeft: `3px solid ${pal.accent}` }}>
-                    <span style={{ fontSize: 8, color: '#a0988c', textTransform: 'uppercase', letterSpacing: 0.6, display: 'block' }}>{t('admin.suppliers.stats.totalBudget')}</span>
-                    <span style={{ fontSize: 16, fontWeight: 700, color: pal.dark, fontFamily: "'Macker', serif" }}>{fmt(totalBudget)}</span>
-                  </div>
-                  <div style={{ flex: 1, backgroundColor: `${pal.accent}18`, borderRadius: 6, padding: '8px 12px', borderLeft: `3px solid ${pal.accent}` }}>
-                    <span style={{ fontSize: 8, color: '#a0988c', textTransform: 'uppercase', letterSpacing: 0.6, display: 'block' }}>{t('admin.suppliers.stats.totalPaid')}</span>
-                    <span style={{ fontSize: 16, fontWeight: 700, color: pal.dark, fontFamily: "'Macker', serif" }}>{fmt(totalCovered)}</span>
-                  </div>
-                  <div style={{ flex: 1, backgroundColor: `${pal.accent}18`, borderRadius: 6, padding: '8px 12px', borderLeft: `3px solid ${pal.accent}` }}>
-                    <span style={{ fontSize: 8, color: '#a0988c', textTransform: 'uppercase', letterSpacing: 0.6, display: 'block' }}>{t('admin.suppliers.stats.remaining')}</span>
-                    <span style={{ fontSize: 16, fontWeight: 700, color: pal.dark, fontFamily: "'Macker', serif" }}>{fmt(totalBudget - totalCovered)}</span>
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: showFinancial ? 16 : 20 }}>
+                  <Ornament color={pal.accent} width={100} />
+                  <span style={{ fontSize: 9, color: '#a0988c', letterSpacing: 0.5 }}>
+                    {suppliers.length} {suppliers.length === 1 ? 'supplier' : 'suppliers'} · {categories.length} {categories.length === 1 ? 'category' : 'categories'}
+                  </span>
                 </div>
+                {/* Summary totals row — only when financial is shown */}
+                {showFinancial && (
+                  <div className="flex" style={{ gap: 12, marginBottom: 22 }}>
+                    {[
+                      { label: t('admin.suppliers.stats.totalSuppliers'), value: String(suppliers.length), color: pal.accent },
+                      { label: t('admin.suppliers.stats.totalBudget'), value: fmt(totalBudget), color: pal.accent },
+                      { label: t('admin.suppliers.stats.totalPaid'), value: fmt(totalCovered), color: '#22c55e' },
+                      { label: t('admin.suppliers.stats.remaining'), value: fmt(totalBudget - totalCovered), color: totalBudget - totalCovered > 0 ? '#e11d48' : '#22c55e' },
+                    ].map((stat, i) => (
+                      <div key={i} style={{ flex: 1, backgroundColor: `${stat.color}10`, borderRadius: 8, padding: '10px 12px', borderBottom: `3px solid ${stat.color}` }}>
+                        <span style={{ fontSize: 8, color: '#a0988c', textTransform: 'uppercase', letterSpacing: 0.6, display: 'block', marginBottom: 2 }}>{stat.label}</span>
+                        <span style={{ fontSize: 18, fontWeight: 700, color: pal.dark, fontFamily: "'Macker', serif" }}>{stat.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </>
             )}
-            {pi > 0 && (
-              <div style={{ marginBottom: 20 }}>
-                <h2 style={{ fontFamily: "'Macker', serif", fontSize: 20, color: pal.dark, marginBottom: 4, letterSpacing: 1 }}>
-                  {t('admin.summary.sections.suppliers')} ({pi + 1})
+            {!page.isFirst && (
+              <div style={{ marginBottom: 16 }}>
+                <h2 style={{ fontFamily: "'Macker', serif", fontSize: 18, color: pal.accent, marginBottom: 4, letterSpacing: 1 }}>
+                  {t('admin.summary.sections.suppliers')}
+                  <span style={{ fontSize: 11, color: '#a0988c', fontWeight: 400, marginLeft: 8 }}>({pi + 1})</span>
                 </h2>
-                <div style={{ height: 2, width: 40, backgroundColor: pal.accent }} />
+                <div style={{ height: 3, width: 44, backgroundColor: pal.accent, borderRadius: 2 }} />
               </div>
             )}
 
-            {/* Supplier rows */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {pageSuppliers.map((sup, si) => {
+            {/* Rows */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {page.rows.map((row, ri) => {
+                if (row.type === 'category') {
+                  const icon = SUPPLIER_CATEGORY_ICONS[row.category] ?? '📋'
+                  return (
+                    <div key={`cat-${row.category}`} style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      marginTop: ri > 0 ? 8 : 0, marginBottom: 2,
+                      paddingBottom: 4, borderBottom: `1.5px solid ${pal.accent}30`,
+                    }}>
+                      <span style={{ fontSize: 12 }}>{icon}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: pal.dark, textTransform: 'uppercase', letterSpacing: 1 }}>
+                        {SUPPLIER_CATEGORY_LABELS[row.category] ?? row.category}
+                      </span>
+                      <span style={{ fontSize: 9, color: '#a0988c', marginLeft: 4 }}>({row.count})</span>
+                    </div>
+                  )
+                }
+
+                const sup = row.supplier
                 const pct = sup.total_amount > 0 ? Math.min(100, (sup.covered_amount / sup.total_amount) * 100) : 0
                 const fullyPaid = sup.total_amount > 0 && sup.covered_amount >= sup.total_amount
+
                 return (
                   <div key={sup.id} style={{
-                    border: '1px solid #e9e5e0', borderRadius: 8, padding: '10px 12px',
-                    borderLeft: `3px solid ${fullyPaid ? '#22c55e' : pal.accent}`,
-                    backgroundColor: si % 2 === 0 ? '#fefdfb' : '#f8f6f2',
+                    borderRadius: 8, padding: showFinancial ? '10px 14px' : '8px 14px',
+                    backgroundColor: row.index % 2 === 0 ? '#fefdfb' : '#f8f6f2',
+                    border: '1px solid #eae7e1',
+                    borderLeft: showFinancial ? `3px solid ${fullyPaid ? '#22c55e' : pal.accent}` : `3px solid ${pal.accent}`,
                   }}>
-                    {/* Header row */}
-                    <div className="flex items-center" style={{ justifyContent: 'space-between', marginBottom: 5 }}>
-                      <div>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: pal.dark, letterSpacing: 0.5 }}>{sup.name}</span>
-                        <span style={{
-                          fontSize: 8, marginLeft: 8, padding: '1px 5px', borderRadius: 9,
-                          backgroundColor: `${pal.accent}22`, color: pal.accentDark,
-                          fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5,
-                        }}>
-                          {SUPPLIER_CATEGORY_LABELS[sup.category] ?? sup.category}
-                        </span>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: fullyPaid ? '#16a34a' : pal.dark }}>
-                          {fmt(sup.covered_amount)} / {fmt(sup.total_amount)}
-                        </span>
-                      </div>
+                    {/* Top row: name + financial */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showFinancial ? 6 : 2 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: pal.dark, letterSpacing: 0.3 }}>{sup.name}</span>
+                      {showFinancial && sup.total_amount > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {fullyPaid && (
+                            <span style={{ fontSize: 7, padding: '1px 5px', borderRadius: 9, backgroundColor: '#dcfce7', color: '#15803d', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                              ✓ {t('admin.suppliers.fullyPaid')}
+                            </span>
+                          )}
+                          <span style={{ fontSize: 11, fontWeight: 700, color: fullyPaid ? '#16a34a' : pal.dark, fontFamily: "'Macker', serif" }}>
+                            {fmt(sup.covered_amount)} / {fmt(sup.total_amount)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     {/* Progress bar */}
-                    <div style={{ height: 4, backgroundColor: '#e9e5e0', borderRadius: 2, marginBottom: 5 }}>
-                      <div style={{ height: 4, borderRadius: 2, width: `${pct}%`, backgroundColor: fullyPaid ? '#22c55e' : pal.accent }} />
+                    {showFinancial && sup.total_amount > 0 && (
+                      <div style={{ height: 4, backgroundColor: '#e9e5e0', borderRadius: 2, marginBottom: 6, overflow: 'hidden' }}>
+                        <div style={{ height: 4, borderRadius: 2, width: `${pct}%`, backgroundColor: fullyPaid ? '#22c55e' : pal.accent, transition: 'width 0.3s' }} />
+                      </div>
+                    )}
+                    {/* Contact + notes in a compact row */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                      {sup.contact_info && (
+                        <span style={{ fontSize: 9, color: '#787167', display: 'flex', alignItems: 'center', gap: 3 }}>
+                          <span style={{ fontSize: 8, opacity: 0.6 }}>📞</span> {sup.contact_info}
+                        </span>
+                      )}
+                      {sup.notes && (
+                        <span style={{ fontSize: 9, fontStyle: 'italic', color: '#a0988c', display: 'flex', alignItems: 'center', gap: 3 }}>
+                          <span style={{ fontSize: 8, opacity: 0.6 }}>📝</span> {sup.notes}
+                        </span>
+                      )}
                     </div>
-                    {/* Contact + notes */}
-                    {sup.contact_info && (
-                      <span style={{ fontSize: 9, color: '#787167', display: 'block', marginBottom: 3 }}>
-                        {sup.contact_info}
-                      </span>
-                    )}
-                    {sup.notes && (
-                      <span style={{ fontSize: 9, fontStyle: 'italic', color: '#a0988c', display: 'block', marginBottom: 3 }}>
-                        {sup.notes}
-                      </span>
-                    )}
-                    {/* Payments */}
-                    {sup.payments?.length > 0 && (
-                      <div style={{ marginTop: 5, paddingTop: 5, borderTop: '1px dashed #e9e5e0' }}>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {/* Payments — only when financial is shown */}
+                    {showFinancial && sup.payments?.length > 0 && (
+                      <div style={{ marginTop: 6, paddingTop: 5, borderTop: '1px dashed #e9e5e0' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                           {sup.payments.map((pay) => (
                             <span key={pay.id} style={{
                               fontSize: 8, backgroundColor: '#f0ede6', borderRadius: 4,
@@ -1258,7 +1327,7 @@ export function WebPDFDocument({ data, t }: {
             subtitle={`${data.suppliers.length} ${data.suppliers.length === 1 ? 'supplier' : 'suppliers'}`}
             iconType="suppliers" pal={pal} weddingName={weddingName}
           />
-          <SuppliersPage suppliers={data.suppliers} weddingName={weddingName} pal={pal} t={t} />
+          <SuppliersPage suppliers={data.suppliers} weddingName={weddingName} pal={pal} t={t} showFinancial={data.showSuppliersFinancial !== false} />
         </>
       )}
       {show('venue') && data.venueMapDataUrl && (

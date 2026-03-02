@@ -1836,6 +1836,9 @@ export const en: Translations = {
         backgrounds: 'Backgrounds',
         highlights: 'Highlights',
         swapColors: 'Swap',
+        options: 'Options',
+        showFinancialInfo: 'Include financial details',
+        showFinancialInfoDesc: 'Show budgets, payments, and progress bars for suppliers',
       },
     },
     suppliers: {

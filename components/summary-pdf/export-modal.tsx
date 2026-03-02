@@ -37,6 +37,7 @@ export interface ExportOptions {
   bgVariant: PaletteVariant
   hlSource: ColorSource
   hlVariant: PaletteVariant
+  showSuppliersFinancial: boolean
 }
 
 // ─────────────────────────────────────────────
@@ -301,6 +302,7 @@ export function ExportModal({
   const [hlSource, setHlSource] = useState<ColorSource>('accent')
   const [hlVariant, setHlVariant] = useState<PaletteVariant>('original')
   const [showImagePicker, setShowImagePicker] = useState(false)
+  const [showSuppliersFinancial, setShowSuppliersFinancial] = useState(true)
 
   const resolveColor = (source: ColorSource, variant: PaletteVariant) => {
     const base = source === 'primary' ? primaryColor : accentColor
@@ -330,7 +332,7 @@ export function ExportModal({
   }
 
   const handleExport = () => {
-    onExport({ coverImageUrl, selectedSections, bgSource, bgVariant, hlSource, hlVariant })
+    onExport({ coverImageUrl, selectedSections, bgSource, bgVariant, hlSource, hlVariant, showSuppliersFinancial })
   }
 
   return (
@@ -561,6 +563,34 @@ export function ExportModal({
                           </button>
                         )}
                       </div>
+
+                      {/* Supplier financial toggle */}
+                      {selectedSections.includes('suppliers') && (
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
+                            {t('admin.summary.exportModal.options')}
+                          </p>
+                          <label className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                            showSuppliersFinancial ? 'border-primary/40 bg-primary/5' : 'border-border hover:border-border/80'
+                          }`}>
+                            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                              showSuppliersFinancial ? 'border-primary bg-primary' : 'border-muted-foreground/40'
+                            }`}>
+                              {showSuppliersFinancial && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                            </div>
+                            <div>
+                              <span className="text-sm text-foreground">{t('admin.summary.exportModal.showFinancialInfo')}</span>
+                              <span className="text-xs text-muted-foreground block">{t('admin.summary.exportModal.showFinancialInfoDesc')}</span>
+                            </div>
+                            <input
+                              type="checkbox"
+                              className="sr-only"
+                              checked={showSuppliersFinancial}
+                              onChange={() => setShowSuppliersFinancial(prev => !prev)}
+                            />
+                          </label>
+                        </div>
+                      )}
 
                       {/* Sections */}
                       <div>

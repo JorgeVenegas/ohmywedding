@@ -82,6 +82,14 @@ export function useAuth() {
     // without erroring. getUser() actually validates against the Supabase server.
     supabase.auth.getUser().then(({ data: { user: validatedUser }, error }) => {
       if (error || !validatedUser) {
+        // refresh_token_already_used means the middleware (server-side) refreshed the
+        // token first and set new cookies on the response. The user is still authenticated.
+        // Reload so the browser picks up the fresh cookies instead of signing out.
+        if ((error as any)?.code === 'refresh_token_already_used') {
+          window.location.reload()
+          return
+        }
+
         // Check if we have stale auth data lingering in storage/cookies
         const hasAuthData = typeof document !== 'undefined' && (
           document.cookie.split(';').some(c => {
@@ -109,10 +117,11 @@ export function useAuth() {
         if (event === 'TOKEN_REFRESHED') {
           // Token refresh - don't update state as user data hasn't changed
           if (!session) {
-            // Token refresh failed, clear all cookies and storage
-            clearAllAuthStorage()
-            supabase.auth.signOut({ scope: 'local' }).catch(() => {})
-            setUser(null)
+            // Token refresh produced no session. This can happen when the middleware
+            // already refreshed the token (race condition). Reload to pick up the
+            // fresh cookies the middleware set on the response rather than signing out.
+            window.location.reload()
+            return
           }
         } else if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
           setUser(session?.user ?? null)

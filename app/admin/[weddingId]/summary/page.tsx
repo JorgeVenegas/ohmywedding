@@ -239,6 +239,7 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
         venueMapIsHorizontal,
         coverImageUrl: options?.coverImageUrl,
         selectedSections: options?.selectedSections,
+        showSuppliersFinancial: options?.showSuppliersFinancial ?? true,
         bgSource: options?.bgSource,
         bgVariant: options?.bgVariant,
         hlSource: options?.hlSource,

@@ -1,4 +1,10 @@
 import { createBrowserClient } from "@supabase/ssr"
+import type { SupabaseClient } from "@supabase/supabase-js"
+
+// Module-level singleton — prevents multiple client instances competing for token refresh.
+// Race conditions between simultaneous getUser()/refresh calls across different instances
+// are the root cause of refresh_token_already_used errors.
+let _supabaseClient: SupabaseClient | null = null
 
 // Get the cookie domain for subdomain sharing
 function getCookieDomain(): string | undefined {
@@ -24,11 +30,14 @@ function getCookieDomain(): string | undefined {
   return undefined
 }
 
-export function createClient() {
+export function createClient(): SupabaseClient {
+  // Return the existing singleton — all callers share one client and one refresh flow
+  if (_supabaseClient) return _supabaseClient
+
   const cookieDomain = getCookieDomain()
   const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:'
   
-  return createBrowserClient(
+  _supabaseClient = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!, 
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -42,4 +51,6 @@ export function createClient() {
       }
     }
   )
+
+  return _supabaseClient
 }
