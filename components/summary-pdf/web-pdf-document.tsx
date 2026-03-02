@@ -710,8 +710,19 @@ function SeatingPages({ seating, weddingName, pal, t, menuColorMap }: {
                       padding: '6px 12px 6px 16px',
                     }}>
                       <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 3, backgroundColor: pal.accent }} />
-                      <span style={{ flex: 1, fontSize: 10, fontWeight: 700, color: pal.dark, paddingLeft: 4, ...truncStyle }}>
-                        {t('admin.summary.tableNumber', { number: String(entry.table.tableNumber) })}: {entry.table.tableName}
+                      {/* Table number badge */}
+                      <div style={{
+                        flexShrink: 0, marginLeft: 4, marginRight: 8,
+                        backgroundColor: pal.accent, borderRadius: 4,
+                        minWidth: 22, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        padding: '0 5px', boxSizing: 'border-box',
+                      }}>
+                        <span style={{ fontSize: 9, fontWeight: 800, color: '#fff', letterSpacing: 0.2 }}>
+                          {entry.table.tableNumber}
+                        </span>
+                      </div>
+                      <span style={{ flex: 1, fontSize: 10, fontWeight: 700, color: pal.dark, minWidth: 0, ...truncStyle }}>
+                        {entry.table.tableName}
                       </span>
                       <div style={{
                         backgroundColor: '#f8f6f2', borderRadius: 4,
