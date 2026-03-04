@@ -53,9 +53,9 @@ export async function GET(request: NextRequest) {
     const planLimit = planFeatures?.limit_value
 
     // Apply plan-based limits
-    // Free: 10 items, Premium: 7 days of data, Deluxe: unlimited
+    // Free: 8 items, Premium: 7 days of data, Deluxe: unlimited
     if (plan === 'free' && planLimit !== null) {
-      effectiveLimit = Math.min(limit, planLimit) // Cap at plan limit (default 10)
+      effectiveLimit = Math.min(limit, planLimit) // Cap at plan limit (8 from DB)
     } else if (plan === 'premium') {
       // Premium: Filter to last 7 days
       // We'll add a date filter below

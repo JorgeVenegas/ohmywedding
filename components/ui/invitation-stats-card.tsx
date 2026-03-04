@@ -45,14 +45,23 @@ export function InvitationStatsCard({ weddingId, compact = false }: InvitationSt
   const [stats, setStats] = useState<InvitationStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [restricted, setRestricted] = useState(false)
 
   const fetchStats = async () => {
     setLoading(true)
     setError(null)
+    setRestricted(false)
     try {
       const response = await fetch(
         `/api/invitation-tracking?weddingId=${encodeURIComponent(weddingId)}`
       )
+      if (response.status === 403) {
+        const data = await response.json()
+        if (data.restricted) {
+          setRestricted(true)
+          return
+        }
+      }
       if (!response.ok) throw new Error("Failed to fetch stats")
       const data = await response.json()
       setStats(data)
@@ -97,6 +106,10 @@ export function InvitationStatsCard({ weddingId, compact = false }: InvitationSt
         </div>
       </Card>
     )
+  }
+
+  if (restricted) {
+    return null
   }
 
   if (!stats) return null

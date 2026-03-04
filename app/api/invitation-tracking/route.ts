@@ -151,6 +151,32 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
     }
 
+    // Check if confirmation tracking is enabled for this wedding's plan
+    const serviceClient = createServiceClient()
+    const { data: weddingSub } = await serviceClient
+      .from('wedding_subscriptions')
+      .select('plan')
+      .eq('wedding_id', wedding.id)
+      .single()
+
+    const plan = (weddingSub?.plan as 'free' | 'premium' | 'deluxe') || 'free'
+
+    const { data: trackingFeature } = await serviceClient
+      .from('plan_features')
+      .select('enabled')
+      .eq('plan', plan)
+      .eq('feature_key', 'confirmation_tracking_enabled')
+      .single()
+
+    if (!trackingFeature?.enabled) {
+      return NextResponse.json({
+        error: 'Confirmation tracking requires a Premium or Deluxe plan',
+        restricted: true,
+        plan,
+        upgrade_url: '/upgrade?source=api_gate_confirmation_tracking',
+      }, { status: 403 })
+    }
+
     if (groupId) {
       // Get stats for a specific group
       const { data: opens, error } = await supabase

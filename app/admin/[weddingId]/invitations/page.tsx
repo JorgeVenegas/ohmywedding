@@ -458,6 +458,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       const result = await response.json()
       if (response.ok) {
         setAllTimelineData(result)
+      } else if (response.status === 403 && result.restricted) {
+        // Plan doesn't support tracking - leave timeline data null
+        setAllTimelineData(null)
       }
     } catch (error) {
       console.error('Error fetching timeline data:', error)
@@ -2838,6 +2841,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             setShowGroupTravelDialog: setShowGroupTravelDialog,
             setBulkInvitedBy: setBulkInvitedBy,
             setShowBulkInvitedByModal: setShowBulkInvitedByModal,
+            planType: planType,
           }}
         />
 
@@ -2856,6 +2860,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             timelineGroupFilter={timelineGroupFilter}
             setTimelineGroupFilter={setTimelineGroupFilter}
             guestGroups={guestGroups}
+            planType={planType}
           />
         </div>
 

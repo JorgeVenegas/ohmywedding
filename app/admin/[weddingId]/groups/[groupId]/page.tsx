@@ -159,9 +159,10 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
     try {
       const response = await fetch(`/api/invitation-tracking/timeline?weddingId=${encodeURIComponent(weddingId)}&groupId=${groupId}`)
       const result = await response.json()
-      if (result.openEvents) {
+      if (response.ok && result.openEvents) {
         setOpenEvents(result.openEvents)
       }
+      // If 403 (plan restricted), silently leave openEvents empty
     } catch (error) {
       console.error('Error fetching open history:', error)
     }
@@ -359,10 +360,12 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
               <XCircle className="w-4 h-4 text-red-600" />
               <span className="text-red-700">{declinedCount}</span>
             </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-100 text-sm font-medium">
-              <Eye className="w-4 h-4 text-blue-600" />
-              <span className="text-blue-700">{group.open_count} opens</span>
-            </div>
+            {weddingPlan !== 'free' && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-100 text-sm font-medium">
+                <Eye className="w-4 h-4 text-blue-600" />
+                <span className="text-blue-700">{group.open_count} opens</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -437,9 +440,13 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
 
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">First Opened</span>
-                <span className={group.first_opened_at ? 'text-blue-600' : 'text-muted-foreground'}>
-                  {group.first_opened_at ? formatDate(group.first_opened_at) : 'Not opened'}
-                </span>
+                {weddingPlan !== 'free' ? (
+                  <span className={group.first_opened_at ? 'text-blue-600' : 'text-muted-foreground'}>
+                    {group.first_opened_at ? formatDate(group.first_opened_at) : 'Not opened'}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground text-xs">Premium feature</span>
+                )}
               </div>
 
               <div className="flex items-center justify-between text-sm">
@@ -552,7 +559,7 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
         </Card>
 
         {/* Opens History Chart */}
-        {opensChartData.length > 0 && (
+        {weddingPlan !== 'free' && opensChartData.length > 0 && (
           <Card className="p-4">
             <h3 className="font-medium text-foreground mb-4">Invitation Views Over Time</h3>
             <InteractiveAreaChart
@@ -590,7 +597,7 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
           )}
 
           {/* Open Events */}
-          {openEvents.length > 0 && (
+          {weddingPlan !== 'free' && openEvents.length > 0 && (
             <div className="mt-6 pt-4 border-t">
               <h4 className="text-sm font-medium text-foreground mb-3">Open History ({openEvents.length} views)</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">

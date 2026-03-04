@@ -77,57 +77,20 @@ export function useAuth() {
   useEffect(() => {
     const supabase = createClient()
 
-    // Validate session with the server using getUser() instead of getSession().
-    // getSession() reads from local cache and may return stale/expired tokens
-    // without erroring. getUser() actually validates against the Supabase server.
-    supabase.auth.getUser().then(({ data: { user: validatedUser }, error }) => {
-      if (error || !validatedUser) {
-        // refresh_token_already_used means the middleware (server-side) refreshed the
-        // token first and set new cookies on the response. The user is still authenticated.
-        // Reload so the browser picks up the fresh cookies instead of signing out.
-        if ((error as any)?.code === 'refresh_token_already_used') {
-          window.location.reload()
-          return
-        }
-
-        // Check if we have stale auth data lingering in storage/cookies
-        const hasAuthData = typeof document !== 'undefined' && (
-          document.cookie.split(';').some(c => {
-            const name = c.trim().split('=')[0]
-            return name.startsWith('sb-') || name.includes('supabase')
-          }) ||
-          Object.keys(localStorage).some(k => k.startsWith('sb-') || k.includes('supabase'))
-        )
-
-        if (hasAuthData) {
-          console.warn('Stale auth state detected, clearing all auth data')
-          clearAllAuthStorage()
-          supabase.auth.signOut({ scope: 'local' }).catch(() => {})
-        }
-        setUser(null)
-      } else {
-        setUser(validatedUser)
-      }
-      setLoading(false)
-    })
-
-    // Listen for auth changes
+    // Rely on onAuthStateChange instead of calling getUser() separately.
+    // getUser() triggers a network request that can race with the middleware's
+    // own token refresh, causing refresh_token_already_used errors and 429s.
+    // The middleware already validates and refreshes sessions on every request,
+    // so the cookies reaching the browser are already validated.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        if (event === 'TOKEN_REFRESHED') {
-          // Token refresh - don't update state as user data hasn't changed
-          if (!session) {
-            // Token refresh produced no session. This can happen when the middleware
-            // already refreshed the token (race condition). Reload to pick up the
-            // fresh cookies the middleware set on the response rather than signing out.
-            window.location.reload()
-            return
-          }
-        } else if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
-          setUser(session?.user ?? null)
-        } else if (event === 'INITIAL_SESSION' && !session) {
-          // Initial session load found no valid session — ensure stale data is cleared
+        if (event === 'SIGNED_OUT') {
+          setUser(null)
           clearAllAuthStorage()
+        } else {
+          // INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED, USER_UPDATED
+          // All provide the current session — trust it.
+          setUser(session?.user ?? null)
         }
         setLoading(false)
       }

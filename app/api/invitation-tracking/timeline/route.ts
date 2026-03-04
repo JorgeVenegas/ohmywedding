@@ -29,6 +29,38 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
     }
 
+    // Check if confirmation tracking is enabled for this wedding's plan
+    const { data: weddingSub } = await supabase
+      .from('wedding_subscriptions')
+      .select('plan')
+      .eq('wedding_id', wedding.id)
+      .single()
+
+    const plan = (weddingSub?.plan as 'free' | 'premium' | 'deluxe') || 'free'
+
+    // Use admin client to check plan_features (bypasses RLS)
+    const { createClient: createAdminClient } = await import('@supabase/supabase-js')
+    const adminClient = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const { data: trackingFeature } = await adminClient
+      .from('plan_features')
+      .select('enabled')
+      .eq('plan', plan)
+      .eq('feature_key', 'confirmation_tracking_enabled')
+      .single()
+
+    if (!trackingFeature?.enabled) {
+      return NextResponse.json({
+        error: 'Confirmation tracking requires a Premium or Deluxe plan',
+        restricted: true,
+        plan,
+        upgrade_url: '/upgrade?source=api_gate_confirmation_tracking',
+      }, { status: 403 })
+    }
+
     // Calculate date range
     let startDate: Date | null = null
     const now = new Date()

@@ -14,9 +14,11 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
+  Lock,
 } from "lucide-react"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import type { GuestGroup, TimelineData } from "../types"
+import type { PlanType } from "@/lib/subscription-shared"
 
 interface InvitationsChartsSectionProps {
   weddingId: string
@@ -33,6 +35,7 @@ interface InvitationsChartsSectionProps {
   timelineGroupFilter: string
   setTimelineGroupFilter: (filter: string) => void
   guestGroups: GuestGroup[]
+  planType: PlanType
 }
 
 const TAG_PIE_COLORS: Record<string, string> = {
@@ -56,9 +59,11 @@ export function InvitationsChartsSection({
   timelineGroupFilter,
   setTimelineGroupFilter,
   guestGroups,
+  planType,
 }: InvitationsChartsSectionProps) {
   const router = useRouter()
 
+  const hasTrackingAccess = planType !== 'free'
   const hasData = statusByInvitedByData.length > 0 || tagsByInvitedByData.length > 0 || !timelineLoading
 
   if (!hasData) return null
@@ -125,7 +130,25 @@ export function InvitationsChartsSection({
         </div>
 
         {/* Confirmation Timeline Chart */}
-        {!timelineLoading && (
+        {!hasTrackingAccess ? (
+          <Card className="p-6 border">
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+                <Lock className="w-6 h-6 text-muted-foreground/60" />
+              </div>
+              <h3 className="text-sm font-semibold text-foreground mb-1">Confirmation & Opens Tracking</h3>
+              <p className="text-xs text-muted-foreground mb-4 max-w-sm">
+                Track when guests open their invitations, view confirmation timelines, and get detailed analytics.
+              </p>
+              <a
+                href={`/upgrade?source=charts_tracking`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
+              >
+                Upgrade to Premium
+              </a>
+            </div>
+          </Card>
+        ) : !timelineLoading && (
           <Card className="p-4 sm:p-6 border">
             <h3 className="text-sm font-semibold text-foreground mb-4">Confirmation Timeline</h3>
             <div className="flex flex-col gap-3 sm:gap-4">
@@ -224,7 +247,7 @@ export function InvitationsChartsSection({
         )}
 
         {/* Loading State */}
-        {timelineLoading && (
+        {hasTrackingAccess && timelineLoading && (
           <Card className="p-4 sm:p-6 border shadow-sm">
             <div className="h-[200px] flex items-center justify-center">
               <div className="flex flex-col items-center gap-2">
@@ -236,7 +259,7 @@ export function InvitationsChartsSection({
         )}
 
         {/* Empty State */}
-        {!timelineLoading && (!timelineData || timelineData.chartData.length === 0) && (
+        {hasTrackingAccess && !timelineLoading && (!timelineData || timelineData.chartData.length === 0) && (
           <Card className="p-4 sm:p-6 border shadow-sm">
             <div className="h-[200px] flex flex-col items-center justify-center text-muted-foreground">
               <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
@@ -249,7 +272,7 @@ export function InvitationsChartsSection({
         )}
 
         {/* Summary Stats */}
-        {timelineData && timelineData.chartData.length > 0 && (
+        {hasTrackingAccess && timelineData && timelineData.chartData.length > 0 && (
           <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
             <StatCard
               label="Confirmations"

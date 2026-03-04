@@ -19,6 +19,7 @@ import {
   Trash2,
 } from "lucide-react"
 import type { GuestGroup, Guest, ColumnVisibility, PartnerOption } from "../types"
+import type { PlanType } from "@/lib/subscription-shared"
 
 export interface InvitationsToolbarProps {
   // View mode
@@ -72,6 +73,8 @@ export interface InvitationsToolbarProps {
   // Invited by setup
   setBulkInvitedBy: (invitedBy: string[]) => void
   setShowBulkInvitedByModal: (show: boolean) => void
+  // Plan
+  planType: PlanType
 }
 
 export function InvitationsToolbarContent({
@@ -110,6 +113,7 @@ export function InvitationsToolbarContent({
   setShowGroupTravelDialog,
   setBulkInvitedBy,
   setShowBulkInvitedByModal,
+  planType,
 }: InvitationsToolbarProps) {
   const hasActiveFilters = searchQuery || statusFilter !== 'all' || tagFilter !== 'all' || groupFilter !== 'all' || invitedByFilter !== 'all' || openedFilter !== 'all'
 
@@ -219,15 +223,17 @@ export function InvitationsToolbarContent({
               <option key={partner.key} value={partner.key}>{partner.name}</option>
             ))}
           </select>
-          <select
-            value={openedFilter}
-            onChange={(e) => setOpenedFilter(e.target.value as typeof openedFilter)}
-            className="h-8 rounded-md border border-border bg-background px-2 text-xs"
-          >
-            <option value="all">All Opens</option>
-            <option value="opened">Opened</option>
-            <option value="not-opened">Not Opened</option>
-          </select>
+          {planType !== 'free' && (
+            <select
+              value={openedFilter}
+              onChange={(e) => setOpenedFilter(e.target.value as typeof openedFilter)}
+              className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+            >
+              <option value="all">All Opens</option>
+              <option value="opened">Opened</option>
+              <option value="not-opened">Not Opened</option>
+            </select>
+          )}
           {hasActiveFilters && (
             <Button
               variant="ghost"

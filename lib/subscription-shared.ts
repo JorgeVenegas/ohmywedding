@@ -227,7 +227,7 @@ export const PLAN_CARDS = {
       'Event schedule',
       'Gift registry links',
       'Up to 50 guests',
-      'Last 10 activities only',
+      'Last 8 activities only',
     ],
     cta: 'Get Started',
     href: '/create-wedding',
@@ -290,7 +290,7 @@ export const COMPARISON_FEATURES = [
     { name: 'Guest limit', free: '50', premium: '250', deluxe: 'Unlimited' },
     { name: 'Guest groups', free: '15', premium: 'Unlimited', deluxe: 'Unlimited' },
     { name: 'Advanced RSVP system', free: false, premium: true, deluxe: true },
-    { name: 'Activity tracking', free: 'Last 10', premium: '1 week', deluxe: 'Unlimited' },
+    { name: 'Activity tracking', free: 'Last 8', premium: '1 week', deluxe: 'Unlimited' },
   ]},
   { category: 'Registry & Payments', features: [
     { name: 'Bespoke registry with secure payouts', free: false, premium: true, deluxe: true },
