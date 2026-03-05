@@ -2,11 +2,170 @@
 
 import React, { useState } from 'react'
 import { ExternalLink, Gift, Heart, Sparkles } from 'lucide-react'
-import { BaseRegistryProps, getColorScheme, getProviderLogoUrl } from './types'
+import { BaseRegistryProps, getColorScheme, getProviderLogoUrl, RegistryProvider } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { getWeddingPath } from '@/lib/wedding-url'
 import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 import Link from 'next/link'
+
+interface RegistryElegantItemProps {
+  registry: RegistryProvider
+  index: number
+  onNoUrl: () => void
+  cardBg: string
+  cardBorder: string
+  primary: string
+  secondary: string
+  titleColor: string
+  mutedTextColor: string
+  showDescription: boolean
+}
+
+function RegistryElegantItem({ registry, index, onNoUrl, cardBg, cardBorder, primary, secondary, titleColor, mutedTextColor, showDescription }: RegistryElegantItemProps) {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+  const { t } = useI18n()
+  const hasUrl = registry.url && registry.url.trim() !== ''
+
+  return (
+    <div
+      ref={ref}
+      className={`relative w-full h-full transition-all duration-500 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}
+      style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
+    >
+      {/* Ornate outer border */}
+      <div
+        className="absolute -inset-3 rounded-3xl opacity-20"
+        style={{
+          border: `2px solid ${primary}`,
+          background: `radial-gradient(circle at top left, ${primary}10, transparent 70%)`
+        }}
+      />
+
+      {/* Corner flourishes */}
+      <div
+        className="absolute -top-2 -left-2 w-8 h-8 rounded-full"
+        style={{
+          background: `radial-gradient(circle, ${primary}, transparent)`,
+          opacity: 0.3
+        }}
+      />
+      <div
+        className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full"
+        style={{
+          background: `radial-gradient(circle, ${secondary}, transparent)`,
+          opacity: 0.3
+        }}
+      />
+
+      {/* Main card */}
+      <div
+        className="relative rounded-2xl overflow-hidden shadow-xl h-full flex flex-col"
+        style={{
+          backgroundColor: cardBg,
+          border: `1px solid ${cardBorder}`
+        }}
+      >
+        {/* Subtle gradient overlay */}
+        <div
+          className="absolute inset-0 opacity-5"
+          style={{
+            background: `linear-gradient(135deg, ${primary}30, ${secondary}30)`
+          }}
+        />
+
+        {/* Decorative top border */}
+        <div
+          className="h-1"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${primary}, ${secondary}, transparent)`
+          }}
+        />
+
+        <div className="relative p-8 sm:p-10 text-center flex-1 flex flex-col justify-center">
+          {/* Provider Logo with decorative frame */}
+          <div className="mb-6 relative inline-block">
+            <div
+              className="absolute -inset-4 rounded-full opacity-10"
+              style={{ border: `1px solid ${primary}` }}
+            />
+            <div className="h-20 sm:h-24 flex items-center justify-center">
+              <img
+                src={getProviderLogoUrl(registry)}
+                alt={registry.name}
+                className="max-h-16 sm:max-h-20 max-w-[140px] sm:max-w-[160px] object-contain"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement
+                  target.style.display = 'none'
+                  target.parentElement!.innerHTML = `<span class="text-4xl font-light" style="color: ${primary}; font-family: var(--font-display, cursive)">${registry.name.charAt(0)}</span>`
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Decorative divider */}
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="w-8 h-px" style={{ backgroundColor: primary, opacity: 0.3 }} />
+            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: primary, opacity: 0.5 }} />
+            <div className="w-8 h-px" style={{ backgroundColor: primary, opacity: 0.3 }} />
+          </div>
+
+          <h3
+            className="text-xl sm:text-2xl font-light mb-2 tracking-wide"
+            style={{
+              color: titleColor,
+              fontFamily: 'var(--font-display, cursive)'
+            }}
+          >
+            {registry.name}
+          </h3>
+
+          {showDescription && registry.description && (
+            <p
+              className="text-sm mb-5 font-light italic line-clamp-2 px-4"
+              style={{ color: mutedTextColor }}
+            >
+              {registry.description}
+            </p>
+          )}
+
+          <div className="flex justify-center">
+            {hasUrl ? (
+              <a
+                href={registry.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-light tracking-wide transition-all duration-300 hover:shadow-lg border"
+                style={{
+                  backgroundColor: 'transparent',
+                  borderColor: primary,
+                  color: primary
+                }}
+              >
+                {t('registry.visitRegistry')}
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            ) : (
+              <button
+                onClick={onNoUrl}
+                className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-light tracking-wide transition-all duration-300 hover:shadow-lg border"
+                style={{
+                  backgroundColor: 'transparent',
+                  borderColor: primary,
+                  color: primary
+                }}
+              >
+                {t('registry.visitRegistry')}
+                <ExternalLink className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export function RegistryElegantVariant({
   theme,
@@ -141,151 +300,21 @@ export function RegistryElegantVariant({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto [&>*:last-child:nth-child(odd)]:md:col-span-2 [&>*:last-child:nth-child(odd)]:md:max-w-lg [&>*:last-child:nth-child(odd)]:md:mx-auto">
-            {registries.map((registry, index) => {
-              const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
-              const hasUrl = registry.url && registry.url.trim() !== ''
-
-              return (
-                <div
-                  key={registry.id}
-                  ref={ref}
-                  className={`relative w-full h-full transition-all duration-500 ${
-                    isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                  }`}
-                  style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
-                >
-                  {/* Ornate outer border */}
-                  <div 
-                    className="absolute -inset-3 rounded-3xl opacity-20"
-                    style={{ 
-                      border: `2px solid ${primary}`,
-                      background: `radial-gradient(circle at top left, ${primary}10, transparent 70%)`
-                    }}
-                  />
-                  
-                  {/* Corner flourishes */}
-                  <div 
-                    className="absolute -top-2 -left-2 w-8 h-8 rounded-full"
-                    style={{ 
-                      background: `radial-gradient(circle, ${primary}, transparent)`,
-                      opacity: 0.3
-                    }}
-                  />
-                  <div 
-                    className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full"
-                    style={{ 
-                      background: `radial-gradient(circle, ${secondary}, transparent)`,
-                      opacity: 0.3
-                    }}
-                  />
-                  
-                  {/* Main card */}
-                  <div
-                    className="relative rounded-2xl overflow-hidden shadow-xl h-full flex flex-col"
-                    style={{ 
-                      backgroundColor: cardBg,
-                      border: `1px solid ${cardBorder}`
-                    }}
-                  >
-                    {/* Subtle gradient overlay */}
-                    <div 
-                      className="absolute inset-0 opacity-5"
-                      style={{ 
-                        background: `linear-gradient(135deg, ${primary}30, ${secondary}30)`
-                      }}
-                    />
-                    
-                    {/* Decorative top border */}
-                    <div 
-                      className="h-1"
-                      style={{ 
-                        background: `linear-gradient(90deg, transparent, ${primary}, ${secondary}, transparent)`
-                      }}
-                    />
-                    
-                    <div className="relative p-8 sm:p-10 text-center flex-1 flex flex-col justify-center">
-                      {/* Provider Logo with decorative frame */}
-                      <div className="mb-6 relative inline-block">
-                        <div 
-                          className="absolute -inset-4 rounded-full opacity-10"
-                          style={{ border: `1px solid ${primary}` }}
-                        />
-                        <div className="h-20 sm:h-24 flex items-center justify-center">
-                          <img 
-                            src={getProviderLogoUrl(registry)}
-                            alt={registry.name}
-                            className="max-h-16 sm:max-h-20 max-w-[140px] sm:max-w-[160px] object-contain"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement
-                        target.style.display = 'none'
-                        target.parentElement!.innerHTML = `<span class="text-4xl font-light" style="color: ${primary}; font-family: var(--font-display, cursive)">${registry.name.charAt(0)}</span>`
-                      }}
-                    />
-                        </div>
-                      </div>
-                      
-                      {/* Decorative divider */}
-                      <div className="flex items-center justify-center gap-2 mb-3">
-                        <div className="w-8 h-px" style={{ backgroundColor: primary, opacity: 0.3 }} />
-                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: primary, opacity: 0.5 }} />
-                        <div className="w-8 h-px" style={{ backgroundColor: primary, opacity: 0.3 }} />
-                      </div>
-                      
-                      <h3 
-                        className="text-xl sm:text-2xl font-light mb-2 tracking-wide"
-                        style={{ 
-                          color: titleColor,
-                          fontFamily: 'var(--font-display, cursive)'
-                        }}
-                      >
-                        {registry.name}
-                      </h3>
-                      
-                      {showDescription && registry.description && (
-                        <p 
-                          className="text-sm mb-5 font-light italic line-clamp-2 px-4"
-                          style={{ color: mutedTextColor }}
-                        >
-                          {registry.description}
-                        </p>
-                      )}
-                      
-                      <div className="flex justify-center">
-                        {hasUrl ? (
-                          <a
-                            href={registry.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-light tracking-wide transition-all duration-300 hover:shadow-lg border"
-                            style={{ 
-                              backgroundColor: 'transparent',
-                              borderColor: primary,
-                              color: primary
-                            }}
-                          >
-                            {t('registry.visitRegistry')}
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                        ) : (
-                          <button
-                            onClick={() => setShowAlert(true)}
-                            className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-light tracking-wide transition-all duration-300 hover:shadow-lg border"
-                            style={{ 
-                              backgroundColor: 'transparent',
-                              borderColor: primary,
-                              color: primary
-                            }}
-                          >
-                            {t('registry.visitRegistry')}
-                            <ExternalLink className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
+            {registries.map((registry, index) => (
+              <RegistryElegantItem
+                key={registry.id}
+                registry={registry}
+                index={index}
+                onNoUrl={() => setShowAlert(true)}
+                cardBg={cardBg}
+                cardBorder={cardBorder}
+                primary={primary}
+                secondary={secondary}
+                titleColor={titleColor}
+                mutedTextColor={mutedTextColor}
+                showDescription={showDescription}
+              />
+            ))}
 
             {/* Custom Registry Card */}
             {showCustomRegistry && weddingNameId && (

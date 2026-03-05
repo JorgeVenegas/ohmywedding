@@ -111,27 +111,32 @@ type UserWedding = {
   plan?: WeddingPlan
 }
 
-function AuthButtons({ isMobile = false }: { isMobile?: boolean }) {
+function AuthButtons({ isMobile = false, userWeddings: externalWeddings, weddingsLoading: externalLoading }: { isMobile?: boolean, userWeddings?: UserWedding[], weddingsLoading?: boolean }) {
   const { user, loading, signOut } = useAuth()
   const { t } = useTranslation()
   const [showUserMenu, setShowUserMenu] = useState(false)
-  const [userWeddings, setUserWeddings] = useState<UserWedding[]>([])
-  const [weddingsLoading, setWeddingsLoading] = useState(false)
+  const [internalWeddings, setInternalWeddings] = useState<UserWedding[]>([])
+  const [internalLoading, setInternalLoading] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  
+  const userWeddings = externalWeddings ?? internalWeddings
+  const weddingsLoading = externalLoading ?? internalLoading
 
   useEffect(() => {
+    // Skip fetching if external data is provided
+    if (externalWeddings !== undefined) return
     if (user) {
-      setWeddingsLoading(true)
+      setInternalLoading(true)
       fetch('/api/weddings')
         .then(res => res.json())
         .then(data => {
-          setUserWeddings(data.weddings || [])
+          setInternalWeddings(data.weddings || [])
         })
-        .finally(() => setWeddingsLoading(false))
+        .finally(() => setInternalLoading(false))
     } else {
-      setUserWeddings([])
+      setInternalWeddings([])
     }
-  }, [user])
+  }, [user, externalWeddings])
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -415,9 +420,27 @@ function CustomCursor() {
 
 function LuxuryHeader() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [userWeddings, setUserWeddings] = useState<UserWedding[]>([])
+  const [weddingsLoading, setWeddingsLoading] = useState(false)
+
+  // Fetch weddings once at header level, shared by both desktop and mobile AuthButtons
+  useEffect(() => {
+    if (user) {
+      setWeddingsLoading(true)
+      fetch('/api/weddings')
+        .then(res => res.json())
+        .then(data => {
+          setUserWeddings(data.weddings || [])
+        })
+        .finally(() => setWeddingsLoading(false))
+    } else {
+      setUserWeddings([])
+    }
+  }, [user])
 
   useEffect(() => {
     let lastScrollTime = 0
@@ -493,7 +516,7 @@ function LuxuryHeader() {
             </span>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-10">
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-10">
             {[
               { label: t('landing.nav.features'), href: '#features' },
               { label: t('landing.nav.experience'), href: '#experience' },
@@ -503,7 +526,7 @@ function LuxuryHeader() {
               <motion.a
                 key={item.label}
                 href={item.href}
-                className="text-[#f5f2eb]/70 hover:text-[#DDA46F] transition-colors duration-500 text-sm tracking-[0.25em] uppercase"
+                className="text-[#f5f2eb]/70 hover:text-[#DDA46F] transition-colors duration-500 text-[11px] xl:text-sm tracking-[0.15em] xl:tracking-[0.25em] uppercase whitespace-nowrap"
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.1 * index }}
@@ -515,7 +538,7 @@ function LuxuryHeader() {
 
           <div className="hidden lg:flex items-center gap-4">
             <LanguageSwitcher variant="pill" />
-            <AuthButtons />
+            <AuthButtons userWeddings={userWeddings} weddingsLoading={weddingsLoading} />
           </div>
 
           <button
@@ -552,7 +575,7 @@ function LuxuryHeader() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.15 }}
           className="fixed inset-0 lg:hidden"
           style={{ zIndex: 9999 }}
         >
@@ -599,9 +622,9 @@ function LuxuryHeader() {
                   href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="block text-[#f5f2eb] hover:text-[#DDA46F] transition-colors duration-200 text-2xl tracking-[0.2em] uppercase py-3"
-                  initial={{ opacity: 0, x: -40 }}
+                  initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: 0.1 + index * 0.05 }}
+                  transition={{ duration: 0.15, delay: index * 0.03 }}
                 >
                   {item.label}
                 </motion.a>
@@ -610,15 +633,15 @@ function LuxuryHeader() {
             
             {/* Language switcher & Auth buttons at bottom */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.3 }}
+              transition={{ duration: 0.15, delay: 0.1 }}
               className="pt-6 border-t border-[#DDA46F]/20 space-y-4"
             >
               <div className="flex items-center justify-center">
                 <LanguageSwitcher variant="pill" />
               </div>
-              <AuthButtons isMobile />
+              <AuthButtons isMobile userWeddings={userWeddings} weddingsLoading={weddingsLoading} />
             </motion.div>
           </div>
         </motion.div>
@@ -678,14 +701,14 @@ function HeroSection() {
     <section ref={containerRef} className="relative min-h-[110vh] flex items-center justify-center overflow-hidden">
       {/* Video Background with Carousel */}
       <motion.div className="absolute inset-0 z-0" style={{ scale }}>
-        <AnimatePresence mode="sync">
+        <AnimatePresence mode="wait">
           <motion.video
             key={currentVideoIndex}
             ref={videoRef}
             autoPlay
             muted
             playsInline
-            preload="auto"
+            preload="none"
             onEnded={handleVideoEnd}
             className="absolute inset-0 w-full h-full object-cover"
             initial={{ opacity: 0 }}
@@ -757,7 +780,7 @@ function HeroSection() {
         >
           <span className="block font-serif font-light text-[1.4em] sm:text-[1.5em] my-0 sm:my-1" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>{t('landing.hero.subtitle')}</span>
           <span className="block font-serif font-light text-[1.4em] sm:text-[1.5em] my-0 sm:my-1" style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>
-            Love Story
+            {t('landing.hero.subtitle2')}
           </span>
           <div className="relative h-[1.2em] sm:h-[1.4em] md:h-[1.6em] lg:h-[1.8em] xl:h-[2em] flex items-center justify-center">
             <AnimatePresence mode="wait">
@@ -782,7 +805,7 @@ function HeroSection() {
           transition={{ duration: 1.2, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className="text-sm sm:text-lg md:text-xl text-[#f5f2eb]/60 max-w-2xl mx-auto mb-5 sm:mb-10 leading-relaxed font-light tracking-wide px-2"
         >
-          Create your luxury wedding website, manage RSVPs, share photos, and celebrate your love story with elegance.
+          {t('landing.hero.description')}
         </motion.p>
 
         <motion.div
@@ -821,7 +844,6 @@ function HeroSection() {
         >
           {[
             { value: '10K+', label: t('landing.hero.stats.couples') },
-            { value: '50+', label: t('landing.hero.stats.countries') },
             { value: '4.9', label: t('landing.hero.stats.rating'), icon: <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-[#DDA46F] text-[#DDA46F] inline ml-1" /> },
           ].map((stat, index) => (
             <motion.div 
@@ -1866,31 +1888,35 @@ function TemplatesSection() {
 // TESTIMONIALS SECTION
 // ============================================
 
-const testimonials = [
-  {
-    quote: "The RSVP system saved us so much time! We could track everything in one place. Absolutely elegant and sophisticated.",
-    author: "Sarah & Michael",
-    role: "Married June 2025",
-    image: "/images/demo_images/demo-img-46.jpg"
-  },
-  {
-    quote: "Our guests loved how easy it was to RSVP. The design was beautiful and matched our vision perfectly.",
-    author: "Emma & James",
-    role: "Married August 2025",
-    image: "/images/demo_images/demo-img-47.jpg"
-  },
-  {
-    quote: "Best investment for our wedding! The invitation tracking feature is incredibly useful.",
-    author: "Jessica & David",
-    role: "Married October 2025",
-    image: "/images/demo_images/demo-img-48.jpg"
-  },
-]
+function useTestimonials() {
+  const { t } = useTranslation()
+  return [
+    {
+      quote: t('landing.testimonials.items.0.quote'),
+      author: t('landing.testimonials.items.0.author'),
+      role: t('landing.testimonials.items.0.role'),
+      image: "/images/demo_images/demo-img-46.jpg"
+    },
+    {
+      quote: t('landing.testimonials.items.1.quote'),
+      author: t('landing.testimonials.items.1.author'),
+      role: t('landing.testimonials.items.1.role'),
+      image: "/images/demo_images/demo-img-47.jpg"
+    },
+    {
+      quote: t('landing.testimonials.items.2.quote'),
+      author: t('landing.testimonials.items.2.author'),
+      role: t('landing.testimonials.items.2.role'),
+      image: "/images/demo_images/demo-img-48.jpg"
+    },
+  ]
+}
 
 function TestimonialsSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: false, margin: "-100px" })
   const { t } = useTranslation()
+  const testimonials = useTestimonials()
 
   return (
     <section ref={ref} className="py-20 sm:py-40 bg-[#172815] relative overflow-hidden">
@@ -2046,12 +2072,13 @@ function FinalCTASection() {
     <section ref={ref} className="relative py-40 overflow-hidden">
       {/* Background Video Carousel */}
       <div className="absolute inset-0">
-        <AnimatePresence mode="sync">
+        <AnimatePresence mode="wait">
           <motion.video
             key={currentVideoIndex}
             autoPlay
             muted
             playsInline
+            preload="none"
             onEnded={handleVideoEnd}
             className="absolute inset-0 w-full h-full object-cover"
             initial={{ opacity: 0 }}

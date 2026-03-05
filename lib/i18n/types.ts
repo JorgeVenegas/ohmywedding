@@ -862,13 +862,14 @@ export interface Translations {
     hero: {
       title: string
       subtitle: string
+      subtitle2: string
+      description: string
       rotatingWords: string[]
       cta: string
       secondary: string
       scrollToExplore: string
       stats: {
         couples: string
-        countries: string
         rating: string
       }
     }
@@ -948,6 +949,11 @@ export interface Translations {
       label: string
       title: string
       subtitle: string
+      items: Array<{
+        quote: string
+        author: string
+        role: string
+      }>
     }
     finalCta: {
       label: string

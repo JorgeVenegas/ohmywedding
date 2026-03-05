@@ -2,11 +2,110 @@
 
 import React, { useState } from 'react'
 import { ExternalLink, Gift, Heart } from 'lucide-react'
-import { BaseRegistryProps, getColorScheme, getProviderLogoUrl } from './types'
+import { BaseRegistryProps, getColorScheme, getProviderLogoUrl, RegistryProvider } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { getWeddingPath } from '@/lib/wedding-url'
 import Link from 'next/link'
 import { useScrollAnimation } from '@/hooks/use-scroll-animation'
+
+interface RegistryCardItemProps {
+  registry: RegistryProvider
+  index: number
+  onNoUrl: () => void
+  cardBg: string
+  cardBorder: string
+  primary: string
+  accentColor: string
+  titleColor: string
+  mutedTextColor: string
+  showDescription: boolean
+}
+
+function RegistryCardItem({ registry, index, onNoUrl, cardBg, cardBorder, primary, accentColor, titleColor, mutedTextColor, showDescription }: RegistryCardItemProps) {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+  const { t } = useI18n()
+  const hasUrl = registry.url && registry.url.trim() !== ''
+  const CardWrapper = hasUrl ? 'a' : 'div'
+  const linkProps = hasUrl ? {
+    href: registry.url,
+    target: "_blank",
+    rel: "noopener noreferrer"
+  } : {
+    onClick: onNoUrl,
+    style: { cursor: 'pointer' }
+  }
+
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-500 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}
+      style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
+    >
+      <CardWrapper
+        {...linkProps}
+        className="group relative flex flex-col rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 w-full h-full"
+        style={{
+          backgroundColor: cardBg,
+          border: `2px solid ${cardBorder}`
+        }}
+      >
+        {/* Accent Bar */}
+        <div
+          className="h-2"
+          style={{
+            background: `linear-gradient(90deg, ${primary}, ${accentColor})`
+          }}
+        />
+
+        <div className="p-6 sm:p-8 text-center flex-1 flex flex-col justify-center">
+          {/* Provider Logo */}
+          <div className="mb-5 h-20 sm:h-24 flex items-center justify-center">
+            <img
+              src={getProviderLogoUrl(registry)}
+              alt={registry.name}
+              className="max-h-16 sm:max-h-20 max-w-[140px] sm:max-w-[180px] object-contain"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement
+                target.style.display = 'none'
+                target.parentElement!.innerHTML = `<span class="text-2xl font-bold" style="color: ${primary}">${registry.name.charAt(0)}</span>`
+              }}
+            />
+          </div>
+
+          <h3
+            className="text-lg sm:text-xl font-bold mb-3"
+            style={{ color: titleColor }}
+          >
+            {registry.name}
+          </h3>
+
+          {showDescription && registry.description && (
+            <p
+              className="text-sm mb-5 line-clamp-2 px-2"
+              style={{ color: mutedTextColor }}
+            >
+              {registry.description}
+            </p>
+          )}
+
+          {/* Button Style CTA */}
+          <div
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold transition-all duration-300 group-hover:shadow-md"
+            style={{
+              backgroundColor: primary,
+              color: '#ffffff'
+            }}
+          >
+            {t('registry.viewRegistry')}
+            <ExternalLink className="w-4 h-4" />
+          </div>
+        </div>
+      </CardWrapper>
+    </div>
+  )
+}
 
 export function RegistryCardsVariant({
   theme,
@@ -107,92 +206,21 @@ export function RegistryCardsVariant({
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 max-w-6xl mx-auto [&>*:last-child:nth-child(3n+1)]:lg:col-start-2">
-            {registries.map((registry, index) => {
-              const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
-              const hasUrl = registry.url && registry.url.trim() !== ''
-              const CardWrapper = hasUrl ? 'a' : 'div'
-              const linkProps = hasUrl ? {
-                href: registry.url,
-                target: "_blank",
-                rel: "noopener noreferrer"
-              } : {
-                onClick: () => setShowAlert(true),
-                style: { cursor: 'pointer' }
-              }
-
-              return (
-                <div
-                  key={registry.id}
-                  ref={ref}
-                  className={`transition-all duration-500 ${
-                    isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                  }`}
-                  style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
-                >
-                <CardWrapper
-                  {...linkProps}
-                  className="group relative flex flex-col rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 w-full h-full"
-                  style={{ 
-                    backgroundColor: cardBg,
-                    border: `2px solid ${cardBorder}`
-                  }}
-                >
-                  {/* Accent Bar */}
-                  <div 
-                    className="h-2"
-                    style={{ 
-                      background: `linear-gradient(90deg, ${primary}, ${accentColor})`
-                    }}
-                  />
-                  
-                  <div className="p-6 sm:p-8 text-center flex-1 flex flex-col justify-center">
-                    {/* Provider Logo - Larger */}
-                    <div className="mb-5 h-20 sm:h-24 flex items-center justify-center">
-                      <img 
-                        src={getProviderLogoUrl(registry)}
-                        alt={registry.name}
-                        className="max-h-16 sm:max-h-20 max-w-[140px] sm:max-w-[180px] object-contain"
-                      onError={(e) => {
-                        // Fallback to text if image fails
-                        const target = e.target as HTMLImageElement
-                        target.style.display = 'none'
-                        target.parentElement!.innerHTML = `<span class="text-2xl font-bold" style="color: ${primary}">${registry.name.charAt(0)}</span>`
-                      }}
-                    />
-                  </div>
-                  
-                  <h3 
-                    className="text-lg sm:text-xl font-bold mb-3"
-                    style={{ color: titleColor }}
-                  >
-                    {registry.name}
-                  </h3>
-                  
-                  {showDescription && registry.description && (
-                    <p 
-                      className="text-sm mb-5 line-clamp-2 px-2"
-                      style={{ color: mutedTextColor }}
-                    >
-                      {registry.description}
-                    </p>
-                  )}
-                  
-                  {/* Button Style CTA */}
-                  <div 
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold transition-all duration-300 group-hover:shadow-md"
-                    style={{ 
-                      backgroundColor: primary,
-                      color: '#ffffff'
-                    }}
-                  >
-                    {t('registry.viewRegistry')}
-                    <ExternalLink className="w-4 h-4" />
-                  </div>
-                </div>
-              </CardWrapper>
-              </div>
-            )
-          })}
+            {registries.map((registry, index) => (
+              <RegistryCardItem
+                key={registry.id}
+                registry={registry}
+                index={index}
+                onNoUrl={() => setShowAlert(true)}
+                cardBg={cardBg}
+                cardBorder={cardBorder}
+                primary={primary}
+                accentColor={accentColor}
+                titleColor={titleColor}
+                mutedTextColor={mutedTextColor}
+                showDescription={showDescription}
+              />
+            ))}
 
             {/* Custom Registry Card */}
             {showCustomRegistry && weddingNameId && (

@@ -867,13 +867,14 @@ export const en: Translations = {
     hero: {
       title: 'The Digital Suite for Weddings',
       subtitle: 'Your',
+      subtitle2: 'Love Story',
+      description: 'Create your luxury wedding website, manage RSVPs, share photos, and celebrate your love story with elegance.',
       rotatingWords: ['Displayed', 'Celebrated', 'Immortalized', 'Unveiled'],
       cta: 'Create Your Website',
       secondary: 'View Gallery',
       scrollToExplore: 'Scroll to Explore',
       stats: {
         couples: 'Happy Couples',
-        countries: 'Countries',
         rating: 'Rating',
       },
     },
@@ -890,8 +891,8 @@ export const en: Translations = {
         customization: 'Full Customization',
       },
       testimonial: {
-        quote: '"The most beautiful wedding website we\'ve ever seen. Every detail was absolutely perfect."',
-        author: '— Sarah & Michael',
+        quote: '"Creating our wedding website was incredibly easy. The design exceeded all our expectations."',
+        author: '-- Verified Couple',
       },
     },
     features: {
@@ -995,6 +996,23 @@ export const en: Translations = {
       label: 'Testimonials',
       title: 'Loved by Couples',
       subtitle: 'Worldwide',
+      items: [
+        {
+          quote: 'The RSVP tracking saved us hours of work. We could see everything in real time, and the design felt premium and elegant.',
+          author: 'Verified Couple',
+          role: 'Married 2025',
+        },
+        {
+          quote: 'Our guests were amazed by how beautiful and easy to use the website was. It perfectly matched our wedding style.',
+          author: 'Verified Couple',
+          role: 'Married 2025',
+        },
+        {
+          quote: 'The best investment for our wedding. The invitation tracking and RSVP dashboard made planning so much simpler.',
+          author: 'Verified Couple',
+          role: 'Married 2025',
+        },
+      ],
     },
     finalCta: {
       label: 'Begin Your Journey',

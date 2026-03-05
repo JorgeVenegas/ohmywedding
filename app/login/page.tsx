@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { createClient } from "@/lib/supabase-client"
+import { createClient, resetClient } from "@/lib/supabase-client"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -37,6 +37,10 @@ function LoginForm() {
   // Using scope: 'local' avoids a server call (which would fail with expired tokens).
   useEffect(() => {
     const cleanup = async () => {
+      // Reset the singleton so a fresh client is created after cleanup.
+      // Without this, the singleton retains stale internal session state
+      // that interferes with the next login attempt.
+      resetClient()
       const supabase = createClient()
       // Sign out locally — clears localStorage session without needing a valid token
       await supabase.auth.signOut({ scope: 'local' }).catch(() => {})

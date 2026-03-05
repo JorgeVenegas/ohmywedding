@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { createClient } from '@/lib/supabase-client'
+import { createClient, resetClient } from '@/lib/supabase-client'
 import type { User } from '@supabase/supabase-js'
 
 export type WeddingPermissions = {
@@ -75,6 +75,24 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Check for cleanup signal from middleware — means the server detected
+    // invalid auth and cleared cookies, but localStorage still has stale tokens.
+    // This automatically unsticks users without them manually clearing cookies.
+    if (typeof document !== 'undefined' && document.cookie.includes('sb-cleanup=1')) {
+      console.warn('[useAuth] Cleanup signal detected — clearing stale auth data')
+      // Delete the signal cookie
+      document.cookie = 'sb-cleanup=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
+      document.cookie = 'sb-cleanup=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.wedding'
+      document.cookie = 'sb-cleanup=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.local'
+      // Clear all stale auth data from localStorage/sessionStorage
+      clearAllAuthStorage()
+      // Reset the singleton so it doesn't hold stale internal state
+      resetClient()
+      setUser(null)
+      setLoading(false)
+      return // Don't subscribe — everything is clean, next page load will be fresh
+    }
+
     const supabase = createClient()
 
     // Rely on onAuthStateChange instead of calling getUser() separately.
@@ -84,6 +102,7 @@ export function useAuth() {
     // so the cookies reaching the browser are already validated.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('[useAuth] onAuthStateChange:', event, 'session:', session ? `user=${session.user?.email}` : 'null')
         if (event === 'SIGNED_OUT') {
           setUser(null)
           clearAllAuthStorage()

@@ -373,6 +373,7 @@ async function handleSupabaseAuth(request: NextRequest, response: NextResponse) 
   try {
     const { data, error } = await supabase.auth.getUser()
     if (error) {
+      console.warn('[Middleware] getUser error:', error.message, 'code:', (error as any).code, 'path:', request.nextUrl.pathname)
       if ((error as any).code === 'refresh_token_already_used') {
         // Race condition: the browser-side client refreshed the token first.
         // The browser holds the new tokens; they'll arrive on the next request.
@@ -399,12 +400,25 @@ async function handleSupabaseAuth(request: NextRequest, response: NextResponse) 
             }
           }
         }
+        // Signal the browser to clear localStorage too — the middleware can only
+        // clear cookies, but Supabase also stores tokens in localStorage.
+        // Without this, stuck users keep retrying stale tokens from localStorage.
+        response.cookies.set('sb-cleanup', '1', {
+          path: '/',
+          maxAge: 60, // short-lived, just needs to survive until the page loads
+          sameSite: 'lax',
+          ...(cookieDomain ? { domain: cookieDomain } : {}),
+        })
         user = null
       }
     } else {
       user = data.user
+      if (user) {
+        console.log('[Middleware] Authenticated user:', user.email, 'path:', request.nextUrl.pathname)
+      }
     }
-  } catch {
+  } catch (catchErr) {
+    console.error('[Middleware] getUser threw:', catchErr, 'path:', request.nextUrl.pathname)
     // If getUser throws unexpectedly, treat as unauthenticated and clear cookies
     const allCookies = request.cookies.getAll()
     for (const cookie of allCookies) {
@@ -424,6 +438,13 @@ async function handleSupabaseAuth(request: NextRequest, response: NextResponse) 
         }
       }
     }
+    // Signal the browser to clear localStorage too
+    response.cookies.set('sb-cleanup', '1', {
+      path: '/',
+      maxAge: 60,
+      sameSite: 'lax',
+      ...(cookieDomain ? { domain: cookieDomain } : {}),
+    })
     user = null
   }
 

@@ -2,11 +2,96 @@
 
 import React, { useState } from 'react'
 import { ExternalLink, Gift, Heart, ArrowRight } from 'lucide-react'
-import { BaseRegistryProps, getColorScheme, getProviderLogoUrl } from './types'
+import { BaseRegistryProps, getColorScheme, getProviderLogoUrl, RegistryProvider } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { getWeddingPath } from '@/lib/wedding-url'
 import Link from 'next/link'
 import { useScrollAnimation } from '@/hooks/use-scroll-animation'
+
+interface RegistryMinimalItemProps {
+  registry: RegistryProvider
+  index: number
+  onNoUrl: () => void
+  cardBg: string
+  cardBorder: string
+  primary: string
+  titleColor: string
+  mutedTextColor: string
+  showDescription: boolean
+}
+
+function RegistryMinimalItem({ registry, index, onNoUrl, cardBg, cardBorder, primary, titleColor, mutedTextColor, showDescription }: RegistryMinimalItemProps) {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+  const hasUrl = registry.url && registry.url.trim() !== ''
+  const ItemWrapper = hasUrl ? 'a' : 'div'
+  const linkProps = hasUrl ? {
+    href: registry.url,
+    target: "_blank",
+    rel: "noopener noreferrer"
+  } : {
+    onClick: onNoUrl,
+    style: { cursor: 'pointer' }
+  }
+
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-500 ${
+        isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
+      }`}
+      style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
+    >
+      <ItemWrapper
+        {...linkProps}
+        className="group flex items-center justify-between p-4 rounded-lg transition-all duration-200 hover:bg-opacity-80 border-l-4"
+        style={{
+          backgroundColor: cardBg,
+          border: `1px solid ${cardBorder}`,
+          borderLeftColor: primary,
+          borderLeftWidth: '4px'
+        }}
+      >
+        <div className="flex items-center gap-4">
+          <div
+            className="w-10 h-10 flex items-center justify-center rounded-full"
+            style={{ backgroundColor: `${primary}15` }}
+          >
+            <img
+              src={getProviderLogoUrl(registry)}
+              alt={registry.name}
+              className="w-6 h-6 object-contain"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement
+                target.style.display = 'none'
+                target.parentElement!.innerHTML = `<span class="text-sm font-bold" style="color: ${primary}">${registry.name.charAt(0)}</span>`
+              }}
+            />
+          </div>
+          <div>
+            <span
+              className="font-medium block"
+              style={{ color: titleColor }}
+            >
+              {registry.name}
+            </span>
+            {showDescription && registry.description && (
+              <span
+                className="text-xs block mt-0.5 line-clamp-1"
+                style={{ color: mutedTextColor }}
+              >
+                {registry.description}
+              </span>
+            )}
+          </div>
+        </div>
+        <ArrowRight
+          className="w-5 h-5"
+          style={{ color: primary }}
+        />
+      </ItemWrapper>
+    </div>
+  )
+}
 
 export function RegistryMinimalVariant({
   theme,
@@ -94,79 +179,20 @@ export function RegistryMinimalVariant({
           </div>
         ) : (
           <div className="space-y-3">
-            {registries.map((registry, index) => {
-              const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
-              const hasUrl = registry.url && registry.url.trim() !== ''
-              const ItemWrapper = hasUrl ? 'a' : 'div'
-              const linkProps = hasUrl ? {
-                href: registry.url,
-                target: "_blank",
-                rel: "noopener noreferrer"
-              } : {
-                onClick: () => setShowAlert(true),
-                style: { cursor: 'pointer' }
-              }
-
-              return (
-                <div
-                  key={registry.id}
-                  ref={ref}
-                  className={`transition-all duration-500 ${
-                    isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
-                  }`}
-                  style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
-                >
-                <ItemWrapper
-                  {...linkProps}
-                  className="group flex items-center justify-between p-4 rounded-lg transition-all duration-200 hover:bg-opacity-80 border-l-4"
-                  style={{ 
-                    backgroundColor: cardBg,
-                    border: `1px solid ${cardBorder}`,
-                    borderLeftColor: primary,
-                    borderLeftWidth: '4px'
-                  }}
-                >
-                  <div className="flex items-center gap-4">
-                    <div 
-                      className="w-10 h-10 flex items-center justify-center rounded-full"
-                      style={{ backgroundColor: `${primary}15` }}
-                    >
-                      <img 
-                        src={getProviderLogoUrl(registry)}
-                        alt={registry.name}
-                        className="w-6 h-6 object-contain"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement
-                        target.style.display = 'none'
-                        target.parentElement!.innerHTML = `<span class="text-sm font-bold" style="color: ${primary}">${registry.name.charAt(0)}</span>`
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <span 
-                      className="font-medium block"
-                      style={{ color: titleColor }}
-                    >
-                      {registry.name}
-                    </span>
-                    {showDescription && registry.description && (
-                      <span
-                        className="text-xs block mt-0.5 line-clamp-1"
-                        style={{ color: mutedTextColor }}
-                      >
-                        {registry.description}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <ArrowRight 
-                  className="w-5 h-5"
-                  style={{ color: primary }}
-                />
-              </ItemWrapper>
-                </div>
-            )
-          })}
+            {registries.map((registry, index) => (
+              <RegistryMinimalItem
+                key={registry.id}
+                registry={registry}
+                index={index}
+                onNoUrl={() => setShowAlert(true)}
+                cardBg={cardBg}
+                cardBorder={cardBorder}
+                primary={primary}
+                titleColor={titleColor}
+                mutedTextColor={mutedTextColor}
+                showDescription={showDescription}
+              />
+            ))}
 
           {/* Custom Registry Item */}
           {showCustomRegistry && weddingNameId && (

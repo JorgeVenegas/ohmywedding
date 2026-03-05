@@ -2,11 +2,87 @@
 
 import React, { useState } from 'react'
 import { ExternalLink, Gift, Heart } from 'lucide-react'
-import { BaseRegistryProps, getColorScheme, getProviderLogoUrl } from './types'
+import { BaseRegistryProps, getColorScheme, getProviderLogoUrl, RegistryProvider } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { getWeddingPath } from '@/lib/wedding-url'
 import Link from 'next/link'
 import { useScrollAnimation } from '@/hooks/use-scroll-animation'
+
+interface RegistryGridItemProps {
+  registry: RegistryProvider
+  index: number
+  onNoUrl: () => void
+  cardBg: string
+  primary: string
+  titleColor: string
+}
+
+function RegistryGridItem({ registry, index, onNoUrl, cardBg, primary, titleColor }: RegistryGridItemProps) {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+  const hasUrl = registry.url && registry.url.trim() !== ''
+  const CardWrapper = hasUrl ? 'a' : 'div'
+  const linkProps = hasUrl ? {
+    href: registry.url,
+    target: "_blank",
+    rel: "noopener noreferrer"
+  } : {
+    onClick: onNoUrl,
+    style: { cursor: 'pointer' }
+  }
+
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-500 ${
+        isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+      }`}
+      style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
+    >
+      <CardWrapper
+        {...linkProps}
+        className="group flex flex-col items-center gap-3 transition-transform duration-200 hover:-translate-y-1"
+      >
+        {/* Circular Badge */}
+        <div
+          className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full shadow-lg group-hover:shadow-xl transition-shadow duration-200 flex items-center justify-center"
+          style={{
+            backgroundColor: cardBg,
+            border: `3px solid ${primary}`
+          }}
+        >
+          <img
+            src={getProviderLogoUrl(registry)}
+            alt={registry.name}
+            className="max-h-12 sm:max-h-14 max-w-[70px] sm:max-w-[80px] object-contain"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.style.display = 'none'
+              target.parentElement!.innerHTML = `<span class="text-3xl font-bold" style="color: ${primary}">${registry.name.charAt(0)}</span>`
+            }}
+          />
+
+          {/* Small external link indicator */}
+          <div
+            className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full shadow-md flex items-center justify-center"
+            style={{ backgroundColor: primary }}
+          >
+            <ExternalLink className="w-3.5 h-3.5 text-white" />
+          </div>
+        </div>
+
+        {/* Name below badge */}
+        <div className="text-center max-w-[120px]">
+          <h3
+            className="text-sm sm:text-base font-semibold line-clamp-2"
+            style={{ color: titleColor }}
+          >
+            {registry.name}
+          </h3>
+        </div>
+      </CardWrapper>
+    </div>
+  )
+}
 
 export function RegistryGridVariant({
   theme,
@@ -107,73 +183,17 @@ export function RegistryGridVariant({
           </div>
         ) : (
           <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
-            {registries.map((registry, index) => {
-              const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
-              const hasUrl = registry.url && registry.url.trim() !== ''
-              const CardWrapper = hasUrl ? 'a' : 'div'
-              const linkProps = hasUrl ? {
-                href: registry.url,
-                target: "_blank",
-                rel: "noopener noreferrer"
-              } : {
-                onClick: () => setShowAlert(true),
-                style: { cursor: 'pointer' }
-              }
-
-              return (
-                <div
-                  key={registry.id}
-                  ref={ref}
-                  className={`transition-all duration-500 ${
-                    isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-                  }`}
-                  style={{ transitionDelay: isVisible ? `${index * 100}ms` : '0ms' }}
-                >
-                <CardWrapper
-                  {...linkProps}
-                  className="group flex flex-col items-center gap-3 transition-transform duration-200 hover:-translate-y-1"
-                >
-                  {/* Circular Badge */}
-                  <div 
-                    className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full shadow-lg group-hover:shadow-xl transition-shadow duration-200 flex items-center justify-center"
-                    style={{ 
-                      backgroundColor: cardBg,
-                      border: `3px solid ${primary}`
-                    }}
-                  >
-                    <img 
-                      src={getProviderLogoUrl(registry)}
-                      alt={registry.name}
-                      className="max-h-12 sm:max-h-14 max-w-[70px] sm:max-w-[80px] object-contain"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      target.style.display = 'none'
-                      target.parentElement!.innerHTML = `<span class="text-3xl font-bold" style="color: ${primary}">${registry.name.charAt(0)}</span>`
-                    }}
-                  />
-                  
-                  {/* Small external link indicator */}
-                  <div 
-                    className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full shadow-md flex items-center justify-center"
-                    style={{ backgroundColor: primary }}
-                  >
-                    <ExternalLink className="w-3.5 h-3.5 text-white" />
-                  </div>
-                </div>
-                
-                {/* Name below badge */}
-                <div className="text-center max-w-[120px]">
-                  <h3 
-                    className="text-sm sm:text-base font-semibold line-clamp-2"
-                    style={{ color: titleColor }}
-                  >
-                    {registry.name}
-                  </h3>
-                </div>
-              </CardWrapper>
-                </div>
-            )
-          })}
+            {registries.map((registry, index) => (
+              <RegistryGridItem
+                key={registry.id}
+                registry={registry}
+                index={index}
+                onNoUrl={() => setShowAlert(true)}
+                cardBg={cardBg}
+                primary={primary}
+                titleColor={titleColor}
+              />
+            ))}
 
           {/* Custom Registry Card */}
           {showCustomRegistry && weddingNameId && (

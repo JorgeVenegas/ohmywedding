@@ -862,15 +862,16 @@ export const es: Translations = {
     },
     hero: {
       title: 'La Suite Digital para Bodas',
-      subtitle: 'Nuestra Historia',
+      subtitle: 'Tu',
+      subtitle2: 'Historia de Amor',
+      description: 'Crea tu sitio web de boda de lujo, gestiona confirmaciones, comparte fotos y celebra tu historia de amor con elegancia.',
       rotatingWords: ['Exhibida', 'Celebrada', 'Inmortalizada', 'Revelada'],
       cta: 'Crea Tu Sitio Web',
-      secondary: 'Ver Galería',
+      secondary: 'Ver Galeria',
       scrollToExplore: 'Desliza para Explorar',
       stats: {
         couples: 'Parejas Felices',
-        countries: 'Países',
-        rating: 'Calificación',
+        rating: 'Calificacion',
       },
     },
     about: {
@@ -886,8 +887,8 @@ export const es: Translations = {
         customization: 'Personalización Total',
       },
       testimonial: {
-        quote: '"El sitio web de boda más hermoso que hemos visto. Cada detalle fue absolutamente perfecto."',
-        author: '— Sarah & Michael',
+        quote: '"Crear nuestro sitio web de boda fue increiblemente facil. El diseno supero todas nuestras expectativas."',
+        author: '-- Pareja Verificada',
       },
     },
     features: {
@@ -991,6 +992,23 @@ export const es: Translations = {
       label: 'Testimonios',
       title: 'Amado por Parejas',
       subtitle: 'de Todo el Mundo',
+      items: [
+        {
+          quote: 'El seguimiento de confirmaciones nos ahorro horas de trabajo. Podiamos ver todo en tiempo real y el diseno se sentia premium y elegante.',
+          author: 'Pareja Verificada',
+          role: 'Casados en 2025',
+        },
+        {
+          quote: 'Nuestros invitados quedaron encantados con lo hermoso y facil de usar que era el sitio web. Combino perfectamente con el estilo de nuestra boda.',
+          author: 'Pareja Verificada',
+          role: 'Casados en 2025',
+        },
+        {
+          quote: 'La mejor inversion para nuestra boda. El seguimiento de invitaciones y el panel de confirmaciones hicieron la planificacion mucho mas sencilla.',
+          author: 'Pareja Verificada',
+          role: 'Casados en 2025',
+        },
+      ],
     },
     finalCta: {
       label: 'Comienza Tu Viaje',

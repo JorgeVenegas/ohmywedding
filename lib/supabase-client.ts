@@ -30,6 +30,13 @@ function getCookieDomain(): string | undefined {
   return undefined
 }
 
+// Reset the singleton — call this before sign-out to clear internal cached state.
+// Needed when the login page clears cookies/storage: the singleton may still
+// hold a stale session in memory which prevents fresh cookie reads.
+export function resetClient(): void {
+  _supabaseClient = null
+}
+
 export function createClient(): SupabaseClient {
   // Return the existing singleton — all callers share one client and one refresh flow
   if (_supabaseClient) return _supabaseClient

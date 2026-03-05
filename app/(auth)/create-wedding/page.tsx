@@ -142,8 +142,7 @@ export default function CreateWeddingPage() {
   // Creation mode
   const [creationMode, setCreationMode] = useState<CreationMode>('template')
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('classic-elegance')
-  const [aiPrompt, setAiPrompt] = useState('')
-  const [isAiGenerating, setIsAiGenerating] = useState(false)
+
 
   // Component sections state
   const [componentSections, setComponentSections] = useState<ComponentSection[]>([
@@ -567,44 +566,7 @@ export default function CreateWeddingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoadingTemplates, dbTemplates])
 
-  // Handle AI generation
-  const handleAiGenerate = async () => {
-    if (!aiPrompt.trim()) return
-    
-    setIsAiGenerating(true)
-    
-    // Simulate AI generation (in production, this would call an AI API)
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // For now, select a template based on keywords in the prompt
-    const prompt = aiPrompt.toLowerCase()
-    let templateId = 'classic-elegance'
-    
-    if (prompt.includes('modern') || prompt.includes('minimal') || prompt.includes('clean')) {
-      templateId = 'modern-minimal'
-    } else if (prompt.includes('rustic') || prompt.includes('barn') || prompt.includes('country')) {
-      templateId = 'rustic-charm'
-    } else if (prompt.includes('romantic') || prompt.includes('garden') || prompt.includes('floral')) {
-      templateId = 'romantic-garden'
-    } else if (prompt.includes('luxury') || prompt.includes('elegant') || prompt.includes('glamorous')) {
-      templateId = 'luxury-noir'
-    } else if (prompt.includes('simple') || prompt.includes('basic') || prompt.includes('quick')) {
-      templateId = 'simple-love'
-    }
-    
-    // Prefer DB template if available
-    const dbTemplate = dbTemplates.find(t => t.id === templateId)
-    if (dbTemplate) {
-      applyTemplate(dbTemplate)
-    } else {
-      const fileTemplate = PAGE_TEMPLATES.find(t => t.id === templateId)
-      if (fileTemplate) {
-        applyTemplate(fileTemplate)
-      }
-    }
-    
-    setIsAiGenerating(false)
-  }
+
 
   // Helper function to distribute photos (accepts photos as parameter)
   const distributePhotosToSectionsWithUrls = async (photos: string[]) => {
@@ -1015,111 +977,6 @@ export default function CreateWeddingPage() {
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-foreground mb-2">{t('auth.createWedding.chooseStartingPoint')}</h2>
               <p className="text-muted-foreground">{t('auth.createWedding.chooseStartingPointDesc')}</p>
-            </div>
-
-            {/* AI Design - Elegant gold-themed design */}
-            <div className="relative mb-8">
-              {/* Subtle golden glow */}
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-[#DDA46F]/20 via-[#c99560]/20 to-[#DDA46F]/20 rounded-2xl blur-lg opacity-60" />
-              
-              <div className="relative bg-gradient-to-br from-stone-50 via-amber-50/30 to-stone-50 rounded-2xl p-6 border border-[#DDA46F]/30 overflow-hidden">
-                {/* Subtle decorative elements */}
-                <div className="absolute top-0 right-0 w-32 h-32 opacity-5 pointer-events-none">
-                  <svg viewBox="0 0 100 100" fill="none" className="w-full h-full">
-                    <path d="M50 0C50 27.6142 27.6142 50 0 50C27.6142 50 50 72.3858 50 100C50 72.3858 72.3858 50 100 50C72.3858 50 50 27.6142 50 0Z" fill="#DDA46F"/>
-                  </svg>
-                </div>
-                <div className="absolute bottom-0 left-0 w-24 h-24 opacity-5 pointer-events-none">
-                  <svg viewBox="0 0 100 100" fill="none" className="w-full h-full">
-                    <circle cx="50" cy="50" r="40" stroke="#DDA46F" strokeWidth="2"/>
-                    <circle cx="50" cy="50" r="25" stroke="#DDA46F" strokeWidth="1"/>
-                  </svg>
-                </div>
-                
-                <div className="relative">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#DDA46F] to-[#c99560] shadow-md">
-                      <Sparkles className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-stone-800 flex items-center gap-2">
-                        {t('auth.createWedding.aiDesignAssistant')}
-                        <span className="px-2 py-0.5 text-[10px] font-medium bg-gradient-to-r from-[#DDA46F] to-[#c99560] text-white rounded-full">
-                          {t('auth.createWedding.newBadge')}
-                        </span>
-                      </h3>
-                      <p className="text-sm text-stone-600">{t('auth.createWedding.describeYourDream')}</p>
-                    </div>
-                  </div>
-
-                  <div className="relative">
-                    <Textarea
-                      value={aiPrompt}
-                      onChange={(e) => setAiPrompt(e.target.value)}
-                      placeholder="Tell us about your wedding vision...
-
-Example: 'A romantic garden ceremony with soft blush colors and elegant serif fonts. We love vintage touches and want to share our love story timeline.'"
-                      className="min-h-28 bg-white/80 border-[#DDA46F]/30 text-stone-800 placeholder:text-stone-400 focus:border-[#DDA46F] focus:ring-[#DDA46F]/20 resize-none"
-                    />
-                    <div className="absolute bottom-3 right-3">
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={handleAiGenerate}
-                        disabled={!aiPrompt.trim() || isAiGenerating}
-                        className="bg-gradient-to-r from-[#DDA46F] to-[#c99560] hover:from-[#c99560] hover:to-[#DDA46F] text-white border-0 shadow-md disabled:opacity-40 disabled:bg-stone-200 disabled:from-stone-200 disabled:to-stone-300 disabled:text-stone-400 disabled:shadow-none disabled:cursor-not-allowed disabled:hover:from-stone-200 disabled:hover:to-stone-300"
-                      >
-                        {isAiGenerating ? (
-                          <>
-                            <Sparkles className="w-4 h-4 mr-2 animate-spin" />
-                            {t('auth.createWedding.designing')}
-                          </>
-                        ) : (
-                          <>
-                            <Wand2 className="w-4 h-4 mr-2" />
-                            {t('auth.createWedding.designMySite')}
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Quick prompts - elegant style */}
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {[
-                      { label: 'Romantic', icon: Heart, prompt: 'A romantic and elegant wedding with soft pink and rose colors, beautiful serif fonts, and a dreamy atmosphere' },
-                      { label: 'Rustic', icon: MapPin, prompt: 'A rustic barn wedding with earthy tones, warm browns and greens, cozy country vibes' },
-                      { label: 'Modern', icon: Sparkles, prompt: 'A sleek modern wedding with clean lines, monochrome colors, minimalist design' },
-                      { label: 'Classic', icon: Heart, prompt: 'A timeless classic wedding with elegant ivory and gold tones, traditional serif fonts' },
-                    ].map((item) => (
-                      <button
-                        key={item.label}
-                        type="button"
-                        onClick={() => setAiPrompt(item.prompt)}
-                        className="px-3 py-1.5 text-xs font-medium bg-white/80 text-stone-600 rounded-full border border-[#DDA46F]/30 hover:border-[#DDA46F] hover:bg-[#DDA46F]/10 transition-all flex items-center gap-1.5"
-                      >
-                        <item.icon className="w-3 h-3 text-[#DDA46F]" />
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {selectedTemplate && aiPrompt && !isAiGenerating && (
-                    <div className="mt-4 p-3 bg-white/60 rounded-lg border border-[#DDA46F]/30">
-                      <p className="text-sm text-stone-700">
-                        <span className="text-[#DDA46F] font-medium">Recommendation:</span> Based on your vision, we suggest <strong className="text-stone-800">{selectedTemplate.name}</strong>
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="relative flex items-center py-4">
-              <div className="flex-grow border-t border-border" />
-              <span className="flex-shrink mx-4 text-sm text-muted-foreground">{t('auth.createWedding.orChooseTemplate')}</span>
-              <div className="flex-grow border-t border-border" />
             </div>
 
             {/* Mode selector - Templates or Manual */}
