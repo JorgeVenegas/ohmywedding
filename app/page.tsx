@@ -672,7 +672,7 @@ function HeroSection() {
   const { t, locale } = useTranslation()
   
   const rotatingWords = (locale === 'es' 
-    ? ['Exhibido', 'Celebrado', 'Inmortalizado', 'Revelado'] 
+    ? ['Exhibida', 'Celebrada', 'Inmortalizada', 'Revelada'] 
     : ['Displayed', 'Celebrated', 'Immortalized', 'Unveiled'])
   
   // Auto-rotate through words
@@ -843,7 +843,6 @@ function HeroSection() {
           className="mt-8 sm:mt-16 flex justify-center gap-8 sm:gap-16 md:gap-24"
         >
           {[
-            { value: '10K+', label: t('landing.hero.stats.couples') },
             { value: '4.9', label: t('landing.hero.stats.rating'), icon: <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-[#DDA46F] text-[#DDA46F] inline ml-1" /> },
           ].map((stat, index) => (
             <motion.div 

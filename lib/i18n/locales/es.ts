@@ -995,17 +995,17 @@ export const es: Translations = {
       items: [
         {
           quote: 'El seguimiento de confirmaciones nos ahorro horas de trabajo. Podiamos ver todo en tiempo real y el diseno se sentia premium y elegante.',
-          author: 'Pareja Verificada',
+          author: 'Juliana & Oscar',
           role: 'Casados en 2025',
         },
         {
           quote: 'Nuestros invitados quedaron encantados con lo hermoso y facil de usar que era el sitio web. Combino perfectamente con el estilo de nuestra boda.',
-          author: 'Pareja Verificada',
+          author: 'America & Alan',
           role: 'Casados en 2025',
         },
         {
           quote: 'La mejor inversion para nuestra boda. El seguimiento de invitaciones y el panel de confirmaciones hicieron la planificacion mucho mas sencilla.',
-          author: 'Pareja Verificada',
+          author: 'Jorge & Yuliana',
           role: 'Casados en 2025',
         },
       ],

@@ -999,17 +999,17 @@ export const en: Translations = {
       items: [
         {
           quote: 'The RSVP tracking saved us hours of work. We could see everything in real time, and the design felt premium and elegant.',
-          author: 'Verified Couple',
+          author: 'Juliana & Oscar',
           role: 'Married 2025',
         },
         {
           quote: 'Our guests were amazed by how beautiful and easy to use the website was. It perfectly matched our wedding style.',
-          author: 'Verified Couple',
+          author: 'America & Alan',
           role: 'Married 2025',
         },
         {
           quote: 'The best investment for our wedding. The invitation tracking and RSVP dashboard made planning so much simpler.',
-          author: 'Verified Couple',
+          author: 'Jorge & Yuliana',
           role: 'Married 2025',
         },
       ],
