@@ -194,8 +194,6 @@ export async function middleware(request: NextRequest) {
 
         if (plan === 'premium' || plan === 'deluxe') {
           // Premium/Deluxe: redirect to subdomain URL.
-          // Construct as string to avoid issues with request.url not reflecting
-          // the actual Host header hostname.
           const protocol = request.nextUrl.protocol || 'http:'
           const targetHost = normalizedHost === 'ohmy.local'
             ? `${first}.ohmy.local${port}`
@@ -211,6 +209,17 @@ export async function middleware(request: NextRequest) {
             targetPath = rest ? `/${rest}` : '/'
           }
 
+          // RSC fetches (Next.js client-side navigation) use fetch().
+          // Cross-origin redirects on fetch are blocked by browsers (CORS).
+          // For RSC requests, rewrite instead of redirect so the content
+          // is served on the same origin without a visible URL change.
+          const isRscRequest = request.headers.get('rsc') === '1' || request.nextUrl.searchParams.has('_rsc')
+          if (isRscRequest) {
+            // Rewrite: serve the content from the path-based route on same origin
+            // (the Next.js app serves the same route regardless of host)
+            return NextResponse.next()
+          }
+
           const redirectTarget = `${protocol}//${targetHost}${targetPath}`
           return NextResponse.redirect(redirectTarget)
         }
@@ -221,7 +230,9 @@ export async function middleware(request: NextRequest) {
 
     // =========================================================================
     // ADMIN PATHS: /admin/{weddingNameId}/... on main domain
-    // Redirect to subdomain for premium/deluxe weddings
+    // Redirect to subdomain for premium/deluxe weddings.
+    // RSC fetches (client-side navigation) must NOT be redirected cross-origin
+    // because browsers block cross-origin redirects on fetch() (CORS).
     // =========================================================================
     if (first === 'admin') {
       const weddingNameId = segments[1]
@@ -234,6 +245,12 @@ export async function middleware(request: NextRequest) {
           const plan = await getWeddingPlan(weddingNameId)
 
           if (plan === 'premium' || plan === 'deluxe') {
+            const isRscRequest = request.headers.get('rsc') === '1' || request.nextUrl.searchParams.has('_rsc')
+            if (isRscRequest) {
+              // RSC fetch: serve content on same origin, no cross-origin redirect
+              return NextResponse.next()
+            }
+
             const protocol = request.nextUrl.protocol || 'http:'
             const targetHost = normalizedHost === 'ohmy.local'
               ? `${weddingNameId}.ohmy.local${port}`
