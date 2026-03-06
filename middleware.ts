@@ -376,6 +376,7 @@ async function handleSupabaseAuth(request: NextRequest, response: NextResponse) 
   )
 
   if (hasAuthCookies) {
+    console.log('[Middleware] Auth cookies detected, calling getUser() for path:', request.nextUrl.pathname)
     try {
       const { data, error } = await supabase.auth.getUser()
       if (error) {
@@ -450,6 +451,9 @@ async function handleSupabaseAuth(request: NextRequest, response: NextResponse) 
     }
   }
   // If no auth cookies: user is simply not logged in — no cleanup needed
+  if (!hasAuthCookies) {
+    console.log('[Middleware] No auth cookies for path:', request.nextUrl.pathname, '— skipping getUser()')
+  }
 
   // Protect admin routes - require authentication
   if (request.nextUrl.pathname.startsWith('/admin')) {

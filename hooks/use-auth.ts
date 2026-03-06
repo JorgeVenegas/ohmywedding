@@ -78,7 +78,6 @@ export function useAuth() {
     console.log('[useAuth] useEffect mount — initializing auth listener')
     // Check for cleanup signal from middleware — means the server detected
     // invalid auth and cleared cookies, but localStorage still has stale tokens.
-    // This automatically unsticks users without them manually clearing cookies.
     if (typeof document !== 'undefined' && document.cookie.includes('sb-cleanup=1')) {
       console.warn('[useAuth] Cleanup signal detected — clearing stale auth data')
       // Delete the signal cookie
@@ -89,9 +88,8 @@ export function useAuth() {
       clearAllAuthStorage()
       // Reset the singleton so it doesn't hold stale internal state
       resetClient()
-      setUser(null)
-      setLoading(false)
-      return // Don't subscribe — everything is clean, next page load will be fresh
+      // Don't return early — still subscribe to auth changes so the app works
+      // after cleanup. The subscription will fire INITIAL_SESSION with null.
     }
 
     const supabase = createClient()
@@ -107,8 +105,9 @@ export function useAuth() {
         if (event === 'SIGNED_OUT') {
           setUser(null)
           clearAllAuthStorage()
-          // Reset the singleton so it doesn't hold stale internal refresh state.
-          resetClient()
+          // Do NOT call resetClient() here — we're inside onAuthStateChange,
+          // destroying the client mid-dispatch causes cascading re-renders.
+          // The login page will reset the client on mount instead.
         } else if (event === 'SIGNED_IN') {
           // Successful sign-in — reset the circuit breaker so token refresh works again
           resetCircuitBreaker()

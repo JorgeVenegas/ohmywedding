@@ -61,43 +61,41 @@ function LoginForm() {
     }
   }, [])
 
-  // ALWAYS clear all stale auth state on login page mount.
-  // This prevents infinite redirect loops when expired tokens remain in storage/cookies.
-  // Using scope: 'local' avoids a server call (which would fail with expired tokens).
+  // Clear stale auth data on login page mount.
+  // Only clear storage/cookies directly — do NOT call supabase.auth.signOut()
+  // because that fires onAuthStateChange events which can cause cascading
+  // effects (resetClient, clearStorage, re-render loops).
   useEffect(() => {
-    const cleanup = async () => {
-      // Reset the singleton so a fresh client is created after cleanup.
-      // Without this, the singleton retains stale internal session state
-      // that interferes with the next login attempt.
-      resetClient()
-      const supabase = createClient()
-      // Sign out locally — clears localStorage session without needing a valid token
-      await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
-      // Also manually clear any remaining cookies and storage
-      try {
-        Object.keys(localStorage).forEach((key) => {
-          if (key.startsWith('sb-') || key.includes('supabase')) {
-            localStorage.removeItem(key)
-          }
-        })
-        Object.keys(sessionStorage).forEach((key) => {
-          if (key.startsWith('sb-') || key.includes('supabase')) {
-            sessionStorage.removeItem(key)
-          }
-        })
-      } catch {}
-      // Clear cookies across all potential domains
-      document.cookie.split(';').forEach(c => {
-        const name = c.trim().split('=')[0]
-        if (name.startsWith('sb-') || name.includes('supabase')) {
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.wedding`
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.local`
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`
+    console.log('[LoginPage] mount — clearing stale auth storage')
+    try {
+      // Clear localStorage
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('sb-') || key.includes('supabase')) {
+          localStorage.removeItem(key)
         }
       })
-    }
-    cleanup()
+      // Clear sessionStorage
+      Object.keys(sessionStorage).forEach((key) => {
+        if (key.startsWith('sb-') || key.includes('supabase')) {
+          sessionStorage.removeItem(key)
+        }
+      })
+    } catch {}
+    // Clear cookies across all potential domains
+    document.cookie.split(';').forEach(c => {
+      const name = c.trim().split('=')[0]
+      if (name.startsWith('sb-') || name.includes('supabase')) {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.wedding`
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.local`
+      }
+    })
+    // Also clear the cleanup signal cookie if present
+    document.cookie = 'sb-cleanup=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
+    document.cookie = 'sb-cleanup=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.wedding'
+    document.cookie = 'sb-cleanup=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.local'
+    // Reset the Supabase client singleton so it starts fresh for login
+    resetClient()
   }, [])
 
   // Show error from URL params (e.g., OAuth callback errors)
