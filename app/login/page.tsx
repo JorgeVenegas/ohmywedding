@@ -32,6 +32,35 @@ function LoginForm() {
   const isFullUrl = redirectTo.startsWith('http://') || redirectTo.startsWith('https://')
   const finalRedirectUrl = isFullUrl ? redirectTo : redirectTo
 
+  // If we're on a subdomain, redirect to the main domain's login page via full-page
+  // navigation. This is critical for two reasons:
+  // 1. The PKCE code verifier must be stored on the same origin as the OAuth callback
+  //    (ohmy.wedding), otherwise Supabase can't find it after Google redirects back.
+  // 2. Auth cookies set during login need to be on .ohmy.wedding to work across subdomains.
+  // The middleware serves /login on subdomains to avoid CORS on RSC fetch redirects,
+  // but the actual login UI must run on the main domain.
+  useEffect(() => {
+    const hostname = window.location.hostname
+    // Detect subdomain: anything like "xyz.ohmy.wedding" or "xyz.ohmy.local"
+    const isSubdomain =
+      (hostname.endsWith('.ohmy.wedding') && hostname !== 'ohmy.wedding') ||
+      (hostname.endsWith('.ohmy.local') && hostname !== 'ohmy.local')
+
+    if (isSubdomain) {
+      let mainDomain: string
+      if (hostname.endsWith('.ohmy.wedding')) {
+        mainDomain = 'https://ohmy.wedding'
+      } else {
+        const port = window.location.port ? `:${window.location.port}` : ''
+        mainDomain = `${window.location.protocol}//ohmy.local${port}`
+      }
+      // Preserve all query params (redirect, error, etc.)
+      const params = window.location.search
+      window.location.href = `${mainDomain}/login${params}`
+      return
+    }
+  }, [])
+
   // ALWAYS clear all stale auth state on login page mount.
   // This prevents infinite redirect loops when expired tokens remain in storage/cookies.
   // Using scope: 'local' avoids a server call (which would fail with expired tokens).
@@ -78,33 +107,18 @@ function LoginForm() {
     }
   }, [errorParam])
 
-  // Get the main domain origin for OAuth callbacks.
-  // OAuth redirect URLs are configured for the main domain only, so even when
-  // the login page is served on a subdomain we must route through the main domain.
-  const getMainDomainOrigin = () => {
-    const hostname = window.location.hostname
-    if (hostname.endsWith('.ohmy.wedding') || hostname === 'ohmy.wedding') {
-      return 'https://ohmy.wedding'
-    }
-    if (hostname.endsWith('.ohmy.local') || hostname === 'ohmy.local') {
-      const port = window.location.port ? `:${window.location.port}` : ''
-      return `${window.location.protocol}//ohmy.local${port}`
-    }
-    // localhost / dev — use current origin
-    return window.location.origin
-  }
-
   const handleGoogleLogin = async () => {
     setIsLoading(true)
     setError(null)
     
     const supabase = createClient()
     
-    const callbackOrigin = getMainDomainOrigin()
+    // Login page always runs on the main domain (subdomain /login redirects here),
+    // so window.location.origin is always the correct callback origin.
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${callbackOrigin}/auth/callback?redirect=${encodeURIComponent(finalRedirectUrl)}`,
+        redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(finalRedirectUrl)}`,
       },
     })
 
@@ -124,12 +138,11 @@ function LoginForm() {
 
     if (isSignUp) {
       // Sign up new user
-      const callbackOrigin = getMainDomainOrigin()
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${callbackOrigin}/auth/callback?redirect=${encodeURIComponent(finalRedirectUrl)}`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(finalRedirectUrl)}`,
         },
       })
 
