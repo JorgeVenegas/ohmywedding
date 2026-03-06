@@ -29,20 +29,12 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
         
         const supabase = createClient()
 
-        // Use getSession() instead of getUser() — getSession() is cached and
-        // doesn't make a network request, avoiding token refresh that causes 429 loops.
-        let user = null
-        try {
-          const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-          if (sessionError) {
-            // Stale session — clear everything before redirecting
-            await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
-          }
-          user = session?.user ?? null
-        } catch {
-          // Auth request failed entirely — clear and redirect
-          await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
-        }
+        // Use getSession() to check auth. This reads from cookies/cache
+        // without making a network request (no 429 risk).
+        // Do NOT call signOut on errors — that destroys valid cookies and
+        // creates a redirect loop (admin → signOut → login → admin → signOut...).
+        const { data: { session } } = await supabase.auth.getSession()
+        const user = session?.user ?? null
         
         if (!user) {
           // Not logged in — redirect to same-origin /login.

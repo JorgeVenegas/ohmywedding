@@ -1,9 +1,8 @@
 import { createBrowserClient } from "@supabase/ssr"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
-// Singleton pattern — prevents multiple client instances competing for token refresh.
-// Race conditions between simultaneous refresh calls are the root cause of
-// refresh_token_already_used errors and 429 loops.
+// Singleton managed by US, not by @supabase/ssr's internal cache.
+// We set isSingleton: false so our resetClient() actually works.
 let _supabaseClient: SupabaseClient | null = null
 
 // Get cookie domain for cross-subdomain cookie sharing
@@ -46,13 +45,24 @@ export function createClient(): SupabaseClient {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // Disable @supabase/ssr's internal singleton so our resetClient() works.
+      // Without this, the library caches the client internally and our
+      // resetClient() (setting _supabaseClient = null) has no effect.
+      isSingleton: false,
       cookieOptions: {
         domain: cookieDomain,
         path: '/',
         sameSite: 'lax',
         secure: isSecure,
         maxAge: 60 * 60 * 24 * 365 // 1 year
-      }
+      },
+      auth: {
+        // We handle the auth callback manually in /auth/callback.
+        // If this is true (default), the Supabase client ALSO tries to
+        // exchange the ?code= param automatically, causing a double exchange
+        // race condition where one succeeds and the other fails.
+        detectSessionInUrl: false,
+      },
     }
   )
 

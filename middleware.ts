@@ -366,13 +366,14 @@ async function handleSupabaseAuth(request: NextRequest, response: NextResponse) 
     }
   )
 
-  // Refresh session if expired - required for Server Components
-  // Only attempt getUser() if there are auth cookies present.
-  // Without cookies, "Auth session missing!" is expected (user not logged in)
-  // and should NOT trigger aggressive cookie/storage clearing.
+  // Only attempt getUser() if there are actual auth session cookies.
+  // The PKCE code-verifier cookie also starts with sb- and contains auth-token,
+  // so we explicitly exclude it to avoid false positives during OAuth flow.
   let user = null
   const hasAuthCookies = request.cookies.getAll().some(
-    c => c.name.startsWith('sb-') && (c.name.includes('auth-token') || c.name.includes('refresh'))
+    c => c.name.startsWith('sb-') &&
+         (c.name.includes('auth-token') || c.name.includes('refresh')) &&
+         !c.name.includes('code-verifier')
   )
 
   if (hasAuthCookies) {
