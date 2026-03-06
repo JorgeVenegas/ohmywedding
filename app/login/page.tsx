@@ -41,10 +41,14 @@ function LoginForm() {
   // but the actual login UI must run on the main domain.
   useEffect(() => {
     const hostname = window.location.hostname
-    // Detect subdomain: anything like "xyz.ohmy.wedding" or "xyz.ohmy.local"
+    // Detect wedding subdomain: e.g. "xyz.ohmy.wedding" or "xyz.ohmy.local"
+    // Exclude "www" — it's the main site, not a wedding subdomain.
+    // Vercel serves www.ohmy.wedding as the primary domain, so treating it
+    // as a subdomain would cause an infinite redirect loop:
+    //   www.ohmy.wedding → ohmy.wedding (trampoline) → www.ohmy.wedding (Vercel 307)
     const isSubdomain =
-      (hostname.endsWith('.ohmy.wedding') && hostname !== 'ohmy.wedding') ||
-      (hostname.endsWith('.ohmy.local') && hostname !== 'ohmy.local')
+      (hostname.endsWith('.ohmy.wedding') && hostname !== 'ohmy.wedding' && hostname !== 'www.ohmy.wedding') ||
+      (hostname.endsWith('.ohmy.local') && hostname !== 'ohmy.local' && hostname !== 'www.ohmy.local')
 
     if (isSubdomain) {
       let mainDomain: string
