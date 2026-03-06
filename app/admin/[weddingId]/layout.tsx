@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase-client"
 import { SubscriptionProvider } from "@/components/contexts/subscription-context"
 import { PlanIndicator } from "@/components/plan-indicator"
-import { getCleanAdminUrl } from "@/lib/admin-url"
 import { useTranslation } from "@/components/contexts/i18n-context"
 
 interface AdminLayoutProps {
@@ -30,36 +29,27 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
         
         const supabase = createClient()
 
-        // Get current user — if stale tokens exist, clear them and redirect to login
+        // Use getSession() instead of getUser() — getSession() is cached and
+        // doesn't make a network request, avoiding token refresh that causes 429 loops.
         let user = null
         try {
-          const { data, error: userError } = await supabase.auth.getUser()
-          if (userError) {
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+          if (sessionError) {
             // Stale session — clear everything before redirecting
             await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
           }
-          user = data?.user ?? null
+          user = session?.user ?? null
         } catch {
           // Auth request failed entirely — clear and redirect
           await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
         }
         
         if (!user) {
-          // Not logged in - redirect to login on main domain
-          const hostname = window.location.hostname
-          const isSubdomain = hostname.includes('ohmy.local') || hostname.includes('ohmy.wedding')
-          
-          if (isSubdomain) {
-            // On subdomain, redirect to main domain with full URL as redirect
-            const mainDomain = hostname.includes('ohmy.local') 
-              ? `http://ohmy.local:${window.location.port || '3000'}`
-              : 'https://ohmy.wedding'
-            
-            window.location.href = `${mainDomain}/login?redirect=${encodeURIComponent(window.location.href)}`
-          } else {
-            // On main domain, use relative URL
-            router.push(`/login?redirect=${encodeURIComponent(getCleanAdminUrl(decodedWeddingId, 'dashboard'))}`)
-          }
+          // Not logged in — redirect to same-origin /login.
+          // The middleware already serves /login on subdomains, so this
+          // works on both main domain and subdomains without CORS issues.
+          // The login page handles the subdomain→main domain hop internally.
+          router.push(`/login?redirect=${encodeURIComponent(window.location.href)}`)
           return
         }
 
