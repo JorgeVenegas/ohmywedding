@@ -106,6 +106,10 @@ export function useAuth() {
         if (event === 'SIGNED_OUT') {
           setUser(null)
           clearAllAuthStorage()
+          // Reset the singleton so it doesn't hold stale internal refresh state.
+          // Without this the client keeps retrying with an invalid refresh token,
+          // causing the 429 loop: _callRefreshToken → _removeSession → _notifyAllSubscribers → repeat.
+          resetClient()
         } else {
           // INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED, USER_UPDATED
           // All provide the current session — trust it.
@@ -144,31 +148,35 @@ export function useWeddingPermissions(weddingNameId: string | null) {
   const [authReady, setAuthReady] = useState(false)
   const lastFetchKey = useRef<string | null>(null)
 
-  // Wait for auth to be ready before fetching permissions
+  // Single effect: subscribe to auth state changes and drive permission fetching.
+  // Using onAuthStateChange only (no getUser/getSession calls here) to avoid
+  // queuing extra token refresh requests that trigger 429s.
   useEffect(() => {
     const supabase = createClient()
-    
-    // Check initial auth state
-    supabase.auth.getUser().then(() => {
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setAuthReady(true)
-    })
-    
-    // Listen for auth changes - only refetch on actual sign in/out
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      setAuthReady(true)
-      
-      // Only refetch permissions on actual authentication changes
+
+      // Only reset + refetch on actual sign in/out events, not TOKEN_REFRESHED
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        // Trigger refetch by updating lastFetchKey
         lastFetchKey.current = null
+        // Pass the session directly so refetch doesn't need to call getSession()
+        refetchWithSession(session?.access_token ?? null)
       }
-      // Don't refetch on TOKEN_REFRESHED to avoid unnecessary API calls
+    })
+
+    // Mark ready on mount using the cached session (no network call)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setAuthReady(true)
+      refetchWithSession(session?.access_token ?? null)
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weddingNameId])
 
-  const refetch = useCallback(async () => {
+  // Accepts an optional access token to avoid calling getSession() inside refetch
+  const refetchWithSession = useCallback(async (accessToken: string | null) => {
     if (!weddingNameId) {
       setPermissions(defaultPermissions)
       setLoading(false)
@@ -177,34 +185,24 @@ export function useWeddingPermissions(weddingNameId: string | null) {
 
     try {
       setLoading(true)
-      // Get current session to pass auth token
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      const headers: Record<string, string> = {
-        'Cache-Control': 'no-cache'
-      }
-      
-      // Pass access token in Authorization header if we have a session
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`
-      }
-      const fetchKey = `${weddingNameId}:${session?.access_token || 'noauth'}`
+      const fetchKey = `${weddingNameId}:${accessToken || 'noauth'}`
       if (lastFetchKey.current === fetchKey) {
         setLoading(false)
         return
       }
-
       lastFetchKey.current = fetchKey
-      
+
+      const headers: Record<string, string> = { 'Cache-Control': 'no-cache' }
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`
+      }
+
       const response = await fetch(`/api/weddings/${weddingNameId}/permissions`, {
         cache: 'no-store',
         headers
       })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch permissions')
-      }
+
+      if (!response.ok) throw new Error('Failed to fetch permissions')
 
       const data = await response.json()
       setPermissions(data.permissions)
@@ -217,28 +215,18 @@ export function useWeddingPermissions(weddingNameId: string | null) {
     }
   }, [weddingNameId])
 
-  // Fetch permissions when auth is ready or weddingNameId changes
+  const refetch = useCallback(async () => {
+    const supabase = createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+    await refetchWithSession(session?.access_token ?? null)
+  }, [refetchWithSession])
+
+  // Fetch permissions when auth is ready
   useEffect(() => {
     if (authReady) {
       refetch()
     }
   }, [authReady, refetch])
-
-  // Also refetch when user signs in/out (not on every auth event like token refresh)
-  useEffect(() => {
-    const supabase = createClient()
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      // Only refetch on actual sign in/out, not token refreshes
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        // Reset the fetch key so we actually refetch
-        lastFetchKey.current = null
-        refetch()
-      }
-    })
-
-    return () => subscription.unsubscribe()
-  }, [refetch])
 
   return { permissions, loading, error, refetch }
 }
