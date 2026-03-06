@@ -149,6 +149,8 @@ export async function middleware(request: NextRequest) {
   // =========================================================================
   if (
     pathname.startsWith('/auth/callback') || 
+    pathname === '/login' ||
+    pathname === '/create-wedding' ||
     pathname.startsWith('/api/registry/webhook') ||
     pathname.startsWith('/api/connect/webhook') ||
     pathname.startsWith('/api/subscriptions/webhook') ||
@@ -344,31 +346,12 @@ function getCookieDomain(host: string): string | undefined {
 async function handleSupabaseAuth(request: NextRequest, response: NextResponse) {
   const host = request.headers.get('host') || ''
   const cookieDomain = getCookieDomain(host)
-  
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          cookiesToSet.forEach(({ name, value, options }) => {
-            const cookieOptions = cookieDomain
-              ? { ...options, domain: cookieDomain, path: '/' }
-              : options
-            response.cookies.set(name, value, cookieOptions)
-          })
-        },
-      },
-    }
-  )
 
-  // Only attempt getUser() if there are actual auth session cookies.
-  // The PKCE code-verifier cookie also starts with sb- and contains auth-token,
-  // so we explicitly exclude it to avoid false positives during OAuth flow.
+  // Check for actual auth session cookies BEFORE creating the server client.
+  // Creating the server client triggers Supabase's auto-initialization
+  // (_initialize → _recoverAndRefresh) which can fire onAuthStateChange
+  // and call setAll() — modifying response cookies as a side effect.
+  // When there are no auth cookies, we must NOT create the client at all.
   let user = null
   const hasAuthCookies = request.cookies.getAll().some(
     c => c.name.startsWith('sb-') &&
@@ -377,15 +360,33 @@ async function handleSupabaseAuth(request: NextRequest, response: NextResponse) 
   )
 
   if (hasAuthCookies) {
-    console.log('[Middleware] Auth cookies found, validating session for:', request.nextUrl.pathname)
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+            cookiesToSet.forEach(({ name, value, options }) => {
+              const cookieOptions = cookieDomain
+                ? { ...options, domain: cookieDomain, path: '/' }
+                : options
+              response.cookies.set(name, value, cookieOptions)
+            })
+          },
+        },
+      }
+    )
+
     try {
       const { data, error } = await supabase.auth.getUser()
       if (error) {
         console.warn('[Middleware] getUser error:', error.message, 'path:', request.nextUrl.pathname)
-        // Don't clear cookies for race conditions — the browser may hold valid tokens
         if ((error as any).code !== 'refresh_token_already_used') {
           // Auth cookies are invalid — clear them so the browser stops sending them.
-          // On the next request the middleware will skip getUser() entirely.
           const allCookies = request.cookies.getAll()
           for (const cookie of allCookies) {
             if (cookie.name.startsWith('sb-') || cookie.name.includes('supabase')) {
@@ -413,9 +414,6 @@ async function handleSupabaseAuth(request: NextRequest, response: NextResponse) 
       console.error('[Middleware] getUser threw:', catchErr, 'path:', request.nextUrl.pathname)
       user = null
     }
-  }
-  if (!hasAuthCookies) {
-    console.log('[Middleware] No auth cookies for:', request.nextUrl.pathname)
   }
 
   // Protect admin routes - require authentication
