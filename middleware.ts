@@ -376,19 +376,15 @@ async function handleSupabaseAuth(request: NextRequest, response: NextResponse) 
   )
 
   if (hasAuthCookies) {
-    console.log('[Middleware] Auth cookies detected, calling getUser() for path:', request.nextUrl.pathname)
+    console.log('[Middleware] Auth cookies found, validating session for:', request.nextUrl.pathname)
     try {
       const { data, error } = await supabase.auth.getUser()
       if (error) {
-        console.warn('[Middleware] getUser error:', error.message, 'code:', (error as any).code, 'path:', request.nextUrl.pathname)
-        if ((error as any).code === 'refresh_token_already_used') {
-          // Race condition: the browser-side client refreshed the token first.
-          // The browser holds the new tokens; they'll arrive on the next request.
-          // Do NOT clear cookies here — that would destroy the valid session.
-          user = null
-        } else {
-          // Auth cookies exist but are invalid (expired, revoked, corrupted).
-          // Clear them to prevent infinite retry loops.
+        console.warn('[Middleware] getUser error:', error.message, 'path:', request.nextUrl.pathname)
+        // Don't clear cookies for race conditions — the browser may hold valid tokens
+        if ((error as any).code !== 'refresh_token_already_used') {
+          // Auth cookies are invalid — clear them so the browser stops sending them.
+          // On the next request the middleware will skip getUser() entirely.
           const allCookies = request.cookies.getAll()
           for (const cookie of allCookies) {
             if (cookie.name.startsWith('sb-') || cookie.name.includes('supabase')) {
@@ -407,52 +403,18 @@ async function handleSupabaseAuth(request: NextRequest, response: NextResponse) 
               }
             }
           }
-          // Signal the browser to clear localStorage too — the middleware can only
-          // clear cookies, but Supabase also stores tokens in localStorage.
-          response.cookies.set('sb-cleanup', '1', {
-            path: '/',
-            maxAge: 60,
-            sameSite: 'lax',
-            ...(cookieDomain ? { domain: cookieDomain } : {}),
-          })
-          user = null
         }
+        user = null
       } else {
         user = data.user
       }
     } catch (catchErr) {
       console.error('[Middleware] getUser threw:', catchErr, 'path:', request.nextUrl.pathname)
-      // If getUser throws unexpectedly, clear stale auth cookies
-      const allCookies = request.cookies.getAll()
-      for (const cookie of allCookies) {
-        if (cookie.name.startsWith('sb-') || cookie.name.includes('supabase')) {
-          response.cookies.set(cookie.name, '', {
-            path: '/',
-            expires: new Date(0),
-            maxAge: 0,
-          })
-          if (cookieDomain) {
-            response.cookies.set(cookie.name, '', {
-              domain: cookieDomain,
-              path: '/',
-              expires: new Date(0),
-              maxAge: 0,
-            })
-          }
-        }
-      }
-      response.cookies.set('sb-cleanup', '1', {
-        path: '/',
-        maxAge: 60,
-        sameSite: 'lax',
-        ...(cookieDomain ? { domain: cookieDomain } : {}),
-      })
       user = null
     }
   }
-  // If no auth cookies: user is simply not logged in — no cleanup needed
   if (!hasAuthCookies) {
-    console.log('[Middleware] No auth cookies for path:', request.nextUrl.pathname, '— skipping getUser()')
+    console.log('[Middleware] No auth cookies for:', request.nextUrl.pathname)
   }
 
   // Protect admin routes - require authentication

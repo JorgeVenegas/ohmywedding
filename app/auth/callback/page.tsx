@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
-import { createClient, resetCircuitBreaker } from "@/lib/supabase-client"
+import { createClient } from "@/lib/supabase-client"
 
 /**
  * Client-side auth callback handler.
@@ -48,9 +48,6 @@ function CallbackHandler() {
         }
 
         console.log("[AuthCallback] Code exchange succeeded, user:", data.user?.email)
-        
-        // Reset the circuit breaker since we just successfully authenticated
-        resetCircuitBreaker()
 
         // Use full-page navigation (not router.push) to ensure:
         // 1. Cookies are sent with the next request

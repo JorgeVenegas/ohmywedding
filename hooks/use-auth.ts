@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { createClient, resetClient, resetCircuitBreaker } from '@/lib/supabase-client'
+import { createClient, resetClient } from '@/lib/supabase-client'
 import type { User } from '@supabase/supabase-js'
 
 export type WeddingPermissions = {
@@ -22,52 +22,22 @@ const defaultPermissions: WeddingPermissions = {
   userId: null
 }
 
-// Clear all Supabase auth cookies across all domains
+// Clear all Supabase auth cookies across all domains (safety net for signOut)
 function clearAllAuthCookies() {
   if (typeof document === 'undefined') return
-  
+
   const cookiesToClear = document.cookie.split(';').map(c => c.trim().split('=')[0])
-  const domains = ['', '.ohmy.local', '.ohmy.wedding', window.location.hostname]
-  const paths = ['/', '']
-  
+  const domains = ['', '.ohmy.local', '.ohmy.wedding']
+  if (typeof window !== 'undefined') domains.push(window.location.hostname)
+
   cookiesToClear.forEach(name => {
     if (name.includes('sb-') || name.includes('supabase')) {
       domains.forEach(domain => {
-        paths.forEach(path => {
-          const domainPart = domain ? `; domain=${domain}` : ''
-          const pathPart = path ? `; path=${path}` : '; path=/'
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT${domainPart}${pathPart}`
-        })
+        const domainPart = domain ? `; domain=${domain}` : ''
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT${domainPart}; path=/`
       })
     }
   })
-}
-
-// Clear all Supabase auth storage (cookies + local/session storage)
-function clearAllAuthStorage() {
-  clearAllAuthCookies()
-
-  if (typeof window === 'undefined') return
-
-  try {
-    Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith('sb-') || key.includes('supabase')) {
-        localStorage.removeItem(key)
-      }
-    })
-  } catch (error) {
-    console.warn('Failed to clear localStorage auth data', error)
-  }
-
-  try {
-    Object.keys(sessionStorage).forEach((key) => {
-      if (key.startsWith('sb-') || key.includes('supabase')) {
-        sessionStorage.removeItem(key)
-      }
-    })
-  } catch (error) {
-    console.warn('Failed to clear sessionStorage auth data', error)
-  }
 }
 
 export function useAuth() {
@@ -75,48 +45,14 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    console.log('[useAuth] useEffect mount — initializing auth listener')
-    // Check for cleanup signal from middleware — means the server detected
-    // invalid auth and cleared cookies, but localStorage still has stale tokens.
-    if (typeof document !== 'undefined' && document.cookie.includes('sb-cleanup=1')) {
-      console.warn('[useAuth] Cleanup signal detected — clearing stale auth data')
-      // Delete the signal cookie
-      document.cookie = 'sb-cleanup=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
-      document.cookie = 'sb-cleanup=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.wedding'
-      document.cookie = 'sb-cleanup=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.local'
-      // Clear all stale auth data from localStorage/sessionStorage
-      clearAllAuthStorage()
-      // Reset the singleton so it doesn't hold stale internal state
-      resetClient()
-      // Don't return early — still subscribe to auth changes so the app works
-      // after cleanup. The subscription will fire INITIAL_SESSION with null.
-    }
-
     const supabase = createClient()
 
-    // Rely on onAuthStateChange instead of calling getUser() separately.
-    // getUser() triggers a network request that can race with the middleware's
-    // own token refresh, causing refresh_token_already_used errors and 429s.
-    // The middleware already validates and refreshes sessions on every request,
-    // so the cookies reaching the browser are already validated.
+    // Subscribe to auth state changes. This fires INITIAL_SESSION immediately
+    // with the current session (from cookies), then SIGNED_IN/SIGNED_OUT/etc.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('[useAuth] onAuthStateChange:', event, 'session:', session ? `user=${session.user?.email}` : 'null')
-        if (event === 'SIGNED_OUT') {
-          setUser(null)
-          clearAllAuthStorage()
-          // Do NOT call resetClient() here — we're inside onAuthStateChange,
-          // destroying the client mid-dispatch causes cascading re-renders.
-          // The login page will reset the client on mount instead.
-        } else if (event === 'SIGNED_IN') {
-          // Successful sign-in — reset the circuit breaker so token refresh works again
-          resetCircuitBreaker()
-          setUser(session?.user ?? null)
-        } else {
-          // INITIAL_SESSION, TOKEN_REFRESHED, USER_UPDATED
-          // All provide the current session — trust it.
-          setUser(session?.user ?? null)
-        }
+        console.log('[useAuth] auth event:', event, session?.user?.email ?? 'no user')
+        setUser(session?.user ?? null)
         setLoading(false)
       }
     )
@@ -126,17 +62,14 @@ export function useAuth() {
 
   const signOut = useCallback(async () => {
     const supabase = createClient()
-    
-    // First attempt normal signout
     try {
       await supabase.auth.signOut()
     } catch (err) {
-      console.error('Error during signout:', err)
+      console.error('[useAuth] signOut error:', err)
     }
-    
-    // Clear all Supabase auth cookies to handle domain mismatch issues
-    clearAllAuthStorage()
-    
+    // Safety net: manually clear cookies across all potential domains
+    clearAllAuthCookies()
+    resetClient()
     window.location.href = '/'
   }, [])
 

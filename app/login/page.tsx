@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { createClient, resetClient } from "@/lib/supabase-client"
+import { createClient } from "@/lib/supabase-client"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -59,43 +59,6 @@ function LoginForm() {
       window.location.href = `${mainDomain}/login${params}`
       return
     }
-  }, [])
-
-  // Clear stale auth data on login page mount.
-  // Only clear storage/cookies directly — do NOT call supabase.auth.signOut()
-  // because that fires onAuthStateChange events which can cause cascading
-  // effects (resetClient, clearStorage, re-render loops).
-  useEffect(() => {
-    console.log('[LoginPage] mount — clearing stale auth storage')
-    try {
-      // Clear localStorage
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith('sb-') || key.includes('supabase')) {
-          localStorage.removeItem(key)
-        }
-      })
-      // Clear sessionStorage
-      Object.keys(sessionStorage).forEach((key) => {
-        if (key.startsWith('sb-') || key.includes('supabase')) {
-          sessionStorage.removeItem(key)
-        }
-      })
-    } catch {}
-    // Clear cookies across all potential domains
-    document.cookie.split(';').forEach(c => {
-      const name = c.trim().split('=')[0]
-      if (name.startsWith('sb-') || name.includes('supabase')) {
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.wedding`
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.local`
-      }
-    })
-    // Also clear the cleanup signal cookie if present
-    document.cookie = 'sb-cleanup=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
-    document.cookie = 'sb-cleanup=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.wedding'
-    document.cookie = 'sb-cleanup=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ohmy.local'
-    // Reset the Supabase client singleton so it starts fresh for login
-    resetClient()
   }, [])
 
   // Show error from URL params (e.g., OAuth callback errors)
