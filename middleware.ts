@@ -252,10 +252,13 @@ export async function middleware(request: NextRequest) {
   // - Free weddings: redirect to main domain with raw Location header
   // =========================================================================
   if (subdomain && !RESERVED_SUBDOMAINS.includes(subdomain.toLowerCase())) {
-    // Skip static files, API routes, and auth routes on subdomains - they should not be rewritten
+    // Skip static files, API routes, auth routes, and login on subdomains - they should not be rewritten.
+    // /login must be same-origin on subdomains to avoid CORS errors when RSC fetch
+    // requests get redirected to the main domain for auth.
     if (pathname.startsWith('/_next') ||
         pathname.startsWith('/api/') ||
         pathname.startsWith('/auth/') ||
+        pathname === '/login' ||
         pathname === '/favicon.ico' ||
         pathname === '/site.webmanifest' ||
         pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico)$/)) {
@@ -451,35 +454,11 @@ async function handleSupabaseAuth(request: NextRequest, response: NextResponse) 
   // Protect admin routes - require authentication
   if (request.nextUrl.pathname.startsWith('/admin')) {
     if (!user) {
-      const host = request.headers.get('host') || ''
-      const subdomain = getSubdomain(host)
-      
-      // Get the main domain for login redirect
-      // Subdomains don't have a login route, so redirect to main domain
-      let loginUrl: URL
-      
-      if (subdomain) {
-        // On subdomain - redirect to main domain for login
-        const hostWithoutPort = host.split(':')[0]
-        const port = host.includes(':') ? `:${host.split(':')[1]}` : ''
-        
-        // Determine the main domain based on current host
-        let mainDomain: string
-        if (hostWithoutPort.endsWith('.ohmy.local')) {
-          mainDomain = `ohmy.local${port}`
-        } else if (hostWithoutPort.endsWith('.ohmy.wedding')) {
-          mainDomain = 'ohmy.wedding'
-        } else {
-          // Fallback to BASE_DOMAIN
-          mainDomain = BASE_DOMAIN
-        }
-        
-        const protocol = request.nextUrl.protocol
-        loginUrl = new URL(`${protocol}//${mainDomain}/login`)
-      } else {
-        // Already on main domain
-        loginUrl = new URL('/login', request.url)
-      }
+      // Always redirect to same-origin /login to avoid CORS issues.
+      // Next.js RSC navigation uses fetch(), and cross-origin redirects on fetch
+      // are blocked by browsers. By keeping /login on the same origin (including
+      // subdomains), the redirect works for both full-page and RSC navigations.
+      const loginUrl = new URL('/login', request.url)
       
       // Set redirect to return to the original URL after login
       loginUrl.searchParams.set('redirect', request.url)

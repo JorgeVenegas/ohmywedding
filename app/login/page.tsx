@@ -78,16 +78,33 @@ function LoginForm() {
     }
   }, [errorParam])
 
+  // Get the main domain origin for OAuth callbacks.
+  // OAuth redirect URLs are configured for the main domain only, so even when
+  // the login page is served on a subdomain we must route through the main domain.
+  const getMainDomainOrigin = () => {
+    const hostname = window.location.hostname
+    if (hostname.endsWith('.ohmy.wedding') || hostname === 'ohmy.wedding') {
+      return 'https://ohmy.wedding'
+    }
+    if (hostname.endsWith('.ohmy.local') || hostname === 'ohmy.local') {
+      const port = window.location.port ? `:${window.location.port}` : ''
+      return `${window.location.protocol}//ohmy.local${port}`
+    }
+    // localhost / dev — use current origin
+    return window.location.origin
+  }
+
   const handleGoogleLogin = async () => {
     setIsLoading(true)
     setError(null)
     
     const supabase = createClient()
     
+    const callbackOrigin = getMainDomainOrigin()
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(finalRedirectUrl)}`,
+        redirectTo: `${callbackOrigin}/auth/callback?redirect=${encodeURIComponent(finalRedirectUrl)}`,
       },
     })
 
@@ -107,11 +124,12 @@ function LoginForm() {
 
     if (isSignUp) {
       // Sign up new user
+      const callbackOrigin = getMainDomainOrigin()
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(finalRedirectUrl)}`,
+          emailRedirectTo: `${callbackOrigin}/auth/callback?redirect=${encodeURIComponent(finalRedirectUrl)}`,
         },
       })
 
