@@ -56,13 +56,9 @@ export function createClient(): SupabaseClient {
         secure: isSecure,
         maxAge: 60 * 60 * 24 * 365 // 1 year
       },
-      auth: {
-        // We handle the auth callback manually in /auth/callback.
-        // If this is true (default), the Supabase client ALSO tries to
-        // exchange the ?code= param automatically, causing a double exchange
-        // race condition where one succeeds and the other fails.
-        detectSessionInUrl: false,
-      },
+      // Note: createBrowserClient internally forces detectSessionInUrl: true
+      // and flowType: 'pkce' regardless of what we pass here. The auth callback
+      // page relies on this auto-detection — see /auth/callback/page.tsx.
     }
   )
 

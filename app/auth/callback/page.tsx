@@ -1,71 +1,85 @@
 "use client"
 
-import { useEffect, useState, Suspense } from "react"
+import { useEffect, useState, useRef, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase-client"
 
 /**
  * Client-side auth callback handler.
  *
- * Why client-side instead of a server-side route handler?
- * - The PKCE code verifier is stored by `createBrowserClient` in `document.cookie`.
- * - A server-side `route.ts` using `createServerClient` reads cookies from the
- *   request headers. In some browsers (especially incognito), the verifier cookie
- *   may not survive the cross-site redirect chain (app -> Supabase -> Google ->
- *   Supabase -> app) and is missing when the server reads cookies.
- * - By exchanging the code client-side with `createBrowserClient`, the SAME storage
- *   adapter that wrote the verifier reads it back, guaranteeing it's found.
+ * @supabase/ssr's createBrowserClient forces `detectSessionInUrl: true` internally
+ * (overriding any value we pass). This means the Supabase client's _initialize()
+ * method automatically detects the ?code= param in the URL, reads the PKCE code
+ * verifier from cookies, and exchanges the code for a session.
+ *
+ * We must NOT manually call exchangeCodeForSession() because:
+ * 1. _initialize() already consumes the code verifier and removes it from storage
+ * 2. The public exchangeCodeForSession() awaits initializePromise first, so it
+ *    always runs AFTER _initialize has already consumed the verifier
+ * 3. Result: "PKCE code verifier not found in storage"
+ *
+ * Instead, we listen for onAuthStateChange to detect when the auto-exchange
+ * completes, then redirect to the target page.
  */
 function CallbackHandler() {
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<"loading" | "error">("loading")
   const [errorMessage, setErrorMessage] = useState("")
+  const hasRedirected = useRef(false)
+
+  const redirectTo = searchParams.get("redirect") || "/"
 
   useEffect(() => {
-    async function handleCallback() {
-      const code = searchParams.get("code")
-      const redirectTo = searchParams.get("redirect") || "/"
+    const supabase = createClient()
 
-      if (!code) {
-        console.warn("[AuthCallback] No code in callback URL, redirecting to /")
-        window.location.href = "/"
-        return
-      }
-
-      try {
-        const supabase = createClient()
-        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-
-        if (error) {
-          console.error("[AuthCallback] Code exchange failed:", error.message)
-          setStatus("error")
-          setErrorMessage(error.message)
-          // Redirect to login with error after a short delay so user can see
-          setTimeout(() => {
-            window.location.href = `/login?error=${encodeURIComponent(error.message)}`
-          }, 2000)
-          return
-        }
-
-        console.log("[AuthCallback] Code exchange succeeded, user:", data.user?.email)
-
-        // Use full-page navigation (not router.push) to ensure:
-        // 1. Cookies are sent with the next request
-        // 2. Server middleware picks up the fresh session
-        // 3. Works for cross-subdomain redirects (e.g., ohmy.wedding -> jorgeyyuli.ohmy.wedding)
-        window.location.href = redirectTo
-      } catch (err) {
-        console.error("[AuthCallback] Unexpected error:", err)
+    // Set a timeout in case the auth exchange silently fails
+    const timeout = setTimeout(() => {
+      if (!hasRedirected.current) {
+        console.error("[AuthCallback] Timed out waiting for auth")
         setStatus("error")
-        setErrorMessage(err instanceof Error ? err.message : "Unknown error")
+        setErrorMessage("Authentication timed out. Please try again.")
         setTimeout(() => {
-          window.location.href = "/login?error=callback_failed"
+          window.location.href = "/login?error=callback_timeout"
         }, 2000)
       }
-    }
+    }, 15000)
 
-    handleCallback()
-  }, [searchParams])
+    // Listen for auth state changes from the auto-initialization.
+    // _initialize() detects ?code= in the URL and exchanges it automatically.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("[AuthCallback] auth event:", event, session?.user?.email ?? "no user")
+
+        if (hasRedirected.current) return
+
+        if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+          // Auth succeeded — redirect using full-page navigation to ensure:
+          // 1. Cookies are sent with the next request
+          // 2. Server middleware picks up the fresh session
+          // 3. Works for cross-subdomain redirects
+          hasRedirected.current = true
+          clearTimeout(timeout)
+          console.log("[AuthCallback] Auth succeeded, redirecting to:", redirectTo)
+          window.location.href = redirectTo
+        } else if (event === 'INITIAL_SESSION' && !session) {
+          // _initialize completed but no session — exchange likely failed
+          hasRedirected.current = true
+          clearTimeout(timeout)
+          console.error("[AuthCallback] No session after initialization")
+          setStatus("error")
+          setErrorMessage("Authentication failed. Please try again.")
+          setTimeout(() => {
+            window.location.href = "/login?error=callback_failed"
+          }, 2000)
+        }
+      }
+    )
+
+    return () => {
+      clearTimeout(timeout)
+      subscription.unsubscribe()
+    }
+  }, [redirectTo])
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
