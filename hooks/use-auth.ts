@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { createClient, resetClient } from '@/lib/supabase-client'
+import { createClient, resetClient, resetCircuitBreaker } from '@/lib/supabase-client'
 import type { User } from '@supabase/supabase-js'
 
 export type WeddingPermissions = {
@@ -75,6 +75,7 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    console.log('[useAuth] useEffect mount — initializing auth listener')
     // Check for cleanup signal from middleware — means the server detected
     // invalid auth and cleared cookies, but localStorage still has stale tokens.
     // This automatically unsticks users without them manually clearing cookies.
@@ -107,11 +108,13 @@ export function useAuth() {
           setUser(null)
           clearAllAuthStorage()
           // Reset the singleton so it doesn't hold stale internal refresh state.
-          // Without this the client keeps retrying with an invalid refresh token,
-          // causing the 429 loop: _callRefreshToken → _removeSession → _notifyAllSubscribers → repeat.
           resetClient()
+        } else if (event === 'SIGNED_IN') {
+          // Successful sign-in — reset the circuit breaker so token refresh works again
+          resetCircuitBreaker()
+          setUser(session?.user ?? null)
         } else {
-          // INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED, USER_UPDATED
+          // INITIAL_SESSION, TOKEN_REFRESHED, USER_UPDATED
           // All provide the current session — trust it.
           setUser(session?.user ?? null)
         }
@@ -155,6 +158,7 @@ export function useWeddingPermissions(weddingNameId: string | null) {
     const supabase = createClient()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[useWeddingPermissions] onAuthStateChange:', event, 'hasSession:', !!session)
       setAuthReady(true)
 
       // Only reset + refetch on actual sign in/out events, not TOKEN_REFRESHED
@@ -166,7 +170,9 @@ export function useWeddingPermissions(weddingNameId: string | null) {
     })
 
     // Mark ready on mount using the cached session (no network call)
+    console.log('[useWeddingPermissions] calling getSession() on mount')
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('[useWeddingPermissions] getSession mount result:', session ? `user=${session.user?.email}` : 'no session')
       setAuthReady(true)
       refetchWithSession(session?.access_token ?? null)
     })

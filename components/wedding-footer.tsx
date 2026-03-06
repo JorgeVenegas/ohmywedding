@@ -23,7 +23,12 @@ export function WeddingFooter({ weddingNameId, ownerId, collaboratorEmails }: We
       try {
         const supabase = createClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        console.log('[wedding-footer] checkAuthorization: calling getSession()')
+        // Use getSession() instead of getUser() — cached, no network request,
+        // avoids triggering token refresh that causes 429 loops.
+        const { data: { session } } = await supabase.auth.getSession()
+        const user = session?.user ?? null
+        console.log('[wedding-footer] getSession result:', user ? `user=${user.email}` : 'no session')
         if (!user) {
           setIsAuthorized(false)
           return

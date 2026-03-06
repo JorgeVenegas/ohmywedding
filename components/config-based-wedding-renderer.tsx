@@ -72,7 +72,12 @@ function ConfigBasedWeddingRendererContent({
       try {
         const supabase = createClient()
         
-        const { data: { user } } = await supabase.auth.getUser()
+        console.log('[config-based-wedding-renderer] checkAuthorization: calling getSession()')
+        // Use getSession() instead of getUser() — getSession() is cached and
+        // doesn't make a network request, avoiding token refresh that causes 429 loops.
+        const { data: { session } } = await supabase.auth.getSession()
+        const user = session?.user ?? null
+        console.log('[config-based-wedding-renderer] getSession result:', user ? `user=${user.email}` : 'no session')
         
         if (!user) {
           setIsAuthorized(false)
