@@ -1,11 +1,11 @@
 'use client'
 
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Sparkles, ArrowRight, ArrowDown, Star, Play } from 'lucide-react'
 import { useTranslation } from '@/components/contexts/i18n-context'
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
+import { motion, useScroll, useTransform } from 'framer-motion'
 
 const heroVideos = [
   "/videos/vid1.mp4",
@@ -18,7 +18,9 @@ const heroVideos = [
 
 export function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null)
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([])
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
+  const [videosReady, setVideosReady] = useState(false)
   const { t } = useTranslation()
 
   const { scrollYProgress } = useScroll({
@@ -29,31 +31,45 @@ export function HeroSection() {
   const y = useTransform(scrollYProgress, [0, 1], [0, 300])
   const opacity = useTransform(scrollYProgress, [0, 0.6], [1, 0])
 
-  const handleVideoEnd = useCallback(() => {
-    setCurrentVideoIndex((prev) => (prev + 1) % heroVideos.length)
+  // Lazy-load all videos after initial page paint so load time is unaffected
+  useEffect(() => {
+    const timer = setTimeout(() => setVideosReady(true), 100)
+    return () => clearTimeout(timer)
+  }, [])
+
+  // Play the current video whenever index changes or videos mount
+  useEffect(() => {
+    const video = videoRefs.current[currentVideoIndex]
+    if (!video) return
+    video.currentTime = 0
+    video.play().catch(() => {})
+  }, [currentVideoIndex, videosReady])
+
+  const handleVideoEnd = useCallback((index: number) => {
+    setCurrentVideoIndex((prev) => {
+      if (prev !== index) return prev
+      return (prev + 1) % heroVideos.length
+    })
   }, [])
 
   return (
     <section ref={containerRef} className="relative min-h-[110vh] flex items-center justify-center overflow-hidden">
-      {/* Video Background */}
+      {/* Video Background — all videos kept in DOM once ready for seamless transitions */}
       <div className="absolute inset-0 z-0">
-        <AnimatePresence mode="wait">
-          <motion.video
-            key={currentVideoIndex}
-            autoPlay
+        {videosReady && heroVideos.map((src, i) => (
+          <video
+            key={src}
+            ref={(el) => { videoRefs.current[i] = el }}
             muted
             playsInline
-            preload="none"
-            onEnded={handleVideoEnd}
-            className="absolute inset-0 w-full h-full object-cover"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8 }}
+            preload="auto"
+            onEnded={() => handleVideoEnd(i)}
+            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+            style={{ opacity: i === currentVideoIndex ? 1 : 0, pointerEvents: 'none' }}
           >
-            <source src={heroVideos[currentVideoIndex]} type="video/mp4" />
-          </motion.video>
-        </AnimatePresence>
+            <source src={src} type="video/mp4" />
+          </video>
+        ))}
         <div className="absolute inset-0 bg-[#420c14]/40" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#420c14]/30 via-transparent to-[#420c14]" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#172815]/20 via-transparent to-[#172815]/20" />

@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Ticket,
   Tag,
+  Award,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase-client"
@@ -53,6 +54,11 @@ const navItems = [
     title: "Promotions",
     href: "/superadmin/promotions",
     icon: Tag,
+  },
+  {
+    title: "Certificates",
+    href: "/superadmin/certificates",
+    icon: Award,
   },
   {
     title: "Activity Log",
