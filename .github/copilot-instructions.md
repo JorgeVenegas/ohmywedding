@@ -38,6 +38,14 @@ you should aim to reduce the amount of code thorugh simplificaitons, reutilizati
 
 after the build, start the dev server again to coninue working
 
+## Checkout Flow
+Pricing CTAs should ALWAYS go directly to Stripe checkout — never to an intermediate upgrade/pricing page. When clicking a paid plan button:
+- If not logged in → redirect to login, then `autoCheckout=1` back to the checkout flow
+- If logged in, no wedding → redirect to `/create-wedding` (not the upgrade page)
+- If logged in, 1 eligible wedding → fire `proceedToCheckout` directly
+- If logged in, multiple eligible → show a minimal wedding selector modal
+The `/upgrade` page supports `autoCheckout=1` in the URL to auto-fire checkout on load. Always pass `paymentMethod` and `plan` as URL params so the experience is seamless after login.
+
 When you make changes to the i18n files, always update both en.ts and es.ts to keep them in sync
 
 When you add new i18n keys, make sure to also update the types.ts file to include the new keys for type safety

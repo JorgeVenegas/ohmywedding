@@ -18,10 +18,13 @@ import {
   X,
   Tag,
   CheckCircle2,
-  Gift
+  Gift,
+  CreditCard,
 } from "lucide-react"
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
 import { useTranslation } from "@/components/contexts/i18n-context"
+import { useGlobalDiscount, type PaymentMethod } from "@/hooks/use-global-discount"
+import { PromoPriceDisplay, PromoPriceInline } from "@/components/ui/promo-price-display"
 
 const plans = [
   {
@@ -71,8 +74,19 @@ function UpgradePageContent() {
   const leadSource = searchParams.get("source") || "direct"
   // If weddingId is provided, auto-select that wedding (skip selector)
   const preselectedWeddingId = searchParams.get("weddingId") || null
+  // autoCheckout=1: skip the plan picker and go straight to checkout (e.g. coming from landing pricing)
+  const autoCheckout = searchParams.get("autoCheckout") === "1"
   // Lead tracking: store the lead ID for this session
   const [leadId, setLeadId] = useState<string | null>(null)
+  const [autoCheckoutFired, setAutoCheckoutFired] = useState(false)
+
+  // Auto-fire checkout when coming from landing pricing with autoCheckout=1
+  useEffect(() => {
+    if (!autoCheckout || autoCheckoutFired || authLoading || !user || isProcessing) return
+    setAutoCheckoutFired(true)
+    handleUpgrade(selectedPlan)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoCheckout, authLoading, user])
 
   // Coupon state
   const [couponCode, setCouponCode] = useState("")
@@ -91,6 +105,10 @@ function UpgradePageContent() {
     promotionCodeId: string
   } | null>(null)
   const [showCouponInput, setShowCouponInput] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
+    (searchParams.get('paymentMethod') as PaymentMethod) === 'msi' ? 'msi' : 'card'
+  )
+  const { discount, getDiscountedPrice, getDiscountPercent, appliesToPlan } = useGlobalDiscount()
 
   // Create/reuse a lead as soon as the user visits the upgrade page
   useEffect(() => {
@@ -248,7 +266,7 @@ function UpgradePageContent() {
       const res = await fetch('/api/coupons/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: couponCode.trim(), planType: selectedPlan }),
+        body: JSON.stringify({ code: couponCode.trim(), planType: selectedPlan, paymentMethod }),
       })
 
       const data = await res.json()
@@ -289,6 +307,17 @@ function UpgradePageContent() {
     setCouponError(null)
   }
 
+  // Clear applied coupon when selected plan or payment method changes
+  // (coupon amounts are calculated against a specific plan + method)
+  useEffect(() => {
+    if (appliedCoupon) {
+      setAppliedCoupon(null)
+      setCouponCode("")
+      setCouponError(null)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPlan, paymentMethod])
+
   const proceedToCheckout = async (planType: "premium" | "deluxe", weddingId: string) => {
     try {
       setIsProcessing(true)
@@ -306,9 +335,9 @@ function UpgradePageContent() {
         }
       }
 
-      const checkoutBody: Record<string, any> = { planType, source: leadSource, leadId }
+      // Both card and MSI go through Stripe Checkout Session
+      const checkoutBody: Record<string, any> = { planType, source: leadSource, leadId, paymentMethod }
 
-      // If a coupon was applied from this page, pass it to the checkout endpoint
       if (appliedCoupon) {
         checkoutBody.promotionCodeId = appliedCoupon.stripePromotionCodeId
         checkoutBody.couponId = appliedCoupon.couponId
@@ -441,6 +470,56 @@ function UpgradePageContent() {
           </span>
         </motion.div>
 
+        {/* Payment Method Selector */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="max-w-xl mx-auto mb-8"
+        >
+          <p className="text-center text-xs text-[#420c14]/50 mb-3 tracking-wider uppercase">Payment Method</p>
+          <div className="flex justify-center">
+            <div className="inline-flex items-center rounded-xl bg-white border border-[#420c14]/10 shadow-sm p-1 gap-1">
+              <button
+                onClick={() => setPaymentMethod('card')}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 ${
+                  paymentMethod === 'card'
+                    ? 'bg-[#420c14] text-white shadow-sm'
+                    : 'text-[#420c14]/60 hover:text-[#420c14] hover:bg-[#420c14]/5'
+                }`}
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                Card
+                {discount && getDiscountPercent('premium', 'card') > 0 && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    paymentMethod === 'card' ? 'bg-green-500/20 text-green-300' : 'bg-green-50 text-green-600'
+                  }`}>
+                    -{getDiscountPercent('premium', 'card')}%
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setPaymentMethod('msi')}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 ${
+                  paymentMethod === 'msi'
+                    ? 'bg-[#420c14] text-white shadow-sm'
+                    : 'text-[#420c14]/60 hover:text-[#420c14] hover:bg-[#420c14]/5'
+                }`}
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                {selectedPlan === 'deluxe' ? '3 o 6 MSI' : '3 MSI'}
+                {discount && getDiscountPercent('premium', 'msi') > 0 && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    paymentMethod === 'msi' ? 'bg-green-500/20 text-green-300' : 'bg-green-50 text-green-600'
+                  }`}>
+                    -{getDiscountPercent('premium', 'msi')}%
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-4xl mx-auto mb-16 sm:mb-24">
           {plans.map((plan, index) => (
@@ -497,12 +576,41 @@ function UpgradePageContent() {
                 }`}>{plan.description}</p>
 
                 <div className="mb-8 sm:mb-10">
-                  <span className={`text-4xl sm:text-6xl font-serif ${
-                    plan.featured ? 'text-[#f5f2eb]' : 'text-[#420c14]'
-                  }`}>{plan.price}</span>
-                  <span className={`ml-2 sm:ml-3 text-sm sm:text-base ${
-                    plan.featured ? 'text-[#f5f2eb]/60' : 'text-[#420c14]/70'
-                  }`}>{plan.period}</span>
+                  {discount && appliesToPlan(plan.id) ? (
+                    <PromoPriceDisplay
+                      originalPriceCents={plan.id === 'premium' ? PRICING.premium.price_mxn : PRICING.deluxe.price_mxn}
+                      discountedPriceCents={getDiscountedPrice(plan.id === 'premium' ? PRICING.premium.price_mxn : PRICING.deluxe.price_mxn, plan.id as 'premium' | 'deluxe', paymentMethod)}
+                      discountPercent={getDiscountPercent(plan.id as 'premium' | 'deluxe', paymentMethod)}
+                      discountLabel={discount.label}
+                      variant={plan.featured ? 'light' : 'gold'}
+                      size="lg"
+                    />
+                  ) : (
+                    <>
+                      <span className={`text-4xl sm:text-6xl font-serif ${
+                        plan.featured ? 'text-[#f5f2eb]' : 'text-[#420c14]'
+                      }`}>{plan.price}</span>
+                      <span className={`ml-2 sm:ml-3 text-sm sm:text-base ${
+                        plan.featured ? 'text-[#f5f2eb]/60' : 'text-[#420c14]/70'
+                      }`}>{plan.period}</span>
+                    </>
+                  )}
+                  {plan.id === 'premium' && paymentMethod === 'msi' && (() => {
+                    const total = getDiscountedPrice(PRICING.premium.price_mxn, 'premium', 'msi') / 100
+                    return (
+                      <p className={`text-xs mt-2 ${plan.featured ? 'text-[#f5f2eb]/50' : 'text-[#420c14]/50'}`}>
+                        3 MSI de ${Math.round(total / 3).toLocaleString('es-MX')}
+                      </p>
+                    )
+                  })()}
+                  {plan.id === 'deluxe' && paymentMethod === 'msi' && (() => {
+                    const total = getDiscountedPrice(PRICING.deluxe.price_mxn, 'deluxe', 'msi') / 100
+                    return (
+                      <p className={`text-xs mt-2 ${plan.isDeluxe ? 'text-[#420c14]/60' : 'text-[#420c14]/50'}`}>
+                        3 MSI de ${Math.round(total / 3).toLocaleString('es-MX')} | 6 MSI de ${Math.round(total / 6).toLocaleString('es-MX')}
+                      </p>
+                    )
+                  })()}
                 </div>
 
                 <Button
@@ -570,6 +678,100 @@ function UpgradePageContent() {
           ))}
         </div>
 
+        {/* Price Summary */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.25 }}
+          className="max-w-md mx-auto mb-6 sm:mb-8"
+        >
+          {(() => {
+            const originalPriceCents = PRICING[selectedPlan].price_mxn
+            const promoActive = !!discount && appliesToPlan(selectedPlan) && getDiscountPercent(selectedPlan, paymentMethod) > 0
+            const promoPercent = promoActive ? getDiscountPercent(selectedPlan, paymentMethod) : 0
+            const promoDiscountCents = promoActive
+              ? originalPriceCents - getDiscountedPrice(originalPriceCents, selectedPlan, paymentMethod)
+              : 0
+            const couponDiscountCents = appliedCoupon?.discountAmount ?? 0
+            // Only ONE discount applies: promo OR coupon, not both
+            const activeDiscount = appliedCoupon ? 'coupon' : promoActive ? 'promo' : null
+            const finalTotalCents = appliedCoupon
+              ? appliedCoupon.finalPrice
+              : promoActive
+                ? getDiscountedPrice(originalPriceCents, selectedPlan, paymentMethod)
+                : originalPriceCents
+
+            return (
+              <div className="bg-white rounded-2xl border border-[#420c14]/10 p-5">
+                <p className="text-[10px] font-semibold text-[#420c14]/40 uppercase tracking-widest mb-4">
+                  Order Summary
+                </p>
+                <div className="space-y-2">
+                  {/* Plan + original price */}
+                  <div className="flex items-center justify-between text-sm py-1">
+                    <span className="text-[#420c14]/60 capitalize">{selectedPlan} Plan</span>
+                    <span className="font-medium text-[#420c14]">
+                      ${(originalPriceCents / 100).toLocaleString('es-MX')} MXN
+                    </span>
+                  </div>
+
+                  {/* Promo row — only shown when no coupon applied (coupon replaces promo) */}
+                  {activeDiscount === 'promo' && discount && (
+                    <div className="flex items-center justify-between text-sm py-1">
+                      <span className="flex items-center gap-1.5 text-[#DDA46F]">
+                        <Tag className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>{discount.label}</span>
+                        <span className="text-[10px] bg-[#DDA46F]/15 text-[#DDA46F] px-1.5 py-0.5 rounded-full font-medium">
+                          -{promoPercent}%
+                        </span>
+                      </span>
+                      <span className="text-[#DDA46F] font-medium">
+                        &minus;${(promoDiscountCents / 100).toLocaleString('es-MX')} MXN
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Coupon row — replaces promo when applied */}
+                  {activeDiscount === 'coupon' && appliedCoupon && (
+                    <div className="flex items-center justify-between text-sm py-1 gap-2">
+                      <span className="flex items-center gap-1.5 text-green-600 min-w-0">
+                        <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span className="truncate">{appliedCoupon.couponName}</span>
+                        <span className="font-mono text-[10px] bg-green-50 px-1.5 py-0.5 rounded-full border border-green-200 flex-shrink-0">
+                          {appliedCoupon.code}
+                        </span>
+                        <button
+                          onClick={handleRemoveCoupon}
+                          className="text-green-400 hover:text-green-700 transition-colors flex-shrink-0"
+                          title="Remove coupon"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                      <span className="text-green-600 font-medium flex-shrink-0">
+                        &minus;${(couponDiscountCents / 100).toLocaleString('es-MX')} MXN
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Total row — shown when any discount applies */}
+                  {activeDiscount && (
+                    <div className="border-t border-[#420c14]/10 pt-3 mt-1 flex items-center justify-between">
+                      <span className="font-semibold text-[#420c14] text-sm">Total</span>
+                      <div className="text-right">
+                        <span className="text-xl font-serif text-[#420c14]">
+                          ${(finalTotalCents / 100).toLocaleString('es-MX')}
+                        </span>
+                        <span className="text-sm font-sans font-normal text-[#420c14]/60 ml-1">MXN</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+        </motion.div>
+
         {/* Coupon Code Section */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -585,43 +787,7 @@ function UpgradePageContent() {
               <Tag className="w-4 h-4" />
               {t('upgrade.coupon.haveCode')}
             </button>
-          ) : appliedCoupon ? (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-green-800">
-                      {appliedCoupon.couponName}
-                    </p>
-                    <p className="text-xs text-green-600 mt-0.5">
-                      Code: <span className="font-mono uppercase">{appliedCoupon.code}</span>
-                      {" — "}
-                      {appliedCoupon.discountType === "percent"
-                        ? `${appliedCoupon.discountValue}% off`
-                        : `$${(appliedCoupon.discountValue / 100).toLocaleString()} MXN off`}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleRemoveCoupon}
-                  className="text-green-600 hover:text-green-800 transition-colors p-1"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="mt-3 pt-3 border-t border-green-200 flex items-center justify-between text-sm">
-                <span className="text-green-700">
-                  <span className="line-through text-green-600/60">
-                    ${(appliedCoupon.originalPrice / 100).toLocaleString()} MXN
-                  </span>
-                </span>
-                <span className="text-green-800 font-semibold text-base">
-                  ${(appliedCoupon.finalPrice / 100).toLocaleString()} MXN
-                </span>
-              </div>
-            </div>
-          ) : (
+          ) : !appliedCoupon ? (
             <div className="bg-white rounded-xl border border-[#420c14]/10 p-4">
               <div className="flex gap-2">
                 <div className="flex-1">
@@ -665,7 +831,7 @@ function UpgradePageContent() {
                 <p className="text-xs text-red-600 mt-2">{couponError}</p>
               )}
             </div>
-          )}
+          ) : null}
         </motion.div>
 
         {/* Comparison Table */}
@@ -694,20 +860,42 @@ function UpgradePageContent() {
                       {t('upgrade.features')}
                     </th>
                     <th className="text-center py-4 sm:py-6 px-3 sm:px-6">
-                      <div className="text-base sm:text-lg font-serif text-[#420c14]">Free</div>
-                      <div className="text-xs sm:text-sm text-[#420c14]/50 mt-1">$0</div>
+                      <div className="text-base sm:text-lg font-serif text-[#420c14]">Starter</div>
+                      <div className="text-xs sm:text-sm text-[#420c14]/50 mt-1">{PRICING.free.priceDisplayMXN}</div>
                     </th>
                     <th className="text-center py-4 sm:py-6 px-3 sm:px-6 relative">
                       <div className="absolute inset-0 bg-[#420c14]/5 -mx-3 sm:-mx-6" />
                       <div className="relative">
                         <div className="text-base sm:text-lg font-serif text-[#420c14]">Premium</div>
-                        <div className="text-xs sm:text-sm text-[#420c14]/50 mt-1">{PRICING.premium.priceDisplayMXN}</div>
+                        <div className="mt-1">
+                          {discount && appliesToPlan('premium') ? (
+                            <PromoPriceInline
+                              originalPriceCents={PRICING.premium.price_mxn}
+                              discountedPriceCents={getDiscountedPrice(PRICING.premium.price_mxn, 'premium', paymentMethod)}
+                              discountPercent={getDiscountPercent('premium', paymentMethod)}
+                              variant="dark"
+                            />
+                          ) : (
+                            <div className="text-xs sm:text-sm text-[#420c14]/50">{PRICING.premium.priceDisplayMXN}</div>
+                          )}
+                        </div>
                         <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-[#DDA46F] mx-auto mt-1" />
                       </div>
                     </th>
                     <th className="text-center py-4 sm:py-6 px-3 sm:px-6">
                       <div className="text-base sm:text-lg font-serif text-[#420c14]">Deluxe</div>
-                      <div className="text-xs sm:text-sm text-[#420c14]/50 mt-1">{PRICING.deluxe.priceDisplayMXN}</div>
+                      <div className="mt-1">
+                        {discount && appliesToPlan('deluxe') ? (
+                          <PromoPriceInline
+                            originalPriceCents={PRICING.deluxe.price_mxn}
+                            discountedPriceCents={getDiscountedPrice(PRICING.deluxe.price_mxn, 'deluxe', paymentMethod)}
+                            discountPercent={getDiscountPercent('deluxe', paymentMethod)}
+                            variant="gold"
+                          />
+                        ) : (
+                          <div className="text-xs sm:text-sm text-[#420c14]/50">{PRICING.deluxe.priceDisplayMXN}</div>
+                        )}
+                      </div>
                       <Crown className="w-3 h-3 sm:w-4 sm:h-4 text-[#DDA46F] mx-auto mt-1" />
                     </th>
                   </tr>
@@ -864,7 +1052,7 @@ function UpgradePageContent() {
                           ? 'bg-[#420c14] text-[#f5f2eb]'
                           : 'bg-[#420c14]/5 text-[#420c14]/50'
                       }`}>
-                        {wedding.plan === 'premium' ? 'Premium' : wedding.plan === 'deluxe' ? 'Deluxe' : 'Free'}
+                        {wedding.plan === 'premium' ? 'Premium' : wedding.plan === 'deluxe' ? 'Deluxe' : 'Starter'}
                       </span>
                     </div>
                     <div className="text-xs text-[#420c14]/50 mt-1">

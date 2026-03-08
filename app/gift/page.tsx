@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
-import { PLAN_CARDS } from "@/lib/subscription-shared"
+import { PLAN_CARDS, PRICING } from "@/lib/subscription-shared"
 import { motion } from "framer-motion"
 import {
   Crown,
@@ -16,14 +16,18 @@ import {
   Loader2,
   Copy,
   Heart,
+  Tag,
 } from "lucide-react"
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
+import { useGlobalDiscount } from "@/hooks/use-global-discount"
+import { PromoPriceDisplay } from "@/components/ui/promo-price-display"
 
 const plans = [
   {
     id: "premium" as const,
     name: PLAN_CARDS.premium.name,
     price: PLAN_CARDS.premium.price,
+    priceCents: PRICING.premium.price_mxn,
     period: PLAN_CARDS.premium.period,
     description: PLAN_CARDS.premium.description,
     features: PLAN_CARDS.premium.features.map(text => ({ text })),
@@ -33,6 +37,7 @@ const plans = [
     id: "deluxe" as const,
     name: PLAN_CARDS.deluxe.name,
     price: PLAN_CARDS.deluxe.price,
+    priceCents: PRICING.deluxe.price_mxn,
     period: PLAN_CARDS.deluxe.period,
     description: PLAN_CARDS.deluxe.description,
     features: PLAN_CARDS.deluxe.features.map(text => ({ text })),
@@ -49,6 +54,7 @@ function GiftPageContent() {
   )
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { discount, getDiscountedPrice, getDiscountPercent, appliesToPlan } = useGlobalDiscount()
 
   const handleGiftCheckout = async (planId: "premium" | "deluxe") => {
     setError(null)
@@ -141,14 +147,14 @@ function GiftPageContent() {
             <Gift className="w-7 h-7 text-[#420c14]" />
           </div>
           <span className="text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.3em] sm:tracking-[0.4em] uppercase mb-4 sm:mb-6 block">
-            Gift a Subscription
+            Gift a Plan
           </span>
           <h1 className="text-3xl sm:text-4xl md:text-5xl text-[#420c14] mb-6 leading-tight">
-            <span className="font-serif font-light">Give the gift of a</span>
+            <span className="font-serif font-light">Help them plan their</span>
             <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.4em] ml-2 block sm:inline">perfect wedding</span>
           </h1>
           <p className="text-[#420c14]/60 text-sm sm:text-base max-w-xl mx-auto">
-            Purchase a gift subscription for newly engaged friends or family. They'll receive a unique code to unlock their plan — no account needed to redeem.
+            Give the gift of stress-free wedding planning. Purchase a plan for newly engaged friends or family — they'll receive a unique code to unlock all the tools they need.
           </p>
         </motion.div>
 
@@ -218,12 +224,25 @@ function GiftPageContent() {
                 </p>
 
                 <div className="mb-8 sm:mb-10">
-                  <span className={`text-4xl sm:text-6xl font-serif ${plan.featured ? "text-[#f5f2eb]" : "text-[#420c14]"}`}>
-                    {plan.price}
-                  </span>
-                  <span className={`ml-2 sm:ml-3 text-sm sm:text-base ${plan.featured ? "text-[#f5f2eb]/60" : "text-[#420c14]/70"}`}>
-                    {plan.period}
-                  </span>
+                  {discount && appliesToPlan(plan.id) && getDiscountPercent(plan.id, 'card') > 0 ? (
+                    <PromoPriceDisplay
+                      originalPriceCents={plan.priceCents}
+                      discountedPriceCents={getDiscountedPrice(plan.priceCents, plan.id, 'card')}
+                      discountPercent={getDiscountPercent(plan.id, 'card')}
+                      discountLabel={discount.label}
+                      variant={plan.featured ? 'light' : 'gold'}
+                      size="lg"
+                    />
+                  ) : (
+                    <div>
+                      <span className={`text-4xl sm:text-6xl font-serif ${plan.featured ? "text-[#f5f2eb]" : "text-[#420c14]"}`}>
+                        {plan.price}
+                      </span>
+                      <span className={`ml-2 sm:ml-3 text-sm sm:text-base ${plan.featured ? "text-[#f5f2eb]/60" : "text-[#420c14]/70"}`}>
+                        {plan.period}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <Button

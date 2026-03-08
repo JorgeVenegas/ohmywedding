@@ -76,20 +76,16 @@ export async function GET() {
   }
 }
 
-// Simplified POST - creates a wedding with minimal info (names, date, location)
-// Website creation is now a separate step via POST /api/weddings/[weddingId]/website
+// POST - creates a wedding. Works for both authenticated and unauthenticated users.
+// For unauthenticated users, an email is required. An invite link is sent to access the dashboard.
 export async function POST(request: Request) {
   try {
     const supabase = await createServerSupabaseClient()
 
-    // Get current user - required for wedding creation
+    // Check if user is already authenticated
     const {
       data: { user },
     } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized - please log in to create a wedding" }, { status: 401 })
-    }
 
     // Parse request body
     let body
@@ -108,7 +104,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Partner names are required" }, { status: 400 })
     }
 
-    // Generate unique wedding IDs
+    // For unauthenticated users, an email is required
+    if (!user && !body.ownerEmail) {
+      return NextResponse.json({ error: "Email is required to create a wedding" }, { status: 400 })
+    }
+
+    const adminClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    // Generate unique wedding IDs first (needed for the invite redirect URL)
     const { dateId, weddingNameId } = await generateWeddingIds(
       body.partner1FirstName,
       body.partner2FirstName,
@@ -117,7 +123,38 @@ export async function POST(request: Request) {
       body.weddingDate,
     )
 
-    // Create wedding record with minimal data
+    // Resolve the owner: logged-in user or find/create by email
+    let ownerId: string
+    let emailSent = false
+
+    if (user) {
+      ownerId = user.id
+    } else {
+      const ownerEmail = body.ownerEmail.trim().toLowerCase()
+
+      // Invite user by email — creates account if new, otherwise resends invite to existing user.
+      // Supabase sends the magic link email via its configured email infrastructure.
+      const redirectTo = body.redirectOrigin
+        ? `${body.redirectOrigin}/auth/callback?redirect=${encodeURIComponent(`/admin/${weddingNameId}/dashboard`)}`
+        : undefined
+
+      const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
+        ownerEmail,
+        { redirectTo }
+      )
+
+      if (inviteError || !inviteData?.user) {
+        return NextResponse.json(
+          { error: inviteError?.message || "Could not create user account" },
+          { status: 500 }
+        )
+      }
+
+      ownerId = inviteData.user.id
+      emailSent = true
+    }
+
+    // Create wedding record — use admin client so it works regardless of RLS/auth state
     const weddingData = {
       date_id: dateId,
       wedding_name_id: weddingNameId,
@@ -127,11 +164,11 @@ export async function POST(request: Request) {
       partner2_last_name: body.partner2LastName || null,
       wedding_date: body.weddingDate || null,
       ceremony_venue_name: body.location || null,
-      owner_id: user.id,
+      owner_id: ownerId,
       has_website: false,
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await adminClient
       .from("weddings")
       .insert([weddingData])
       .select('id, wedding_name_id')
@@ -141,13 +178,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
+    // Insert needs_onboarding record so the tutorial shows on first dashboard visit
+    await adminClient
+      .from('needs_onboarding')
+      .upsert({ user_id: ownerId }, { onConflict: 'user_id', ignoreDuplicates: true })
+
+    // Always create a free wedding_subscription row so we can track the trial start date.
+    await adminClient
+      .from('wedding_subscriptions')
+      .upsert({ wedding_id: data.id, plan: 'free' }, { onConflict: 'wedding_id', ignoreDuplicates: true })
+
     // Handle gift code redemption if provided
     if (body.giftCode) {
-      const adminClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      )
-
       // Validate the gift code
       const { data: gift, error: giftError } = await adminClient
         .from('gift_subscriptions')
@@ -163,6 +205,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ 
           weddingId: data.id, 
           weddingNameId: data.wedding_name_id,
+          emailSent,
           giftCodeError: 'Invalid or already redeemed gift code'
         })
       }
@@ -180,7 +223,7 @@ export async function POST(request: Request) {
         .update({
           status: 'redeemed',
           redeemed_at: new Date().toISOString(),
-          redeemed_by_user_id: user.id,
+          redeemed_by_user_id: ownerId,
           wedding_id: data.id,
         })
         .eq('id', gift.id)
@@ -188,7 +231,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ 
       weddingId: data.id, 
-      weddingNameId: data.wedding_name_id 
+      weddingNameId: data.wedding_name_id,
+      emailSent,
     })
   } catch (error) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

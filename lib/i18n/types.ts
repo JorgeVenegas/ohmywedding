@@ -863,6 +863,8 @@ export interface Translations {
       title: string
       subtitle: string
       subtitle2: string
+      subtitle3: string
+      subtitle4: string
       description: string
       rotatingWords: string[]
       cta: string
@@ -934,6 +936,65 @@ export interface Translations {
         secure: string
         moneyBack: string
       }
+      forMe: string
+      asGift: string
+      paymentMethod: string
+      card: string
+      selectWedding: string
+      selectWeddingFor: string
+      plans: {
+        free: { description: string; period: string; cta: string; features: string[] }
+        premium: { description: string; period: string; cta: string; giftCta: string; features: string[] }
+        deluxe: { description: string; period: string; cta: string; giftCta: string; features: string[] }
+      }
+      comparison: {
+        categories: {
+          coreFeatures: string
+          guestManagement: string
+          registryPayments: string
+          invitationsCommunication: string
+          customizationDesign: string
+          experienceSupport: string
+        }
+        values: {
+          forever: string
+          sixMonths: string
+          unlimited: string
+          lastEight: string
+          oneWeek: string
+          weekly: string
+          daily: string
+        }
+        featureNames: {
+          weddingWebsite: string
+          photoGallery: string
+          eventSchedule: string
+          giftRegistryLinks: string
+          websitePermanence: string
+          guestLimit: string
+          guestGroups: string
+          advancedRsvp: string
+          activityTracking: string
+          bespokeRegistry: string
+          noAccountSharing: string
+          registryCommission: string
+          digitalInvitations: string
+          invitationTracking: string
+          whatsappAutomation: string
+          messageTemplates: string
+          personalizedSubdomain: string
+          customDomain: string
+          activityReports: string
+          bespokeSections: string
+          bespokePage: string
+          seatingChart: string
+          emailSupport: string
+          expertGuidance: string
+          dedicatedAgent: string
+          weDesign: string
+        }
+      }
+      errors: { alreadyOnPlan: string; tryAgain: string }
     }
     goldenBanner: {
       quote: string
@@ -1279,6 +1340,12 @@ export interface Translations {
       creatingWebsite: string
       pleaseWait: string
       createWebsiteBtn: string
+      createBtn: string
+      yourEmail: string
+      emailHint: string
+      checkEmailTitle: string
+      checkEmailDesc: string
+      checkSpam: string
     }
   }
 
@@ -1317,6 +1384,12 @@ export interface Translations {
       noPermission: string
       noPermissionDescription: string
       goHome: string
+      freeTrialBanner: {
+        title: string
+        expiredTitle: string
+        description: string
+        upgradeButton: string
+      }
     }
     settings: {
       title: string

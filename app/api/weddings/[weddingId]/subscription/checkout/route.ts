@@ -34,7 +34,7 @@ export async function POST(
       )
     }
 
-    const { planType, source, leadId, promotionCodeId, couponId, promoCodeDbId } = await request.json()
+    const { planType, source, leadId, promotionCodeId, couponId, promoCodeDbId, paymentMethod } = await request.json()
     const { weddingId } = await params
 
     // Validate plan
@@ -44,6 +44,11 @@ export async function POST(
         { status: 400 }
       )
     }
+
+    // Validate payment method (subscriptions only support card and msi)
+    const validPaymentMethods = ['card', 'msi'] as const
+    type PaymentMethodType = typeof validPaymentMethods[number]
+    const selectedPaymentMethod: PaymentMethodType = validPaymentMethods.includes(paymentMethod) ? paymentMethod : 'card'
 
     const validatedPlanType = planType as ValidPlan
     const leadSource = typeof source === 'string' ? source : 'direct'
@@ -106,9 +111,51 @@ export async function POST(
     // Create Stripe checkout session
     const stripe = getStripe()
     
-    const priceInCents = planType === 'premium' 
+    const originalPriceInCents = planType === 'premium' 
       ? PRICING.premium.price_mxn 
       : PRICING.deluxe.price_mxn
+
+    // Fetch active global discount to get its linked Stripe coupon
+    let globalDiscountId: string | null = null
+    let globalDiscountPercent = 0
+    let globalStripeCouponId: string | null = null
+    
+    const { data: activeDiscount } = await supabaseAdmin
+      .from('global_discounts')
+      .select('*')
+      .eq('is_active', true)
+      .lte('starts_at', new Date().toISOString())
+      .or(`ends_at.is.null,ends_at.gte.${new Date().toISOString()}`)
+      .limit(1)
+      .maybeSingle()
+
+    if (activeDiscount) {
+      const planApplies = !activeDiscount.applies_to_plans?.length || 
+        activeDiscount.applies_to_plans.includes(validatedPlanType)
+      
+      if (planApplies) {
+        globalDiscountId = activeDiscount.id
+        // Get the discount percentage and linked Stripe coupon for the selected payment method and plan
+        if (selectedPaymentMethod === 'msi') {
+          globalDiscountPercent = validatedPlanType === 'premium'
+            ? (activeDiscount.premium_msi_discount_percent || 0)
+            : (activeDiscount.deluxe_msi_discount_percent || 0)
+          globalStripeCouponId = validatedPlanType === 'premium'
+            ? (activeDiscount.premium_msi_stripe_coupon_id || null)
+            : (activeDiscount.deluxe_msi_stripe_coupon_id || null)
+        } else {
+          globalDiscountPercent = validatedPlanType === 'premium'
+            ? (activeDiscount.premium_card_discount_percent || 0)
+            : (activeDiscount.deluxe_card_discount_percent || 0)
+          globalStripeCouponId = validatedPlanType === 'premium'
+            ? (activeDiscount.premium_card_stripe_coupon_id || null)
+            : (activeDiscount.deluxe_card_stripe_coupon_id || null)
+        }
+      }
+    }
+
+    // ALWAYS use full price as unit_amount — discounts are applied via Stripe coupons
+    const priceInCents = originalPriceInCents
 
     // Create or retrieve Stripe customer (required for customer_balance payment method)
     let customerId: string
@@ -149,24 +196,51 @@ export async function POST(
 
     const planInfo = planDetails[validatedPlanType]
 
+    // Build payment method configuration based on selected method
+    let paymentMethodConfig: any = {}
+    
+    if (selectedPaymentMethod === 'card') {
+      paymentMethodConfig = {
+        payment_method_types: ['card'],
+      }
+    } else if (selectedPaymentMethod === 'msi') {
+      paymentMethodConfig = {
+        payment_method_types: ['card'],
+        payment_method_options: {
+          card: {
+            installments: {
+              enabled: true,
+            },
+          },
+        },
+      }
+    } else {
+      // transfer (bank transfer via SPEI)
+      paymentMethodConfig = {
+        payment_method_types: ['customer_balance'],
+        payment_method_options: {
+          customer_balance: {
+            funding_type: 'bank_transfer',
+            bank_transfer: {
+              type: 'mx_bank_transfer',
+            },
+          },
+        },
+      }
+    }
+
     // Build checkout session params
     const checkoutParams: any = {
       customer: customerId,
-      payment_method_types: ["customer_balance"],
-      payment_method_options: {
-        customer_balance: {
-          funding_type: "bank_transfer",
-          bank_transfer: {
-            type: "mx_bank_transfer",
-          },
-        },
-      },
+      ...paymentMethodConfig,
       line_items: [
         {
           price_data: {
             currency: 'mxn',
             product_data: {
-              name: planInfo.name,
+              name: selectedPaymentMethod === 'msi'
+                ? `${planInfo.name} — Meses sin Intereses`
+                : planInfo.name,
               description: planInfo.description,
             },
             unit_amount: priceInCents,
@@ -174,6 +248,13 @@ export async function POST(
           quantity: 1,
         },
       ],
+      ...(selectedPaymentMethod === 'msi' ? {
+        custom_text: {
+          submit: {
+            message: 'Ingresa tu tarjeta de crédito para ver las opciones de pago a meses sin intereses disponibles para tu banco.',
+          },
+        },
+      } : {}),
       metadata: {
         user_id: user.id,
         wedding_id: resolvedWeddingId,
@@ -181,6 +262,8 @@ export async function POST(
         wedding_name_id: wedding.wedding_name_id,
         source: leadSource,
         from_plan: currentPlan,
+        payment_method: selectedPaymentMethod,
+        ...(globalDiscountId ? { global_discount_id: globalDiscountId, global_discount_percent: String(globalDiscountPercent), original_amount_cents: String(originalPriceInCents) } : {}),
         ...(couponId ? { coupon_id: couponId } : {}),
         ...(promoCodeDbId ? { promotion_code_id: promoCodeDbId } : {}),
       },
@@ -192,9 +275,15 @@ export async function POST(
     }
 
     // If a specific promotion code was provided (from upgrade page), apply it as a discount
+    // This takes priority — only ONE discount applies (user coupon OR global promo, never both)
     if (promotionCodeId) {
       checkoutParams.discounts = [{ promotion_code: promotionCodeId }]
       // When using discounts, allow_promotion_codes must be removed
+      delete checkoutParams.allow_promotion_codes
+    } else if (globalStripeCouponId && globalDiscountPercent > 0) {
+      // No user coupon — auto-apply the global promo via its linked Stripe coupon
+      // (Stripe coupons are created by superadmin when setting up the promotion)
+      checkoutParams.discounts = [{ coupon: globalStripeCouponId }]
       delete checkoutParams.allow_promotion_codes
     }
 
@@ -213,9 +302,12 @@ export async function POST(
       stripe_payment_intent_id: paymentIntentId,
       stripe_customer_id: customerId,
       amount_cents: priceInCents,
+      original_amount_cents: originalPriceInCents,
       currency: 'mxn',
       status: 'checkout_started',
       checkout_started_at: new Date().toISOString(),
+      payment_method: selectedPaymentMethod,
+      ...(globalDiscountId ? { global_discount_id: globalDiscountId, global_discount_percent: globalDiscountPercent } : {}),
       metadata: {
         wedding_name_id: wedding.wedding_name_id,
         couple: coupleDisplay,
@@ -233,7 +325,7 @@ export async function POST(
           wedding_id: resolvedWeddingId,
           user_id: user.id,
           stripe_checkout_session_id: checkoutSession.id,
-          original_amount_cents: priceInCents,
+          original_amount_cents: originalPriceInCents,
           plan_type: validatedPlanType,
           status: 'applied',
         })

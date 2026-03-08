@@ -102,7 +102,8 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Calculate discount
+    // Calculate discount — coupons apply against the FULL price (no stacking with global discounts)
+    // Only ONE promotion applies: either global promo OR user coupon, never both.
     const pricing = PRICING[planType as PlanType]
     const originalPrice = pricing.price_mxn
 

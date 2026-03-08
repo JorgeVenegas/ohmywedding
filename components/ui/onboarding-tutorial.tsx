@@ -82,9 +82,8 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
   const handleComplete = useCallback(async () => {
     try {
       const supabase = createClient()
-      await supabase.auth.updateUser({
-        data: { tutorial_completed: true }
-      })
+      // Delete the needs_onboarding record to mark tutorial as completed
+      await supabase.from('needs_onboarding').delete().eq('user_id', (await supabase.auth.getUser()).data.user?.id ?? '')
     } catch (error) {
       console.error('Failed to save tutorial completion:', error)
     }

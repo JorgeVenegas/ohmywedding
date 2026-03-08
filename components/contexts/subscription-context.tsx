@@ -16,6 +16,7 @@ interface SubscriptionContextValue {
   loading: boolean
   isPremium: boolean
   weddingId: string | null
+  freeTrialStartedAt: string | null
   canAccessFeature: (feature: keyof WeddingFeatures) => boolean
   refetch: () => Promise<void>
 }
@@ -33,12 +34,14 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
   const [features, setFeatures] = useState<WeddingFeatures>(getDefaultFeatures('free'))
   const [loading, setLoading] = useState(true)
   const [isSuperuser, setIsSuperuser] = useState(false)
+  const [freeTrialStartedAt, setFreeTrialStartedAt] = useState<string | null>(null)
 
   const fetchSubscriptionAndFeatures = useCallback(async () => {
     if (!user || !weddingId) {
       setPlanType('free')
       setFeatures(getDefaultFeatures('free'))
       setIsSuperuser(false)
+      setFreeTrialStartedAt(null)
       setLoading(false)
       return
     }
@@ -68,12 +71,14 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
       setIsSuperuser(isSuperuserUser)
 
       // Fetch wedding features (which includes the wedding's plan)
-      // weddingId could be either UUID or wedding_name_id, so we need to handle both
-      const isUUID = weddingId.includes('-')
+      // weddingId could be either UUID or wedding_name_id — use a strict UUID regex
+      // since wedding_name_id can also contain hyphens (e.g. "jorge-yuli", "demo-luxury-noir")
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      const isUUID = UUID_REGEX.test(weddingId)
       
       const weddingQuery = supabase
         .from('weddings')
-        .select('id')
+        .select('id, created_at')
       
       const { data: wedding } = isUUID
         ? await weddingQuery.eq('id', weddingId).single()
@@ -82,7 +87,7 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
       if (wedding) {
         const { data: weddingFeatures } = await supabase
           .from('wedding_subscriptions')
-          .select('plan')
+          .select('plan, created_at')
           .eq('wedding_id', wedding.id)
           .single()
 
@@ -90,6 +95,11 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
           // Always use the wedding's plan as the source of truth
           const weddingPlan = (weddingFeatures.plan as PlanType) || 'free'
           setPlanType(weddingPlan)
+          // Track free trial start: subscription created_at is when the free trial began
+          // Fall back to the wedding's created_at for older records without a subscription row
+          setFreeTrialStartedAt(
+            weddingFeatures.created_at ?? (wedding as any).created_at ?? null
+          )
           
           // Superusers get all features enabled regardless of plan
           if (isSuperuserUser) {
@@ -105,7 +115,8 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
             setFeatures(getDefaultFeatures(weddingPlan))
           }
         } else {
-          // No subscription record yet
+          // No subscription record yet — use wedding created_at as fallback
+          setFreeTrialStartedAt((wedding as any).created_at ?? null)
           if (isSuperuserUser) {
             // Superuser still sees all features but plan stays free
             setPlanType('free')
@@ -132,6 +143,7 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
       setPlanType('free')
       setFeatures(getDefaultFeatures('free'))
       setIsSuperuser(false)
+      setFreeTrialStartedAt(null)
     } finally {
       setLoading(false)
     }
@@ -167,6 +179,7 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
         loading: loading || authLoading,
         isPremium,
         weddingId,
+        freeTrialStartedAt,
         canAccessFeature,
         refetch: fetchSubscriptionAndFeatures,
       }}

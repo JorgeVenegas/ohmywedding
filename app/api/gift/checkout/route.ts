@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createClient } from '@supabase/supabase-js'
 import { STRIPE_API_VERSION } from '@/lib/stripe-config'
 import { PRICING } from '@/lib/subscription-shared'
 
@@ -38,6 +39,42 @@ export async function POST(request: NextRequest) {
     const stripe = getStripe()
     const pricing = PRICING[validatedPlan]
 
+    // Fetch active global discount to get its linked Stripe coupon (for gift, always card payment)
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    let globalStripeCouponId: string | null = null
+    let globalDiscountId: string | null = null
+    let globalDiscountPercent = 0
+    const { data: activeDiscount } = await supabaseAdmin
+      .from('global_discounts')
+      .select('*')
+      .eq('is_active', true)
+      .lte('starts_at', new Date().toISOString())
+      .or(`ends_at.is.null,ends_at.gte.${new Date().toISOString()}`)
+      .limit(1)
+      .maybeSingle()
+
+    if (activeDiscount) {
+      const planApplies = !activeDiscount.applies_to_plans?.length || 
+        activeDiscount.applies_to_plans.includes(validatedPlan)
+      if (planApplies) {
+        globalDiscountId = activeDiscount.id
+        // Gift is always card payment — use per-plan card discount
+        globalDiscountPercent = validatedPlan === 'premium'
+          ? (activeDiscount.premium_card_discount_percent || 0)
+          : (activeDiscount.deluxe_card_discount_percent || 0)
+        globalStripeCouponId = validatedPlan === 'premium'
+          ? (activeDiscount.premium_card_stripe_coupon_id || null)
+          : (activeDiscount.deluxe_card_stripe_coupon_id || null)
+      }
+    }
+
+    // ALWAYS use full price as unit_amount — discount applied via Stripe coupon
+    const unitAmount = pricing.price_mxn
+
     // Find or create Stripe customer
     const existingCustomers = await stripe.customers.list({
       email: user.email,
@@ -61,7 +98,7 @@ export async function POST(request: NextRequest) {
     const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'https://ohmy.wedding'
 
     // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams: any = {
       customer: customerId,
       payment_method_types: ['card'],
       line_items: [
@@ -72,7 +109,7 @@ export async function POST(request: NextRequest) {
               name: `Gift - ${pricing.name} Plan`,
               description: `Gift a ${pricing.name} wedding plan to a loved one`,
             },
-            unit_amount: pricing.price_mxn,
+            unit_amount: unitAmount,
           },
           quantity: 1,
         },
@@ -93,7 +130,17 @@ export async function POST(request: NextRequest) {
           purchaser_user_id: user.id,
         },
       },
-    })
+    }
+
+    // Apply global promo as Stripe coupon if available
+    // (Stripe coupons are created by superadmin when setting up the promotion)
+    if (globalStripeCouponId) {
+      sessionParams.discounts = [{ coupon: globalStripeCouponId }]
+    } else {
+      sessionParams.allow_promotion_codes = true
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams)
 
     return NextResponse.json({
       url: session.url,

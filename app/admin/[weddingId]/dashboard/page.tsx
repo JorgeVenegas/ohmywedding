@@ -27,30 +27,49 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
   const [showTutorial, setShowTutorial] = useState(false)
   const [hasWebsite, setHasWebsite] = useState<boolean | null>(null)
   const [isLegacy, setIsLegacy] = useState(false)
+  const [coupleNames, setCoupleNames] = useState<string | null>(null)
 
-  // Check if tutorial should be shown (per-user, via auth metadata)
+  // Check if tutorial should be shown (per-user, via needs_onboarding table)
   useEffect(() => {
-    if (user && !user.user_metadata?.tutorial_completed) {
-      setShowTutorial(true)
-    }
+    if (!user) return
+    const supabase = createClient()
+    supabase
+      .from('needs_onboarding')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setShowTutorial(true)
+      })
   }, [user])
 
   // Check if wedding has a website — detect legacy dynamically (no is_legacy column read)
   useEffect(() => {
     async function checkWebsite() {
       const supabase = createClient()
-      const { data } = await supabase
+      // weddingId can be either a UUID (subdomain users) or a wedding_name_id slug
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+      const isUUID = UUID_REGEX.test(decodedWeddingId)
+      const query = supabase
         .from('weddings')
-        .select('id, has_website, page_config, wedding_websites(id)')
-        .eq('wedding_name_id', decodedWeddingId)
-        .maybeSingle()
+        .select('id, has_website, page_config, partner1_first_name, partner2_first_name, wedding_websites(id)')
+      const { data } = isUUID
+        ? await query.eq('id', decodedWeddingId).maybeSingle()
+        : await query.eq('wedding_name_id', decodedWeddingId).maybeSingle()
       
       if (data) {
         const websiteRow = Array.isArray(data.wedding_websites) ? data.wedding_websites[0] : data.wedding_websites
-        setHasWebsite(!!(websiteRow) || data.has_website)
-        // Legacy: has data in weddings.page_config but no wedding_websites row yet
         const hasLegacyConfig = !!data.page_config && typeof data.page_config === 'object' && Object.keys(data.page_config).length > 0
+        setHasWebsite(!!(websiteRow) || data.has_website || hasLegacyConfig)
         setIsLegacy(!websiteRow && hasLegacyConfig)
+        if (data.partner1_first_name) {
+          const p1 = data.partner1_first_name
+          const p2 = data.partner2_first_name
+          setCoupleNames(p2 ? `${p1} & ${p2}` : p1)
+        }
+      } else {
+        // Wedding not found — default to showing create card
+        setHasWebsite(false)
       }
     }
     checkWebsite()
@@ -147,7 +166,11 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       <div className="page-container">
         {/* Welcome Section */}
         <div className="mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-2">{t('admin.dashboard.welcomeBack')}</h1>
+          <h1 className="text-4xl font-bold text-foreground mb-2">
+            {coupleNames ? (
+              <>{t('admin.dashboard.welcomeBack').replace(/[¡!]/g, '')}, <span className="text-primary">{coupleNames}</span>!</>
+            ) : t('admin.dashboard.welcomeBack')}
+          </h1>
           <p className="text-lg text-muted-foreground">{t('admin.dashboard.manageDescription')}</p>
         </div>
 

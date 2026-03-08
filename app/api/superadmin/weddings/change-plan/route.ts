@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase-server"
+import { createServerSupabaseClient, createAdminSupabaseClient } from "@/lib/supabase-server"
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -42,8 +42,11 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    // Use admin client to bypass RLS for superadmin operations
+    const adminSupabase = createAdminSupabaseClient()
+    
     // Get current wedding info
-    const { data: wedding, error: weddingError } = await supabase
+    const { data: wedding, error: weddingError } = await adminSupabase
       .from('weddings')
       .select('id, wedding_name_id, partner1_first_name, partner1_last_name, partner2_first_name, partner2_last_name')
       .eq('id', weddingId)
@@ -57,7 +60,7 @@ export async function POST(request: NextRequest) {
     const partner2Name = `${wedding.partner2_first_name} ${wedding.partner2_last_name || ''}`.trim()
     
     // Get current plan
-    const { data: currentFeatures } = await supabase
+    const { data: currentFeatures } = await adminSupabase
       .from('wedding_subscriptions')
       .select('plan')
       .eq('wedding_id', weddingId)
@@ -72,8 +75,8 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Update wedding subscription with new plan
-    const { error: updateError } = await supabase
+    // Update wedding subscription with new plan (admin client bypasses RLS)
+    const { error: updateError } = await adminSupabase
       .from('wedding_subscriptions')
       .upsert({
         wedding_id: weddingId,
@@ -96,7 +99,7 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get('user-agent') || 'unknown'
     
     // Log the activity
-    const { error: logError } = await supabase
+    const { error: logError } = await adminSupabase
       .from('superuser_activity_logs')
       .insert({
         superuser_id: user.id,

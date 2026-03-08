@@ -73,7 +73,7 @@ export default async function SuperadminDashboard() {
         
         <div className="bg-white rounded-2xl p-6 border border-[#420c14]/10 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-medium text-[#420c14]/60">Free Plan</p>
+            <p className="text-sm font-medium text-[#420c14]/60">Starter Plan</p>
             <div className="w-10 h-10 rounded-xl bg-[#420c14]/5 flex items-center justify-center">
               <Users className="w-5 h-5 text-[#420c14]/60" />
             </div>

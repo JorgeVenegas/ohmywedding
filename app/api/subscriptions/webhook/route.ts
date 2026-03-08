@@ -202,6 +202,27 @@ export async function POST(request: Request) {
           break
         }
 
+        // Detect actual payment method from Stripe PaymentIntent
+        let detectedPaymentMethod: string | null = null
+        try {
+          const piDetails = await stripe.paymentIntents.retrieve(pi.id, {
+            expand: ['latest_charge'],
+          })
+          const charge = piDetails.latest_charge as Stripe.Charge | null
+          if (charge?.payment_method_details) {
+            const pmType = charge.payment_method_details.type
+            if (pmType === 'customer_balance') {
+              detectedPaymentMethod = 'transfer'
+            } else if (pmType === 'card') {
+              // Check for installments (MSI)
+              const installmentPlan = (charge.payment_method_details.card as any)?.installments?.plan
+              detectedPaymentMethod = installmentPlan ? 'msi' : 'card'
+            }
+          }
+        } catch (pmErr) {
+          console.error('[webhook] Could not detect payment method:', pmErr)
+        }
+
         // Activate the subscription
         const { data: subscription, error: subscriptionError } = await supabaseAdmin
           .from('wedding_subscriptions')
@@ -224,14 +245,20 @@ export async function POST(request: Request) {
         console.log(`[webhook] Subscription upserted: ${subscription?.id}`)
 
         // Update order to completed
+        const orderUpdateData: any = {
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          stripe_payment_intent_id: pi.id,
+          wedding_subscription_id: subscription?.id || null,
+        }
+        // Set payment method if detected (takes priority over what was set at checkout time)
+        if (detectedPaymentMethod) {
+          orderUpdateData.payment_method = detectedPaymentMethod
+        }
+
         const { error } = await supabaseAdmin
           .from('subscription_orders')
-          .update({
-            status: 'completed',
-            completed_at: new Date().toISOString(),
-            stripe_payment_intent_id: pi.id,
-            wedding_subscription_id: subscription?.id || null,
-          })
+          .update(orderUpdateData)
           .eq('id', order.id)
 
         console.log(`[webhook] Updated order ${order.id} → completed. Error: ${error?.message || 'none'}`)

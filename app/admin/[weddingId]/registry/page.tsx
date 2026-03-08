@@ -135,8 +135,10 @@ export default function RegistryPage({ params }: RegistryPageProps) {
 
   const fetchWeddingData = async () => {
     try {
-      // Detect if weddingId is a UUID (contains hyphens) or a wedding_name_id
-      const isUUID = weddingId.includes('-')
+      // Detect if weddingId is a UUID or a wedding_name_id
+      // wedding_name_id can also contain hyphens (e.g. "demo-luxury-noir"), so use strict UUID regex
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      const isUUID = UUID_REGEX.test(weddingId)
       const query = supabase
         .from("weddings")
         .select("id, stripe_account_id, stripe_onboarding_completed, payouts_enabled, partner1_first_name, partner2_first_name")

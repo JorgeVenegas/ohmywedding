@@ -151,7 +151,7 @@ export default function WeddingsManagementPage() {
       default: 
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#420c14]/5 text-[#420c14]/60 text-xs font-medium">
-            Free
+            Starter
           </span>
         )
     }
@@ -283,7 +283,7 @@ export default function WeddingsManagementPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-[#420c14]/10">
-                  <SelectItem value="free" className="rounded-lg">Free</SelectItem>
+                  <SelectItem value="free" className="rounded-lg">Starter</SelectItem>
                   <SelectItem value="premium" className="rounded-lg">Premium</SelectItem>
                   <SelectItem value="deluxe" className="rounded-lg">Deluxe</SelectItem>
                 </SelectContent>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase-client"
 import { SubscriptionProvider } from "@/components/contexts/subscription-context"
 import { PlanIndicator } from "@/components/plan-indicator"
+import { FreeTrialBanner } from "@/components/ui/free-trial-banner"
 import { useTranslation } from "@/components/contexts/i18n-context"
 
 interface AdminLayoutProps {
@@ -105,6 +106,7 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
 
   return (
     <SubscriptionProvider weddingId={weddingId}>
+      <FreeTrialBanner />
       {children}
       <PlanIndicator />
     </SubscriptionProvider>

@@ -4,6 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import { Crown, Sparkles, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PRICING } from '@/lib/subscription-shared'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export type UpgradeReason = 
@@ -277,8 +278,8 @@ export function UpgradeModal({
                 <div className={`grid gap-3 mb-6 ${content.planLevel === 'deluxe' ? 'grid-cols-3' : 'grid-cols-2'}`}>
                   <div className="rounded-xl border border-[#420c14]/10 p-4 bg-white">
                     <div className="flex items-center justify-between mb-2">
-                      <h5 className="text-sm font-medium text-[#420c14]/70">Free</h5>
-                      <span className="text-xl font-serif text-[#420c14]">$0</span>
+                      <h5 className="text-sm font-medium text-[#420c14]/70">Starter</h5>
+                      <span className="text-xl font-serif text-[#420c14]">{PRICING.free.priceDisplayMXN}</span>
                     </div>
                     <ul className="space-y-1 text-xs text-[#420c14]/50">
                       <li className="flex items-center gap-1.5">

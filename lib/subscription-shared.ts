@@ -179,25 +179,26 @@ export const PLAN_FEATURES: PlanFeature[] = [
 // Pricing information
 export const PRICING = {
   free: {
-    name: 'Free',
-    tagline: 'Get started for free',
-    price_usd: 0,
-    price_mxn: 0,
-    priceDisplay: '$0',
-    priceDisplayMXN: '$0 MXN',
-    period: 'forever',
-    description: 'Create your free wedding website with essential features to get started.',
+    name: 'Starter',
+    tagline: 'Start planning your wedding',
+    price_usd: 2500, // $25 USD in cents
+    price_mxn: 50000, // $500 MXN in centavos
+    priceDisplay: '$25 USD',
+    priceDisplayMXN: '$500 MXN',
+    period: 'one-time',
+    description: 'Create your wedding website and start organizing your celebration.',
   },
   premium: {
     name: 'Premium',
-    tagline: 'We do it together',
+    tagline: 'We plan it together',
     price_usd: 35000, // $350 USD in cents
     price_mxn: 700000, // $7,000 MXN in centavos
     priceDisplay: '$350 USD',
     priceDisplayMXN: '$7,000 MXN',
     period: 'one-time',
-    description: 'We accompany you from day one — premium features, expert guidance, and all existing components at your fingertips.',
+    description: 'We accompany you from day one — intuitive planning tools, expert guidance, and everything you need to organize your wedding.',
     stripePriceId: process.env.STRIPE_PREMIUM_PRICE_ID || '',
+    msiMonths: [3] as const,
   },
   deluxe: {
     name: 'Deluxe',
@@ -207,8 +208,9 @@ export const PRICING = {
     priceDisplay: '$750 USD',
     priceDisplayMXN: '$15,000 MXN',
     period: 'one-time',
-    description: 'The ultimate bespoke experience — we create your wedding page with completely personalized, custom-made components and exceptional attention to detail.',
+    description: 'Your wedding is unique, your planning should be too — we design and build your page completely bespoke with exceptional attention to detail.',
     stripePriceId: process.env.STRIPE_DELUXE_PRICE_ID || '',
+    msiMonths: [3, 6] as const,
   },
 }
 
@@ -220,7 +222,7 @@ export const PLAN_CARDS = {
     tagline: PRICING.free.tagline,
     price: PRICING.free.priceDisplayMXN,
     period: PRICING.free.period,
-    description: 'A refined start for your celebration',
+    description: 'Start planning your wedding with a beautiful website',
     features: [
       'Beautiful wedding website',
       'Photo gallery',
@@ -237,7 +239,7 @@ export const PLAN_CARDS = {
     tagline: PRICING.premium.tagline,
     price: PRICING.premium.priceDisplayMXN,
     period: PRICING.premium.period,
-    description: 'We accompany you from day one with expert guidance and premium tools',
+    description: 'We accompany you from day one with intuitive tools and expert guidance to plan your wedding',
     features: [
       'Everything in Free',
       'Up to 250 guests',
@@ -257,7 +259,7 @@ export const PLAN_CARDS = {
     tagline: PRICING.deluxe.tagline,
     price: PRICING.deluxe.priceDisplayMXN,
     period: PRICING.deluxe.period,
-    description: 'We take care of everything — bespoke design, personalized components, exceptional attention to detail',
+    description: 'We take care of everything — bespoke design, personalized components, so you just enjoy planning',
     features: [
       'Everything in Premium',
       'Unlimited guests & groups',

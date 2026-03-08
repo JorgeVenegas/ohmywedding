@@ -18,7 +18,6 @@ import {
   Shield,
   Sparkles,
   ChevronDown,
-  Star,
   Crown,
   Palette,
   Clock,
@@ -29,11 +28,15 @@ import {
   FileText,
   BarChart3,
   Infinity,
+  Tag,
 } from "lucide-react"
 import { PRICING, PLAN_CARDS, COMPARISON_FEATURES } from "@/lib/subscription-shared"
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
 import { useTranslation } from "@/components/contexts/i18n-context"
 import { getTranslations } from "@/lib/i18n"
+import { useGlobalDiscount } from "@/hooks/use-global-discount"
+import { PromoPriceDisplay } from "@/components/ui/promo-price-display"
+import { TestimonialsSection } from "@/components/landing/testimonials-section"
 
 // ============================================
 // HERO SECTION
@@ -41,6 +44,7 @@ import { getTranslations } from "@/lib/i18n"
 
 function HeroSection() {
   const { t } = useTranslation()
+  const { discount, getDiscountedPrice, getDiscountPercent, appliesToPlan } = useGlobalDiscount()
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#1a0a0d] via-[#420c14] to-[#1a0a0d]">
       {/* Decorative gold elements */}
@@ -76,9 +80,22 @@ function HeroSection() {
             {t('plans.deluxe.heroDescription')}
           </p>
 
-          <p className="text-4xl sm:text-5xl font-serif text-[#DDA46F] mb-2">
-            {PRICING.deluxe.priceDisplayMXN}
-          </p>
+          <div className="mb-2 flex flex-col items-center">
+            {discount && appliesToPlan('deluxe') && getDiscountPercent('deluxe', 'card') > 0 ? (
+              <PromoPriceDisplay
+                originalPriceCents={PRICING.deluxe.price_mxn}
+                discountedPriceCents={getDiscountedPrice(PRICING.deluxe.price_mxn, 'deluxe', 'card')}
+                discountPercent={getDiscountPercent('deluxe', 'card')}
+                discountLabel={discount.label}
+                variant="light"
+                size="lg"
+              />
+            ) : (
+              <p className="text-4xl sm:text-5xl font-serif text-[#DDA46F]">
+                {PRICING.deluxe.priceDisplayMXN}
+              </p>
+            )}
+          </div>
           <p className="text-sm text-[#f5f2eb]/30 mb-12">{t('plans.common.oneTimePayment')} • {t('plans.common.completelyPersonalized')} • {t('plans.common.yoursForever')}</p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -344,6 +361,10 @@ function PlanComparisonSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-80px" })
   const { t } = useTranslation()
+  const { discount, appliesToPlan } = useGlobalDiscount()
+
+  const premiumPrice = PRICING.premium.priceDisplayMXN
+  const deluxePrice = PRICING.deluxe.priceDisplayMXN
 
   const aspectKeys = ['whoBuilds', 'designApproach', 'components', 'support', 'guestLimit', 'activityTracking', 'reports'] as const
 
@@ -355,8 +376,8 @@ function PlanComparisonSection() {
     })),
     {
       aspect: t('plans.deluxe.comparison.aspects.price.label'),
-      premium: PRICING.premium.priceDisplayMXN,
-      deluxe: PRICING.deluxe.priceDisplayMXN,
+      premium: premiumPrice,
+      deluxe: deluxePrice,
     },
   ]
 
@@ -423,57 +444,6 @@ function PlanComparisonSection() {
 }
 
 // ============================================
-// TESTIMONIALS
-// ============================================
-
-function TestimonialsSection() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: "-80px" })
-  const { t, locale } = useTranslation()
-  const translations = getTranslations(locale)
-  const testimonials = translations.plans.deluxe.testimonials.items
-
-  return (
-    <section ref={ref} className="py-20 sm:py-32 bg-[#f5f2eb] relative">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
-        >
-          <p className="text-[10px] tracking-[0.4em] text-[#DDA46F] uppercase mb-4">{t('plans.deluxe.testimonials.label')}</p>
-          <h2 className="text-3xl sm:text-4xl font-serif text-[#420c14]">{t('plans.deluxe.testimonials.title')}</h2>
-        </motion.div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-          {testimonials.map((item, i) => (
-            <motion.div
-              key={item.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: 0.2 + i * 0.15 }}
-              className="p-8 rounded-2xl bg-white border border-[#420c14]/5 shadow-sm"
-            >
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, j) => (
-                  <Star key={j} className="w-4 h-4 text-[#DDA46F] fill-[#DDA46F]" />
-                ))}
-              </div>
-              <p className="text-[#420c14]/70 leading-relaxed mb-6 italic">&ldquo;{item.quote}&rdquo;</p>
-              <div>
-                <p className="font-medium text-[#420c14] text-sm">{item.name}</p>
-                <p className="text-xs text-[#420c14]/40">{item.detail}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ============================================
 // FOR WHO
 // ============================================
 
@@ -532,9 +502,11 @@ function FAQSection() {
   const isInView = useInView(ref, { once: true, margin: "-80px" })
   const { t, locale } = useTranslation()
   const translations = getTranslations(locale)
+  const { discount, appliesToPlan } = useGlobalDiscount()
+  const displayPrice = PRICING.deluxe.priceDisplayMXN
   const faqs = translations.plans.deluxe.faq.items.map(item => ({
     q: item.q,
-    a: item.a.replace('{{price}}', PRICING.deluxe.priceDisplayMXN),
+    a: item.a.replace('{{price}}', displayPrice),
   }))
 
   return (
@@ -580,6 +552,7 @@ function FAQSection() {
 
 function FinalCTASection() {
   const { t } = useTranslation()
+  const { discount, getDiscountedPrice, getDiscountPercent, appliesToPlan } = useGlobalDiscount()
   return (
     <section className="py-24 sm:py-36 bg-gradient-to-b from-[#1a0a0d] via-[#420c14] to-[#1a0a0d] relative overflow-hidden">
       {/* Glow effect */}
@@ -603,9 +576,22 @@ function FinalCTASection() {
           <p className="text-lg text-[#f5f2eb]/40 mb-4 max-w-xl mx-auto">
             {t('plans.deluxe.finalCta.description')}
           </p>
-          <p className="text-3xl sm:text-4xl font-serif text-[#DDA46F] mb-2">
-            {PRICING.deluxe.priceDisplayMXN}
-          </p>
+          <div className="mb-2 flex flex-col items-center">
+            {discount && appliesToPlan('deluxe') && getDiscountPercent('deluxe', 'card') > 0 ? (
+              <PromoPriceDisplay
+                originalPriceCents={PRICING.deluxe.price_mxn}
+                discountedPriceCents={getDiscountedPrice(PRICING.deluxe.price_mxn, 'deluxe', 'card')}
+                discountPercent={getDiscountPercent('deluxe', 'card')}
+                discountLabel={discount.label}
+                variant="light"
+                size="md"
+              />
+            ) : (
+              <p className="text-3xl sm:text-4xl font-serif text-[#DDA46F]">
+                {PRICING.deluxe.priceDisplayMXN}
+              </p>
+            )}
+          </div>
           <p className="text-sm text-[#f5f2eb]/30 mb-12">{t('plans.common.oneTimePayment')} • {t('plans.common.completelyPersonalized')} • {t('plans.common.yoursForever')}</p>
           <Link href="/upgrade?plan=deluxe&source=deluxe_page_cta">
             <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] text-lg px-14 py-7 rounded-full font-medium shadow-xl shadow-[#DDA46F]/20 border border-[#DDA46F]/50">

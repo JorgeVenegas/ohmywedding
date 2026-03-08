@@ -234,7 +234,7 @@ function GiftRedeemContent() {
                 ) : weddings.length === 0 ? (
                   <div className="rounded-2xl bg-amber-50 border border-amber-200 p-5 text-center">
                     <p className="text-amber-800 text-sm mb-3">
-                      No eligible weddings found. Gifts can only be applied to weddings on the free plan.
+                      No eligible weddings found. Gifts can only be applied to weddings on the Starter plan.
                     </p>
                     <Link href="/create-wedding" className="text-[#DDA46F] text-sm font-medium hover:underline">
                       Create a wedding first →

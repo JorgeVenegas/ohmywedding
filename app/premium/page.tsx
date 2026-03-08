@@ -18,16 +18,19 @@ import {
   Shield,
   Sparkles,
   ChevronDown,
-  Star,
   ArrowLeft,
   Crown,
   Calendar,
   FileText,
+  Tag,
 } from "lucide-react"
 import { PRICING, PLAN_CARDS, COMPARISON_FEATURES } from "@/lib/subscription-shared"
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
 import { useTranslation } from "@/components/contexts/i18n-context"
 import { getTranslations } from "@/lib/i18n"
+import { useGlobalDiscount } from "@/hooks/use-global-discount"
+import { PromoPriceDisplay } from "@/components/ui/promo-price-display"
+import { TestimonialsSection } from "@/components/landing/testimonials-section"
 
 // ============================================
 // HERO SECTION
@@ -35,6 +38,7 @@ import { getTranslations } from "@/lib/i18n"
 
 function HeroSection() {
   const { t } = useTranslation()
+  const { discount, getDiscountedPrice, getDiscountPercent, appliesToPlan } = useGlobalDiscount()
 
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#420c14] via-[#5a1a22] to-[#420c14]">
@@ -60,9 +64,22 @@ function HeroSection() {
           <p className="text-lg sm:text-xl text-[#f5f2eb]/60 max-w-2xl mx-auto leading-relaxed mb-4">
             {t('plans.premium.heroDescription')}
           </p>
-          <p className="text-3xl sm:text-4xl font-serif text-[#DDA46F] mb-2">
-            {PRICING.premium.priceDisplayMXN}
-          </p>
+          <div className="mb-2 flex flex-col items-center">
+            {discount && appliesToPlan('premium') && getDiscountPercent('premium', 'card') > 0 ? (
+              <PromoPriceDisplay
+                originalPriceCents={PRICING.premium.price_mxn}
+                discountedPriceCents={getDiscountedPrice(PRICING.premium.price_mxn, 'premium', 'card')}
+                discountPercent={getDiscountPercent('premium', 'card')}
+                discountLabel={discount.label}
+                variant="light"
+                size="lg"
+              />
+            ) : (
+              <p className="text-3xl sm:text-4xl font-serif text-[#DDA46F]">
+                {PRICING.premium.priceDisplayMXN}
+              </p>
+            )}
+          </div>
           <p className="text-sm text-[#f5f2eb]/40 mb-10">{t('plans.common.oneTimePayment')} • {t('plans.common.noSubscriptions')} • {t('plans.common.yoursForever')}</p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -336,7 +353,7 @@ function ComparisonSection() {
             <thead>
               <tr className="border-b-2 border-[#420c14]/10">
                 <th className="text-left py-4 px-4 font-medium text-[#420c14]/60 text-xs uppercase tracking-wider">{t('plans.premium.comparison.feature')}</th>
-                <th className="text-center py-4 px-4 font-medium text-[#420c14]/40 text-xs uppercase tracking-wider w-28">Free</th>
+                <th className="text-center py-4 px-4 font-medium text-[#420c14]/40 text-xs uppercase tracking-wider w-28">Starter</th>
                 <th className="text-center py-4 px-4 font-medium text-[#DDA46F] text-xs uppercase tracking-wider w-28 bg-[#DDA46F]/5 rounded-t-xl">Premium</th>
               </tr>
             </thead>
@@ -381,6 +398,9 @@ function WhyUpgradeSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-80px" })
   const { t } = useTranslation()
+  const { discount, appliesToPlan } = useGlobalDiscount()
+
+  const displayPrice = PRICING.premium.priceDisplayMXN
 
   const reasons = [
     {
@@ -405,7 +425,7 @@ function WhyUpgradeSection() {
     },
     {
       title: t('plans.premium.whyUpgrade.reasons.pricing.title'),
-      description: t('plans.premium.whyUpgrade.reasons.pricing.description', { price: PRICING.premium.priceDisplayMXN }),
+      description: t('plans.premium.whyUpgrade.reasons.pricing.description', { price: displayPrice }),
     },
   ]
 
@@ -447,73 +467,6 @@ function WhyUpgradeSection() {
 }
 
 // ============================================
-// TESTIMONIALS
-// ============================================
-
-function TestimonialsSection() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: "-80px" })
-  const { t } = useTranslation()
-
-  const testimonials = [
-    {
-      quote: "The guidance from the OhMyWedding team made all the difference. They helped us set up everything and our guests loved the digital invitations.",
-      name: "María & Carlos",
-      detail: "Wedding in Guadalajara",
-    },
-    {
-      quote: "Being able to track who opened our invitation saved us so much time. We knew exactly who to follow up with. Worth every peso.",
-      name: "Ana & Diego",
-      detail: "Wedding in Monterrey",
-    },
-    {
-      quote: "The registry feature was incredible. Guests could contribute easily and we didn't have to share our bank details with anyone.",
-      name: "Sofía & Andrés",
-      detail: "Wedding in CDMX",
-    },
-  ]
-
-  return (
-    <section ref={ref} className="py-20 sm:py-32 bg-white relative">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
-        >
-          <p className="text-[10px] tracking-[0.4em] text-[#DDA46F] uppercase mb-4">{t('plans.premium.testimonials.label')}</p>
-          <h2 className="text-3xl sm:text-4xl font-serif text-[#420c14]">{t('plans.premium.testimonials.title')}</h2>
-        </motion.div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-          {testimonials.map((item, i) => (
-            <motion.div
-              key={item.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: 0.2 + i * 0.15 }}
-              className="p-8 rounded-2xl bg-[#f5f2eb] border border-[#420c14]/5"
-            >
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, j) => (
-                  <Star key={j} className="w-4 h-4 text-[#DDA46F] fill-[#DDA46F]" />
-                ))}
-              </div>
-              <p className="text-[#420c14]/70 leading-relaxed mb-6 italic">&ldquo;{item.quote}&rdquo;</p>
-              <div>
-                <p className="font-medium text-[#420c14] text-sm">{item.name}</p>
-                <p className="text-xs text-[#420c14]/40">{item.detail}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ============================================
 // FAQ
 // ============================================
 
@@ -523,9 +476,12 @@ function FAQSection() {
   const { t, locale } = useTranslation()
   const translations = getTranslations(locale)
 
+  const { discount, appliesToPlan } = useGlobalDiscount()
+  const displayPrice = PRICING.premium.priceDisplayMXN
+
   const faqs = translations.plans.premium.faq.items.map((item) => ({
     q: item.q,
-    a: item.a.replace('{{price}}', PRICING.premium.priceDisplayMXN),
+    a: item.a.replace('{{price}}', displayPrice),
   }))
 
   return (
@@ -573,6 +529,7 @@ function DeluxeUpsellSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-80px" })
   const { t } = useTranslation()
+  const { discount, getDiscountedPrice, getDiscountPercent, appliesToPlan } = useGlobalDiscount()
 
   return (
     <section ref={ref} className="py-20 sm:py-24 bg-white relative">
@@ -592,7 +549,20 @@ function DeluxeUpsellSection() {
             <p className="text-[#f5f2eb]/60 max-w-lg mx-auto mb-6 leading-relaxed">
               {t('plans.premium.deluxeUpsell.description')}
             </p>
-            <p className="text-2xl font-serif text-[#DDA46F] mb-6">{PRICING.deluxe.priceDisplayMXN}</p>
+            <div className="mb-6 flex flex-col items-center">
+              {discount && appliesToPlan('deluxe') && getDiscountPercent('deluxe', 'card') > 0 ? (
+                <PromoPriceDisplay
+                  originalPriceCents={PRICING.deluxe.price_mxn}
+                  discountedPriceCents={getDiscountedPrice(PRICING.deluxe.price_mxn, 'deluxe', 'card')}
+                  discountPercent={getDiscountPercent('deluxe', 'card')}
+                  discountLabel={discount.label}
+                  variant="light"
+                  size="md"
+                />
+              ) : (
+                <p className="text-2xl font-serif text-[#DDA46F]">{PRICING.deluxe.priceDisplayMXN}</p>
+              )}
+            </div>
             <Link href="/deluxe">
               <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] px-8 py-5 rounded-full font-medium">
                 {t('plans.common.learnAboutDeluxe')}
@@ -612,6 +582,7 @@ function DeluxeUpsellSection() {
 
 function FinalCTASection() {
   const { t } = useTranslation()
+  const { discount, getDiscountedPrice, getDiscountPercent, appliesToPlan } = useGlobalDiscount()
 
   return (
     <section className="py-20 sm:py-32 bg-gradient-to-b from-[#420c14] to-[#5a1a22] relative">
@@ -626,9 +597,25 @@ function FinalCTASection() {
             {t('plans.premium.finalCta.title')}{" "}
             <span className="text-[#DDA46F] italic">{t('plans.premium.finalCta.highlight')}</span>?
           </h2>
-          <p className="text-lg text-[#f5f2eb]/50 mb-4">
-            {PRICING.premium.priceDisplayMXN} • {t('plans.common.oneTimePayment')} • {t('plans.common.yoursForever')}
-          </p>
+          <div className="mb-4 flex flex-col items-center">
+            {discount && appliesToPlan('premium') && getDiscountPercent('premium', 'card') > 0 ? (
+              <PromoPriceDisplay
+                originalPriceCents={PRICING.premium.price_mxn}
+                discountedPriceCents={getDiscountedPrice(PRICING.premium.price_mxn, 'premium', 'card')}
+                discountPercent={getDiscountPercent('premium', 'card')}
+                discountLabel={discount.label}
+                variant="light"
+                size="md"
+              />
+            ) : (
+              <p className="text-2xl font-serif text-[#DDA46F] mb-2">
+                {PRICING.premium.priceDisplayMXN}
+              </p>
+            )}
+            <p className="text-sm text-[#f5f2eb]/50">
+              {t('plans.common.oneTimePayment')} • {t('plans.common.yoursForever')}
+            </p>
+          </div>
           <p className="text-sm text-[#f5f2eb]/30 mb-10">
             {t('plans.premium.finalCta.description')}
           </p>

@@ -21,10 +21,26 @@ import {
 function UpgradeSuccessContent() {
   const searchParams = useSearchParams()
   const sessionId = searchParams.get('session_id')
+  const paymentIntentClientSecret = searchParams.get('payment_intent_client_secret')
+  const redirectStatus = searchParams.get('redirect_status')
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
 
   useEffect(() => {
     async function verifyPayment() {
+      // Handle PaymentIntent-based confirmation (MSI flow)
+      if (paymentIntentClientSecret) {
+        if (redirectStatus === 'succeeded') {
+          setStatus('success')
+        } else if (redirectStatus === 'failed' || redirectStatus === 'canceled') {
+          setStatus('error')
+        } else {
+          // Still processing — assume success since webhook will activate plan
+          setStatus('success')
+        }
+        return
+      }
+
+      // Handle CheckoutSession-based confirmation (card flow)
       if (!sessionId) {
         setStatus('error')
         return
@@ -44,14 +60,14 @@ function UpgradeSuccessContent() {
         } else {
           setStatus('error')
         }
-      } catch (error) {
+      } catch {
         // Still show success since webhook might have processed it
         setStatus('success')
       }
     }
 
     verifyPayment()
-  }, [sessionId])
+  }, [sessionId, paymentIntentClientSecret, redirectStatus])
 
   if (status === 'loading') {
     return (

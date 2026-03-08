@@ -26,7 +26,7 @@ export function PlanIndicator() {
 
   const config = {
     free: {
-      label: 'Free',
+      label: 'Starter',
       icon: Star,
       bgGradient: 'from-slate-500 via-slate-600 to-slate-700',
       textColor: 'text-white',

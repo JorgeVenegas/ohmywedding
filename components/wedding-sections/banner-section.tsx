@@ -4,7 +4,7 @@ import React from 'react'
 import Image from 'next/image'
 import { ThemeConfig, AlignmentConfig } from '@/lib/wedding-config'
 import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
-import { useCustomize } from '@/components/contexts/customize-context'
+import { useCustomizeSafe } from '@/components/contexts/customize-context'
 
 export interface BannerSectionProps {
   sectionId?: string
@@ -38,7 +38,7 @@ export function BannerSection({
   gradientColor2,
   imageBrightness = 100
 }: BannerSectionProps) {
-  const customizeContext = useCustomize()
+  const customizeContext = useCustomizeSafe()
 
   // Extract base type from sectionId (remove numeric suffix) for config lookup
   const configKey = sectionId.replace(/-\d+$/, '')
