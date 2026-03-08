@@ -189,7 +189,7 @@ export async function POST(
         description: `Premium wedding website for ${coupleDisplay}. We accompany you from day one with expert guidance. Features: Up to 250 guests, unlimited groups, 1-week activity retention, personalized invitations, registry with secure payouts, and custom domain option.`,
       },
       deluxe: {
-        name: 'OhMyWedding Deluxe — We take care of everything',
+        name: 'OhMyWedding Deluxe — Bespoke Page Design + Full Suite',
         description: `Deluxe bespoke wedding website for ${coupleDisplay}. We design and build your entire page with completely personalized, custom-made components and exceptional attention to detail. Includes all Premium features plus unlimited guests, activity retention, dedicated support, and more.`,
       },
     }

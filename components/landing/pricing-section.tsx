@@ -152,6 +152,7 @@ export function PricingSection() {
     { category: P.comparison.categories.experienceSupport, features: [
       { name: P.comparison.featureNames.emailSupport, free: true, premium: true, deluxe: true },
       { name: P.comparison.featureNames.expertGuidance, free: false, premium: true, deluxe: true },
+      { name: P.comparison.featureNames.collaboratorsAccess, free: false, premium: true, deluxe: true },
       { name: P.comparison.featureNames.dedicatedAgent, free: false, premium: false, deluxe: true },
       { name: P.comparison.featureNames.weDesign, free: false, premium: false, deluxe: true },
     ]},

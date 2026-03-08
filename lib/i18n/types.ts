@@ -993,6 +993,7 @@ export interface Translations {
           expertGuidance: string
           dedicatedAgent: string
           weDesign: string
+          collaboratorsAccess: string
         }
       }
       errors: { alreadyOnPlan: string; tryAgain: string }

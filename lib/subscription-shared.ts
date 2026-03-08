@@ -205,13 +205,13 @@ export const PRICING = {
   },
   deluxe: {
     name: 'Deluxe',
-    tagline: 'We take care of everything',
+    tagline: 'Bespoke design, full control',
     price_usd: 75000, // $750 USD in cents
     price_mxn: 1500000, // $15,000 MXN in centavos
     priceDisplay: '$750 USD',
     priceDisplayMXN: '$15,000 MXN',
     period: 'one-time',
-    description: 'Your wedding is unique, your planning should be too — we design and build your page completely bespoke with exceptional attention to detail.',
+    description: 'We design your complete wedding page from scratch. You and your team manage everything with the full planning suite — or invite your wedding planner to co-manage.',
     stripePriceId: process.env.STRIPE_DELUXE_PRICE_ID || '',
     msiMonths: [3, 6] as const,
   },
@@ -256,6 +256,7 @@ export const PLAN_CARDS = {
       'Bespoke domain option',
       'Website stays forever',
       'Expert guidance & advice from our team',
+      'Share access with collaborators & wedding planners',
     ],
     cta: 'Upgrade to Premium',
     href: '/upgrade?source=pricing_premium',
@@ -265,7 +266,7 @@ export const PLAN_CARDS = {
     tagline: PRICING.deluxe.tagline,
     price: PRICING.deluxe.priceDisplayMXN,
     period: PRICING.deluxe.period,
-    description: 'We take care of everything — bespoke design, personalized components, so you just enjoy planning',
+    description: 'We design your complete wedding page from scratch. You and your team manage everything with the full planning suite — or invite your wedding planner to co-manage.',
     features: [
       'Everything in Premium',
       'Unlimited guests & groups',
@@ -276,7 +277,7 @@ export const PLAN_CARDS = {
       'WhatsApp automation (extra cost)',
       'Lower registry commission',
       'Dedicated personal support agent',
-      'We design & build your entire page',
+      'We design your complete wedding page from scratch',
       'Interactive seating chart designer',
     ],
     cta: 'Go Deluxe',
@@ -325,8 +326,9 @@ export const COMPARISON_FEATURES = [
   { category: 'Experience & Support', features: [
     { name: 'Email support', free: true, premium: true, deluxe: true },
     { name: 'Expert guidance & advice', free: false, premium: true, deluxe: true },
+    { name: 'Share with collaborators & wedding planners', free: false, premium: true, deluxe: true },
     { name: 'Dedicated personal support agent', free: false, premium: false, deluxe: true },
-    { name: 'We design & build your page', free: false, premium: false, deluxe: true },
+    { name: 'We design your complete wedding page', free: false, premium: false, deluxe: true },
   ]},
 ] as const
 
