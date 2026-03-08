@@ -232,6 +232,7 @@ export async function POST(
     // Build checkout session params
     const checkoutParams: any = {
       customer: customerId,
+      currency: 'mxn',
       ...paymentMethodConfig,
       line_items: [
         {

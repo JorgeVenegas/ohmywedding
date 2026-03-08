@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Copy, Check, Download, ExternalLink, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-const SITE_URL = "https://ohmywedding.com"
+const SITE_URL = "https://ohmy.wedding"
 
 // ─── Corner bracket decorations ─────────────────────────────────────────────
 function CornerBracket({ position }: { position: "tl" | "tr" | "bl" | "br" }) {
@@ -60,11 +60,27 @@ const PARTICLES = [
 // ─── Main page ───────────────────────────────────────────────────────────────
 export default function QRPage() {
   const canvasRef = useRef<HTMLDivElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const [copied, setCopied] = useState(false)
   const [qrVisible, setQrVisible] = useState(false)
+  const [qrSize, setQrSize] = useState(320)
 
   useEffect(() => {
-    // slight delay before showing QR for dramatic reveal
+    const compute = () => {
+      // Fill most of the screen: min of 88vw and 58vh, clamped between 280–700px
+      const size = Math.min(
+        Math.round(window.innerWidth * 0.88),
+        Math.round(window.innerHeight * 0.58),
+        700
+      )
+      setQrSize(Math.max(size, 280))
+    }
+    compute()
+    window.addEventListener('resize', compute)
+    return () => window.removeEventListener('resize', compute)
+  }, [])
+
+  useEffect(() => {
     const t = setTimeout(() => setQrVisible(true), 600)
     return () => clearTimeout(t)
   }, [])
@@ -118,43 +134,32 @@ export default function QRPage() {
           className="flex items-center gap-2 text-[#DDA46F]/60 hover:text-[#DDA46F] transition-colors duration-200 text-sm tracking-[0.1em]"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>ohmywedding.com</span>
+          <span>ohmy.wedding</span>
         </Link>
       </motion.div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center px-6 py-16 max-w-md w-full text-center">
+      <div ref={wrapperRef} className="relative z-10 flex flex-col items-center px-4 py-8 w-full text-center">
 
-        {/* Logo */}
+        {/* Logo + tag compact row */}
         <motion.div
-          initial={{ opacity: 0, y: -30 }}
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-          className="flex flex-col items-center gap-3 mb-10"
+          transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          className="flex items-center gap-3 mb-5"
         >
           <Image
             src="/images/logos/OMW Logo Gold.png"
             alt="OhMyWedding"
-            width={56}
-            height={56}
-            className="w-14 h-auto"
+            width={36}
+            height={36}
+            className="w-9 h-auto"
             priority
           />
-          <span className="font-serif text-2xl font-light text-[#f5f2eb] tracking-[0.2em]">
-            OhMyWedding
-          </span>
-          <div className="w-12 h-px bg-[#DDA46F]/40" />
+          <span className="font-serif text-xl font-light text-[#f5f2eb] tracking-[0.18em]">OhMyWedding</span>
+          <div className="w-px h-5 bg-[#DDA46F]/30" />
+          <span className="text-[#DDA46F]/70 text-[10px] tracking-[0.3em] uppercase">Escanea para visitar</span>
         </motion.div>
-
-        {/* Tag */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.35 }}
-          className="text-[#DDA46F]/80 text-[11px] tracking-[0.35em] uppercase mb-8"
-        >
-          Escanea para visitar
-        </motion.p>
 
         {/* QR Code card */}
         <AnimatePresence>
@@ -163,7 +168,7 @@ export default function QRPage() {
               initial={{ opacity: 0, scale: 0.85, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-              className="relative mb-8"
+              className="relative mb-5"
             >
               {/* Outer glow ring */}
               <motion.div
@@ -174,8 +179,8 @@ export default function QRPage() {
 
               {/* Card */}
               <div
-                className="relative p-6 rounded-2xl border border-[#DDA46F]/20 bg-[#f5f2eb]"
-                style={{ boxShadow: "0 0 60px rgba(221,164,111,0.12), 0 20px 60px rgba(0,0,0,0.5)" }}
+                className="relative p-5 rounded-2xl border border-[#DDA46F]/20 bg-[#f5f2eb]"
+                style={{ boxShadow: "0 0 80px rgba(221,164,111,0.18), 0 20px 80px rgba(0,0,0,0.6)" }}
               >
                 {/* Corner brackets */}
                 <div className="relative">
@@ -188,14 +193,14 @@ export default function QRPage() {
                   <div ref={canvasRef}>
                     <QRCodeCanvas
                       value={SITE_URL}
-                      size={240}
+                      size={qrSize - 48}
                       fgColor="#420c14"
                       bgColor="transparent"
                       level="H"
                       imageSettings={{
                         src: "/images/logos/OMW Logo Gold.png",
-                        width: 48,
-                        height: 48,
+                        width: Math.round((qrSize - 48) * 0.18),
+                        height: Math.round((qrSize - 48) * 0.18),
                         excavate: true,
                       }}
                     />
@@ -211,7 +216,7 @@ export default function QRPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 1.1 }}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#f5f2eb]/5 border border-[#DDA46F]/15 mb-8"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#f5f2eb]/5 border border-[#DDA46F]/15 mb-5"
         >
           <span className="text-[#DDA46F]/80 text-sm tracking-[0.05em] font-light">{SITE_URL}</span>
           <a
@@ -229,7 +234,7 @@ export default function QRPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 1.3 }}
-          className="flex gap-3 w-full"
+          className="flex gap-3 w-full max-w-sm mx-auto"
         >
           <Button
             onClick={handleCopy}
