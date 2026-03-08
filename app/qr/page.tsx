@@ -189,21 +189,33 @@ export default function QRPage() {
                   <CornerBracket position="bl" />
                   <CornerBracket position="br" />
 
-                  {/* QR code */}
-                  <div ref={canvasRef}>
+                  {/* QR code with overlaid logo (overlay avoids distortion from forced imageSettings dimensions) */}
+                  <div ref={canvasRef} className="relative inline-block">
                     <QRCodeCanvas
                       value={SITE_URL}
                       size={qrSize - 48}
                       fgColor="#420c14"
                       bgColor="transparent"
                       level="H"
-                      imageSettings={{
-                        src: "/images/logos/OMW Logo Gold.png",
-                        width: Math.round((qrSize - 48) * 0.18),
-                        height: Math.round((qrSize - 48) * 0.18),
-                        excavate: true,
-                      }}
                     />
+                    {/* Centered logo overlay — CSS handles aspect ratio, no distortion */}
+                    <div
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    >
+                      <div
+                        className="bg-[#f5f2eb] rounded-md flex items-center justify-center"
+                        style={{ width: Math.round((qrSize - 48) * 0.2), height: Math.round((qrSize - 48) * 0.2) }}
+                      >
+                        <Image
+                          src="/images/logos/OMW Logo Gold.png"
+                          alt=""
+                          width={120}
+                          height={120}
+                          className="object-contain"
+                          style={{ width: Math.round((qrSize - 48) * 0.15), height: "auto" }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
