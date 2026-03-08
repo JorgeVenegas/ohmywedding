@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { NextResponse } from "next/server"
+import { getWeddingFeatureLimit } from "@/lib/subscription"
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -92,6 +93,19 @@ export async function POST(request: Request) {
     // type === 'supplier'
     const { name, category, contact_info, contact_type, contract_url, total_amount, notes, display_order } = body
     if (!name) return NextResponse.json({ error: 'name is required' }, { status: 400 })
+
+    // Check supplier limit for this plan
+    const supplierLimit = await getWeddingFeatureLimit(uuid, 'suppliers_limit')
+    if (supplierLimit !== null) {
+      const { count } = await supabase.from('suppliers').select('id', { count: 'exact', head: true }).eq('wedding_id', uuid)
+      if ((count ?? 0) >= supplierLimit) {
+        return NextResponse.json({
+          error: `Supplier limit reached. Your plan allows ${supplierLimit} suppliers. Upgrade to add more.`,
+          code: 'SUPPLIER_LIMIT_EXCEEDED',
+          limit: supplierLimit,
+        }, { status: 403 })
+      }
+    }
 
     const { data, error } = await supabase
       .from('suppliers')

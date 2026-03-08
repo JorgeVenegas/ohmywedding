@@ -8,6 +8,9 @@ export type FeatureKey =
   | 'guests_limit'
   | 'guest_groups_limit'
   | 'activity_tracking_limit'
+  | 'suppliers_limit'
+  | 'menus_limit'
+  | 'itinerary_limit'
   | 'rsvp_enabled'
   | 'custom_registry_enabled'
   | 'registry_links_enabled'
@@ -106,7 +109,7 @@ export const PLAN_FEATURES: PlanFeature[] = [
   },
   {
     name: 'Guest Management',
-    description: 'Up to 50 guests (Free), 250 (Premium), Unlimited (Deluxe)',
+    description: 'Up to 100 guests (Lovers), 250 (Premium), Unlimited (Deluxe)',
     included_free: true,
     included_premium: true,
     included_deluxe: true,
@@ -179,7 +182,7 @@ export const PLAN_FEATURES: PlanFeature[] = [
 // Pricing information
 export const PRICING = {
   free: {
-    name: 'Starter',
+    name: 'Lovers',
     tagline: 'Start planning your wedding',
     price_usd: 2500, // $25 USD in cents
     price_mxn: 50000, // $500 MXN in centavos
@@ -228,8 +231,11 @@ export const PLAN_CARDS = {
       'Photo gallery',
       'Event schedule',
       'Gift registry links',
-      'Up to 50 guests',
-      'Last 8 activities only',
+      'Up to 100 guests',
+      'Up to 3 suppliers',
+      '1 menu',
+      'Up to 5 itinerary events',
+      'Last 3 activities',
     ],
     cta: 'Get Started',
     href: '/create-wedding',
@@ -241,7 +247,7 @@ export const PLAN_CARDS = {
     period: PRICING.premium.period,
     description: 'We accompany you from day one with intuitive tools and expert guidance to plan your wedding',
     features: [
-      'Everything in Free',
+      'Everything in Lovers',
       'Up to 250 guests',
       'Unlimited guest groups',
       '1 week activity retention',
@@ -289,10 +295,13 @@ export const COMPARISON_FEATURES = [
     { name: 'Website permanence', free: '6 months', premium: 'Forever', deluxe: 'Forever' },
   ]},
   { category: 'Guest Management', features: [
-    { name: 'Guest limit', free: '50', premium: '250', deluxe: 'Unlimited' },
+    { name: 'Guest limit', free: '100', premium: '250', deluxe: 'Unlimited' },
     { name: 'Guest groups', free: '15', premium: 'Unlimited', deluxe: 'Unlimited' },
     { name: 'Advanced RSVP system', free: false, premium: true, deluxe: true },
-    { name: 'Activity tracking', free: 'Last 8', premium: '1 week', deluxe: 'Unlimited' },
+    { name: 'Activity tracking', free: 'Last 3', premium: '1 week', deluxe: 'Unlimited' },
+    { name: 'Suppliers', free: '3', premium: 'Unlimited', deluxe: 'Unlimited' },
+    { name: 'Menus', free: '1', premium: 'Unlimited', deluxe: 'Unlimited' },
+    { name: 'Itinerary events', free: '5', premium: 'Unlimited', deluxe: 'Unlimited' },
   ]},
   { category: 'Registry & Payments', features: [
     { name: 'Bespoke registry with secure payouts', free: false, premium: true, deluxe: true },

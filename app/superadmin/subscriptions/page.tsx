@@ -83,7 +83,7 @@ export default async function SubscriptionsPage() {
       case 'free':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#420c14]/5 text-[#420c14]/60 text-xs font-medium">
-            Starter
+            Lovers
           </span>
         )
       default: 

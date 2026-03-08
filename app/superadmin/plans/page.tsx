@@ -252,7 +252,7 @@ export default function PlanFeaturesPage() {
         <div className="bg-white rounded-2xl border border-[#420c14]/10 shadow-sm p-6">
           <div className="flex items-center gap-2 mb-4">
             <DollarSign className="w-5 h-5 text-[#420c14]/40" />
-            <h3 className="font-medium text-[#420c14]">Starter</h3>
+            <h3 className="font-medium text-[#420c14]">Lovers</h3>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
@@ -316,7 +316,7 @@ export default function PlanFeaturesPage() {
             <thead>
               <tr className="border-b-2 border-[#420c14]/10">
                 <th className="text-left py-5 px-6 font-medium text-[#420c14]/60 text-sm">Feature</th>
-                <th className="text-center py-5 px-6 font-medium text-[#420c14]/60 text-sm border-l-2 border-[#420c14]/5">Starter</th>
+                <th className="text-center py-5 px-6 font-medium text-[#420c14]/60 text-sm border-l-2 border-[#420c14]/5">Lovers</th>
                 <th className="text-center py-5 px-6 font-medium text-[#DDA46F] text-sm border-l-2 border-[#420c14]/10">Premium</th>
                 <th className="text-center py-5 px-6 font-medium text-[#420c14] text-sm bg-[#420c14]/5 border-l-2 border-[#420c14]/20">Deluxe</th>
               </tr>

@@ -125,10 +125,10 @@ export function PricingSection() {
       { name: P.comparison.featureNames.websitePermanence, free: P.comparison.values.sixMonths, premium: P.comparison.values.forever, deluxe: P.comparison.values.forever },
     ]},
     { category: P.comparison.categories.guestManagement, features: [
-      { name: P.comparison.featureNames.guestLimit, free: '50', premium: '250', deluxe: P.comparison.values.unlimited },
+      { name: P.comparison.featureNames.guestLimit, free: '100', premium: '250', deluxe: P.comparison.values.unlimited },
       { name: P.comparison.featureNames.guestGroups, free: '15', premium: P.comparison.values.unlimited, deluxe: P.comparison.values.unlimited },
       { name: P.comparison.featureNames.advancedRsvp, free: false, premium: true, deluxe: true },
-      { name: P.comparison.featureNames.activityTracking, free: P.comparison.values.lastEight, premium: P.comparison.values.oneWeek, deluxe: P.comparison.values.unlimited },
+      { name: P.comparison.featureNames.activityTracking, free: P.comparison.values.lastThree, premium: P.comparison.values.oneWeek, deluxe: P.comparison.values.unlimited },
     ]},
     { category: P.comparison.categories.registryPayments, features: [
       { name: P.comparison.featureNames.bespokeRegistry, free: false, premium: true, deluxe: true },

@@ -278,13 +278,13 @@ export function UpgradeModal({
                 <div className={`grid gap-3 mb-6 ${content.planLevel === 'deluxe' ? 'grid-cols-3' : 'grid-cols-2'}`}>
                   <div className="rounded-xl border border-[#420c14]/10 p-4 bg-white">
                     <div className="flex items-center justify-between mb-2">
-                      <h5 className="text-sm font-medium text-[#420c14]/70">Starter</h5>
+                      <h5 className="text-sm font-medium text-[#420c14]/70">Lovers</h5>
                       <span className="text-xl font-serif text-[#420c14]">{PRICING.free.priceDisplayMXN}</span>
                     </div>
                     <ul className="space-y-1 text-xs text-[#420c14]/50">
                       <li className="flex items-center gap-1.5">
                         <Check className="w-3 h-3" />
-                        <span>Up to 50 guests</span>
+                        <span>Up to 100 guests</span>
                       </li>
                       <li className="flex items-center gap-1.5">
                         <Check className="w-3 h-3" />

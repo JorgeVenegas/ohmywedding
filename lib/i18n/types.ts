@@ -960,6 +960,7 @@ export interface Translations {
           forever: string
           sixMonths: string
           unlimited: string
+          lastThree: string
           lastEight: string
           oneWeek: string
           weekly: string

@@ -353,7 +353,7 @@ function ComparisonSection() {
             <thead>
               <tr className="border-b-2 border-[#420c14]/10">
                 <th className="text-left py-4 px-4 font-medium text-[#420c14]/60 text-xs uppercase tracking-wider">{t('plans.premium.comparison.feature')}</th>
-                <th className="text-center py-4 px-4 font-medium text-[#420c14]/40 text-xs uppercase tracking-wider w-28">Starter</th>
+                <th className="text-center py-4 px-4 font-medium text-[#420c14]/40 text-xs uppercase tracking-wider w-28">Lovers</th>
                 <th className="text-center py-4 px-4 font-medium text-[#DDA46F] text-xs uppercase tracking-wider w-28 bg-[#DDA46F]/5 rounded-t-xl">Premium</th>
               </tr>
             </thead>

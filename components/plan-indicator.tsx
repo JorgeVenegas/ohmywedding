@@ -26,11 +26,11 @@ export function PlanIndicator() {
 
   const config = {
     free: {
-      label: 'Starter',
+      label: 'Lovers',
       icon: Star,
       bgGradient: 'from-slate-500 via-slate-600 to-slate-700',
       textColor: 'text-white',
-      description: 'Up to 50 guests, 15 groups. Upgrade for more features!',
+      description: 'Up to 100 guests, 15 groups. Upgrade for more features!',
       clickable: true,
     },
     premium: {

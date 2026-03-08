@@ -860,7 +860,7 @@ function UpgradePageContent() {
                       {t('upgrade.features')}
                     </th>
                     <th className="text-center py-4 sm:py-6 px-3 sm:px-6">
-                      <div className="text-base sm:text-lg font-serif text-[#420c14]">Starter</div>
+                      <div className="text-base sm:text-lg font-serif text-[#420c14]">Lovers</div>
                       <div className="text-xs sm:text-sm text-[#420c14]/50 mt-1">{PRICING.free.priceDisplayMXN}</div>
                     </th>
                     <th className="text-center py-4 sm:py-6 px-3 sm:px-6 relative">
@@ -1052,7 +1052,7 @@ function UpgradePageContent() {
                           ? 'bg-[#420c14] text-[#f5f2eb]'
                           : 'bg-[#420c14]/5 text-[#420c14]/50'
                       }`}>
-                        {wedding.plan === 'premium' ? 'Premium' : wedding.plan === 'deluxe' ? 'Deluxe' : 'Starter'}
+                        {wedding.plan === 'premium' ? 'Premium' : wedding.plan === 'deluxe' ? 'Deluxe' : 'Lovers'}
                       </span>
                     </div>
                     <div className="text-xs text-[#420c14]/50 mt-1">

@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { NextResponse } from "next/server"
+import { getWeddingFeatureLimit } from "@/lib/subscription"
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -60,6 +61,19 @@ export async function POST(request: Request) {
     const { name, description, image_url, courses_count, courses, display_order } = body
 
     if (!name) return NextResponse.json({ error: "Menu name is required" }, { status: 400 })
+
+    // Check menu limit for this plan
+    const menuLimit = await getWeddingFeatureLimit(weddingUuid, 'menus_limit')
+    if (menuLimit !== null) {
+      const { count } = await supabase.from('menus').select('id', { count: 'exact', head: true }).eq('wedding_id', weddingUuid)
+      if ((count ?? 0) >= menuLimit) {
+        return NextResponse.json({
+          error: `Menu limit reached. Your plan allows ${menuLimit} menu(s). Upgrade to add more.`,
+          code: 'MENU_LIMIT_EXCEEDED',
+          limit: menuLimit,
+        }, { status: 403 })
+      }
+    }
 
     const { data: menu, error: menuError } = await supabase
       .from('menus')

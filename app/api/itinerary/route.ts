@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { NextResponse } from "next/server"
+import { getWeddingFeatureLimit } from "@/lib/subscription"
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -64,6 +65,25 @@ export async function POST(request: Request) {
 
     if (!title || !start_time) {
       return NextResponse.json({ error: "Title and start time are required" }, { status: 400 })
+    }
+
+    // Check itinerary limit for this plan (only count top-level events)
+    if (!parent_id) {
+      const itineraryLimit = await getWeddingFeatureLimit(weddingUuid, 'itinerary_limit')
+      if (itineraryLimit !== null) {
+        const { count } = await supabase
+          .from('itinerary_events')
+          .select('id', { count: 'exact', head: true })
+          .eq('wedding_id', weddingUuid)
+          .is('parent_id', null)
+        if ((count ?? 0) >= itineraryLimit) {
+          return NextResponse.json({
+            error: `Itinerary limit reached. Your plan allows ${itineraryLimit} itinerary events. Upgrade to add more.`,
+            code: 'ITINERARY_LIMIT_EXCEEDED',
+            limit: itineraryLimit,
+          }, { status: 403 })
+        }
+      }
     }
 
     const { data, error } = await supabase

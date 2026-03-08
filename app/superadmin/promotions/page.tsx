@@ -96,6 +96,13 @@ export default function PromotionsPage() {
     setShowForm(true)
   }
 
+  // Format to local datetime string for datetime-local input (avoids UTC shift)
+  const toLocalDatetimeInput = (isoString: string) => {
+    const d = new Date(isoString)
+    const pad = (n: number) => n.toString().padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  }
+
   const openEdit = (d: GlobalDiscountRow) => {
     setEditId(d.id)
     setFormName(d.name)
@@ -105,8 +112,8 @@ export default function PromotionsPage() {
     setFormDeluxeCard(d.deluxe_card_discount_percent)
     setFormDeluxeMsi(d.deluxe_msi_discount_percent)
     setFormPlans(d.applies_to_plans)
-    setFormStartsAt(d.starts_at ? new Date(d.starts_at).toISOString().slice(0, 16) : '')
-    setFormEndsAt(d.ends_at ? new Date(d.ends_at).toISOString().slice(0, 16) : '')
+    setFormStartsAt(d.starts_at ? toLocalDatetimeInput(d.starts_at) : '')
+    setFormEndsAt(d.ends_at ? toLocalDatetimeInput(d.ends_at) : '')
     setFormIsActive(d.is_active)
     setShowForm(true)
   }
