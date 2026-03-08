@@ -1093,6 +1093,15 @@ export const es: Translations = {
         alreadyOnPlan: 'Tus bodas ya están en este plan o uno superior.',
         tryAgain: 'Algo salió mal. Por favor intenta de nuevo.',
       },
+      promoCountdown: {
+        endsIn: 'Oferta termina en',
+        endsOn: 'Oferta termina el',
+        hurry: '¡Date prisa!',
+        days: 'd',
+        hours: 'h',
+        minutes: 'm',
+        seconds: 's',
+      },
     },
     goldenBanner: {
       quote: 'Tu historia de amor es unica, tu planeacion tambien',
@@ -1147,7 +1156,37 @@ export const es: Translations = {
   },
 
   // Página de upgrade
+  gift: {
+    back: 'Regresar',
+    label: 'Regala un Plan',
+    title: 'Ayúdalos a planear su',
+    titleHighlight: 'boda perfecta',
+    description: 'Regala la tranquilidad de planear una boda sin estrés. Compra un plan para amigos o familiares recién comprometidos — recibirán un código único para desbloquear todas las herramientas.',
+    processing: 'Procesando...',
+    giftPlan: 'Regala {{plan}}',
+    howItWorks: 'Cómo funciona',
+    steps: {
+      purchase: { title: '1. Compra', desc: 'Elige un plan y completa el pago. Se generará un código de regalo único.' },
+      share: { title: '2. Comparte el código', desc: 'Envía el código de regalo a los novios. Pueden canjearlo al configurar su boda.' },
+      celebrate: { title: '3. ¡Que celebren!', desc: 'Los novios canjean el código en su configuración para activar el plan de inmediato.' },
+    },
+    upgradingOwn: '¿Quieres actualizar tu propia boda?',
+    goToUpgrade: 'Ve a la página de actualización \u2192',
+    errorGeneric: 'Algo salió mal. Inténtalo de nuevo.',
+  },
+
   upgrade: {
+    pageLabel: 'Actualiza',
+    giftCallout: {
+      buyingAsGift: '¿Comprando como regalo?',
+      giftSubscription: 'Regala una suscripción',
+      haveGiftCode: '¿Tienes un código de regalo?',
+      redeemHere: 'Canjéalo aquí \u2192',
+    },
+    paymentMethod: 'Método de Pago',
+    card: 'Tarjeta',
+    orderSummary: 'Resumen del Pedido',
+    planLabel: 'Plan {{plan}}',
     title: 'Elige Tu',
     subtitle: 'Plan',
     description: 'Un solo pago, acceso de por vida. Sin suscripciones, sin costos ocultos. Planea tu boda sin complicaciones.',

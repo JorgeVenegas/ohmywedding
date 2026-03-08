@@ -997,6 +997,15 @@ export interface Translations {
         }
       }
       errors: { alreadyOnPlan: string; tryAgain: string }
+      promoCountdown: {
+        endsIn: string
+        endsOn: string
+        hurry: string
+        days: string
+        hours: string
+        minutes: string
+        seconds: string
+      }
     }
     goldenBanner: {
       quote: string
@@ -1038,8 +1047,39 @@ export interface Translations {
     }
   }
 
+  // Gift page
+  gift: {
+    back: string
+    label: string
+    title: string
+    titleHighlight: string
+    description: string
+    processing: string
+    giftPlan: string
+    howItWorks: string
+    steps: {
+      purchase: { title: string; desc: string }
+      share: { title: string; desc: string }
+      celebrate: { title: string; desc: string }
+    }
+    upgradingOwn: string
+    goToUpgrade: string
+    errorGeneric: string
+  }
+
   // Upgrade page
   upgrade: {
+    pageLabel: string
+    giftCallout: {
+      buyingAsGift: string
+      giftSubscription: string
+      haveGiftCode: string
+      redeemHere: string
+    }
+    paymentMethod: string
+    card: string
+    orderSummary: string
+    planLabel: string
     title: string
     subtitle: string
     description: string

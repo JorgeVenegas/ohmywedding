@@ -24,6 +24,7 @@ import {
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
 import { useTranslation } from "@/components/contexts/i18n-context"
 import { useGlobalDiscount, type PaymentMethod } from "@/hooks/use-global-discount"
+import { PromoCountdown } from "@/components/ui/promo-countdown"
 import { PromoPriceDisplay, PromoPriceInline } from "@/components/ui/promo-price-display"
 
 const plans = [
@@ -425,7 +426,7 @@ function UpgradePageContent() {
           className="text-center mb-12 sm:mb-16"
         >
           <span className="text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.3em] sm:tracking-[0.4em] uppercase mb-4 sm:mb-6 block">
-            Upgrade
+            {t('upgrade.pageLabel')}
           </span>
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#420c14] mb-6 leading-tight">
             <span className="font-serif font-light">{t('upgrade.title')}</span>
@@ -455,17 +456,17 @@ function UpgradePageContent() {
           className="max-w-xl mx-auto mb-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-sm text-[#420c14]/50"
         >
           <span className="inline-flex items-center gap-1.5">
-            Buying as a gift?{' '}
+            {t('upgrade.giftCallout.buyingAsGift')}{' '}
             <Link href="/gift" className="text-[#DDA46F] hover:text-[#c99560] hover:underline font-medium inline-flex items-center gap-1 transition-colors">
               <Gift className="w-3.5 h-3.5" />
-              Gift a subscription
+              {t('upgrade.giftCallout.giftSubscription')}
             </Link>
           </span>
           <span className="hidden sm:block text-[#420c14]/20">·</span>
           <span className="inline-flex items-center gap-1.5">
-            Have a gift code?{' '}
+            {t('upgrade.giftCallout.haveGiftCode')}{' '}
             <Link href="/gift/redeem" className="text-[#DDA46F] hover:text-[#c99560] hover:underline font-medium transition-colors">
-              Redeem it here →
+              {t('upgrade.giftCallout.redeemHere')}
             </Link>
           </span>
         </motion.div>
@@ -477,7 +478,7 @@ function UpgradePageContent() {
           transition={{ delay: 0.2 }}
           className="max-w-xl mx-auto mb-8"
         >
-          <p className="text-center text-xs text-[#420c14]/50 mb-3 tracking-wider uppercase">Payment Method</p>
+          <p className="text-center text-xs text-[#420c14]/50 mb-3 tracking-wider uppercase">{t('upgrade.paymentMethod')}</p>
           <div className="flex justify-center">
             <div className="inline-flex items-center rounded-xl bg-white border border-[#420c14]/10 shadow-sm p-1 gap-1">
               <button
@@ -489,7 +490,7 @@ function UpgradePageContent() {
                 }`}
               >
                 <CreditCard className="w-3.5 h-3.5" />
-                Card
+                {t('upgrade.card')}
                 {discount && getDiscountPercent('premium', 'card') > 0 && (
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                     paymentMethod === 'card' ? 'bg-green-500/20 text-green-300' : 'bg-green-50 text-green-600'
@@ -519,6 +520,13 @@ function UpgradePageContent() {
             </div>
           </div>
         </motion.div>
+
+        {/* Promo countdown */}
+        {discount?.ends_at && (
+          <div className="flex justify-center mb-8">
+            <PromoCountdown discount={discount} variant="dark" />
+          </div>
+        )}
 
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-4xl mx-auto mb-16 sm:mb-24">
@@ -704,12 +712,12 @@ function UpgradePageContent() {
             return (
               <div className="bg-white rounded-2xl border border-[#420c14]/10 p-5">
                 <p className="text-[10px] font-semibold text-[#420c14]/40 uppercase tracking-widest mb-4">
-                  Order Summary
+                  {t('upgrade.orderSummary')}
                 </p>
                 <div className="space-y-2">
                   {/* Plan + original price */}
                   <div className="flex items-center justify-between text-sm py-1">
-                    <span className="text-[#420c14]/60 capitalize">{selectedPlan} Plan</span>
+                    <span className="text-[#420c14]/60 capitalize">{t('upgrade.planLabel', { plan: selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1) })}</span>
                     <span className="font-medium text-[#420c14]">
                       ${(originalPriceCents / 100).toLocaleString('es-MX')} MXN
                     </span>
@@ -1005,7 +1013,7 @@ function UpgradePageContent() {
             </span>
           </div>
           <p className="text-[#420c14]/40 text-sm tracking-wide">
-            💳 {t('upgrade.guarantee.securePayment')}
+            <CreditCard className="w-4 h-4 inline mr-1" />{t('upgrade.guarantee.securePayment')}
           </p>
         </motion.div>
 

@@ -11,6 +11,7 @@ import { PLAN_CARDS, PRICING } from '@/lib/subscription-shared'
 import { useGlobalDiscount } from '@/hooks/use-global-discount'
 import type { DiscountPlan, PaymentMethod } from '@/hooks/use-global-discount'
 import { PromoPriceDisplay, PromoPriceInline } from '@/components/ui/promo-price-display'
+import { PromoCountdown } from '@/components/ui/promo-countdown'
 import { useAuth } from '@/hooks/use-auth'
 
 export function PricingSection() {
@@ -64,6 +65,28 @@ export function PricingSection() {
       setCheckoutLoading(null)
     } catch {
       setCheckoutError(t('landing.pricing.errors.tryAgain'))
+      setCheckoutLoading(null)
+    }
+  }
+
+  const handleGiftCheckout = async (plan: DiscountPlan) => {
+    if (!user) {
+      router.push(`/login?redirect=${encodeURIComponent(`/gift?plan=${plan}&paymentMethod=${paymentMethod}&autoCheckout=1&source=landing_pricing`)}`)
+      return
+    }
+    setCheckoutError(null)
+    setCheckoutLoading(plan)
+    try {
+      const res = await fetch('/api/gift/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planType: plan }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Gift checkout failed')
+      if (data.url) window.location.href = data.url
+    } catch (err) {
+      setCheckoutError(err instanceof Error ? err.message : t('landing.pricing.errors.tryAgain'))
       setCheckoutLoading(null)
     }
   }
@@ -257,6 +280,13 @@ export function PricingSection() {
           </div>
         </motion.div>
 
+        {/* Promo countdown */}
+        {discount?.ends_at && (
+          <div className="flex justify-center mb-6">
+            <PromoCountdown discount={discount} variant="dark" />
+          </div>
+        )}
+
         {/* Error message */}
         {checkoutError && (
           <motion.div
@@ -353,7 +383,7 @@ export function PricingSection() {
                 </div>
 
                 <div className="space-y-3">
-                  {plan.plan === 'free' || giftMode ? (
+                  {plan.plan === 'free' ? (
                     <Link href={plan.href}>
                       <Button className={`w-full h-12 sm:h-14 text-sm sm:text-base tracking-wider transition-all duration-700 ${
                         plan.featured
@@ -365,7 +395,7 @@ export function PricingSection() {
                     </Link>
                   ) : (
                     <Button
-                      onClick={() => handleCheckout(plan.plan as DiscountPlan)}
+                      onClick={() => giftMode ? handleGiftCheckout(plan.plan as DiscountPlan) : handleCheckout(plan.plan as DiscountPlan)}
                       disabled={checkoutLoading === plan.plan}
                       className={`w-full h-12 sm:h-14 text-sm sm:text-base tracking-wider transition-all duration-700 ${
                         plan.featured

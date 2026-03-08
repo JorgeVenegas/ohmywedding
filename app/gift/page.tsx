@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, Suspense } from "react"
+import React, { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -20,41 +20,51 @@ import {
 } from "lucide-react"
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
 import { useGlobalDiscount } from "@/hooks/use-global-discount"
+import { PromoCountdown } from "@/components/ui/promo-countdown"
 import { PromoPriceDisplay } from "@/components/ui/promo-price-display"
+import { useI18n } from "@/components/contexts/i18n-context"
 
-const plans = [
-  {
-    id: "premium" as const,
-    name: PLAN_CARDS.premium.name,
-    price: PLAN_CARDS.premium.price,
-    priceCents: PRICING.premium.price_mxn,
-    period: PLAN_CARDS.premium.period,
-    description: PLAN_CARDS.premium.description,
-    features: PLAN_CARDS.premium.features.map(text => ({ text })),
-    featured: true,
-  },
-  {
-    id: "deluxe" as const,
-    name: PLAN_CARDS.deluxe.name,
-    price: PLAN_CARDS.deluxe.price,
-    priceCents: PRICING.deluxe.price_mxn,
-    period: PLAN_CARDS.deluxe.period,
-    description: PLAN_CARDS.deluxe.description,
-    features: PLAN_CARDS.deluxe.features.map(text => ({ text })),
-    isDeluxe: true,
-  },
+const planIds = [
+  { id: "premium" as const, featured: true },
+  { id: "deluxe" as const, isDeluxe: true },
 ]
 
 function GiftPageContent() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { t, translations } = useI18n()
   const [selectedPlan, setSelectedPlan] = useState<"premium" | "deluxe">(
     searchParams.get("plan") === "deluxe" ? "deluxe" : "premium"
   )
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { discount, getDiscountedPrice, getDiscountPercent, appliesToPlan } = useGlobalDiscount()
+
+  const G = translations.gift
+  const P = translations.landing.pricing
+
+  const plans = planIds.map(({ id, featured, isDeluxe }) => ({
+    id,
+    featured,
+    isDeluxe,
+    name: PLAN_CARDS[id].name,
+    price: PLAN_CARDS[id].price,
+    priceCents: PRICING[id].price_mxn,
+    period: PLAN_CARDS[id].period,
+    description: P.plans[id].description,
+    features: P.plans[id].features.map((text: string) => ({ text })),
+  }))
+
+  // Auto-fire checkout after login redirect
+  useEffect(() => {
+    if (authLoading) return
+    const autoCheckout = searchParams.get("autoCheckout")
+    if (autoCheckout === "1" && user) {
+      handleGiftCheckout(selectedPlan)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, user])
 
   const handleGiftCheckout = async (planId: "premium" | "deluxe") => {
     setError(null)
@@ -77,7 +87,7 @@ function GiftPageContent() {
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || "Failed to create gift checkout")
+        setError(data.error || G.errorGeneric)
         setIsProcessing(false)
         return
       }
@@ -86,7 +96,7 @@ function GiftPageContent() {
         window.location.href = data.url
       }
     } catch {
-      setError("Something went wrong. Please try again.")
+      setError(G.errorGeneric)
       setIsProcessing(false)
     }
   }
@@ -131,7 +141,7 @@ function GiftPageContent() {
               className="inline-flex items-center gap-2 text-[#420c14]/60 hover:text-[#420c14] transition-colors text-sm tracking-wider"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back
+              {G.back}
             </Link>
           </div>
         </motion.div>
@@ -147,16 +157,23 @@ function GiftPageContent() {
             <Gift className="w-7 h-7 text-[#420c14]" />
           </div>
           <span className="text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.3em] sm:tracking-[0.4em] uppercase mb-4 sm:mb-6 block">
-            Gift a Plan
+            {G.label}
           </span>
           <h1 className="text-3xl sm:text-4xl md:text-5xl text-[#420c14] mb-6 leading-tight">
-            <span className="font-serif font-light">Help them plan their</span>
-            <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.4em] ml-2 block sm:inline">perfect wedding</span>
+            <span className="font-serif font-light">{G.title}</span>
+            <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.4em] ml-2 block sm:inline">{G.titleHighlight}</span>
           </h1>
           <p className="text-[#420c14]/60 text-sm sm:text-base max-w-xl mx-auto">
-            Give the gift of stress-free wedding planning. Purchase a plan for newly engaged friends or family — they'll receive a unique code to unlock all the tools they need.
+            {G.description}
           </p>
         </motion.div>
+
+        {/* Promo countdown */}
+        {discount?.ends_at && (
+          <div className="flex justify-center mb-8">
+            <PromoCountdown discount={discount} variant="dark" />
+          </div>
+        )}
 
         {/* Error */}
         {error && (
@@ -197,7 +214,7 @@ function GiftPageContent() {
                 >
                   <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-[#f5f2eb] text-[#420c14] text-xs sm:text-sm font-medium tracking-wider">
                     <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Most Popular
+                    {t('upgrade.mostPopular')}
                   </span>
                 </motion.div>
               )}
@@ -210,7 +227,7 @@ function GiftPageContent() {
                 >
                   <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-[#420c14] text-[#f5f2eb] text-xs sm:text-sm font-medium tracking-wider">
                     <Crown className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Luxury
+                    {t('upgrade.luxury')}
                   </span>
                 </motion.div>
               )}
@@ -260,12 +277,12 @@ function GiftPageContent() {
                   {isProcessing && selectedPlan === plan.id ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Processing...
+                      {G.processing}
                     </>
                   ) : (
                     <>
                       <Gift className="w-4 h-4 mr-2" />
-                      Gift {plan.name}
+                      {t('gift.giftPlan', { plan: plan.name })}
                     </>
                   )}
                 </Button>
@@ -296,12 +313,12 @@ function GiftPageContent() {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="max-w-3xl mx-auto bg-white rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-10 border border-[#420c14]/10 shadow-xl shadow-[#420c14]/5"
         >
-          <h2 className="text-xl sm:text-2xl font-serif text-[#420c14] mb-8 text-center">How it works</h2>
+          <h2 className="text-xl sm:text-2xl font-serif text-[#420c14] mb-8 text-center">{G.howItWorks}</h2>
           <div className="grid sm:grid-cols-3 gap-6 sm:gap-8">
             {[
-              { icon: <Gift className="w-6 h-6" />, title: "1. Purchase", desc: "Choose a plan and complete checkout. A unique gift code will be generated." },
-              { icon: <Copy className="w-6 h-6" />, title: "2. Share the code", desc: "Send the gift code to the couple. They can redeem it when setting up their wedding." },
-              { icon: <Heart className="w-6 h-6" />, title: "3. They celebrate", desc: "The couple redeems the code in their settings to activate the plan immediately." },
+              { icon: <Gift className="w-6 h-6" />, title: G.steps.purchase.title, desc: G.steps.purchase.desc },
+              { icon: <Copy className="w-6 h-6" />, title: G.steps.share.title, desc: G.steps.share.desc },
+              { icon: <Heart className="w-6 h-6" />, title: G.steps.celebrate.title, desc: G.steps.celebrate.desc },
             ].map((step, i) => (
               <div key={i} className="flex flex-col items-center text-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-[#420c14]/8 flex items-center justify-center text-[#420c14]">
@@ -321,9 +338,9 @@ function GiftPageContent() {
           transition={{ duration: 0.8, delay: 0.6 }}
           className="text-center text-[#420c14]/40 text-xs mt-8"
         >
-          Upgrading your own wedding?{" "}
+          {G.upgradingOwn}{" "}
           <Link href="/upgrade" className="underline hover:text-[#420c14]/70 transition-colors">
-            Go to the upgrade page instead →
+            {G.goToUpgrade}
           </Link>
         </motion.p>
       </div>

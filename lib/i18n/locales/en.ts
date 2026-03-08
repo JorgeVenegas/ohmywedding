@@ -1097,6 +1097,15 @@ export const en: Translations = {
         alreadyOnPlan: 'Your weddings are already on this plan or higher.',
         tryAgain: 'Something went wrong. Please try again.',
       },
+      promoCountdown: {
+        endsIn: 'Offer ends in',
+        endsOn: 'Offer ends on',
+        hurry: 'Hurry!',
+        days: 'd',
+        hours: 'h',
+        minutes: 'm',
+        seconds: 's',
+      },
     },
     goldenBanner: {
       quote: 'Your love story is unique, your planning should be too',
@@ -1151,7 +1160,37 @@ export const en: Translations = {
   },
 
   // Upgrade page
+  gift: {
+    back: 'Back',
+    label: 'Gift a Plan',
+    title: 'Help them plan their',
+    titleHighlight: 'perfect wedding',
+    description: 'Give the gift of stress-free wedding planning. Purchase a plan for newly engaged friends or family — they\'ll receive a unique code to unlock all the tools they need.',
+    processing: 'Processing...',
+    giftPlan: 'Gift {{plan}}',
+    howItWorks: 'How it works',
+    steps: {
+      purchase: { title: '1. Purchase', desc: 'Choose a plan and complete checkout. A unique gift code will be generated.' },
+      share: { title: '2. Share the code', desc: 'Send the gift code to the couple. They can redeem it when setting up their wedding.' },
+      celebrate: { title: '3. They celebrate', desc: 'The couple redeems the code in their settings to activate the plan immediately.' },
+    },
+    upgradingOwn: 'Upgrading your own wedding?',
+    goToUpgrade: 'Go to the upgrade page instead \u2192',
+    errorGeneric: 'Something went wrong. Please try again.',
+  },
+
   upgrade: {
+    pageLabel: 'Upgrade',
+    giftCallout: {
+      buyingAsGift: 'Buying as a gift?',
+      giftSubscription: 'Gift a subscription',
+      haveGiftCode: 'Have a gift code?',
+      redeemHere: 'Redeem it here \u2192',
+    },
+    paymentMethod: 'Payment Method',
+    card: 'Card',
+    orderSummary: 'Order Summary',
+    planLabel: '{{plan}} Plan',
     title: 'Choose Your',
     subtitle: 'Plan',
     description: 'One-time payment, lifetime access. No subscriptions, no hidden fees. Plan your wedding stress-free.',

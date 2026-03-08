@@ -30,6 +30,7 @@ import { useTranslation } from "@/components/contexts/i18n-context"
 import { getTranslations } from "@/lib/i18n"
 import { useGlobalDiscount } from "@/hooks/use-global-discount"
 import { PromoPriceDisplay } from "@/components/ui/promo-price-display"
+import { PromoCountdown } from "@/components/ui/promo-countdown"
 import { TestimonialsSection } from "@/components/landing/testimonials-section"
 
 // ============================================
@@ -80,6 +81,11 @@ function HeroSection() {
               </p>
             )}
           </div>
+          {discount?.ends_at && (
+            <div className="flex justify-center mt-3 mb-4">
+              <PromoCountdown discount={discount} variant="light" />
+            </div>
+          )}
           <p className="text-sm text-[#f5f2eb]/40 mb-10">{t('plans.common.oneTimePayment')} • {t('plans.common.noSubscriptions')} • {t('plans.common.yoursForever')}</p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
