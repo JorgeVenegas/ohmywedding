@@ -131,7 +131,7 @@ export function AuthButtons({ isMobile = false, userWeddings: externalWeddings, 
             className="flex items-center gap-2 px-3 py-2 rounded-md text-[#f5f2eb]/90 hover:text-[#f5f2eb] hover:bg-[#f5f2eb]/10 transition-colors duration-200"
           >
             <User className="w-4 h-4" />
-            <span className="text-sm font-medium hidden lg:inline max-w-[150px] truncate">{user.email}</span>
+            <span className="text-sm font-medium hidden xl:inline max-w-[150px] truncate">{user.email}</span>
             <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`} />
           </button>
           
