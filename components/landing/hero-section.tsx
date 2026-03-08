@@ -84,13 +84,14 @@ export function HeroSection() {
           className="mb-4 sm:mb-8 leading-tight tracking-tight"
           style={{ textShadow: '0 4px 30px rgba(0,0,0,0.4), 0 2px 10px rgba(0,0,0,0.3)' }}
         >
-          <span
-            className="block font-serif font-light text-[#f5f2eb] text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl leading-[1.15]"
-            style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
-          >
-            {t('landing.hero.subtitle')}
-          </span>
+          {/* Line 1 */}
           <span className="block leading-[1.35]">
+            <span
+              className="font-serif font-light text-[#f5f2eb] text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl"
+              style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
+            >
+              {t('landing.hero.subtitle')}{' '}
+            </span>
             <span
               className="relative inline-block font-serif font-light text-[#f5f2eb] text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl pb-1 sm:pb-2"
               style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
@@ -108,13 +109,14 @@ export function HeroSection() {
               </svg>
             </span>
           </span>
-          <span
-            className="block font-serif font-light text-[#f5f2eb] text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl leading-[1.15]"
-            style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
-          >
-            {t('landing.hero.subtitle3')}
-          </span>
+          {/* Line 2 */}
           <span className="block leading-[1.35]">
+            <span
+              className="font-serif font-light text-[#f5f2eb] text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl"
+              style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
+            >
+              {t('landing.hero.subtitle3')}{' '}
+            </span>
             <span
               className="relative inline-block font-serif font-light text-[#f5f2eb] text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl pb-1 sm:pb-2"
               style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
