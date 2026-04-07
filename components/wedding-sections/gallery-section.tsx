@@ -7,6 +7,7 @@ import {
   GalleryGridVariant,
   GalleryListVariant,
   GalleryCollageVariant,
+  GalleryHaciendaVariant,
   BaseGalleryProps
 } from './gallery-variants'
 import { 
@@ -20,7 +21,7 @@ import { useI18n } from '@/components/contexts/i18n-context'
 type BackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
 
 interface GallerySectionProps extends Omit<BaseGalleryProps, 'backgroundColorChoice'> {
-  variant?: 'carousel' | 'masonry' | 'grid' | 'list' | 'collage'
+  variant?: 'carousel' | 'masonry' | 'grid' | 'list' | 'collage' | 'hacienda'
   showVariantSwitcher?: boolean
   dateId?: string
   backgroundColorChoice?: BackgroundColorChoice
@@ -94,6 +95,12 @@ export function GallerySection({
       value: 'collage',
       label: t('gallery.collage'),
       description: t('gallery.collageDesc')
+    },
+    {
+      value: 'hacienda',
+      label: 'Hacienda',
+      description: 'Hacienda-style masonry with archway frames',
+      deluxeOnly: true
     }
   ]
 
@@ -143,6 +150,8 @@ export function GallerySection({
         return <GalleryListVariant {...commonProps} />
       case 'collage':
         return <GalleryCollageVariant {...commonProps} />
+      case 'hacienda':
+        return <GalleryHaciendaVariant {...commonProps} />
       case 'grid':
       default:
         return <GalleryGridVariant {...commonProps} />

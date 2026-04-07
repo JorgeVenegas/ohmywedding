@@ -14,14 +14,30 @@ export async function GET(
     const { weddingId } = await params
 
     // First, get the wedding to resolve ID and get colors
-    const { data: wedding, error: weddingError } = await supabase
+    let wedding = null
+    const { data: weddingData, error: weddingError } = await supabase
       .from('weddings')
       .select('id, primary_color, secondary_color, accent_color, og_title, og_description, og_image_url, has_website')
       .eq('wedding_name_id', weddingId)
       .single()
 
-    if (weddingError || !wedding) {
-      return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
+    if (weddingData) {
+      wedding = weddingData
+    } else {
+      // Fallback: use admin client in case RLS is interfering (e.g. stale auth cookies)
+      console.warn('[config GET] Anon lookup failed, trying admin client:', { weddingId, error: weddingError?.message, code: weddingError?.code })
+      const adminClient = createAdminSupabaseClient()
+      const { data: adminWedding, error: adminError } = await adminClient
+        .from('weddings')
+        .select('id, primary_color, secondary_color, accent_color, og_title, og_description, og_image_url, has_website')
+        .eq('wedding_name_id', weddingId)
+        .single()
+
+      if (adminError || !adminWedding) {
+        console.error('[config GET] Wedding not found even with admin client:', { weddingId, error: adminError?.message })
+        return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
+      }
+      wedding = adminWedding
     }
 
     let pageConfig: Record<string, any> = {}
@@ -94,14 +110,30 @@ export async function PUT(
     const { data: { user } } = await supabase.auth.getUser()
     
     // First, check if the wedding exists and get owner info
-    const { data: existingWedding, error: findError } = await supabase
+    let existingWedding = null
+    const { data: weddingData, error: findError } = await supabase
       .from('weddings')
       .select('id, date_id, wedding_name_id, owner_id')
       .eq('wedding_name_id', weddingId)
       .single()
-    
-    if (findError || !existingWedding) {
-      return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
+
+    if (weddingData) {
+      existingWedding = weddingData
+    } else {
+      // Fallback: use admin client in case RLS is interfering
+      console.warn('[config PUT] Anon lookup failed, trying admin client:', { weddingId, error: findError?.message })
+      const adminClient = createAdminSupabaseClient()
+      const { data: adminWedding, error: adminError } = await adminClient
+        .from('weddings')
+        .select('id, date_id, wedding_name_id, owner_id')
+        .eq('wedding_name_id', weddingId)
+        .single()
+
+      if (adminError || !adminWedding) {
+        console.error('[config PUT] Wedding not found even with admin client:', { weddingId, error: adminError?.message })
+        return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
+      }
+      existingWedding = adminWedding
     }
     
     // Check permissions
@@ -176,7 +208,10 @@ export async function PUT(
       return feature?.enabled || false
     }
 
-    const { data: updatedWebsite, error: upsertError } = await supabase
+    // Use adminClient for writes — RLS on wedding_websites requires owner_id = auth.uid(),
+    // but owner_id can be NULL for weddings created via migration/seed.
+    // Permission checks above already verify the user is authorized.
+    const { data: updatedWebsite, error: upsertError } = await adminClient
       .from('wedding_websites')
       .upsert({
         wedding_id: existingWedding.id,
@@ -189,8 +224,10 @@ export async function PUT(
       .single()
 
     if (upsertError) {
+      console.error('[config PUT] wedding_websites upsert failed:', { weddingId, wedding_uuid: existingWedding.id, error: upsertError.message, code: upsertError.code })
+
       // Fallback: try updating the legacy weddings.page_config column
-      const { data: updatedWeddings, error: legacyError } = await supabase
+      const { data: updatedWeddings, error: legacyError } = await adminClient
         .from('weddings')
         .update({
           page_config: config,
@@ -200,11 +237,13 @@ export async function PUT(
         .select('id, page_config')
 
       if (legacyError) {
-        return NextResponse.json({ error: 'Failed to save configuration' }, { status: 500 })
+        console.error('[config PUT] Legacy fallback also failed:', { weddingId, error: legacyError.message })
+        return NextResponse.json({ error: 'Failed to save configuration', detail: upsertError.message }, { status: 500 })
       }
 
       if (!updatedWeddings || updatedWeddings.length === 0) {
-        return NextResponse.json({ error: 'Wedding not found or update failed' }, { status: 404 })
+        console.error('[config PUT] Legacy fallback returned 0 rows:', { weddingId })
+        return NextResponse.json({ error: 'Failed to save configuration', detail: upsertError.message }, { status: 500 })
       }
 
       return NextResponse.json({
@@ -216,7 +255,7 @@ export async function PUT(
     }
 
     // Ensure has_website is set to true
-    await supabase
+    await adminClient
       .from('weddings')
       .update({ has_website: true, updated_at: new Date().toISOString() })
       .eq('id', existingWedding.id)

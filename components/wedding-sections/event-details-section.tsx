@@ -7,6 +7,7 @@ import {
   EventDetailsTimelineVariant,
   EventDetailsMinimalVariant,
   EventDetailsSplitVariant,
+  EventDetailsHaciendaVariant,
   BaseEventDetailsProps
 } from './event-details-variants'
 import { 
@@ -20,7 +21,7 @@ import { useI18n } from '@/components/contexts/i18n-context'
 type BackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
 
 interface EventDetailsSectionProps extends Omit<BaseEventDetailsProps, 'backgroundColorChoice'> {
-  variant?: 'classic' | 'elegant' | 'timeline' | 'minimal' | 'split'
+  variant?: 'classic' | 'elegant' | 'timeline' | 'minimal' | 'split' | 'hacienda'
   showVariantSwitcher?: boolean
   dateId?: string
   showPhotos?: boolean
@@ -86,6 +87,12 @@ export function EventDetailsSection({
       value: 'split',
       label: t('config.splitLayout'),
       description: t('config.splitLayoutDesc')
+    },
+    {
+      value: 'hacienda',
+      label: 'Hacienda',
+      description: 'Vertical timeline with charro-inspired styling and botanical accents',
+      deluxeOnly: true
     }
   ]
 
@@ -145,6 +152,8 @@ export function EventDetailsSection({
         return <EventDetailsMinimalVariant {...commonProps} />
       case 'split':
         return <EventDetailsSplitVariant {...commonProps} />
+      case 'hacienda':
+        return <EventDetailsHaciendaVariant {...commonProps} />
       case 'classic':
       default:
         return <EventDetailsClassicVariant {...commonProps} />

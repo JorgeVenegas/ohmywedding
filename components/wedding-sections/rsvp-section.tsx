@@ -5,6 +5,7 @@ import {
   RSVPElegantVariant,
   RSVPMinimalisticVariant,
   RSVPCardsVariant,
+  RSVPHaciendaVariant,
   BaseRSVPProps,
   CustomQuestion
 } from './rsvp-variants'
@@ -17,7 +18,7 @@ import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper
 import { useI18n } from '@/components/contexts/i18n-context'
 
 interface RSVPSectionProps extends BaseRSVPProps {
-  variant?: 'elegant' | 'minimalistic' | 'cards'
+  variant?: 'elegant' | 'minimalistic' | 'cards' | 'hacienda'
   showVariantSwitcher?: boolean
   groupId?: string
 }
@@ -66,6 +67,12 @@ export function RSVPSection({
       value: 'cards',
       label: 'Cards',
       description: 'Individual guest cards with contemporary style'
+    },
+    {
+      value: 'hacienda',
+      label: 'Hacienda',
+      description: 'Elegant hacienda-themed RSVP with ornamental accents',
+      deluxeOnly: true
     }
   ]
 
@@ -106,6 +113,8 @@ export function RSVPSection({
         return <RSVPMinimalisticVariant {...commonProps} />
       case 'cards':
         return <RSVPCardsVariant {...commonProps} />
+      case 'hacienda':
+        return <RSVPHaciendaVariant {...commonProps} />
       case 'elegant':
       default:
         return <RSVPElegantVariant {...commonProps} />

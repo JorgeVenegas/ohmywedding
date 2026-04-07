@@ -60,13 +60,21 @@ export async function POST(request: Request) {
       )
 
       // Update the guest group with the message and submission timestamp
+      const groupUpdateData: Record<string, any> = {
+        rsvp_submitted_at: new Date().toISOString()
+      }
       if (body.message) {
+        groupUpdateData.message = body.message
+      }
+      // Handle extra passes confirmed count
+      if (typeof body.extraPassesAttending === 'number' && body.extraPassesAttending >= 0) {
+        groupUpdateData.extra_passes_confirmed = body.extraPassesAttending
+      }
+
+      {
         const { error: groupUpdateError } = await supabaseAdmin
           .from('guest_groups')
-          .update({
-            message: body.message,
-            rsvp_submitted_at: new Date().toISOString()
-          })
+          .update(groupUpdateData)
           .eq('id', body.groupId)
 
         if (groupUpdateError) {

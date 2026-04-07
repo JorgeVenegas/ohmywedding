@@ -119,6 +119,8 @@ export async function POST(request: Request) {
     // Determine if this is a draft group (no name provided or isDraft flag)
     const isDraft = body.isDraft === true || !rawName || rawName.trim() === ''
 
+    const extraPasses = typeof body.extraPasses === 'number' && body.extraPasses >= 0 ? body.extraPasses : 0
+
     const { data, error } = await supabase.from("guest_groups").insert([
       {
         wedding_id: wedding.id,
@@ -126,6 +128,7 @@ export async function POST(request: Request) {
         phone_number: body.phoneNumber || null,
         notes: body.notes || null,
         is_draft: isDraft,
+        extra_passes: extraPasses,
       },
     ]).select().single()
 
@@ -161,6 +164,11 @@ export async function PUT(request: Request) {
       phone_number: body.phoneNumber,
       notes: body.notes,
       updated_at: new Date().toISOString(),
+    }
+
+    // Handle extra passes
+    if (typeof body.extraPasses === 'number' && body.extraPasses >= 0) {
+      updateData.extra_passes = body.extraPasses
     }
 
     // If name is being set and it's not empty, mark as not draft

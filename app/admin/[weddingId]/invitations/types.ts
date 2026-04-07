@@ -39,6 +39,8 @@ export interface GuestGroup {
   first_opened_at: string | null
   open_count: number
   is_draft?: boolean
+  extra_passes: number
+  extra_passes_confirmed: number
 }
 
 export interface TimelineData {

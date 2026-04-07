@@ -132,26 +132,46 @@ export async function POST(request: Request) {
     } else {
       const ownerEmail = body.ownerEmail.trim().toLowerCase()
 
-      // Invite user by email — creates account if new, otherwise resends invite to existing user.
-      // Supabase sends the magic link email via its configured email infrastructure.
       const redirectTo = body.redirectOrigin
         ? `${body.redirectOrigin}/auth/callback?redirect=${encodeURIComponent(`/admin/${weddingNameId}/dashboard`)}`
         : undefined
 
+      // Try inviteUserByEmail first — creates user + sends invite email for new users
       const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
         ownerEmail,
         { redirectTo }
       )
 
-      if (inviteError || !inviteData?.user) {
-        return NextResponse.json(
-          { error: inviteError?.message || "Could not create user account" },
-          { status: 500 }
-        )
-      }
+      if (!inviteError && inviteData?.user) {
+        // New user successfully invited
+        ownerId = inviteData.user.id
+        emailSent = true
+      } else {
+        // Invite failed — most likely "User already registered".
+        // Look up the existing user by email so the wedding is still created.
+        let existingUser = null
+        let page = 1
+        const perPage = 50
+        while (!existingUser) {
+          const { data: { users }, error: listError } = await adminClient.auth.admin.listUsers({ page, perPage })
+          if (listError || !users || users.length === 0) break
+          existingUser = users.find(u => u.email?.toLowerCase() === ownerEmail) || null
+          if (users.length < perPage) break
+          page++
+        }
 
-      ownerId = inviteData.user.id
-      emailSent = true
+        if (!existingUser) {
+          return NextResponse.json(
+            { error: inviteError?.message || "Could not create user account" },
+            { status: 500 }
+          )
+        }
+
+        ownerId = existingUser.id
+        // Existing user already has an account — they can log in normally.
+        // No email sent since inviteUserByEmail failed and generateLink doesn't auto-send.
+        emailSent = false
+      }
     }
 
     // Create wedding record — use admin client so it works regardless of RLS/auth state
@@ -187,6 +207,13 @@ export async function POST(request: Request) {
     await adminClient
       .from('wedding_subscriptions')
       .upsert({ wedding_id: data.id, plan: 'free' }, { onConflict: 'wedding_id', ignoreDuplicates: true })
+
+    // Bootstrap a wedding_websites row so the config endpoint always has an entry.
+    // Without this, the first PUT to /config must create it, and any failure leaves the wedding
+    // without a website entry (the row is required for the website editor to function).
+    await adminClient
+      .from('wedding_websites')
+      .upsert({ wedding_id: data.id, page_config: {} }, { onConflict: 'wedding_id', ignoreDuplicates: true })
 
     // Handle gift code redemption if provided
     if (body.giftCode) {

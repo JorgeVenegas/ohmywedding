@@ -93,9 +93,12 @@ export const es: Translations = {
     chapterOne: 'Capítulo Uno',
     howWeMet: 'Cómo Nos Conocimos',
     howWeMetDefault: 'Nuestra historia de amor comenzó de la manera más inesperada. Desde el momento en que nos conocimos, supimos que había algo especial entre nosotros.',
+    howWeMetPlaceholder: 'Cuenta cómo se conocieron — el lugar, el momento y la sensación que nunca olvidarán.',
     theBigMoment: 'El Gran Momento',
     theProposal: 'La Propuesta',
-    proposalDefault: 'Bajo las estrellas, se hizo una pregunta y se prometió un para siempre.'
+    proposal: 'La Propuesta',
+    proposalDefault: 'Bajo las estrellas, se hizo una pregunta y se prometió un para siempre.',
+    proposalPlaceholder: 'Describe la pedida de mano — dónde fue, qué se dijo y la alegría de decir que sí.'
   },
 
   // Event Details Section
@@ -187,6 +190,8 @@ export const es: Translations = {
     alreadySubmitted: 'Respuesta Ya Enviada',
     responseRecorded: '¡Tu respuesta ha sido registrada. Gracias!',
     editResponse: 'Editar Respuesta',
+    additionalGuests: 'Invitados Adicionales',
+    extraPassesMax: 'Hasta {{max}} invitados adicionales',
     willAttend: '¡Sí, asistiré!',
     cannotAttend: 'Lo siento, no podré asistir',
     accept: 'Aceptar',

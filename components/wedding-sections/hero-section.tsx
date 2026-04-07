@@ -8,6 +8,7 @@ import {
   HeroFramedVariant,
   HeroMinimalVariant,
   HeroStackedVariant,
+  HeroHaciendaVariant,
   BaseHeroProps
 } from './hero-variants'
 import { 
@@ -19,7 +20,7 @@ import {
 import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
 
 interface HeroSectionProps extends BaseHeroProps {
-  variant?: 'background' | 'side-by-side' | 'framed' | 'minimal' | 'stacked'
+  variant?: 'background' | 'side-by-side' | 'framed' | 'minimal' | 'stacked' | 'hacienda'
   imagePosition?: 'left' | 'right' // for side-by-side variant
   frameStyle?: 'circular' | 'rounded' | 'square' | 'polaroid' // for framed variant
   imageSize?: 'small' | 'medium' | 'large' // for framed variant
@@ -126,6 +127,12 @@ export function HeroSection({
       value: 'stacked',
       label: 'Stacked',
       description: 'Content above with image below - perfect for showcasing landscape photos'
+    },
+    {
+      value: 'hacienda',
+      label: 'Hacienda',
+      description: 'Dark botanical overlay with filigree corners and elegant accents',
+      deluxeOnly: true
     }
   ]
 
@@ -247,6 +254,14 @@ export function HeroSection({
             showDecorations={config.showDecorations ?? true}
             imageHeight={config.imageHeight || 'medium'}
             imageWidth={config.imageWidth || 'centered'}
+          />
+        )
+      case 'hacienda':
+        return (
+          <HeroHaciendaVariant
+            {...commonProps}
+            overlayOpacity={config.overlayOpacity ?? 50}
+            imageBrightness={config.imageBrightness ?? 85}
           />
         )
       case 'background':

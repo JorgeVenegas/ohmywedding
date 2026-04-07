@@ -93,9 +93,12 @@ export const en: Translations = {
     chapterOne: 'Chapter One',
     howWeMet: 'How We Met',
     howWeMetDefault: 'Our love story began in the most unexpected way. From the moment we met, we knew there was something special between us.',
+    howWeMetPlaceholder: 'Share the story of how you two first crossed paths — the place, the moment, and the feeling you\'ll never forget.',
     theBigMoment: 'The Big Moment',
     theProposal: 'The Proposal',
-    proposalDefault: 'Under the stars, a question was asked and forever was promised.'
+    proposal: 'The Proposal',
+    proposalDefault: 'Under the stars, a question was asked and forever was promised.',
+    proposalPlaceholder: 'Describe the proposal — where it happened, the words that were said, and the joy of saying yes.'
   },
 
   // Event Details Section
@@ -187,6 +190,8 @@ export const en: Translations = {
     alreadySubmitted: 'Response Already Submitted',
     responseRecorded: 'Your response has been recorded. Thank you!',
     editResponse: 'Edit Response',
+    additionalGuests: 'Additional Guests',
+    extraPassesMax: 'Up to {{max}} additional guests',
     willAttend: "Yes, I'll be there!",
     cannotAttend: "Sorry, I can't make it",
     accept: 'Accept',

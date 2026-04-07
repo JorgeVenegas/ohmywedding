@@ -7,6 +7,7 @@ import {
   FAQCardsVariant,
   FAQElegantVariant,
   FAQSimpleVariant,
+  FAQHaciendaVariant,
   BaseFAQProps
 } from './faq-variants'
 import { 
@@ -30,7 +31,7 @@ function isOldHardcodedDefault(value: string | undefined, type: 'title' | 'subti
 }
 
 interface FAQSectionProps extends BaseFAQProps {
-  variant?: 'accordion' | 'minimal' | 'cards' | 'elegant' | 'simple'
+  variant?: 'accordion' | 'minimal' | 'cards' | 'elegant' | 'simple' | 'hacienda'
   showVariantSwitcher?: boolean
 }
 
@@ -83,6 +84,12 @@ export function FAQSection({
       value: 'simple',
       label: 'Simple List',
       description: 'Clean numbered list format'
+    },
+    {
+      value: 'hacienda',
+      label: 'Hacienda',
+      description: 'Botanical hacienda-themed FAQ with ornamental dividers',
+      deluxeOnly: true
     }
   ]
 
@@ -155,6 +162,8 @@ export function FAQSection({
         return <FAQElegantVariant {...commonProps} />
       case 'simple':
         return <FAQSimpleVariant {...commonProps} />
+      case 'hacienda':
+        return <FAQHaciendaVariant {...commonProps} />
       case 'accordion':
       default:
         return <FAQAccordionVariant {...commonProps} />

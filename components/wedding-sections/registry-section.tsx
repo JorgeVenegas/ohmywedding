@@ -6,6 +6,7 @@ import {
   RegistryMinimalVariant,
   RegistryElegantVariant,
   RegistryGridVariant,
+  RegistryHaciendaVariant,
   BaseRegistryProps
 } from './registry-variants'
 import { 
@@ -29,7 +30,7 @@ function isOldHardcodedDefault(value: string | undefined, type: 'title' | 'subti
 }
 
 interface RegistrySectionProps extends BaseRegistryProps {
-  variant?: 'cards' | 'minimal' | 'elegant' | 'grid'
+  variant?: 'cards' | 'minimal' | 'elegant' | 'grid' | 'hacienda'
   showVariantSwitcher?: boolean
   showDescription?: boolean
   weddingNameId?: string
@@ -83,6 +84,12 @@ export function RegistrySection({
       value: 'grid',
       label: 'Grid',
       description: 'Compact grid layout for many items'
+    },
+    {
+      value: 'hacienda',
+      label: 'Hacienda',
+      description: 'Elegant hacienda-style registry cards',
+      deluxeOnly: true
     }
   ]
 
@@ -156,6 +163,8 @@ export function RegistrySection({
         return <RegistryElegantVariant {...commonProps} />
       case 'grid':
         return <RegistryGridVariant {...commonProps} />
+      case 'hacienda':
+        return <RegistryHaciendaVariant {...commonProps} />
       case 'cards':
       default:
         return <RegistryCardsVariant {...commonProps} />

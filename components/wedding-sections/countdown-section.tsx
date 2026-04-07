@@ -7,6 +7,7 @@ import {
   CountdownCircularVariant,
   CountdownElegantVariant,
   CountdownModernVariant,
+  CountdownHaciendaVariant,
   BaseCountdownProps
 } from './countdown-variants'
 import { 
@@ -28,7 +29,7 @@ function isOldHardcodedDefault(value: string | undefined): boolean {
 }
 
 interface CountdownSectionProps extends BaseCountdownProps {
-  variant?: 'classic' | 'minimal' | 'circular' | 'elegant' | 'modern'
+  variant?: 'classic' | 'minimal' | 'circular' | 'elegant' | 'modern' | 'hacienda'
   showVariantSwitcher?: boolean
 }
 
@@ -88,6 +89,12 @@ export function CountdownSection({
       value: 'modern',
       label: 'Modern Bold',
       description: 'Bold contemporary cards with gradient'
+    },
+    {
+      value: 'hacienda',
+      label: 'Hacienda',
+      description: 'Warm botanical elegance with ornamental flourishes - exclusive deluxe design',
+      deluxeOnly: true
     }
   ]
 
@@ -145,6 +152,8 @@ export function CountdownSection({
         return <CountdownElegantVariant {...commonProps} />
       case 'modern':
         return <CountdownModernVariant {...commonProps} />
+      case 'hacienda':
+        return <CountdownHaciendaVariant {...commonProps} />
       case 'classic':
       default:
         return <CountdownClassicVariant {...commonProps} />

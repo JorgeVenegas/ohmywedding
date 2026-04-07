@@ -18,6 +18,8 @@ export interface VariantOption {
   value: string
   label: string
   description: string
+  /** When true, this variant is only available for deluxe weddings */
+  deluxeOnly?: boolean
 }
 
 // Configuration interface for sections

@@ -12,6 +12,8 @@ create table "guest_groups" (
   "message" text,
   "rsvp_submitted_at" timestamp with time zone,
   "is_draft" boolean default false, -- Indicates if this is a draft group (created but not finalized)
+  "extra_passes" integer not null default 0 check ("extra_passes" >= 0), -- Unnamed guest slots (e.g. +2 extra passes)
+  "extra_passes_confirmed" integer not null default 0 check ("extra_passes_confirmed" >= 0), -- How many extra passes confirmed via RSVP
   "created_at" timestamp with time zone default now(),
   "updated_at" timestamp with time zone default now()
 );

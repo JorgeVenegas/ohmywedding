@@ -474,6 +474,17 @@ export const FONT_PAIRING_CATEGORIES: FontPairingCategory[] = [
         bodyFamily: '"Source Sans Pro", sans-serif',
         googleFonts: 'Playfair+Display:wght@400;700&family=Raleway:wght@400;600&family=Source+Sans+Pro:wght@300;400;600'
       },
+      {
+        id: 'hacienda-elegance',
+        name: 'Hacienda Elegance',
+        display: 'Playfair Display',
+        heading: 'Cormorant Garamond',
+        body: 'Lato',
+        displayFamily: '"Playfair Display", serif',
+        headingFamily: '"Cormorant Garamond", serif',
+        bodyFamily: '"Lato", sans-serif',
+        googleFonts: 'Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Lato:wght@300;400;700'
+      },
     ]
   },
 ]
@@ -690,6 +701,7 @@ export const COLOR_THEME_CATEGORIES: ColorThemeCategory[] = [
     description: 'Special palettes',
     themes: [
       { id: 'yulis-wedding', name: 'Yulis Wedding', colors: { primary: '#5F5420', secondary: '#F8F8F5', accent: '#D4AF37' } },
+      { id: 'hacienda-charro', name: 'Hacienda Charro', colors: { primary: '#2D4A32', secondary: '#FAF6EF', accent: '#C0A882' } },
     ]
   },
 ]

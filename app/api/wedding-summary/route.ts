@@ -56,7 +56,7 @@ export async function GET(request: Request) {
     ] = await Promise.all([
       supabase.from('weddings').select('id, wedding_name_id, partner1_first_name, partner1_last_name, partner2_first_name, partner2_last_name, wedding_date, wedding_time, reception_time, ceremony_venue_name, ceremony_venue_address, reception_venue_name, reception_venue_address, page_config').eq('id', weddingUuid).single(),
       supabase.from('guests').select('id, name, guest_group_id, confirmation_status, dietary_restrictions, notes, phone_number').eq('wedding_id', weddingUuid),
-      supabase.from('guest_groups').select('id, name').eq('wedding_id', weddingUuid),
+      supabase.from('guest_groups').select('id, name, extra_passes, extra_passes_confirmed').eq('wedding_id', weddingUuid),
       supabase.from('seating_tables').select('*').eq('wedding_id', weddingUuid).order('display_order', { ascending: true }),
       supabase.from('seating_assignments').select('*').eq('wedding_id', weddingUuid),
       supabase.from('venue_elements').select('*').eq('wedding_id', weddingUuid),
@@ -175,11 +175,13 @@ export async function GET(request: Request) {
     }))
 
     // Guest stats
-    const confirmed = guests.filter(g => g.confirmation_status === 'confirmed').length
+    const totalExtraPasses = groups.reduce((sum, g) => sum + (g.extra_passes || 0), 0)
+    const totalExtraPassesConfirmed = groups.reduce((sum, g) => sum + (g.extra_passes_confirmed || 0), 0)
+    const confirmed = guests.filter(g => g.confirmation_status === 'confirmed').length + totalExtraPassesConfirmed
     const declined = guests.filter(g => g.confirmation_status === 'declined').length
-    const pending = guests.filter(g => g.confirmation_status === 'pending').length
+    const pending = guests.filter(g => g.confirmation_status === 'pending').length + (totalExtraPasses - totalExtraPassesConfirmed)
     const assignedGuests = seatAssignments.length
-    const unassignedGuests = confirmed - assignedGuests
+    const unassignedGuests = confirmed - totalExtraPassesConfirmed - assignedGuests
 
     // Extract locale, theme colors, and hero image from page_config
     const pageConfig = wedding.page_config as Record<string, unknown> | null
@@ -248,7 +250,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       wedding: weddingData,
       stats: {
-        totalGuests: guests.length,
+        totalGuests: guests.length + totalExtraPasses,
         confirmed,
         declined,
         pending,

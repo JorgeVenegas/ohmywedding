@@ -327,8 +327,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     return [
       { key: 'groupName', label: 'Group Name', required: true },
       { key: 'guestCount', label: 'Number of Guests', required: true },
+      { key: 'extraPasses', label: 'Extra Passes', required: false },
       { key: 'phoneNumber', label: 'Phone Number', required: false },
       { key: 'tags', label: 'Tags (comma-separated)', required: false },
+      { key: 'extraPasses', label: 'Extra Passes', required: false },
       { key: 'invitedBy', label: `Invited By (${p1}, ${p2})`, required: false },
       { key: 'notes', label: 'Notes', required: false },
     ]
@@ -341,6 +343,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const [groupForm, setGroupForm] = useState({
     name: "",
     notes: "",
+    extraPasses: 0,
   })
 
   // State for guests to add within the group modal
@@ -700,6 +703,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             id: draftGroupId,
             name: groupForm.name,
             notes: groupForm.notes || null,
+            extraPasses: groupForm.extraPasses || 0,
           }),
         })
 
@@ -731,6 +735,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           weddingId: weddingId,
           name: groupForm.name,
           notes: groupForm.notes || null,
+          extraPasses: groupForm.extraPasses || 0,
         }),
       })
 
@@ -775,6 +780,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           id: editingGroup.id,
           name: groupForm.name,
           notes: groupForm.notes || null,
+          extraPasses: groupForm.extraPasses || 0,
         }),
       })
 
@@ -1078,7 +1084,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   }
 
   const resetGroupForm = () => {
-    setGroupForm({ name: "", notes: "" })
+    setGroupForm({ name: "", notes: "", extraPasses: 0 })
     setGuestsInGroupModal([])
     setDraftGroupId(null)
     setTempGuestForm({
@@ -1115,6 +1121,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     setGroupForm({
       name: group.name || "",
       notes: group.notes || "",
+      extraPasses: group.extra_passes || 0,
     })
     setEditingGroup(group)
   }
@@ -1987,6 +1994,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             autoMapping[index.toString()] = 'dietaryRestrictions'
           } else if (headerLower.includes('invited')) {
             autoMapping[index.toString()] = 'invitedBy'
+          } else if (headerLower.includes('extra') && (headerLower.includes('pass') || headerLower.includes('guest'))) {
+            autoMapping[index.toString()] = 'extraPasses'
           } else if (headerLower.includes('note') || headerLower.includes('comment')) {
             autoMapping[index.toString()] = 'notes'
           }
@@ -2120,6 +2129,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
             if (dbField === 'guestCount') {
               group[dbField] = parseInt(value) || 1
+            } else if (dbField === 'extraPasses') {
+              group[dbField] = parseInt(value) || 0
             } else if (dbField === 'invitedBy') {
               // Validate and map invited_by to partner references
               const rawNames = value.split(',').map(t => t.trim()).filter(t => t)
@@ -2203,7 +2214,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         // Guests mode: Create guests and auto-create groups as needed
         const invalidInvitedByValues: string[] = []
         const guestsData = csvData.map(row => {
-          const guest: Record<string, string | string[]> = {}
+          const guest: Record<string, string | string[] | number> = {}
 
           Object.entries(columnMapping).forEach(([csvIndex, dbField]) => {
             const value = row[parseInt(csvIndex)] || ''
@@ -2223,6 +2234,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               guest[dbField] = mapped
             } else if (dbField === 'tags') {
               guest[dbField] = value.split(',').map(t => t.trim().toLowerCase()).filter(t => t)
+            } else if (dbField === 'extraPasses') {
+              guest[dbField] = parseInt(value) || 0
             } else if (dbField === 'confirmationStatus') {
               const statusLower = value.toLowerCase().trim()
               if (statusLower === 'confirmed' || statusLower === 'yes' || statusLower === 'attending') {
@@ -2324,6 +2337,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       invitedBy: string
       dietaryRestrictions: string
       notes: string
+      extraPasses: string
+      extraPassesConfirmed: string
     }> = []
 
     // Add guests from groups
@@ -2338,6 +2353,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           invitedBy: (guest.invited_by || []).map(ref => resolveInvitedBy(ref, partnerNames)).join(', '),
           dietaryRestrictions: guest.dietary_restrictions || '',
           notes: guest.notes || '',
+          extraPasses: String(group.extra_passes || 0),
+          extraPassesConfirmed: String(group.extra_passes_confirmed || 0),
         })
       })
     })
@@ -2353,11 +2370,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         invitedBy: (guest.invited_by || []).map(ref => resolveInvitedBy(ref, partnerNames)).join(', '),
         dietaryRestrictions: guest.dietary_restrictions || '',
         notes: guest.notes || '',
+        extraPasses: '0',
+        extraPassesConfirmed: '0',
       })
     })
 
     // Create CSV content
-    const headers = ['Group Name', 'Guest Name', 'Phone', 'Status', 'Tags', 'Invited By', 'Dietary Restrictions', 'Notes']
+    const headers = ['Group Name', 'Guest Name', 'Phone', 'Status', 'Tags', 'Invited By', 'Dietary Restrictions', 'Notes', 'Extra Passes', 'Extra Passes Confirmed']
     const escapeForCsv = (value: string) => {
       if (value.includes(',') || value.includes('"') || value.includes('\n')) {
         return `"${value.replace(/"/g, '""')}"`
@@ -2376,6 +2395,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         escapeForCsv(guest.invitedBy),
         escapeForCsv(guest.dietaryRestrictions),
         escapeForCsv(guest.notes),
+        escapeForCsv(guest.extraPasses),
+        escapeForCsv(guest.extraPassesConfirmed),
       ].join(','))
     ].join('\n')
 
@@ -2445,12 +2466,14 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   }, [ungroupedGuests, partnerNames])
 
   // Calculate stats (including ungrouped guests) - TOTAL counts (unfiltered)
+  const totalExtraPasses = normalizedGroups.reduce((acc, group) => acc + (group.extra_passes || 0), 0)
+  const totalExtraPassesConfirmed = normalizedGroups.reduce((acc, group) => acc + (group.extra_passes_confirmed || 0), 0)
   const groupedGuestsCount = normalizedGroups.reduce((acc, group) => acc + group.guests.length, 0)
-  const totalGuests = groupedGuestsCount + normalizedUngroupedGuests.length
+  const totalGuests = groupedGuestsCount + normalizedUngroupedGuests.length + totalExtraPasses
   const totalConfirmedGuests = normalizedGroups.reduce(
     (acc, group) => acc + group.guests.filter(g => g.confirmation_status === "confirmed").length,
     0
-  ) + normalizedUngroupedGuests.filter(g => g.confirmation_status === "confirmed").length
+  ) + normalizedUngroupedGuests.filter(g => g.confirmation_status === "confirmed").length + totalExtraPassesConfirmed
   const totalDeclinedGuests = normalizedGroups.reduce(
     (acc, group) => acc + group.guests.filter(g => g.confirmation_status === "declined").length,
     0
@@ -2458,7 +2481,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const totalPendingGuests = normalizedGroups.reduce(
     (acc, group) => acc + group.guests.filter(g => g.confirmation_status === "pending").length,
     0
-  ) + normalizedUngroupedGuests.filter(g => g.confirmation_status === "pending").length
+  ) + normalizedUngroupedGuests.filter(g => g.confirmation_status === "pending").length + (totalExtraPasses - totalExtraPassesConfirmed)
 
   // Get all unique tags from individual guests (single source of truth)
   const allTags = useMemo(() => {

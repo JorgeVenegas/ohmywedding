@@ -219,8 +219,9 @@ export function GuestsTableGroups({
             </thead>
             <tbody>
               {filteredGroups.map((group, index) => {
-                const confirmedCount = group.guests.filter(g => g.confirmation_status === 'confirmed').length
-                const pendingCount = group.guests.filter(g => g.confirmation_status === 'pending').length
+                const confirmedCount = group.guests.filter(g => g.confirmation_status === 'confirmed').length + (group.extra_passes_confirmed || 0)
+                const extraPassesPending = (group.extra_passes || 0) - (group.extra_passes_confirmed || 0)
+                const pendingCount = group.guests.filter(g => g.confirmation_status === 'pending').length + Math.max(0, extraPassesPending)
                 const declinedCount = group.guests.filter(g => g.confirmation_status === 'declined').length
                 const allGroupTags = [...new Set([
                   ...group.guests.flatMap(g => g.tags || [])
@@ -340,8 +341,15 @@ export function GuestsTableGroups({
                         </div>
                       </td>
                       <td className="px-3 py-2 text-center">
-                        <span className="inline-flex items-center justify-center min-w-[24px] px-1.5 py-0.5 rounded-full bg-muted text-xs font-medium">
-                          {group.guests.length}
+                        <span className="inline-flex items-center justify-center gap-1">
+                          <span className="inline-flex items-center justify-center min-w-[24px] px-1.5 py-0.5 rounded-full bg-muted text-xs font-medium">
+                            {group.guests.length + (group.extra_passes || 0)}
+                          </span>
+                          {(group.extra_passes || 0) > 0 && (
+                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                              +{group.extra_passes}
+                            </span>
+                          )}
                         </span>
                       </td>
                       <td className="px-3 py-2 text-center">

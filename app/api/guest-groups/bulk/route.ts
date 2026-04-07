@@ -52,6 +52,7 @@ export async function POST(request: Request) {
     for (const groupData of body.groups) {
       const groupName = groupData.groupName?.trim()
       const guestCount = parseInt(groupData.guestCount) || 1
+      const extraPasses = parseInt(groupData.extraPasses) || 0
       
       if (!groupName) continue
 
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
           name: groupName,
           phone_number: groupData.phoneNumber || null,
           notes: groupData.notes || null,
+          extra_passes: extraPasses,
         }])
         .select()
         .single()

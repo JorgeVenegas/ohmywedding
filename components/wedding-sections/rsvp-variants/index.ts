@@ -1,5 +1,6 @@
 export { RSVPElegantVariant } from './rsvp-elegant-variant'
 export { RSVPMinimalisticVariant } from './rsvp-minimalistic-variant'
 export { RSVPCardsVariant } from './rsvp-cards-variant'
+export { RSVPHaciendaVariant } from './rsvp-hacienda-variant'
 export type { BaseRSVPProps, CustomQuestion } from './types'
 export { getColorScheme } from './types'

@@ -55,20 +55,33 @@ export async function POST(request: Request) {
       groupMap.set(group.name.toLowerCase().trim(), group.id)
     })
 
-    // Track groups we need to create
+    // Track groups we need to create and their extra passes
     const groupsToCreate = new Set<string>()
+    const groupExtraPasses = new Map<string, number>()
     
-    // First pass: identify groups that need to be created
+    // First pass: identify groups that need to be created and collect extra passes
     for (const guest of body.guests) {
       const groupName = (guest.groupName as string)?.trim()
-      if (groupName && !groupMap.has(groupName.toLowerCase())) {
-        groupsToCreate.add(groupName)
+      if (groupName) {
+        const groupKey = groupName.toLowerCase()
+        if (!groupMap.has(groupKey)) {
+          groupsToCreate.add(groupName)
+        }
+        // Track extra passes per group (use the max value found across guests in the same group)
+        const extraPasses = parseInt(guest.extraPasses) || 0
+        if (extraPasses > 0) {
+          const current = groupExtraPasses.get(groupKey) || 0
+          if (extraPasses > current) {
+            groupExtraPasses.set(groupKey, extraPasses)
+          }
+        }
       }
     }
 
     // Create new groups
     let newGroupsCreated = 0
     for (const groupName of groupsToCreate) {
+      const groupKey = groupName.toLowerCase()
       const { data: newGroup, error: createError } = await supabase
         .from("guest_groups")
         .insert([{
@@ -76,6 +89,7 @@ export async function POST(request: Request) {
           name: groupName,
           phone_number: null,
           notes: null,
+          extra_passes: groupExtraPasses.get(groupKey) || 0,
         }])
         .select()
         .single()
@@ -84,8 +98,21 @@ export async function POST(request: Request) {
         continue
       }
 
-      groupMap.set(groupName.toLowerCase(), newGroup.id)
+      groupMap.set(groupKey, newGroup.id)
       newGroupsCreated++
+    }
+
+    // Update extra passes on existing groups if needed
+    for (const [groupKey, extraPasses] of groupExtraPasses) {
+      const groupId = groupMap.get(groupKey)
+      if (groupId && !groupsToCreate.has(groupKey)) {
+        // Only update existing groups (new ones already have extra_passes set)
+        // Find original group name since groupsToCreate stores original casing
+        await supabase
+          .from("guest_groups")
+          .update({ extra_passes: extraPasses })
+          .eq("id", groupId)
+      }
     }
 
     // Now create all guests with their group assignments

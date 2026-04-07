@@ -31,6 +31,8 @@ interface GroupData {
   phone_numbers?: string[]
   guests: Guest[]
   hasSubmitted?: boolean
+  extra_passes?: number
+  extra_passes_confirmed?: number
 }
 // Map old travel arrangement values to new ones for backwards compatibility
 const mapTravelArrangement = (value: string | null): 'already_booked' | 'no_ticket_needed' | null => {
@@ -68,6 +70,7 @@ export function RSVPCardsVariant({
   const [showOTPDialog, setShowOTPDialog] = useState(false)
   const [applyToAllEnabled, setApplyToAllEnabled] = useState<{ [guestId: string]: boolean }>({})
   const [editingGuestId, setEditingGuestId] = useState<string | null>(null)
+  const [extraPassesAttending, setExtraPassesAttending] = useState(0)
 
   const { bgColor, textColor, titleColor, cardBg, isColored } = getColorScheme(
     theme,
@@ -215,6 +218,7 @@ export function RSVPCardsVariant({
             travel_arrangement: g.attending === false ? null : g.travel_arrangement,
             ticket_attachment_url: g.attending === false ? null : g.ticket_attachment_url
           })),
+          extraPassesAttending: (groupData?.extra_passes || 0) > 0 ? extraPassesAttending : undefined,
           message
         })
       })
@@ -517,6 +521,47 @@ export function RSVPCardsVariant({
                 </AnimatedSection>
               ))}
             </div>
+
+            {/* Extra Passes */}
+            {(groupData?.extra_passes || 0) > 0 && (
+              <div 
+                className="p-6 rounded-2xl border-2 shadow-md mb-6 transition-all"
+                style={{
+                  backgroundColor: cardBg,
+                  borderColor: `${theme?.colors?.accent || titleColor}25`,
+                }}
+              >
+                <label className="block text-sm font-medium mb-3" style={{ color: titleColor }}>
+                  {t('rsvp.additionalGuests')}
+                </label>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setExtraPassesAttending(prev => Math.max(0, prev - 1))}
+                    className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-lg transition-all hover:scale-105"
+                    style={{ borderColor: `${titleColor}30`, color: titleColor }}
+                    disabled={extraPassesAttending <= 0}
+                  >
+                    -
+                  </button>
+                  <span className="text-xl font-semibold min-w-[3ch] text-center" style={{ color: titleColor }}>
+                    {extraPassesAttending}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setExtraPassesAttending(prev => Math.min(groupData?.extra_passes || 0, prev + 1))}
+                    className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-lg transition-all hover:scale-105"
+                    style={{ borderColor: `${titleColor}30`, color: titleColor }}
+                    disabled={extraPassesAttending >= (groupData?.extra_passes || 0)}
+                  >
+                    +
+                  </button>
+                </div>
+                <p className="text-xs mt-2 opacity-60" style={{ color: textColor }}>
+                  {t('rsvp.extraPassesMax', { max: String(groupData?.extra_passes || 0) })}
+                </p>
+              </div>
+            )}
 
             {/* Message Box */}
             <div 

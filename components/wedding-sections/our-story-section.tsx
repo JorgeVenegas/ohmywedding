@@ -8,6 +8,7 @@ import {
   OurStoryZigzagVariant,
   OurStoryBookletVariant,
   OurStorySplitVariant,
+  OurStoryHaciendaVariant,
   BaseOurStoryProps,
 } from './our-story-variants'
 import { 
@@ -18,7 +19,7 @@ import {
 import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
 
 interface OurStorySectionProps extends BaseOurStoryProps {
-  variant?: 'timeline' | 'cards' | 'minimal' | 'zigzag' | 'booklet' | 'split'
+  variant?: 'timeline' | 'cards' | 'minimal' | 'zigzag' | 'booklet' | 'split' | 'hacienda'
   showVariantSwitcher?: boolean
   showHowWeMetPhoto?: boolean
   showProposalPhoto?: boolean
@@ -83,6 +84,12 @@ export function OurStorySection({
       value: 'split',
       label: 'Split View',
       description: 'Full-width alternating layout with large photos - elegant and immersive'
+    },
+    {
+      value: 'hacienda',
+      label: 'Hacienda',
+      description: 'Lush botanical hacienda style with arch frames and antique accents',
+      deluxeOnly: true
     }
   ]
 
@@ -163,6 +170,8 @@ export function OurStorySection({
         return <OurStoryBookletVariant {...commonProps} />
       case 'split':
         return <OurStorySplitVariant {...commonProps} />
+      case 'hacienda':
+        return <OurStoryHaciendaVariant {...commonProps} />
       case 'cards':
       default:
         return <OurStoryCardsVariant {...commonProps} />

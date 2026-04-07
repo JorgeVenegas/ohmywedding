@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { X, Tag, Plus } from "lucide-react"
+import { X, Tag, Plus, Users } from "lucide-react"
 import { Guest, PREDEFINED_TAGS, TAG_COLORS } from "../types"
 
 interface TempGuestForm {
@@ -28,6 +28,7 @@ interface GuestInGroupModal {
 interface GroupForm {
   name: string
   notes: string
+  extraPasses: number
 }
 
 interface EditingGroup {
@@ -111,6 +112,25 @@ export function AddEditGroupModal({
               onChange={(e) => setGroupForm({ ...groupForm, notes: e.target.value })}
               placeholder="Optional notes..."
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              <span className="flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                Extra Passes
+              </span>
+            </label>
+            <Input
+              type="number"
+              min={0}
+              value={groupForm.extraPasses}
+              onChange={(e) => setGroupForm({ ...groupForm, extraPasses: Math.max(0, parseInt(e.target.value) || 0) })}
+              placeholder="0"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Additional unnamed guest slots (e.g. plus-ones without specific names)
+            </p>
           </div>
 
           {/* Guests Section - Only show when creating a new group */}

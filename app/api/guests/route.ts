@@ -102,13 +102,22 @@ export async function POST(request: Request) {
           .select('*', { count: 'exact', head: true })
           .eq('wedding_id', wedding.id)
         
-        const newGuestCount = (currentGuestCount || 0) + body.guests.length
+        // Count extra passes from guest groups
+        const { data: groupsWithExtra } = await supabase
+          .from('guest_groups')
+          .select('extra_passes')
+          .eq('wedding_id', wedding.id)
+          .gt('extra_passes', 0)
+        const totalExtraPasses = groupsWithExtra?.reduce((sum, g) => sum + (g.extra_passes || 0), 0) || 0
+        
+        const effectiveCount = (currentGuestCount || 0) + totalExtraPasses
+        const newGuestCount = effectiveCount + body.guests.length
         if (newGuestCount > guestLimit) {
           return NextResponse.json({ 
-            error: `Guest limit exceeded. Your plan allows ${guestLimit} guests. You currently have ${currentGuestCount || 0} and are trying to add ${body.guests.length}.`,
+            error: `Guest limit exceeded. Your plan allows ${guestLimit} guests. You currently have ${effectiveCount} and are trying to add ${body.guests.length}.`,
             code: 'GUEST_LIMIT_EXCEEDED',
             limit: guestLimit,
-            current: currentGuestCount || 0,
+            current: effectiveCount,
             requested: body.guests.length
           }, { status: 403 })
         }
@@ -190,12 +199,21 @@ export async function POST(request: Request) {
         .select('*', { count: 'exact', head: true })
         .eq('wedding_id', wedding.id)
       
-      if ((currentGuestCount || 0) >= guestLimit) {
+      // Count extra passes from guest groups
+      const { data: groupsWithExtra } = await supabase
+        .from('guest_groups')
+        .select('extra_passes')
+        .eq('wedding_id', wedding.id)
+        .gt('extra_passes', 0)
+      const totalExtraPasses = groupsWithExtra?.reduce((sum, g) => sum + (g.extra_passes || 0), 0) || 0
+      
+      const effectiveCount = (currentGuestCount || 0) + totalExtraPasses
+      if (effectiveCount >= guestLimit) {
         return NextResponse.json({ 
           error: `Guest limit reached. Your plan allows ${guestLimit} guests. Upgrade to add more.`,
           code: 'GUEST_LIMIT_EXCEEDED',
           limit: guestLimit,
-          current: currentGuestCount || 0
+          current: effectiveCount
         }, { status: 403 })
       }
     }

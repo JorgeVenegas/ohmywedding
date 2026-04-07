@@ -86,7 +86,9 @@ export async function GET(
       phone_number: group.phone_number,
       phone_numbers: phoneNumbers,
       guests: guestsWithStatus,
-      hasSubmitted: allResponded
+      hasSubmitted: allResponded,
+      extra_passes: group.extra_passes || 0,
+      extra_passes_confirmed: group.extra_passes_confirmed || 0
     })
   } catch (error) {
     return NextResponse.json(

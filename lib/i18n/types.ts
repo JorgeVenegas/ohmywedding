@@ -95,9 +95,12 @@ export interface Translations {
     chapterOne: string
     howWeMet: string
     howWeMetDefault: string
+    howWeMetPlaceholder: string
     theBigMoment: string
     theProposal: string
+    proposal: string
     proposalDefault: string
+    proposalPlaceholder: string
   }
 
   // Event Details Section
@@ -189,6 +192,8 @@ export interface Translations {
     alreadySubmitted: string
     responseRecorded: string
     editResponse: string
+    additionalGuests: string
+    extraPassesMax: string
     willAttend: string
     cannotAttend: string
     accept: string
