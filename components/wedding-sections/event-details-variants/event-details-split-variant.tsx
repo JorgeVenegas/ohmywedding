@@ -176,8 +176,7 @@ export function EventDetailsSplitVariant(props: BaseEventDetailsProps) {
         <p 
           className="text-base max-w-md mx-auto font-light"
           style={{ 
-            color: cardMutedColor,
-            fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+            color: cardMutedColor
           }}
         >
           {subtitle}
@@ -273,8 +272,7 @@ export function EventDetailsSplitVariant(props: BaseEventDetailsProps) {
                       <p 
                         className="text-sm sm:text-base mb-3 sm:mb-4 font-light italic"
                         style={{ 
-                          color: cardMutedColor,
-                          fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                          color: cardMutedColor
                         }}
                       >
                         "{event.description}"
@@ -430,8 +428,7 @@ export function EventDetailsSplitVariant(props: BaseEventDetailsProps) {
                       <p 
                         className="text-sm sm:text-base mb-4 sm:mb-5 font-light italic"
                         style={{ 
-                          color: cardMutedColor,
-                          fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                          color: cardMutedColor
                         }}
                       >
                         "{event.description}"

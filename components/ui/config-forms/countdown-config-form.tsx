@@ -109,7 +109,8 @@ export function CountdownConfigForm({ config, onChange }: CountdownConfigFormPro
     { value: 'minimal', label: t('config.minimalClean'), description: t('config.minimalCleanDesc') },
     { value: 'circular', label: t('config.circularProgress'), description: t('countdown.title') },
     { value: 'elegant', label: t('config.elegantScript'), description: t('config.elegantScriptDesc') },
-    { value: 'modern', label: t('config.modernBold'), description: t('config.timelineDesc') }
+    { value: 'modern', label: t('config.modernBold'), description: t('config.timelineDesc') },
+    { value: 'hacienda', label: 'Hacienda', description: 'Ornamental hacienda-style countdown' }
   ]
 
   const currentChoice = config.backgroundColorChoice || (config.useColorBackground ? 'primary' : 'none')

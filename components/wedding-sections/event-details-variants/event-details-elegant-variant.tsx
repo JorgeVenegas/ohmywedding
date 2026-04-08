@@ -104,8 +104,7 @@ export function EventDetailsElegantVariant(props: BaseEventDetailsProps) {
           <p 
             className="text-base max-w-lg mx-auto"
             style={{ 
-              color: isColored ? sectionTextColorAlt : theme?.colors?.muted,
-              fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+              color: isColored ? sectionTextColorAlt : theme?.colors?.muted
             }}
           >
             {subtitle}
@@ -224,8 +223,7 @@ export function EventDetailsElegantVariant(props: BaseEventDetailsProps) {
                   <p 
                     className="italic text-sm mb-2 sm:mb-3 max-w-sm mx-auto"
                     style={{ 
-                      color: cardMutedColor,
-                      fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                      color: cardMutedColor
                     }}
                   >
                     "{event.description}"

@@ -99,8 +99,6 @@ export function EventDetailsTimelineVariant(props: BaseEventDetailsProps) {
           <h2 
             className="text-4xl md:text-5xl font-bold"
             style={{ 
-              fontFamily: theme?.fonts?.heading === 'script' ? 'cursive' : 
-                          theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif',
               color: sectionTitleColor
             }}
           >
@@ -172,8 +170,7 @@ export function EventDetailsTimelineVariant(props: BaseEventDetailsProps) {
                     <h3 
                       className={`text-2xl font-bold mb-3 clear-both ${index % 2 === 0 ? 'md:text-right' : 'md:text-left'}`}
                       style={{ 
-                        color: cardTitleColor,
-                        fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
+                        color: cardTitleColor
                       }}
                     >
                       {event.title || t(`eventDetails.eventTypes.${event.type}`) || event.venue}
@@ -205,8 +202,7 @@ export function EventDetailsTimelineVariant(props: BaseEventDetailsProps) {
                     <p 
                       className="text-sm mb-4"
                       style={{ 
-                        color: cardMutedColor,
-                        fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                        color: cardMutedColor
                       }}
                     >
                       {event.description}

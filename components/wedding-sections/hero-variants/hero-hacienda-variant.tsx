@@ -7,22 +7,29 @@ import { HeroTextContent } from './hero-text-content'
 import { BaseHeroProps } from './types'
 import { useEnvelope } from '@/components/contexts/envelope-context'
 import { ChevronDown } from 'lucide-react'
-import { BotanicalCorner, HaciendaTilePattern, CandleGlow, FloralDivider, SideBorderScrollwork } from '../hacienda-ornaments'
+import { BotanicalCorner, CandleGlow, FloralDivider, SideBorderScrollwork, DetailedBorderDivider } from '../hacienda-ornaments'
+import { resolveColor } from '@/lib/color-utils'
 
 interface HeroHaciendaVariantProps extends BaseHeroProps {
   overlayOpacity?: number
   imageBrightness?: number
+  backgroundGradient?: boolean
+  gradientColor1?: string
+  gradientColor2?: string
 }
 
 export function HeroHaciendaVariant({
   wedding, dateId, weddingNameId, theme, alignment,
   showTagline = true, tagline, showCountdown = true, showRSVPButton = true,
   heroImageUrl, overlayOpacity = 55, imageBrightness = 80,
+  backgroundGradient = false, gradientColor1, gradientColor2,
 }: HeroHaciendaVariantProps) {
   const { isOpened: envelopeOpened } = useEnvelope()
   const accent = theme?.colors?.accent || '#C0A882'
   const primary = theme?.colors?.primary || '#2D4A32'
   const [scrollY, setScrollY] = useState(0)
+  const resolvedGradientColor1 = resolveColor(gradientColor1, theme)
+  const resolvedGradientColor2 = resolveColor(gradientColor2, theme)
 
   useEffect(() => {
     const onScroll = () => setScrollY(window.scrollY)
@@ -52,23 +59,29 @@ export function HeroHaciendaVariant({
             rgba(20,16,10,${overlayOpacity / 100 * 0.5}) 75%,
             rgba(12,10,6,${overlayOpacity / 100 * 0.9}) 100%)`,
         }} />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_25%,rgba(15,12,8,0.55)_100%)]" />
+        {/* Color / gradient overlay */}
+        {backgroundGradient && resolvedGradientColor1 && resolvedGradientColor2 ? (
+          <div className="absolute inset-0" style={{
+            background: `linear-gradient(135deg, ${resolvedGradientColor1} 0%, ${resolvedGradientColor2} 100%)`,
+            opacity: 0.55,
+          }} />
+        ) : null}
+        <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, transparent 25%, rgba(15,12,8,${overlayOpacity / 100 * 0.55}) 100%)` }} />
       </div>
 
-      {/* Tile pattern */}
-      <div className={`absolute inset-0 z-[1] pointer-events-none transition-opacity duration-1500 ${envelopeOpened ? 'opacity-100 delay-300' : 'opacity-0'}`}>
-        <HaciendaTilePattern color={accent} opacity={0.025} />
-      </div>
+
 
       {/* Warm glows */}
-      <div className={`absolute inset-0 z-[2] pointer-events-none transition-opacity duration-1500 ${envelopeOpened ? 'opacity-100 delay-500' : 'opacity-0'}`}>
+      <div className={`absolute inset-0 z-[2] pointer-events-none transition-opacity duration-1500 ${envelopeOpened ? 'delay-500' : 'opacity-0'}`}
+        style={{ opacity: envelopeOpened ? overlayOpacity / 100 : 0 }}>
         <CandleGlow position="top-left" intensity="medium" />
         <CandleGlow position="top-right" intensity="medium" />
         <CandleGlow position="center" intensity="strong" />
       </div>
 
       {/* Floating particles */}
-      <div className={`absolute inset-0 z-[3] pointer-events-none transition-opacity duration-2000 ${envelopeOpened ? 'opacity-100 delay-1000' : 'opacity-0'}`}>
+      <div className={`absolute inset-0 z-[3] pointer-events-none transition-opacity duration-2000 ${envelopeOpened ? 'delay-1000' : 'opacity-0'}`}
+        style={{ opacity: envelopeOpened ? overlayOpacity / 100 : 0 }}>
         {[
           { top: '12%', left: '15%', size: 3, delay: '0s', dur: '6s' },
           { top: '20%', left: '78%', size: 2.5, delay: '1.5s', dur: '7s' },
@@ -93,34 +106,38 @@ export function HeroHaciendaVariant({
         `}</style>
       </div>
 
-      {/* === LARGE BOTANICAL CORNER SPRAYS — VERY PROMINENT === */}
+      {/* === BOTANICAL CORNER SPRAYS === */}
       <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-1000 ${envelopeOpened ? 'opacity-100 delay-500' : 'opacity-0'}`}>
-        <BotanicalCorner position="top-left" color={`${accent}90`} size="xl" />
-        <BotanicalCorner position="top-right" color={`${accent}90`} size="xl" />
-        <BotanicalCorner position="bottom-left" color={`${accent}80`} size="lg" />
-        <BotanicalCorner position="bottom-right" color={`${accent}80`} size="lg" />
+        <BotanicalCorner position="top-left" color={accent} size="sm" />
+        <BotanicalCorner position="top-right" color={accent} size="sm" />
+        <BotanicalCorner position="bottom-left" color={accent} size="sm" />
+        <BotanicalCorner position="bottom-right" color={accent} size="sm" />
       </div>
 
-      {/* Border frame — triple line with higher opacity */}
+      {/* Border frame */}
       <div className={`absolute inset-4 sm:inset-8 md:inset-12 z-10 pointer-events-none transition-opacity duration-1000 ${envelopeOpened ? 'opacity-100 delay-700' : 'opacity-0'}`}>
-        <div className="absolute inset-0" style={{ border: `1.5px solid ${accent}35` }} />
-        <div className="absolute inset-2" style={{ border: `1px solid ${accent}18` }} />
-        <div className="absolute inset-3.5" style={{ border: `1px solid ${accent}10` }} />
+        <div className="absolute inset-0" style={{ border: `1.5px solid ${accent}90` }} />
+        <div className="absolute inset-2" style={{ border: `1px solid ${accent}50` }} />
+        <div className="absolute inset-3.5" style={{ border: `1px solid ${accent}30` }} />
         {['top-0 left-0', 'top-0 right-0', 'bottom-0 left-0', 'bottom-0 right-0'].map((pos, i) => (
           <div key={i} className={`absolute ${pos} w-2.5 h-2.5 -translate-x-1/2 -translate-y-1/2`}>
-            <div className="w-full h-full rounded-full" style={{ backgroundColor: accent, opacity: 0.45 }} />
+            <div className="w-full h-full rounded-full" style={{ backgroundColor: accent, opacity: 0.8 }} />
           </div>
         ))}
       </div>
 
       {/* Side border scrollwork */}
       <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-1200 ${envelopeOpened ? 'opacity-100 delay-800' : 'opacity-0'}`}>
-        <SideBorderScrollwork color={`${accent}60`} side="left" />
-        <SideBorderScrollwork color={`${accent}60`} side="right" />
+        <SideBorderScrollwork color={accent} side="left" />
+        <SideBorderScrollwork color={accent} side="right" />
       </div>
 
       {/* Content */}
       <div className="relative z-20 w-full max-w-4xl mx-auto px-6 sm:px-8 flex flex-col items-center justify-center h-full">
+        {/* Asset 5 above the names */}
+        <div className={`w-full transition-all duration-700 delay-[700ms] ${envelopeOpened ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          <DetailedBorderDivider color={accent} className="mb-4 sm:mb-5" />
+        </div>
         <HeroTextContent
           wedding={wedding} dateId={dateId} weddingNameId={weddingNameId}
           theme={theme} alignment={alignment}
@@ -131,7 +148,7 @@ export function HeroHaciendaVariant({
         {/* Floral divider above RSVP */}
         {showRSVPButton && weddingNameId && (
           <div className={`transition-all duration-700 delay-[1500ms] ${envelopeOpened ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <FloralDivider color={`${accent}70`} className="mb-6 sm:mb-8" />
+            <FloralDivider color={accent} className="mb-6 sm:mb-8" />
           </div>
         )}
 

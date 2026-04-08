@@ -119,8 +119,7 @@ export function FAQAccordionVariant({
           <p 
             className="text-base sm:text-lg"
             style={{ 
-              color: subtitleColor,
-              fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+              color: subtitleColor
             }}
           >
             {subtitle}
@@ -178,8 +177,7 @@ export function FAQAccordionVariant({
                   <h3 
                     className="text-base sm:text-lg font-semibold pr-4"
                     style={{ 
-                      color: titleColor,
-                      fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
+                      color: titleColor
                     }}
                   >
                     {item.question}
@@ -210,8 +208,7 @@ export function FAQAccordionVariant({
                     <p 
                       className="text-sm sm:text-base leading-relaxed mb-4"
                       style={{ 
-                        color: mutedTextColor,
-                        fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                        color: mutedTextColor
                       }}
                     >
                       {item.answer}
@@ -253,8 +250,7 @@ export function FAQAccordionVariant({
             <p 
               className="text-sm"
               style={{ 
-                color: mutedTextColor,
-                fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                color: mutedTextColor
               }}
             >
               {contactNote}

@@ -84,8 +84,6 @@ export function HeroTextContent({
             : 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-slate-800'
         }`}
         style={{ 
-          ...(theme?.fonts?.heading === 'script' ? { fontFamily: 'cursive' } : 
-              theme?.fonts?.heading === 'sans-serif' ? { fontFamily: 'sans-serif' } : {}),
           color: isOverlay ? 'white' : (theme?.colors?.foreground || '#1f2937')
         }}
       >
@@ -101,8 +99,7 @@ export function HeroTextContent({
               : 'text-base sm:text-lg md:text-xl lg:text-2xl'
           }`}
           style={{ 
-            color: isOverlay ? 'rgba(255,255,255,0.9)' : (theme?.colors?.muted || '#6b7280'),
-            fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+            color: isOverlay ? 'rgba(255,255,255,0.9)' : (theme?.colors?.muted || '#6b7280')
           }}
         >
           {displayTagline}
@@ -117,8 +114,7 @@ export function HeroTextContent({
             : 'text-xl sm:text-2xl md:text-3xl lg:text-4xl text-slate-800'
         } ${textAlign === 'left' ? 'text-left' : textAlign === 'right' ? 'text-right' : 'text-center'}`}
         style={{ 
-          ...(theme?.fonts?.heading === 'script' ? { fontFamily: 'cursive' } : 
-              theme?.fonts?.heading === 'sans-serif' ? { fontFamily: 'sans-serif' } : {}),
+          fontFamily: 'var(--font-display)',
           color: isOverlay ? 'white' : (theme?.colors?.foreground || '#1f2937')
         }}
       >

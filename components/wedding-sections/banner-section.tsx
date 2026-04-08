@@ -164,10 +164,6 @@ export function BannerSection({
               {effectiveTitle && (
                 <h2
                   className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 drop-shadow-lg"
-                  style={{
-                    fontFamily: theme?.fonts?.heading === 'script' ? 'cursive' : 
-                                theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
-                  }}
                 >
                   {effectiveTitle}
                 </h2>
@@ -175,9 +171,6 @@ export function BannerSection({
               {effectiveSubtitle && (
                 <p 
                   className="text-xl md:text-2xl lg:text-3xl drop-shadow-lg opacity-90"
-                  style={{
-                    fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
-                  }}
                 >
                   {effectiveSubtitle}
                 </p>

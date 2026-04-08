@@ -175,8 +175,7 @@ export function OurStorySplitVariant({
         <p 
           className="text-base max-w-md mx-auto font-light"
           style={{ 
-            color: sectionSubtitleColor,
-            fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+            color: sectionSubtitleColor
           }}
         >
           {subtitle}
@@ -243,8 +242,7 @@ export function OurStorySplitVariant({
                   <p 
                     className="text-sm sm:text-base leading-relaxed font-light"
                     style={{ 
-                      color: contentTextColor,
-                      fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                      color: contentTextColor
                     }}
                   >
                     {section.text}
@@ -314,8 +312,7 @@ export function OurStorySplitVariant({
                     <p 
                       className="text-sm sm:text-base leading-relaxed font-light max-w-2xl mx-auto"
                       style={{ 
-                        color: contentTextColor,
-                        fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                        color: contentTextColor
                       }}
                     >
                       {section.text}
@@ -412,8 +409,7 @@ export function OurStorySplitVariant({
                           <p 
                             className="text-sm sm:text-base leading-relaxed font-light"
                             style={{ 
-                              color: contentTextColor,
-                              fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                              color: contentTextColor
                             }}
                           >
                             {section.text}

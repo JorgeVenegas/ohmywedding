@@ -89,8 +89,7 @@ export function EventDetailsMinimalVariant(props: BaseEventDetailsProps) {
           <h2 
             className="text-3xl md:text-4xl font-light tracking-wide"
             style={{ 
-              color: sectionTitleColor,
-              fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
+              color: sectionTitleColor
             }}
           >
             {title}

@@ -198,9 +198,7 @@ export function CountdownCircularVariant({
             <h2 
               className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6"
               style={{ 
-                color: isColored ? titleColor : theme?.colors?.foreground,
-                fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 
-                           theme?.fonts?.heading === 'script' ? 'cursive' : 'sans-serif'
+                color: isColored ? titleColor : theme?.colors?.foreground
               }}
             >
               {sectionTitle}
@@ -211,9 +209,7 @@ export function CountdownCircularVariant({
             <p 
               className={`text-xl md:text-2xl ${messageColor}`}
               style={{ 
-                color: isColored ? undefined : theme?.colors?.foreground,
-                fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 
-                           theme?.fonts?.heading === 'script' ? 'cursive' : 'sans-serif'
+                color: isColored ? undefined : theme?.colors?.foreground
               }}
             >
               {displayMessage}

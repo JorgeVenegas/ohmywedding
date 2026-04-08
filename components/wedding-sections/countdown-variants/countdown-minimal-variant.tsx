@@ -122,7 +122,6 @@ export function CountdownMinimalVariant({
             <h2 
               className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4"
               style={{ 
-                fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif',
                 color: isColored ? sectionTextColor : theme?.colors?.foreground
               }}
             >
@@ -132,7 +131,6 @@ export function CountdownMinimalVariant({
           <p 
             className={`text-lg md:text-xl mb-8 font-light ${isColored ? '' : 'text-gray-500'}`}
             style={{ 
-              fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif',
               color: isColored ? sectionTextColorAlt : undefined
             }}
           >

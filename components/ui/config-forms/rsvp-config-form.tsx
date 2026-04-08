@@ -43,7 +43,8 @@ export function RSVPConfigForm({ config, onChange }: RSVPConfigFormProps) {
   const variants = [
     { value: 'elegant', label: 'Elegant', description: 'Romantic invitation-style design with elegant typography' },
     { value: 'minimalistic', label: 'Minimalistic', description: 'Modern and clean with refined sophistication' },
-    { value: 'cards', label: 'Cards', description: 'Contemporary card-based layout with smooth interactions' }
+    { value: 'cards', label: 'Cards', description: 'Contemporary card-based layout with smooth interactions' },
+    { value: 'hacienda', label: 'Hacienda', description: 'Rustic hacienda-style RSVP with ornamental card' }
   ]
 
   const addCustomQuestion = () => {

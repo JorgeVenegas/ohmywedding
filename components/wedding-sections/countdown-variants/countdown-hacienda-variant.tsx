@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { AnimatedCountdownUnit } from './animated-countdown-unit'
 import { BaseCountdownProps, TimeLeft, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
-import { CharroStar } from '../hacienda-ornaments'
+import { CharroStar, FloralDivider, HaciendaTilePattern, CandleGlow, DetailedBorderDivider } from '../hacienda-ornaments'
 
 function calculateTimeLeft(targetDate: string): TimeLeft {
   const target = new Date(targetDate + 'T00:00:00')
@@ -44,7 +44,9 @@ export function CountdownHaciendaVariant({
   const numberColor = isAccentBg ? primary : accent
   const labelColor = isColored ? (isAccentBg ? primary : `${secondary}CC`) : sectionTextColor || primary
 
+  const showMonthsUnit = timeLeft.months > 0 || timeLeft.years > 0
   const units = [
+    showMonthsUnit && { value: timeLeft.months, label: t('countdown.months') },
     showDays && { value: timeLeft.days, label: t('countdown.days') },
     showHours && { value: timeLeft.hours, label: t('countdown.hours') },
     showMinutes && { value: timeLeft.minutes, label: t('countdown.minutes') },
@@ -57,16 +59,23 @@ export function CountdownHaciendaVariant({
       className="w-full py-12 sm:py-14 md:py-16 relative overflow-hidden"
       style={{ backgroundColor: isColored ? bgColor : (theme?.colors?.secondary || '#FAF6EF') }}
     >
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 relative z-10">
+        <HaciendaTilePattern color={isAccentBg ? primary : accent} opacity={0.10} />
+        <CandleGlow position="center" intensity="subtle" />
+        <div className="max-w-3xl mx-auto px-6 sm:px-8 md:px-10 relative z-10">
           {sectionTitle && (
             <div className="text-center mb-6 sm:mb-8">
               <h3 className="text-sm sm:text-base uppercase tracking-[0.35em] font-light"
                 style={{ color: labelColor, fontFamily: 'var(--font-heading, serif)' }}>
                 {sectionTitle}
               </h3>
+              <div className="mt-3">
+                <FloralDivider color={isAccentBg ? primary : accent} />
+              </div>
             </div>
           )}
 
+          {/* Asset 5 decorative banner above units */}
+          <DetailedBorderDivider color={isAccentBg ? primary : accent} className="mb-6 opacity-75" />
           {/* Countdown units with charro star separators */}
           <div className="flex items-center justify-center gap-2 sm:gap-6 md:gap-8">
             {units.map((unit, i) => (

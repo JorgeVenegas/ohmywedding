@@ -88,8 +88,7 @@ export function FAQCardsVariant({
           <h2 
             className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold mb-3 sm:mb-4"
             style={{ 
-              color: titleColor,
-              fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
+              color: titleColor
             }}
           >
             {title}
@@ -98,8 +97,7 @@ export function FAQCardsVariant({
             <p 
               className="text-base sm:text-lg max-w-xl mx-auto"
               style={{ 
-                color: subtitleColor,
-                fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                color: subtitleColor
               }}
             >
               {subtitle}
@@ -157,8 +155,7 @@ export function FAQCardsVariant({
                   <h3 
                     className="text-base sm:text-lg font-medium mb-2"
                     style={{ 
-                      color: titleColor,
-                      fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
+                      color: titleColor
                     }}
                   >
                     {item.question}
@@ -166,8 +163,7 @@ export function FAQCardsVariant({
                   <p 
                     className="text-sm sm:text-base leading-relaxed mb-4"
                     style={{ 
-                      color: bodyTextColor,
-                      fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                      color: bodyTextColor
                     }}
                   >
                     {item.answer}
@@ -214,8 +210,7 @@ export function FAQCardsVariant({
             <p 
               className="text-base sm:text-lg"
               style={{ 
-                color: bodyTextColor,
-                fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                color: bodyTextColor
               }}
             >
               {contactNote}

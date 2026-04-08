@@ -135,9 +135,7 @@ export function CountdownClassicVariant({
             <h2 
               className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"
               style={{ 
-                color: messageColor,
-                fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 
-                           theme?.fonts?.heading === 'script' ? 'cursive' : 'sans-serif'
+                color: messageColor
               }}
             >
               {sectionTitle}
@@ -148,9 +146,7 @@ export function CountdownClassicVariant({
             <h2 
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold italic"
               style={{ 
-                color: messageColor,
-                fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 
-                           theme?.fonts?.heading === 'script' ? 'cursive' : 'sans-serif'
+                color: messageColor
               }}
             >
               {displayMessage}
@@ -180,7 +176,7 @@ export function CountdownClassicVariant({
                       className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-1 sm:mb-2"
                       style={{ 
                         color: numberColor,
-                        fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
+                        fontFamily: 'var(--font-heading)'
                       }}
                     >
                       {unit.value.toString().padStart(2, '0')}

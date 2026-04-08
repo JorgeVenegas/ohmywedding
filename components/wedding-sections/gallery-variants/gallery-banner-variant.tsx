@@ -79,10 +79,6 @@ export function GalleryBannerVariant({
           <div className="text-white text-center px-6 max-w-4xl">
             <h2
               className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 drop-shadow-lg"
-              style={{
-                fontFamily: theme?.fonts?.heading === 'script' ? 'cursive' : 
-                            theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
-              }}
             >
               {sectionTitle || t('gallery.title')}
             </h2>

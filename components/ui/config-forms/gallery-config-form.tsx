@@ -165,6 +165,11 @@ export function GalleryConfigForm({ config, onChange, weddingNameId }: GalleryCo
       value: 'collage',
       label: t('config.galleryCollage'),
       description: t('config.galleryCollageDesc')
+    },
+    {
+      value: 'hacienda',
+      label: 'Hacienda',
+      description: 'Hacienda-style tight collage gallery'
     }
   ]
 

@@ -8,8 +8,8 @@ import { BaseFAQProps, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 import {
-  HaciendaTilePattern, CandleGlow, IronLineDivider,
-  HaciendaSectionTitle, FloralDivider, OrnateCorner, BotanicalCorner,
+  CandleGlow, IronLineDivider,
+  HaciendaSectionTitle, FloralDivider, OrnateCorner,
 } from '../hacienda-ornaments'
 
 function AnimatedFAQItem({ index, children }: { index: number; children: React.ReactNode }) {
@@ -80,20 +80,15 @@ export function FAQHaciendaVariant({
     <>
       <section id="faq" className="w-full py-16 sm:py-20 md:py-28 relative overflow-hidden"
         style={{ backgroundColor: sectionBg }}>
-        {/* Rich layered background */}
-        <HaciendaTilePattern color={useDarkBg ? creamText : darkBg} opacity={useDarkBg ? 0.025 : 0.015} />
+        {/* Background glow */}
         <CandleGlow position="top-left" intensity={useDarkBg ? 'medium' : 'subtle'} />
         <CandleGlow position="top-right" intensity={useDarkBg ? 'medium' : 'subtle'} />
-
-        {/* Botanical corners */}
-        <BotanicalCorner position="top-right" color={`${goldAccent}${useDarkBg ? '35' : '25'}`} size="md" />
-        <BotanicalCorner position="bottom-left" color={`${goldAccent}${useDarkBg ? '30' : '20'}`} size="sm" />
 
         {/* Top/bottom gold edges */}
         <div className="absolute top-0 left-0 right-0 h-1" style={{ background: `linear-gradient(90deg, transparent, ${goldAccent}30, transparent)` }} />
         <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: `linear-gradient(90deg, transparent, ${goldAccent}30, transparent)` }} />
 
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 relative z-10">
+        <div className="max-w-3xl mx-auto px-6 sm:px-8 md:px-10 relative z-10">
           <AnimatedSection className="mb-12 sm:mb-16">
             <HaciendaSectionTitle title={title} subtitle={subtitle}
               titleColor={headingColor} subtitleColor={`${headingColor}99`} accentColor={goldAccent} />
@@ -110,10 +105,10 @@ export function FAQHaciendaVariant({
                 <CandleGlow position="center" intensity="subtle" />
 
                 {/* Ornate corners on dress code card */}
-                <OrnateCorner position="top-left" color={`${goldAccent}40`} size="sm" />
-                <OrnateCorner position="top-right" color={`${goldAccent}40`} size="sm" />
-                <OrnateCorner position="bottom-left" color={`${goldAccent}30`} size="sm" />
-                <OrnateCorner position="bottom-right" color={`${goldAccent}30`} size="sm" />
+                <OrnateCorner position="top-left" color={`${goldAccent}90`} size="sm" />
+                <OrnateCorner position="top-right" color={`${goldAccent}90`} size="sm" />
+                <OrnateCorner position="bottom-left" color={`${goldAccent}90`} size="sm" />
+                <OrnateCorner position="bottom-right" color={`${goldAccent}90`} size="sm" />
 
                 <div className="flex items-center gap-2.5 mb-5 relative z-10">
                   <Shirt className="w-5 h-5" style={{ color: goldAccent }} />

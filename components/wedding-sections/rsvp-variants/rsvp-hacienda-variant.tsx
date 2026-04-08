@@ -12,7 +12,7 @@ import { AnimatedSection } from '../animated-section'
 import { BaseRSVPProps, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import {
-  FloralDivider, HaciendaTilePattern, CandleGlow,
+  FloralDivider, CandleGlow,
   OrnateCorner, BotanicalCorner, DecorativeQuoteBlock,
 } from '../hacienda-ornaments'
 
@@ -223,9 +223,8 @@ export function RSVPHaciendaVariant({
   if (isSubmitted && !isEditing) {
     return (
       <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : { backgroundColor: secondary }}>
-        <HaciendaTilePattern color={primary} opacity={0.015} />
-        <BotanicalCorner position="top-right" color={`${accent}25`} size="sm" />
-        <div className="max-w-2xl mx-auto px-4 py-16 sm:py-20 relative z-10">
+        <BotanicalCorner position="top-left" color={`${accent}55`} size="sm" />
+        <div className="max-w-2xl mx-auto px-6 sm:px-8 py-16 sm:py-20 relative z-10">
           <AnimatedSection>
             <OrnateCard>
               <div className="text-center space-y-5">
@@ -285,9 +284,8 @@ export function RSVPHaciendaVariant({
   if (!groupId) {
     return (
       <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : { backgroundColor: secondary }}>
-        <HaciendaTilePattern color={primary} opacity={0.015} />
-        <BotanicalCorner position="bottom-left" color={`${accent}22`} size="sm" />
-        <div className="max-w-xl mx-auto px-4 py-16 sm:py-20 relative z-10">
+        <BotanicalCorner position="bottom-right" color={`${accent}52`} size="sm" />
+        <div className="max-w-xl mx-auto px-6 sm:px-8 py-16 sm:py-20 relative z-10">
           <AnimatedSection>
             <OrnateCard>
               <div className="space-y-6" style={{ textAlign }}>
@@ -305,10 +303,9 @@ export function RSVPHaciendaVariant({
   /* Main RSVP Form */
   return (
     <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : { backgroundColor: secondary }}>
-      <HaciendaTilePattern color={primary} opacity={0.015} />
-      <BotanicalCorner position="top-left" color={`${accent}22`} size="sm" />
-      <BotanicalCorner position="bottom-right" color={`${accent}18`} size="sm" />
-      <div className="max-w-2xl mx-auto px-4 py-14 sm:py-18 relative z-10">
+      <BotanicalCorner position="top-right" color={`${accent}52`} size="sm" />
+      <BotanicalCorner position="bottom-left" color={`${accent}45`} size="sm" />
+      <div className="max-w-2xl mx-auto px-6 sm:px-8 py-14 sm:py-18 relative z-10">
         <AnimatedSection>
           <OrnateCard>
             <form onSubmit={handleSubmitClick} className="space-y-7" style={{ textAlign }}>

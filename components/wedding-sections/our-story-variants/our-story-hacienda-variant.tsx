@@ -7,8 +7,8 @@ import { AnimatedSection } from '../animated-section'
 import { BaseOurStoryProps, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import {
-  BaroqueFrame, BotanicalCorner, FloralDivider,
-  HaciendaTilePattern, CandleGlow, HaciendaSectionTitle,
+  BaroqueFrame, BotanicalCorner, FloralDivider, SideBorderScrollwork,
+  CandleGlow, HaciendaSectionTitle,
   ScrapbookPhoto, GoldTapeAccent, DecorativeQuoteBlock, TornPaperEdge,
 } from '../hacienda-ornaments'
 
@@ -45,17 +45,18 @@ export function OurStoryHaciendaVariant({
     >
       {/* Rich background layers */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <HaciendaTilePattern color={isColored ? secondary : primary} opacity={0.025} />
         <CandleGlow position="top-right" intensity="medium" />
         <CandleGlow position="bottom" intensity="medium" />
         {/* LARGE botanical corners — visible like reference */}
-        <BotanicalCorner position="top-left" color={`${accent}30`} size="lg" />
-        <BotanicalCorner position="bottom-right" color={`${accent}30`} size="lg" />
-        <BotanicalCorner position="top-right" color={`${accent}20`} size="md" />
-        <BotanicalCorner position="bottom-left" color={`${accent}20`} size="md" />
+        <BotanicalCorner position="top-left" color={`${accent}60`} size="sm" />
+        <BotanicalCorner position="bottom-right" color={`${accent}60`} size="sm" />
+        <BotanicalCorner position="top-right" color={`${accent}45`} size="sm" />
+        <BotanicalCorner position="bottom-left" color={`${accent}45`} size="sm" />
+        <SideBorderScrollwork color={`${accent}42`} side="left" />
+        <SideBorderScrollwork color={`${accent}42`} side="right" />
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
+      <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-10 relative z-10">
         {/* Section title */}
         <AnimatedSection className="mb-14 sm:mb-20">
           <HaciendaSectionTitle

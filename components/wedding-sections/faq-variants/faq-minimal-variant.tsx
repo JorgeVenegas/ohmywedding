@@ -109,8 +109,7 @@ export function FAQMinimalVariant({
           <h2 
             className="text-2xl sm:text-3xl md:text-4xl font-light"
             style={{ 
-              color: titleColor,
-              fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
+              color: titleColor
             }}
           >
             {title}
@@ -148,8 +147,7 @@ export function FAQMinimalVariant({
                   <h3 
                     className="text-sm sm:text-base font-medium"
                     style={{ 
-                      color: titleColor,
-                      fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                      color: titleColor
                     }}
                   >
                     {item.question}
@@ -172,8 +170,7 @@ export function FAQMinimalVariant({
                   <p 
                     className="text-sm leading-relaxed mb-4"
                     style={{ 
-                      color: mutedTextColor,
-                      fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                      color: mutedTextColor
                     }}
                   >
                     {item.answer}
@@ -214,8 +211,7 @@ export function FAQMinimalVariant({
             <p 
               className="text-sm font-light"
               style={{ 
-                color: mutedTextColor,
-                fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                color: mutedTextColor
               }}
             >
               {contactNote}

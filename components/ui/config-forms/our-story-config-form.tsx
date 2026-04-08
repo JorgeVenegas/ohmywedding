@@ -123,7 +123,8 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
     { value: 'minimal', label: t('config.minimal'), description: t('config.minimalCleanDesc') },
     { value: 'zigzag', label: t('config.zigzag'), description: t('config.zigzagDesc') },
     { value: 'booklet', label: t('config.booklet'), description: t('config.bookletDesc') },
-    { value: 'split', label: t('config.splitView'), description: t('config.splitViewDesc') }
+    { value: 'split', label: t('config.splitView'), description: t('config.splitViewDesc') },
+    { value: 'hacienda', label: 'Hacienda', description: 'Rustic hacienda-style story layout' }
   ]
 
   const currentChoice = config.backgroundColorChoice || (config.useColorBackground ? 'primary' : 'none')

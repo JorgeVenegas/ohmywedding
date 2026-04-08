@@ -251,6 +251,7 @@ export function EventDetailsConfigForm({ config, wedding, onChange }: EventDetai
             { value: 'timeline', label: t('config.timeline'), description: t('config.timelineDesc') },
             { value: 'minimal', label: t('config.minimalClean'), description: t('config.minimalCleanDesc') },
             { value: 'split', label: t('config.splitLayout'), description: t('config.splitLayoutDesc') },
+            { value: 'hacienda', label: 'Hacienda', description: 'Hacienda-style event details with medallions' },
           ]}
         />
       </div>

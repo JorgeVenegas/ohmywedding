@@ -106,8 +106,6 @@ export function EventDetailsClassicVariant(props: BaseEventDetailsProps) {
         <h2 
           className="text-4xl md:text-5xl font-bold mb-4"
           style={{ 
-            fontFamily: theme?.fonts?.heading === 'script' ? 'cursive' : 
-                        theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif',
             color: sectionTitleColor
           }}
         >
@@ -166,8 +164,7 @@ export function EventDetailsClassicVariant(props: BaseEventDetailsProps) {
               <h3 
                 className="text-xl sm:text-2xl mb-2"
                 style={{ 
-                  color: cardTitleColor,
-                  fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
+                  color: cardTitleColor
                 }}
               >
                 {event.title || t(`eventDetails.eventTypes.${event.type}`) || event.venue}
@@ -225,8 +222,7 @@ export function EventDetailsClassicVariant(props: BaseEventDetailsProps) {
               <p 
                 className="text-sm mb-3 sm:mb-4 italic"
                 style={{ 
-                  color: cardMutedColor,
-                  fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                  color: cardMutedColor
                 }}
               >
                 {event.description}

@@ -3,20 +3,19 @@
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { X } from 'lucide-react'
-import { SectionWrapper } from '../section-wrapper'
 import { AnimatedSection } from '../animated-section'
 import { BaseGalleryProps } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { getGalleryColorScheme } from './color-utils'
 import {
-  HaciendaTilePattern, CandleGlow, HaciendaSectionTitle,
-  BotanicalCorner, FloralDivider, ScrapbookPhoto, TornPaperEdge,
+  CandleGlow, HaciendaSectionTitle,
+  FloralDivider, CenterMedallion, CharroStar,
 } from '../hacienda-ornaments'
 
 export function GalleryHaciendaVariant({
   weddingNameId, theme, alignment, sectionTitle, sectionSubtitle,
   photos = [], backgroundColorChoice = 'none',
-  titleAlignment = 'center', subtitleAlignment = 'center', masonryColumns = 3,
+  titleAlignment = 'center', subtitleAlignment = 'center', gridColumns = 4,
 }: BaseGalleryProps) {
   const { t } = useI18n()
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null)
@@ -31,193 +30,165 @@ export function GalleryHaciendaVariant({
   }, [selectedPhoto, isClosing])
 
   const handleClosePhoto = () => {
-    setIsVisible(false); setIsClosing(true)
+    setIsVisible(false)
+    setIsClosing(true)
     setTimeout(() => { setSelectedPhoto(null); setIsClosing(false) }, 300)
   }
-
-  const { bgColor, textColor, mutedTextColor, isColored } = getGalleryColorScheme(
-    theme, backgroundColorChoice || 'none'
-  )
 
   const primary = theme?.colors?.primary || '#2D4A32'
   const accent = theme?.colors?.accent || '#C0A882'
   const secondary = theme?.colors?.secondary || '#FAF6EF'
-  const validPhotos = photos.filter((photo) => photo.url)
+  const validPhotos = photos.filter(photo => photo.url)
+
+  const { textColor, mutedTextColor, isColored } = getGalleryColorScheme(
+    theme, backgroundColorChoice || 'none'
+  )
+
+  const getLightTint = (hex: string, tintAmount: number): string => {
+    const num = parseInt(hex.replace('#', ''), 16)
+    const r = (num >> 16) & 255
+    const g = (num >> 8) & 255
+    const b = num & 255
+    return `rgb(${Math.round(r + (255 - r) * tintAmount)}, ${Math.round(g + (255 - g) * tintAmount)}, ${Math.round(b + (255 - b) * tintAmount)})`
+  }
+
+  const getBackgroundColor = () => {
+    if (!backgroundColorChoice || backgroundColorChoice === 'none') return secondary
+    if (!theme?.colors) return secondary
+    if (backgroundColorChoice.includes('-light')) {
+      const baseKey = backgroundColorChoice.split('-')[0] as 'primary' | 'secondary' | 'accent'
+      const baseColor = theme.colors[baseKey] || '#9CAF88'
+      return backgroundColorChoice.endsWith('lighter')
+        ? getLightTint(baseColor, 0.88)
+        : getLightTint(baseColor, 0.5)
+    }
+    return theme.colors[backgroundColorChoice as 'primary' | 'secondary' | 'accent'] || secondary
+  }
+
+  const backgroundColor = getBackgroundColor()
 
   if (validPhotos.length === 0) {
     return (
-      <SectionWrapper theme={isColored ? undefined : theme} alignment={alignment}
-        background={isColored ? 'default' : 'muted'} id="gallery"
-        style={isColored ? { backgroundColor: bgColor } : { backgroundColor: secondary }}>
-        <div className="text-center py-16">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl mb-4"
-            style={{ fontFamily: 'var(--font-display, cursive)', color: isColored ? textColor : primary, fontWeight: 400 }}>
-            {sectionTitle || t('gallery.title')}
-          </h2>
+      <section id="gallery" className="w-full py-16 sm:py-20 relative overflow-hidden" style={{ backgroundColor }}>
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <CandleGlow position="top" intensity="medium" />
+          <CandleGlow position="bottom" intensity="subtle" />
+        </div>
+        <div className="relative z-10 text-center max-w-3xl mx-auto px-6 sm:px-8">
+          <HaciendaSectionTitle
+            title={sectionTitle || t('gallery.title')} subtitle={sectionSubtitle}
+            titleColor={isColored ? textColor : primary}
+            subtitleColor={isColored ? mutedTextColor : accent} accentColor={accent} />
+          <div className="flex items-center justify-center gap-4 sm:gap-6 mt-6 mb-5">
+            <CharroStar color={`${accent}70`} size={20} />
+            <CenterMedallion color={`${accent}75`} size="sm" />
+            <CharroStar color={`${accent}70`} size={20} />
+          </div>
           <p className="text-sm font-light" style={{ color: isColored ? mutedTextColor : `${primary}80` }}>
             {t('gallery.noPhotosYet')}. {t('gallery.uploadYourFirst')}
           </p>
         </div>
-      </SectionWrapper>
+      </section>
     )
-  }
-
-  const getAspectRatio = (index: number) => {
-    const patterns = ['aspect-[3/4]', 'aspect-square', 'aspect-[4/5]', 'aspect-[3/4]', 'aspect-[5/6]']
-    return patterns[index % patterns.length]
-  }
-
-  const archClip = 'polygon(0% 20%, 1% 14%, 3% 9%, 7% 5%, 13% 2%, 20% 0.5%, 30% 0%, 50% 0%, 70% 0%, 80% 0.5%, 87% 2%, 93% 5%, 97% 9%, 99% 14%, 100% 20%, 100% 100%, 0% 100%)'
-
-  // Pattern: every 4th = scrapbook, every 6th = torn edge, every 3rd = arch
-  const shouldUseArch = (index: number) => index % 3 === 0 && index % 4 !== 0 && index % 6 !== 0
-  const shouldUseScrapbook = (index: number) => index % 4 === 0
-  const shouldUseTornEdge = (index: number) => index % 6 === 2
-  const getScrapbookRotation = (index: number) => {
-    const rotations = [-3, 2.5, -2, 3.5, -1.5, 2]
-    return rotations[index % rotations.length]
   }
 
   return (
     <>
-      <SectionWrapper theme={isColored ? undefined : theme} alignment={alignment}
-        background={isColored ? 'default' : 'default'} id="gallery"
-        style={isColored ? { backgroundColor: bgColor } : { backgroundColor: secondary }}>
-
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <HaciendaTilePattern color={isColored ? textColor : primary} opacity={0.02} />
-          <CandleGlow position="top" intensity="medium" />
-          <CandleGlow position="bottom" intensity="subtle" />
-          <BotanicalCorner position="top-left" color={`${accent}20`} size="lg" />
-          <BotanicalCorner position="bottom-right" color={`${accent}20`} size="lg" />
-          <BotanicalCorner position="top-right" color={`${accent}12`} size="md" />
+      <section id="gallery" className="w-full relative overflow-hidden" style={{ backgroundColor }}>
+        {/* Hacienda header */}
+        <div className="relative z-10 py-12 sm:py-16">
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <CandleGlow position="top" intensity="subtle" />
+          </div>
+          <div className="max-w-3xl mx-auto px-6 sm:px-8 relative z-10">
+            <AnimatedSection className={`text-${titleAlignment}`}>
+              <HaciendaSectionTitle
+                title={sectionTitle || t('gallery.title')} subtitle={sectionSubtitle}
+                titleColor={isColored ? textColor : primary}
+                subtitleColor={isColored ? mutedTextColor : accent} accentColor={accent} />
+              <div className="flex items-center justify-center gap-4 sm:gap-6 mt-6">
+                <CharroStar color={`${accent}65`} size={20} />
+                <CenterMedallion color={`${accent}70`} size="sm" />
+                <CharroStar color={`${accent}65`} size={20} />
+              </div>
+            </AnimatedSection>
+          </div>
         </div>
 
-        <div className="relative z-10">
-          <AnimatedSection className={`mb-14 sm:mb-18 text-${titleAlignment}`}>
-            <HaciendaSectionTitle
-              title={sectionTitle || t('gallery.title')} subtitle={sectionSubtitle}
-              titleColor={isColored ? textColor : primary}
-              subtitleColor={isColored ? mutedTextColor : accent} accentColor={accent} />
-          </AnimatedSection>
-
-          {/* Masonry Grid */}
-          <div className={`gap-5 sm:gap-6 w-full ${
-            masonryColumns === 2 ? 'columns-2'
-              : masonryColumns === 3 ? 'columns-2 md:columns-3'
-                : masonryColumns === 4 ? 'columns-2 md:columns-3 lg:columns-4'
-                  : 'columns-2 md:columns-3 lg:columns-5'
-          }`}>
+        {/* Full-width collage grid -- no gaps, smart wide images */}
+        <div className="relative">
+          <div
+            className={`grid w-full gap-0 auto-rows-auto ${
+              gridColumns === 2 ? 'grid-cols-2' :
+              gridColumns === 3 ? 'grid-cols-2 md:grid-cols-3' :
+              gridColumns === 4 ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' :
+              gridColumns === 5 ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5' :
+              'grid-cols-2 md:grid-cols-3 lg:grid-cols-6'
+            }`}
+          >
             {validPhotos.map((photo, index) => {
-              const isArch = shouldUseArch(index)
-              const isScrapbook = shouldUseScrapbook(index)
-              const isTorn = shouldUseTornEdge(index)
+              const totalPhotos = validPhotos.length
+              const cols = gridColumns
+              const remainder = totalPhotos % cols
+              const emptySpaces = remainder === 0 ? 0 : cols - remainder
 
-              // Scrapbook-style: rotated, white border, tape strip
-              if (isScrapbook) {
-                return (
-                  <AnimatedSection key={photo.id} index={index}
-                    className="break-inside-avoid mb-5 sm:mb-6 cursor-pointer"
-                    onClick={() => setSelectedPhoto(photo.url)}>
-                    <ScrapbookPhoto rotation={getScrapbookRotation(index)} accentColor={accent}>
-                      <div className={`relative ${getAspectRatio(index)} overflow-hidden`}>
-                        <Image src={photo.url} alt={photo.alt || 'Gallery photo'} fill
-                          className="object-cover"
-                          style={{
-                            objectPosition: photo.focalPoint ? `${photo.focalPoint.x}% ${photo.focalPoint.y}%` : 'center',
-                            transform: photo.zoom && photo.zoom > 1 ? `scale(${photo.zoom})` : undefined,
-                            transformOrigin: photo.focalPoint ? `${photo.focalPoint.x}% ${photo.focalPoint.y}%` : 'center',
-                          }}
-                          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw" loading="lazy" />
-                      </div>
-                      {photo.caption && (
-                        <p className="text-center text-[10px] sm:text-xs font-light italic mt-2 px-1 line-clamp-1"
-                          style={{ color: `${primary}99`, fontFamily: 'var(--font-body, sans-serif)' }}>
-                          {photo.caption}
-                        </p>
-                      )}
-                    </ScrapbookPhoto>
-                  </AnimatedSection>
-                )
+              const wideImageIndices: number[] = []
+              if (emptySpaces > 0) {
+                const step = Math.floor(totalPhotos / emptySpaces)
+                for (let i = 0; i < emptySpaces; i++) {
+                  let position = Math.min((i + 1) * step - 1, totalPhotos - 1)
+                  if (position === totalPhotos - 1 && emptySpaces > 1) {
+                    position = totalPhotos - 2
+                  }
+                  wideImageIndices.push(position)
+                }
               }
 
-              // Torn paper edge photo
-              if (isTorn) {
-                return (
-                  <AnimatedSection key={photo.id} index={index}
-                    className="break-inside-avoid mb-5 sm:mb-6 cursor-pointer group"
-                    onClick={() => setSelectedPhoto(photo.url)}>
-                    <TornPaperEdge side="bottom" bgColor={secondary}>
-                      <div className={`relative ${getAspectRatio(index)} overflow-hidden`}>
-                        <Image src={photo.url} alt={photo.alt || 'Gallery photo'} fill
-                          className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                          style={{
-                            objectPosition: photo.focalPoint ? `${photo.focalPoint.x}% ${photo.focalPoint.y}%` : 'center',
-                            transform: photo.zoom && photo.zoom > 1 ? `scale(${photo.zoom})` : undefined,
-                            transformOrigin: photo.focalPoint ? `${photo.focalPoint.x}% ${photo.focalPoint.y}%` : 'center',
-                          }}
-                          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw" loading="lazy" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400">
-                          {photo.caption && (
-                            <div className="absolute bottom-4 left-0 right-0 px-3">
-                              <p className="text-white text-xs font-light line-clamp-2" style={{ fontFamily: 'var(--font-body, sans-serif)' }}>{photo.caption}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </TornPaperEdge>
-                  </AnimatedSection>
-                )
-              }
+              const isWide = wideImageIndices.includes(index)
 
-              // Regular or arch photo
               return (
-                <AnimatedSection key={photo.id} index={index}
-                  className="break-inside-avoid mb-5 sm:mb-6 cursor-pointer group"
-                  onClick={() => setSelectedPhoto(photo.url)}>
-                  <div className={`relative ${getAspectRatio(index)} overflow-hidden transition-all duration-500 hover:shadow-2xl`}
+                <AnimatedSection
+                  key={photo.id}
+                  index={index}
+                  className={`relative overflow-hidden cursor-pointer group ${
+                    isWide ? 'col-span-2 aspect-[2/1]' : 'aspect-square'
+                  }`}
+                  onClick={() => setSelectedPhoto(photo.url)}
+                >
+                  <Image
+                    src={photo.url}
+                    alt={photo.alt || 'Gallery photo'}
+                    fill
+                    className="object-cover"
                     style={{
-                      clipPath: isArch ? archClip : undefined,
-                      borderRadius: isArch ? undefined : '0.75rem',
-                      boxShadow: isArch
-                        ? `0 8px 30px rgba(0,0,0,0.2), inset 0 0 0 4px ${accent}35`
-                        : '0 4px 18px rgba(0,0,0,0.12)',
-                    }}>
-                    <Image src={photo.url} alt={photo.alt || 'Gallery photo'} fill
-                      className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-                      style={{
-                        objectPosition: photo.focalPoint ? `${photo.focalPoint.x}% ${photo.focalPoint.y}%` : 'center',
-                        transform: photo.zoom && photo.zoom > 1 ? `scale(${photo.zoom})` : undefined,
-                        transformOrigin: photo.focalPoint ? `${photo.focalPoint.x}% ${photo.focalPoint.y}%` : 'center',
-                      }}
-                      sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw" loading="lazy" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400">
-                      {photo.caption && (
-                        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
-                          <p className="text-white text-xs sm:text-sm font-light line-clamp-2" style={{ fontFamily: 'var(--font-body, sans-serif)' }}>{photo.caption}</p>
-                        </div>
-                      )}
+                      objectPosition: photo.focalPoint ? `${photo.focalPoint.x}% ${photo.focalPoint.y}%` : 'center',
+                      transform: photo.zoom && photo.zoom > 1 ? `scale(${photo.zoom})` : undefined,
+                      transformOrigin: photo.focalPoint ? `${photo.focalPoint.x}% ${photo.focalPoint.y}%` : 'center',
+                    }}
+                    sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                    loading="lazy"
+                  />
+                  {photo.caption && (
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4 z-10">
+                      <p className="text-white text-center text-sm font-medium">{photo.caption}</p>
                     </div>
-                    {isArch && (
-                      <div className="absolute inset-0 pointer-events-none transition-all duration-500 group-hover:shadow-[inset_0_0_40px_rgba(192,168,130,0.25)]"
-                        style={{ clipPath: archClip, boxShadow: `inset 0 0 0 4px ${accent}40` }} />
-                    )}
-                    {!isArch && (
-                      <div className="absolute inset-0 pointer-events-none border-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                        style={{ borderColor: `${accent}40` }} />
-                    )}
-                  </div>
+                  )}
                 </AnimatedSection>
               )
             })}
           </div>
+        </div>
 
-          {/* Bottom floral divider */}
-          <div className="mt-14 sm:mt-18">
-            <FloralDivider color={`${accent}45`} />
+        {/* Bottom hacienda divider */}
+        <div className="relative z-10 py-10 sm:py-14">
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <CandleGlow position="bottom" intensity="subtle" />
+          </div>
+          <div className="max-w-3xl mx-auto px-6 sm:px-8 relative z-10">
+            <FloralDivider color={`${accent}55`} />
           </div>
         </div>
-      </SectionWrapper>
+      </section>
 
       {/* Lightbox */}
       {selectedPhoto && (
@@ -229,7 +200,7 @@ export function GalleryHaciendaVariant({
             <X className="w-6 h-6" />
           </button>
           <div className={`relative max-w-6xl max-h-[90vh] w-full h-full transition-all duration-300 ${isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
-            <Image src={selectedPhoto} alt="Full size photo" fill className="object-contain" sizes="100vw" />
+            <Image src={selectedPhoto} alt="Full size photo" fill className="object-contain" sizes="100vw" unoptimized />
           </div>
         </div>
       )}

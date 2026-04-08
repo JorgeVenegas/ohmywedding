@@ -152,7 +152,8 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
     { value: 'minimal', label: t('config.minimal'), description: t('config.minimalCleanDesc') },
     { value: 'cards', label: t('config.cardsGrid'), description: t('config.cardsGridDesc') },
     { value: 'elegant', label: t('config.elegant'), description: t('config.elegantScriptDesc') },
-    { value: 'simple', label: t('config.simpleList'), description: t('config.simpleListDesc') }
+    { value: 'simple', label: t('config.simpleList'), description: t('config.simpleListDesc') },
+    { value: 'hacienda', label: 'Hacienda', description: 'Elegant hacienda-style FAQ with iron accents' }
   ]
 
   const currentChoice = config.backgroundColorChoice || (config.useColorBackground ? 'primary' : 'none')

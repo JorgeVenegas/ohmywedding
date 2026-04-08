@@ -62,8 +62,6 @@ export function GalleryListVariant({
         <h2
           className="text-3xl md:text-5xl font-bold mb-4"
           style={{
-            fontFamily: theme?.fonts?.heading === 'script' ? 'cursive' : 
-                        theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif',
             color: textColor
           }}
         >
@@ -129,8 +127,7 @@ export function GalleryListVariant({
                 <p 
                   className="text-lg md:text-xl leading-relaxed"
                   style={{ 
-                    color: textColor,
-                    fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                    color: textColor
                   }}
                 >
                   {photo.caption}

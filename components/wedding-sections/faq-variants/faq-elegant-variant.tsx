@@ -116,8 +116,7 @@ export function FAQElegantVariant({
           <h2 
             className="text-3xl sm:text-4xl md:text-5xl font-light italic mb-3 sm:mb-4"
             style={{ 
-              color: titleColor,
-              fontFamily: theme?.fonts?.script || 'Georgia, serif'
+              color: titleColor
             }}
           >
             {title}
@@ -126,8 +125,7 @@ export function FAQElegantVariant({
             <p 
               className="text-base sm:text-lg font-light"
               style={{ 
-                color: subtitleColor,
-                fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                color: subtitleColor
               }}
             >
               {subtitle}
@@ -146,8 +144,7 @@ export function FAQElegantVariant({
             <p 
               className="text-lg font-light italic mb-1"
               style={{ 
-                color: isColored ? 'rgba(255,255,255,0.6)' : '#9ca3af',
-                fontFamily: theme?.fonts?.script || 'Georgia, serif'
+                color: isColored ? 'rgba(255,255,255,0.6)' : '#9ca3af'
               }}
             >
               {t('faq.noFaqsYet')}
@@ -183,7 +180,6 @@ export function FAQElegantVariant({
                     className="text-base sm:text-lg font-light"
                     style={{ 
                       color: titleColor,
-                      fontFamily: theme?.fonts?.script || 'Georgia, serif',
                       fontStyle: 'italic'
                     }}
                   >
@@ -200,8 +196,7 @@ export function FAQElegantVariant({
                     <p 
                       className="text-sm sm:text-base leading-relaxed mb-4"
                       style={{ 
-                        color: bodyTextColor,
-                        fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                        color: bodyTextColor
                       }}
                     >
                       {item.answer}
@@ -248,8 +243,7 @@ export function FAQElegantVariant({
             <p 
               className="text-base font-light italic"
               style={{ 
-                color: mutedTextColor,
-                fontFamily: theme?.fonts?.script || 'Georgia, serif'
+                color: mutedTextColor
               }}
             >
               {contactNote}

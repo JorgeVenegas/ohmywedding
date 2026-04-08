@@ -83,8 +83,7 @@ export function FAQSimpleVariant({
           <h2 
             className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3"
             style={{ 
-              color: titleColor,
-              fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
+              color: titleColor
             }}
           >
             {title}
@@ -93,8 +92,7 @@ export function FAQSimpleVariant({
             <p 
               className="text-base sm:text-lg"
               style={{ 
-                color: subtitleColor,
-                fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                color: subtitleColor
               }}
             >
               {subtitle}
@@ -125,8 +123,7 @@ export function FAQSimpleVariant({
               <h3 
                 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3 flex flex-col sm:flex-row items-center sm:items-start gap-1 sm:gap-3"
                 style={{ 
-                  color: titleColor,
-                  fontFamily: theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif'
+                  color: titleColor
                 }}
               >
                 <span 
@@ -141,8 +138,7 @@ export function FAQSimpleVariant({
                 <p 
                   className="text-sm sm:text-base leading-relaxed mb-4"
                   style={{ 
-                    color: bodyTextColor,
-                    fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                    color: bodyTextColor
                   }}
                 >
                   {item.answer}
@@ -187,8 +183,7 @@ export function FAQSimpleVariant({
             <p 
               className="text-base sm:text-lg font-medium"
               style={{ 
-                color: bodyTextColor,
-                fontFamily: theme?.fonts?.body === 'serif' ? 'serif' : 'sans-serif'
+                color: bodyTextColor
               }}
             >
               {contactNote}

@@ -91,8 +91,6 @@ export function GalleryMasonryVariant({
           <h2
             className="text-3xl md:text-5xl font-bold mb-4"
             style={{
-              fontFamily: theme?.fonts?.heading === 'script' ? 'cursive' : 
-                          theme?.fonts?.heading === 'serif' ? 'serif' : 'sans-serif',
               color: textColor
             }}
           >

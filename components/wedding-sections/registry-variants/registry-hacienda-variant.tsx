@@ -9,7 +9,7 @@ import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 import Link from 'next/link'
 import {
   HaciendaSectionTitle, HaciendaTilePattern, CandleGlow,
-  IronLineDivider, OrnateCorner, BotanicalCorner,
+  IronLineDivider, OrnateCorner, BotanicalCorner, SideBorderScrollwork,
 } from '../hacienda-ornaments'
 
 interface RegistryHaciendaItemProps {
@@ -136,11 +136,16 @@ export function RegistryHaciendaVariant({
   return (
     <section id="registry" className="w-full py-16 sm:py-20 md:py-24 relative overflow-hidden"
       style={{ backgroundColor: isColored ? bgColor : secondary }}>
-      <HaciendaTilePattern color={primary} opacity={0.015} />
-      <BotanicalCorner position="top-right" color={`${accent}25`} size="md" />
-      <BotanicalCorner position="bottom-left" color={`${accent}20`} size="sm" />
+      <HaciendaTilePattern color={primary} opacity={0.05} />
+      <CandleGlow position="top" intensity="subtle" />
+      <BotanicalCorner position="top-left" color={`${accent}60`} size="sm" />
+      <BotanicalCorner position="bottom-right" color={`${accent}60`} size="sm" />
+      <BotanicalCorner position="top-right" color={`${accent}45`} size="sm" />
+      <BotanicalCorner position="bottom-left" color={`${accent}45`} size="sm" />
+      <SideBorderScrollwork color={`${accent}50`} side="left" />
+      <SideBorderScrollwork color={`${accent}50`} side="right" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 relative z-10">
+      <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-10 relative z-10">
         {/* Section header */}
         <div className="mb-6 sm:mb-10 text-center">
           <HaciendaSectionTitle title={title} titleColor={titleColor} subtitleColor={subtitleColor} accentColor={accent} />

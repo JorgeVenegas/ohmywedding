@@ -23,7 +23,7 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
   const { weddingId } = use(params)
   const decodedWeddingId = decodeURIComponent(weddingId)
   const { t } = useTranslation()
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
   const [showTutorial, setShowTutorial] = useState(false)
   const [hasWebsite, setHasWebsite] = useState<boolean | null>(null)
   const [isLegacy, setIsLegacy] = useState(false)
@@ -154,7 +154,7 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       <Header
         rightContent={
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10">
+            <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10" onClick={() => signOut()}>
               <LogOut className="w-4 h-4 mr-2" />
               {t('admin.dashboard.signOut')}
             </Button>

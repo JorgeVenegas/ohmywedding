@@ -262,6 +262,9 @@ export function HeroSection({
             {...commonProps}
             overlayOpacity={config.overlayOpacity ?? 50}
             imageBrightness={config.imageBrightness ?? 85}
+            backgroundGradient={config.backgroundGradient ?? false}
+            gradientColor1={config.gradientColor1}
+            gradientColor2={config.gradientColor2}
           />
         )
       case 'background':

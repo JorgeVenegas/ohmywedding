@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createServerSupabaseClient, createAdminSupabaseClient } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -55,8 +55,9 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    // Get permissions
-    const { data: permissions, error: permError } = await supabase
+    // Use admin client to bypass RLS — access is already verified above
+    const adminClient = createAdminSupabaseClient()
+    const { data: permissions, error: permError } = await adminClient
       .from('collaborator_permissions')
       .select('*')
       .eq('wedding_id', wedding.id)
@@ -128,8 +129,9 @@ export async function PUT(
     const body = await request.json()
     const permissions: Partial<CollaboratorPermissions> = body
 
-    // Upsert permissions
-    const { data, error: upsertError } = await supabase
+    // Use admin client to bypass RLS — ownership is already verified above
+    const adminClient = createAdminSupabaseClient()
+    const { data, error: upsertError } = await adminClient
       .from('collaborator_permissions')
       .upsert({
         wedding_id: wedding.id,
