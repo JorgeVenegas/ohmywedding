@@ -349,8 +349,8 @@
     font-weight: 400;
   }
   
-  /* Consistent paragraph and text sizes */
-  section p {
+  /* Consistent paragraph and text sizes - data-custom-font allows inline overrides */
+  section p:not([data-custom-font]) {
     font-size: clamp(1rem, 2vw, 1.125rem) !important;
     line-height: 1.7;
   }

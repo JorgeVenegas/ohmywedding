@@ -99,6 +99,7 @@ export function HeroTextContent({
               ? 'text-base sm:text-xl md:text-2xl lg:text-3xl drop-shadow-md' 
               : 'text-base sm:text-lg md:text-xl lg:text-2xl'
           }`}
+          {...(taglineStyle?.fontSize ? { 'data-custom-font': '' } : {})}
           style={{ 
             color: isOverlay ? 'white' : (theme?.colors?.muted || '#6b7280'),
             whiteSpace: 'pre-line',

@@ -53,5 +53,12 @@ create policy "Allow verification updates"
   to public
   using (true);
 
+-- Allow deletion of unverified OTP records (cleanup before re-sending)
+create policy "Allow OTP cleanup"
+  on rsvp_otp_verifications
+  for delete
+  to public
+  using (verified = false);
+
 -- Note: Supabase Auth handles the actual OTP sending and verification
 -- This table just tracks which guest groups have been verified
