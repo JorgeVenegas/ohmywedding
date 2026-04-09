@@ -51,6 +51,7 @@ export interface Translations {
     faq: string
     schedule: string
     location: string
+    dressCode: string
   }
 
   // Hero Section

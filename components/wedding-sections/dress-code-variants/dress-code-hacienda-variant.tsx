@@ -80,8 +80,8 @@ export function DressCodeHaciendaVariant({
                 <div
                   className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4"
                   style={{
-                    maskImage: `url('/assets/Icons/Dresscode.svg')`,
-                    WebkitMaskImage: `url('/assets/Icons/Dresscode.svg')`,
+                    maskImage: "url('/assets/Icons/Dresscode.svg')",
+                    WebkitMaskImage: "url('/assets/Icons/Dresscode.svg')",
                     maskSize: 'contain',
                     maskRepeat: 'no-repeat',
                     maskPosition: 'center',
@@ -105,7 +105,28 @@ export function DressCodeHaciendaVariant({
                   </p>
                 )}
 
-                {images.length > 0 && (
+                {images.length === 1 && (
+                  <div className="mt-7 -mx-7 sm:-mx-10">
+                    <div
+                      className="relative overflow-hidden group cursor-pointer"
+                      style={{ border: `1px solid ${accent}30`, boxShadow: `0 4px 20px ${accent}15` }}
+                      onClick={() => openLightbox(images[0])}>
+                      <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: `linear-gradient(90deg, transparent, ${accent}80, ${accent}, ${accent}80, transparent)` }} />
+                      <div className="aspect-[16/9] sm:aspect-[21/9] overflow-hidden">
+                        <Image
+                          src={images[0]}
+                          alt="Dress code reference"
+                          fill
+                          className="object-cover sepia-[.06] brightness-[1.02] transition-transform duration-700 group-hover:scale-[1.03]"
+                          sizes="(max-width: 640px) 100vw, 672px"
+                        />
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: `linear-gradient(90deg, transparent, ${accent}70, ${accent}, ${accent}70, transparent)` }} />
+                    </div>
+                  </div>
+                )}
+
+                {images.length > 1 && (
                   <div className="flex gap-3 mt-6 flex-wrap justify-center">
                     {images.map((img, i) => (
                       <button key={i} onClick={() => openLightbox(img)}

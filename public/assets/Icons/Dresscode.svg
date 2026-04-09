@@ -2,81 +2,25 @@
 <svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 419.35 384.85">
   <defs>
     <style>
-      .cls-1 {
-        fill: #d6d6d6;
-      }
-
-      .cls-2 {
-        fill: #e3e3e3;
-      }
-
-      .cls-3 {
-        fill: #777;
-      }
-
-      .cls-4 {
-        fill: #9a9a9a;
-      }
-
-      .cls-5 {
-        fill: #f6f6f6;
-      }
-
-      .cls-6 {
-        fill: #ebebeb;
-      }
-
-      .cls-7 {
-        fill: #f4f4f4;
-      }
-
-      .cls-8 {
-        fill: #212121;
-      }
-
-      .cls-9 {
-        fill: #4d4d4d;
-      }
-
-      .cls-10 {
-        fill: #020202;
-      }
-
-      .cls-11 {
-        fill: #f0f0f0;
-      }
-
-      .cls-12 {
-        fill: #fafafa;
-      }
-
-      .cls-13 {
-        fill: #f7f7f7;
-      }
-
-      .cls-14 {
-        fill: #282828;
-      }
-
-      .cls-15 {
-        fill: #fcfcfc;
-      }
-
-      .cls-16 {
-        fill: #353535;
-      }
-
-      .cls-17 {
-        fill: #1a1a1a;
-      }
-
-      .cls-18 {
-        fill: #161616;
-      }
-
-      .cls-19 {
-        fill: #fdfdfd;
-      }
+      .cls-1 { fill: none; }
+      .cls-2 { fill: none; }
+      .cls-3 { fill: #000000; }
+      .cls-4 { fill: #000000; }
+      .cls-5 { fill: none; }
+      .cls-6 { fill: none; }
+      .cls-7 { fill: none; }
+      .cls-8 { fill: #000000; }
+      .cls-9 { fill: #000000; }
+      .cls-10 { fill: #000000; }
+      .cls-11 { fill: none; }
+      .cls-12 { fill: none; }
+      .cls-13 { fill: none; }
+      .cls-14 { fill: #000000; }
+      .cls-15 { fill: none; }
+      .cls-16 { fill: #000000; }
+      .cls-17 { fill: #000000; }
+      .cls-18 { fill: #000000; }
+      .cls-19 { fill: none; }
     </style>
   </defs>
   <g id="Layer_1-2" data-name="Layer 1">

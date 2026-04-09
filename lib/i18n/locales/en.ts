@@ -48,7 +48,8 @@ export const en: Translations = {
     rsvp: 'RSVP',
     faq: 'FAQ',
     schedule: 'Schedule',
-    location: 'Location'
+    location: 'Location',
+    dressCode: 'Dress Code'
   },
 
   // Hero Section

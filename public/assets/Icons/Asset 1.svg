@@ -3,22 +3,22 @@
   <defs>
     <style>
       .cls-1 {
-        stroke-width: 3.49px;
+        stroke-width: 5.58px;
       }
 
       .cls-1, .cls-2, .cls-3 {
         fill: none;
-        stroke: #000;
+        stroke: #000000;
         stroke-linecap: round;
         stroke-linejoin: round;
       }
 
       .cls-2 {
-        stroke-width: 3.1px;
+        stroke-width: 4.96px;
       }
 
       .cls-3 {
-        stroke-width: 1.16px;
+        stroke-width: 1.86px;
       }
     </style>
   </defs>

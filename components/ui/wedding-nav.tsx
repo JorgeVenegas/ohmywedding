@@ -172,7 +172,8 @@ export function WeddingNav({
       'gallery': t('nav.gallery'),
       'registry': t('registry.title'),
       'rsvp': t('nav.rsvp'),
-      'faq': t('nav.faq')
+      'faq': t('nav.faq'),
+      'dress-code': t('nav.dressCode')
     }
     return labelMap[sectionId] || sectionId
   }
@@ -274,7 +275,7 @@ export function WeddingNav({
     : [person1Initial, person2Initial].filter(Boolean).join('')
 
   // Valid section ids that we support in navigation
-  const validSectionIds = ['hero', 'our-story', 'countdown', 'event-details', 'gallery', 'registry', 'rsvp', 'faq']
+  const validSectionIds = ['hero', 'our-story', 'countdown', 'event-details', 'gallery', 'registry', 'rsvp', 'faq', 'dress-code']
 
   // Generate section links from enabled sections (including hero as "Home")
   const sectionLinks: SectionLink[] = enabledSections
