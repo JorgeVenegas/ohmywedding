@@ -37,6 +37,8 @@ interface HeroSectionProps extends BaseHeroProps {
   imageBrightness?: number // image brightness control
   useColorBackground?: boolean // for side-by-side variant
   backgroundColorChoice?: 'primary' | 'secondary' | 'accent' // for side-by-side variant
+  taglineTopPadding?: number // hacienda: top padding above lema
+  taglineFontSize?: string // hacienda: font size of lema
 }
 
 export function HeroSection({
@@ -265,6 +267,8 @@ export function HeroSection({
             backgroundGradient={config.backgroundGradient ?? false}
             gradientColor1={config.gradientColor1}
             gradientColor2={config.gradientColor2}
+            taglineTopPadding={config.taglineTopPadding ?? 0}
+            taglineFontSize={config.taglineFontSize ?? 'sm'}
           />
         )
       case 'background':

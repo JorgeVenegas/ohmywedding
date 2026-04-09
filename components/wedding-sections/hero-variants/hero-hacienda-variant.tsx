@@ -18,6 +18,8 @@ interface HeroHaciendaVariantProps extends BaseHeroProps {
   backgroundGradient?: boolean
   gradientColor1?: string
   gradientColor2?: string
+  taglineTopPadding?: number
+  taglineFontSize?: string
 }
 
 export function HeroHaciendaVariant({
@@ -25,6 +27,7 @@ export function HeroHaciendaVariant({
   showTagline = true, tagline, showCountdown = true, showRSVPButton = true,
   heroImageUrl, overlayOpacity = 55, imageBrightness = 80,
   backgroundGradient = false, gradientColor1, gradientColor2,
+  taglineTopPadding = 0, taglineFontSize = 'sm',
 }: HeroHaciendaVariantProps) {
   const { isOpened: envelopeOpened } = useEnvelope()
   const { t } = useI18n()
@@ -138,7 +141,7 @@ export function HeroHaciendaVariant({
               <div className="text-center">
                 <div className="text-4xl sm:text-5xl md:text-6xl font-light tabular-nums leading-none"
                   style={{
-                    color: '#FFFFFF', fontFamily: 'var(--font-display, serif)',
+                    color: '#FFFFFF', fontFamily: 'var(--font-heading, serif)',
                     textShadow: `0 0 30px ${accent}60, 0 0 60px ${accent}30, 0 2px 12px rgba(0,0,0,0.5)`,
                   }}>
                   {daysUntil}
@@ -175,9 +178,28 @@ export function HeroHaciendaVariant({
         <HeroTextContent
           wedding={wedding} dateId={dateId} weddingNameId={weddingNameId}
           theme={theme} alignment={alignment}
-          showTagline={showTagline} tagline={tagline}
+          showTagline={false}
           showCountdown={false} showRSVPButton={false} isOverlay={true}
         />
+
+        {/* Lema / Tagline - hacienda style */}
+        {showTagline && tagline && (
+          <div
+            className={`transition-all duration-700 delay-[1100ms] ${envelopeOpened ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'} text-center w-full`}
+            style={{ paddingTop: taglineTopPadding ? `${taglineTopPadding}px` : undefined }}
+          >
+            <p
+              className={`font-light tracking-[0.2em] uppercase whitespace-pre-line text-${taglineFontSize}`}
+              style={{
+                color: `${accent}CC`,
+                fontFamily: 'var(--font-heading, serif)',
+                textShadow: `0 0 20px ${accent}40, 0 1px 4px rgba(0,0,0,0.4)`,
+              }}
+            >
+              {tagline}
+            </p>
+          </div>
+        )}
 
         {/* Floral divider above RSVP */}
         {showRSVPButton && weddingNameId && (

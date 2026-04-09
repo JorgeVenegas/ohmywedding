@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
 import { ImageGalleryDialog } from '@/components/ui/image-gallery-dialog'
@@ -61,6 +62,8 @@ interface HeroConfigFormProps {
     textAlignment?: string
     showTagline?: boolean
     tagline?: string
+    taglineTopPadding?: number
+    taglineFontSize?: string
     showCountdown?: boolean
     showRSVPButton?: boolean
     heroImageUrl?: string
@@ -965,16 +968,53 @@ export function HeroConfigForm({ config, onChange, hasWeddingDate = true, weddin
         </div>
 
         {config.showTagline && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('config.tagline')}
-            </label>
-            <Input
-              type="text"
-              value={config.tagline || ''}
-              onChange={(e) => onChange('tagline', e.target.value)}
-              placeholder={t('hero.tagline')}
-            />
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {t('config.tagline')}
+              </label>
+              <Textarea
+                value={config.tagline || ''}
+                onChange={(e) => onChange('tagline', e.target.value)}
+                placeholder={t('hero.tagline')}
+                rows={3}
+                className="text-sm"
+              />
+            </div>
+            {config.variant === 'hacienda' && (
+              <>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    {t('config.taglineFontSize') || 'Font Size'}
+                  </label>
+                  <select
+                    value={config.taglineFontSize || 'sm'}
+                    onChange={(e) => onChange('taglineFontSize', e.target.value)}
+                    className="w-full text-sm border border-gray-200 rounded-md px-3 py-2 bg-white"
+                  >
+                    <option value="xs">XS</option>
+                    <option value="sm">SM</option>
+                    <option value="base">Base</option>
+                    <option value="lg">LG</option>
+                    <option value="xl">XL</option>
+                    <option value="2xl">2XL</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    {t('config.taglineTopPadding') || 'Top Spacing (px)'}
+                  </label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={200}
+                    value={config.taglineTopPadding ?? 0}
+                    onChange={(e) => onChange('taglineTopPadding', Number(e.target.value))}
+                    className="text-sm"
+                  />
+                </div>
+              </>
+            )}
           </div>
         )}
 
