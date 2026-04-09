@@ -15,8 +15,15 @@ interface UploadResult {
   fileName: string
 }
 
-/** Compress + resize an image to max 1920px, max 2MB JPEG */
-async function compressImage(file: File): Promise<File> {
+interface CompressOptions {
+  maxPx?: number
+  quality?: number
+  maxBytes?: number
+}
+
+/** Compress + resize an image. Optionally enforce a max byte size by reducing quality iteratively. */
+async function compressImage(file: File, options: CompressOptions = {}): Promise<File> {
+  const { maxPx = 1920, quality = 0.85, maxBytes } = options
   // Only compress raster images (not GIF)
   if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
     return file
@@ -26,21 +33,39 @@ async function compressImage(file: File): Promise<File> {
     const url = URL.createObjectURL(file)
     img.onload = () => {
       URL.revokeObjectURL(url)
-      const MAX_PX = 1920
       let { width, height } = img
-      if (width > MAX_PX || height > MAX_PX) {
-        if (width > height) { height = Math.round(height * MAX_PX / width); width = MAX_PX }
-        else { width = Math.round(width * MAX_PX / height); height = MAX_PX }
+      if (width > maxPx || height > maxPx) {
+        if (width > height) { height = Math.round(height * maxPx / width); width = maxPx }
+        else { width = Math.round(width * maxPx / height); height = maxPx }
       }
       const canvas = document.createElement('canvas')
       canvas.width = width
       canvas.height = height
       const ctx = canvas.getContext('2d')!
       ctx.drawImage(img, 0, 0, width, height)
-      canvas.toBlob((blob) => {
-        if (!blob) { resolve(file); return }
-        resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }))
-      }, 'image/jpeg', 0.85)
+
+      const getName = (name: string) => name.replace(/\.[^.]+$/, '.jpg')
+
+      if (!maxBytes) {
+        canvas.toBlob((blob) => {
+          if (!blob) { resolve(file); return }
+          resolve(new File([blob], getName(file.name), { type: 'image/jpeg' }))
+        }, 'image/jpeg', quality)
+        return
+      }
+
+      // Iteratively reduce quality until under maxBytes
+      const tryQuality = (q: number) => {
+        canvas.toBlob((blob) => {
+          if (!blob) { resolve(file); return }
+          if (blob.size <= maxBytes || q <= 0.3) {
+            resolve(new File([blob], getName(file.name), { type: 'image/jpeg' }))
+          } else {
+            tryQuality(Math.max(q - 0.08, 0.3))
+          }
+        }, 'image/jpeg', q)
+      }
+      tryQuality(quality)
     }
     img.onerror = () => { URL.revokeObjectURL(url); resolve(file) }
     img.src = url
@@ -54,7 +79,7 @@ export function useImageUpload() {
     success: false
   })
 
-  const uploadImage = async (file: File): Promise<UploadResult | null> => {
+  const uploadImage = async (file: File, compressOptions?: CompressOptions): Promise<UploadResult | null> => {
     setState({ uploading: true, error: null, success: false })
 
     try {
@@ -70,7 +95,7 @@ export function useImageUpload() {
       }
 
       // Compress the image client-side before uploading
-      const compressed = await compressImage(file)
+      const compressed = await compressImage(file, compressOptions)
 
       const fileExt = compressed.name.split('.').pop() || 'jpg'
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`

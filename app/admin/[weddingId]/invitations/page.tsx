@@ -312,6 +312,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       { key: 'name', label: 'Guest Name', required: true },
       { key: 'groupName', label: 'Group Name', required: true },
       { key: 'phoneNumber', label: 'Phone Number', required: false },
+      { key: 'extraPasses', label: 'Extra Passes', required: false },
       { key: 'tags', label: 'Tags (comma-separated)', required: false },
       { key: 'confirmationStatus', label: 'Status (pending/confirmed/declined)', required: false },
       { key: 'dietaryRestrictions', label: 'Dietary Restrictions', required: false },
@@ -330,7 +331,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       { key: 'extraPasses', label: 'Extra Passes', required: false },
       { key: 'phoneNumber', label: 'Phone Number', required: false },
       { key: 'tags', label: 'Tags (comma-separated)', required: false },
-      { key: 'extraPasses', label: 'Extra Passes', required: false },
       { key: 'invitedBy', label: `Invited By (${p1}, ${p2})`, required: false },
       { key: 'notes', label: 'Notes', required: false },
     ]

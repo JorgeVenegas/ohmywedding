@@ -153,7 +153,7 @@ export function FAQHaciendaVariant({
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <VineAccent color={goldAccent} flip className="!w-6 sm:!w-8 !h-3 sm:!h-4" />
                     </div>
-                    <span className="text-sm sm:text-base font-medium px-3 leading-snug flex-1"
+                    <span className="text-base sm:text-lg font-medium px-3 leading-snug flex-1"
                       style={{ color: headingColor, fontFamily: 'var(--font-heading, serif)' }}>
                       {q.question}
                     </span>
