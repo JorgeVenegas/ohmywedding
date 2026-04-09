@@ -182,6 +182,39 @@ export const FONT_PAIRING_CATEGORIES: FontPairingCategory[] = [
         bodyFamily: '"Lora", serif',
         googleFonts: 'Pinyon+Script&family=Crimson+Text:wght@400;600&family=Lora:wght@400;600'
       },
+      {
+        id: 'brittany-romance',
+        name: 'Brittany Romance',
+        display: 'Brittany Signature',
+        heading: 'Cormorant Garamond',
+        body: 'Lato',
+        displayFamily: '"Brittany Signature", cursive',
+        headingFamily: '"Cormorant Garamond", serif',
+        bodyFamily: '"Lato", sans-serif',
+        googleFonts: 'Cormorant+Garamond:wght@400;600&family=Lato:wght@300;400;700'
+      },
+      {
+        id: 'arabilla-classic',
+        name: 'Arabilla Classic',
+        display: 'Arabilla Signature',
+        heading: 'Playfair Display',
+        body: 'Crimson Text',
+        displayFamily: '"Arabilla Signature", cursive',
+        headingFamily: '"Playfair Display", serif',
+        bodyFamily: '"Crimson Text", serif',
+        googleFonts: 'Playfair+Display:wght@400;700&family=Crimson+Text:wght@400;600'
+      },
+      {
+        id: 'autographer-modern',
+        name: 'Autographer Modern',
+        display: 'Autographer',
+        heading: 'Montserrat',
+        body: 'Open Sans',
+        displayFamily: '"Autographer", cursive',
+        headingFamily: '"Montserrat", sans-serif',
+        bodyFamily: '"Open Sans", sans-serif',
+        googleFonts: 'Montserrat:wght@400;600&family=Open+Sans:wght@300;400;600'
+      },
     ]
   },
   {
@@ -513,6 +546,9 @@ export const AVAILABLE_FONTS: AvailableFont[] = [
   { name: 'Bodoni Moda', family: '"Bodoni Moda", serif', category: 'Display' },
   { name: 'Cinzel', family: '"Cinzel", serif', category: 'Display' },
   // Calligraphic/Script fonts
+  { name: 'Brittany Signature', family: '"Brittany Signature", cursive', category: 'Calligraphic' },
+  { name: 'Arabilla Signature', family: '"Arabilla Signature", cursive', category: 'Calligraphic' },
+  { name: 'Autographer', family: '"Autographer", cursive', category: 'Calligraphic' },
   { name: 'Great Vibes', family: '"Great Vibes", cursive', category: 'Calligraphic' },
   { name: 'Dancing Script', family: '"Dancing Script", cursive', category: 'Calligraphic' },
   { name: 'Parisienne', family: '"Parisienne", cursive', category: 'Calligraphic' },
