@@ -55,11 +55,12 @@ export async function POST(request: Request) {
       groupMap.set(group.name.toLowerCase().trim(), group.id)
     })
 
-    // Track groups we need to create and their extra passes
+    // Track groups we need to create, their extra passes, and phone numbers
     const groupsToCreate = new Set<string>()
     const groupExtraPasses = new Map<string, number>()
+    const groupPhoneNumbers = new Map<string, string>()
     
-    // First pass: identify groups that need to be created and collect extra passes
+    // First pass: identify groups that need to be created and collect metadata
     for (const guest of body.guests) {
       const groupName = (guest.groupName as string)?.trim()
       if (groupName) {
@@ -75,11 +76,17 @@ export async function POST(request: Request) {
             groupExtraPasses.set(groupKey, extraPasses)
           }
         }
+        // Use the first non-empty phone number found for the group
+        const phone = (guest.phoneNumber as string)?.trim()
+        if (phone && !groupPhoneNumbers.has(groupKey)) {
+          groupPhoneNumbers.set(groupKey, phone)
+        }
       }
     }
 
     // Create new groups
     let newGroupsCreated = 0
+    const groupErrors: string[] = []
     for (const groupName of groupsToCreate) {
       const groupKey = groupName.toLowerCase()
       const { data: newGroup, error: createError } = await supabase
@@ -87,7 +94,7 @@ export async function POST(request: Request) {
         .insert([{
           wedding_id: wedding.id,
           name: groupName,
-          phone_number: null,
+          phone_number: groupPhoneNumbers.get(groupKey) || null,
           notes: null,
           extra_passes: groupExtraPasses.get(groupKey) || 0,
         }])
@@ -95,6 +102,8 @@ export async function POST(request: Request) {
         .single()
 
       if (createError) {
+        console.error('[bulk-with-groups] Failed to create group:', { groupName, error: createError.message, code: createError.code })
+        groupErrors.push(`${groupName}: ${createError.message}`)
         continue
       }
 
@@ -102,12 +111,18 @@ export async function POST(request: Request) {
       newGroupsCreated++
     }
 
+    // If ALL groups failed to create, return an error instead of creating ungrouped guests
+    if (groupsToCreate.size > 0 && newGroupsCreated === 0) {
+      return NextResponse.json({
+        error: "Failed to create any groups. Guests were not imported.",
+        details: groupErrors.slice(0, 5),
+      }, { status: 500 })
+    }
+
     // Update extra passes on existing groups if needed
     for (const [groupKey, extraPasses] of groupExtraPasses) {
       const groupId = groupMap.get(groupKey)
       if (groupId && !groupsToCreate.has(groupKey)) {
-        // Only update existing groups (new ones already have extra_passes set)
-        // Find original group name since groupsToCreate stores original casing
         await supabase
           .from("guest_groups")
           .update({ extra_passes: extraPasses })
@@ -166,7 +181,8 @@ export async function POST(request: Request) {
       success: true, 
       guestCount: createdGuests?.length || 0,
       groupCount: uniqueGroupIds.size,
-      newGroupsCreated
+      newGroupsCreated,
+      ...(groupErrors.length > 0 ? { groupErrors } : {}),
     })
   } catch (error) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
