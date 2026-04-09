@@ -12,6 +12,38 @@ interface UploadResult {
   fileName: string
 }
 
+/** Compress + resize an image to max 1920px, max 2MB JPEG */
+async function compressImage(file: File): Promise<File> {
+  // Only compress raster images (not GIF)
+  if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+    return file
+  }
+  return new Promise((resolve) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const MAX_PX = 1920
+      let { width, height } = img
+      if (width > MAX_PX || height > MAX_PX) {
+        if (width > height) { height = Math.round(height * MAX_PX / width); width = MAX_PX }
+        else { width = Math.round(width * MAX_PX / height); height = MAX_PX }
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0, width, height)
+      canvas.toBlob((blob) => {
+        if (!blob) { resolve(file); return }
+        resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }))
+      }, 'image/jpeg', 0.85)
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file) }
+    img.src = url
+  })
+}
+
 export function useImageUpload() {
   const [state, setState] = useState<UploadState>({
     uploading: false,
@@ -29,13 +61,16 @@ export function useImageUpload() {
         throw new Error('Invalid file type. Please upload an image file.')
       }
 
-      // Validate file size (50MB max)
+      // Validate file size (50MB max before compression)
       if (file.size > 52428800) {
         throw new Error('File too large. Maximum size is 50MB.')
       }
 
+      // Compress the image client-side before uploading
+      const compressed = await compressImage(file)
+
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('file', compressed)
 
       const response = await fetch('/api/upload', {
         method: 'POST',

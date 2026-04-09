@@ -95,7 +95,8 @@ export function RegistryConfigForm({ config, onChange }: RegistryConfigFormProps
     { value: 'cards', label: 'Cards', description: 'Classic card-based layout' },
     { value: 'minimal', label: 'Minimal', description: 'Clean and simple list style' },
     { value: 'elegant', label: 'Elegant', description: 'Romantic style with decorations' },
-    { value: 'grid', label: 'Grid', description: 'Compact grid for many items' }
+    { value: 'grid', label: 'Grid', description: 'Compact grid for many items' },
+    { value: 'hacienda', label: 'Hacienda', description: 'Elegant hacienda-style registry cards' }
   ]
 
   // Filter out providers that are already added
