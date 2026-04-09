@@ -178,28 +178,18 @@ export function HeroHaciendaVariant({
         <HeroTextContent
           wedding={wedding} dateId={dateId} weddingNameId={weddingNameId}
           theme={theme} alignment={alignment}
-          showTagline={false}
+          showTagline={showTagline && !!tagline}
+          tagline={tagline}
+          taglineStyle={{
+            fontFamily: 'var(--font-heading, serif)',
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+            fontSize: taglineFontSize === 'xs' ? '0.75rem' : taglineFontSize === 'sm' ? '0.875rem' : taglineFontSize === 'base' ? '1rem' : taglineFontSize === 'lg' ? '1.125rem' : taglineFontSize === 'xl' ? '1.25rem' : taglineFontSize === '2xl' ? '1.5rem' : '0.875rem',
+            textShadow: `0 0 20px ${accent}40, 0 1px 4px rgba(0,0,0,0.4)`,
+            marginTop: taglineTopPadding ? `${taglineTopPadding}px` : undefined,
+          }}
           showCountdown={false} showRSVPButton={false} isOverlay={true}
         />
-
-        {/* Lema / Tagline - hacienda style */}
-        {showTagline && tagline && (
-          <div
-            className={`transition-all duration-700 delay-[1100ms] ${envelopeOpened ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'} text-center w-full`}
-            style={{ paddingTop: taglineTopPadding ? `${taglineTopPadding}px` : undefined }}
-          >
-            <p
-              className={`font-light tracking-[0.2em] uppercase whitespace-pre-line text-${taglineFontSize}`}
-              style={{
-                color: `${accent}CC`,
-                fontFamily: 'var(--font-heading, serif)',
-                textShadow: `0 0 20px ${accent}40, 0 1px 4px rgba(0,0,0,0.4)`,
-              }}
-            >
-              {tagline}
-            </p>
-          </div>
-        )}
 
         {/* Floral divider above RSVP */}
         {showRSVPButton && weddingNameId && (

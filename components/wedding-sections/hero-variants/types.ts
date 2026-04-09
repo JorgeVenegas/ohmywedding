@@ -1,3 +1,4 @@
+import React from 'react'
 import { ThemeConfig, AlignmentConfig } from '@/lib/wedding-config'
 import { type Wedding } from '@/lib/wedding-data'
 
@@ -24,6 +25,7 @@ export interface HeroContentProps {
   alignment?: Partial<AlignmentConfig>
   showTagline?: boolean
   tagline?: string
+  taglineStyle?: React.CSSProperties
   showCountdown?: boolean
   showRSVPButton?: boolean
   isOverlay?: boolean

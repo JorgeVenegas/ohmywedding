@@ -16,6 +16,7 @@ export function HeroTextContent({
   alignment,
   showTagline = true,
   tagline,
+  taglineStyle,
   showCountdown = true,
   showRSVPButton = true,
   isOverlay = false
@@ -95,11 +96,13 @@ export function HeroTextContent({
         <p 
           className={`mb-4 sm:mb-6 md:mb-8 font-light ${getAnimationClass('delay-700')} ${
             isOverlay 
-              ? 'text-base sm:text-xl md:text-2xl lg:text-3xl text-white/90 drop-shadow-md' 
+              ? 'text-base sm:text-xl md:text-2xl lg:text-3xl drop-shadow-md' 
               : 'text-base sm:text-lg md:text-xl lg:text-2xl'
           }`}
           style={{ 
-            color: isOverlay ? 'rgba(255,255,255,0.9)' : (theme?.colors?.muted || '#6b7280')
+            color: isOverlay ? 'white' : (theme?.colors?.muted || '#6b7280'),
+            whiteSpace: 'pre-line',
+            ...taglineStyle
           }}
         >
           {displayTagline}
