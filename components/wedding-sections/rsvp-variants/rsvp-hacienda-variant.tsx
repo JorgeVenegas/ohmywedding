@@ -316,7 +316,7 @@ export function RSVPHaciendaVariant({
                 {groupData && (
                   <div className="pt-2">
                     <div className="inline-block px-5 py-2.5 rounded-full border" style={{ borderColor: `${accent}35`, backgroundColor: `${accent}08` }}>
-                      <p className="text-lg sm:text-xl font-light italic tracking-wide" style={{ fontFamily: 'var(--font-display, cursive)', color: renderTitleColor }}>{groupData.name}</p>
+                      <p className="text-lg sm:text-xl font-light italic tracking-wide" style={{ fontFamily: 'var(--font-heading, serif)', color: renderTitleColor }}>{groupData.name}</p>
                       <p className="text-[10px] tracking-[0.2em] uppercase mt-0.5 opacity-60" style={{ color: renderTextColor }}>{t('rsvp.partyOf')} {guests.length + (groupData?.extra_passes || 0)}</p>
                     </div>
                   </div>
