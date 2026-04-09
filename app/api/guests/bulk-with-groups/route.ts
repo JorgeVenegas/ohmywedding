@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from "@/lib/supabase-server"
+import { createServerSupabaseClient, createAdminSupabaseClient } from "@/lib/supabase-server"
 import { NextResponse } from "next/server"
 
 export const dynamic = 'force-dynamic'
@@ -24,16 +24,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
-    // Get the wedding UUID from the wedding_name_id
+    // Get the wedding UUID and verify ownership
     const { data: wedding, error: weddingError } = await supabase
       .from('weddings')
-      .select('id')
+      .select('id, owner_id, collaborator_emails')
       .eq('wedding_name_id', decodedWeddingId)
       .single()
     
     if (weddingError || !wedding) {
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
     }
+
+    // Verify user is owner or collaborator
+    const isOwner = wedding.owner_id === user.id
+    const isCollaborator = wedding.collaborator_emails?.includes(user.email?.toLowerCase() || '')
+    if (!isOwner && !isCollaborator) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    // Use admin client for writes to bypass RLS (ownership already verified above)
+    const adminClient = createAdminSupabaseClient()
 
     if (!body.guests || !Array.isArray(body.guests)) {
       return NextResponse.json({ error: "Guests array is required" }, { status: 400 })
@@ -89,7 +99,7 @@ export async function POST(request: Request) {
     const groupErrors: string[] = []
     for (const groupName of groupsToCreate) {
       const groupKey = groupName.toLowerCase()
-      const { data: newGroup, error: createError } = await supabase
+      const { data: newGroup, error: createError } = await adminClient
         .from("guest_groups")
         .insert([{
           wedding_id: wedding.id,
@@ -123,7 +133,7 @@ export async function POST(request: Request) {
     for (const [groupKey, extraPasses] of groupExtraPasses) {
       const groupId = groupMap.get(groupKey)
       if (groupId && !groupsToCreate.has(groupKey)) {
-        await supabase
+        await adminClient
           .from("guest_groups")
           .update({ extra_passes: extraPasses })
           .eq("id", groupId)
@@ -165,7 +175,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No valid guests to import" }, { status: 400 })
     }
 
-    const { data: createdGuests, error: insertError } = await supabase
+    const { data: createdGuests, error: insertError } = await adminClient
       .from("guests")
       .insert(guestsToInsert)
       .select()
