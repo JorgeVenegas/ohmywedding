@@ -62,7 +62,6 @@ export async function POST(request: Request) {
         .insert([{
           wedding_id: wedding.id,
           name: groupName,
-          phone_number: groupData.phoneNumber || null,
           notes: groupData.notes || null,
           extra_passes: extraPasses,
         }])

@@ -65,10 +65,9 @@ export async function POST(request: Request) {
       groupMap.set(group.name.toLowerCase().trim(), group.id)
     })
 
-    // Track groups we need to create, their extra passes, and phone numbers
+    // Track groups we need to create and their extra passes
     const groupsToCreate = new Set<string>()
     const groupExtraPasses = new Map<string, number>()
-    const groupPhoneNumbers = new Map<string, string>()
     
     // First pass: identify groups that need to be created and collect metadata
     for (const guest of body.guests) {
@@ -86,11 +85,6 @@ export async function POST(request: Request) {
             groupExtraPasses.set(groupKey, extraPasses)
           }
         }
-        // Use the first non-empty phone number found for the group
-        const phone = (guest.phoneNumber as string)?.trim()
-        if (phone && !groupPhoneNumbers.has(groupKey)) {
-          groupPhoneNumbers.set(groupKey, phone)
-        }
       }
     }
 
@@ -104,7 +98,6 @@ export async function POST(request: Request) {
         .insert([{
           wedding_id: wedding.id,
           name: groupName,
-          phone_number: groupPhoneNumbers.get(groupKey) || null,
           notes: null,
           extra_passes: groupExtraPasses.get(groupKey) || 0,
         }])

@@ -125,7 +125,6 @@ export async function POST(request: Request) {
       {
         wedding_id: wedding.id,
         name: rawName,
-        phone_number: body.phoneNumber || null,
         notes: body.notes || null,
         is_draft: isDraft,
         extra_passes: extraPasses,
@@ -161,7 +160,6 @@ export async function PUT(request: Request) {
 
     const updateData: Record<string, any> = {
       name: body.name,
-      phone_number: body.phoneNumber,
       notes: body.notes,
       updated_at: new Date().toISOString(),
     }

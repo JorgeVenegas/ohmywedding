@@ -329,7 +329,6 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       { key: 'groupName', label: 'Group Name', required: true },
       { key: 'guestCount', label: 'Number of Guests', required: true },
       { key: 'extraPasses', label: 'Extra Passes', required: false },
-      { key: 'phoneNumber', label: 'Phone Number', required: false },
       { key: 'tags', label: 'Tags (comma-separated)', required: false },
       { key: 'invitedBy', label: `Invited By (${p1}, ${p2})`, required: false },
       { key: 'notes', label: 'Notes', required: false },
