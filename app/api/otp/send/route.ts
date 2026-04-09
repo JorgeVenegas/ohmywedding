@@ -1,13 +1,13 @@
-import { createServerSupabaseClient } from "@/lib/supabase-server"
+import { createAdminSupabaseClient } from "@/lib/supabase-server"
 import { NextResponse } from "next/server"
-import crypto from "crypto"
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createServerSupabaseClient()
+    // Use admin client to bypass RLS - this is a public API for guest OTP verification
+    const supabase = createAdminSupabaseClient()
     const { phoneNumber, groupId } = await request.json()
 
     if (!phoneNumber || !groupId) {
