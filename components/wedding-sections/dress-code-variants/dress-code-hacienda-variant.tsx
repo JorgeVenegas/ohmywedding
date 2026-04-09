@@ -89,7 +89,7 @@ export function DressCodeHaciendaVariant({
                 <FloralDivider color={accent} className="!w-36 sm:!w-44 mb-5" />
 
                 {description && (
-                  <p className="text-sm sm:text-base font-light leading-relaxed max-w-lg mx-auto"
+                  <p className="text-sm sm:text-base font-light leading-relaxed max-w-lg mx-auto whitespace-pre-line"
                     style={{ color: bodyColor, fontFamily: 'var(--font-body, sans-serif)' }}>
                     {description}
                   </p>

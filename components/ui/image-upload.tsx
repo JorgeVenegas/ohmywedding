@@ -4,6 +4,35 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Upload, X, Image as ImageIcon } from 'lucide-react'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+
+const BUCKET = 'wedding-images'
+
+async function compressImage(file: File): Promise<File> {
+  if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) return file
+  return new Promise((resolve) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const MAX_PX = 1920
+      let { width, height } = img
+      if (width > MAX_PX || height > MAX_PX) {
+        if (width > height) { height = Math.round(height * MAX_PX / width); width = MAX_PX }
+        else { width = Math.round(width * MAX_PX / height); height = MAX_PX }
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = width; canvas.height = height
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height)
+      canvas.toBlob((blob) => {
+        if (!blob) { resolve(file); return }
+        resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }))
+      }, 'image/jpeg', 0.85)
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file) }
+    img.src = url
+  })
+}
 
 interface ImageUploadProps {
   onUpload: (url: string) => void
@@ -29,34 +58,30 @@ export function ImageUpload({ onUpload, currentImageUrl, placeholder = "Upload a
     // Show preview immediately
     const objectUrl = URL.createObjectURL(file)
     setPreviewUrl(objectUrl)
-    
     setUploading(true)
-    
+
     try {
-      const formData = new FormData()
-      formData.append('file', file)
+      const compressed = await compressImage(file)
+      const fileExt = compressed.name.split('.').pop() || 'jpg'
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
-      })
+      const supabase = createClientComponentClient()
+      const { data, error } = await supabase.storage
+        .from(BUCKET)
+        .upload(fileName, compressed, { cacheControl: '3600', upsert: false })
 
-      const result = await response.json()
+      URL.revokeObjectURL(objectUrl)
 
-      if (result.success) {
-        setPreviewUrl(result.url)
-        onUpload(result.url)
-      } else {
-        setPreviewUrl(currentImageUrl || null)
-        // You might want to show a toast or error message here
-      }
-    } catch (error) {
+      if (error) throw error
+
+      const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(data.path)
+      setPreviewUrl(publicUrl)
+      onUpload(publicUrl)
+    } catch {
       setPreviewUrl(currentImageUrl || null)
-      // You might want to show a toast or error message here
+      URL.revokeObjectURL(objectUrl)
     } finally {
       setUploading(false)
-      // Clean up object URL
-      URL.revokeObjectURL(objectUrl)
     }
   }
 
