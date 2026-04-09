@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import Image from 'next/image'
-import { Shirt, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { BaseDressCodeProps, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { AnimatedSection } from '../animated-section'
@@ -77,7 +77,17 @@ export function DressCodeHaciendaVariant({
               <OrnateCorner position="bottom-right" color={`${accent}60`} size="sm" />
 
               <div className="relative z-10">
-                <Shirt className="w-8 h-8 mx-auto mb-4" style={{ color: accent }} />
+                <div
+                  className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4"
+                  style={{
+                    maskImage: `url('/assets/Icons/Dresscode.svg')`,
+                    WebkitMaskImage: `url('/assets/Icons/Dresscode.svg')`,
+                    maskSize: 'contain',
+                    maskRepeat: 'no-repeat',
+                    maskPosition: 'center',
+                    backgroundColor: accent,
+                  }}
+                />
 
                 {dressCodeType && (
                   <h3 className="text-xl sm:text-2xl font-light tracking-wide uppercase mb-3"
