@@ -178,7 +178,7 @@ export function HeroHaciendaVariant({
         <HeroTextContent
           wedding={wedding} dateId={dateId} weddingNameId={weddingNameId}
           theme={theme} alignment={alignment}
-          showTagline={showTagline && !!tagline}
+          showTagline={showTagline}
           tagline={tagline}
           taglineStyle={{
             fontFamily: 'var(--font-heading, serif)',

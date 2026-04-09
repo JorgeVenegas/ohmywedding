@@ -669,6 +669,7 @@ export interface Translations {
     formOptions: string
     showMealPreferences: string
     showTravelInfo: string
+    requirePhoneVerification: string
     enableCustomQuestions: string
     customQuestions: string
     textInput: string

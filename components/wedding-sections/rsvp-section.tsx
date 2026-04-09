@@ -39,7 +39,8 @@ export function RSVPSection({
   showVariantSwitcher = true,
   groupId,
   useColorBackground,
-  backgroundColorChoice
+  backgroundColorChoice,
+  requirePhoneVerification = true
 }: RSVPSectionProps) {
   const { t } = useI18n()
   
@@ -87,7 +88,8 @@ export function RSVPSection({
     customQuestions,
     embedForm,
     useColorBackground: false,
-    backgroundColorChoice: 'none'
+    backgroundColorChoice: 'none',
+    requirePhoneVerification
   })
 
   const commonProps = {
@@ -107,7 +109,8 @@ export function RSVPSection({
     embedForm: config.embedForm ?? embedForm,
     groupId,
     useColorBackground: config.useColorBackground ?? useColorBackground,
-    backgroundColorChoice: config.backgroundColorChoice ?? backgroundColorChoice
+    backgroundColorChoice: config.backgroundColorChoice ?? backgroundColorChoice,
+    requirePhoneVerification: config.requirePhoneVerification ?? requirePhoneVerification
   }
 
   const renderRSVPContent = (activeVariant: string) => {
@@ -133,7 +136,8 @@ export function RSVPSection({
       showTravelInfo: config.showTravelInfo ?? showTravelInfo,
       showCustomQuestions: config.showCustomQuestions ?? showCustomQuestions,
       customQuestions: config.customQuestions || customQuestions,
-      embedForm: config.embedForm ?? embedForm
+      embedForm: config.embedForm ?? embedForm,
+      requirePhoneVerification: config.requirePhoneVerification ?? requirePhoneVerification
     })
   }
 

@@ -663,6 +663,7 @@ export const es: Translations = {
     formOptions: 'Opciones del Formulario',
     showMealPreferences: 'Mostrar Preferencias de Comida',
     showTravelInfo: 'Mostrar Info de Viaje',
+    requirePhoneVerification: 'Requerir Verificacion Telefonica',
     enableCustomQuestions: 'Habilitar Preguntas Personalizadas',
     customQuestions: 'Preguntas Personalizadas',
     textInput: 'Entrada de Texto',

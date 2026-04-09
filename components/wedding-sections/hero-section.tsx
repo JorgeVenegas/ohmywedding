@@ -319,7 +319,9 @@ export function HeroSection({
         overlayOpacity: config.overlayOpacity ?? overlayOpacity,
         imageBrightness: config.imageBrightness ?? imageBrightness,
         useColorBackground: config.useColorBackground ?? useColorBackground,
-        backgroundColorChoice: config.backgroundColorChoice || backgroundColorChoice
+        backgroundColorChoice: config.backgroundColorChoice || backgroundColorChoice,
+        taglineTopPadding: config.taglineTopPadding ?? 0,
+        taglineFontSize: config.taglineFontSize ?? 'sm'
       }
       customizeContext.openCustomizer(sectionId, sectionType, configToPass)
     }

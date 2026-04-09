@@ -34,6 +34,7 @@ interface RSVPConfigFormProps {
     embedForm?: boolean
     useColorBackground?: boolean
     backgroundColorChoice?: BackgroundColorChoice
+    requirePhoneVerification?: boolean
   }
   onChange: (key: string, value: any) => void
 }
@@ -155,6 +156,17 @@ export function RSVPConfigForm({ config, onChange }: RSVPConfigFormProps) {
         <Switch
           checked={config.showTravelInfo ?? true}
           onCheckedChange={(checked) => onChange('showTravelInfo', checked)}
+        />
+      </div>
+
+      {/* Phone Verification Toggle */}
+      <div className="flex items-center justify-between">
+        <label className="text-sm font-medium text-gray-700">
+          {t('config.requirePhoneVerification')}
+        </label>
+        <Switch
+          checked={config.requirePhoneVerification ?? true}
+          onCheckedChange={(checked) => onChange('requirePhoneVerification', checked)}
         />
       </div>
 

@@ -171,7 +171,7 @@ export function OTPVerificationDialog({
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 shadow-lg" style={{ backgroundColor: buttonColor }}>
                 <Phone className="w-10 h-10 text-white" />
               </div>
-              <h2 className="text-3xl font-serif font-semibold" style={{ color: buttonColor }}>
+              <h2 className="text-3xl font-semibold" style={{ color: buttonColor, fontFamily: 'var(--font-heading, serif)' }}>
                 {t('rsvp.phoneVerification')}
               </h2>
               <p className="text-sm" style={{ color: `${textColor}99` }}>
@@ -254,7 +254,7 @@ export function OTPVerificationDialog({
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 shadow-lg" style={{ backgroundColor: buttonColor }}>
                 <Phone className="w-10 h-10 text-white" />
               </div>
-              <h2 className="text-3xl font-serif font-semibold" style={{ color: buttonColor }}>
+              <h2 className="text-3xl font-semibold" style={{ color: buttonColor, fontFamily: 'var(--font-heading, serif)' }}>
                 {t('rsvp.verifyPhone')}
               </h2>
               <p className="text-sm" style={{ color: `${textColor}99` }}>
@@ -326,7 +326,7 @@ export function OTPVerificationDialog({
               <CheckCircle2 className="w-14 h-14 text-white" />
             </div>
             <div>
-              <h2 className="text-3xl font-serif font-semibold mb-2" style={{ color: buttonColor }}>
+              <h2 className="text-3xl font-semibold mb-2" style={{ color: buttonColor, fontFamily: 'var(--font-heading, serif)' }}>
                 {t('rsvp.phoneVerified')}
               </h2>
               <p className="text-sm" style={{ color: `${textColor}99` }}>

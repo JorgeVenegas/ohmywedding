@@ -53,6 +53,7 @@ export function RSVPCardsVariant({
   groupId,
   useColorBackground,
   backgroundColorChoice,
+  requirePhoneVerification = true,
 }: BaseRSVPProps) {
   // Ensure defaults are set
   const effectiveUseColorBackground = useColorBackground ?? false
@@ -193,7 +194,38 @@ export function RSVPCardsVariant({
       return
     }
     
-    setShowOTPDialog(true)
+    if (requirePhoneVerification) {
+      setShowOTPDialog(true)
+    } else {
+      handleDirectSubmit()
+    }
+  }
+
+  const handleDirectSubmit = async () => {
+    setSubmitError('')
+    setSubmitting(true)
+    try {
+      const response = await fetch('/api/rsvps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          weddingNameId, groupId, skipPhoneVerification: true,
+          guests: guests.map(g => ({
+            guestId: g.id, attending: g.attending,
+            is_traveling: g.attending === false ? false : g.is_traveling,
+            traveling_from: g.attending === false ? null : g.traveling_from,
+            travel_arrangement: g.attending === false ? null : g.travel_arrangement,
+            ticket_attachment_url: g.attending === false ? null : g.ticket_attachment_url
+          })),
+          extraPassesAttending: (groupData?.extra_passes || 0) > 0 ? extraPassesAttending : undefined,
+          message
+        })
+      })
+      const data = await response.json()
+      if (response.ok) { setSubmitted(true); setIsEditing(false) }
+      else { setSubmitError(data.error || t('rsvp.error')) }
+    } catch { setSubmitError(t('rsvp.error')) }
+    finally { setSubmitting(false) }
   }
 
   const handleOTPVerified = async (token: string) => {

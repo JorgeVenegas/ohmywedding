@@ -667,6 +667,7 @@ export const en: Translations = {
     formOptions: 'Form Options',
     showMealPreferences: 'Show Meal Preferences',
     showTravelInfo: 'Show Travel Info',
+    requirePhoneVerification: 'Require Phone Verification',
     enableCustomQuestions: 'Enable Custom Questions',
     customQuestions: 'Custom Questions',
     textInput: 'Text Input',

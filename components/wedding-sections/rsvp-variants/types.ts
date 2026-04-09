@@ -25,6 +25,7 @@ export interface BaseRSVPProps {
   useColorBackground?: boolean
   backgroundColorChoice?: BackgroundColorChoice
   groupId?: string | null
+  requirePhoneVerification?: boolean
 }
 
 // Helper to add opacity to hex color

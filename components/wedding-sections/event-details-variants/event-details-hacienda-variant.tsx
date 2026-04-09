@@ -80,7 +80,7 @@ function EventBlock({
             <img
               src={event.imageUrl}
               alt={event.venue ? `${event.venue}` : event.title}
-              className="w-full h-auto object-cover aspect-[16/10] sepia-[.08] brightness-[1.02]"
+              className="w-full h-auto object-contain sepia-[.08] brightness-[1.02]"
               loading="lazy"
             />
           </div>
@@ -155,10 +155,10 @@ function VenuePhoto({ url, accent }: { url: string; accent: string }) {
         <OrnateCorner position="bottom-left" color={`${accent}CC`} size="sm" />
         <OrnateCorner position="bottom-right" color={`${accent}CC`} size="sm" />
         <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: `linear-gradient(90deg, transparent, ${accent}80, ${accent}, ${accent}80, transparent)` }} />
-        <div className="overflow-hidden aspect-[16/9] sm:aspect-[21/9]">
+        <div className="overflow-hidden">
           <img
             src={url} alt="Venue"
-            className="w-full h-full object-cover sepia-[.06] brightness-[1.02] transition-transform duration-700 group-hover:scale-[1.03]"
+            className="w-full h-auto object-contain sepia-[.06] brightness-[1.02] transition-transform duration-700 group-hover:scale-[1.03]"
             loading="lazy"
           />
         </div>

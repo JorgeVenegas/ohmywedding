@@ -42,6 +42,7 @@ export function RSVPHaciendaVariant({
   weddingNameId, theme, alignment, sectionTitle, sectionSubtitle,
   showTravelInfo = true, showCustomQuestions = false, customQuestions = [],
   useColorBackground, backgroundColorChoice, groupId,
+  requirePhoneVerification = true,
 }: BaseRSVPProps) {
   const effectiveUseColorBackground = useColorBackground ?? false
   const effectiveBackgroundColorChoice = backgroundColorChoice ?? 'none'
@@ -156,7 +157,36 @@ export function RSVPHaciendaVariant({
     if (guestsNeedingTravelInfo.length > 0) { setSubmitError(t('rsvp.travelInfoRequired')); return }
     const guestsNeedingTicket = guests.filter((g) => g.attending === true && g.is_traveling && g.travel_arrangement === 'already_booked' && !g.ticket_attachment_url)
     if (guestsNeedingTicket.length > 0) { setSubmitError(t('rsvp.ticketRequired')); return }
-    setShowOTPDialog(true)
+    if (requirePhoneVerification) {
+      setShowOTPDialog(true)
+    } else {
+      handleDirectSubmit()
+    }
+  }
+
+  const handleDirectSubmit = async () => {
+    setSubmitError(''); setIsSubmitting(true)
+    try {
+      const response = await fetch('/api/rsvps', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          weddingNameId, groupId, skipPhoneVerification: true,
+          guests: guests.map((g) => ({
+            guestId: g.id, attending: g.attending,
+            is_traveling: g.attending === false ? false : g.is_traveling,
+            traveling_from: g.attending === false ? null : g.traveling_from,
+            travel_arrangement: g.attending === false ? null : g.travel_arrangement,
+            ticket_attachment_url: g.attending === false ? null : g.ticket_attachment_url,
+          })),
+          extraPassesAttending: (groupData?.extra_passes || 0) > 0 ? extraPassesAttending : undefined,
+          message,
+        }),
+      })
+      const data = await response.json()
+      if (response.ok) { setIsSubmitted(true); setIsEditing(false) }
+      else setSubmitError(data.error || t('rsvp.error'))
+    } catch { setSubmitError(t('rsvp.error')) }
+    finally { setIsSubmitting(false) }
   }
 
   const handleOTPVerified = async (token: string) => {

@@ -11,42 +11,7 @@ export async function POST(request: Request) {
 
     // Update each guest's confirmation status
     if (body.guests && Array.isArray(body.guests)) {
-      // REQUIRE OTP verification for group RSVPs
-      if (!body.verificationToken || !body.groupId) {
-        return NextResponse.json(
-          { error: "Phone verification required" },
-          { status: 403 }
-        )
-      }
-
-      // Verify the OTP token is valid and not expired
-      const { data: verification, error: verificationError } = await supabase
-        .from('rsvp_otp_verifications')
-        .select('*')
-        .eq('guest_group_id', body.groupId)
-        .eq('verification_token', body.verificationToken)
-        .eq('verified', true)
-        .single()
-
-      if (verificationError || !verification) {
-        return NextResponse.json(
-          { error: "Invalid or expired verification" },
-          { status: 403 }
-        )
-      }
-
-      // Check if verification has expired (valid for 1 hour after verification)
-      const verifiedAt = new Date(verification.verified_at)
-      const expirationTime = new Date(verifiedAt.getTime() + 60 * 60 * 1000) // 1 hour
-      
-      if (new Date() > expirationTime) {
-        return NextResponse.json(
-          { error: "Verification has expired. Please verify your phone number again." },
-          { status: 403 }
-        )
-      }
-
-      // Use service role client to bypass RLS since we've verified the OTP
+      // Use service role client to bypass RLS
       const { createClient } = await import('@supabase/supabase-js')
       const supabaseAdmin = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -58,6 +23,78 @@ export async function POST(request: Request) {
           }
         }
       )
+
+      // Check if phone verification is being skipped
+      if (body.skipPhoneVerification && body.groupId) {
+        // Verify the wedding actually has phone verification disabled in its config
+        // Look up the wedding via the group's wedding_id
+        const { data: groupCheck } = await supabaseAdmin
+          .from('guest_groups')
+          .select('wedding_id')
+          .eq('id', body.groupId)
+          .single()
+
+        if (!groupCheck) {
+          return NextResponse.json(
+            { error: "Guest group not found" },
+            { status: 404 }
+          )
+        }
+
+        // Check page config for requirePhoneVerification setting
+        const { data: website } = await supabaseAdmin
+          .from('wedding_websites')
+          .select('page_config')
+          .eq('wedding_id', groupCheck.wedding_id)
+          .single()
+
+        const pageConfig = website?.page_config as Record<string, any> | null
+        const rsvpConfig = pageConfig?.sectionConfigs?.rsvp || {}
+        const requirePhoneVerification = rsvpConfig.requirePhoneVerification ?? true
+
+        if (requirePhoneVerification) {
+          return NextResponse.json(
+            { error: "Phone verification is required" },
+            { status: 403 }
+          )
+        }
+        // Phone verification disabled — proceed without token
+      } else {
+        // REQUIRE OTP verification for group RSVPs
+        if (!body.verificationToken || !body.groupId) {
+          return NextResponse.json(
+            { error: "Phone verification required" },
+            { status: 403 }
+          )
+        }
+
+        // Verify the OTP token is valid and not expired
+        const { data: verification, error: verificationError } = await supabase
+          .from('rsvp_otp_verifications')
+          .select('*')
+          .eq('guest_group_id', body.groupId)
+          .eq('verification_token', body.verificationToken)
+          .eq('verified', true)
+          .single()
+
+        if (verificationError || !verification) {
+          return NextResponse.json(
+            { error: "Invalid or expired verification" },
+            { status: 403 }
+          )
+        }
+
+        // Check if verification has expired (valid for 1 hour after verification)
+        const verifiedAt = new Date(verification.verified_at)
+        const expirationTime = new Date(verifiedAt.getTime() + 60 * 60 * 1000) // 1 hour
+        
+        if (new Date() > expirationTime) {
+          return NextResponse.json(
+            { error: "Verification has expired. Please verify your phone number again." },
+            { status: 403 }
+          )
+        }
+      }
 
       // Update the guest group with the message and submission timestamp
       const groupUpdateData: Record<string, any> = {
