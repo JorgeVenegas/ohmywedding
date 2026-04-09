@@ -138,7 +138,7 @@ export function RegistryCardsVariant({
   return (
     <section 
       id="registry"
-      className="w-full py-12 sm:py-16 md:py-20"
+      className="w-full py-16 sm:py-16 md:py-20"
       style={{ backgroundColor: bgColor }}
     >
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
