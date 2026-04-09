@@ -49,6 +49,7 @@ export function RSVPCardsVariant({
   alignment,
   sectionTitle,
   sectionSubtitle,
+  showTravelInfo = true,
   groupId,
   useColorBackground,
   backgroundColorChoice,
@@ -497,7 +498,7 @@ export function RSVPCardsVariant({
                   )}
 
                   {/* Travel Fields - Only show if attending */}
-                  {guest.attending === true && (
+                  {showTravelInfo && guest.attending === true && (
                     <div className="mt-4">
                       <TravelFields
                         guestId={guest.id}

@@ -165,7 +165,9 @@ export function HeroSection({
     overlayOpacity,
     imageBrightness,
     useColorBackground,
-    backgroundColorChoice
+    backgroundColorChoice,
+    taglineTopPadding: 0,
+    taglineFontSize: 'sm'
   })
 
   // Helper to check if tagline is an old hardcoded English default

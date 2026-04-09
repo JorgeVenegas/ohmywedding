@@ -668,6 +668,7 @@ export interface Translations {
     embeddedForm: string
     formOptions: string
     showMealPreferences: string
+    showTravelInfo: string
     enableCustomQuestions: string
     customQuestions: string
     textInput: string

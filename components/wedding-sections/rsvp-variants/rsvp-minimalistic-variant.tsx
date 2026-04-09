@@ -50,6 +50,7 @@ export function RSVPMinimalisticVariant({
   alignment,
   sectionTitle,
   sectionSubtitle,
+  showTravelInfo: showTravelInfoProp = true,
   groupId,
   useColorBackground,
   backgroundColorChoice,
@@ -81,7 +82,7 @@ export function RSVPMinimalisticVariant({
   )
   
   // Determine if travel features should be shown
-  const showTravelInfo = weddingSettings?.rsvp_travel_confirmation_enabled ?? true
+  const showTravelInfo = showTravelInfoProp && (weddingSettings?.rsvp_travel_confirmation_enabled ?? true)
 
   useEffect(() => {
     const fetchGroupData = async () => {

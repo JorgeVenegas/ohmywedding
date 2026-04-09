@@ -28,6 +28,7 @@ interface RSVPConfigFormProps {
     sectionSubtitle?: string
     textAlignment?: string
     showMealPreferences?: boolean
+    showTravelInfo?: boolean
     showCustomQuestions?: boolean
     customQuestions?: CustomQuestion[]
     embedForm?: boolean
@@ -144,6 +145,17 @@ export function RSVPConfigForm({ config, onChange }: RSVPConfigFormProps) {
             placeholder={t('rsvp.subtitle')}
           />
         </div>
+      </div>
+
+      {/* Travel Info Toggle */}
+      <div className="flex items-center justify-between">
+        <label className="text-sm font-medium text-gray-700">
+          {t('config.showTravelInfo')}
+        </label>
+        <Switch
+          checked={config.showTravelInfo ?? true}
+          onCheckedChange={(checked) => onChange('showTravelInfo', checked)}
+        />
       </div>
 
       {/* Form Options - only show if embedded form is selected */}

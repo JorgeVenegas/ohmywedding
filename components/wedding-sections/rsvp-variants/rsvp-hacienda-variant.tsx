@@ -40,7 +40,7 @@ interface GroupData {
 
 export function RSVPHaciendaVariant({
   weddingNameId, theme, alignment, sectionTitle, sectionSubtitle,
-  showCustomQuestions = false, customQuestions = [],
+  showTravelInfo = true, showCustomQuestions = false, customQuestions = [],
   useColorBackground, backgroundColorChoice, groupId,
 }: BaseRSVPProps) {
   const effectiveUseColorBackground = useColorBackground ?? false
@@ -366,7 +366,8 @@ export function RSVPHaciendaVariant({
 
                     {guest.attending === true && (
                       <div className="pl-0 sm:pl-12 pt-1">
-                        <TravelFields guestId={guest.id} guestName={guest.name} weddingNameId={weddingNameId}
+                        {showTravelInfo && (
+                          <TravelFields guestId={guest.id} guestName={guest.name} weddingNameId={weddingNameId}
                           isTraveling={guest.is_traveling || false} travelingFrom={guest.traveling_from || ''}
                           travelArrangement={guest.travel_arrangement || null} ticketAttachmentUrl={guest.ticket_attachment_url}
                           adminSetTravel={guest.adminSetTravel || false}
@@ -375,6 +376,7 @@ export function RSVPHaciendaVariant({
                           onTravelArrangementChange={(v) => handleGuestUpdate(guest.id, 'travel_arrangement', v)}
                           onTicketUpload={(v) => handleGuestUpdate(guest.id, 'ticket_attachment_url', v)}
                           primaryColor={accent} textColor={renderTextColor} />
+                        )}
                       </div>
                     )}
                   </div>

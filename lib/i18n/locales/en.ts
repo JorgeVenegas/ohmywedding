@@ -666,6 +666,7 @@ export const en: Translations = {
     embeddedForm: 'Embedded Form',
     formOptions: 'Form Options',
     showMealPreferences: 'Show Meal Preferences',
+    showTravelInfo: 'Show Travel Info',
     enableCustomQuestions: 'Enable Custom Questions',
     customQuestions: 'Custom Questions',
     textInput: 'Text Input',

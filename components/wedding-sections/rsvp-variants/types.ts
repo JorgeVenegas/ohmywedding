@@ -18,6 +18,7 @@ export interface BaseRSVPProps {
   sectionTitle?: string
   sectionSubtitle?: string
   showMealPreferences?: boolean
+  showTravelInfo?: boolean
   showCustomQuestions?: boolean
   customQuestions?: CustomQuestion[]
   embedForm?: boolean

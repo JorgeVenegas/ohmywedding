@@ -55,6 +55,7 @@ export function RSVPElegantVariant({
   alignment,
   sectionTitle,
   sectionSubtitle,
+  showTravelInfo = true,
   showCustomQuestions = false,
   customQuestions = [],
   useColorBackground,
@@ -642,7 +643,7 @@ export function RSVPElegantVariant({
                     )}
                     
                     {/* Travel Fields - only show if attending */}
-                    {guest.attending === true && (
+                    {showTravelInfo && guest.attending === true && (
                       <div className="pl-0 sm:pl-14 pt-2">
                         <TravelFields
                           guestId={guest.id}
