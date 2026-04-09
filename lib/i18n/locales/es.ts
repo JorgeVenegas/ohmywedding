@@ -307,6 +307,12 @@ export const es: Translations = {
     editQuestion: 'Editar Pregunta'
   },
 
+  // Dress Code Section
+  dressCode: {
+    title: 'Código de Vestimenta',
+    subtitle: 'Qué vestir para nuestra celebración',
+  },
+
   // Banner Section
   banner: {
     title: 'Banner'

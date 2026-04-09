@@ -7,7 +7,17 @@ import { AnimatedSection } from '../animated-section'
 import { BaseEventDetailsProps, buildEventList, getMapUrl, getColorScheme, formatWeddingTime } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { useScrollAnimation } from '@/hooks/use-scroll-animation'
-import { HaciendaTilePattern, CandleGlow, HaciendaSectionTitle, FloralDivider, CenterMedallion, VineAccent } from '../hacienda-ornaments'
+import { HaciendaTilePattern, CandleGlow, HaciendaSectionTitle, FloralDivider, VineAccent, OrnateCorner } from '../hacienda-ornaments'
+
+// Icon assets to display above each event
+const EVENT_ICONS = [
+  '/assets/Icons/Asset%206.svg', // Desfile
+  '/assets/Icons/Asset%201.svg', // Ceremonia Civil
+  '/assets/Icons/Asset%202.svg', // Coctel
+  '/assets/Icons/Asset%203.svg', // Recepcion
+  '/assets/Icons/Asset%204.svg', // Cena
+  '/assets/Icons/Asset%205.svg', // Fiesta
+] as const
 
 /** Centered event block with large medallion ornament. */
 function EventBlock({
@@ -27,20 +37,30 @@ function EventBlock({
       className={`transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
       style={{ transitionDelay: isVisible ? `${index * 180}ms` : '0ms' }}>
 
-      {/* Large medallion ornament */}
+      {/* Event icon */}
       <div className="flex justify-center mb-6">
-        <CenterMedallion color={accent} size="sm" />
+        <div
+          className="w-16 h-16 sm:w-20 sm:h-20"
+          style={{
+            maskImage: `url('${EVENT_ICONS[index % EVENT_ICONS.length]}')`,
+            WebkitMaskImage: `url('${EVENT_ICONS[index % EVENT_ICONS.length]}')`,
+            maskSize: 'contain',
+            maskRepeat: 'no-repeat',
+            maskPosition: 'center',
+            backgroundColor: accent,
+          }}
+        />
       </div>
 
       {/* Event content — centered */}
       <div className="text-center max-w-lg mx-auto">
         <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3">
-          <VineAccent color={`${accent}99`} flip />
+          <VineAccent color={`${accent}CC`} flip />
           <h3 className="text-2xl sm:text-3xl"
             style={{ fontFamily: 'var(--font-display, cursive)', color: titleColor, fontWeight: 400 }}>
             {event.title}
           </h3>
-          <VineAccent color={`${accent}99`} />
+          <VineAccent color={`${accent}CC`} />
         </div>
 
         {event.time && (
@@ -63,10 +83,6 @@ function EventBlock({
               className="w-full h-auto object-cover aspect-[16/10] sepia-[.08] brightness-[1.02]"
               loading="lazy"
             />
-            <div className="absolute top-1.5 left-1.5 w-4 h-4 border-t border-l opacity-30" style={{ borderColor: accent }} />
-            <div className="absolute top-1.5 right-1.5 w-4 h-4 border-t border-r opacity-30" style={{ borderColor: accent }} />
-            <div className="absolute bottom-1.5 left-1.5 w-4 h-4 border-b border-l opacity-30" style={{ borderColor: accent }} />
-            <div className="absolute bottom-1.5 right-1.5 w-4 h-4 border-b border-r opacity-30" style={{ borderColor: accent }} />
           </div>
         )}
 
@@ -96,15 +112,66 @@ function EventBlock({
         )}
       </div>
 
-      {!isLast && <div className="my-14 sm:my-16" />}
+      {!isLast && (
+        <div className="my-14 sm:my-16 flex justify-center">
+          <div
+            className="w-32 h-10 sm:w-40 sm:h-12 opacity-70"
+            style={{
+              maskImage: `url('/assets/Ornaments/Asset%204.svg')`,
+              WebkitMaskImage: `url('/assets/Ornaments/Asset%204.svg')`,
+              maskSize: 'contain',
+              maskRepeat: 'no-repeat',
+              maskPosition: 'center',
+              backgroundColor: accent,
+            }}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Animated venue photo block. */
+function VenuePhoto({ url, accent }: { url: string; accent: string }) {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.1, triggerOnce: false })
+  return (
+    <div ref={ref} className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-[0.98]'}`}>
+      <div className="flex justify-center mb-6 sm:mb-8">
+        <div
+          className="w-full h-8 sm:h-10"
+          style={{
+            maskImage: `url('/assets/Ornaments/Asset%205.svg')`,
+            WebkitMaskImage: `url('/assets/Ornaments/Asset%205.svg')`,
+            maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center',
+            backgroundColor: `${accent}CC`,
+          }}
+        />
+      </div>
+      <div
+        className="relative p-1.5 sm:p-2 w-full overflow-hidden group"
+        style={{ border: `2px solid ${accent}70`, boxShadow: `0 0 0 1px ${accent}30, 0 12px 40px rgba(0,0,0,0.15)` }}>
+        <OrnateCorner position="top-left" color={accent} size="sm" />
+        <OrnateCorner position="top-right" color={accent} size="sm" />
+        <OrnateCorner position="bottom-left" color={`${accent}CC`} size="sm" />
+        <OrnateCorner position="bottom-right" color={`${accent}CC`} size="sm" />
+        <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: `linear-gradient(90deg, transparent, ${accent}80, ${accent}, ${accent}80, transparent)` }} />
+        <div className="overflow-hidden aspect-[16/9] sm:aspect-[21/9]">
+          <img
+            src={url} alt="Venue"
+            className="w-full h-full object-cover sepia-[.06] brightness-[1.02] transition-transform duration-700 group-hover:scale-[1.03]"
+            loading="lazy"
+          />
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: `linear-gradient(90deg, transparent, ${accent}70, ${accent}, ${accent}70, transparent)` }} />
+      </div>
     </div>
   )
 }
 
 export function EventDetailsHaciendaVariant(props: BaseEventDetailsProps) {
   const {
-    wedding, theme, alignment, showMapLinks = true,
-    sectionTitle, sectionSubtitle, useColorBackground, backgroundColorChoice,
+    wedding, theme, alignment, showMapLinks = true, showMap = true,
+    venueImageUrl, mapAddress: mapAddressOverride, sectionTitle, sectionSubtitle, useColorBackground, backgroundColorChoice,
   } = props
 
   const { t } = useI18n()
@@ -129,6 +196,10 @@ export function EventDetailsHaciendaVariant(props: BaseEventDetailsProps) {
 
   const events = buildEventList(props)
   if (events.length === 0) return null
+
+  // Map address: use explicit override, else first event with an address
+  const autoMapAddress = events.find(e => e.address)?.address
+  const mapAddress = mapAddressOverride || autoMapAddress
 
   return (
     <SectionWrapper
@@ -163,6 +234,54 @@ export function EventDetailsHaciendaVariant(props: BaseEventDetailsProps) {
             />
           ))}
         </div>
+
+        {/* Venue photo — independent of map */}
+        {venueImageUrl && (
+          <div className="w-full mt-10 sm:mt-14">
+            <VenuePhoto url={venueImageUrl} accent={accent} />
+          </div>
+        )}
+
+        {/* Embedded Map — independent of venue photo */}
+        {showMap && mapAddress && (
+          <div className="w-full mt-10 sm:mt-14">
+            <div className="flex justify-center mb-6 sm:mb-8">
+              <div
+                className="w-full h-8 sm:h-10"
+                style={{
+                  maskImage: `url('/assets/Ornaments/Asset%205.svg')`,
+                  WebkitMaskImage: `url('/assets/Ornaments/Asset%205.svg')`,
+                  maskSize: 'contain',
+                  maskRepeat: 'no-repeat',
+                  maskPosition: 'center',
+                  backgroundColor: `${accent}CC`,
+                }}
+              />
+            </div>
+            <div
+              className="relative p-1.5 sm:p-2 w-full"
+              style={{ border: `2px solid ${accent}70`, boxShadow: `0 0 0 1px ${accent}30, 0 8px 30px rgba(0,0,0,0.1)` }}>
+              <OrnateCorner position="top-left" color={accent} size="sm" />
+              <OrnateCorner position="top-right" color={accent} size="sm" />
+              <OrnateCorner position="bottom-left" color={`${accent}CC`} size="sm" />
+              <OrnateCorner position="bottom-right" color={`${accent}CC`} size="sm" />
+              <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: `linear-gradient(90deg, transparent, ${accent}80, ${accent}, ${accent}80, transparent)` }} />
+              <div className="aspect-[16/9] md:aspect-[21/9] overflow-hidden">
+                <iframe
+                  src={`https://www.google.com/maps?q=${encodeURIComponent(mapAddress)}&output=embed`}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Event Location Map"
+                />
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: `linear-gradient(90deg, transparent, ${accent}70, ${accent}, ${accent}70, transparent)` }} />
+            </div>
+          </div>
+        )}
 
         {/* Bottom closing ornament */}
         <div className="mt-10 sm:mt-14 w-full">

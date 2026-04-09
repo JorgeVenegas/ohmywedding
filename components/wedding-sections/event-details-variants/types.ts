@@ -27,6 +27,8 @@ export interface BaseEventDetailsProps {
   events?: CustomEvent[] // New primary way to manage events
   showMapLinks?: boolean
   showMap?: boolean
+  mapAddress?: string
+  venueImageUrl?: string
   sectionTitle?: string
   sectionSubtitle?: string
   useColorBackground?: boolean

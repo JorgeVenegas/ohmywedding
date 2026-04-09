@@ -71,18 +71,22 @@ export function BotanicalCorner({ position, color, size = 'lg' }: {
 /* --------------------------------------------------------------------------
    2. SCROLLWORK FRAME — composed from Assets 6 (top vine), 8 (sides), 7 (bottom)
    -------------------------------------------------------------------------- */
-export function BaroqueFrame({ children, color, className = '' }: {
+export function BaroqueFrame({ children, color, className = '', showTop = true, showBottom = true }: {
   children: React.ReactNode
   color: string
   className?: string
+  showTop?: boolean
+  showBottom?: boolean
 }) {
   return (
     <div className={`relative ${className}`}>
       {/* TOP CREST — Asset 6 vine ornament, flipped for symmetry */}
-      <div
-        className="absolute -top-8 sm:-top-12 left-1/2 -translate-x-1/2 w-[65%] sm:w-[60%] h-8 sm:h-12 z-20 pointer-events-none"
-        style={ornamentMask(ORNAMENT.vine, color, 0.55, { transform: 'scaleY(-1)' })}
-      />
+      {showTop && (
+        <div
+          className="absolute -top-8 sm:-top-12 left-1/2 -translate-x-1/2 w-[65%] sm:w-[60%] h-8 sm:h-12 z-20 pointer-events-none"
+          style={ornamentMask(ORNAMENT.vine, color, 0.55, { transform: 'scaleY(-1)' })}
+        />
+      )}
 
       {/* LEFT SIDE — Asset 8 vertical border */}
       <div
@@ -102,10 +106,12 @@ export function BaroqueFrame({ children, color, className = '' }: {
       />
 
       {/* BOTTOM ORNAMENT — Asset 7 symmetric divider */}
-      <div
-        className="absolute -bottom-5 sm:-bottom-7 left-1/2 -translate-x-1/2 w-[50%] sm:w-[45%] h-6 sm:h-8 z-20 pointer-events-none"
-        style={ornamentMask(ORNAMENT.symmetricDivider, color, 0.45)}
-      />
+      {showBottom && (
+        <div
+          className="absolute -bottom-5 sm:-bottom-7 left-1/2 -translate-x-1/2 w-[50%] sm:w-[45%] h-6 sm:h-8 z-20 pointer-events-none"
+          style={ornamentMask(ORNAMENT.symmetricDivider, color, 0.45)}
+        />
+      )}
 
       {/* CONTENT with ornate border */}
       <div className="relative" style={{

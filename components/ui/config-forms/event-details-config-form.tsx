@@ -53,6 +53,8 @@ interface EventDetailsConfigFormProps {
     events?: CustomEvent[]
     showMapLinks?: boolean
     showMap?: boolean
+    mapAddress?: string
+    venueImageUrl?: string
     useColorBackground?: boolean
     backgroundColorChoice?: BackgroundColorChoice
     // Legacy props that might exist in config
@@ -326,14 +328,6 @@ export function EventDetailsConfigForm({ config, wedding, onChange }: EventDetai
       {/* Display Options */}
       <div className="space-y-4">
         <label className="text-sm font-medium text-gray-700">{t('config.displayOptions')}</label>
-        
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">{t('config.showEmbeddedMap')}</span>
-          <Switch
-            checked={config.showMap ?? true}
-            onCheckedChange={(checked) => onChange('showMap', checked)}
-          />
-        </div>
 
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-600">{t('config.showMapLinks')}</span>
@@ -342,6 +336,65 @@ export function EventDetailsConfigForm({ config, wedding, onChange }: EventDetai
             onCheckedChange={(checked) => onChange('showMapLinks', checked)}
           />
         </div>
+      </div>
+
+      {/* Venue Photo */}
+      <div className="p-4 border border-gray-200 rounded-lg space-y-4">
+        <h4 className="font-medium text-gray-900 text-sm">Venue Photo</h4>
+        <p className="text-xs text-gray-500 -mt-2">Optional photo displayed above the map</p>
+        <ImageUpload
+          currentImageUrl={config.venueImageUrl || ''}
+          onUpload={(url) => onChange('venueImageUrl', url)}
+        />
+        {config.venueImageUrl && (
+          <button
+            type="button"
+            onClick={() => onChange('venueImageUrl', '')}
+            className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1"
+          >
+            <Trash2 className="w-3 h-3" />
+            Remove photo
+          </button>
+        )}
+      </div>
+
+      {/* Map */}
+      <div className="p-4 border border-gray-200 rounded-lg space-y-4">
+        <div className="flex items-center justify-between">
+          <h4 className="font-medium text-gray-900 text-sm">{t('config.showEmbeddedMap')}</h4>
+          <Switch
+            checked={config.showMap ?? true}
+            onCheckedChange={(checked) => onChange('showMap', checked)}
+          />
+        </div>
+
+        {(config.showMap ?? true) && (
+          <>
+            {/* Auto-detected address info */}
+            {(() => {
+              const autoAddress = (config.events || []).find((e: any) => e.address)?.address
+              return autoAddress && !config.mapAddress ? (
+                <p className="text-xs text-gray-500 bg-gray-50 rounded px-3 py-2">
+                  Using address from first event: <span className="font-medium text-gray-700">{autoAddress}</span>
+                </p>
+              ) : null
+            })()}
+
+            {/* Map address override */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Custom map location
+              </label>
+              <Input
+                type="text"
+                value={config.mapAddress || ''}
+                onChange={(e) => onChange('mapAddress', e.target.value || undefined)}
+                placeholder="Leave empty to use first event's address"
+              />
+              <p className="text-xs text-gray-400 mt-1">Override which address the map centers on</p>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Events Management */}

@@ -9,7 +9,7 @@ import { useI18n } from '@/components/contexts/i18n-context'
 import {
   BaroqueFrame, BotanicalCorner, FloralDivider, SideBorderScrollwork,
   CandleGlow, HaciendaSectionTitle,
-  ScrapbookPhoto, GoldTapeAccent, DecorativeQuoteBlock, TornPaperEdge,
+  DecorativeQuoteBlock,
 } from '../hacienda-ornaments'
 
 export function OurStoryHaciendaVariant({
@@ -67,17 +67,16 @@ export function OurStoryHaciendaVariant({
           />
         </AnimatedSection>
 
-        {/* === HOW WE MET — Text left, Baroque-framed photo right with scrapbook accent === */}
+        {/* === HOW WE MET — Text first, then photo (mobile: text, photo; desktop: text left, photo right) === */}
         {showHowWeMet && (
           <AnimatedSection delay={200} className="mb-24 sm:mb-32">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-14 items-center">
-              {/* Left: Text content */}
-              <div className={`${showHowWeMetPhoto && howWeMetPhoto ? 'md:col-span-6 md:order-1' : 'md:col-span-12'} space-y-5`}>
+              {/* Text content */}
+              <div className={`${showHowWeMetPhoto && howWeMetPhoto ? 'md:col-span-6' : 'md:col-span-12'} space-y-5 order-1`}>
                 <h3 className="text-3xl sm:text-4xl md:text-5xl uppercase tracking-[0.06em]"
                   style={{ fontFamily: 'var(--font-heading, serif)', color: renderTitleColor, fontWeight: 400, letterSpacing: '0.04em' }}>
                   {t('ourStory.howWeMet')}
                 </h3>
-                {/* Ornate scrollwork accent */}
                 <div className="w-28 sm:w-32">
                   <svg viewBox="0 0 100 12" fill="none" className="w-full">
                     <line x1="0" y1="6" x2="30" y2="6" stroke={accent} strokeWidth="0.8" opacity="0.4" />
@@ -96,11 +95,10 @@ export function OurStoryHaciendaVariant({
                 </DecorativeQuoteBlock>
               </div>
 
-              {/* Right: Photo composition — Baroque frame + scrapbook accent */}
+              {/* Photo in Baroque frame */}
               {showHowWeMetPhoto && howWeMetPhoto && (
-                <div className="md:col-span-6 md:order-2 relative mt-8 md:mt-0">
-                  {/* Main photo in elaborate Baroque frame */}
-                  <BaroqueFrame color={accent} className="relative z-10">
+                <div className="md:col-span-6 order-2">
+                  <BaroqueFrame color={accent} showTop={false} showBottom={false}>
                     <div className="relative aspect-[3/4] overflow-hidden">
                       <Image src={howWeMetPhoto} alt="How we met" fill
                         className="object-cover" sizes="(max-width: 768px) 90vw, 40vw" priority />
@@ -108,69 +106,18 @@ export function OurStoryHaciendaVariant({
                         style={{ boxShadow: `inset 0 0 80px rgba(0,0,0,0.12)` }} />
                     </div>
                   </BaroqueFrame>
-
-                  {/* Scrapbook accent photo — overlapping, rotated, with tape */}
-                  {proposalPhoto && (
-                    <div className="absolute -bottom-10 -right-4 sm:-right-10 z-20 w-[42%] sm:w-[40%]">
-                      <ScrapbookPhoto rotation={4} accentColor={accent}>
-                        <div className="relative aspect-square overflow-hidden">
-                          <Image src={proposalPhoto} alt="Detail" fill className="object-cover"
-                            sizes="(max-width: 768px) 35vw, 15vw" />
-                        </div>
-                      </ScrapbookPhoto>
-                    </div>
-                  )}
-
-                  {/* Background decorative arch outline */}
-                  <div className="absolute -bottom-6 -left-6 w-[35%] h-[28%] rounded-t-full border-2 opacity-15 hidden sm:block"
-                    style={{ borderColor: accent }} />
                 </div>
               )}
             </div>
           </AnimatedSection>
         )}
 
-        {/* === THE PROPOSAL — Photo left with torn edge, text right === */}
+        {/* === THE PROPOSAL — Text first, then photo (mobile: text, photo; desktop: photo left, text right) === */}
         {showProposal && (
           <AnimatedSection delay={400}>
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-14 items-center">
-              {/* Left: Photo with torn edge + scrapbook accent */}
-              {showProposalPhoto && proposalPhoto && (
-                <div className="md:col-span-6 md:order-1 relative">
-                  {/* Main photo with torn paper edge */}
-                  <TornPaperEdge side="right" bgColor={secondary} className="relative z-10 shadow-xl">
-                    <div className="relative aspect-[4/5] overflow-hidden">
-                      <Image src={proposalPhoto} alt="The proposal" fill className="object-cover"
-                        sizes="(max-width: 768px) 90vw, 40vw" />
-                      <div className="absolute inset-0 pointer-events-none"
-                        style={{ boxShadow: `inset 0 0 60px rgba(0,0,0,0.1)` }} />
-                    </div>
-                  </TornPaperEdge>
-
-                  {/* Overlapping scrapbook accent with how-we-met photo */}
-                  {howWeMetPhoto && (
-                    <div className="absolute -bottom-8 -right-4 sm:-right-8 z-20 w-[38%] sm:w-[36%]">
-                      <ScrapbookPhoto rotation={-3} accentColor={accent}>
-                        <div className="relative aspect-[4/3] overflow-hidden">
-                          <Image src={howWeMetPhoto} alt="Detail" fill className="object-cover"
-                            sizes="(max-width: 768px) 30vw, 12vw" />
-                        </div>
-                      </ScrapbookPhoto>
-                    </div>
-                  )}
-
-                  {/* Tape accent on torn photo */}
-                  <div className="absolute top-4 left-6 z-20 hidden sm:block">
-                    <GoldTapeAccent color={accent} rotation={-12} />
-                  </div>
-                  <div className="absolute bottom-16 right-8 z-20 hidden sm:block">
-                    <GoldTapeAccent color={accent} rotation={8} />
-                  </div>
-                </div>
-              )}
-
-              {/* Right: text content */}
-              <div className={`${showProposalPhoto && proposalPhoto ? 'md:col-span-6 md:order-2' : 'md:col-span-12'} space-y-5`}>
+              {/* Text content — on mobile comes first (order-1), on desktop goes right (md:order-2) */}
+              <div className={`${showProposalPhoto && proposalPhoto ? 'md:col-span-6 md:order-2' : 'md:col-span-12'} space-y-5 order-1`}>
                 <h3 className="text-3xl sm:text-4xl md:text-5xl uppercase tracking-[0.06em]"
                   style={{ fontFamily: 'var(--font-heading, serif)', color: renderTitleColor, fontWeight: 400, letterSpacing: '0.04em' }}>
                   {t('ourStory.proposal')}
@@ -192,6 +139,20 @@ export function OurStoryHaciendaVariant({
                   </div>
                 </DecorativeQuoteBlock>
               </div>
+
+              {/* Photo in Baroque frame — on mobile comes second (order-2), on desktop goes left (md:order-1) */}
+              {showProposalPhoto && proposalPhoto && (
+                <div className="md:col-span-6 md:order-1 order-2">
+                  <BaroqueFrame color={accent} showTop={false} showBottom={false}>
+                    <div className="relative aspect-[3/4] overflow-hidden">
+                      <Image src={proposalPhoto} alt="The proposal" fill
+                        className="object-cover" sizes="(max-width: 768px) 90vw, 40vw" />
+                      <div className="absolute inset-0 pointer-events-none"
+                        style={{ boxShadow: `inset 0 0 80px rgba(0,0,0,0.12)` }} />
+                    </div>
+                  </BaroqueFrame>
+                </div>
+              )}
             </div>
           </AnimatedSection>
         )}

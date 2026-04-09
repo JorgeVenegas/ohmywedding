@@ -8,8 +8,7 @@ import { getWeddingPath } from '@/lib/wedding-url'
 import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 import Link from 'next/link'
 import {
-  HaciendaSectionTitle, HaciendaTilePattern, CandleGlow,
-  IronLineDivider, OrnateCorner, BotanicalCorner, SideBorderScrollwork,
+  HaciendaSectionTitle, HaciendaTilePattern,
 } from '../hacienda-ornaments'
 
 interface RegistryHaciendaItemProps {
@@ -38,23 +37,18 @@ function RegistryHaciendaItem({ registry, index, onNoUrl, cardBg, cardBorder, pr
       style={{ transitionDelay: isVisible ? `${index * 120}ms` : '0ms' }}
     >
       {/* Main card */}
-      <div className="relative rounded-2xl overflow-hidden shadow-lg h-full flex flex-col border"
-        style={{ backgroundColor: cardBg, borderColor: `${accent}30` }}>
-        {/* Ornate corners */}
-        <OrnateCorner position="top-left" color={`${accent}40`} size="sm" />
-        <OrnateCorner position="top-right" color={`${accent}40`} size="sm" />
-        <OrnateCorner position="bottom-left" color={`${accent}30`} size="sm" />
-        <OrnateCorner position="bottom-right" color={`${accent}30`} size="sm" />
-        {/* Warm glow */}
-        <CandleGlow position="center" intensity="subtle" />
-
-        {/* Banner accent */}
-        <div className="h-1" style={{ background: `linear-gradient(90deg, transparent, ${accent}60, ${primary}40, ${accent}60, transparent)` }} />
+      <div className="relative overflow-hidden shadow-lg h-full flex flex-col"
+        style={{
+          backgroundColor: cardBg,
+          border: `2px solid ${accent}40`,
+          boxShadow: `0 0 0 1px ${accent}15, 0 0 0 5px ${accent}05, 0 8px 30px rgba(0,0,0,0.12)`,
+        }}>
+        {/* Top gold accent line */}
+        <div className="h-1" style={{ background: `linear-gradient(90deg, transparent, ${accent}60, ${accent}, ${accent}60, transparent)` }} />
 
         <div className="relative z-10 p-7 sm:p-9 text-center flex-1 flex flex-col justify-center">
           {/* Provider logo */}
-          <div className="mb-5 relative inline-block mx-auto">
-            <div className="absolute -inset-3 rounded-full" style={{ border: `1px solid ${accent}20` }} />
+          <div className="mb-4 relative inline-block mx-auto">
             <div className="h-18 sm:h-22 flex items-center justify-center">
               <img src={getProviderLogoUrl(registry)} alt={registry.name}
                 className="max-h-14 sm:max-h-18 max-w-[130px] sm:max-w-[150px] object-contain"
@@ -66,10 +60,7 @@ function RegistryHaciendaItem({ registry, index, onNoUrl, cardBg, cardBorder, pr
             </div>
           </div>
 
-          {/* Divider */}
-          <IronLineDivider color={accent} />
-
-          <h3 className="text-lg sm:text-xl font-light mb-2 tracking-wide mt-3"
+          <h3 className="text-lg sm:text-xl font-light mb-2 tracking-wide"
             style={{ color: titleColor, fontFamily: 'var(--font-heading, serif)' }}>
             {registry.name}
           </h3>
@@ -81,21 +72,32 @@ function RegistryHaciendaItem({ registry, index, onNoUrl, cardBg, cardBorder, pr
           <div className="flex justify-center mt-auto pt-4">
             {hasUrl ? (
               <a href={registry.url} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-7 py-3 rounded-full text-sm font-light tracking-[0.15em] uppercase transition-all duration-300 hover:shadow-lg hover:opacity-90 border"
-                style={{ backgroundColor: 'transparent', borderColor: `${accent}60`, color: accent }}>
+                className="group inline-flex items-center gap-2 px-7 py-3 text-sm font-light tracking-[0.15em] uppercase transition-all duration-300 hover:shadow-lg relative"
+                style={{ color: accent, border: `1.5px solid ${accent}50` }}>
+                <span className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 transition-all duration-300 group-hover:w-4 group-hover:h-4" style={{ borderColor: accent }} />
+                <span className="absolute top-0 right-0 w-2.5 h-2.5 border-t-2 border-r-2 transition-all duration-300 group-hover:w-4 group-hover:h-4" style={{ borderColor: accent }} />
+                <span className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b-2 border-l-2 transition-all duration-300 group-hover:w-4 group-hover:h-4" style={{ borderColor: accent }} />
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 transition-all duration-300 group-hover:w-4 group-hover:h-4" style={{ borderColor: accent }} />
                 {t('registry.visitRegistry')}
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
             ) : (
               <button onClick={onNoUrl}
-                className="inline-flex items-center gap-2 px-7 py-3 rounded-full text-sm font-light tracking-[0.15em] uppercase transition-all duration-300 hover:shadow-lg hover:opacity-90 border"
-                style={{ backgroundColor: 'transparent', borderColor: `${accent}60`, color: accent }}>
+                className="group inline-flex items-center gap-2 px-7 py-3 text-sm font-light tracking-[0.15em] uppercase transition-all duration-300 hover:shadow-lg relative"
+                style={{ color: accent, border: `1.5px solid ${accent}50` }}>
+                <span className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 transition-all duration-300 group-hover:w-4 group-hover:h-4" style={{ borderColor: accent }} />
+                <span className="absolute top-0 right-0 w-2.5 h-2.5 border-t-2 border-r-2 transition-all duration-300 group-hover:w-4 group-hover:h-4" style={{ borderColor: accent }} />
+                <span className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b-2 border-l-2 transition-all duration-300 group-hover:w-4 group-hover:h-4" style={{ borderColor: accent }} />
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 transition-all duration-300 group-hover:w-4 group-hover:h-4" style={{ borderColor: accent }} />
                 {t('registry.visitRegistry')}
                 <ExternalLink className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
         </div>
+
+        {/* Bottom gold accent line */}
+        <div className="h-0.5" style={{ background: `linear-gradient(90deg, transparent, ${accent}40, ${accent}70, ${accent}40, transparent)` }} />
       </div>
     </div>
   )
@@ -137,13 +139,6 @@ export function RegistryHaciendaVariant({
     <section id="registry" className="w-full py-16 sm:py-20 md:py-24 relative overflow-hidden"
       style={{ backgroundColor: isColored ? bgColor : secondary }}>
       <HaciendaTilePattern color={primary} opacity={0.05} />
-      <CandleGlow position="top" intensity="subtle" />
-      <BotanicalCorner position="top-left" color={`${accent}60`} size="sm" />
-      <BotanicalCorner position="bottom-right" color={`${accent}60`} size="sm" />
-      <BotanicalCorner position="top-right" color={`${accent}45`} size="sm" />
-      <BotanicalCorner position="bottom-left" color={`${accent}45`} size="sm" />
-      <SideBorderScrollwork color={`${accent}50`} side="left" />
-      <SideBorderScrollwork color={`${accent}50`} side="right" />
 
       <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-10 relative z-10">
         {/* Section header */}
@@ -162,11 +157,6 @@ export function RegistryHaciendaVariant({
               backgroundColor: isColored ? 'rgba(255,255,255,0.1)' : `${secondary}`,
               borderColor: `${accent}20`,
             }}>
-            {/* Corner accents */}
-            <div className="absolute top-2 left-2 w-4 h-4 border-t border-l" style={{ borderColor: `${accent}40` }} />
-            <div className="absolute top-2 right-2 w-4 h-4 border-t border-r" style={{ borderColor: `${accent}40` }} />
-            <div className="absolute bottom-2 left-2 w-4 h-4 border-b border-l" style={{ borderColor: `${accent}30` }} />
-            <div className="absolute bottom-2 right-2 w-4 h-4 border-b border-r" style={{ borderColor: `${accent}30` }} />
             <p className="text-base sm:text-lg italic font-light" style={{ color: bodyTextColor }}>
               &ldquo;{messageText}&rdquo;
             </p>
@@ -196,23 +186,21 @@ export function RegistryHaciendaVariant({
             {showCustomRegistry && weddingNameId && (
               <div className="relative w-full h-full">
                 <Link href={getWeddingPath(weddingNameId, '/registry')}
-                  className="block relative rounded-2xl overflow-hidden shadow-lg transition-shadow duration-300 hover:shadow-2xl h-full border"
-                  style={{ backgroundColor: cardBg, borderColor: `${accent}30` }}>
-                  <OrnateCorner position="top-left" color={`${accent}40`} size="sm" />
-                  <OrnateCorner position="top-right" color={`${accent}40`} size="sm" />
-                  <OrnateCorner position="bottom-left" color={`${accent}30`} size="sm" />
-                  <OrnateCorner position="bottom-right" color={`${accent}30`} size="sm" />
-                  <CandleGlow position="center" intensity="subtle" />
-                  <div className="h-1" style={{ background: `linear-gradient(90deg, transparent, ${accent}60, ${primary}40, ${accent}60, transparent)` }} />
+                  className="block relative overflow-hidden shadow-lg transition-shadow duration-300 hover:shadow-2xl h-full"
+                  style={{
+                    backgroundColor: cardBg,
+                    border: `2px solid ${accent}40`,
+                    boxShadow: `0 0 0 1px ${accent}15, 0 0 0 5px ${accent}05, 0 8px 30px rgba(0,0,0,0.12)`,
+                  }}>
+                  <div className="h-1" style={{ background: `linear-gradient(90deg, transparent, ${accent}60, ${accent}, ${accent}60, transparent)` }} />
+
                   <div className="relative z-10 p-8 sm:p-10 text-center">
-                    <div className="mb-5 relative inline-block">
-                      <div className="absolute -inset-3 rounded-full" style={{ border: `1px solid ${accent}20` }} />
+                    <div className="mb-4 relative inline-block">
                       <div className="h-18 sm:h-22 flex items-center justify-center">
                         <Heart className="w-14 h-14 sm:w-16 sm:h-16" style={{ color: accent }} fill={accent} />
                       </div>
                     </div>
-                    <IronLineDivider color={accent} />
-                    <h3 className="text-lg sm:text-xl font-light mb-2 tracking-wide mt-3"
+                    <h3 className="text-lg sm:text-xl font-light mb-2 tracking-wide"
                       style={{ color: titleColor, fontFamily: 'var(--font-heading, serif)' }}>
                       {t('registry.customTitle') || 'Our Custom Registry'}
                     </h3>
@@ -222,13 +210,18 @@ export function RegistryHaciendaVariant({
                       </p>
                     )}
                     <div className="flex justify-center">
-                      <div className="inline-flex items-center gap-2 px-7 py-3 rounded-full text-sm font-light tracking-[0.15em] uppercase transition-all duration-300 hover:shadow-lg hover:opacity-90 border"
-                        style={{ backgroundColor: 'transparent', borderColor: `${accent}60`, color: accent }}>
+                      <div className="group inline-flex items-center gap-2 px-7 py-3 text-sm font-light tracking-[0.15em] uppercase transition-all duration-300 hover:shadow-lg relative"
+                        style={{ color: accent, border: `1.5px solid ${accent}50` }}>
+                        <span className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 transition-all duration-300 group-hover:w-4 group-hover:h-4" style={{ borderColor: accent }} />
+                        <span className="absolute top-0 right-0 w-2.5 h-2.5 border-t-2 border-r-2 transition-all duration-300 group-hover:w-4 group-hover:h-4" style={{ borderColor: accent }} />
+                        <span className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b-2 border-l-2 transition-all duration-300 group-hover:w-4 group-hover:h-4" style={{ borderColor: accent }} />
+                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 transition-all duration-300 group-hover:w-4 group-hover:h-4" style={{ borderColor: accent }} />
                         {t('registry.visitRegistry')}
                         <ExternalLink className="w-3.5 h-3.5" />
                       </div>
                     </div>
                   </div>
+                  <div className="h-0.5" style={{ background: `linear-gradient(90deg, transparent, ${accent}40, ${accent}70, ${accent}40, transparent)` }} />
                 </Link>
               </div>
             )}

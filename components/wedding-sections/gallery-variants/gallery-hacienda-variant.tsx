@@ -9,7 +9,6 @@ import { useI18n } from '@/components/contexts/i18n-context'
 import { getGalleryColorScheme } from './color-utils'
 import {
   CandleGlow, HaciendaSectionTitle,
-  FloralDivider, CenterMedallion, CharroStar,
 } from '../hacienda-ornaments'
 
 export function GalleryHaciendaVariant({
@@ -79,12 +78,7 @@ export function GalleryHaciendaVariant({
             title={sectionTitle || t('gallery.title')} subtitle={sectionSubtitle}
             titleColor={isColored ? textColor : primary}
             subtitleColor={isColored ? mutedTextColor : accent} accentColor={accent} />
-          <div className="flex items-center justify-center gap-4 sm:gap-6 mt-6 mb-5">
-            <CharroStar color={`${accent}70`} size={20} />
-            <CenterMedallion color={`${accent}75`} size="sm" />
-            <CharroStar color={`${accent}70`} size={20} />
-          </div>
-          <p className="text-sm font-light" style={{ color: isColored ? mutedTextColor : `${primary}80` }}>
+          <p className="text-sm font-light mt-6" style={{ color: isColored ? mutedTextColor : `${primary}80` }}>
             {t('gallery.noPhotosYet')}. {t('gallery.uploadYourFirst')}
           </p>
         </div>
@@ -106,11 +100,7 @@ export function GalleryHaciendaVariant({
                 title={sectionTitle || t('gallery.title')} subtitle={sectionSubtitle}
                 titleColor={isColored ? textColor : primary}
                 subtitleColor={isColored ? mutedTextColor : accent} accentColor={accent} />
-              <div className="flex items-center justify-center gap-4 sm:gap-6 mt-6">
-                <CharroStar color={`${accent}65`} size={20} />
-                <CenterMedallion color={`${accent}70`} size="sm" />
-                <CharroStar color={`${accent}65`} size={20} />
-              </div>
+
             </AnimatedSection>
           </div>
         </div>
@@ -176,16 +166,6 @@ export function GalleryHaciendaVariant({
                 </AnimatedSection>
               )
             })}
-          </div>
-        </div>
-
-        {/* Bottom hacienda divider */}
-        <div className="relative z-10 py-10 sm:py-14">
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <CandleGlow position="bottom" intensity="subtle" />
-          </div>
-          <div className="max-w-3xl mx-auto px-6 sm:px-8 relative z-10">
-            <FloralDivider color={`${accent}55`} />
           </div>
         </div>
       </section>

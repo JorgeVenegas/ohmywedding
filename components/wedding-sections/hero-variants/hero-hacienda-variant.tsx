@@ -7,8 +7,10 @@ import { HeroTextContent } from './hero-text-content'
 import { BaseHeroProps } from './types'
 import { useEnvelope } from '@/components/contexts/envelope-context'
 import { ChevronDown } from 'lucide-react'
-import { BotanicalCorner, CandleGlow, FloralDivider, SideBorderScrollwork, DetailedBorderDivider } from '../hacienda-ornaments'
+import { BotanicalCorner, CandleGlow, FloralDivider, SideBorderScrollwork, DetailedBorderDivider, CharroStar, VineAccent } from '../hacienda-ornaments'
 import { resolveColor } from '@/lib/color-utils'
+import { calculateDaysUntilWedding } from '@/lib/wedding-utils-client'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 interface HeroHaciendaVariantProps extends BaseHeroProps {
   overlayOpacity?: number
@@ -25,9 +27,11 @@ export function HeroHaciendaVariant({
   backgroundGradient = false, gradientColor1, gradientColor2,
 }: HeroHaciendaVariantProps) {
   const { isOpened: envelopeOpened } = useEnvelope()
+  const { t } = useI18n()
   const accent = theme?.colors?.accent || '#C0A882'
   const primary = theme?.colors?.primary || '#2D4A32'
   const [scrollY, setScrollY] = useState(0)
+  const daysUntil = calculateDaysUntilWedding(wedding.wedding_date)
   const resolvedGradientColor1 = resolveColor(gradientColor1, theme)
   const resolvedGradientColor2 = resolveColor(gradientColor2, theme)
 
@@ -107,48 +111,78 @@ export function HeroHaciendaVariant({
       </div>
 
       {/* === BOTANICAL CORNER SPRAYS === */}
-      <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-1000 ${envelopeOpened ? 'opacity-100 delay-500' : 'opacity-0'}`}>
+      <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-1000 ${envelopeOpened ? 'opacity-100 delay-500' : 'opacity-0'}`}
+        style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))' }}>
         <BotanicalCorner position="top-left" color={accent} size="sm" />
         <BotanicalCorner position="top-right" color={accent} size="sm" />
         <BotanicalCorner position="bottom-left" color={accent} size="sm" />
         <BotanicalCorner position="bottom-right" color={accent} size="sm" />
       </div>
 
-      {/* Border frame */}
-      <div className={`absolute inset-4 sm:inset-8 md:inset-12 z-10 pointer-events-none transition-opacity duration-1000 ${envelopeOpened ? 'opacity-100 delay-700' : 'opacity-0'}`}>
-        <div className="absolute inset-0" style={{ border: `1.5px solid ${accent}90` }} />
-        <div className="absolute inset-2" style={{ border: `1px solid ${accent}50` }} />
-        <div className="absolute inset-3.5" style={{ border: `1px solid ${accent}30` }} />
-        {['top-0 left-0', 'top-0 right-0', 'bottom-0 left-0', 'bottom-0 right-0'].map((pos, i) => (
-          <div key={i} className={`absolute ${pos} w-2.5 h-2.5 -translate-x-1/2 -translate-y-1/2`}>
-            <div className="w-full h-full rounded-full" style={{ backgroundColor: accent, opacity: 0.8 }} />
-          </div>
-        ))}
-      </div>
 
-      {/* Side border scrollwork */}
-      <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-1200 ${envelopeOpened ? 'opacity-100 delay-800' : 'opacity-0'}`}>
+
+      {/* Side border scrollwork — hidden on mobile */}
+      <div className={`absolute inset-0 z-10 pointer-events-none transition-opacity duration-1200 hidden sm:block ${envelopeOpened ? 'opacity-100 delay-800' : 'opacity-0'}`}
+        style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))' }}>
         <SideBorderScrollwork color={accent} side="left" />
         <SideBorderScrollwork color={accent} side="right" />
       </div>
 
       {/* Content */}
       <div className="relative z-20 w-full max-w-4xl mx-auto px-6 sm:px-8 flex flex-col items-center justify-center h-full">
-        {/* Asset 5 above the names */}
+        {/* Hacienda-styled countdown */}
+        {showCountdown && wedding.wedding_date && daysUntil > 0 && (
+          <div className={`transition-all duration-700 delay-[400ms] mb-4 sm:mb-5 ${envelopeOpened ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <div className="flex items-center justify-center gap-3 sm:gap-4">
+              <VineAccent color={accent} flip className="!w-8 sm:!w-12 drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]" />
+              <div className="text-center">
+                <div className="text-4xl sm:text-5xl md:text-6xl font-light tabular-nums leading-none"
+                  style={{
+                    color: '#FFFFFF', fontFamily: 'var(--font-display, serif)',
+                    textShadow: `0 0 30px ${accent}60, 0 0 60px ${accent}30, 0 2px 12px rgba(0,0,0,0.5)`,
+                  }}>
+                  {daysUntil}
+                </div>
+                <div className="mt-1.5 text-[10px] sm:text-xs uppercase tracking-[0.35em] font-medium"
+                  style={{ color: '#FFFFFF', fontFamily: 'var(--font-heading, serif)',
+                    textShadow: `0 0 20px ${accent}50, 0 1px 4px rgba(0,0,0,0.5)` }}>
+                  {daysUntil === 1 ? t('countdown.day') : t('countdown.days')} {t('hero.untilBigDay')}
+                </div>
+              </div>
+              <VineAccent color={accent} className="!w-8 sm:!w-12 drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]" />
+            </div>
+          </div>
+        )}
+        {showCountdown && wedding.wedding_date && daysUntil === 0 && (
+          <div className={`transition-all duration-700 delay-[400ms] mb-4 sm:mb-5 ${envelopeOpened ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <div className="flex items-center justify-center gap-3 sm:gap-4">
+              <VineAccent color={accent} flip className="!w-8 sm:!w-12" />
+              <span className="text-sm sm:text-base uppercase tracking-[0.3em] font-medium"
+                style={{ color: '#FFFFFF', fontFamily: 'var(--font-heading, serif)',
+                  textShadow: '0 1px 4px rgba(0,0,0,0.4)' }}>
+                {t('hero.todayIsTheDay')}
+              </span>
+              <VineAccent color={accent} className="!w-8 sm:!w-12" />
+            </div>
+          </div>
+        )}
+
+        {/* Divider between countdown and names */}
         <div className={`w-full transition-all duration-700 delay-[700ms] ${envelopeOpened ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <DetailedBorderDivider color={accent} className="mb-4 sm:mb-5" />
+          <DetailedBorderDivider color={accent} className="mb-4 sm:mb-5 drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)] !max-w-[160px] sm:!max-w-sm" />
         </div>
+
         <HeroTextContent
           wedding={wedding} dateId={dateId} weddingNameId={weddingNameId}
           theme={theme} alignment={alignment}
           showTagline={showTagline} tagline={tagline}
-          showCountdown={showCountdown} showRSVPButton={false} isOverlay={true}
+          showCountdown={false} showRSVPButton={false} isOverlay={true}
         />
 
         {/* Floral divider above RSVP */}
         {showRSVPButton && weddingNameId && (
           <div className={`transition-all duration-700 delay-[1500ms] ${envelopeOpened ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <FloralDivider color={accent} className="mb-6 sm:mb-8" />
+            <FloralDivider color={accent} className="mb-6 sm:mb-8 drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]" />
           </div>
         )}
 
@@ -157,17 +191,21 @@ export function HeroHaciendaVariant({
           <div className={`transition-all duration-700 delay-[1800ms] ${envelopeOpened ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
             <a href="#rsvp"
               onClick={(e) => { e.preventDefault(); document.querySelector('#rsvp')?.scrollIntoView({ behavior: 'smooth' }) }}
-              className="group relative inline-block px-12 sm:px-16 py-3 sm:py-3.5 text-[11px] sm:text-xs uppercase tracking-[0.4em] font-medium transition-all duration-500 hover:shadow-[0_0_30px_rgba(192,168,130,0.15)] active:scale-[0.98]"
+              className="group/btn relative inline-block px-12 sm:px-16 py-3.5 sm:py-4 text-[11px] sm:text-xs uppercase tracking-[0.4em] transition-all duration-500 active:scale-[0.98] backdrop-blur-sm overflow-hidden"
               style={{
-                color: accent, border: `1.5px solid ${accent}60`,
+                color: '#FFFFFF', border: `1.5px solid ${accent}80`,
                 fontFamily: 'var(--font-heading, serif)',
-                background: `linear-gradient(135deg, rgba(192,168,130,0.05) 0%, rgba(192,168,130,0.12) 100%)`,
+                background: `linear-gradient(180deg, ${accent}18 0%, transparent 50%, ${accent}10 100%)`,
+                boxShadow: `inset 0 1px 0 ${accent}30, 0 0 20px ${accent}15`,
+                textShadow: `0 0 12px ${accent}40`,
               }}>
-              <span className="absolute top-0 left-0 w-3.5 h-3.5 border-t-2 border-l-2 transition-all duration-300 group-hover:w-5 group-hover:h-5" style={{ borderColor: accent }} />
-              <span className="absolute top-0 right-0 w-3.5 h-3.5 border-t-2 border-r-2 transition-all duration-300 group-hover:w-5 group-hover:h-5" style={{ borderColor: accent }} />
-              <span className="absolute bottom-0 left-0 w-3.5 h-3.5 border-b-2 border-l-2 transition-all duration-300 group-hover:w-5 group-hover:h-5" style={{ borderColor: accent }} />
-              <span className="absolute bottom-0 right-0 w-3.5 h-3.5 border-b-2 border-r-2 transition-all duration-300 group-hover:w-5 group-hover:h-5" style={{ borderColor: accent }} />
-              RSVP
+              {/* Hover fill layer */}
+              <span className="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-400" style={{ background: `${accent}` }} />
+              <span className="absolute top-0 left-0 w-3.5 h-3.5 border-t border-l transition-all duration-300 group-hover/btn:w-5 group-hover/btn:h-5" style={{ borderColor: `${accent}90` }} />
+              <span className="absolute top-0 right-0 w-3.5 h-3.5 border-t border-r transition-all duration-300 group-hover/btn:w-5 group-hover/btn:h-5" style={{ borderColor: `${accent}90` }} />
+              <span className="absolute bottom-0 left-0 w-3.5 h-3.5 border-b border-l transition-all duration-300 group-hover/btn:w-5 group-hover/btn:h-5" style={{ borderColor: `${accent}90` }} />
+              <span className="absolute bottom-0 right-0 w-3.5 h-3.5 border-b border-r transition-all duration-300 group-hover/btn:w-5 group-hover/btn:h-5" style={{ borderColor: `${accent}90` }} />
+              <span className="relative z-10" style={{ color: 'inherit', textShadow: 'inherit' }}>{t('hero.rsvpNow')}</span>
             </a>
           </div>
         )}

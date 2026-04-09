@@ -311,6 +311,12 @@ export interface Translations {
     editQuestion: string
   }
 
+  // Dress Code Section
+  dressCode: {
+    title: string
+    subtitle: string
+  }
+
   // Banner Section
   banner: {
     title: string

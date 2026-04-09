@@ -113,6 +113,8 @@ export function EventDetailsSection({
     customEvents,
     useColorBackground: false,
     backgroundColorChoice: 'none',
+    venueImageUrl: undefined as string | undefined,
+    mapAddress: undefined as string | undefined,
     ceremonyTextAlignment: 'center',
     receptionTextAlignment: 'center'
   })
@@ -126,6 +128,8 @@ export function EventDetailsSection({
     showReception: config.showReception ?? showReception,
     showMapLinks: config.showMapLinks ?? showMapLinks,
     showMap: config.showMap ?? showMap,
+    venueImageUrl: config.venueImageUrl,
+    mapAddress: config.mapAddress,
     showPhotos: config.showPhotos ?? showPhotos,
     ceremonyImageUrl: config.ceremonyImageUrl ?? ceremonyImageUrl,
     receptionImageUrl: config.receptionImageUrl ?? receptionImageUrl,

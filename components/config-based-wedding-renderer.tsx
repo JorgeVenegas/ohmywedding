@@ -16,7 +16,8 @@ import {
   GallerySection,
   FAQSection,
   CountdownSection,
-  RegistrySection
+  RegistrySection,
+  DressCodeSection
 } from './wedding-sections'
 import { BannerSection } from './wedding-sections/banner-section'
 import { VariantProvider } from './contexts/variant-context'
@@ -323,6 +324,12 @@ function ConfigBasedWeddingRendererContent({
           customItems: [],
           showCustomRegistry: false
         }
+      case 'dress-code':
+        return {
+          dressCodeType: '',
+          description: '',
+          images: [],
+        }
       default:
         return {}
     }
@@ -512,6 +519,15 @@ function ConfigBasedWeddingRendererContent({
             {...commonProps}
             {...mergedProps}
             weddingNameId={weddingNameId}
+          />
+        )
+        break
+      case 'dress-code':
+        renderedComponent = (
+          <DressCodeSection
+            key={component.id}
+            {...commonProps}
+            {...mergedProps}
           />
         )
         break

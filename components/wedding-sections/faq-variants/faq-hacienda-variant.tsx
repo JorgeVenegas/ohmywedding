@@ -8,8 +8,8 @@ import { BaseFAQProps, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 import {
-  CandleGlow, IronLineDivider,
-  HaciendaSectionTitle, FloralDivider, OrnateCorner,
+  CandleGlow, IronLineDivider, HaciendaTilePattern,
+  HaciendaSectionTitle, FloralDivider, OrnateCorner, VineAccent,
 } from '../hacienda-ornaments'
 
 function AnimatedFAQItem({ index, children }: { index: number; children: React.ReactNode }) {
@@ -80,6 +80,7 @@ export function FAQHaciendaVariant({
     <>
       <section id="faq" className="w-full py-16 sm:py-20 md:py-28 relative overflow-hidden"
         style={{ backgroundColor: sectionBg }}>
+        <HaciendaTilePattern color={useDarkBg ? creamText : darkBg} opacity={0.05} />
         {/* Background glow */}
         <CandleGlow position="top-left" intensity={useDarkBg ? 'medium' : 'subtle'} />
         <CandleGlow position="top-right" intensity={useDarkBg ? 'medium' : 'subtle'} />
@@ -145,11 +146,14 @@ export function FAQHaciendaVariant({
           <div className="space-y-0">
             {otherQuestions.map((q, index) => (
               <AnimatedFAQItem key={index} index={index}>
-                <IronLineDivider color={useDarkBg ? creamText : darkBg} />
+                <IronLineDivider color={goldAccent} />
                 <div className="py-1">
                   <button onClick={() => toggleItem(index)}
                     className="w-full flex items-center justify-between py-4 sm:py-5 text-left group transition-colors">
-                    <span className="text-sm sm:text-base font-medium pr-4 leading-snug"
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <VineAccent color={goldAccent} flip className="!w-6 sm:!w-8 !h-3 sm:!h-4" />
+                    </div>
+                    <span className="text-sm sm:text-base font-medium px-3 leading-snug flex-1"
                       style={{ color: headingColor, fontFamily: 'var(--font-heading, serif)' }}>
                       {q.question}
                     </span>
@@ -177,7 +181,7 @@ export function FAQHaciendaVariant({
                 </div>
               </AnimatedFAQItem>
             ))}
-            <IronLineDivider color={useDarkBg ? creamText : darkBg} />
+            <IronLineDivider color={goldAccent} />
           </div>
 
           {showContactNote && contactNoteText && (

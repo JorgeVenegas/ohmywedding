@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react'
-import { Crown, Heart, Clock, MapPin, Image, Mail, HelpCircle, Gift } from 'lucide-react'
+import { Crown, Heart, Clock, MapPin, Image, Mail, HelpCircle, Gift, Shirt } from 'lucide-react'
 import { CustomizePanel } from './customize-panel'
 import { useCustomizeSafe } from '@/components/contexts/customize-context'
 import { usePageConfigSafe } from '@/components/contexts/page-config-context'
@@ -14,7 +14,8 @@ import {
   EventDetailsConfigForm,
   FAQConfigForm,
   RegistryConfigForm,
-  GalleryConfigForm
+  GalleryConfigForm,
+  DressCodeConfigForm
 } from './config-forms'
 import { BannerConfigForm } from './config-forms/banner-config-form'
 import { Button } from './button'
@@ -31,7 +32,8 @@ const SECTION_ICONS: Record<string, React.ReactNode> = {
   gallery: <Image className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
   faq: <HelpCircle className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
   'event-details': <MapPin className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
-  registry: <Gift className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
+  registry: <Gift className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
+  'dress-code': <Shirt className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
 }
 
 export function SectionCustomizer() {
@@ -56,7 +58,8 @@ export function SectionCustomizer() {
       gallery: t('config.sectionGallery'),
       faq: t('config.sectionFaq'),
       'event-details': t('config.sectionEventDetails'),
-      registry: t('registry.title')
+      registry: t('registry.title'),
+      'dress-code': t('dressCode.title')
     }
     return sectionNameMap[type] || t('config.unknownSection')
   }
@@ -130,6 +133,13 @@ export function SectionCustomizer() {
             config={sectionConfig} 
             onChange={updateConfig}
             weddingNameId={customizeContext.weddingNameId}
+          />
+        )
+      case 'dress-code':
+        return (
+          <DressCodeConfigForm 
+            config={sectionConfig} 
+            onChange={updateConfig}
           />
         )
       default:
