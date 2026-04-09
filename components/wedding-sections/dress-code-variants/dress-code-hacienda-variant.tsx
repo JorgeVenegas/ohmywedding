@@ -106,35 +106,60 @@ export function DressCodeHaciendaVariant({
                 )}
 
                 {images.length === 1 && (
-                  <div className="mt-7 -mx-7 sm:-mx-10">
+                  <div className="mt-8 -mx-7 sm:-mx-10">
+                    {/* center diamond divider */}
+                    <div className="flex items-center justify-center gap-3 mb-6">
+                      <div className="h-px flex-1" style={{ background: `linear-gradient(to right, transparent, ${accent}50)` }} />
+                      <div className="w-2 h-2 rotate-45" style={{ backgroundColor: accent, opacity: 0.6 }} />
+                      <div className="h-px flex-1" style={{ background: `linear-gradient(to left, transparent, ${accent}50)` }} />
+                    </div>
                     <div
-                      className="relative overflow-hidden group cursor-pointer"
-                      style={{ border: `1px solid ${accent}30`, boxShadow: `0 4px 20px ${accent}15` }}
+                      className="relative mx-4 sm:mx-6 overflow-hidden group cursor-pointer"
+                      style={{ boxShadow: `0 2px 24px ${accent}18` }}
                       onClick={() => openLightbox(images[0])}>
-                      <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: `linear-gradient(90deg, transparent, ${accent}80, ${accent}, ${accent}80, transparent)` }} />
-                      <div className="aspect-[16/9] sm:aspect-[21/9] overflow-hidden">
+                      {/* thin top accent bar */}
+                      <div className="h-0.5 w-full" style={{ background: `linear-gradient(90deg, transparent, ${accent}90, transparent)` }} />
+                      <div className="flex items-center justify-center">
                         <Image
                           src={images[0]}
                           alt="Dress code reference"
-                          fill
-                          className="object-cover sepia-[.06] brightness-[1.02] transition-transform duration-700 group-hover:scale-[1.03]"
-                          sizes="(max-width: 640px) 100vw, 672px"
+                          width={600}
+                          height={600}
+                          className="max-h-[55vh] sm:max-h-[60vh] w-full h-auto object-contain sepia-[.04] brightness-[1.01] transition-transform duration-700 group-hover:scale-[1.015]"
+                          sizes="(max-width: 640px) 85vw, 520px"
                         />
                       </div>
-                      <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: `linear-gradient(90deg, transparent, ${accent}70, ${accent}, ${accent}70, transparent)` }} />
+                      {/* thin bottom accent bar */}
+                      <div className="h-0.5 w-full" style={{ background: `linear-gradient(90deg, transparent, ${accent}70, transparent)` }} />
                     </div>
                   </div>
                 )}
 
                 {images.length > 1 && (
-                  <div className="flex gap-3 mt-6 flex-wrap justify-center">
-                    {images.map((img, i) => (
-                      <button key={i} onClick={() => openLightbox(img)}
-                        className="relative w-20 h-20 sm:w-24 sm:h-24 overflow-hidden border transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                        style={{ borderColor: `${accent}30` }}>
-                        <Image src={img} alt="Dress code reference" fill className="object-cover" sizes="96px" />
-                      </button>
-                    ))}
+                  <div className="mt-8 -mx-7 sm:-mx-10">
+                    <div className="flex items-center justify-center gap-3 mb-6">
+                      <div className="h-px flex-1" style={{ background: `linear-gradient(to right, transparent, ${accent}50)` }} />
+                      <div className="w-2 h-2 rotate-45" style={{ backgroundColor: accent, opacity: 0.6 }} />
+                      <div className="h-px flex-1" style={{ background: `linear-gradient(to left, transparent, ${accent}50)` }} />
+                    </div>
+                    <div className={`grid gap-1 mx-4 sm:mx-6 ${images.length === 2 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'}`}>
+                      {images.map((img, i) => (
+                        <div key={i}
+                          className="relative overflow-hidden cursor-pointer group"
+                          onClick={() => openLightbox(img)}>
+                          <div className="flex items-center justify-center transition-transform duration-500 group-hover:scale-[1.02]">
+                            <Image
+                              src={img}
+                              alt="Dress code reference"
+                              width={300}
+                              height={300}
+                              className="max-h-48 sm:max-h-56 w-full h-auto object-contain"
+                              sizes="(max-width: 640px) 45vw, 200px"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
