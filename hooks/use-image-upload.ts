@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+
+const BUCKET = 'wedding-images'
 
 interface UploadState {
   uploading: boolean
@@ -69,22 +72,20 @@ export function useImageUpload() {
       // Compress the image client-side before uploading
       const compressed = await compressImage(file)
 
-      const formData = new FormData()
-      formData.append('file', compressed)
+      const fileExt = compressed.name.split('.').pop() || 'jpg'
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
-      })
+      const supabase = createClientComponentClient()
+      const { data, error } = await supabase.storage
+        .from(BUCKET)
+        .upload(fileName, compressed, { cacheControl: '3600', upsert: false })
 
-      const result = await response.json()
+      if (error) throw new Error(error.message)
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Upload failed')
-      }
+      const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(data.path)
 
       setState({ uploading: false, error: null, success: true })
-      return result
+      return { url: publicUrl, path: data.path, fileName }
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Upload failed'
