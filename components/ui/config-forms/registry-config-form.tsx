@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { Plus, Trash2, ChevronDown, ChevronUp, ExternalLink, Gift } from 'lucide-react'
-import { DEFAULT_PROVIDERS, RegistryProvider, CustomRegistryItem } from '@/components/wedding-sections/registry-variants/types'
+import { DEFAULT_PROVIDERS, RegistryProvider, CustomRegistryItem, CashRegistry } from '@/components/wedding-sections/registry-variants/types'
 import { BackgroundColorPicker, type BackgroundColorChoice } from '@/components/ui/config-forms/shared'
 
 interface RegistryConfigFormProps {
@@ -20,6 +20,7 @@ interface RegistryConfigFormProps {
     registries?: RegistryProvider[]
     customItems?: CustomRegistryItem[]
     showCustomRegistry?: boolean
+    cashRegistry?: CashRegistry
     useColorBackground?: boolean
     backgroundColorChoice?: BackgroundColorChoice
   }
@@ -476,6 +477,72 @@ export function RegistryConfigForm({ config, onChange }: RegistryConfigFormProps
         onUseColorBackgroundChange={(value) => onChange('useColorBackground', value)}
         onBackgroundColorChoiceChange={(value) => onChange('backgroundColorChoice', value)}
       />
+
+      {/* Cash / Bank Transfer Section */}
+      <div className="p-4 border border-gray-200 rounded-lg space-y-4">
+        <div className="flex items-center justify-between">
+          <h4 className="font-medium text-gray-900 text-sm">
+            {t('registry.cashTitle')}
+          </h4>
+          <Switch
+            checked={config.cashRegistry?.enabled || false}
+            onCheckedChange={(checked) =>
+              onChange('cashRegistry', { ...config.cashRegistry, enabled: checked })
+            }
+          />
+        </div>
+
+        {config.cashRegistry?.enabled && (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                {t('config.sectionTitle')}
+              </label>
+              <Input
+                value={config.cashRegistry?.title || ''}
+                onChange={(e) => onChange('cashRegistry', { ...config.cashRegistry, enabled: true, title: e.target.value })}
+                placeholder={t('registry.cashTitle')}
+                className="text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                {t('registry.customDescription')}
+              </label>
+              <Textarea
+                value={config.cashRegistry?.description || ''}
+                onChange={(e) => onChange('cashRegistry', { ...config.cashRegistry, enabled: true, description: e.target.value })}
+                placeholder="Optional message for your guests"
+                rows={2}
+                className="text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                {t('registry.accountOwner')}
+              </label>
+              <Input
+                value={config.cashRegistry?.accountOwner || ''}
+                onChange={(e) => onChange('cashRegistry', { ...config.cashRegistry, enabled: true, accountOwner: e.target.value })}
+                placeholder="Full name"
+                className="text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                {t('registry.clabe')}
+              </label>
+              <Input
+                value={config.cashRegistry?.clabe || ''}
+                onChange={(e) => onChange('cashRegistry', { ...config.cashRegistry, enabled: true, clabe: e.target.value })}
+                placeholder="18-digit CLABE"
+                className="text-sm font-mono"
+                maxLength={18}
+              />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

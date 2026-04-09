@@ -2,13 +2,14 @@
 
 import React, { useState } from 'react'
 import { ExternalLink, Gift, Heart } from 'lucide-react'
-import { BaseRegistryProps, getColorScheme, getProviderLogoUrl, RegistryProvider } from './types'
+import { BaseRegistryProps, getColorScheme, getProviderLogoUrl, RegistryProvider, CashRegistry } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { getWeddingPath } from '@/lib/wedding-url'
 import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 import Link from 'next/link'
 import {
   HaciendaSectionTitle, HaciendaTilePattern,
+  OrnateCorner, WroughtIronDivider, FloralDivider,
 } from '../hacienda-ornaments'
 
 interface RegistryHaciendaItemProps {
@@ -103,10 +104,129 @@ function RegistryHaciendaItem({ registry, index, onNoUrl, cardBg, cardBorder, pr
   )
 }
 
+function RegistryHaciendaCashCard({
+  cashRegistry, index, cardBg, accent, primary, titleColor, mutedTextColor,
+}: {
+  cashRegistry: CashRegistry
+  index: number
+  cardBg: string
+  accent: string
+  primary: string
+  titleColor: string
+  mutedTextColor: string
+}) {
+  const [copied, setCopied] = useState(false)
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.2, triggerOnce: false })
+  const { t } = useI18n()
+
+  const copyClabe = () => {
+    if (!cashRegistry.clabe) return
+    navigator.clipboard.writeText(cashRegistry.clabe).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    })
+  }
+
+  const title = cashRegistry.title || t('registry.cashTitle')
+
+  return (
+    <div
+      ref={ref}
+      className={`relative w-full h-full transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+      style={{ transitionDelay: isVisible ? `${index * 120}ms` : '0ms' }}
+    >
+      <div className="relative overflow-hidden shadow-lg h-full flex flex-col"
+        style={{
+          backgroundColor: cardBg,
+          border: `2px solid ${accent}40`,
+          boxShadow: `0 0 0 1px ${accent}15, 0 0 0 5px ${accent}05, 0 8px 30px rgba(0,0,0,0.12)`,
+        }}>
+        {/* Top gold accent line */}
+        <div className="h-1" style={{ background: `linear-gradient(90deg, transparent, ${accent}60, ${accent}, ${accent}60, transparent)` }} />
+
+        {/* Ornate corner accents */}
+        <OrnateCorner position="top-left" color={accent} size="sm" />
+        <OrnateCorner position="top-right" color={accent} size="sm" />
+        <OrnateCorner position="bottom-left" color={accent} size="sm" />
+        <OrnateCorner position="bottom-right" color={accent} size="sm" />
+
+        <div className="relative z-10 px-8 sm:px-10 pt-10 pb-8 sm:pt-12 sm:pb-10 text-center flex-1 flex flex-col">
+          {/* Title */}
+          <h3 className="text-xl sm:text-2xl font-light tracking-wide mb-1" style={{ color: titleColor, fontFamily: 'var(--font-display, cursive)' }}>
+            {title}
+          </h3>
+
+          {/* Floral divider below title */}
+          <FloralDivider color={accent} className="my-3" />
+
+          {/* Description */}
+          {cashRegistry.description && (
+            <p className="text-sm sm:text-base italic font-light mb-5 px-2" style={{ color: mutedTextColor }}>
+              {cashRegistry.description}
+            </p>
+          )}
+
+          {/* Bank info */}
+          <div className="mt-auto space-y-5">
+            {cashRegistry.accountOwner && (
+              <div className="space-y-1">
+                <p className="text-[10px] uppercase tracking-[0.2em] font-medium" style={{ color: `${accent}BB` }}>
+                  {t('registry.accountOwner')}
+                </p>
+                <p className="text-base font-light" style={{ color: titleColor, fontFamily: 'var(--font-heading, serif)' }}>
+                  {cashRegistry.accountOwner}
+                </p>
+              </div>
+            )}
+
+            {/* Wrought-iron divider between fields */}
+            {cashRegistry.accountOwner && cashRegistry.clabe && (
+              <WroughtIronDivider color={accent} className="opacity-60" />
+            )}
+
+            {cashRegistry.clabe && (
+              <div className="space-y-1.5">
+                <p className="text-[10px] uppercase tracking-[0.2em] font-medium" style={{ color: `${accent}BB` }}>
+                  {t('registry.clabe')}
+                </p>
+                <button
+                  onClick={copyClabe}
+                  className="group w-full inline-flex items-center justify-center gap-3 px-5 py-3 transition-all duration-300 relative"
+                  style={{
+                    backgroundColor: `${accent}08`,
+                    border: `1px solid ${accent}35`,
+                    color: titleColor,
+                  }}
+                >
+                  {/* Corner accents on copy button */}
+                  <span className="absolute top-0 left-0 w-2 h-2 border-t border-l transition-all duration-300 group-hover:w-3 group-hover:h-3" style={{ borderColor: accent }} />
+                  <span className="absolute top-0 right-0 w-2 h-2 border-t border-r transition-all duration-300 group-hover:w-3 group-hover:h-3" style={{ borderColor: accent }} />
+                  <span className="absolute bottom-0 left-0 w-2 h-2 border-b border-l transition-all duration-300 group-hover:w-3 group-hover:h-3" style={{ borderColor: accent }} />
+                  <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r transition-all duration-300 group-hover:w-3 group-hover:h-3" style={{ borderColor: accent }} />
+                  <span className="font-mono text-sm tracking-[0.15em]">{cashRegistry.clabe}</span>
+                  <span
+                    className="text-[10px] uppercase tracking-[0.12em] flex-shrink-0 transition-colors duration-200"
+                    style={{ color: copied ? accent : mutedTextColor }}
+                  >
+                    {copied ? t('registry.copied') : t('registry.copy')}
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom gold accent line */}
+        <div className="h-0.5" style={{ background: `linear-gradient(90deg, transparent, ${accent}40, ${accent}70, ${accent}40, transparent)` }} />
+      </div>
+    </div>
+  )
+}
+
 export function RegistryHaciendaVariant({
   theme, sectionTitle, sectionSubtitle, message,
   registries = [], showCustomRegistry = false, customItems = [],
-  showDescription = true, useColorBackground = false,
+  showDescription = true, cashRegistry, useColorBackground = false,
   backgroundColorChoice = 'none', weddingNameId,
 }: BaseRegistryProps) {
   const [showAlert, setShowAlert] = useState(false)
@@ -164,7 +284,7 @@ export function RegistryHaciendaVariant({
         )}
 
         {/* Registry grid */}
-        {!hasRegistries && !hasCustomRegistry ? (
+        {!hasRegistries && !hasCustomRegistry && !cashRegistry?.enabled ? (
           <div className="text-center py-14 px-8 rounded-2xl border border-dashed"
             style={{ borderColor: `${accent}30`, backgroundColor: isColored ? 'rgba(255,255,255,0.05)' : 'transparent' }}>
             <Gift className="w-12 h-12 mx-auto mb-4 opacity-25" style={{ color: accent }} />
@@ -181,6 +301,16 @@ export function RegistryHaciendaVariant({
                 mutedTextColor={mutedTextColor} showDescription={showDescription}
               />
             ))}
+
+            {/* Cash Registry Card */}
+            {cashRegistry?.enabled && (
+              <RegistryHaciendaCashCard
+                cashRegistry={cashRegistry}
+                index={registries.length}
+                cardBg={cardBg} accent={accent} primary={primary}
+                titleColor={titleColor} mutedTextColor={mutedTextColor}
+              />
+            )}
 
             {/* Custom Registry Card */}
             {showCustomRegistry && weddingNameId && (

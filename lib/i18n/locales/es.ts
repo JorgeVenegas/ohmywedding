@@ -372,6 +372,11 @@ export const es: Translations = {
     contributionsUnavailableDescription: 'La pareja aún está configurando su cuenta de pagos. Por favor vuelve más tarde para contribuir.',
     comingSoon: 'Próximamente',
     checkingStatus: 'Verificando estado...',
+    cashTitle: 'Transferencia Bancaria',
+    accountOwner: 'Titular de la Cuenta',
+    clabe: 'CLABE',
+    copy: 'Copiar',
+    copied: '¡Copiado!',
     providers: {
       amazon: 'Amplia selección de regalos del mercado más grande del mundo',
       liverpool: 'Registro de tienda departamental premium en México',

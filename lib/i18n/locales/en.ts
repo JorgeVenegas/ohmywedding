@@ -374,6 +374,11 @@ export const en: Translations = {
     contributionsUnavailableDescription: 'The couple is still setting up their payment account. Please check back later to contribute.',
     comingSoon: 'Coming Soon',
     checkingStatus: 'Checking status...',
+    cashTitle: 'Cash / Bank Transfer',
+    accountOwner: 'Account Holder',
+    clabe: 'CLABE',
+    copy: 'Copy',
+    copied: 'Copied!',
     providers: {
       amazon: 'Wide selection of gifts from the world\'s largest marketplace',
       liverpool: 'Premium department store registry in Mexico',

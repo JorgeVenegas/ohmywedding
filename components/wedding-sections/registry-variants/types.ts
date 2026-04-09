@@ -35,6 +35,15 @@ export interface CustomRegistryItem {
   category?: string
 }
 
+// Cash / bank transfer registry option
+export interface CashRegistry {
+  enabled: boolean
+  title?: string
+  description?: string
+  clabe?: string
+  accountOwner?: string
+}
+
 export interface BaseRegistryProps {
   theme?: Partial<ThemeConfig>
   alignment?: Partial<AlignmentConfig>
@@ -45,6 +54,7 @@ export interface BaseRegistryProps {
   customItems?: CustomRegistryItem[]
   showCustomRegistry?: boolean
   showDescription?: boolean
+  cashRegistry?: CashRegistry
   useColorBackground?: boolean
   backgroundColorChoice?: BackgroundColorChoice
   weddingNameId?: string

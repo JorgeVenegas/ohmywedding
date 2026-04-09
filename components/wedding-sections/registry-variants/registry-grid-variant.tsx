@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { ExternalLink, Gift, Heart } from 'lucide-react'
 import { BaseRegistryProps, getColorScheme, getProviderLogoUrl, RegistryProvider } from './types'
+import { CashRegistryCard } from './cash-registry-card'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { getWeddingPath } from '@/lib/wedding-url'
 import Link from 'next/link'
@@ -93,6 +94,7 @@ export function RegistryGridVariant({
   showCustomRegistry = false,
   customItems = [],
   showDescription = true,
+  cashRegistry,
   useColorBackground = false,
   backgroundColorChoice = 'none',
   weddingNameId
@@ -107,6 +109,7 @@ export function RegistryGridVariant({
 
   const hasRegistries = registries.length > 0
   const hasCustomRegistry = showCustomRegistry && !!weddingNameId
+  const hasCashRegistry = !!cashRegistry?.enabled
 
   return (
     <section 
@@ -156,7 +159,7 @@ export function RegistryGridVariant({
         )}
 
         {/* Registry Links - Grid Layout */}
-        {!hasRegistries && !hasCustomRegistry ? (
+        {!hasRegistries && !hasCustomRegistry && !hasCashRegistry ? (
           <div 
             className="text-center py-12 px-6 rounded-lg border-2 border-dashed"
             style={{ 
@@ -194,6 +197,19 @@ export function RegistryGridVariant({
                 titleColor={titleColor}
               />
             ))}
+
+            {/* Cash Registry Card */}
+            {hasCashRegistry && (
+              <CashRegistryCard
+                cashRegistry={cashRegistry!}
+                index={registries.length}
+                cardBg={cardBg}
+                accentColor={accentColor || primary}
+                titleColor={titleColor}
+                mutedTextColor={mutedTextColor}
+                layout="card"
+              />
+            )}
 
           {/* Custom Registry Card */}
           {showCustomRegistry && weddingNameId && (

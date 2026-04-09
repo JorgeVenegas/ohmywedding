@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { ExternalLink, Gift, Heart, ArrowRight } from 'lucide-react'
 import { BaseRegistryProps, getColorScheme, getProviderLogoUrl, RegistryProvider } from './types'
+import { CashRegistryCard } from './cash-registry-card'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { getWeddingPath } from '@/lib/wedding-url'
 import Link from 'next/link'
@@ -102,6 +103,7 @@ export function RegistryMinimalVariant({
   showCustomRegistry = false,
   customItems = [],
   showDescription = true,
+  cashRegistry,
   useColorBackground = false,
   backgroundColorChoice = 'none',
   weddingNameId
@@ -116,6 +118,7 @@ export function RegistryMinimalVariant({
 
   const hasRegistries = registries.length > 0
   const hasCustomRegistry = showCustomRegistry && !!weddingNameId
+  const hasCashRegistry = !!cashRegistry?.enabled
 
   return (
     <section 
@@ -158,7 +161,7 @@ export function RegistryMinimalVariant({
         )}
 
         {/* Registry Links - Simple List Style */}
-        {!hasRegistries && !hasCustomRegistry ? (
+        {!hasRegistries && !hasCustomRegistry && !hasCashRegistry ? (
           <div 
             className="text-center py-10 px-6 border border-dashed rounded-lg"
             style={{ 
@@ -193,6 +196,19 @@ export function RegistryMinimalVariant({
                 showDescription={showDescription}
               />
             ))}
+
+          {/* Cash Registry Row */}
+          {hasCashRegistry && (
+            <CashRegistryCard
+              cashRegistry={cashRegistry!}
+              index={registries.length}
+              cardBg={cardBg}
+              accentColor={accentColor}
+              titleColor={titleColor}
+              mutedTextColor={mutedTextColor}
+              layout="row"
+            />
+          )}
 
           {/* Custom Registry Item */}
           {showCustomRegistry && weddingNameId && (

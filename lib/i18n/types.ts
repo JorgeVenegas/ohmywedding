@@ -376,6 +376,11 @@ export interface Translations {
     contributionsUnavailableDescription: string
     comingSoon: string
     checkingStatus: string
+    cashTitle: string
+    accountOwner: string
+    clabe: string
+    copy: string
+    copied: string
     providers: {
       amazon: string
       liverpool: string
