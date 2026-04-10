@@ -112,27 +112,21 @@ export function HaciendaEnvelope({
               const parts = (coupleNames || "You're Invited").split(/\s*&\s*/)
               return parts.length === 2 ? (
                 <>
-                  {/* Mobile: stacked (3 lines). Desktop: single line with & inline */}
+                  {/* Mobile: single element with line breaks — prevents inter-element clipping on iOS */}
                   <p className="drop-shadow-sm sm:hidden"
-                    style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', fontSize: NAMES_SIZES[namesSize].main, lineHeight: 1.8, overflow: 'visible', margin: '-0.15em 0' }}>
-                    {parts[0].trim()}
-                  </p>
-                  <p className="drop-shadow-sm sm:hidden"
-                    style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', opacity: 0.75, fontSize: NAMES_SIZES[namesSize].amp, lineHeight: 1.8, overflow: 'visible', margin: '-0.2em 0' }}>
-                    &amp;
-                  </p>
-                  <p className="drop-shadow-sm sm:hidden"
-                    style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', fontSize: NAMES_SIZES[namesSize].main, lineHeight: 1.8, overflow: 'visible', margin: '-0.15em 0' }}>
+                    style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', fontSize: NAMES_SIZES[namesSize].main, lineHeight: 1.3, overflow: 'visible', padding: '0.4em 0' }}>
+                    {parts[0].trim()}<br/>
+                    <span style={{ fontSize: NAMES_SIZES[namesSize].amp, opacity: 0.75 }}>&amp;</span><br/>
                     {parts[1].trim()}
                   </p>
                   <p className="hidden sm:block drop-shadow-sm"
-                    style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', fontSize: NAMES_SIZES[namesSize].main, lineHeight: 1.8, overflow: 'visible' }}>
+                    style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', fontSize: NAMES_SIZES[namesSize].main, lineHeight: 1.3, overflow: 'visible', padding: '0.4em 0' }}>
                     {parts[0].trim()}&nbsp;<span style={{ opacity: 0.75 }}>&amp;</span>&nbsp;{parts[1].trim()}
                   </p>
                 </>
               ) : (
                 <p className="drop-shadow-sm"
-                  style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', fontSize: NAMES_SIZES[namesSize].main, lineHeight: 1.8, overflow: 'visible' }}>
+                  style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', fontSize: NAMES_SIZES[namesSize].main, lineHeight: 1.3, overflow: 'visible', padding: '0.4em 0' }}>
                   {coupleNames || "You're Invited"}
                 </p>
               )

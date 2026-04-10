@@ -86,9 +86,9 @@ export function HeroTextContent({
         }`}
         style={{ 
           color: isOverlay ? 'white' : (theme?.colors?.foreground || '#1f2937'),
-          lineHeight: 1.8,
+          lineHeight: 1.3,
           overflow: 'visible',
-          padding: '0.3em 0',
+          padding: '0.4em 0',
         }}
       >
         {wedding.partner1_first_name} & {wedding.partner2_first_name}
