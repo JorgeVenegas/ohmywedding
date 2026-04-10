@@ -394,6 +394,18 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
     }
   }, [showEnvelope, wedding])
 
+  // Clear body background after curtain animation completes so the page bg is transparent
+  useEffect(() => {
+    if (!weddingDataLoading) {
+      // 100ms curtain start delay + 800ms fall animation + 200ms buffer
+      const timer = setTimeout(() => {
+        document.body.style.backgroundColor = ''
+        document.body.style.transition = ''
+      }, 1100)
+      return () => clearTimeout(timer)
+    }
+  }, [weddingDataLoading])
+
   useEffect(() => {
     async function loadWedding() {
       try {

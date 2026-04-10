@@ -101,17 +101,22 @@ export function HaciendaEnvelope({
               const parts = (coupleNames || "You're Invited").split(/\s*&\s*/)
               return parts.length === 2 ? (
                 <>
-                  <p className="drop-shadow-sm leading-tight"
+                  {/* Mobile: stacked (3 lines). Desktop: single line with & inline */}
+                  <p className="drop-shadow-sm leading-tight sm:hidden"
                     style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', fontSize: NAMES_SIZES[namesSize].main }}>
                     {parts[0].trim()}
                   </p>
-                  <p className="drop-shadow-sm leading-tight mt-1"
+                  <p className="drop-shadow-sm leading-tight mt-1 sm:hidden"
                     style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', opacity: 0.75, fontSize: NAMES_SIZES[namesSize].amp }}>
                     &amp;
                   </p>
-                  <p className="drop-shadow-sm leading-tight"
+                  <p className="drop-shadow-sm leading-tight sm:hidden"
                     style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', fontSize: NAMES_SIZES[namesSize].main }}>
                     {parts[1].trim()}
+                  </p>
+                  <p className="hidden sm:block drop-shadow-sm leading-tight"
+                    style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', fontSize: NAMES_SIZES[namesSize].main }}>
+                    {parts[0].trim()}&nbsp;<span style={{ opacity: 0.75 }}>&amp;</span>&nbsp;{parts[1].trim()}
                   </p>
                 </>
               ) : (
