@@ -35,11 +35,15 @@ function EnvelopeImageUploads({
   onDecorationImageChange,
   decorationSize,
   onDecorationSizeChange,
+  namesSize,
+  onNamesSizeChange,
 }: {
   decorationImageUrl?: string
   onDecorationImageChange?: (url: string | undefined) => void
   decorationSize?: 'sm' | 'md' | 'lg' | 'xl'
   onDecorationSizeChange?: (size: 'sm' | 'md' | 'lg' | 'xl') => void
+  namesSize?: 'sm' | 'md' | 'lg' | 'xl'
+  onNamesSizeChange?: (size: 'sm' | 'md' | 'lg' | 'xl') => void
 }) {
   const { uploadImage, uploading } = useImageUpload()
 
@@ -53,6 +57,25 @@ function EnvelopeImageUploads({
   return (
     <div className="p-3 bg-gray-50 rounded-lg mt-3 space-y-3">
       <p className="text-xs text-gray-500">Hacienda Decoration</p>
+
+      <div>
+        <label className="text-xs font-medium text-gray-600 mb-1.5 block">Names Size</label>
+        <div className="flex gap-1.5">
+          {(['sm', 'md', 'lg', 'xl'] as const).map((size) => (
+            <button
+              key={size}
+              onClick={() => onNamesSizeChange?.(size)}
+              className={`flex-1 py-1.5 text-xs font-medium rounded border transition-colors ${
+                (namesSize || 'md') === size
+                  ? 'bg-gray-800 text-white border-gray-800'
+                  : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+              }`}
+            >
+              {size.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div>
         <label className="text-xs font-medium text-gray-600 mb-1.5 block">Seal Size</label>
@@ -134,6 +157,8 @@ interface SettingsPanelProps {
   onEnvelopeDecorationImageChange?: (url: string | undefined) => void
   envelopeDecorationSize?: 'sm' | 'md' | 'lg' | 'xl'
   onEnvelopeDecorationSizeChange?: (size: 'sm' | 'md' | 'lg' | 'xl') => void
+  envelopeNamesSize?: 'sm' | 'md' | 'lg' | 'xl'
+  onEnvelopeNamesSizeChange?: (size: 'sm' | 'md' | 'lg' | 'xl') => void
   // Language settings
   currentLocale?: 'en' | 'es'
   onLocaleChange?: (locale: 'en' | 'es') => void
@@ -178,6 +203,8 @@ export function SettingsPanel({
   onEnvelopeDecorationImageChange,
   envelopeDecorationSize: envelopeDecorationSizeProp,
   onEnvelopeDecorationSizeChange,
+  envelopeNamesSize: envelopeNamesSizeProp,
+  onEnvelopeNamesSizeChange,
   currentLocale = 'en',
   onLocaleChange
 }: SettingsPanelProps) {
@@ -1196,6 +1223,8 @@ export function SettingsPanel({
                     onDecorationImageChange={onEnvelopeDecorationImageChange}
                     decorationSize={envelopeDecorationSizeProp}
                     onDecorationSizeChange={onEnvelopeDecorationSizeChange}
+                    namesSize={envelopeNamesSizeProp}
+                    onNamesSizeChange={onEnvelopeNamesSizeChange}
                   />
                 )}
               </div>

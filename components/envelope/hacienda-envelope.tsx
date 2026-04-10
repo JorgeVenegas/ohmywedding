@@ -4,6 +4,14 @@ import { useTranslation } from '@/components/contexts/i18n-context'
 import Image from 'next/image'
 
 type DecorationSize = 'sm' | 'md' | 'lg' | 'xl'
+type NamesSize = 'sm' | 'md' | 'lg' | 'xl'
+
+const NAMES_SIZES: Record<NamesSize, { main: string; amp: string }> = {
+  sm: { main: 'clamp(2rem, 5vw, 3.5rem)',  amp: 'clamp(1.5rem, 4vw, 2.75rem)' },
+  md: { main: 'clamp(3rem, 7vw, 6rem)',     amp: 'clamp(2.25rem, 5.5vw, 4.5rem)' },
+  lg: { main: 'clamp(4.5rem, 10vw, 9rem)',  amp: 'clamp(3.25rem, 8vw, 7rem)' },
+  xl: { main: 'clamp(6rem, 14vw, 12rem)',   amp: 'clamp(4.5rem, 11vw, 9rem)' },
+}
 
 const SEAL_SIZES: Record<DecorationSize, { image: string; fallback: string; px: number }> = {
   sm: { image: 'w-32 h-32 sm:w-40 sm:h-40', fallback: 'w-24 h-24 sm:w-32 sm:h-32', px: 160 },
@@ -28,6 +36,7 @@ interface HaciendaEnvelopeProps {
   guestGroup: { id: string; name: string; wedding_id: string } | null
   decorationImageUrl?: string
   decorationSize?: DecorationSize
+  namesSize?: NamesSize
 }
 
 export function HaciendaEnvelope({
@@ -46,6 +55,7 @@ export function HaciendaEnvelope({
   guestGroup,
   decorationImageUrl,
   decorationSize = 'md',
+  namesSize = 'md',
 }: HaciendaEnvelopeProps) {
   const { t } = useTranslation()
 
@@ -89,22 +99,22 @@ export function HaciendaEnvelope({
               const parts = (coupleNames || "You're Invited").split(/\s*&\s*/)
               return parts.length === 2 ? (
                 <>
-                  <p className="text-5xl sm:text-7xl md:text-8xl drop-shadow-sm leading-tight"
-                    style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif' }}>
+                  <p className="drop-shadow-sm leading-tight"
+                    style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', fontSize: NAMES_SIZES[namesSize].main }}>
                     {parts[0].trim()}
                   </p>
-                  <p className="text-4xl sm:text-6xl md:text-7xl drop-shadow-sm leading-tight mt-1"
-                    style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', opacity: 0.75 }}>
+                  <p className="drop-shadow-sm leading-tight mt-1"
+                    style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', opacity: 0.75, fontSize: NAMES_SIZES[namesSize].amp }}>
                     &amp;
                   </p>
-                  <p className="text-5xl sm:text-7xl md:text-8xl drop-shadow-sm leading-tight"
-                    style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif' }}>
+                  <p className="drop-shadow-sm leading-tight"
+                    style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', fontSize: NAMES_SIZES[namesSize].main }}>
                     {parts[1].trim()}
                   </p>
                 </>
               ) : (
-                <p className="text-5xl sm:text-7xl md:text-8xl drop-shadow-sm leading-tight"
-                  style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', overflow: 'visible' }}>
+                <p className="drop-shadow-sm leading-tight"
+                  style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', overflow: 'visible', fontSize: NAMES_SIZES[namesSize].main }}>
                   {coupleNames || "You're Invited"}
                 </p>
               )

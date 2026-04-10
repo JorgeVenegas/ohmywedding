@@ -49,6 +49,7 @@ export interface PageConfiguration {
       variant?: 'classic' | 'hacienda'
       decorationImageUrl?: string
       decorationSize?: 'sm' | 'md' | 'lg' | 'xl'
+      namesSize?: 'sm' | 'md' | 'lg' | 'xl'
     }
   }
   
