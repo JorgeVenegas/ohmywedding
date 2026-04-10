@@ -34,6 +34,10 @@ interface EnvelopeContentProps {
   primaryColor: string
   flapColor: string
   textColor: string
+  secondaryColor: string
+  secondaryTextColor: string
+  displayFontFamily?: string
+  bodyFontFamily?: string
   coupleNames: string
   coupleInitials: string
   weddingDate: string
@@ -50,6 +54,10 @@ function EnvelopeContent({
   primaryColor,
   flapColor,
   textColor,
+  secondaryColor,
+  secondaryTextColor,
+  displayFontFamily,
+  bodyFontFamily,
   coupleNames,
   coupleInitials,
   weddingDate,
@@ -66,8 +74,11 @@ function EnvelopeContent({
         envelopeOpening={envelopeOpening}
         handleEnvelopeClick={handleEnvelopeClick}
         primaryColor={primaryColor}
-        flapColor={flapColor}
+        secondaryColor={secondaryColor}
         textColor={textColor}
+        secondaryTextColor={secondaryTextColor}
+        displayFontFamily={displayFontFamily}
+        bodyFontFamily={bodyFontFamily}
         coupleNames={coupleNames}
         coupleInitials={coupleInitials}
         weddingDate={weddingDate}
@@ -183,7 +194,7 @@ function EnvelopeContent({
 }
 
 // Wrapper to get locale and colors from page config (same pattern as ConfigBasedWeddingRenderer)
-function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'flapColor' | 'textColor' | 'variant' | 'decorationImageUrl'>) {
+function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'flapColor' | 'textColor' | 'secondaryColor' | 'secondaryTextColor' | 'displayFontFamily' | 'bodyFontFamily' | 'variant' | 'decorationImageUrl'>) {
   const { config } = usePageConfig()
   const locale = config.siteSettings.locale || 'en'
   
@@ -211,13 +222,11 @@ function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'fl
     const r = (num >> 16) & 255
     const g = (num >> 8) & 255
     const b = num & 255
-    // Calculate relative luminance using sRGB coefficients
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-    // Return dark text for light backgrounds, light text for dark backgrounds
     return luminance > 0.6 ? '#1a1a1a' : '#ffffff'
   }
   
-  // Get the base color (primary, secondary, or accent)
+  // Get colors from palette
   const colors = config.siteSettings.theme?.colors || {}
   const baseColorType = envelopeColorChoice.includes('primary') ? 'primary' 
     : envelopeColorChoice.includes('secondary') ? 'secondary' 
@@ -231,7 +240,7 @@ function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'fl
       ? getLightTint(baseColor, 0.7)
       : baseColor
   
-  // Calculate a lighter shade for the flap
+  // Calculate a lighter shade for the flap (used by classic variant)
   const lightenColor = (color: string, percent: number) => {
     const num = parseInt(color.replace("#",""), 16)
     const amt = Math.round(2.55 * percent)
@@ -242,12 +251,32 @@ function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'fl
   }
   const flapColor = lightenColor(envelopeColor, 20)
   
-  // Calculate text color for contrast
+  // Text color for primary bg
   const textColor = getContrastTextColor(envelopeColor)
+  
+  // Secondary color and its text contrast (for hacienda paper layer)
+  const secondaryColor = colors.secondary || colors.background || '#f5f0e8'
+  const secondaryTextColor = getContrastTextColor(secondaryColor)
+  
+  // Font families
+  const fonts = config.siteSettings.theme?.fonts || {}
+  const displayFontFamily = fonts.displayFamily || '"Playfair Display", serif'
+  const bodyFontFamily = fonts.bodyFamily || '"Lato", sans-serif'
   
   return (
     <I18nProvider initialLocale={locale}>
-      <EnvelopeContent {...props} primaryColor={envelopeColor} flapColor={flapColor} textColor={textColor} variant={envelopeVariant} decorationImageUrl={decorationImageUrl} />
+      <EnvelopeContent
+        {...props}
+        primaryColor={envelopeColor}
+        flapColor={flapColor}
+        textColor={textColor}
+        secondaryColor={secondaryColor}
+        secondaryTextColor={secondaryTextColor}
+        displayFontFamily={displayFontFamily}
+        bodyFontFamily={bodyFontFamily}
+        variant={envelopeVariant}
+        decorationImageUrl={decorationImageUrl}
+      />
     </I18nProvider>
   )
 }
