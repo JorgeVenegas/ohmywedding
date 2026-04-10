@@ -6,6 +6,7 @@ import { ConfigBasedWeddingRenderer } from "@/components/config-based-wedding-re
 import { PageConfigProvider, usePageConfig } from "@/components/contexts/page-config-context"
 import { I18nProvider, useTranslation } from "@/components/contexts/i18n-context"
 import { EnvelopeProvider, useEnvelope } from "@/components/contexts/envelope-context"
+import { HaciendaEnvelope } from "@/components/envelope/hacienda-envelope"
 import { notFound, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Wedding } from "@/lib/wedding-data"
@@ -37,6 +38,8 @@ interface EnvelopeContentProps {
   coupleInitials: string
   weddingDate: string
   guestGroup: GuestGroup | null
+  variant?: 'classic' | 'hacienda'
+  decorationImageUrl?: string
 }
 
 function EnvelopeContent({
@@ -50,9 +53,29 @@ function EnvelopeContent({
   coupleNames,
   coupleInitials,
   weddingDate,
-  guestGroup
+  guestGroup,
+  variant = 'classic',
+  decorationImageUrl,
 }: EnvelopeContentProps) {
   const { t } = useTranslation()
+
+  if (variant === 'hacienda') {
+    return (
+      <HaciendaEnvelope
+        envelopeFalling={envelopeFalling}
+        envelopeOpening={envelopeOpening}
+        handleEnvelopeClick={handleEnvelopeClick}
+        primaryColor={primaryColor}
+        flapColor={flapColor}
+        textColor={textColor}
+        coupleNames={coupleNames}
+        coupleInitials={coupleInitials}
+        weddingDate={weddingDate}
+        guestGroup={guestGroup}
+        decorationImageUrl={decorationImageUrl}
+      />
+    )
+  }
   
   return (
     <>
@@ -160,12 +183,15 @@ function EnvelopeContent({
 }
 
 // Wrapper to get locale and colors from page config (same pattern as ConfigBasedWeddingRenderer)
-function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'flapColor' | 'textColor'>) {
+function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'flapColor' | 'textColor' | 'variant' | 'decorationImageUrl'>) {
   const { config } = usePageConfig()
   const locale = config.siteSettings.locale || 'en'
   
-  // Get envelope color choice from config, default to 'primary'
-  const envelopeColorChoice = config.siteSettings.envelope?.colorChoice || 'primary'
+  // Get envelope config
+  const envelopeConfig = config.siteSettings.envelope || {}
+  const envelopeColorChoice = envelopeConfig.colorChoice || 'primary'
+  const envelopeVariant = envelopeConfig.variant || 'classic'
+  const decorationImageUrl = envelopeConfig.decorationImageUrl
   
   // Helper to create a light tint
   const getLightTint = (hex: string, tintAmount: number): string => {
@@ -221,7 +247,7 @@ function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'fl
   
   return (
     <I18nProvider initialLocale={locale}>
-      <EnvelopeContent {...props} primaryColor={envelopeColor} flapColor={flapColor} textColor={textColor} />
+      <EnvelopeContent {...props} primaryColor={envelopeColor} flapColor={flapColor} textColor={textColor} variant={envelopeVariant} decorationImageUrl={decorationImageUrl} />
     </I18nProvider>
   )
 }

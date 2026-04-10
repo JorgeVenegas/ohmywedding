@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { X, Settings, FileText, Palette, Type, ChevronDown, Users, UserPlus, Trash2, Globe } from 'lucide-react'
+import { X, Settings, FileText, Palette, Type, ChevronDown, Users, UserPlus, Trash2, Globe, Upload } from 'lucide-react'
 import { Button } from './button'
 import { Input } from './input'
 import { WeddingDetailsForm } from './config-forms/wedding-details-form'
@@ -11,10 +11,12 @@ import { CollaboratorManager } from './collaborator-manager'
 import { ColorPicker } from './color-picker'
 import { FONT_PAIRINGS, FONT_PAIRING_CATEGORIES, COLOR_THEMES, COLOR_THEME_CATEGORIES, AVAILABLE_FONTS } from '@/lib/theme-config'
 import { useCollaborators } from '@/hooks/use-auth'
+import { useImageUpload } from '@/hooks/use-image-upload'
 import { useEditingModeSafe } from '@/components/contexts/editing-mode-context'
 
 type NavBackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
 type EnvelopeColorChoice = 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
+type EnvelopeVariant = 'classic' | 'hacienda'
 
 // Helper to create a light tint of a color for palette display
 function getLightTint(hex: string, tintAmount: number): string {
@@ -26,6 +28,61 @@ function getLightTint(hex: string, tintAmount: number): string {
   const newG = Math.round(g + (255 - g) * tintAmount)
   const newB = Math.round(b + (255 - b) * tintAmount)
   return `rgb(${newR}, ${newG}, ${newB})`
+}
+
+function EnvelopeImageUploads({
+  decorationImageUrl,
+  onDecorationImageChange,
+}: {
+  decorationImageUrl?: string
+  onDecorationImageChange?: (url: string | undefined) => void
+}) {
+  const { uploadImage, uploading } = useImageUpload()
+
+  const handleUpload = async (file: File) => {
+    const result = await uploadImage(file, { maxPx: 400, quality: 0.85 })
+    if (result?.url) {
+      onDecorationImageChange?.(result.url)
+    }
+  }
+
+  return (
+    <div className="p-3 bg-gray-50 rounded-lg mt-3 space-y-3">
+      <p className="text-xs text-gray-500">Hacienda Decoration</p>
+      
+      <div>
+        <label className="text-xs font-medium text-gray-600 mb-1.5 block">Decoration Image</label>
+        {decorationImageUrl ? (
+          <div className="flex items-center gap-2">
+            <img src={decorationImageUrl} alt="Decoration" className="w-12 h-12 object-contain border border-gray-200 rounded" />
+            <button
+              onClick={() => onDecorationImageChange?.(undefined)}
+              className="text-xs text-red-500 hover:text-red-700"
+            >
+              Remove
+            </button>
+          </div>
+        ) : (
+          <label className="flex items-center gap-2 px-3 py-2 border border-dashed border-gray-300 rounded-md cursor-pointer hover:border-gray-400 transition-colors">
+            <Upload className="w-3.5 h-3.5 text-gray-400" />
+            <span className="text-xs text-gray-500">
+              {uploading ? 'Uploading...' : 'Upload decoration image'}
+            </span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              disabled={uploading}
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) handleUpload(file)
+              }}
+            />
+          </label>
+        )}
+      </div>
+    </div>
+  )
 }
 
 interface SettingsPanelProps {
@@ -48,6 +105,10 @@ interface SettingsPanelProps {
   // Envelope settings
   envelopeColorChoice?: EnvelopeColorChoice
   onEnvelopeColorChange?: (colorChoice: EnvelopeColorChoice) => void
+  envelopeVariant?: EnvelopeVariant
+  onEnvelopeVariantChange?: (variant: EnvelopeVariant) => void
+  envelopeDecorationImageUrl?: string
+  onEnvelopeDecorationImageChange?: (url: string | undefined) => void
   // Language settings
   currentLocale?: 'en' | 'es'
   onLocaleChange?: (locale: 'en' | 'es') => void
@@ -86,6 +147,10 @@ export function SettingsPanel({
   onNavColorBackgroundChange,
   envelopeColorChoice: envelopeColorChoiceProp = 'primary',
   onEnvelopeColorChange,
+  envelopeVariant: envelopeVariantProp = 'classic',
+  onEnvelopeVariantChange,
+  envelopeDecorationImageUrl: envelopeDecorationImageUrlProp,
+  onEnvelopeDecorationImageChange,
   currentLocale = 'en',
   onLocaleChange
 }: SettingsPanelProps) {
@@ -97,6 +162,7 @@ export function SettingsPanel({
   const [navUseColorBackground, setNavUseColorBackground] = useState(navUseColorBackgroundProp)
   const [navBackgroundColorChoice, setNavBackgroundColorChoice] = useState<NavBackgroundColorChoice>(navBackgroundColorChoiceProp)
   const [envelopeColorChoice, setEnvelopeColorChoice] = useState<EnvelopeColorChoice>(envelopeColorChoiceProp)
+  const [envelopeVariant, setEnvelopeVariant] = useState<EnvelopeVariant>(envelopeVariantProp)
   const [locale, setLocale] = useState<'en' | 'es'>(currentLocale)
   
   // Sync showNavLinks state when prop changes
@@ -1072,6 +1138,37 @@ export function SettingsPanel({
                     </div>
                   </div>
                 </div>
+
+                {/* Envelope Variant */}
+                <div className="p-3 bg-gray-50 rounded-lg mt-3">
+                  <p className="text-xs text-gray-500 mb-2">Envelope Style</p>
+                  <div className="flex gap-2">
+                    {(['classic', 'hacienda'] as const).map((v) => (
+                      <button
+                        key={v}
+                        onClick={() => {
+                          setEnvelopeVariant(v)
+                          onEnvelopeVariantChange?.(v)
+                        }}
+                        className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-all border ${
+                          envelopeVariant === v
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                        }`}
+                      >
+                        {v === 'classic' ? 'Classic' : 'Hacienda'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Hacienda-specific: Decoration image */}
+                {envelopeVariant === 'hacienda' && (
+                  <EnvelopeImageUploads
+                    decorationImageUrl={envelopeDecorationImageUrlProp}
+                    onDecorationImageChange={onEnvelopeDecorationImageChange}
+                  />
+                )}
               </div>
               
               {/* Navigation Settings */}

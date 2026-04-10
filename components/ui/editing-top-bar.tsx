@@ -289,7 +289,15 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
         })}
         envelopeColorChoice={pageConfigContext.config.siteSettings.envelope?.colorChoice || 'primary'}
         onEnvelopeColorChange={(colorChoice) => pageConfigContext.updateSiteSettings({
-          envelope: { colorChoice }
+          envelope: { ...pageConfigContext.config.siteSettings.envelope, colorChoice }
+        })}
+        envelopeVariant={pageConfigContext.config.siteSettings.envelope?.variant || 'classic'}
+        onEnvelopeVariantChange={(variant) => pageConfigContext.updateSiteSettings({
+          envelope: { ...pageConfigContext.config.siteSettings.envelope, variant }
+        })}
+        envelopeDecorationImageUrl={pageConfigContext.config.siteSettings.envelope?.decorationImageUrl}
+        onEnvelopeDecorationImageChange={(url) => pageConfigContext.updateSiteSettings({
+          envelope: { ...pageConfigContext.config.siteSettings.envelope, decorationImageUrl: url }
         })}
         currentLocale={pageConfigContext.config.siteSettings.locale || 'en'}
         onLocaleChange={pageConfigContext.updateLocale}

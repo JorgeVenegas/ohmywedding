@@ -46,6 +46,8 @@ export interface PageConfiguration {
     }
     envelope?: {
       colorChoice?: 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
+      variant?: 'classic' | 'hacienda'
+      decorationImageUrl?: string
     }
   }
   
