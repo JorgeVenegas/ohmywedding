@@ -9,6 +9,7 @@ export { FAQSection } from './faq-section'
 export { DressCodeSection } from './dress-code-section'
 export { CountdownSection } from './countdown-section'
 export { RegistrySection } from './registry-section'
+export { HotelSuggestionsSection } from './hotel-suggestions-section'
 
 // Export base section utilities  
 export { 

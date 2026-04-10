@@ -322,6 +322,29 @@ export const es: Translations = {
     subtitle: 'Qué vestir para nuestra celebración',
   },
 
+  // Hotel Suggestions Section
+  hotelSuggestions: {
+    title: 'Sugerencias de Hospedaje',
+    subtitle: 'Dónde hospedarte para nuestra celebración',
+    hotels: 'Hoteles',
+    newHotel: 'Nuevo Hotel',
+    addHotel: 'Agregar Hotel',
+    hotelName: 'Nombre del Hotel',
+    hotelNamePlaceholder: 'ej., Hotel Hacienda del Sol',
+    descriptionPlaceholder: 'Breve descripción del hotel...',
+    address: 'Dirección',
+    addressPlaceholder: 'Dirección completa',
+    distanceToVenue: 'Distancia al Venue',
+    distancePlaceholder: 'ej., 5 min en auto',
+    priceRange: 'Rango de Precios',
+    priceRangePlaceholder: 'ej., $2,000 - $4,000/noche',
+    phone: 'Teléfono',
+    websiteUrl: 'Sitio Web',
+    bookingCode: 'Código de Reservación',
+    bookingCodePlaceholder: 'ej., BODA2026',
+    viewHotel: 'Ver Hotel',
+  },
+
   // Banner Section
   banner: {
     title: 'Banner'

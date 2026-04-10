@@ -57,6 +57,7 @@ export type ComponentType =
   | 'contact'
   | 'livestream'
   | 'thank-you'
+  | 'hotel-suggestions'
 
 export interface WeddingPageConfig {
   theme: ThemeConfig
@@ -283,6 +284,14 @@ export const defaultComponentConfigs: Record<ComponentType, Omit<ComponentConfig
       message: 'Thank you for making our special day unforgettable!',
       showPhotos: true,
       photos: []
+    },
+    alignment: { text: 'center', content: 'center', image: 'center' }
+  },
+  'hotel-suggestions': {
+    type: 'hotel-suggestions',
+    enabled: false,
+    props: {
+      hotels: []
     },
     alignment: { text: 'center', content: 'center', image: 'center' }
   }

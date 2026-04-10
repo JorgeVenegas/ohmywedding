@@ -44,13 +44,18 @@ async function compressImage(file: File, options: CompressOptions = {}): Promise
       const ctx = canvas.getContext('2d')!
       ctx.drawImage(img, 0, 0, width, height)
 
-      const getName = (name: string) => name.replace(/\.[^.]+$/, '.jpg')
+      // Preserve original format for PNG/WebP, convert others to JPEG
+      const isPng = file.type === 'image/png'
+      const isWebp = file.type === 'image/webp'
+      const outputType = isPng ? 'image/png' : isWebp ? 'image/webp' : 'image/jpeg'
+      const outputExt = isPng ? '.png' : isWebp ? '.webp' : '.jpg'
+      const getName = (name: string) => name.replace(/\.[^.]+$/, outputExt)
 
       if (!maxBytes) {
         canvas.toBlob((blob) => {
           if (!blob) { resolve(file); return }
-          resolve(new File([blob], getName(file.name), { type: 'image/jpeg' }))
-        }, 'image/jpeg', quality)
+          resolve(new File([blob], getName(file.name), { type: outputType }))
+        }, outputType, isPng ? undefined : quality)
         return
       }
 
@@ -59,11 +64,11 @@ async function compressImage(file: File, options: CompressOptions = {}): Promise
         canvas.toBlob((blob) => {
           if (!blob) { resolve(file); return }
           if (blob.size <= maxBytes || q <= 0.3) {
-            resolve(new File([blob], getName(file.name), { type: 'image/jpeg' }))
+            resolve(new File([blob], getName(file.name), { type: outputType }))
           } else {
             tryQuality(Math.max(q - 0.08, 0.3))
           }
-        }, 'image/jpeg', q)
+        }, outputType, isPng ? undefined : q)
       }
       tryQuality(quality)
     }

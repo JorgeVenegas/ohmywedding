@@ -326,6 +326,29 @@ export interface Translations {
     subtitle: string
   }
 
+  // Hotel Suggestions Section
+  hotelSuggestions: {
+    title: string
+    subtitle: string
+    hotels: string
+    newHotel: string
+    addHotel: string
+    hotelName: string
+    hotelNamePlaceholder: string
+    descriptionPlaceholder: string
+    address: string
+    addressPlaceholder: string
+    distanceToVenue: string
+    distancePlaceholder: string
+    priceRange: string
+    priceRangePlaceholder: string
+    phone: string
+    websiteUrl: string
+    bookingCode: string
+    bookingCodePlaceholder: string
+    viewHotel: string
+  }
+
   // Banner Section
   banner: {
     title: string

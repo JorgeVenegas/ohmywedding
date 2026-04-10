@@ -324,6 +324,29 @@ export const en: Translations = {
     subtitle: 'What to wear to our celebration',
   },
 
+  // Hotel Suggestions Section
+  hotelSuggestions: {
+    title: 'Hotel Suggestions',
+    subtitle: 'Where to stay for our celebration',
+    hotels: 'Hotels',
+    newHotel: 'New Hotel',
+    addHotel: 'Add Hotel',
+    hotelName: 'Hotel Name',
+    hotelNamePlaceholder: 'e.g., Hotel Hacienda del Sol',
+    descriptionPlaceholder: 'Brief description of the hotel...',
+    address: 'Address',
+    addressPlaceholder: 'Full address',
+    distanceToVenue: 'Distance to Venue',
+    distancePlaceholder: 'e.g., 5 min drive',
+    priceRange: 'Price Range',
+    priceRangePlaceholder: 'e.g., $100 - $200/night',
+    phone: 'Phone',
+    websiteUrl: 'Website URL',
+    bookingCode: 'Booking Code',
+    bookingCodePlaceholder: 'e.g., WEDDING2026',
+    viewHotel: 'View Hotel',
+  },
+
   // Banner Section
   banner: {
     title: 'Banner'

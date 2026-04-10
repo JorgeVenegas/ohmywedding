@@ -16,7 +16,6 @@ import {
   FolderPlus,
   Upload,
   Download,
-  Send,
   Settings,
 } from "lucide-react"
 import { useTranslation } from "@/components/contexts/i18n-context"
@@ -150,14 +149,6 @@ export function InvitationsHeaderContent({
           >
             <Settings className="w-3.5 h-3.5 mr-1.5" />
             {t('admin.invitations.header.inviteSettings')}
-          </Button>
-          <Button
-            size="sm"
-            className="h-8 bg-blue-600 hover:bg-blue-700"
-            onClick={onOpenSendInvites}
-          >
-            <Send className="w-3.5 h-3.5 mr-1.5" />
-            {t('admin.invitations.header.sendInvites')}
           </Button>
         </div>
       </div>

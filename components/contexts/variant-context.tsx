@@ -12,6 +12,7 @@ interface VariantState {
   countdown: string
   registry: string
   dressCode: string
+  hotelSuggestions: string
 }
 
 interface VariantContextType {
@@ -29,7 +30,8 @@ const defaultVariants: VariantState = {
   faq: 'accordion',
   countdown: 'default',
   registry: 'cards',
-  dressCode: 'hacienda'
+  dressCode: 'hacienda',
+  hotelSuggestions: 'hacienda'
 }
 
 const VariantContext = createContext<VariantContextType | undefined>(undefined)

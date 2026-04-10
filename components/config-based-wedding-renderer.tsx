@@ -17,7 +17,8 @@ import {
   FAQSection,
   CountdownSection,
   RegistrySection,
-  DressCodeSection
+  DressCodeSection,
+  HotelSuggestionsSection
 } from './wedding-sections'
 import { BannerSection } from './wedding-sections/banner-section'
 import { VariantProvider } from './contexts/variant-context'
@@ -525,6 +526,15 @@ function ConfigBasedWeddingRendererContent({
       case 'dress-code':
         renderedComponent = (
           <DressCodeSection
+            key={component.id}
+            {...commonProps}
+            {...mergedProps}
+          />
+        )
+        break
+      case 'hotel-suggestions':
+        renderedComponent = (
+          <HotelSuggestionsSection
             key={component.id}
             {...commonProps}
             {...mergedProps}

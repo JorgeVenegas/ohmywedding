@@ -30,7 +30,7 @@ export interface SectionConfig {
 
 // Hook for consistent section behavior
 export function useSectionVariants<T extends string>(
-  componentKey: 'hero' | 'ourStory' | 'countdown' | 'rsvp' | 'eventDetails' | 'gallery' | 'faq' | 'registry' | 'dressCode',
+  componentKey: 'hero' | 'ourStory' | 'countdown' | 'rsvp' | 'eventDetails' | 'gallery' | 'faq' | 'registry' | 'dressCode' | 'hotelSuggestions',
   sectionId: string, // e.g., 'hero', 'our-story', 'countdown', 'registry'
   defaultVariant: T,
   propVariant?: T,
