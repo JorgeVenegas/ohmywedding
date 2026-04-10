@@ -85,34 +85,20 @@ export function HaciendaEnvelope({
           }}
         >
           <div className="text-center w-full px-6" style={{ overflow: 'visible' }}>
-            {coupleInitials && coupleInitials.includes('<span') ? (
-              <h1
-                className="text-5xl sm:text-7xl md:text-8xl drop-shadow-sm"
-                style={{
-                  color: secondaryTextColor,
-                  fontFamily: displayFontFamily || 'serif',
-                  overflow: 'visible',
-                  whiteSpace: 'nowrap',
-                }}
-                dangerouslySetInnerHTML={{ __html: coupleInitials }}
-              />
-            ) : (
-              <h1
-                className="text-5xl sm:text-7xl md:text-8xl drop-shadow-sm"
-                style={{
-                  color: secondaryTextColor,
-                  fontFamily: displayFontFamily || 'serif',
-                  overflow: 'visible',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {coupleInitials || "You're Invited"}
-              </h1>
-            )}
+            <p
+              className="text-2xl sm:text-3xl md:text-4xl drop-shadow-sm leading-snug"
+              style={{
+                color: secondaryTextColor,
+                fontFamily: displayFontFamily || 'serif',
+                overflow: 'visible',
+              }}
+            >
+              {coupleNames || "You're Invited"}
+            </p>
           </div>
         </div>
 
-        {/* From/To info at bottom of envelope */}
+        {/* From info at bottom of envelope */}
         <div
           className="absolute left-0 right-0 text-center"
           style={{ bottom: '7%' }}
@@ -124,22 +110,10 @@ export function HaciendaEnvelope({
             {t('common.from')}
           </p>
           <p
-            className="text-xs tracking-wider mb-3"
-            style={{ color: textColor, opacity: 0.7, fontFamily: bodyFontFamily || 'sans-serif' }}
+            className="text-sm tracking-wider"
+            style={{ color: textColor, opacity: 0.7, fontFamily: displayFontFamily || 'serif' }}
           >
-            {coupleNames || 'The Couple'}
-          </p>
-          <p
-            className="text-[10px] uppercase mb-1"
-            style={{ color: textColor, opacity: 0.5, fontFamily: bodyFontFamily || 'sans-serif', letterSpacing: '0.25em' }}
-          >
-            {t('common.to')}
-          </p>
-          <p
-            className="text-xs tracking-wider"
-            style={{ color: textColor, opacity: 0.7, fontFamily: bodyFontFamily || 'sans-serif' }}
-          >
-            {guestGroup?.name || 'Guest'}
+            {coupleInitials?.replace(/<[^>]*>/g, '') || 'The Couple'}
           </p>
         </div>
       </div>
@@ -217,17 +191,31 @@ export function HaciendaEnvelope({
         )}
       </div>
 
-      {/* Layer 5: Recipient "To:" overlay — on top of all layers, slides DOWN when opening */}
+      {/* Layer 5: Recipient overlay — initials + group name, slides DOWN when opening */}
       {guestGroup?.name && (
         <div
-          className="fixed z-[60] left-0 right-0 flex justify-center pointer-events-none"
+          className="fixed z-[70] left-0 right-0 flex justify-center pointer-events-none"
           style={{
-            bottom: '24%',
+            bottom: '20%',
             transform: envelopeFalling ? 'translateY(100vh)' : 'translateY(0)',
             transition: 'transform 900ms cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
           <div className="text-center">
+            {coupleInitials && coupleInitials.includes('<span') ? (
+              <p
+                className="text-4xl sm:text-5xl drop-shadow-sm mb-3"
+                style={{ color: textColor, fontFamily: displayFontFamily || 'serif', overflow: 'visible', whiteSpace: 'nowrap' }}
+                dangerouslySetInnerHTML={{ __html: coupleInitials }}
+              />
+            ) : (
+              <p
+                className="text-4xl sm:text-5xl drop-shadow-sm mb-3"
+                style={{ color: textColor, fontFamily: displayFontFamily || 'serif', overflow: 'visible', whiteSpace: 'nowrap' }}
+              >
+                {coupleInitials}
+              </p>
+            )}
             <p
               className="text-[10px] uppercase mb-2"
               style={{
@@ -243,7 +231,7 @@ export function HaciendaEnvelope({
               className="text-xl sm:text-2xl tracking-wide"
               style={{
                 color: textColor,
-                fontFamily: displayFontFamily || 'serif',
+                fontFamily: bodyFontFamily || 'sans-serif',
               }}
             >
               {guestGroup.name}
@@ -255,7 +243,7 @@ export function HaciendaEnvelope({
       {/* Tap to open hint */}
       {!envelopeFalling && !envelopeOpening && (
         <div
-          className="fixed z-[65] bottom-12 left-0 right-0 text-center pointer-events-none"
+          className="fixed z-[75] bottom-12 left-0 right-0 text-center pointer-events-none"
         >
           <p
             className="text-xs sm:text-sm animate-pulse font-light tracking-wide drop-shadow"
