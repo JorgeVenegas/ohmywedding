@@ -37,6 +37,8 @@ function EnvelopeImageUploads({
   onDecorationSizeChange,
   namesSize,
   onNamesSizeChange,
+  decorationVerticalPos,
+  onDecorationVerticalPosChange,
 }: {
   decorationImageUrl?: string
   onDecorationImageChange?: (url: string | undefined) => void
@@ -44,6 +46,8 @@ function EnvelopeImageUploads({
   onDecorationSizeChange?: (size: 'sm' | 'md' | 'lg' | 'xl') => void
   namesSize?: 'sm' | 'md' | 'lg' | 'xl'
   onNamesSizeChange?: (size: 'sm' | 'md' | 'lg' | 'xl') => void
+  decorationVerticalPos?: number
+  onDecorationVerticalPosChange?: (pos: number) => void
 }) {
   const { uploadImage, uploading } = useImageUpload()
 
@@ -93,6 +97,25 @@ function EnvelopeImageUploads({
               {size.toUpperCase()}
             </button>
           ))}
+        </div>
+      </div>
+
+      <div>
+        <label className="text-xs font-medium text-gray-600 mb-1 block">
+          Seal Position — <span className="font-normal text-gray-400">{decorationVerticalPos ?? 38}%</span>
+        </label>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={1}
+          value={decorationVerticalPos ?? 38}
+          onChange={(e) => onDecorationVerticalPosChange?.(Number(e.target.value))}
+          className="w-full h-1.5 accent-gray-800 cursor-pointer"
+        />
+        <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
+          <span>Top</span>
+          <span>Bottom</span>
         </div>
       </div>
 
@@ -159,6 +182,8 @@ interface SettingsPanelProps {
   onEnvelopeDecorationSizeChange?: (size: 'sm' | 'md' | 'lg' | 'xl') => void
   envelopeNamesSize?: 'sm' | 'md' | 'lg' | 'xl'
   onEnvelopeNamesSizeChange?: (size: 'sm' | 'md' | 'lg' | 'xl') => void
+  envelopeDecorationVerticalPos?: number
+  onEnvelopeDecorationVerticalPosChange?: (pos: number) => void
   // Language settings
   currentLocale?: 'en' | 'es'
   onLocaleChange?: (locale: 'en' | 'es') => void
@@ -205,6 +230,8 @@ export function SettingsPanel({
   onEnvelopeDecorationSizeChange,
   envelopeNamesSize: envelopeNamesSizeProp,
   onEnvelopeNamesSizeChange,
+  envelopeDecorationVerticalPos: envelopeDecorationVerticalPosProp,
+  onEnvelopeDecorationVerticalPosChange,
   currentLocale = 'en',
   onLocaleChange
 }: SettingsPanelProps) {
@@ -1225,6 +1252,8 @@ export function SettingsPanel({
                     onDecorationSizeChange={onEnvelopeDecorationSizeChange}
                     namesSize={envelopeNamesSizeProp}
                     onNamesSizeChange={onEnvelopeNamesSizeChange}
+                    decorationVerticalPos={envelopeDecorationVerticalPosProp}
+                    onDecorationVerticalPosChange={onEnvelopeDecorationVerticalPosChange}
                   />
                 )}
               </div>

@@ -46,6 +46,7 @@ interface EnvelopeContentProps {
   decorationImageUrl?: string
   decorationSize?: 'sm' | 'md' | 'lg' | 'xl'
   namesSize?: 'sm' | 'md' | 'lg' | 'xl'
+  decorationVerticalPos?: number
 }
 
 function EnvelopeContent({
@@ -68,6 +69,7 @@ function EnvelopeContent({
   decorationImageUrl,
   decorationSize,
   namesSize,
+  decorationVerticalPos,
 }: EnvelopeContentProps) {
   const { t } = useTranslation()
 
@@ -90,6 +92,7 @@ function EnvelopeContent({
         decorationImageUrl={decorationImageUrl}
         decorationSize={decorationSize}
         namesSize={namesSize}
+        decorationVerticalPos={decorationVerticalPos}
       />
     )
   }
@@ -200,7 +203,7 @@ function EnvelopeContent({
 }
 
 // Wrapper to get locale and colors from page config (same pattern as ConfigBasedWeddingRenderer)
-function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'flapColor' | 'textColor' | 'secondaryColor' | 'secondaryTextColor' | 'displayFontFamily' | 'bodyFontFamily' | 'variant' | 'decorationImageUrl' | 'decorationSize' | 'namesSize'>) {
+function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'flapColor' | 'textColor' | 'secondaryColor' | 'secondaryTextColor' | 'displayFontFamily' | 'bodyFontFamily' | 'variant' | 'decorationImageUrl' | 'decorationSize' | 'namesSize' | 'decorationVerticalPos'>) {
   const { config } = usePageConfig()
   const locale = config.siteSettings.locale || 'en'
   
@@ -211,6 +214,7 @@ function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'fl
   const decorationImageUrl = envelopeConfig.decorationImageUrl
   const decorationSize = envelopeConfig.decorationSize
   const namesSize = envelopeConfig.namesSize
+  const decorationVerticalPos = envelopeConfig.decorationVerticalPos
 
   // Helper to create a light tint
   const getLightTint = (hex: string, tintAmount: number): string => {
@@ -286,6 +290,7 @@ function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'fl
         decorationImageUrl={decorationImageUrl}
         decorationSize={decorationSize}
         namesSize={namesSize}
+        decorationVerticalPos={decorationVerticalPos}
       />
     </I18nProvider>
   )

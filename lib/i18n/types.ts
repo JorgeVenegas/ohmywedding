@@ -329,6 +329,7 @@ export interface Translations {
   // Hotel Suggestions Section
   hotelSuggestions: {
     title: string
+    navLabel: string
     subtitle: string
     hotels: string
     newHotel: string

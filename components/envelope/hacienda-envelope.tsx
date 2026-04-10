@@ -37,6 +37,7 @@ interface HaciendaEnvelopeProps {
   decorationImageUrl?: string
   decorationSize?: DecorationSize
   namesSize?: NamesSize
+  decorationVerticalPos?: number
 }
 
 export function HaciendaEnvelope({
@@ -56,6 +57,7 @@ export function HaciendaEnvelope({
   decorationImageUrl,
   decorationSize = 'md',
   namesSize = 'md',
+  decorationVerticalPos = 38,
 }: HaciendaEnvelopeProps) {
   const { t } = useTranslation()
 
@@ -156,7 +158,7 @@ export function HaciendaEnvelope({
       <div
         className="fixed z-50 pointer-events-none"
         style={{
-          top: '50%',
+          top: `${decorationVerticalPos}%`,
           right: '50%',
           transform: envelopeFalling
             ? 'translate(calc(50% + 100vw), -50%)'
@@ -211,13 +213,13 @@ export function HaciendaEnvelope({
           <div className="text-center">
             {coupleInitials && coupleInitials.includes('<span') ? (
               <p
-                className="text-4xl sm:text-5xl drop-shadow-sm mb-3"
+                className="text-4xl sm:text-5xl drop-shadow-sm mb-8"
                 style={{ color: textColor, fontFamily: displayFontFamily || 'serif', overflow: 'visible', whiteSpace: 'nowrap' }}
                 dangerouslySetInnerHTML={{ __html: coupleInitials }}
               />
             ) : (
               <p
-                className="text-4xl sm:text-5xl drop-shadow-sm mb-3"
+                className="text-4xl sm:text-5xl drop-shadow-sm mb-8"
                 style={{ color: textColor, fontFamily: displayFontFamily || 'serif', overflow: 'visible', whiteSpace: 'nowrap' }}
               >
                 {coupleInitials}

@@ -327,6 +327,7 @@ export const en: Translations = {
   // Hotel Suggestions Section
   hotelSuggestions: {
     title: 'Hotel Suggestions',
+    navLabel: 'Hotel Suggestions',
     subtitle: 'Where to stay for our celebration',
     hotels: 'Hotels',
     newHotel: 'New Hotel',

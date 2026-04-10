@@ -50,6 +50,7 @@ export interface PageConfiguration {
       decorationImageUrl?: string
       decorationSize?: 'sm' | 'md' | 'lg' | 'xl'
       namesSize?: 'sm' | 'md' | 'lg' | 'xl'
+      decorationVerticalPos?: number
     }
   }
   

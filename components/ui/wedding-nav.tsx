@@ -174,7 +174,7 @@ export function WeddingNav({
       'rsvp': t('nav.rsvp'),
       'faq': t('nav.faq'),
       'dress-code': t('nav.dressCode'),
-      'hotel-suggestions': t('hotelSuggestions.title'),
+      'hotel-suggestions': t('hotelSuggestions.navLabel'),
     }
     return labelMap[sectionId] || sectionId
   }
