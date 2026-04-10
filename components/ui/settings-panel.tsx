@@ -53,7 +53,26 @@ function EnvelopeImageUploads({
   return (
     <div className="p-3 bg-gray-50 rounded-lg mt-3 space-y-3">
       <p className="text-xs text-gray-500">Hacienda Decoration</p>
-      
+
+      <div>
+        <label className="text-xs font-medium text-gray-600 mb-1.5 block">Seal Size</label>
+        <div className="flex gap-1.5">
+          {(['sm', 'md', 'lg', 'xl'] as const).map((size) => (
+            <button
+              key={size}
+              onClick={() => onDecorationSizeChange?.(size)}
+              className={`flex-1 py-1.5 text-xs font-medium rounded border transition-colors ${
+                (decorationSize || 'md') === size
+                  ? 'bg-gray-800 text-white border-gray-800'
+                  : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+              }`}
+            >
+              {size.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div>
         <label className="text-xs font-medium text-gray-600 mb-1.5 block">Decoration Image</label>
         {decorationImageUrl ? (
