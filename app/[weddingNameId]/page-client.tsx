@@ -618,7 +618,7 @@ function WeddingContentWithCurtain({
     <>
       {/* Curtain overlay - starts covering screen, then falls */}
       {!curtainComplete && (
-        <div className="fixed inset-0 z-50 pointer-events-none">
+        <div className="fixed inset-0 z-[80] pointer-events-none">
           <div 
             className="absolute inset-0 transition-all duration-800 ease-in-out flex items-center justify-center"
             style={{

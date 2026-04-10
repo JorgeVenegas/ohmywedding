@@ -6,10 +6,10 @@ import Image from 'next/image'
 type DecorationSize = 'sm' | 'md' | 'lg' | 'xl'
 
 const SEAL_SIZES: Record<DecorationSize, { image: string; fallback: string; px: number }> = {
-  sm: { image: 'w-16 h-16 sm:w-20 sm:h-20', fallback: 'w-12 h-12 sm:w-16 sm:h-16', px: 80 },
-  md: { image: 'w-24 h-24 sm:w-32 sm:h-32', fallback: 'w-16 h-16 sm:w-20 sm:h-20', px: 128 },
-  lg: { image: 'w-32 h-32 sm:w-44 sm:h-44', fallback: 'w-20 h-20 sm:w-28 sm:h-28', px: 176 },
-  xl: { image: 'w-44 h-44 sm:w-56 sm:h-56', fallback: 'w-28 h-28 sm:w-36 sm:h-36', px: 224 },
+  sm: { image: 'w-32 h-32 sm:w-40 sm:h-40', fallback: 'w-24 h-24 sm:w-32 sm:h-32', px: 160 },
+  md: { image: 'w-48 h-48 sm:w-64 sm:h-64', fallback: 'w-32 h-32 sm:w-40 sm:h-40', px: 256 },
+  lg: { image: 'w-64 h-64 sm:w-80 sm:h-80', fallback: 'w-40 h-40 sm:w-56 sm:h-56', px: 320 },
+  xl: { image: 'w-80 h-80 sm:w-96 sm:h-96', fallback: 'w-56 h-56 sm:w-72 sm:h-72', px: 384 },
 }
 
 interface HaciendaEnvelopeProps {
@@ -85,16 +85,30 @@ export function HaciendaEnvelope({
           }}
         >
           <div className="text-center w-full px-6" style={{ overflow: 'visible' }}>
-            <p
-              className="text-5xl sm:text-7xl md:text-8xl drop-shadow-sm leading-tight"
-              style={{
-                color: secondaryTextColor,
-                fontFamily: displayFontFamily || 'serif',
-                overflow: 'visible',
-              }}
-            >
-              {coupleNames || "You're Invited"}
-            </p>
+            {(() => {
+              const parts = (coupleNames || "You're Invited").split(/\s*&\s*/)
+              return parts.length === 2 ? (
+                <>
+                  <p className="text-5xl sm:text-7xl md:text-8xl drop-shadow-sm leading-tight"
+                    style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif' }}>
+                    {parts[0].trim()}
+                  </p>
+                  <p className="text-4xl sm:text-6xl md:text-7xl drop-shadow-sm leading-tight mt-1"
+                    style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', opacity: 0.75 }}>
+                    &amp;
+                  </p>
+                  <p className="text-5xl sm:text-7xl md:text-8xl drop-shadow-sm leading-tight"
+                    style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif' }}>
+                    {parts[1].trim()}
+                  </p>
+                </>
+              ) : (
+                <p className="text-5xl sm:text-7xl md:text-8xl drop-shadow-sm leading-tight"
+                  style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', overflow: 'visible' }}>
+                  {coupleNames || "You're Invited"}
+                </p>
+              )
+            })()}
           </div>
         </div>
 

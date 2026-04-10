@@ -72,10 +72,10 @@ export function HotelSuggestionsHaciendaVariant({
             </div>
           </AnimatedSection>
         ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+        <div className={hotels.length === 1 ? 'flex justify-center' : 'grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8'}>
           {hotels.map((hotel, index) => (
             <AnimatedHotelCard key={index} index={index}>
-              <div className="relative rounded-2xl border overflow-hidden group transition-all duration-300 hover:shadow-lg"
+              <div className={`relative rounded-2xl border overflow-hidden group transition-all duration-300 hover:shadow-lg${hotels.length === 1 ? ' w-full max-w-lg' : ''}`}
                 style={{
                   backgroundColor: useDarkBg ? `${creamText}08` : `${darkBg}03`,
                   borderColor: `${goldAccent}25`,
