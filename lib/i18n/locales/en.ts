@@ -1633,6 +1633,7 @@ export const en: Translations = {
         invitations: 'Invitations',
         gallery: 'Gallery',
         general: 'General',
+        collaborators: 'Collaborators',
       },
       subscription: {
         title: 'Subscription & Features',
@@ -1666,6 +1667,9 @@ export const en: Translations = {
       generalSettings: {
         timezone: 'Timezone',
         language: 'Language',
+      },
+      collaborators: {
+        description: 'Add collaborators and manage their permissions for each module',
       },
       saving: 'Saving...',
       active: 'Active',

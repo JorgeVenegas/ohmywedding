@@ -1629,6 +1629,7 @@ export const es: Translations = {
         invitations: 'Invitaciones',
         gallery: 'Galería',
         general: 'General',
+        collaborators: 'Colaboradores',
       },
       subscription: {
         title: 'Suscripción y Funciones',
@@ -1662,6 +1663,9 @@ export const es: Translations = {
       generalSettings: {
         timezone: 'Zona Horaria',
         language: 'Idioma',
+      },
+      collaborators: {
+        description: 'Agrega colaboradores y administra sus permisos para cada modulo',
       },
       saving: 'Guardando...',
       active: 'Activo',

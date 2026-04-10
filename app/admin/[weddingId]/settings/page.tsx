@@ -4,6 +4,7 @@ import Link from "next/link"
 import React, { useState, useEffect, use } from "react"
 import { Header } from "@/components/header"
 import { UpdateWeddingNameId } from "@/components/ui/update-wedding-name-id"
+import { CollaboratorManager } from "@/components/ui/collaborator-manager"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
@@ -27,6 +28,7 @@ import {
   Sparkles,
   Check,
   X,
+  UserCog,
 } from "lucide-react"
 
 interface WeddingFeatures {
@@ -74,7 +76,7 @@ interface SettingsPageProps {
   params: Promise<{ weddingId: string }>
 }
 
-type Section = "subscription" | "features" | "rsvp" | "invitations" | "gallery" | "general"
+type Section = "subscription" | "features" | "rsvp" | "invitations" | "gallery" | "general" | "collaborators"
 
 export default function SettingsPage({ params }: SettingsPageProps) {
   const { weddingId } = use(params)
@@ -154,6 +156,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
     { id: "invitations", label: t('admin.settings.nav.invitations'), icon: Mail },
     { id: "gallery", label: t('admin.settings.nav.gallery'), icon: Image },
     { id: "general", label: t('admin.settings.nav.general'), icon: Globe },
+    { id: "collaborators", label: t('admin.settings.nav.collaborators'), icon: UserCog },
   ]
 
   if (loading) {
@@ -650,10 +653,24 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                   </div>
                 </div>
               )}
+
+              {activeSection === "collaborators" && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-xl font-semibold text-foreground mb-1">
+                      {t('admin.settings.nav.collaborators')}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      {t('admin.settings.collaborators.description')}
+                    </p>
+                  </div>
+                  <CollaboratorManager weddingNameId={decodeURIComponent(weddingId)} />
+                </div>
+              )}
             </Card>
 
             {/* Save Button */}
-            {hasChanges && activeSection !== 'subscription' && activeSection !== 'features' && (
+            {hasChanges && activeSection !== 'subscription' && activeSection !== 'features' && activeSection !== 'collaborators' && (
               <div className="mt-4 flex justify-end">
                 <Button
                   onClick={saveSettings}

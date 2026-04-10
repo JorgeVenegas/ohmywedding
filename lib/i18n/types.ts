@@ -1496,6 +1496,7 @@ export interface Translations {
         invitations: string
         gallery: string
         general: string
+        collaborators: string
       }
       subscription: {
         title: string
@@ -1529,6 +1530,9 @@ export interface Translations {
       generalSettings: {
         timezone: string
         language: string
+      }
+      collaborators: {
+        description: string
       }
       saving: string
       active: string
