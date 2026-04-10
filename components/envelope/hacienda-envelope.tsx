@@ -86,7 +86,7 @@ export function HaciendaEnvelope({
         >
           <div className="text-center w-full px-6" style={{ overflow: 'visible' }}>
             <p
-              className="text-2xl sm:text-3xl md:text-4xl drop-shadow-sm leading-snug"
+              className="text-5xl sm:text-7xl md:text-8xl drop-shadow-sm leading-tight"
               style={{
                 color: secondaryTextColor,
                 fontFamily: displayFontFamily || 'serif',
@@ -98,24 +98,6 @@ export function HaciendaEnvelope({
           </div>
         </div>
 
-        {/* From info at bottom of envelope */}
-        <div
-          className="absolute left-0 right-0 text-center"
-          style={{ bottom: '7%' }}
-        >
-          <p
-            className="text-[10px] uppercase mb-1"
-            style={{ color: textColor, opacity: 0.5, fontFamily: bodyFontFamily || 'sans-serif', letterSpacing: '0.25em' }}
-          >
-            {t('common.from')}
-          </p>
-          <p
-            className="text-sm tracking-wider"
-            style={{ color: textColor, opacity: 0.7, fontFamily: displayFontFamily || 'serif' }}
-          >
-            {coupleInitials?.replace(/<[^>]*>/g, '') || 'The Couple'}
-          </p>
-        </div>
       </div>
 
       {/* Layer 3: Right half flap (covers right half) - slides RIGHT */}
@@ -191,12 +173,13 @@ export function HaciendaEnvelope({
         )}
       </div>
 
-      {/* Layer 5: Recipient overlay — initials + group name, slides DOWN when opening */}
+      {/* Layer 5: Recipient overlay — initials + group name, fills space below paper, slides DOWN when opening */}
       {guestGroup?.name && (
         <div
-          className="fixed z-[70] left-0 right-0 flex justify-center pointer-events-none"
+          className="fixed z-[70] left-0 right-0 flex items-center justify-center pointer-events-none"
           style={{
-            bottom: '20%',
+            top: '70%',
+            bottom: '3%',
             transform: envelopeFalling ? 'translateY(100vh)' : 'translateY(0)',
             transition: 'transform 900ms cubic-bezier(0.4, 0, 0.2, 1)',
           }}
