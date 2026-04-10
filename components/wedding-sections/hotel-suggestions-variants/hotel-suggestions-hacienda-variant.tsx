@@ -87,7 +87,7 @@ export function HotelSuggestionsHaciendaVariant({
                     <img
                       src={hotel.imageUrl}
                       alt={hotel.name}
-                      className="h-16 sm:h-20 w-auto object-contain"
+                      className="h-32 sm:h-40 w-auto object-contain"
                       loading="lazy"
                     />
                   </div>

@@ -439,7 +439,7 @@ export function RSVPCardsVariant({
             </AnimatedSection>
 
             {/* Guest Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 items-start">
               {guests.map((guest, index) => (
                 <AnimatedSection
                   key={guest.id}
@@ -564,10 +564,10 @@ export function RSVPCardsVariant({
                   borderColor: `${theme?.colors?.accent || titleColor}25`,
                 }}
               >
-                <label className="block text-sm font-medium mb-3" style={{ color: titleColor }}>
+                <label className="block text-sm font-medium mb-3 text-center" style={{ color: titleColor }}>
                   {t('rsvp.additionalGuests')}
                 </label>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center gap-3">
                   <button
                     type="button"
                     onClick={() => setExtraPassesAttending(prev => Math.max(0, prev - 1))}
@@ -590,7 +590,7 @@ export function RSVPCardsVariant({
                     +
                   </button>
                 </div>
-                <p className="text-xs mt-2 opacity-60" style={{ color: textColor }}>
+                <p className="text-xs mt-2 opacity-60 text-center" style={{ color: textColor }}>
                   {t('rsvp.extraPassesMax', { max: String(groupData?.extra_passes || 0) })}
                 </p>
               </div>
