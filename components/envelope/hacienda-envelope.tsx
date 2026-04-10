@@ -96,13 +96,13 @@ export function HaciendaEnvelope({
           }}
         />
 
-        {/* Names text — centered in the visible left half (0% to 50%) */}
+        {/* Names text — centered on the full paper; right half may be under the flap but text is centered */}
         <div
           className="absolute flex flex-col items-center justify-center"
           style={{
             top: '6%',
-            left: 0,
-            right: '50%',
+            left: '8%',
+            right: '8%',
             bottom: '30%',
           }}
         >
