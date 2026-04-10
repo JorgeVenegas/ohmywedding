@@ -125,20 +125,13 @@ export default function SettingsPage({ params }: SettingsPageProps) {
   const saveSettings = async () => {
     try {
       setSaving(true)
-      const [featuresRes, settingsRes] = await Promise.all([
-        fetch(`/api/weddings/${weddingId}/features`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(features),
-        }),
-        fetch(`/api/weddings/${weddingId}/settings`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(settings),
-        }),
-      ])
+      const settingsRes = await fetch(`/api/weddings/${weddingId}/settings`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
+      })
 
-      if (featuresRes.ok && settingsRes.ok) {
+      if (settingsRes.ok) {
         setHasChanges(false)
       }
     } catch (error) {
