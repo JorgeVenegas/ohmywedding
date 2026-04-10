@@ -83,16 +83,13 @@ export function HotelSuggestionsHaciendaVariant({
                 <OrnateCorner position="top-right" color={`${goldAccent}60`} size="sm" />
 
                 {hotel.imageUrl && (
-                  <div className="relative w-full overflow-hidden">
+                  <div className="flex justify-center pt-5 sm:pt-6">
                     <img
                       src={hotel.imageUrl}
                       alt={hotel.name}
-                      className="w-full h-auto object-contain transition-transform duration-500 group-hover:scale-105"
+                      className="h-16 sm:h-20 w-auto object-contain"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0" style={{
-                      background: `linear-gradient(to top, ${useDarkBg ? sectionBg : darkBg}40, transparent 60%)`
-                    }} />
                   </div>
                 )}
 

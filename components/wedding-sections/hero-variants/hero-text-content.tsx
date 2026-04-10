@@ -79,7 +79,7 @@ export function HeroTextContent({
 
       {/* Couple Names */}
       <h1 
-        className={`font-serif mb-4 sm:mb-6 md:mb-8 leading-tight ${getAnimationClass('delay-500')} ${
+        className={`font-serif mb-4 sm:mb-6 md:mb-8 leading-normal ${getAnimationClass('delay-500')} ${
           isOverlay 
             ? 'text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl text-white drop-shadow-lg' 
             : 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-slate-800'
