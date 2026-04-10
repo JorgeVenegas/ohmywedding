@@ -99,11 +99,9 @@
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(12px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -316,7 +314,8 @@
   /* Elegant Typography Styles - Only apply to section content, not UI controls */
   section h1, section h2, section h3, section h4, section h5, section h6 {
     letter-spacing: -0.02em;
-    line-height: 1.2;
+    line-height: 1.5;
+    overflow: visible;
   }
   
   /* Display font for main headings (wedding names, section titles) */
