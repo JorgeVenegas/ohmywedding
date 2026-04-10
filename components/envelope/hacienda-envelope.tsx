@@ -96,7 +96,7 @@ export function HaciendaEnvelope({
           }}
         />
 
-        {/* Names text — constrained to the visible left half so Layer 3 (right flap) never covers them */}
+        {/* Names text — centered in the visible left half (0% to 50%) */}
         <div
           className="absolute flex flex-col items-center justify-center"
           style={{
