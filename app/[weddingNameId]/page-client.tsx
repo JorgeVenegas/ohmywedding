@@ -44,6 +44,7 @@ interface EnvelopeContentProps {
   guestGroup: GuestGroup | null
   variant?: 'classic' | 'hacienda'
   decorationImageUrl?: string
+  decorationSize?: 'sm' | 'md' | 'lg' | 'xl'
 }
 
 function EnvelopeContent({
@@ -64,6 +65,7 @@ function EnvelopeContent({
   guestGroup,
   variant = 'classic',
   decorationImageUrl,
+  decorationSize,
 }: EnvelopeContentProps) {
   const { t } = useTranslation()
 
@@ -84,6 +86,7 @@ function EnvelopeContent({
         weddingDate={weddingDate}
         guestGroup={guestGroup}
         decorationImageUrl={decorationImageUrl}
+        decorationSize={decorationSize}
       />
     )
   }
@@ -194,7 +197,7 @@ function EnvelopeContent({
 }
 
 // Wrapper to get locale and colors from page config (same pattern as ConfigBasedWeddingRenderer)
-function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'flapColor' | 'textColor' | 'secondaryColor' | 'secondaryTextColor' | 'displayFontFamily' | 'bodyFontFamily' | 'variant' | 'decorationImageUrl'>) {
+function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'flapColor' | 'textColor' | 'secondaryColor' | 'secondaryTextColor' | 'displayFontFamily' | 'bodyFontFamily' | 'variant' | 'decorationImageUrl' | 'decorationSize'>) {
   const { config } = usePageConfig()
   const locale = config.siteSettings.locale || 'en'
   
@@ -203,7 +206,8 @@ function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'fl
   const envelopeColorChoice = envelopeConfig.colorChoice || 'primary'
   const envelopeVariant = envelopeConfig.variant || 'classic'
   const decorationImageUrl = envelopeConfig.decorationImageUrl
-  
+  const decorationSize = envelopeConfig.decorationSize
+
   // Helper to create a light tint
   const getLightTint = (hex: string, tintAmount: number): string => {
     const num = parseInt(hex.replace('#', ''), 16)
@@ -276,6 +280,7 @@ function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'fl
         bodyFontFamily={bodyFontFamily}
         variant={envelopeVariant}
         decorationImageUrl={decorationImageUrl}
+        decorationSize={decorationSize}
       />
     </I18nProvider>
   )

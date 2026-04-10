@@ -47,8 +47,6 @@ export function HotelSuggestionsHaciendaVariant({
   const bodyColor = useDarkBg ? (isLightBg ? `${darkBg}DD` : `${creamText}DD`) : `${darkBg}CC`
   const mutedColor = useDarkBg ? (isLightBg ? `${darkBg}99` : `${creamText}80`) : `${darkBg}80`
 
-  if (hotels.length === 0) return null
-
   return (
     <section id="hotel-suggestions" className="w-full py-16 sm:py-20 md:py-28 relative overflow-hidden"
       style={{ backgroundColor: sectionBg }}>
@@ -65,6 +63,15 @@ export function HotelSuggestionsHaciendaVariant({
             titleColor={headingColor} subtitleColor={`${headingColor}99`} accentColor={goldAccent} />
         </AnimatedSection>
 
+        {hotels.length === 0 ? (
+          <AnimatedSection delay={100}>
+            <div className="text-center py-8">
+              <p className="text-sm italic" style={{ color: mutedColor, fontFamily: 'var(--font-body, sans-serif)' }}>
+                {t('hotelSuggestions.subtitle')}
+              </p>
+            </div>
+          </AnimatedSection>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
           {hotels.map((hotel, index) => (
             <AnimatedHotelCard key={index} index={index}>
@@ -167,6 +174,7 @@ export function HotelSuggestionsHaciendaVariant({
             </AnimatedHotelCard>
           ))}
         </div>
+        )}
       </div>
     </section>
   )

@@ -299,6 +299,10 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
         onEnvelopeDecorationImageChange={(url) => pageConfigContext.updateSiteSettings({
           envelope: { ...pageConfigContext.config.siteSettings.envelope, decorationImageUrl: url }
         })}
+        envelopeDecorationSize={pageConfigContext.config.siteSettings.envelope?.decorationSize || 'md'}
+        onEnvelopeDecorationSizeChange={(size) => pageConfigContext.updateSiteSettings({
+          envelope: { ...pageConfigContext.config.siteSettings.envelope, decorationSize: size }
+        })}
         currentLocale={pageConfigContext.config.siteSettings.locale || 'en'}
         onLocaleChange={pageConfigContext.updateLocale}
       />

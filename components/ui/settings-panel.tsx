@@ -33,9 +33,13 @@ function getLightTint(hex: string, tintAmount: number): string {
 function EnvelopeImageUploads({
   decorationImageUrl,
   onDecorationImageChange,
+  decorationSize,
+  onDecorationSizeChange,
 }: {
   decorationImageUrl?: string
   onDecorationImageChange?: (url: string | undefined) => void
+  decorationSize?: 'sm' | 'md' | 'lg' | 'xl'
+  onDecorationSizeChange?: (size: 'sm' | 'md' | 'lg' | 'xl') => void
 }) {
   const { uploadImage, uploading } = useImageUpload()
 
@@ -109,6 +113,8 @@ interface SettingsPanelProps {
   onEnvelopeVariantChange?: (variant: EnvelopeVariant) => void
   envelopeDecorationImageUrl?: string
   onEnvelopeDecorationImageChange?: (url: string | undefined) => void
+  envelopeDecorationSize?: 'sm' | 'md' | 'lg' | 'xl'
+  onEnvelopeDecorationSizeChange?: (size: 'sm' | 'md' | 'lg' | 'xl') => void
   // Language settings
   currentLocale?: 'en' | 'es'
   onLocaleChange?: (locale: 'en' | 'es') => void
@@ -151,6 +157,8 @@ export function SettingsPanel({
   onEnvelopeVariantChange,
   envelopeDecorationImageUrl: envelopeDecorationImageUrlProp,
   onEnvelopeDecorationImageChange,
+  envelopeDecorationSize: envelopeDecorationSizeProp,
+  onEnvelopeDecorationSizeChange,
   currentLocale = 'en',
   onLocaleChange
 }: SettingsPanelProps) {
@@ -1167,6 +1175,8 @@ export function SettingsPanel({
                   <EnvelopeImageUploads
                     decorationImageUrl={envelopeDecorationImageUrlProp}
                     onDecorationImageChange={onEnvelopeDecorationImageChange}
+                    decorationSize={envelopeDecorationSizeProp}
+                    onDecorationSizeChange={onEnvelopeDecorationSizeChange}
                   />
                 )}
               </div>
