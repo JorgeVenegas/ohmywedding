@@ -46,7 +46,7 @@
 
 @font-face {
   font-family: 'Brittany Signature';
-  src: url('/fonts/BrittanySignature.ttf') format('truetype');
+  src: url('/fonts/BrittanySignature.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -99,7 +99,7 @@
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;

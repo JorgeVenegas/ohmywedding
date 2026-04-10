@@ -79,13 +79,16 @@ export function HeroTextContent({
 
       {/* Couple Names */}
       <h1 
-        className={`font-serif mb-4 sm:mb-6 md:mb-8 leading-normal ${getAnimationClass('delay-500')} ${
+        className={`font-serif mb-4 sm:mb-6 md:mb-8 ${getAnimationClass('delay-500')} ${
           isOverlay 
             ? 'text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl text-white drop-shadow-lg' 
             : 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-slate-800'
         }`}
         style={{ 
-          color: isOverlay ? 'white' : (theme?.colors?.foreground || '#1f2937')
+          color: isOverlay ? 'white' : (theme?.colors?.foreground || '#1f2937'),
+          lineHeight: 1.4,
+          overflow: 'visible',
+          padding: '0.15em 0',
         }}
       >
         {wedding.partner1_first_name} & {wedding.partner2_first_name}
