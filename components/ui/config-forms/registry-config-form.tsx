@@ -530,6 +530,17 @@ export function RegistryConfigForm({ config, onChange }: RegistryConfigFormProps
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
+                {t('registry.bank')}
+              </label>
+              <Input
+                value={config.cashRegistry?.bank || ''}
+                onChange={(e) => onChange('cashRegistry', { ...config.cashRegistry, enabled: true, bank: e.target.value })}
+                placeholder="e.g. BBVA, Banamex, Santander"
+                className="text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 {t('registry.clabe')}
               </label>
               <Input

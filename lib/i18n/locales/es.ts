@@ -406,6 +406,7 @@ export const es: Translations = {
     checkingStatus: 'Verificando estado...',
     cashTitle: 'Transferencia Bancaria',
     accountOwner: 'Titular de la Cuenta',
+    bank: 'Banco',
     clabe: 'CLABE',
     copy: 'Copiar',
     copied: '¡Copiado!',

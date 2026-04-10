@@ -83,9 +83,9 @@ export function HaciendaEnvelope({
         }}
         onClick={!envelopeFalling ? handleEnvelopeClick : undefined}
       >
-        {/* Layer 2: Paper card (secondary color, rounded top) - inside back, moves with it */}
+        {/* Layer 2: Paper card background (secondary color, rounded top) */}
         <div
-          className="absolute flex flex-col items-center justify-center"
+          className="absolute"
           style={{
             top: '6%',
             left: '8%',
@@ -93,10 +93,20 @@ export function HaciendaEnvelope({
             bottom: '30%',
             backgroundColor: secondaryColor,
             borderRadius: '50% 50% 4px 4px / 30% 30% 0 0',
-            overflow: 'visible',
+          }}
+        />
+
+        {/* Names text — constrained to the visible left half so Layer 3 (right flap) never covers them */}
+        <div
+          className="absolute flex flex-col items-center justify-center"
+          style={{
+            top: '6%',
+            left: 0,
+            right: '50%',
+            bottom: '30%',
           }}
         >
-          <div className="text-center w-full px-6" style={{ overflow: 'visible' }}>
+          <div className="text-center w-full px-6">
             {(() => {
               const parts = (coupleNames || "You're Invited").split(/\s*&\s*/)
               return parts.length === 2 ? (
@@ -121,7 +131,7 @@ export function HaciendaEnvelope({
                 </>
               ) : (
                 <p className="drop-shadow-sm leading-tight"
-                  style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', overflow: 'visible', fontSize: NAMES_SIZES[namesSize].main }}>
+                  style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', fontSize: NAMES_SIZES[namesSize].main }}>
                   {coupleNames || "You're Invited"}
                 </p>
               )
@@ -254,10 +264,11 @@ export function HaciendaEnvelope({
         </div>
       )}
 
-      {/* Tap to open hint */}
+      {/* Tap to open hint — positioned below the guest-group section (3% strip) on mobile */}
       {!envelopeFalling && !envelopeOpening && (
         <div
-          className="fixed z-[75] bottom-12 left-0 right-0 text-center pointer-events-none"
+          className="fixed z-[75] left-0 right-0 text-center pointer-events-none"
+          style={{ bottom: guestGroup?.name ? '5%' : '10%' }}
         >
           <p
             className="text-xs sm:text-sm animate-pulse font-light tracking-wide drop-shadow"

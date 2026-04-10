@@ -40,7 +40,7 @@ function EventBlock({
       {/* Event icon */}
       <div className="flex justify-center mb-6">
         <div
-          className="w-16 h-16 sm:w-20 sm:h-20"
+          className="w-20 h-20 sm:w-28 sm:h-28"
           style={{
             maskImage: `url('${EVENT_ICONS[index % EVENT_ICONS.length]}')`,
             WebkitMaskImage: `url('${EVENT_ICONS[index % EVENT_ICONS.length]}')`,
@@ -65,7 +65,7 @@ function EventBlock({
 
         {event.time && (
           <div className="flex items-center justify-center gap-1.5 mb-3">
-            <Clock className="w-3.5 h-3.5" style={{ color: accent }} />
+            <Clock className="w-5 h-5" style={{ color: accent }} />
             <span className="text-sm sm:text-base font-light tracking-wide uppercase"
               style={{ color: accent, fontFamily: 'var(--font-heading, serif)' }}>
               {formatTime(event.time)}
@@ -90,7 +90,7 @@ function EventBlock({
 
         {event.address && (
           <div className="flex items-center justify-center gap-1.5 mb-2">
-            <MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: mutedColor }} />
+            <MapPin className="w-5 h-5 flex-shrink-0" style={{ color: mutedColor }} />
             <span className="text-xs sm:text-sm font-light" style={{ color: mutedColor }}>{event.address}</span>
           </div>
         )}
@@ -106,7 +106,7 @@ function EventBlock({
           <a href={getMapUrl(event.address)} target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 mt-4 text-xs font-light tracking-wide uppercase transition-all duration-300 hover:opacity-70 group"
             style={{ color: accent }}>
-            <ExternalLink className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
+            <ExternalLink className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
             <span>Ver mapa</span>
           </a>
         )}

@@ -179,8 +179,19 @@ function RegistryHaciendaCashCard({
               </div>
             )}
 
+            {cashRegistry.bank && (
+              <div className="space-y-1">
+                <p className="text-[10px] uppercase tracking-[0.2em] font-medium" style={{ color: `${accent}BB` }}>
+                  {t('registry.bank')}
+                </p>
+                <p className="text-base font-light" style={{ color: titleColor, fontFamily: 'var(--font-heading, serif)' }}>
+                  {cashRegistry.bank}
+                </p>
+              </div>
+            )}
+
             {/* Wrought-iron divider between fields */}
-            {cashRegistry.accountOwner && cashRegistry.clabe && (
+            {(cashRegistry.accountOwner || cashRegistry.bank) && cashRegistry.clabe && (
               <WroughtIronDivider color={accent} className="opacity-60" />
             )}
 

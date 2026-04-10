@@ -40,6 +40,7 @@ export interface CashRegistry {
   enabled: boolean
   title?: string
   description?: string
+  bank?: string
   clabe?: string
   accountOwner?: string
 }

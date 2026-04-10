@@ -410,6 +410,7 @@ export interface Translations {
     checkingStatus: string
     cashTitle: string
     accountOwner: string
+    bank: string
     clabe: string
     copy: string
     copied: string

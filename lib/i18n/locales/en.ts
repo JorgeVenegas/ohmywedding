@@ -408,6 +408,7 @@ export const en: Translations = {
     checkingStatus: 'Checking status...',
     cashTitle: 'Cash / Bank Transfer',
     accountOwner: 'Account Holder',
+    bank: 'Bank',
     clabe: 'CLABE',
     copy: 'Copy',
     copied: 'Copied!',

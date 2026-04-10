@@ -70,6 +70,9 @@ export function CashRegistryCard({
             {cashRegistry.accountOwner && (
               <p className="text-xs font-medium" style={{ color: titleColor }}>{cashRegistry.accountOwner}</p>
             )}
+            {cashRegistry.bank && (
+              <p className="text-xs" style={{ color: mutedTextColor }}>{cashRegistry.bank}</p>
+            )}
             {cashRegistry.clabe && (
               <button
                 onClick={copyClabe}
@@ -129,6 +132,17 @@ export function CashRegistryCard({
                 </p>
                 <p className="text-sm font-medium" style={{ color: titleColor }}>
                   {cashRegistry.accountOwner}
+                </p>
+              </div>
+            )}
+
+            {cashRegistry.bank && (
+              <div>
+                <p className="text-[11px] uppercase tracking-widest mb-1" style={{ color: mutedTextColor }}>
+                  {t('registry.bank')}
+                </p>
+                <p className="text-sm font-medium" style={{ color: titleColor }}>
+                  {cashRegistry.bank}
                 </p>
               </div>
             )}
