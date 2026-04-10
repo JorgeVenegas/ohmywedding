@@ -24,10 +24,13 @@ async function compressImage(file: File): Promise<File> {
       const canvas = document.createElement('canvas')
       canvas.width = width; canvas.height = height
       canvas.getContext('2d')!.drawImage(img, 0, 0, width, height)
+      const isPng = file.type === 'image/png'
+      const outputType = isPng ? 'image/png' : 'image/jpeg'
+      const outputExt = isPng ? '.png' : '.jpg'
       canvas.toBlob((blob) => {
         if (!blob) { resolve(file); return }
-        resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }))
-      }, 'image/jpeg', 0.85)
+        resolve(new File([blob], file.name.replace(/\.[^.]+$/, outputExt), { type: outputType }))
+      }, outputType, isPng ? undefined : 0.85)
     }
     img.onerror = () => { URL.revokeObjectURL(url); resolve(file) }
     img.src = url
@@ -126,7 +129,7 @@ export function ImageUpload({ onUpload, currentImageUrl, placeholder = "Upload a
           <img
             src={previewUrl}
             alt="Preview"
-            className="w-full h-48 object-cover"
+            className="w-full h-48 object-contain"
           />
           <Button
             type="button"

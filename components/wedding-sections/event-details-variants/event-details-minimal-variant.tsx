@@ -1,7 +1,6 @@
 "use client"
 
 import React from 'react'
-import Image from 'next/image'
 import { Card } from '@/components/ui/card'
 import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar, ArrowRight } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
@@ -108,15 +107,12 @@ export function EventDetailsMinimalVariant(props: BaseEventDetailsProps) {
               <AnimatedEventItem key={event.id} index={index}>
                 {/* Event Image - show if imageUrl exists */}
                 {event.imageUrl && (
-                  <div className="aspect-[4/3] mb-6 overflow-hidden rounded-lg bg-gray-100">
-                    <Image
+                  <div className="mb-6 overflow-hidden rounded-lg">
+                    <img
                       src={event.imageUrl}
                       alt={`${event.venue} venue`}
-                      width={600}
-                      height={450}
-                      className="w-full h-full object-cover"
+                      className="w-full h-auto object-contain"
                       loading="lazy"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 45vw, 600px"
                     />
                   </div>
                 )}

@@ -1,7 +1,6 @@
 "use client"
 
 import React from 'react'
-import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar, Navigation, Heart } from 'lucide-react'
 import { BaseEventDetailsProps, buildEventList, getMapUrl, getColorScheme, getEventIconType, formatWeddingTime } from './types'
@@ -316,23 +315,12 @@ export function EventDetailsSplitVariant(props: BaseEventDetailsProps) {
               <div className={`flex flex-col lg:flex-row ${isImageRight ? 'lg:flex-row-reverse' : ''}`}>
                 {/* Image Side */}
                 {event.imageUrl && (
-                  <div className="w-full lg:w-1/2 min-h-[350px] lg:min-h-[550px] relative overflow-hidden bg-gray-100">
-                    <Image
+                  <div className="w-full lg:w-1/2 relative overflow-hidden flex items-center justify-center p-4 lg:p-8">
+                    <img
                       src={event.imageUrl}
                       alt={`${event.venue} venue`}
-                      fill
-                      className="object-cover transition-transform duration-700 hover:scale-105"
+                      className="w-full h-auto object-contain transition-transform duration-700 hover:scale-105"
                       loading="lazy"
-                      sizes="(max-width: 1024px) 100vw, 50vw"
-                    />
-                    {/* Subtle gradient overlay for elegance */}
-                    <div 
-                      className="absolute inset-0"
-                      style={{
-                        background: isImageRight 
-                          ? 'linear-gradient(to left, rgba(0,0,0,0.02), transparent 30%)'
-                          : 'linear-gradient(to right, rgba(0,0,0,0.02), transparent 30%)'
-                      }}
                     />
                   </div>
                 )}

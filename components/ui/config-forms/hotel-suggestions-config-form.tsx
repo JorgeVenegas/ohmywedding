@@ -208,7 +208,7 @@ export function HotelSuggestionsConfigForm({ config, onChange }: HotelSuggestion
                     {hotel.imageUrl ? (
                       <div className="flex items-center gap-2">
                         <div className="w-20 h-14 rounded overflow-hidden border flex-shrink-0">
-                          <img src={hotel.imageUrl} alt="" className="w-full h-full object-cover" />
+                          <img src={hotel.imageUrl} alt="" className="w-full h-full object-contain" />
                         </div>
                         <Button
                           variant="ghost"

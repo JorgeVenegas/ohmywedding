@@ -1,7 +1,6 @@
 "use client"
 
 import React from 'react'
-import Image from 'next/image'
 import { ExternalLink, Phone, MapPin, DollarSign, Navigation } from 'lucide-react'
 import { BaseHotelSuggestionsProps, getColorScheme } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
@@ -84,13 +83,12 @@ export function HotelSuggestionsHaciendaVariant({
                 <OrnateCorner position="top-right" color={`${goldAccent}60`} size="sm" />
 
                 {hotel.imageUrl && (
-                  <div className="relative w-full aspect-[16/9] overflow-hidden">
-                    <Image
+                  <div className="relative w-full overflow-hidden">
+                    <img
                       src={hotel.imageUrl}
                       alt={hotel.name}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="w-full h-auto object-contain transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
                     />
                     <div className="absolute inset-0" style={{
                       background: `linear-gradient(to top, ${useDarkBg ? sectionBg : darkBg}40, transparent 60%)`

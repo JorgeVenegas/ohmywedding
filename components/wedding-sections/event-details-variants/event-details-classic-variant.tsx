@@ -1,7 +1,6 @@
 "use client"
 
 import React from 'react'
-import Image from 'next/image'
 import { Card } from '@/components/ui/card'
 import { MapPin, Clock, ExternalLink, Church, PartyPopper, Calendar } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
@@ -134,15 +133,12 @@ export function EventDetailsClassicVariant(props: BaseEventDetailsProps) {
           <AnimatedCard key={event.id} index={index} isColored={isColored} cardBg={cardBg}>
             {/* Event Image - show if imageUrl exists */}
             {event.imageUrl && (
-              <div className="aspect-[16/10] overflow-hidden bg-gray-100">
-                <Image
+              <div className="overflow-hidden">
+                <img
                   src={event.imageUrl}
                   alt={`${event.venue} venue`}
-                  width={800}
-                  height={500}
-                  className="w-full h-full object-cover"
+                  className="w-full h-auto object-contain"
                   loading="lazy"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 800px"
                 />
               </div>
             )}
