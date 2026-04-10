@@ -39,6 +39,14 @@ export interface Translations {
     deleteConfirmWarning: string
     deleteCollaboratorMessage: string
     deleteCollaboratorWarning: string
+    success: string
+    error: string
+    saving: string
+    pending: string
+    confirmed: string
+    declined: string
+    updated: string
+    deleted: string
   }
 
   // Navigation
@@ -1555,6 +1563,8 @@ export interface Translations {
       contributionsTab: string
     }
     invitations: {
+      title: string
+      subtitle: string
       notifications: {
         groupCreated: string
         guestCreated: string
@@ -1597,6 +1607,379 @@ export interface Translations {
         updated: string
         deleted: string
       }
+      header: {
+        groups: string
+        guests: string
+        of: string
+        add: string
+        addGuest: string
+        addGroup: string
+        importCsv: string
+        exportCsv: string
+        inviteSettings: string
+        sendInvites: string
+      }
+      toolbar: {
+        groupsView: string
+        guestsView: string
+        searchPlaceholder: string
+        allStatus: string
+        allTags: string
+        allGroups: string
+        ungrouped: string
+        allInvitedBy: string
+        allOpens: string
+        opened: string
+        notOpened: string
+        clear: string
+        showing: string
+        columns: string
+        columnInviteSent: string
+        columnInvitedBy: string
+        columnTravelInfo: string
+        columnSeatingTable: string
+        columnDish: string
+        selected: string
+        assignGroup: string
+      }
+      table: {
+        name: string
+        phone: string
+        group: string
+        tags: string
+        status: string
+        dietary: string
+        invitedBy: string
+        invite: string
+        travelInfo: string
+        tableName: string
+        dish: string
+        actions: string
+        groupName: string
+        guestsCount: string
+        noGuestsFound: string
+        addFirstGuest: string
+        tryAdjustingFilters: string
+        noGroupsFound: string
+        createFirstGroup: string
+        unnamedGroup: string
+        needsName: string
+        needsNameClick: string
+        ungroupedGuests: string
+        legacyNeedsGroup: string
+        sent: string
+        send: string
+        clickMarkNotSent: string
+        clickMarkSent: string
+        noInvitesSent: string
+        openRsvpPage: string
+        copyRsvpLink: string
+        sendInvite: string
+        noGuestsInGroup: string
+      }
+      opens: {
+        openedTimes: string
+        firstOpened: string
+        notOpened: string
+      }
+      travel: {
+        isTraveling: string
+        travelingFrom: string
+        travelArrangement: string
+        willPurchaseTicket: string
+        purchaseDescription: string
+        noTicketNeeded: string
+        noTicketDescription: string
+        verificationRequired: string
+        ticketUploaded: string
+        ticketVerified: string
+        noTicketReason: string
+        clearSelection: string
+        cityOrLocation: string
+        reasonPlaceholder: string
+      }
+      groupModal: {
+        editTitle: string
+        addTitle: string
+        groupName: string
+        groupNamePlaceholder: string
+        notes: string
+        notesPlaceholder: string
+        extraPasses: string
+        extraPassesDescription: string
+        guests: string
+        addGuest: string
+        guestNamePlaceholder: string
+        phonePlaceholder: string
+        tags: string
+        dietaryPlaceholder: string
+        updateGroup: string
+        addGroup: string
+      }
+      guestModal: {
+        editTitle: string
+        addTitle: string
+        guestName: string
+        fullNamePlaceholder: string
+        phoneNumber: string
+        phonePlaceholder: string
+        group: string
+        selectGroup: string
+        createNewGroup: string
+        newGroupPlaceholder: string
+        selectExisting: string
+        groupHelpText: string
+        tags: string
+        addCustomTag: string
+        confirmationStatus: string
+        dietaryRestrictions: string
+        dietaryPlaceholder: string
+        notes: string
+        notesPlaceholder: string
+        invitedBy: string
+        travelInformation: string
+        guestIsTraveling: string
+        saveAndAddAnother: string
+        updateGuest: string
+        addGuest: string
+      }
+      assignModal: {
+        title: string
+        selectGroup: string
+        createNewGroup: string
+        newGroupName: string
+        groupPlaceholder: string
+        selectedGuests: string
+        assignToGroup: string
+        assigning: string
+      }
+      bulkInvitedByModal: {
+        title: string
+        description: string
+        invitedBy: string
+        helpText: string
+        selectedGuests: string
+        update: string
+        updating: string
+      }
+      travelDialog: {
+        title: string
+        group: string
+        selectedGuests: string
+        guestsWillBeUpdated: string
+        guestsTraveling: string
+        applyToGroup: string
+        applying: string
+      }
+      csvImport: {
+        title: string
+        rowsFound: string
+        importMode: string
+        importGuests: string
+        importGuestsDescription: string
+        importGroups: string
+        importGroupsDescription: string
+        columnMapping: string
+        mapColumnsGroups: string
+        mapColumnsGuests: string
+        csvColumn: string
+        mapToField: string
+        dontImport: string
+        requiredField: string
+        groupNameRequired: string
+        numberOfGuestsRequired: string
+        guestNameRequired: string
+        preview: string
+        empty: string
+        moreRows: string
+        groupsSummary: string
+        guestsSummary: string
+        importing: string
+        importGroupsButton: string
+        importGuestsButton: string
+      }
+      csvErrors: {
+        needsHeaderAndData: string
+        guestNameRequired: string
+        groupNameRequiredGuests: string
+        groupNameRequiredGroups: string
+        numberOfGuestsRequired: string
+        invalidInvitedBy: string
+        noValidGroups: string
+        noValidGuests: string
+        failedToImport: string
+      }
+      csvSuccess: {
+        groupsImported: string
+        guestsImported: string
+      }
+      csvExport: {
+        groupName: string
+        guestName: string
+        phone: string
+        status: string
+        tags: string
+        invitedBy: string
+        dietaryRestrictions: string
+        notes: string
+        extraPasses: string
+        extraPassesConfirmed: string
+      }
+      csvFields: {
+        guestName: string
+        groupName: string
+        phoneNumber: string
+        extraPasses: string
+        tags: string
+        statusField: string
+        dietaryRestrictions: string
+        notes: string
+        numberOfGuests: string
+      }
+      sendModal: {
+        title: string
+        description: string
+        skipAlreadySent: string
+        skipAlreadySentHelp: string
+        onlyConfirmed: string
+        onlyConfirmedHelp: string
+        onlyPending: string
+        onlyPendingHelp: string
+        guestsWillReceive: string
+        sendInvites: string
+      }
+      templateModal: {
+        title: string
+        subtitle: string
+        messageTemplate: string
+        addDynamicContent: string
+        dynamicContent: string
+        searchVariables: string
+        guestInformation: string
+        weddingDetails: string
+        venueInformation: string
+        examples: string
+        templateExamples: string
+        typePlaceholder: string
+        variablesHelp: string
+        preview: string
+        messagePreview: string
+        replaceWith: string
+        saveTemplate: string
+        upgradeToSave: string
+      }
+      templateExamples: {
+        formalTitle: string
+        formalDescription: string
+        casualTitle: string
+        casualDescription: string
+        detailedTitle: string
+        detailedDescription: string
+        shortTitle: string
+        shortDescription: string
+      }
+      templateVariables: {
+        groupName: string
+        groupNameDesc: string
+        guestName: string
+        guestNameDesc: string
+        invitationUrl: string
+        invitationUrlDesc: string
+        partner1: string
+        partner2: string
+        weddingDate: string
+        ceremonyVenue: string
+        ceremonyAddress: string
+        ceremonyAddressDesc: string
+        receptionVenue: string
+        receptionAddress: string
+        receptionAddressDesc: string
+      }
+      messageModal: {
+        title: string
+        submittedOn: string
+        noMessage: string
+        guestsInGroup: string
+        attending: string
+        notAttending: string
+      }
+      charts: {
+        title: string
+        hide: string
+        show: string
+        guestStatusByInviter: string
+        guestStatusByInviterDesc: string
+        guestDistributionByTag: string
+        guestDistributionByTagDesc: string
+        confirmationOpensTracking: string
+        confirmationOpensTrackingDesc: string
+        upgradeToPremium: string
+        confirmationTimeline: string
+        allGroups: string
+        opened: string
+        recentConfirmations: string
+        more: string
+        loadingTimeline: string
+        noConfirmations: string
+        noConfirmationsDesc: string
+        confirmations: string
+        guestsConfirmed: string
+        declines: string
+        guestsDeclined: string
+        opens: string
+        invitationViews: string
+      }
+      toasts: {
+        groupFinalized: string
+        groupCreated: string
+        groupUpdated: string
+        groupDeleted: string
+        groupAddError: string
+        groupUpdateError: string
+        groupDeleteError: string
+        guestAddedAnother: string
+        guestCreated: string
+        guestCreateError: string
+        guestUpdated: string
+        guestUpdateError: string
+        guestDeleted: string
+        guestDeleteError: string
+        guestAdded: string
+        draftGroupError: string
+        guestsAssigned: string
+        guestsAssignError: string
+        guestsUpdated: string
+        guestsUpdateError: string
+        guestsDeleted: string
+        guestsDeleteError: string
+        invitedByUpdated: string
+        invitedByError: string
+        allMarkedAs: string
+        groupStatusError: string
+        travelInfoSet: string
+        travelInfoError: string
+        inviteStatusError: string
+        groupInviteStatusError: string
+        noPhoneNumbersMessage: string
+        whatsappOpenedMessage: string
+        linkCopied: string
+        linkCopiedMessage: string
+        linkCopyError: string
+        whatsappOpenedGuest: string
+        noPhoneNumber: string
+        noPhoneNumberMessage: string
+        comingSoonMessage: string
+        templateSaved: string
+        templateSavedMessage: string
+        deleteGuestTitle: string
+        deleteGuestMessage: string
+        deleteGroupTitle: string
+        deleteGroupMessage: string
+      }
+    }
+    guests: {
+      title: string
+      redirecting: string
     }
     seating: {
       title: string

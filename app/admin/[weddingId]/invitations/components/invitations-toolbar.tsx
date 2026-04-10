@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useTranslation } from '@/components/contexts/i18n-context'
 import { ViewSwitcher } from "@/components/ui/view-switcher"
 import {
   Users2,
@@ -115,6 +116,7 @@ export function InvitationsToolbarContent({
   setShowBulkInvitedByModal,
   planType,
 }: InvitationsToolbarProps) {
+  const { t } = useTranslation()
   const hasActiveFilters = searchQuery || statusFilter !== 'all' || tagFilter !== 'all' || groupFilter !== 'all' || invitedByFilter !== 'all' || openedFilter !== 'all'
 
   const handleClearFilters = () => {
@@ -163,8 +165,8 @@ export function InvitationsToolbarContent({
         {/* View Mode Toggle */}
         <ViewSwitcher
           options={[
-            { value: 'groups', label: 'Groups', icon: Users2 },
-            { value: 'flat', label: 'Guests', icon: LayoutList },
+            { value: 'groups', label: t('admin.invitations.toolbar.groupsView'), icon: Users2 },
+            { value: 'flat', label: t('admin.invitations.toolbar.guestsView'), icon: LayoutList },
           ]}
           value={viewMode}
           onChange={(mode) => setViewMode(mode as 'flat' | 'groups')}
@@ -174,7 +176,7 @@ export function InvitationsToolbarContent({
         <div className="relative">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input
-            placeholder="Search..."
+            placeholder={t('admin.invitations.toolbar.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-7 h-8 w-36 text-sm"
@@ -185,17 +187,17 @@ export function InvitationsToolbarContent({
           onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
           className="h-8 rounded-md border border-border bg-background px-2 text-xs"
         >
-          <option value="all">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="declined">Declined</option>
+          <option value="all">{t('admin.invitations.toolbar.allStatus')}</option>
+          <option value="pending">{t('common.pending')}</option>
+          <option value="confirmed">{t('common.confirmed')}</option>
+          <option value="declined">{t('common.declined')}</option>
         </select>
         <select
           value={tagFilter}
           onChange={(e) => setTagFilter(e.target.value)}
           className="h-8 rounded-md border border-border bg-background px-2 text-xs"
         >
-          <option value="all">All Tags</option>
+          <option value="all">{t('admin.invitations.toolbar.allTags')}</option>
           {allTags.map(tag => (
             <option key={tag} value={tag}>{tag}</option>
           ))}
@@ -206,8 +208,8 @@ export function InvitationsToolbarContent({
               onChange={(e) => setGroupFilter(e.target.value)}
               className="h-8 rounded-md border border-border bg-background px-2 text-xs"
             >
-              <option value="all">All Groups</option>
-              <option value="ungrouped">Ungrouped</option>
+              <option value="all">{t('admin.invitations.toolbar.allGroups')}</option>
+              <option value="ungrouped">{t('admin.invitations.toolbar.ungrouped')}</option>
               {guestGroups.map(group => (
                 <option key={group.id} value={group.id}>{group.name}</option>
               ))}
@@ -218,7 +220,7 @@ export function InvitationsToolbarContent({
             onChange={(e) => setInvitedByFilter(e.target.value)}
             className="h-8 rounded-md border border-border bg-background px-2 text-xs"
           >
-            <option value="all">All Invited By</option>
+            <option value="all">{t('admin.invitations.toolbar.allInvitedBy')}</option>
             {partnerOptions.map(partner => (
               <option key={partner.key} value={partner.key}>{partner.name}</option>
             ))}
@@ -229,9 +231,9 @@ export function InvitationsToolbarContent({
               onChange={(e) => setOpenedFilter(e.target.value as typeof openedFilter)}
               className="h-8 rounded-md border border-border bg-background px-2 text-xs"
             >
-              <option value="all">All Opens</option>
-              <option value="opened">Opened</option>
-              <option value="not-opened">Not Opened</option>
+              <option value="all">{t('admin.invitations.toolbar.allOpens')}</option>
+              <option value="opened">{t('admin.invitations.toolbar.opened')}</option>
+              <option value="not-opened">{t('admin.invitations.toolbar.notOpened')}</option>
             </select>
           )}
           {hasActiveFilters && (
@@ -242,13 +244,13 @@ export function InvitationsToolbarContent({
               onClick={handleClearFilters}
             >
               <X className="w-3 h-3 mr-1" />
-              Clear
+              {t('admin.invitations.toolbar.clear')}
             </Button>
           )}
           <span className="text-xs text-muted-foreground">
             {viewMode === 'groups'
-              ? `${filteredGroupsCount}/${totalGroupsCount} groups`
-              : `${filteredGuestsCount}/${totalGuestsCount} guests`
+              ? `${filteredGroupsCount}/${totalGroupsCount} ${t('admin.invitations.toolbar.groupsView').toLowerCase()}`
+              : `${filteredGuestsCount}/${totalGuestsCount} ${t('admin.invitations.toolbar.guestsView').toLowerCase()}`
             }
           </span>
 
@@ -261,7 +263,7 @@ export function InvitationsToolbarContent({
               onClick={() => setShowColumnMenu(!showColumnMenu)}
             >
               <Columns className="w-3.5 h-3.5 mr-1" />
-              Columns
+              {t('admin.invitations.toolbar.columns')}
             </Button>
             {showColumnMenu && (
               <div className="absolute top-full left-0 mt-1 bg-background border border-border rounded-md shadow-lg z-10 min-w-[140px]">
@@ -275,11 +277,11 @@ export function InvitationsToolbarContent({
                       {visibleColumns[key] && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
                     </div>
                     <span className="capitalize">
-                      {key === 'inviteSent' ? 'Invite Sent' :
-                        key === 'invitedBy' ? 'Invited By' :
-                          key === 'travelInfo' ? 'Travel Info' :
-                          key === 'seating' ? 'Seating Table' :
-                          key === 'dish' ? 'Dish' :
+                      {key === 'inviteSent' ? t('admin.invitations.toolbar.columnInviteSent') :
+                        key === 'invitedBy' ? t('admin.invitations.toolbar.columnInvitedBy') :
+                          key === 'travelInfo' ? t('admin.invitations.toolbar.columnTravelInfo') :
+                          key === 'seating' ? t('admin.invitations.toolbar.columnSeatingTable') :
+                          key === 'dish' ? t('admin.invitations.toolbar.columnDish') :
                             key}
                     </span>
                   </button>
@@ -293,7 +295,7 @@ export function InvitationsToolbarContent({
             <>
               <div className="h-5 w-px bg-border mx-1" />
               <span className="text-xs font-medium text-foreground">
-                {selectedGuestIds.size} selected
+                {selectedGuestIds.size} {t('admin.invitations.toolbar.selected')}
               </span>
               <div className="flex items-center gap-1">
                 <Button
@@ -303,7 +305,7 @@ export function InvitationsToolbarContent({
                   onClick={() => onBulkStatusUpdate('confirmed')}
                 >
                   <CheckCircle2 className="w-3 h-3 mr-1" />
-                  Confirm
+                  {t('common.confirm')}
                 </Button>
                 <Button
                   variant="outline"
@@ -312,7 +314,7 @@ export function InvitationsToolbarContent({
                   onClick={() => onBulkStatusUpdate('pending')}
                 >
                   <Clock className="w-3 h-3 mr-1" />
-                  Pending
+                  {t('common.pending')}
                 </Button>
                 <Button
                   variant="outline"
@@ -321,7 +323,7 @@ export function InvitationsToolbarContent({
                   onClick={() => onBulkStatusUpdate('declined')}
                 >
                   <XCircle className="w-3 h-3 mr-1" />
-                  Decline
+                  {t('common.declined')}
                 </Button>
               </div>
               <div className="h-5 w-px bg-border mx-1" />
@@ -332,7 +334,7 @@ export function InvitationsToolbarContent({
                 onClick={onAssignGroup}
               >
                 <FolderPlus className="w-3 h-3 mr-1" />
-                Assign Group
+                {t('admin.invitations.toolbar.assignGroup')}
               </Button>
               <Button
                 variant="outline"
@@ -341,7 +343,7 @@ export function InvitationsToolbarContent({
                 onClick={handleTravelInfo}
               >
                 <Plane className="w-3 h-3 mr-1" />
-                Travel Info
+                {t('admin.invitations.toolbar.columnTravelInfo')}
               </Button>
               <Button
                 variant="outline"
@@ -350,7 +352,7 @@ export function InvitationsToolbarContent({
                 onClick={handleInvitedBy}
               >
                 <UserCheck className="w-3 h-3 mr-1" />
-                Invited By
+                {t('admin.invitations.toolbar.columnInvitedBy')}
               </Button>
               <Button
                 variant="outline"

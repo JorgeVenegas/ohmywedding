@@ -10,6 +10,7 @@ import { UpgradeModal, type UpgradeReason } from "@/components/ui/upgrade-modal"
 import { useSubscriptionContext } from "@/components/contexts/subscription-context"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { getWeddingUrl, type WeddingPlan } from "@/lib/wedding-url"
+import { useTranslation } from '@/components/contexts/i18n-context'
 import {
   InvitationsHeaderToolbar,
   InvitationsChartsSection,
@@ -101,6 +102,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const { weddingId } = use(params)
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { t } = useTranslation()
 
   // Premium feature check
   const { canAccessFeature, loading: subscriptionLoading, planType } = useSubscriptionContext()
@@ -309,31 +311,31 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     const p1 = partnerNames.partner1 || 'Partner 1'
     const p2 = partnerNames.partner2 || 'Partner 2'
     return [
-      { key: 'name', label: 'Guest Name', required: true },
-      { key: 'groupName', label: 'Group Name', required: true },
-      { key: 'phoneNumber', label: 'Phone Number', required: false },
-      { key: 'extraPasses', label: 'Extra Passes', required: false },
-      { key: 'tags', label: 'Tags (comma-separated)', required: false },
-      { key: 'confirmationStatus', label: 'Status (pending/confirmed/declined)', required: false },
-      { key: 'dietaryRestrictions', label: 'Dietary Restrictions', required: false },
-      { key: 'invitedBy', label: `Invited By (${p1}, ${p2})`, required: false },
-      { key: 'notes', label: 'Notes', required: false },
+      { key: 'name', label: t('admin.invitations.csvFields.guestName'), required: true },
+      { key: 'groupName', label: t('admin.invitations.csvFields.groupName'), required: true },
+      { key: 'phoneNumber', label: t('admin.invitations.csvFields.phoneNumber'), required: false },
+      { key: 'extraPasses', label: t('admin.invitations.csvFields.extraPasses'), required: false },
+      { key: 'tags', label: t('admin.invitations.csvFields.tags'), required: false },
+      { key: 'confirmationStatus', label: t('admin.invitations.csvFields.statusField'), required: false },
+      { key: 'dietaryRestrictions', label: t('admin.invitations.csvFields.dietaryRestrictions'), required: false },
+      { key: 'invitedBy', label: `${t('admin.invitations.csv.invitedBy')} (${p1}, ${p2})`, required: false },
+      { key: 'notes', label: t('admin.invitations.csvFields.notes'), required: false },
     ]
-  }, [partnerNames])
+  }, [partnerNames, t])
 
   // Database fields for CSV mapping - Groups mode
   const GROUP_DB_FIELDS = useMemo(() => {
     const p1 = partnerNames.partner1 || 'Partner 1'
     const p2 = partnerNames.partner2 || 'Partner 2'
     return [
-      { key: 'groupName', label: 'Group Name', required: true },
-      { key: 'guestCount', label: 'Number of Guests', required: true },
-      { key: 'extraPasses', label: 'Extra Passes', required: false },
-      { key: 'tags', label: 'Tags (comma-separated)', required: false },
-      { key: 'invitedBy', label: `Invited By (${p1}, ${p2})`, required: false },
-      { key: 'notes', label: 'Notes', required: false },
+      { key: 'groupName', label: t('admin.invitations.csvFields.groupName'), required: true },
+      { key: 'guestCount', label: t('admin.invitations.csvFields.numberOfGuests'), required: true },
+      { key: 'extraPasses', label: t('admin.invitations.csvFields.extraPasses'), required: false },
+      { key: 'tags', label: t('admin.invitations.csvFields.tags'), required: false },
+      { key: 'invitedBy', label: `${t('admin.invitations.csv.invitedBy')} (${p1}, ${p2})`, required: false },
+      { key: 'notes', label: t('admin.invitations.csvFields.notes'), required: false },
     ]
-  }, [partnerNames])
+  }, [partnerNames, t])
 
   // Get current DB fields based on import mode
   const DB_FIELDS = csvImportMode === 'groups' ? GROUP_DB_FIELDS : GUEST_DB_FIELDS
@@ -708,7 +710,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
         if (!response.ok) {
           const result = await response.json().catch(() => ({}))
-          setNotification({ isOpen: true, type: 'error', title: 'Error', message: `Error finalizing group: ${result.error || 'Please try again.'}` })
+          setNotification({ isOpen: true, type: 'error', title: t('common.error'), message: `${result.error || t('admin.invitations.toasts.groupAddError')}` })
           return
         }
 
@@ -720,8 +722,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         setNotification({
           isOpen: true,
           type: 'success',
-          title: 'Success',
-          message: `Group finalized with ${guestsInGroupModal.length} guest${guestsInGroupModal.length !== 1 ? 's' : ''}!`
+          title: t('common.success'),
+          message: t('admin.invitations.toasts.groupFinalized', { count: guestsInGroupModal.length })
         })
         return
       }
@@ -747,7 +749,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           showUpgrade('group_limit')
           return
         }
-        setNotification({ isOpen: true, type: 'error', title: 'Error', message: `Error adding group: ${result.error}` })
+        setNotification({ isOpen: true, type: 'error', title: t('common.error'), message: `${result.error}` })
         return
       }
 
@@ -757,11 +759,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       setNotification({
         isOpen: true,
         type: 'success',
-        title: 'Success',
-        message: 'Group created successfully!'
+        title: t('common.success'),
+        message: t('admin.invitations.toasts.groupCreated')
       })
     } catch (error) {
-      setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error adding group. Please try again.' })
+      setNotification({ isOpen: true, type: 'error', title: t('common.error'), message: t('admin.invitations.toasts.groupAddError') })
     } finally {
       setIsSubmittingGroup(false)
     }
@@ -790,20 +792,20 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         setNotification({
           isOpen: true,
           type: 'success',
-          title: 'Success',
-          message: 'Group updated successfully!'
+          title: t('common.success'),
+          message: t('admin.invitations.toasts.groupUpdated')
         })
       } else {
         const errorData = await response.json().catch(() => ({}))
         setNotification({ 
           isOpen: true, 
           type: 'error', 
-          title: 'Error', 
-          message: errorData.error || 'Failed to update group. Please try again.' 
+          title: t('common.error'), 
+          message: errorData.error || t('admin.invitations.toasts.groupUpdateError') 
         })
       }
     } catch (error) {
-      setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error updating group. Please try again.' })
+      setNotification({ isOpen: true, type: 'error', title: t('common.error'), message: t('admin.invitations.toasts.groupUpdateError') })
     } finally {
       setIsSubmittingGroup(false)
     }
@@ -812,9 +814,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const handleDeleteGroup = async (groupId: string) => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Delete Group',
-      message: 'Are you sure you want to delete this group? All guests in this group will be unassigned.',
-      confirmLabel: 'Delete',
+      title: t('admin.invitations.toasts.deleteGroupTitle'),
+      message: t('admin.invitations.toasts.deleteGroupMessage'),
+      confirmLabel: t('common.delete'),
       confirmVariant: 'destructive',
       onConfirm: async () => {
         setConfirmDialog(prev => ({ ...prev, isOpen: false }))
@@ -825,10 +827,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
           if (response.ok) {
             await fetchGuestGroups()
-            setNotification({ isOpen: true, type: 'success', title: 'Deleted', message: 'Group deleted successfully.' })
+            setNotification({ isOpen: true, type: 'success', title: t('common.deleted'), message: t('admin.invitations.toasts.groupDeleted') })
           }
         } catch (error) {
-          setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error deleting group. Please try again.' })
+          setNotification({ isOpen: true, type: 'error', title: t('common.error'), message: t('admin.invitations.toasts.groupDeleteError') })
         }
       }
     })
@@ -860,8 +862,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           setNotification({ 
             isOpen: true, 
             type: 'error', 
-            title: 'Error', 
-            message: errorData.error || 'Failed to create group. Please try again.' 
+            title: t('common.error'), 
+            message: errorData.error || t('admin.invitations.toasts.guestCreateError') 
           })
           return
         }
@@ -886,8 +888,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           setNotification({ 
             isOpen: true, 
             type: 'error', 
-            title: 'Error', 
-            message: errorData.error || 'Failed to create group. Please try again.' 
+            title: t('common.error'), 
+            message: errorData.error || t('admin.invitations.toasts.guestCreateError') 
           })
           return
         }
@@ -949,8 +951,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         setNotification({
           isOpen: true,
           type: 'success',
-          title: 'Success',
-          message: keepOpen ? 'Guest added! You can add another.' : 'Guest created successfully!'
+          title: t('common.success'),
+          message: keepOpen ? t('admin.invitations.toasts.guestAddedAnother') : t('admin.invitations.toasts.guestCreated')
         })
       } else {
         const errorData = await response.json().catch(() => ({}))
@@ -963,13 +965,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         setNotification({ 
           isOpen: true, 
           type: 'error', 
-          title: 'Error', 
-          message: errorData.error || 'Failed to create guest. Please try again.' 
+          title: t('common.error'), 
+          message: errorData.error || t('admin.invitations.toasts.guestCreateError') 
         })
       }
     } catch (error) {
       console.error('Error creating guest:', error)
-      setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error creating guest. Please try again.' })
+      setNotification({ isOpen: true, type: 'error', title: t('common.error'), message: t('admin.invitations.toasts.guestCreateError') })
     } finally {
       setIsSubmittingGuest(false)
     }
@@ -1009,21 +1011,21 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         setNotification({
           isOpen: true,
           type: 'success',
-          title: 'Success',
-          message: 'Guest updated successfully!'
+          title: t('common.success'),
+          message: t('admin.invitations.toasts.guestUpdated')
         })
       } else {
         const errorData = await response.json().catch(() => ({}))
         setNotification({ 
           isOpen: true, 
           type: 'error', 
-          title: 'Error', 
-          message: errorData.error || 'Failed to update guest. Please try again.' 
+          title: t('common.error'), 
+          message: errorData.error || t('admin.invitations.toasts.guestUpdateError') 
         })
       }
     } catch (error) {
       console.error('Error updating guest:', error)
-      setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error updating guest. Please try again.' })
+      setNotification({ isOpen: true, type: 'error', title: t('common.error'), message: t('admin.invitations.toasts.guestUpdateError') })
     } finally {
       setIsSubmittingGuest(false)
     }
@@ -1032,9 +1034,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const handleDeleteGuest = async (guestId: string) => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Delete Guest',
-      message: 'Are you sure you want to delete this guest?',
-      confirmLabel: 'Delete',
+      title: t('admin.invitations.toasts.deleteGuestTitle'),
+      message: t('admin.invitations.toasts.deleteGuestMessage'),
+      confirmLabel: t('common.delete'),
       confirmVariant: 'destructive',
       onConfirm: async () => {
         setConfirmDialog(prev => ({ ...prev, isOpen: false }))
@@ -1046,10 +1048,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           if (response.ok) {
             await fetchGuestGroups()
             await fetchUngroupedGuests()
-            setNotification({ isOpen: true, type: 'success', title: 'Deleted', message: 'Guest deleted successfully.' })
+            setNotification({ isOpen: true, type: 'success', title: t('common.deleted'), message: t('admin.invitations.toasts.guestDeleted') })
           }
         } catch (error) {
-          setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error deleting guest. Please try again.' })
+          setNotification({ isOpen: true, type: 'error', title: t('common.error'), message: t('admin.invitations.toasts.guestDeleteError') })
         }
       }
     })
@@ -1193,7 +1195,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           groupId = data.id
           setDraftGroupId(data.id)
         } else {
-          setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Failed to create draft group. Please try again.' })
+          setNotification({ isOpen: true, type: 'error', title: t('common.error'), message: t('admin.invitations.toasts.draftGroupError') })
           return
         }
       }
@@ -1216,15 +1218,15 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
       if (!guestResponse.ok) {
         const errorData = await guestResponse.json().catch(() => ({}))
-        setNotification({ isOpen: true, type: 'error', title: 'Error', message: errorData.error || 'Failed to create guest. Please try again.' })
+        setNotification({ isOpen: true, type: 'error', title: t('common.error'), message: errorData.error || t('admin.invitations.toasts.guestCreateError') })
         return
       }
 
       setNotification({ 
         isOpen: true, 
         type: 'success', 
-        title: 'Success', 
-        message: `Guest "${tempGuestForm.name.trim()}" added!` 
+        title: t('common.success'), 
+        message: t('admin.invitations.toasts.guestAdded', { name: tempGuestForm.name.trim() }) 
       })
 
       // Add to local state for display in the modal
@@ -1245,7 +1247,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       setIsAddingGuestInModal(false)
     } catch (error) {
       console.error('Error adding guest to group modal:', error)
-      setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error adding guest. Please try again.' })
+      setNotification({ isOpen: true, type: 'error', title: t('common.error'), message: t('admin.invitations.toasts.guestCreateError') })
     } finally {
       setIsAddingGuestToModal(false)
     }
@@ -1333,7 +1335,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
         const result = await response.json()
         if (!response.ok) {
-          setNotification({ isOpen: true, type: 'error', title: 'Error', message: `Error creating group: ${result.error}` })
+          setNotification({ isOpen: true, type: 'error', title: t('common.error'), message: `${result.error}` })
           return
         }
         targetGroupId = result.data.id
@@ -1371,9 +1373,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       setShowAssignGroupModal(false)
       setNewGroupName('')
       setAssignToGroupId('new')
-      setNotification({ isOpen: true, type: 'success', title: 'Success', message: 'Guests assigned to group successfully!' })
+      setNotification({ isOpen: true, type: 'success', title: t('common.success'), message: t('admin.invitations.toasts.guestsAssigned') })
     } catch (error) {
-      setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error assigning guests. Please try again.' })
+      setNotification({ isOpen: true, type: 'error', title: t('common.error'), message: t('admin.invitations.toasts.guestsAssignError') })
     } finally {
       setIsSubmittingAssign(false)
     }
@@ -1412,9 +1414,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
       // Reset selection
       setSelectedGuestIds(new Set())
-      setNotification({ isOpen: true, type: 'success', title: 'Updated', message: `${selectedGuestIds.size} guest(s) updated successfully!` })
+      setNotification({ isOpen: true, type: 'success', title: t('common.updated'), message: t('admin.invitations.toasts.guestsUpdated', { count: selectedGuestIds.size }) })
     } catch (error) {
-      setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error updating guests. Please try again.' })
+      setNotification({ isOpen: true, type: 'error', title: t('common.error'), message: t('admin.invitations.toasts.guestsUpdateError') })
     }
   }
 
@@ -1425,9 +1427,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     const count = selectedGuestIds.size
     setConfirmDialog({
       isOpen: true,
-      title: 'Delete Guests',
-      message: `Are you sure you want to delete ${count} guest(s)? This action cannot be undone.`,
-      confirmLabel: 'Delete',
+      title: t('admin.invitations.confirmDelete.guests'),
+      message: t('admin.invitations.confirmDelete.guestsMessage', { count }),
+      confirmLabel: t('common.delete'),
       confirmVariant: 'destructive',
       onConfirm: async () => {
         setConfirmDialog(prev => ({ ...prev, isOpen: false }))
@@ -1446,9 +1448,9 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
           // Reset selection
           setSelectedGuestIds(new Set())
-          setNotification({ isOpen: true, type: 'success', title: 'Deleted', message: `${count} guest(s) deleted successfully.` })
+          setNotification({ isOpen: true, type: 'success', title: t('common.deleted'), message: t('admin.invitations.toasts.guestsDeleted', { count }) })
         } catch (error) {
-          setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error deleting guests. Please try again.' })
+          setNotification({ isOpen: true, type: 'error', title: t('common.error'), message: t('admin.invitations.toasts.guestsDeleteError') })
         }
       }
     })
@@ -1495,11 +1497,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       setNotification({
         isOpen: true,
         type: 'success',
-        title: 'Updated',
-        message: `Updated "Invited By" for ${count} guest(s)!`
+        title: t('common.updated'),
+        message: t('admin.invitations.toasts.invitedByUpdated', { count })
       })
     } catch (error) {
-      setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error updating guests. Please try again.' })
+      setNotification({ isOpen: true, type: 'error', title: t('common.error'), message: t('admin.invitations.toasts.invitedByError') })
     } finally {
       setIsSubmittingBulkInvitedBy(false)
     }
@@ -1533,11 +1535,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       setNotification({
         isOpen: true,
         type: 'success',
-        title: 'Updated',
-        message: `All guests in "${group.name}" marked as ${newStatus}.`
+        title: t('common.updated'),
+        message: t('admin.invitations.toasts.allMarkedAs', { name: group.name || '', status: newStatus })
       })
     } catch (error) {
-      setNotification({ isOpen: true, type: 'error', title: 'Error', message: 'Error updating group. Please try again.' })
+      setNotification({ isOpen: true, type: 'error', title: t('common.error'), message: t('admin.invitations.toasts.groupStatusError') })
     }
   }
 
@@ -1633,15 +1635,15 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       setNotification({
         isOpen: true,
         type: 'success',
-        title: 'Success',
-        message: `Travel info set for ${count} guest(s)`
+        title: t('common.success'),
+        message: t('admin.invitations.toasts.travelInfoSet', { count })
       })
     } catch (error) {
       setNotification({
         isOpen: true,
         type: 'error',
-        title: 'Error',
-        message: 'Failed to set travel info'
+        title: t('common.error'),
+        message: t('admin.invitations.toasts.travelInfoError')
       })
     } finally {
       setIsSubmittingTravel(false)
@@ -1722,8 +1724,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       setNotification({
         isOpen: true,
         type: "error",
-        title: "Error",
-        message: "Failed to update invitation status"
+        title: t('common.error'),
+        message: t('admin.invitations.toasts.inviteStatusError')
       })
     }
   }
@@ -1749,8 +1751,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       setNotification({
         isOpen: true,
         type: "error",
-        title: "Error",
-        message: "Failed to update group invitation status"
+        title: t('common.error'),
+        message: t('admin.invitations.toasts.groupInviteStatusError')
       })
     }
   }
@@ -1787,8 +1789,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       setNotification({
         isOpen: true,
         type: 'error',
-        title: 'No Phone Numbers',
-        message: `No guests in ${group.name} have phone numbers set`
+        title: t('admin.invitations.whatsapp.noPhoneNumbers'),
+        message: t('admin.invitations.toasts.noPhoneNumbersMessage', { name: group.name || '' })
       })
       return
     }
@@ -1827,8 +1829,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     setNotification({
       isOpen: true,
       type: 'success',
-      title: 'WhatsApp Opened',
-      message: `Opening WhatsApp to send invitations to ${guestsWithPhone.length} guest${guestsWithPhone.length !== 1 ? 's' : ''} in ${group.name}`
+      title: t('admin.invitations.whatsapp.opened'),
+      message: t('admin.invitations.toasts.whatsappOpenedMessage', { count: guestsWithPhone.length, name: group.name || '' })
     })
   }
 
@@ -1839,15 +1841,15 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       setNotification({
         isOpen: true,
         type: 'success',
-        title: 'Link Copied!',
-        message: `RSVP link for "${group.name}" copied to clipboard`
+        title: t('admin.invitations.toasts.linkCopied'),
+        message: t('admin.invitations.toasts.linkCopiedMessage', { name: group.name || '' })
       })
     }).catch(() => {
       setNotification({
         isOpen: true,
         type: 'error',
-        title: 'Error',
-        message: 'Failed to copy link to clipboard'
+        title: t('common.error'),
+        message: t('admin.invitations.toasts.linkCopyError')
       })
     })
   }
@@ -1897,15 +1899,15 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       setNotification({
         isOpen: true,
         type: 'success',
-        title: 'WhatsApp Opened',
-        message: `Opening WhatsApp to send invitation to ${guest.name}`
+        title: t('admin.invitations.whatsapp.opened'),
+        message: t('admin.invitations.toasts.whatsappOpenedGuest', { name: guest.name })
       })
     } else {
       setNotification({
         isOpen: true,
         type: 'error',
-        title: 'No Phone Number',
-        message: `${guest.name} does not have a phone number set`
+        title: t('admin.invitations.toasts.noPhoneNumber'),
+        message: t('admin.invitations.toasts.noPhoneNumberMessage', { name: guest.name })
       })
     }
   }
@@ -1924,8 +1926,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     setNotification({
       isOpen: true,
       type: 'success',
-      title: 'Coming Soon',
-      message: `Sending invites to ${sendInvitesConfig.skipAlreadySent ? notSentCount : totalGuests} guests will be available soon.`
+      title: t('admin.invitations.status.comingSoon'),
+      message: t('admin.invitations.toasts.comingSoonMessage', { count: sendInvitesConfig.skipAlreadySent ? notSentCount : totalGuests })
     })
   }
 
@@ -1950,7 +1952,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         const rows = parseCSV(text)
 
         if (rows.length < 2) {
-          setCsvImportError("CSV file must have at least a header row and one data row")
+          setCsvImportError(t('admin.invitations.csvErrors.needsHeaderAndData'))
           return
         }
 
@@ -2002,7 +2004,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         setColumnMapping(autoMapping)
         setShowCsvImportModal(true)
       } catch {
-        setCsvImportError("Failed to parse CSV file")
+        setCsvImportError(t('admin.invitations.csvErrors.failedToImport'))
       }
     }
     reader.readAsText(file)
@@ -2086,11 +2088,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       const hasGroupNameMapping = Object.values(columnMapping).includes('groupName')
       const hasGuestCountMapping = Object.values(columnMapping).includes('guestCount')
       if (!hasGroupNameMapping) {
-        setCsvImportError("Group Name field is required. Please map a column to 'Group Name'.")
+        setCsvImportError(t('admin.invitations.csvErrors.groupNameRequiredGroups'))
         return false
       }
       if (!hasGuestCountMapping) {
-        setCsvImportError("Number of Guests field is required. Please map a column to 'Number of Guests'.")
+        setCsvImportError(t('admin.invitations.csvErrors.numberOfGuestsRequired'))
         return false
       }
     } else {
@@ -2098,11 +2100,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       const hasNameMapping = Object.values(columnMapping).includes('name')
       const hasGroupNameMapping = Object.values(columnMapping).includes('groupName')
       if (!hasNameMapping) {
-        setCsvImportError("Guest Name field is required. Please map a column to 'Guest Name'.")
+        setCsvImportError(t('admin.invitations.csvErrors.guestNameRequired'))
         return false
       }
       if (!hasGroupNameMapping) {
-        setCsvImportError("Group Name field is required. All guests must be assigned to a group.")
+        setCsvImportError(t('admin.invitations.csvErrors.groupNameRequiredGuests'))
         return false
       }
     }

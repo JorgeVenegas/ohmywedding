@@ -3,6 +3,7 @@
 import { X, FileSpreadsheet, UserPlus, Users, AlertCircle, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { useTranslation } from '@/components/contexts/i18n-context'
 
 interface DBField {
   key: string
@@ -39,6 +40,7 @@ export function CsvImportModal({
   dbFields,
   onImport,
 }: CsvImportModalProps) {
+  const { t } = useTranslation()
   if (!isOpen) return null
 
   const updateColumnMapping = (csvIndex: string, dbField: string) => {
@@ -66,9 +68,9 @@ export function CsvImportModal({
             <div className="flex items-center gap-3">
               <FileSpreadsheet className="w-6 h-6 text-primary" />
               <div>
-                <h2 className="text-xl font-semibold">Import from CSV</h2>
+                <h2 className="text-xl font-semibold">{t('admin.invitations.csvImport.title')}</h2>
                 <p className="text-sm text-muted-foreground">
-                  {csvData.length} rows found. Map columns and import.
+                  {t('admin.invitations.csvImport.rowsFound', { count: csvData.length })}
                 </p>
               </div>
             </div>
@@ -81,7 +83,7 @@ export function CsvImportModal({
         <div className="flex-1 overflow-y-auto p-6">
           {/* Import Mode Selector */}
           <div className="mb-6">
-            <h3 className="text-sm font-medium text-foreground mb-3">Import Mode</h3>
+            <h3 className="text-sm font-medium text-foreground mb-3">{t('admin.invitations.csvImport.importMode')}</h3>
             <div className="flex gap-3">
               <button
                 type="button"
@@ -93,10 +95,10 @@ export function CsvImportModal({
               >
                 <div className="flex items-center gap-2 mb-1">
                   <UserPlus className="w-4 h-4" />
-                  <span className="font-medium">Import Guests</span>
+                  <span className="font-medium">{t('admin.invitations.csvImport.importGuests')}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Import individual guests with names. Groups will be auto-created.
+                  {t('admin.invitations.csvImport.importGuestsDescription')}
                 </p>
               </button>
               <button
@@ -109,10 +111,10 @@ export function CsvImportModal({
               >
                 <div className="flex items-center gap-2 mb-1">
                   <Users className="w-4 h-4" />
-                  <span className="font-medium">Import Groups</span>
+                  <span className="font-medium">{t('admin.invitations.csvImport.importGroups')}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Import groups with guest count. Guests named &quot;Guest 1&quot;, &quot;Guest 2&quot;, etc.
+                  {t('admin.invitations.csvImport.importGroupsDescription')}
                 </p>
               </button>
             </div>
@@ -128,11 +130,11 @@ export function CsvImportModal({
 
           {/* Column Mapping */}
           <div className="mb-6">
-            <h3 className="text-sm font-medium text-foreground mb-3">Column Mapping</h3>
+            <h3 className="text-sm font-medium text-foreground mb-3">{t('admin.invitations.csvImport.columnMapping')}</h3>
             <p className="text-xs text-muted-foreground mb-4">
               {csvImportMode === 'groups'
-                ? 'Map columns. Group Name and Number of Guests are required.'
-                : 'Map columns. Guest Name and Group Name are required.'
+                ? t('admin.invitations.csvImport.mapColumnsGroups')
+                : t('admin.invitations.csvImport.mapColumnsGuests')
               }
             </p>
 
@@ -140,8 +142,8 @@ export function CsvImportModal({
               <table className="w-full text-sm">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground w-1/2">CSV Column</th>
-                    <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground w-1/2">Map to Field</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground w-1/2">{t('admin.invitations.csvImport.csvColumn')}</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground w-1/2">{t('admin.invitations.csvImport.mapToField')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -166,7 +168,7 @@ export function CsvImportModal({
                                 : ''
                             }`}
                         >
-                          <option value="">-- Don&apos;t import --</option>
+                          <option value="">{t('admin.invitations.csvImport.dontImport')}</option>
                           {dbFields.map(field => {
                             const isMapped = Object.entries(columnMapping).some(
                               ([key, val]) => val === field.key && key !== index.toString()
@@ -192,17 +194,17 @@ export function CsvImportModal({
             {/* Required field indicator */}
             <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
               <span className="text-red-500">*</span>
-              <span>Required field</span>
+              <span>{t('admin.invitations.csvImport.requiredField')}</span>
               {csvImportMode === 'groups' ? (
                 <>
                   {!Object.values(columnMapping).includes('groupName') && (
                     <span className="ml-4 text-amber-600 font-medium">
-                      ⚠️ Group Name must be mapped
+                      {t('admin.invitations.csvImport.groupNameRequired')}
                     </span>
                   )}
                   {!Object.values(columnMapping).includes('guestCount') && (
                     <span className="ml-4 text-amber-600 font-medium">
-                      ⚠️ Number of Guests must be mapped
+                      {t('admin.invitations.csvImport.numberOfGuestsRequired')}
                     </span>
                   )}
                 </>
@@ -210,12 +212,12 @@ export function CsvImportModal({
                 <>
                   {!Object.values(columnMapping).includes('name') && (
                     <span className="ml-4 text-amber-600 font-medium">
-                      ⚠️ Guest Name must be mapped
+                      {t('admin.invitations.csvImport.guestNameRequired')}
                     </span>
                   )}
                   {!Object.values(columnMapping).includes('groupName') && (
                     <span className="ml-4 text-amber-600 font-medium">
-                      ⚠️ Group Name must be mapped
+                      {t('admin.invitations.csvImport.groupNameRequired')}
                     </span>
                   )}
                 </>
@@ -226,7 +228,7 @@ export function CsvImportModal({
           {/* Preview */}
           <div>
             <h3 className="text-sm font-medium text-foreground mb-3">
-              Preview (first 5 rows)
+              {t('admin.invitations.csvImport.preview')}
             </h3>
             <div className="overflow-x-auto border rounded-lg">
               <table className="w-full text-sm">
@@ -249,7 +251,7 @@ export function CsvImportModal({
                         const value = csvIndex !== undefined ? row[parseInt(csvIndex)] || '' : ''
                         return (
                           <td key={field.key} className="px-3 py-2">
-                            {value || <span className="text-muted-foreground italic">empty</span>}
+                            {value || <span className="text-muted-foreground italic">{t('admin.invitations.csvImport.empty')}</span>}
                           </td>
                         )
                       })}
@@ -260,7 +262,7 @@ export function CsvImportModal({
             </div>
             {csvData.length > 5 && (
               <p className="mt-2 text-xs text-muted-foreground">
-                ... and {csvData.length - 5} more rows
+                {t('admin.invitations.csvImport.moreRows', { count: csvData.length - 5 })}
               </p>
             )}
           </div>
@@ -270,13 +272,13 @@ export function CsvImportModal({
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
               {csvImportMode === 'groups'
-                ? `${csvData.length} groups will be created with auto-generated guests`
-                : `${csvData.length} guests will be imported into groups`
+                ? t('admin.invitations.csvImport.groupsSummary', { count: csvData.length })
+                : t('admin.invitations.csvImport.guestsSummary', { count: csvData.length })
               }
             </p>
             <div className="flex gap-2">
               <Button variant="outline" onClick={onClose}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button
                 onClick={onImport}
@@ -287,15 +289,15 @@ export function CsvImportModal({
               >
                 {csvImporting ? (
                   <>
-                    <span className="animate-spin mr-2">⏳</span>
-                    Importing...
+                    <span className="animate-spin mr-2">&#8987;</span>
+                    {t('admin.invitations.csvImport.importing')}
                   </>
                 ) : (
                   <>
                     <Upload className="w-4 h-4 mr-2" />
                     {csvImportMode === 'groups'
-                      ? `Import ${csvData.length} Groups`
-                      : `Import ${csvData.length} Guests`
+                      ? t('admin.invitations.csvImport.importGroupsButton', { count: csvData.length })
+                      : t('admin.invitations.csvImport.importGuestsButton', { count: csvData.length })
                     }
                   </>
                 )}

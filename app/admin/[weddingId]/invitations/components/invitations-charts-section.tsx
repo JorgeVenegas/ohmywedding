@@ -16,6 +16,7 @@ import {
   Clock,
   Lock,
 } from "lucide-react"
+import { useTranslation } from '@/components/contexts/i18n-context'
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import type { GuestGroup, TimelineData } from "../types"
 import type { PlanType } from "@/lib/subscription-shared"
@@ -62,6 +63,7 @@ export function InvitationsChartsSection({
   planType,
 }: InvitationsChartsSectionProps) {
   const router = useRouter()
+  const { t } = useTranslation()
 
   const hasTrackingAccess = planType !== 'free'
   const hasData = statusByInvitedByData.length > 0 || tagsByInvitedByData.length > 0 || !timelineLoading
@@ -78,8 +80,8 @@ export function InvitationsChartsSection({
         }`}
       >
         <ChevronDown className={`w-4 h-4 text-primary/70 transition-transform duration-300 flex-shrink-0 ${chartsExpanded ? 'rotate-0' : '-rotate-90'}`} />
-        <span className="text-sm font-semibold text-foreground">Charts & Analytics</span>
-        <span className="text-xs text-muted-foreground ml-1">{chartsExpanded ? 'Hide' : 'Show'}</span>
+        <span className="text-sm font-semibold text-foreground">{t('admin.invitations.charts.title')}</span>
+        <span className="text-xs text-muted-foreground ml-1">{chartsExpanded ? t('admin.invitations.charts.hide') : t('admin.invitations.charts.show')}</span>
       </button>
       <div
         className={`overflow-hidden transition-all duration-300 ease-out ${chartsExpanded
@@ -93,16 +95,16 @@ export function InvitationsChartsSection({
           {/* Status by Invited By - Stacked Bar Chart */}
           {statusByInvitedByData.length > 0 && (
             <ChartCard
-              title="Guest Status by Inviter"
-              description="Distribution of confirmations, pending, and declines"
+              title={t('admin.invitations.charts.guestStatusByInviter')}
+              description={t('admin.invitations.charts.guestStatusByInviterDesc')}
             >
               <StackedBarChart
                 data={statusByInvitedByData}
                 categoryKey="name"
                 bars={[
-                  { dataKey: "confirmed", name: "Confirmed", color: "emerald" },
-                  { dataKey: "pending", name: "Pending", color: "amber" },
-                  { dataKey: "declined", name: "Declined", color: "red" },
+                  { dataKey: "confirmed", name: t('common.confirmed'), color: "emerald" },
+                  { dataKey: "pending", name: t('common.pending'), color: "amber" },
+                  { dataKey: "declined", name: t('common.declined'), color: "red" },
                 ]}
                 height={Math.max(250, statusByInvitedByData.length * 45 + 60)}
               />
@@ -112,8 +114,8 @@ export function InvitationsChartsSection({
           {/* Tags Donut Chart */}
           {tagsByInvitedByData.length > 0 && (
             <ChartCard
-              title="Guest Distribution by Tag"
-              description="Breakdown of guests by their assigned categories"
+              title={t('admin.invitations.charts.guestDistributionByTag')}
+              description={t('admin.invitations.charts.guestDistributionByTagDesc')}
             >
               <DonutChart
                 data={tagsByInvitedByData.map((item) => ({
@@ -136,21 +138,21 @@ export function InvitationsChartsSection({
               <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
                 <Lock className="w-6 h-6 text-muted-foreground/60" />
               </div>
-              <h3 className="text-sm font-semibold text-foreground mb-1">Confirmation & Opens Tracking</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-1">{t('admin.invitations.charts.confirmationOpensTracking')}</h3>
               <p className="text-xs text-muted-foreground mb-4 max-w-sm">
-                Track when guests open their invitations, view confirmation timelines, and get detailed analytics.
+                {t('admin.invitations.charts.confirmationOpensTrackingDesc')}
               </p>
               <a
                 href={`/upgrade?source=charts_tracking`}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
               >
-                Upgrade to Premium
+                {t('admin.invitations.charts.upgradeToPremium')}
               </a>
             </div>
           </Card>
         ) : !timelineLoading && (
           <Card className="p-4 sm:p-6 border">
-            <h3 className="text-sm font-semibold text-foreground mb-4">Confirmation Timeline</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-4">{t('admin.invitations.charts.confirmationTimeline')}</h3>
             <div className="flex flex-col gap-3 sm:gap-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
                 {/* Time Range Filter */}
@@ -174,7 +176,7 @@ export function InvitationsChartsSection({
                   onChange={(e) => setTimelineGroupFilter(e.target.value)}
                   className="h-8 px-2 sm:px-3 text-xs border border-border rounded-md bg-background hover:bg-muted/50 transition-colors flex-1 sm:flex-none"
                 >
-                  <option value="all">All Groups</option>
+                  <option value="all">{t('admin.invitations.charts.allGroups')}</option>
                   {guestGroups.map((group) => (
                     <option key={group.id} value={group.id}>{group.name}</option>
                   ))}
@@ -188,9 +190,9 @@ export function InvitationsChartsSection({
                     data={timelineData.chartData}
                     xAxisKey="date"
                     areas={[
-                      { dataKey: "cumulativeConfirmed", name: "Confirmed", color: "emerald" },
-                      { dataKey: "cumulativeDeclined", name: "Declined", color: "red" },
-                      { dataKey: "cumulativeOpens", name: "Opened", color: "blue" },
+                      { dataKey: "cumulativeConfirmed", name: t('common.confirmed'), color: "emerald" },
+                      { dataKey: "cumulativeDeclined", name: t('common.declined'), color: "red" },
+                      { dataKey: "cumulativeOpens", name: t('admin.invitations.charts.opened'), color: "blue" },
                     ]}
                     height={280}
                     className="mb-4"
@@ -206,7 +208,7 @@ export function InvitationsChartsSection({
                   {/* Recent Events */}
                   {timelineData.confirmationEvents.length > 0 && (
                     <div className="border-t pt-3 sm:pt-4">
-                      <h4 className="text-xs font-medium text-muted-foreground mb-2">Recent Confirmations</h4>
+                      <h4 className="text-xs font-medium text-muted-foreground mb-2">{t('admin.invitations.charts.recentConfirmations')}</h4>
                       <div className="flex flex-wrap gap-1.5 sm:gap-2">
                         {timelineData.confirmationEvents.slice(0, 8).map((event) => (
                           <button
@@ -234,7 +236,7 @@ export function InvitationsChartsSection({
                         ))}
                         {timelineData.confirmationEvents.length > 8 && (
                           <span className="text-xs text-muted-foreground py-1">
-                            +{timelineData.confirmationEvents.length - 8} more
+                            +{timelineData.confirmationEvents.length - 8} {t('admin.invitations.charts.more')}
                           </span>
                         )}
                       </div>
@@ -252,7 +254,7 @@ export function InvitationsChartsSection({
             <div className="h-[200px] flex items-center justify-center">
               <div className="flex flex-col items-center gap-2">
                 <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
-                <p className="text-xs text-muted-foreground">Loading timeline...</p>
+                <p className="text-xs text-muted-foreground">{t('admin.invitations.charts.loadingTimeline')}</p>
               </div>
             </div>
           </Card>
@@ -265,8 +267,8 @@ export function InvitationsChartsSection({
               <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
                 <Clock className="w-6 h-6 text-muted-foreground/60" />
               </div>
-              <p className="text-sm font-medium">No confirmations yet</p>
-              <p className="text-xs mt-1">RSVPs will appear here when guests respond to invitations</p>
+              <p className="text-sm font-medium">{t('admin.invitations.charts.noConfirmations')}</p>
+              <p className="text-xs mt-1">{t('admin.invitations.charts.noConfirmationsDesc')}</p>
             </div>
           </Card>
         )}
@@ -275,22 +277,22 @@ export function InvitationsChartsSection({
         {hasTrackingAccess && timelineData && timelineData.chartData.length > 0 && (
           <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
             <StatCard
-              label="Confirmations"
+              label={t('admin.invitations.charts.confirmations')}
               value={timelineData.summary.totalConfirmed}
               color="emerald"
-              subtitle="guests confirmed attendance"
+              subtitle={t('admin.invitations.charts.guestsConfirmed')}
             />
             <StatCard
-              label="Declines"
+              label={t('admin.invitations.charts.declines')}
               value={timelineData.summary.totalDeclined}
               color="red"
-              subtitle="guests declined"
+              subtitle={t('admin.invitations.charts.guestsDeclined')}
             />
             <StatCard
-              label="Opens"
+              label={t('admin.invitations.charts.opens')}
               value={timelineData.summary.totalOpens}
               color="blue"
-              subtitle="invitation views"
+              subtitle={t('admin.invitations.charts.invitationViews')}
             />
           </div>
         )}

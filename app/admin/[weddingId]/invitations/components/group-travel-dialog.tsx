@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { X, Plane, Ticket, Check } from "lucide-react"
+import { useTranslation } from '@/components/contexts/i18n-context'
 import { GuestGroup, GroupTravelForm } from "../types"
 
 interface GroupTravelDialogProps {
@@ -28,6 +29,7 @@ export function GroupTravelDialog({
   onSubmit,
   isSubmitting = false,
 }: GroupTravelDialogProps) {
+  const { t } = useTranslation()
   if (!isOpen) return null
 
   const isSubmitDisabled =
@@ -42,7 +44,7 @@ export function GroupTravelDialog({
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <Plane className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold">Set Travel Info for Group</h2>
+              <h2 className="text-xl font-semibold">{t('admin.invitations.travelDialog.title')}</h2>
             </div>
             <button
               onClick={onClose}
@@ -54,19 +56,19 @@ export function GroupTravelDialog({
 
           <div className="mb-4 p-3 bg-muted rounded-lg">
             <p className="text-sm text-muted-foreground">
-              {groupTravelForm.groupId ? 'Group:' : 'Selected Guests:'}
+              {groupTravelForm.groupId ? t('admin.invitations.travelDialog.group') : t('admin.invitations.travelDialog.selectedGuests')}
             </p>
             <p className="font-medium">{groupTravelForm.groupName}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {groupTravelForm.groupId
-                ? `${guestGroups.find((g) => g.id === groupTravelForm.groupId)?.guests.length || 0} guest(s) will be updated`
-                : `${selectedGuestIds.size} guest(s) will be updated`}
+              {t('admin.invitations.travelDialog.guestsWillBeUpdated', { count: groupTravelForm.groupId
+                ? guestGroups.find((g) => g.id === groupTravelForm.groupId)?.guests.length || 0
+                : selectedGuestIds.size })}
             </p>
           </div>
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Guest(s) traveling?</label>
+              <label className="text-sm font-medium">{t('admin.invitations.travelDialog.guestsTraveling')}</label>
               <Switch
                 checked={groupTravelForm.isTraveling}
                 onCheckedChange={(checked) =>
@@ -78,7 +80,7 @@ export function GroupTravelDialog({
             {groupTravelForm.isTraveling && (
               <>
                 <div>
-                  <label className="text-sm font-medium mb-1.5 block">Traveling from</label>
+                  <label className="text-sm font-medium mb-1.5 block">{t('admin.invitations.travel.travelingFrom')}</label>
                   <Input
                     value={groupTravelForm.travelingFrom}
                     onChange={(e) =>
@@ -87,13 +89,13 @@ export function GroupTravelDialog({
                         travelingFrom: e.target.value,
                       }))
                     }
-                    placeholder="e.g., New York, USA"
+                    placeholder={t('admin.invitations.travel.cityOrLocation')}
                   />
                 </div>
 
                 <div>
                   <label className="text-sm font-medium mb-2 block">
-                    Travel arrangement <span className="text-muted-foreground">(optional)</span>
+                    {t('admin.invitations.travel.travelArrangement')} <span className="text-muted-foreground">({t('common.optional')})</span>
                   </label>
                   <div className="space-y-2">
                     <button
@@ -112,9 +114,9 @@ export function GroupTravelDialog({
                       <div className="flex items-start gap-2">
                         <Ticket className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="font-medium text-sm">Will purchase ticket</p>
+                          <p className="font-medium text-sm">{t('admin.invitations.travel.willPurchaseTicket')}</p>
                           <p className="text-xs text-muted-foreground">
-                            Guest will need to upload proof of purchase
+                            {t('admin.invitations.travel.purchaseDescription')}
                           </p>
                         </div>
                       </div>
@@ -136,9 +138,9 @@ export function GroupTravelDialog({
                       <div className="flex items-start gap-2">
                         <X className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="font-medium text-sm">Does not need ticket</p>
+                          <p className="font-medium text-sm">{t('admin.invitations.travel.noTicketNeeded')}</p>
                           <p className="text-xs text-muted-foreground">
-                            Guest must provide a reason
+                            {t('admin.invitations.travel.noTicketDescription')}
                           </p>
                         </div>
                       </div>
@@ -154,7 +156,7 @@ export function GroupTravelDialog({
                         }
                         className="w-full p-2 rounded-lg border border-border hover:bg-muted transition-colors text-sm text-muted-foreground"
                       >
-                        Clear selection
+                        {t('admin.invitations.travel.clearSelection')}
                       </button>
                     )}
                   </div>
@@ -162,7 +164,7 @@ export function GroupTravelDialog({
 
                 {groupTravelForm.travelArrangement === 'no_ticket_needed' && (
                   <div>
-                    <label className="text-sm font-medium mb-1.5 block">Reason</label>
+                    <label className="text-sm font-medium mb-1.5 block">{t('admin.invitations.travel.noTicketReason')}</label>
                     <textarea
                       value={groupTravelForm.noTicketReason}
                       onChange={(e) =>
@@ -171,7 +173,7 @@ export function GroupTravelDialog({
                           noTicketReason: e.target.value,
                         }))
                       }
-                      placeholder="e.g., Driving, Already have ticket, etc."
+                      placeholder={t('admin.invitations.travel.reasonPlaceholder')}
                       className="w-full px-3 py-2 border border-border rounded-lg resize-none"
                       rows={2}
                     />
@@ -183,7 +185,7 @@ export function GroupTravelDialog({
 
           <div className="flex gap-3 mt-6">
             <Button variant="outline" className="flex-1" onClick={onClose} disabled={isSubmitting}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               className="flex-1"
@@ -191,7 +193,7 @@ export function GroupTravelDialog({
               disabled={isSubmitDisabled}
             >
               <Check className="w-4 h-4 mr-2" />
-              {isSubmitting ? 'Applying...' : 'Apply to Group'}
+              {isSubmitting ? t('admin.invitations.travelDialog.applying') : t('admin.invitations.travelDialog.applyToGroup')}
             </Button>
           </div>
         </div>

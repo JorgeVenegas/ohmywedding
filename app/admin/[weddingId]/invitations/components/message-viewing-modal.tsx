@@ -3,6 +3,7 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
+import { useTranslation } from '@/components/contexts/i18n-context'
 import type { Guest } from "../types"
 
 interface GroupForMessage {
@@ -35,6 +36,7 @@ export function MessageViewingModal({
   group,
   onClose,
 }: MessageViewingModalProps) {
+  const { t } = useTranslation()
   if (!isOpen || !group) return null
 
   return (
@@ -43,11 +45,11 @@ export function MessageViewingModal({
         <div className="flex items-center justify-between p-6 pb-4 border-b">
           <div>
             <h2 className="text-xl font-semibold text-foreground">
-              Message from {group.name || '(Unnamed Group)'}
+              {t('admin.invitations.messageModal.title', { name: group.name || '(Unnamed Group)' })}
             </h2>
             {group.rsvp_submitted_at && (
               <p className="text-sm text-muted-foreground mt-1">
-                Submitted on {new Date(group.rsvp_submitted_at).toLocaleString()}
+                {t('admin.invitations.messageModal.submittedOn', { date: new Date(group.rsvp_submitted_at).toLocaleString() })}
               </p>
             )}
           </div>
@@ -63,19 +65,19 @@ export function MessageViewingModal({
         <div className="flex-1 overflow-y-auto p-6">
           <div className="bg-muted/30 rounded-lg p-4 border border-border">
             <p className="text-foreground whitespace-pre-wrap">
-              {group.message || 'No message provided'}
+              {group.message || t('admin.invitations.messageModal.noMessage')}
             </p>
           </div>
 
           {/* Guest List */}
           <div className="mt-6">
-            <h3 className="text-sm font-semibold text-foreground mb-3">Guests in this group:</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-3">{t('admin.invitations.messageModal.guestsInGroup')}</h3>
             <div className="space-y-2">
               {group.guests.map(guest => (
                 <div key={guest.id} className="flex items-center justify-between px-3 py-2 bg-muted/20 rounded-md">
                   <span className="text-sm text-foreground">{guest.name}</span>
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusBadgeClass(guest.confirmation_status)}`}>
-                    {guest.confirmation_status === 'confirmed' ? 'Attending' : guest.confirmation_status === 'declined' ? 'Not Attending' : 'Pending'}
+                    {guest.confirmation_status === 'confirmed' ? t('admin.invitations.messageModal.attending') : guest.confirmation_status === 'declined' ? t('admin.invitations.messageModal.notAttending') : t('common.pending')}
                   </span>
                 </div>
               ))}

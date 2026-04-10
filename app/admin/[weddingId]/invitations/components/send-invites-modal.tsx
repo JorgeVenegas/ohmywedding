@@ -3,6 +3,7 @@
 import { X, Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { useTranslation } from '@/components/contexts/i18n-context'
 import type { Guest } from "../types"
 
 export interface SendInvitesConfig {
@@ -28,6 +29,8 @@ export function SendInvitesModal({
   setConfig,
   onSend,
 }: SendInvitesModalProps) {
+  const { t } = useTranslation()
+
   if (!isOpen) return null
 
   const getFilteredCount = () => {
@@ -48,7 +51,7 @@ export function SendInvitesModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-foreground">Send Invitations</h2>
+          <h2 className="text-xl font-semibold text-foreground">{t('admin.invitations.sendModal.title')}</h2>
           <Button
             variant="ghost"
             size="sm"
@@ -60,7 +63,7 @@ export function SendInvitesModal({
 
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Configure which guests should receive invitations.
+            {t('admin.invitations.sendModal.description')}
           </p>
 
           <div className="space-y-3">
@@ -72,8 +75,8 @@ export function SendInvitesModal({
                 className="w-4 h-4 rounded border-border"
               />
               <div>
-                <span className="text-sm font-medium text-foreground">Skip already sent</span>
-                <p className="text-xs text-muted-foreground">Don&apos;t send to guests who already received an invite</p>
+                <span className="text-sm font-medium text-foreground">{t('admin.invitations.sendModal.skipAlreadySent')}</span>
+                <p className="text-xs text-muted-foreground">{t('admin.invitations.sendModal.skipAlreadySentHelp')}</p>
               </div>
             </label>
 
@@ -89,8 +92,8 @@ export function SendInvitesModal({
                 className="w-4 h-4 rounded border-border"
               />
               <div>
-                <span className="text-sm font-medium text-foreground">Only confirmed guests</span>
-                <p className="text-xs text-muted-foreground">Send only to guests who have confirmed attendance</p>
+                <span className="text-sm font-medium text-foreground">{t('admin.invitations.sendModal.onlyConfirmed')}</span>
+                <p className="text-xs text-muted-foreground">{t('admin.invitations.sendModal.onlyConfirmedHelp')}</p>
               </div>
             </label>
 
@@ -106,15 +109,15 @@ export function SendInvitesModal({
                 className="w-4 h-4 rounded border-border"
               />
               <div>
-                <span className="text-sm font-medium text-foreground">Only pending guests</span>
-                <p className="text-xs text-muted-foreground">Send only to guests who haven&apos;t responded yet</p>
+                <span className="text-sm font-medium text-foreground">{t('admin.invitations.sendModal.onlyPending')}</span>
+                <p className="text-xs text-muted-foreground">{t('admin.invitations.sendModal.onlyPendingHelp')}</p>
               </div>
             </label>
           </div>
 
           <div className="pt-4 border-t border-border">
             <div className="text-sm text-muted-foreground mb-4">
-              <strong className="text-foreground">{getFilteredCount()}</strong> guest(s) will receive invitations
+              <strong className="text-foreground">{getFilteredCount()}</strong> {t('admin.invitations.sendModal.guestsWillReceive')}
             </div>
           </div>
         </div>
@@ -125,14 +128,14 @@ export function SendInvitesModal({
             className="flex-1"
             onClick={onClose}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             className="flex-1"
             onClick={onSend}
           >
             <Send className="w-4 h-4 mr-2" />
-            Send Invites
+            {t('admin.invitations.sendModal.sendInvites')}
           </Button>
         </div>
       </Card>

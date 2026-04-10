@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import type { Guest, GuestGroup } from "../types"
+import { useTranslation } from '@/components/contexts/i18n-context'
 
 interface AssignGroupModalProps {
   isOpen: boolean
@@ -35,6 +36,8 @@ export function AssignGroupModal({
 }: AssignGroupModalProps) {
   if (!isOpen) return null
 
+  const { t } = useTranslation()
+
   const handleClose = () => {
     onClose()
     setNewGroupName('')
@@ -46,7 +49,7 @@ export function AssignGroupModal({
       <Card className="w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-foreground">
-            Assign {selectedGuestIds.size} Guest{selectedGuestIds.size !== 1 ? 's' : ''} to Group
+            {t('admin.invitations.assignModal.title', { count: selectedGuestIds.size })}
           </h2>
           <Button
             variant="ghost"
@@ -60,14 +63,14 @@ export function AssignGroupModal({
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Select Group
+              {t('admin.invitations.assignModal.selectGroup')}
             </label>
             <select
               value={assignToGroupId}
               onChange={(e) => setAssignToGroupId(e.target.value as string | 'new')}
               className="w-full h-9 rounded-lg border border-border bg-background px-3 py-1.5 text-sm"
             >
-              <option value="new">Create New Group</option>
+              <option value="new">{t('admin.invitations.assignModal.createNewGroup')}</option>
               {guestGroups.map((group) => (
                 <option key={group.id} value={group.id}>
                   {group.name} ({group.guests.length} guests)
@@ -79,18 +82,18 @@ export function AssignGroupModal({
           {assignToGroupId === 'new' && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                New Group Name *
+                {t('admin.invitations.assignModal.newGroupName')} *
               </label>
               <Input
                 value={newGroupName}
                 onChange={(e) => setNewGroupName(e.target.value)}
-                placeholder="e.g., The Smith Family"
+                placeholder={t('admin.invitations.assignModal.groupPlaceholder')}
               />
             </div>
           )}
 
           <div className="pt-2">
-            <p className="text-xs text-muted-foreground mb-2">Selected guests:</p>
+            <p className="text-xs text-muted-foreground mb-2">{t('admin.invitations.assignModal.selectedGuests')}</p>
             <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
               {Array.from(selectedGuestIds).map(id => {
                 const guest = allGuests.find(g => g.id === id)
@@ -110,7 +113,7 @@ export function AssignGroupModal({
               onClick={handleClose}
               disabled={isSubmitting}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               className="flex-1"
@@ -118,7 +121,7 @@ export function AssignGroupModal({
               disabled={(assignToGroupId === 'new' && !newGroupName.trim()) || isSubmitting}
             >
               <FolderPlus className="w-4 h-4 mr-2" />
-              {isSubmitting ? 'Assigning...' : 'Assign to Group'}
+              {isSubmitting ? t('admin.invitations.assignModal.assigning') : t('admin.invitations.assignModal.assignToGroup')}
             </Button>
           </div>
         </div>

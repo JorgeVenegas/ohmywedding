@@ -3,6 +3,7 @@ import { use, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { getCleanAdminUrl } from "@/lib/admin-url"
+import { useTranslation } from '@/components/contexts/i18n-context'
 
 interface GuestsPageProps {
   params: Promise<{ weddingId: string }>
@@ -11,6 +12,7 @@ interface GuestsPageProps {
 export default function GuestsPage({ params }: GuestsPageProps) {
   const { weddingId } = use(params)
   const router = useRouter()
+  const { t } = useTranslation()
 
   useEffect(() => {
     // Redirect to invitations page where guests are managed
@@ -22,11 +24,11 @@ export default function GuestsPage({ params }: GuestsPageProps) {
       <Header
         showBackButton
         backHref={getCleanAdminUrl(weddingId, 'dashboard')}
-        title="Guest List"
+        title={t('admin.guests.title')}
       />
       <div className="page-container">
         <div className="text-center">
-          <p className="text-muted-foreground">Redirecting to guest management...</p>
+          <p className="text-muted-foreground">{t('admin.guests.redirecting')}</p>
         </div>
       </div>
     </main>

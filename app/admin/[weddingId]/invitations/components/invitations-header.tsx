@@ -19,6 +19,7 @@ import {
   Send,
   Settings,
 } from "lucide-react"
+import { useTranslation } from "@/components/contexts/i18n-context"
 
 export interface InvitationsHeaderProps {
   // Stats
@@ -63,11 +64,12 @@ export function InvitationsHeaderContent({
   onOpenSendInvites,
   onCsvFileSelect,
 }: InvitationsHeaderProps) {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Invitations & Guests</h1>
-        <p className="text-sm text-muted-foreground">Manage your guest groups and track confirmations</p>
+        <h1 className="text-2xl font-bold text-foreground">{t('admin.invitations.title')}</h1>
+        <p className="text-sm text-muted-foreground">{t('admin.invitations.subtitle')}</p>
       </div>
       {/* Stats and Action Buttons */}
       <div className="flex items-center gap-4">
@@ -76,12 +78,12 @@ export function InvitationsHeaderContent({
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
             <Users className="w-3 h-3 text-muted-foreground" />
             <span className="text-muted-foreground">
-              {hasActiveFilters ? `${filteredGroupsCount}/` : ''}{guestGroupsCount} groups
+              {hasActiveFilters ? `${filteredGroupsCount}/` : ''}{guestGroupsCount} {t('admin.invitations.header.groups')}
             </span>
           </div>
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
             <span className="text-foreground font-semibold">{displayedGuestCount}</span>
-            <span className="text-muted-foreground">guests{hasActiveFilters && totalGuests !== displayedGuestCount ? ` of ${totalGuests}` : ''}</span>
+            <span className="text-muted-foreground">{t('admin.invitations.header.guests')}{hasActiveFilters && totalGuests !== displayedGuestCount ? ` ${t('admin.invitations.header.of')} ${totalGuests}` : ''}</span>
           </div>
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 text-xs font-medium">
             <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
@@ -103,18 +105,18 @@ export function InvitationsHeaderContent({
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-8">
                 <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Add
+                {t('admin.invitations.header.add')}
                 <ChevronDown className="w-3.5 h-3.5 ml-1.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onAddGuest}>
                 <UserPlus className="w-4 h-4 mr-2" />
-                Add Guest
+                {t('admin.invitations.header.addGuest')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onAddGroup}>
                 <FolderPlus className="w-4 h-4 mr-2" />
-                Add Group
+                {t('admin.invitations.header.addGroup')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -124,11 +126,11 @@ export function InvitationsHeaderContent({
                 }}
               >
                 <Upload className="w-4 h-4 mr-2" />
-                Import CSV
+                {t('admin.invitations.header.importCsv')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onExportCsv}>
                 <Download className="w-4 h-4 mr-2" />
-                Export CSV
+                {t('admin.invitations.header.exportCsv')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -147,7 +149,7 @@ export function InvitationsHeaderContent({
             onClick={onOpenInviteSettings}
           >
             <Settings className="w-3.5 h-3.5 mr-1.5" />
-            Invite Settings
+            {t('admin.invitations.header.inviteSettings')}
           </Button>
           <Button
             size="sm"
@@ -155,7 +157,7 @@ export function InvitationsHeaderContent({
             onClick={onOpenSendInvites}
           >
             <Send className="w-3.5 h-3.5 mr-1.5" />
-            Send Invites
+            {t('admin.invitations.header.sendInvites')}
           </Button>
         </div>
       </div>

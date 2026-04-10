@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch"
 import { X, Tag, Plus, FileText } from "lucide-react"
 import { GuestGroup, PREDEFINED_TAGS, TAG_COLORS } from "../types"
 import type { PartnerOption } from "../types"
+import { useTranslation } from '@/components/contexts/i18n-context'
 
 interface GuestForm {
   name: string
@@ -73,6 +74,7 @@ export function AddEditGuestModal({
   toggleGuestTag,
   isSubmitting = false,
 }: AddEditGuestModalProps) {
+  const { t } = useTranslation()
   const [customTagInput, setCustomTagInput] = useState('')
 
   if (!isOpen) return null
@@ -95,7 +97,7 @@ export function AddEditGuestModal({
       <Card className="w-full max-w-md max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-6 pb-4 border-b">
           <h2 className="text-xl font-semibold text-foreground">
-            {editingGuest ? "Edit Guest" : "Add Guest"}
+            {editingGuest ? t('admin.invitations.guestModal.editTitle') : t('admin.invitations.guestModal.addTitle')}
           </h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X className="w-4 h-4" />
@@ -105,30 +107,30 @@ export function AddEditGuestModal({
         <div className="flex-1 overflow-y-auto p-6 pt-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Guest Name *
+              {t('admin.invitations.guestModal.guestName')} *
             </label>
             <Input
               value={guestForm.name}
               onChange={(e) => setGuestForm({ ...guestForm, name: e.target.value })}
-              placeholder="Full name"
+              placeholder={t('admin.invitations.guestModal.fullNamePlaceholder')}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Phone Number
+              {t('admin.invitations.guestModal.phoneNumber')}
             </label>
             <Input
               type="tel"
               value={guestForm.phoneNumber}
               onChange={(e) => setGuestForm({ ...guestForm, phoneNumber: e.target.value })}
-              placeholder="+1 555 123 4567"
+              placeholder={t('admin.invitations.guestModal.phonePlaceholder')}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Group *
+              {t('admin.invitations.guestModal.group')} *
             </label>
             {!isCreatingNewGroup ? (
               <div className="space-y-2">
@@ -137,7 +139,7 @@ export function AddEditGuestModal({
                   onChange={(e) => setSelectedGroupId(e.target.value || null)}
                   className="w-full h-9 rounded-lg border border-border bg-background px-3 py-1.5 text-sm"
                 >
-                  <option value="">Select a group...</option>
+                  <option value="">{t('admin.invitations.guestModal.selectGroup')}</option>
                   {guestGroups.map((group) => (
                     <option key={group.id} value={group.id}>
                       {group.name}
@@ -153,7 +155,7 @@ export function AddEditGuestModal({
                   className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
                 >
                   <Plus className="w-3 h-3" />
-                  Create new group
+                  {t('admin.invitations.guestModal.createNewGroup')}
                 </button>
               </div>
             ) : (
@@ -161,7 +163,7 @@ export function AddEditGuestModal({
                 <Input
                   value={newGroupNameForGuest}
                   onChange={(e) => setNewGroupNameForGuest(e.target.value)}
-                  placeholder="Enter new group name"
+                  placeholder={t('admin.invitations.guestModal.newGroupPlaceholder')}
                   autoFocus
                 />
                 <button
@@ -173,18 +175,18 @@ export function AddEditGuestModal({
                   className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
                 >
                   <X className="w-3 h-3" />
-                  Select existing group instead
+                  {t('admin.invitations.guestModal.selectExisting')}
                 </button>
               </div>
             )}
             <p className="text-xs text-muted-foreground mt-2">
-              All guests must belong to a group. If no group is selected, one will be created automatically.
+              {t('admin.invitations.guestModal.groupHelpText')}
             </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Tags
+              {t('admin.invitations.guestModal.tags')}
             </label>
             <div className="flex flex-wrap gap-2">
               {displayTags.map((tag) => (
@@ -213,7 +215,7 @@ export function AddEditGuestModal({
                     handleAddCustomTag()
                   }
                 }}
-                placeholder="Add custom tag..."
+                placeholder={t('admin.invitations.guestModal.addCustomTag')}
                 className="h-8 text-xs"
               />
               <Button
@@ -231,7 +233,7 @@ export function AddEditGuestModal({
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Confirmation Status
+              {t('admin.invitations.guestModal.confirmationStatus')}
             </label>
             <select
               value={guestForm.confirmationStatus}
@@ -243,39 +245,39 @@ export function AddEditGuestModal({
               }
               className="w-full h-9 rounded-lg border border-border bg-background px-3 py-1.5 text-sm"
             >
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="declined">Declined</option>
+              <option value="pending">{t('common.pending')}</option>
+              <option value="confirmed">{t('common.confirmed')}</option>
+              <option value="declined">{t('common.declined')}</option>
             </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Dietary Restrictions
+              {t('admin.invitations.guestModal.dietaryRestrictions')}
             </label>
             <Input
               value={guestForm.dietaryRestrictions}
               onChange={(e) =>
                 setGuestForm({ ...guestForm, dietaryRestrictions: e.target.value })
               }
-              placeholder="e.g., Vegetarian, Gluten-free"
+              placeholder={t('admin.invitations.guestModal.dietaryPlaceholder')}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Notes
+              {t('admin.invitations.guestModal.notes')}
             </label>
             <Input
               value={guestForm.notes}
               onChange={(e) => setGuestForm({ ...guestForm, notes: e.target.value })}
-              placeholder="Optional notes..."
+              placeholder={t('admin.invitations.guestModal.notesPlaceholder')}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Invited By
+              {t('admin.invitations.guestModal.invitedBy')}
             </label>
             <div className="flex flex-wrap gap-2">
               {partnerOptions.map((partner) => (
@@ -304,7 +306,7 @@ export function AddEditGuestModal({
 
           {/* Travel Information Section - Always visible for admin to pre-configure */}
           <div className="border-t pt-4 space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">Travel Information</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t('admin.invitations.guestModal.travelInformation')}</h3>
 
             <div className="flex items-center gap-2">
               <Switch
@@ -314,7 +316,7 @@ export function AddEditGuestModal({
                 }
               />
               <label className="text-sm font-medium text-foreground">
-                Guest is traveling
+                {t('admin.invitations.guestModal.guestIsTraveling')}
               </label>
             </div>
 
@@ -322,20 +324,20 @@ export function AddEditGuestModal({
               <>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Traveling From
+                    {t('admin.invitations.travel.travelingFrom')}
                   </label>
                   <Input
                     value={guestForm.travelingFrom}
                     onChange={(e) =>
                       setGuestForm({ ...guestForm, travelingFrom: e.target.value })
                     }
-                    placeholder="City or location"
+                    placeholder={t('admin.invitations.travel.cityOrLocation')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Travel Arrangement
+                    {t('admin.invitations.travel.travelArrangement')}
                   </label>
                   <div className="space-y-2">
                     <button
@@ -349,7 +351,7 @@ export function AddEditGuestModal({
                           : 'border-border bg-background text-foreground hover:border-primary/50'
                       }`}
                     >
-                      Will purchase ticket (requires verification)
+                      {t('admin.invitations.travel.willPurchaseTicket')} ({t('admin.invitations.travel.purchaseDescription')})
                     </button>
                     <button
                       type="button"
@@ -362,7 +364,7 @@ export function AddEditGuestModal({
                           : 'border-border bg-background text-foreground hover:border-primary/50'
                       }`}
                     >
-                      Does not need ticket (requires reason)
+                      {t('admin.invitations.travel.noTicketNeeded')} ({t('admin.invitations.travel.noTicketDescription')})
                     </button>
                   </div>
                 </div>
@@ -370,14 +372,14 @@ export function AddEditGuestModal({
                 {guestForm.travelArrangement === 'no_ticket_needed' && (
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
-                      Reason for No Ticket
+                      {t('admin.invitations.travel.noTicketReason')}
                     </label>
                     <Input
                       value={guestForm.noTicketReason}
                       onChange={(e) =>
                         setGuestForm({ ...guestForm, noTicketReason: e.target.value })
                       }
-                      placeholder="e.g., Lives at destination, traveling by car, etc."
+                      placeholder={t('admin.invitations.travel.reasonPlaceholder')}
                     />
                   </div>
                 )}
@@ -387,7 +389,7 @@ export function AddEditGuestModal({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <FileText className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm text-foreground">Ticket uploaded</span>
+                        <span className="text-sm text-foreground">{t('admin.invitations.travel.ticketUploaded')}</span>
                       </div>
                       <Button
                         variant="ghost"
@@ -395,7 +397,7 @@ export function AddEditGuestModal({
                         className="h-6 px-2 text-[10px]"
                         onClick={() => window.open(guestForm.ticketAttachmentUrl!, '_blank')}
                       >
-                        View
+                        {t('common.view')}
                       </Button>
                     </div>
                   </div>
@@ -407,7 +409,7 @@ export function AddEditGuestModal({
 
         <div className="flex gap-2 p-6 pt-4 border-t">
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           {!editingGuest && onSaveAndAddAnother && (
             <Button
@@ -416,7 +418,7 @@ export function AddEditGuestModal({
               onClick={onSaveAndAddAnother}
               disabled={!guestForm.name || isSubmitting}
             >
-              {isSubmitting ? 'Saving...' : 'Save & Add Another'}
+              {isSubmitting ? t('common.saving') : t('admin.invitations.guestModal.saveAndAddAnother')}
             </Button>
           )}
           <Button
@@ -424,7 +426,7 @@ export function AddEditGuestModal({
             onClick={onSubmit}
             disabled={!guestForm.name || isSubmitting}
           >
-            {isSubmitting ? 'Saving...' : `${editingGuest ? "Update" : "Add"} Guest`}
+            {isSubmitting ? t('common.saving') : (editingGuest ? t('admin.invitations.guestModal.updateGuest') : t('admin.invitations.guestModal.addGuest'))}
           </Button>
         </div>
       </Card>

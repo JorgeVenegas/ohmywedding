@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { X, Plus, Check, Mail, Lock } from "lucide-react"
+import { useTranslation } from '@/components/contexts/i18n-context'
 import { getWeddingUrl, type WeddingPlan } from "@/lib/wedding-url"
 
 // Types
@@ -120,6 +121,7 @@ export function InvitationTemplateModal({
   const [dynamicContentSearch, setDynamicContentSearch] = useState('')
   const [showReplaceMenu, setShowReplaceMenu] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const { t } = useTranslation()
 
   const editorRef = useRef<HTMLDivElement>(null)
   const isUpdatingRef = useRef(false)
@@ -471,9 +473,9 @@ export function InvitationTemplateModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 pb-4 border-b">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Invitation Message Settings</h2>
+            <h2 className="text-xl font-semibold text-foreground">{t('admin.invitations.templateModal.title')}</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Configure the message template for sending invitations to guests
+              {t('admin.invitations.templateModal.subtitle')}
             </p>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -490,7 +492,7 @@ export function InvitationTemplateModal({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium text-foreground">
-                    Message Template
+                    {t('admin.invitations.templateModal.messageTemplate')}
                   </label>
                   <div className="flex items-center gap-2">
                     {/* Add Dynamic Content Dropdown */}
@@ -498,23 +500,23 @@ export function InvitationTemplateModal({
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="sm" className="h-8 text-xs">
                           <Plus className="w-3 h-3 mr-1" />
-                          Add Dynamic Content
+                          {t('admin.invitations.templateModal.addDynamicContent')}
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-96 max-h-96 overflow-y-auto">
-                        <div className="px-2 py-1.5 text-xs font-semibold">Dynamic Content</div>
+                        <div className="px-2 py-1.5 text-xs font-semibold">{t('admin.invitations.templateModal.dynamicContent')}</div>
                         <div className="px-2 pb-2">
                           <Input
                             value={dynamicContentSearch}
                             onChange={(e) => setDynamicContentSearch(e.target.value)}
-                            placeholder="Search variables..."
+                            placeholder={t('admin.invitations.templateModal.searchVariables')}
                             className="h-8 text-xs"
                           />
                         </div>
                         <DropdownMenuSeparator />
 
                         {/* Guest Information */}
-                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Guest Information</div>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">{t('admin.invitations.templateModal.guestInformation')}</div>
                         {filterVariables(GUEST_VARIABLES).map((item) => (
                           <DropdownMenuItem
                             key={item.var}
@@ -529,7 +531,7 @@ export function InvitationTemplateModal({
                         <DropdownMenuSeparator />
 
                         {/* Wedding Details */}
-                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Wedding Details</div>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">{t('admin.invitations.templateModal.weddingDetails')}</div>
                         {WEDDING_VARIABLES.filter(item =>
                           !dynamicContentSearch ||
                           item.label.toLowerCase().includes(dynamicContentSearch.toLowerCase()) ||
@@ -549,7 +551,7 @@ export function InvitationTemplateModal({
                         <DropdownMenuSeparator />
 
                         {/* Venue Information */}
-                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Venue Information</div>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">{t('admin.invitations.templateModal.venueInformation')}</div>
                         {VENUE_VARIABLES.filter(item =>
                           !dynamicContentSearch ||
                           item.label.toLowerCase().includes(dynamicContentSearch.toLowerCase()) ||
@@ -574,11 +576,11 @@ export function InvitationTemplateModal({
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm" className="h-8 text-xs">
-                          Examples
+                          {t('admin.invitations.templateModal.examples')}
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-80">
-                        <div className="px-2 py-1.5 text-xs font-semibold">Template Examples</div>
+                        <div className="px-2 py-1.5 text-xs font-semibold">{t('admin.invitations.templateModal.templateExamples')}</div>
                         <DropdownMenuSeparator />
                         {TEMPLATE_EXAMPLES.map((example) => (
                           <DropdownMenuItem
@@ -587,8 +589,8 @@ export function InvitationTemplateModal({
                             onClick={() => setInviteTemplate(example.template)}
                           >
                             <div className="flex flex-col gap-1">
-                              <span className="font-medium">{example.label}</span>
-                              <span className="text-muted-foreground">{example.description}</span>
+                              <span className="font-medium">{t(`admin.invitations.templateExamples.${example.id}Title` as never)}</span>
+                              <span className="text-muted-foreground">{t(`admin.invitations.templateExamples.${example.id}Description` as never)}</span>
                             </div>
                           </DropdownMenuItem>
                         ))}
@@ -605,23 +607,23 @@ export function InvitationTemplateModal({
                   onPaste={handlePaste}
                   className="w-full min-h-[300px] max-h-[400px] px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm overflow-y-auto whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
                   style={{ lineHeight: '1.5' }}
-                  data-placeholder="Type your message here..."
+                  data-placeholder={t('admin.invitations.templateModal.typePlaceholder')}
                   suppressContentEditableWarning
                 />
                 <p className="text-xs text-muted-foreground">
-                  Variables appear as badges with example values. Hover to edit or delete.
+                  {t('admin.invitations.templateModal.variablesHelp')}
                 </p>
               </div>
 
               {/* Right: Preview */}
               <div className="space-y-3">
                 <label className="text-sm font-medium text-foreground block">
-                  Preview
+                  {t('admin.invitations.templateModal.preview')}
                 </label>
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg p-4 border border-blue-200 dark:border-blue-900 min-h-[300px] max-h-[400px] overflow-y-auto">
                   <div className="flex items-center gap-2 mb-3 pb-3 border-b border-blue-200 dark:border-blue-800">
                     <Mail className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    <span className="text-xs font-semibold text-blue-900 dark:text-blue-100">Message Preview</span>
+                    <span className="text-xs font-semibold text-blue-900 dark:text-blue-100">{t('admin.invitations.templateModal.messagePreview')}</span>
                   </div>
                   <div className="text-sm text-blue-800 dark:text-blue-200 whitespace-pre-wrap">
                     {replaceTemplateVariables(
@@ -649,7 +651,7 @@ export function InvitationTemplateModal({
                 }}
               >
                 <div className="px-2 py-1.5 text-xs font-semibold border-b mb-2">
-                  Replace with:
+                  {t('admin.invitations.templateModal.replaceWith')}
                 </div>
                 <div className="max-h-64 overflow-y-auto space-y-1">
                   {ALL_VARIABLES.filter(v => v.var !== showReplaceMenu).map((variable) => (
@@ -672,7 +674,7 @@ export function InvitationTemplateModal({
                     onClick={() => setShowReplaceMenu(null)}
                     className="w-full text-center px-3 py-1.5 rounded-md hover:bg-accent text-xs text-muted-foreground transition-colors"
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                 </div>
               </div>
@@ -683,7 +685,7 @@ export function InvitationTemplateModal({
         {/* Footer with action buttons */}
         <div className="flex gap-3 p-6 border-t">
           <Button variant="outline" className="flex-1" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button className="flex-1" onClick={handleSave} disabled={saving}>
             {weddingPlan === 'free' ? (
@@ -691,7 +693,7 @@ export function InvitationTemplateModal({
             ) : (
               <Check className="w-4 h-4 mr-2" />
             )}
-            {saving ? 'Saving...' : weddingPlan === 'free' ? 'Upgrade to Save' : 'Save Template'}
+            {saving ? t('common.saving') : weddingPlan === 'free' ? t('admin.invitations.templateModal.upgradeToSave') : t('admin.invitations.templateModal.saveTemplate')}
           </Button>
         </div>
       </Card>

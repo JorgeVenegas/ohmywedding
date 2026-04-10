@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import type { Guest } from "../types"
 import type { PartnerOption } from "../types"
+import { useTranslation } from '@/components/contexts/i18n-context'
 
 interface BulkInvitedByModalProps {
   isOpen: boolean
@@ -31,6 +32,8 @@ export function BulkInvitedByModal({
 }: BulkInvitedByModalProps) {
   if (!isOpen) return null
 
+  const { t } = useTranslation()
+
   const handleClose = () => {
     onClose()
     setBulkInvitedBy([])
@@ -41,7 +44,7 @@ export function BulkInvitedByModal({
       <Card className="w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-foreground">
-            Update Invited By
+            {t('admin.invitations.bulkInvitedByModal.title')}
           </h2>
           <Button
             variant="ghost"
@@ -54,12 +57,12 @@ export function BulkInvitedByModal({
 
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Set who invited the selected {selectedGuestIds.size} guest{selectedGuestIds.size !== 1 ? 's' : ''}.
+            {t('admin.invitations.bulkInvitedByModal.description', { count: selectedGuestIds.size })}
           </p>
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Invited By
+              {t('admin.invitations.bulkInvitedByModal.invitedBy')}
             </label>
             <div className="flex flex-wrap gap-2">
               {partnerOptions.map((partner) => (
@@ -81,12 +84,12 @@ export function BulkInvitedByModal({
               ))}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Select one or both partners, or leave empty to clear.
+              {t('admin.invitations.bulkInvitedByModal.helpText')}
             </p>
           </div>
 
           <div className="pt-2">
-            <p className="text-xs text-muted-foreground mb-2">Selected guests:</p>
+            <p className="text-xs text-muted-foreground mb-2">{t('admin.invitations.bulkInvitedByModal.selectedGuests')}</p>
             <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
               {Array.from(selectedGuestIds).map(id => {
                 const guest = allGuests.find(g => g.id === id)
@@ -106,7 +109,7 @@ export function BulkInvitedByModal({
               onClick={handleClose}
               disabled={isSubmitting}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               className="flex-1"
@@ -114,7 +117,7 @@ export function BulkInvitedByModal({
               disabled={isSubmitting}
             >
               <UserCheck className="w-4 h-4 mr-2" />
-              {isSubmitting ? 'Updating...' : 'Update Invited By'}
+              {isSubmitting ? t('admin.invitations.bulkInvitedByModal.updating') : t('admin.invitations.bulkInvitedByModal.update')}
             </Button>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { X, Tag, Plus, Users } from "lucide-react"
 import { Guest, PREDEFINED_TAGS, TAG_COLORS } from "../types"
+import { useTranslation } from '@/components/contexts/i18n-context'
 
 interface TempGuestForm {
   name: string
@@ -77,6 +78,7 @@ export function AddEditGroupModal({
   isSubmitting = false,
   isAddingGuest = false,
 }: AddEditGroupModalProps) {
+  const { t } = useTranslation()
   if (!isOpen) return null
 
   return (
@@ -84,7 +86,7 @@ export function AddEditGroupModal({
       <Card className="w-full max-w-md max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-6 pb-4 border-b">
           <h2 className="text-xl font-semibold text-foreground">
-            {editingGroup ? "Edit Group" : "Add Guest Group"}
+            {editingGroup ? t('admin.invitations.groupModal.editTitle') : t('admin.invitations.groupModal.addTitle')}
           </h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X className="w-4 h-4" />
@@ -94,23 +96,23 @@ export function AddEditGroupModal({
         <div className="flex-1 overflow-y-auto p-6 pt-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Group Name *
+              {t('admin.invitations.groupModal.groupName')} *
             </label>
             <Input
               value={groupForm.name}
               onChange={(e) => setGroupForm({ ...groupForm, name: e.target.value })}
-              placeholder="e.g., The Smith Family"
+              placeholder={t('admin.invitations.groupModal.groupNamePlaceholder')}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Notes
+              {t('admin.invitations.groupModal.notes')}
             </label>
             <Input
               value={groupForm.notes}
               onChange={(e) => setGroupForm({ ...groupForm, notes: e.target.value })}
-              placeholder="Optional notes..."
+              placeholder={t('admin.invitations.groupModal.notesPlaceholder')}
             />
           </div>
 
@@ -118,7 +120,7 @@ export function AddEditGroupModal({
             <label className="block text-sm font-medium text-foreground mb-2">
               <span className="flex items-center gap-1.5">
                 <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                Extra Passes
+                {t('admin.invitations.groupModal.extraPasses')}
               </span>
             </label>
             <Input
@@ -129,7 +131,7 @@ export function AddEditGroupModal({
               placeholder="0"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Additional unnamed guest slots (e.g. plus-ones without specific names)
+              {t('admin.invitations.groupModal.extraPassesDescription')}
             </p>
           </div>
 
@@ -138,7 +140,7 @@ export function AddEditGroupModal({
             <div className="border-t pt-4 space-y-3">
               <div className="flex items-center justify-between">
                 <label className="block text-sm font-medium text-foreground">
-                  Guests ({guestsInGroupModal.length})
+                  {t('admin.invitations.groupModal.guests')} ({guestsInGroupModal.length})
                 </label>
                 {!isAddingGuestInModal && (
                   <Button
@@ -148,7 +150,7 @@ export function AddEditGroupModal({
                     onClick={() => setIsAddingGuestInModal(true)}
                   >
                     <Plus className="w-3 h-3 mr-1" />
-                    Add Guest
+                    {t('admin.invitations.groupModal.addGuest')}
                   </Button>
                 )}
               </div>
@@ -206,7 +208,7 @@ export function AddEditGroupModal({
                       onChange={(e) =>
                         setTempGuestForm({ ...tempGuestForm, name: e.target.value })
                       }
-                      placeholder="Guest name *"
+                      placeholder={`${t('admin.invitations.groupModal.guestNamePlaceholder')} *`}
                       autoFocus
                     />
                   </div>
@@ -217,12 +219,12 @@ export function AddEditGroupModal({
                       onChange={(e) =>
                         setTempGuestForm({ ...tempGuestForm, phoneNumber: e.target.value })
                       }
-                      placeholder="Phone number (optional)"
+                      placeholder={t('admin.invitations.groupModal.phonePlaceholder')}
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Tags</label>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('admin.invitations.groupModal.tags')}</label>
                     <div className="flex flex-wrap gap-1">
                       {PREDEFINED_TAGS.map((tag) => (
                         <button
@@ -252,9 +254,9 @@ export function AddEditGroupModal({
                       }
                       className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs"
                     >
-                      <option value="pending">Pending</option>
-                      <option value="confirmed">Confirmed</option>
-                      <option value="declined">Declined</option>
+                      <option value="pending">{t('common.pending')}</option>
+                      <option value="confirmed">{t('common.confirmed')}</option>
+                      <option value="declined">{t('common.declined')}</option>
                     </select>
                   </div>
 
@@ -267,7 +269,7 @@ export function AddEditGroupModal({
                           dietaryRestrictions: e.target.value,
                         })
                       }
-                      placeholder="Dietary restrictions (optional)"
+                      placeholder={t('admin.invitations.groupModal.dietaryPlaceholder')}
                       className="text-xs"
                     />
                   </div>
@@ -290,7 +292,7 @@ export function AddEditGroupModal({
                         })
                       }}
                     >
-                      Cancel
+                      {t('common.cancel')}
                     </Button>
                     <Button
                       type="button"
@@ -299,7 +301,7 @@ export function AddEditGroupModal({
                       onClick={addGuestToGroupModal}
                       disabled={!tempGuestForm.name.trim() || isAddingGuest}
                     >
-                      {isAddingGuest ? 'Adding...' : 'Add'}
+                      {isAddingGuest ? t('admin.invitations.groupModal.addGuest') : t('admin.invitations.groupModal.addGuest')}
                     </Button>
                   </div>
                 </div>
@@ -310,14 +312,14 @@ export function AddEditGroupModal({
 
         <div className="flex gap-2 p-6 pt-4 border-t">
           <Button variant="outline" className="flex-1" onClick={onClose} disabled={isSubmitting}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             className="flex-1"
             onClick={onSubmit}
             disabled={!groupForm.name || isSubmitting}
           >
-            {isSubmitting ? 'Saving...' : (editingGroup ? "Update" : "Add")} {isSubmitting ? '' : 'Group'}
+            {isSubmitting ? t('common.saving') : (editingGroup ? t('admin.invitations.groupModal.updateGroup') : t('admin.invitations.groupModal.addGroup'))}
           </Button>
         </div>
       </Card>
