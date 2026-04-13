@@ -416,27 +416,27 @@ export function RSVPHaciendaVariant({
               {/* Extra Passes */}
               {(groupData?.extra_passes || 0) > 0 && (
                 <div className="pt-3">
-                  <div className="p-4 rounded-xl border" style={{ borderColor: `${accent}25`, backgroundColor: `${accent}08` }}>
-                    <label className="block text-xs font-light tracking-wide uppercase mb-3"
-                      style={{ color: renderTextColor, opacity: 0.7, letterSpacing: '0.15em' }}>
+                  <div className="p-4 rounded-xl border backdrop-blur-sm" style={{ borderColor: `${accent}30`, backgroundColor: `${renderTextColor}08`, boxShadow: `0 1px 4px ${renderTextColor}06` }}>
+                    <label className="block text-xs font-light tracking-wide uppercase mb-3 text-center"
+                      style={{ color: renderTextColor, opacity: 0.8, letterSpacing: '0.15em' }}>
                       {t('rsvp.additionalGuests')}
                     </label>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center gap-3">
                       <button type="button"
                         onClick={() => setExtraPassesAttending(prev => Math.max(0, prev - 1))}
-                        className="w-9 h-9 rounded-full border flex items-center justify-center text-lg transition-all hover:scale-105"
-                        style={{ borderColor: `${accent}40`, color: renderTitleColor }}
+                        className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-lg transition-all hover:scale-105 disabled:opacity-40"
+                        style={{ borderColor: `${accent}50`, color: renderTitleColor, backgroundColor: `${accent}10` }}
                         disabled={extraPassesAttending <= 0}>-</button>
                       <span className="text-xl font-serif min-w-[3ch] text-center" style={{ color: renderTitleColor }}>
                         {extraPassesAttending}
                       </span>
                       <button type="button"
                         onClick={() => setExtraPassesAttending(prev => Math.min(groupData?.extra_passes || 0, prev + 1))}
-                        className="w-9 h-9 rounded-full border flex items-center justify-center text-lg transition-all hover:scale-105"
-                        style={{ borderColor: `${accent}40`, color: renderTitleColor }}
+                        className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-lg transition-all hover:scale-105 disabled:opacity-40"
+                        style={{ borderColor: `${accent}50`, color: renderTitleColor, backgroundColor: `${accent}10` }}
                         disabled={extraPassesAttending >= (groupData?.extra_passes || 0)}>+</button>
                     </div>
-                    <p className="text-[10px] mt-2 opacity-50" style={{ color: renderTextColor }}>
+                    <p className="text-[10px] mt-2 opacity-60 text-center" style={{ color: renderTextColor }}>
                       {t('rsvp.extraPassesMax', { max: String(groupData?.extra_passes || 0) })}
                     </p>
                   </div>

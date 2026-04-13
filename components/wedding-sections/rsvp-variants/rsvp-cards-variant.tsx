@@ -558,10 +558,11 @@ export function RSVPCardsVariant({
             {/* Extra Passes */}
             {(groupData?.extra_passes || 0) > 0 && (
               <div 
-                className="p-6 rounded-2xl border-2 shadow-md mb-6 transition-all"
+                className="p-6 rounded-2xl border-2 shadow-md mb-6 transition-all backdrop-blur-sm"
                 style={{
-                  backgroundColor: cardBg,
-                  borderColor: `${theme?.colors?.accent || titleColor}25`,
+                  backgroundColor: `${textColor}08`,
+                  borderColor: `${theme?.colors?.accent || titleColor}35`,
+                  boxShadow: `0 1px 4px ${textColor}06`
                 }}
               >
                 <label className="block text-sm font-medium mb-3 text-center" style={{ color: titleColor }}>
@@ -571,8 +572,8 @@ export function RSVPCardsVariant({
                   <button
                     type="button"
                     onClick={() => setExtraPassesAttending(prev => Math.max(0, prev - 1))}
-                    className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-lg transition-all hover:scale-105"
-                    style={{ borderColor: `${titleColor}30`, color: titleColor }}
+                    className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-lg transition-all hover:scale-105 disabled:opacity-40"
+                    style={{ borderColor: `${titleColor}50`, color: titleColor, backgroundColor: `${titleColor}10` }}
                     disabled={extraPassesAttending <= 0}
                   >
                     -
@@ -583,8 +584,8 @@ export function RSVPCardsVariant({
                   <button
                     type="button"
                     onClick={() => setExtraPassesAttending(prev => Math.min(groupData?.extra_passes || 0, prev + 1))}
-                    className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-lg transition-all hover:scale-105"
-                    style={{ borderColor: `${titleColor}30`, color: titleColor }}
+                    className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-lg transition-all hover:scale-105 disabled:opacity-40"
+                    style={{ borderColor: `${titleColor}50`, color: titleColor, backgroundColor: `${titleColor}10` }}
                     disabled={extraPassesAttending >= (groupData?.extra_passes || 0)}
                   >
                     +
