@@ -45,6 +45,8 @@ interface InvitationTemplateModalProps {
   weddingNameId?: string
   weddingPlan?: WeddingPlan
   weddingLocale?: Locale
+  sampleGroupName?: string
+  sampleGuestName?: string
 }
 
 // Template examples by locale
@@ -132,6 +134,8 @@ export function InvitationTemplateModal({
   weddingNameId,
   weddingPlan = 'free',
   weddingLocale = 'en',
+  sampleGroupName,
+  sampleGuestName,
 }: InvitationTemplateModalProps) {
   const [inviteTemplate, setInviteTemplate] = useState(initialTemplate)
   const [dynamicContentSearch, setDynamicContentSearch] = useState('')
@@ -152,9 +156,11 @@ export function InvitationTemplateModal({
 
   // Get friendly display name for variables
   const getVariableDisplayName = useCallback((variable: string): string => {
+    const defaultGroupName = sampleGroupName || (locale === 'es' ? 'Familia Lopez' : 'The Smith Family')
+    const defaultGuestName = sampleGuestName || (locale === 'es' ? 'Maria Lopez' : 'John Smith')
     const variableMap: Record<string, string> = {
-      '{{groupname}}': 'The Smith Family',
-      '{{guestname}}': 'John Smith',
+      '{{groupname}}': defaultGroupName,
+      '{{guestname}}': defaultGuestName,
       '{{groupinvitationurl}}': 'https://yourwedding.com/invite/abc123',
       '{{partner1}}': weddingDetails?.partner1_first_name || 'Alex',
       '{{partner2}}': weddingDetails?.partner2_first_name || 'Jordan',
@@ -167,7 +173,7 @@ export function InvitationTemplateModal({
       '{{receptionaddress}}': weddingDetails?.reception_venue_address || '456 Park Ave, City'
     }
     return variableMap[variable] || variable
-  }, [weddingDetails])
+  }, [weddingDetails, locale, sampleGroupName, sampleGuestName])
 
   // Replace template variables with actual values for preview
   const replaceTemplateVariables = useCallback((
@@ -638,8 +644,8 @@ export function InvitationTemplateModal({
                     {replaceTemplateVariables(
                       inviteTemplate,
                       {
-                        groupName: 'The Smith Family',
-                        guestName: 'John Smith',
+                        groupName: sampleGroupName || (locale === 'es' ? 'Familia Lopez' : 'The Smith Family'),
+                        guestName: sampleGuestName || (locale === 'es' ? 'Maria Lopez' : 'John Smith'),
                         groupId: 'abc123'
                       }
                     )}

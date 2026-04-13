@@ -3134,6 +3134,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         weddingNameId={weddingNameId}
         weddingPlan={weddingPlan}
         weddingLocale={weddingDetails?.page_config?.siteSettings?.locale || 'en'}
+        sampleGroupName={guestGroups[0]?.name || undefined}
+        sampleGuestName={guestGroups[0]?.guests?.[0]?.name || undefined}
       />
 
       {/* Message Viewing Modal */}
