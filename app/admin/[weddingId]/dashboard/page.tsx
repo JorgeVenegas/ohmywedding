@@ -30,6 +30,7 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
   const [isLegacy, setIsLegacy] = useState(false)
   const [coupleNames, setCoupleNames] = useState<string | null>(null)
   const [dashboardSections, setDashboardSections] = useState<Record<string, boolean>>({})
+  const [sectionsLoaded, setSectionsLoaded] = useState(false)
 
   // Check if tutorial should be shown (per-user, via needs_onboarding table)
   useEffect(() => {
@@ -56,7 +57,9 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
             setDashboardSections(data.settings.dashboard_sections)
           }
         }
-      } catch {}
+      } catch {} finally {
+        setSectionsLoaded(true)
+      }
     }
     fetchDashboardSections()
   }, [weddingId])
@@ -211,7 +214,19 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
         <div>
           <h2 className="text-2xl font-bold text-foreground mb-6">{t('admin.dashboard.management')}</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sections.map((section, index) => {
+            {!sectionsLoaded ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <Card key={i} className="p-6 border border-muted/20">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-3 rounded-lg bg-muted/10">
+                      <div className="w-6 h-6 bg-muted animate-pulse rounded" />
+                    </div>
+                  </div>
+                  <div className="h-5 w-36 bg-muted animate-pulse rounded mb-2" />
+                  <div className="h-4 w-full bg-muted/60 animate-pulse rounded" />
+                </Card>
+              ))
+            ) : sections.map((section, index) => {
               const Icon = section.icon
               const badge = 'badge' in section ? section.badge : undefined
               const isWebsiteCard = index === 0
