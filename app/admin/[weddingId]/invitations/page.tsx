@@ -10,6 +10,7 @@ import { UpgradeModal, type UpgradeReason } from "@/components/ui/upgrade-modal"
 import { useSubscriptionContext } from "@/components/contexts/subscription-context"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { getWeddingUrl, type WeddingPlan } from "@/lib/wedding-url"
+import { formatWeddingDate } from "@/lib/wedding-utils-client"
 import { useTranslation } from '@/components/contexts/i18n-context'
 import {
   InvitationsHeaderToolbar,
@@ -1677,17 +1678,11 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     const partner1 = partnerNames.partner1 || 'Partner 1'
     const partner2 = partnerNames.partner2 || 'Partner 2'
 
-    // Format wedding date if available
-    let formattedDate = 'TBD'
-    if (weddingData?.wedding_date) {
-      const date = new Date(weddingData.wedding_date)
-      formattedDate = date.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
-    }
+    // Format wedding date using locale-aware utility (avoids UTC timezone offset bug)
+    const weddingLocale = weddingDetails?.page_config?.siteSettings?.locale || 'en'
+    const formattedDate = weddingData?.wedding_date
+      ? formatWeddingDate(weddingData.wedding_date, weddingLocale)
+      : 'TBD'
 
     return template
       .replace(/\{\{groupname\}\}/gi, data.groupName || '')
@@ -3133,6 +3128,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         weddingId={weddingId}
         weddingNameId={weddingNameId}
         weddingPlan={weddingPlan}
+        weddingLocale={weddingDetails?.page_config?.siteSettings?.locale || 'en'}
       />
 
       {/* Message Viewing Modal */}

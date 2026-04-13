@@ -14,6 +14,8 @@ import {
 import { X, Plus, Check, Mail, Lock } from "lucide-react"
 import { useTranslation } from '@/components/contexts/i18n-context'
 import { getWeddingUrl, type WeddingPlan } from "@/lib/wedding-url"
+import { formatWeddingDate } from "@/lib/wedding-utils-client"
+import type { Locale } from "@/lib/i18n"
 
 // Types
 interface WeddingDetails {
@@ -42,35 +44,48 @@ interface InvitationTemplateModalProps {
   weddingId: string
   weddingNameId?: string
   weddingPlan?: WeddingPlan
+  weddingLocale?: Locale
 }
 
-// Template examples
-const TEMPLATE_EXAMPLES = [
-  {
-    id: 'formal',
-    label: 'Formal Invitation',
-    description: 'Classic wedding invitation template',
-    template: "Dear {{groupname}},\n\nWe are delighted to invite you to celebrate our wedding on {{weddingdate}}!\n\nView your personalized invitation here: {{groupinvitationurl}}\n\nWith love,\n{{partner1}} & {{partner2}}"
-  },
-  {
-    id: 'casual',
-    label: 'Casual & Fun',
-    description: 'Friendly and relaxed invitation',
-    template: "Hey {{groupname}}! 👋\n\n{{partner1}} and {{partner2}} are getting married on {{weddingdate}}! 🎉\n\nCheck out your invite: {{groupinvitationurl}}\n\nCan't wait to celebrate with you!"
-  },
-  {
-    id: 'detailed',
-    label: 'Detailed Info',
-    description: 'Includes venue details',
-    template: "Hello {{guestname}},\n\nYou're invited to our wedding at {{ceremonyplace}} on {{weddingdate}}.\n\nCeremony: {{ceremonyplace}}\nReception: {{receptionplace}}\n\nRSVP here: {{groupinvitationurl}}"
-  },
-  {
-    id: 'short',
-    label: 'Short & Simple',
-    description: 'Quick message with link',
-    template: "Hi {{groupname}}! Your invitation is ready: {{groupinvitationurl}}"
-  }
-]
+// Template examples by locale
+const TEMPLATE_EXAMPLES: Record<Locale, Array<{ id: string; template: string }>> = {
+  en: [
+    {
+      id: 'formal',
+      template: "Dear {{groupname}},\n\nWe are delighted to invite you to celebrate our wedding on {{weddingdate}}!\n\nView your personalized invitation here: {{groupinvitationurl}}\n\nWith love,\n{{partner1}} & {{partner2}}"
+    },
+    {
+      id: 'casual',
+      template: "Hey {{groupname}}!\n\n{{partner1}} and {{partner2}} are getting married on {{weddingdate}}!\n\nCheck out your invite: {{groupinvitationurl}}\n\nCan't wait to celebrate with you!"
+    },
+    {
+      id: 'detailed',
+      template: "Hello {{guestname}},\n\nYou're invited to our wedding at {{ceremonyplace}} on {{weddingdate}}.\n\nCeremony: {{ceremonyplace}}\nReception: {{receptionplace}}\n\nRSVP here: {{groupinvitationurl}}"
+    },
+    {
+      id: 'short',
+      template: "Hi {{groupname}}! Your invitation is ready: {{groupinvitationurl}}"
+    }
+  ],
+  es: [
+    {
+      id: 'formal',
+      template: "Querido {{groupname}},\n\nTenemos el placer de invitarles a celebrar nuestra boda el {{weddingdate}}.\n\nVean su invitacion personalizada aqui: {{groupinvitationurl}}\n\nCon amor,\n{{partner1}} & {{partner2}}"
+    },
+    {
+      id: 'casual',
+      template: "Hola {{groupname}}!\n\n{{partner1}} y {{partner2}} se casan el {{weddingdate}}!\n\nMira tu invitacion: {{groupinvitationurl}}\n\nNo podemos esperar para celebrar contigo!"
+    },
+    {
+      id: 'detailed',
+      template: "Hola {{guestname}},\n\nEstas invitado a nuestra boda en {{ceremonyplace}} el {{weddingdate}}.\n\nCeremonia: {{ceremonyplace}}\nRecepcion: {{receptionplace}}\n\nConfirma aqui: {{groupinvitationurl}}"
+    },
+    {
+      id: 'short',
+      template: "Hola {{groupname}}! Tu invitacion esta lista: {{groupinvitationurl}}"
+    }
+  ]
+}
 
 // Variable definitions
 const GUEST_VARIABLES = [
@@ -116,6 +131,7 @@ export function InvitationTemplateModal({
   weddingId,
   weddingNameId,
   weddingPlan = 'free',
+  weddingLocale = 'en',
 }: InvitationTemplateModalProps) {
   const [inviteTemplate, setInviteTemplate] = useState(initialTemplate)
   const [dynamicContentSearch, setDynamicContentSearch] = useState('')
@@ -142,9 +158,9 @@ export function InvitationTemplateModal({
       '{{groupinvitationurl}}': 'https://yourwedding.com/invite/abc123',
       '{{partner1}}': weddingDetails?.partner1_first_name || 'Alex',
       '{{partner2}}': weddingDetails?.partner2_first_name || 'Jordan',
-      '{{weddingdate}}': weddingDetails?.wedding_date 
-        ? new Date(weddingDetails.wedding_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) 
-        : 'June 15, 2026',
+      '{{weddingdate}}': weddingDetails?.wedding_date
+        ? formatWeddingDate(weddingDetails.wedding_date, weddingLocale)
+        : (weddingLocale === 'es' ? '15 de junio de 2026' : 'June 15, 2026'),
       '{{ceremonyplace}}': weddingDetails?.ceremony_venue_name || 'Grand Oak Chapel',
       '{{ceremonyaddress}}': weddingDetails?.ceremony_venue_address || '123 Main St, City',
       '{{receptionplace}}': weddingDetails?.reception_venue_name || 'Garden Pavilion',
@@ -167,16 +183,9 @@ export function InvitationTemplateModal({
     const partner1 = partnerNames.partner1 || 'Partner 1'
     const partner2 = partnerNames.partner2 || 'Partner 2'
 
-    let formattedDate = 'TBD'
-    if (weddingDetails?.wedding_date) {
-      const date = new Date(weddingDetails.wedding_date)
-      formattedDate = date.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
-    }
+    const formattedDate = weddingDetails?.wedding_date
+      ? formatWeddingDate(weddingDetails.wedding_date, weddingLocale)
+      : 'TBD'
 
     return template
       .replace(/\{\{groupname\}\}/gi, data.groupName || '')
@@ -582,7 +591,7 @@ export function InvitationTemplateModal({
                       <DropdownMenuContent align="end" className="w-80">
                         <div className="px-2 py-1.5 text-xs font-semibold">{t('admin.invitations.templateModal.templateExamples')}</div>
                         <DropdownMenuSeparator />
-                        {TEMPLATE_EXAMPLES.map((example) => (
+                        {TEMPLATE_EXAMPLES[weddingLocale].map((example) => (
                           <DropdownMenuItem
                             key={example.id}
                             className="text-xs cursor-pointer"
