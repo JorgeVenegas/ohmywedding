@@ -137,7 +137,7 @@ export function InvitationTemplateModal({
   const [dynamicContentSearch, setDynamicContentSearch] = useState('')
   const [showReplaceMenu, setShowReplaceMenu] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
 
   const editorRef = useRef<HTMLDivElement>(null)
   const isUpdatingRef = useRef(false)
@@ -159,8 +159,8 @@ export function InvitationTemplateModal({
       '{{partner1}}': weddingDetails?.partner1_first_name || 'Alex',
       '{{partner2}}': weddingDetails?.partner2_first_name || 'Jordan',
       '{{weddingdate}}': weddingDetails?.wedding_date
-        ? formatWeddingDate(weddingDetails.wedding_date, weddingLocale)
-        : (weddingLocale === 'es' ? '15 de junio de 2026' : 'June 15, 2026'),
+        ? formatWeddingDate(weddingDetails.wedding_date, locale)
+        : (locale === 'es' ? '15 de junio de 2026' : 'June 15, 2026'),
       '{{ceremonyplace}}': weddingDetails?.ceremony_venue_name || 'Grand Oak Chapel',
       '{{ceremonyaddress}}': weddingDetails?.ceremony_venue_address || '123 Main St, City',
       '{{receptionplace}}': weddingDetails?.reception_venue_name || 'Garden Pavilion',
@@ -184,7 +184,7 @@ export function InvitationTemplateModal({
     const partner2 = partnerNames.partner2 || 'Partner 2'
 
     const formattedDate = weddingDetails?.wedding_date
-      ? formatWeddingDate(weddingDetails.wedding_date, weddingLocale)
+      ? formatWeddingDate(weddingDetails.wedding_date, locale)
       : 'TBD'
 
     return template
@@ -591,7 +591,7 @@ export function InvitationTemplateModal({
                       <DropdownMenuContent align="end" className="w-80">
                         <div className="px-2 py-1.5 text-xs font-semibold">{t('admin.invitations.templateModal.templateExamples')}</div>
                         <DropdownMenuSeparator />
-                        {TEMPLATE_EXAMPLES[weddingLocale].map((example) => (
+                        {TEMPLATE_EXAMPLES[locale].map((example) => (
                           <DropdownMenuItem
                             key={example.id}
                             className="text-xs cursor-pointer"
