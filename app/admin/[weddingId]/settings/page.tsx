@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { useTranslation } from "@/components/contexts/i18n-context"
+import { useWeddingPermissions } from "@/hooks/use-auth"
 import {
   Settings,
   Users,
@@ -80,6 +81,7 @@ type Section = "subscription" | "features" | "rsvp" | "invitations" | "gallery" 
 
 export default function SettingsPage({ params }: SettingsPageProps) {
   const { weddingId } = use(params)
+  const { permissions: weddingPerms, loading: permsLoading } = useWeddingPermissions(weddingId)
   const [features, setFeatures] = useState<WeddingFeatures | null>(null)
   const [settings, setSettings] = useState<WeddingSettings | null>(null)
   const [subscription, setSubscription] = useState<Subscription | null>(null)
@@ -159,13 +161,35 @@ export default function SettingsPage({ params }: SettingsPageProps) {
     { id: "collaborators", label: t('admin.settings.nav.collaborators'), icon: UserCog },
   ]
 
-  if (loading) {
+  // Show loading while data or permissions are being fetched
+  if (loading || permsLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <div className="page-container">
           <div className="flex items-center justify-center h-96">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Only owners can access settings
+  if (!weddingPerms.isOwner) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="page-container">
+          <div className="flex items-center justify-center h-96">
+            <div className="text-center max-w-md">
+              <Settings className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-xl font-semibold mb-2">{t('admin.settings.ownerOnly')}</h2>
+              <p className="text-muted-foreground mb-6">{t('admin.settings.ownerOnlyDescription')}</p>
+              <Button variant="outline" asChild>
+                <Link href={getCleanAdminUrl(weddingId, 'dashboard')}>{t('admin.settings.backToDashboard')}</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </div>

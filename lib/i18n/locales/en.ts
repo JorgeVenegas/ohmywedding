@@ -1626,6 +1626,8 @@ export const en: Translations = {
       title: 'Settings',
       description: 'Manage your subscription, features, and wedding site preferences',
       backToDashboard: 'Back to dashboard',
+      ownerOnly: 'Owner access only',
+      ownerOnlyDescription: 'Only the wedding owner can access settings.',
       nav: {
         subscription: 'Subscription',
         rsvp: 'RSVP',

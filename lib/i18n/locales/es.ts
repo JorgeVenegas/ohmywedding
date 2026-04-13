@@ -1622,6 +1622,8 @@ export const es: Translations = {
       title: 'Configuración',
       description: 'Administra tu suscripción, funciones y preferencias del sitio de boda',
       backToDashboard: 'Volver al panel',
+      ownerOnly: 'Solo acceso para el propietario',
+      ownerOnlyDescription: 'Solo el propietario de la boda puede acceder a la configuración.',
       nav: {
         subscription: 'Suscripción',
         rsvp: 'Confirmaciones',

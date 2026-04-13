@@ -1489,6 +1489,8 @@ export interface Translations {
       title: string
       description: string
       backToDashboard: string
+      ownerOnly: string
+      ownerOnlyDescription: string
       nav: {
         subscription: string
         rsvp: string

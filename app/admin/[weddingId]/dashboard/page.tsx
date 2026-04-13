@@ -12,7 +12,7 @@ import { OnboardingTutorial } from "@/components/ui/onboarding-tutorial"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { getWeddingPath } from "@/lib/wedding-url"
 import { useTranslation } from "@/components/contexts/i18n-context"
-import { useAuth } from "@/hooks/use-auth"
+import { useAuth, useWeddingPermissions } from "@/hooks/use-auth"
 import { createClient } from "@/lib/supabase-client"
 
 interface AdminDashboardProps {
@@ -24,6 +24,7 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
   const decodedWeddingId = decodeURIComponent(weddingId)
   const { t } = useTranslation()
   const { user, signOut } = useAuth()
+  const { permissions: weddingPerms } = useWeddingPermissions(decodedWeddingId)
   const [showTutorial, setShowTutorial] = useState(false)
   const [hasWebsite, setHasWebsite] = useState<boolean | null>(null)
   const [isLegacy, setIsLegacy] = useState(false)
@@ -141,8 +142,9 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       icon: Settings,
       href: getCleanAdminUrl(weddingId, 'settings'),
       color: "secondary" as const,
+      ownerOnly: true,
     },
-  ]
+  ].filter(s => !('ownerOnly' in s) || !s.ownerOnly || weddingPerms.isOwner)
 
   return (
     <main className="min-h-screen bg-background">
