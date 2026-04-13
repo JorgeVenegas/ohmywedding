@@ -1928,6 +1928,8 @@ export interface Translations {
         guestNameDesc: string
         invitationUrl: string
         invitationUrlDesc: string
+        weddingUrl: string
+        weddingUrlDesc: string
         partner1: string
         partner2: string
         weddingDate: string

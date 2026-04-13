@@ -167,7 +167,9 @@ function EnvelopeContent({
             <div className="mb-12 sm:mb-16">
               <div className="inline-block border-t border-b border-white/30 py-4 px-8">
                 <p className="text-xs sm:text-sm font-light tracking-widest uppercase mb-2" style={{ color: textColor, opacity: 0.7 }}>{t('common.from')}: {coupleNames || "The Couple"}</p>
-                <p className="text-sm sm:text-base font-light tracking-wider" style={{ color: textColor }}>{t('common.to')}: {guestGroup?.name || "Guest"}</p>
+                {guestGroup?.name && (
+                  <p className="text-sm sm:text-base font-light tracking-wider" style={{ color: textColor }}>{t('common.to')}: {guestGroup.name}</p>
+                )}
               </div>
             </div>
             
@@ -428,8 +430,8 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
         }
         
         setWeddingDataLoading(false)
-        // Only show envelope if group_id is provided
-        setShowEnvelope(!!groupId)
+        // Always show envelope
+        setShowEnvelope(true)
       } catch (error) {
         setWeddingDataLoading(false)
       }
@@ -523,8 +525,8 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
     }).format(date)
   })() : ''
 
-  // Determine if envelope should be shown based on groupId (synchronously available from URL)
-  const hasEnvelope = !!groupId
+  // Always show envelope
+  const hasEnvelope = true
 
   return (
     <>

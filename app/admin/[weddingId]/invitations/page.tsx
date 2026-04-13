@@ -1691,6 +1691,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     return template
       .replace(/\{\{groupname\}\}/gi, data.groupName || '')
       .replace(/\{\{groupinvitationurl\}\}/gi, invitationUrl)
+      .replace(/\{\{weddingurl\}\}/gi, getInvitationUrl())
       .replace(/\{\{guestname\}\}/gi, data.guestName || '')
       .replace(/\{\{partner1\}\}/gi, partner1)
       .replace(/\{\{partner2\}\}/gi, partner2)

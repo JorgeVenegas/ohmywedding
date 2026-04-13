@@ -94,6 +94,7 @@ const GUEST_VARIABLES = [
   { var: '{{groupname}}', label: 'Group Name', desc: 'Name of the guest group' },
   { var: '{{guestname}}', label: 'Guest Name', desc: 'Individual guest name' },
   { var: '{{groupinvitationurl}}', label: 'Invitation URL', desc: 'Direct link to invitation' },
+  { var: '{{weddingurl}}', label: 'Wedding URL', desc: 'Generic wedding link (no group)' },
 ]
 
 const WEDDING_VARIABLES = [
@@ -113,6 +114,7 @@ const ALL_VARIABLES = [
   { var: '{{groupname}}', label: 'Group Name' },
   { var: '{{guestname}}', label: 'Guest Name' },
   { var: '{{groupinvitationurl}}', label: 'Invitation URL' },
+  { var: '{{weddingurl}}', label: 'Wedding URL' },
   { var: '{{partner1}}', label: 'Partner 1' },
   { var: '{{partner2}}', label: 'Partner 2' },
   { var: '{{weddingdate}}', label: 'Wedding Date' },
@@ -162,6 +164,7 @@ export function InvitationTemplateModal({
       '{{groupname}}': defaultGroupName,
       '{{guestname}}': defaultGuestName,
       '{{groupinvitationurl}}': 'https://yourwedding.com/invite/abc123',
+      '{{weddingurl}}': getWeddingUrl(weddingNameId || weddingId, '', weddingPlan),
       '{{partner1}}': weddingDetails?.partner1_first_name || 'Alex',
       '{{partner2}}': weddingDetails?.partner2_first_name || 'Jordan',
       '{{weddingdate}}': weddingDetails?.wedding_date
@@ -196,6 +199,7 @@ export function InvitationTemplateModal({
     return template
       .replace(/\{\{groupname\}\}/gi, data.groupName || '')
       .replace(/\{\{groupinvitationurl\}\}/gi, invitationUrl)
+      .replace(/\{\{weddingurl\}\}/gi, baseUrl)
       .replace(/\{\{guestname\}\}/gi, data.guestName || '')
       .replace(/\{\{partner1\}\}/gi, partner1)
       .replace(/\{\{partner2\}\}/gi, partner2)

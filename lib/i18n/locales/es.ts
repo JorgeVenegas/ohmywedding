@@ -2061,6 +2061,8 @@ export const es: Translations = {
         guestNameDesc: 'Nombre individual del invitado',
         invitationUrl: 'URL de Invitación',
         invitationUrlDesc: 'Enlace directo a la invitación',
+        weddingUrl: 'URL de la Boda',
+        weddingUrlDesc: 'Enlace generico de la boda (sin grupo)',
         partner1: 'Pareja 1',
         partner2: 'Pareja 2',
         weddingDate: 'Fecha de la Boda',
