@@ -40,6 +40,7 @@ export interface InvitationsHeaderProps {
   onExportCsv: () => void
   onOpenInviteSettings: () => void
   onOpenSendInvites: () => void
+  showInviteSettings?: boolean
   // CSV file input handler
   onCsvFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
@@ -61,6 +62,7 @@ export function InvitationsHeaderContent({
   onExportCsv,
   onOpenInviteSettings,
   onOpenSendInvites,
+  showInviteSettings = false,
   onCsvFileSelect,
 }: InvitationsHeaderProps) {
   const { t } = useTranslation()
@@ -141,15 +143,17 @@ export function InvitationsHeaderContent({
             className="hidden"
             onChange={onCsvFileSelect}
           />
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8"
-            onClick={onOpenInviteSettings}
-          >
-            <Settings className="w-3.5 h-3.5 mr-1.5" />
-            {t('admin.invitations.header.inviteSettings')}
-          </Button>
+          {showInviteSettings && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8"
+              onClick={onOpenInviteSettings}
+            >
+              <Settings className="w-3.5 h-3.5 mr-1.5" />
+              {t('admin.invitations.header.inviteSettings')}
+            </Button>
+          )}
         </div>
       </div>
     </div>

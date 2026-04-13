@@ -12,6 +12,7 @@ import { getCleanAdminUrl } from "@/lib/admin-url"
 import { getWeddingUrl, type WeddingPlan } from "@/lib/wedding-url"
 import { formatWeddingDate } from "@/lib/wedding-utils-client"
 import { useTranslation } from '@/components/contexts/i18n-context'
+import { useWeddingPermissions } from '@/hooks/use-auth'
 import {
   InvitationsHeaderToolbar,
   InvitationsChartsSection,
@@ -103,7 +104,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const { weddingId } = use(params)
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
 
   // Premium feature check
   const { canAccessFeature, loading: subscriptionLoading, planType } = useSubscriptionContext()
@@ -240,10 +241,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   // Invitation template settings
   const [showInviteTemplateModal, setShowInviteTemplateModal] = useState(false)
-  const [inviteTemplate, setInviteTemplate] = useState(
-    "Dear {{groupname}},\n\nWe are delighted to invite you to celebrate our wedding on {{weddingdate}}!\n\nView your personalized invitation here: {{groupinvitationurl}}\n\nWith love,\n{{partner1}} & {{partner2}}"
-  )
+  const defaultTemplate = locale === 'es'
+    ? "Querido {{groupname}},\n\nTenemos el placer de invitarles a celebrar nuestra boda el {{weddingdate}}.\n\nVean su invitacion personalizada aqui: {{groupinvitationurl}}\n\nCon amor,\n{{partner1}} & {{partner2}}"
+    : "Dear {{groupname}},\n\nWe are delighted to invite you to celebrate our wedding on {{weddingdate}}!\n\nView your personalized invitation here: {{groupinvitationurl}}\n\nWith love,\n{{partner1}} & {{partner2}}"
+  const [inviteTemplate, setInviteTemplate] = useState(defaultTemplate)
   const [weddingNameId, setWeddingNameId] = useState<string>('')
+  const { permissions: weddingPermissions } = useWeddingPermissions(weddingNameId || null)
+  const isOwner = weddingPermissions.isOwner
   const [weddingPlan, setWeddingPlan] = useState<WeddingPlan>('free')
   const [weddingDetails, setWeddingDetails] = useState<any>(null)
   const [chartsExpanded, setChartsExpanded] = useState(false)
@@ -2814,6 +2818,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               // Free users can open and edit but save is gated inside the modal
               setShowInviteTemplateModal(true)
             },
+            showInviteSettings: isOwner,
             onOpenSendInvites: () => {
               // Check if user has premium access
               if (!canAccessFeature('invitations_panel_enabled')) {
