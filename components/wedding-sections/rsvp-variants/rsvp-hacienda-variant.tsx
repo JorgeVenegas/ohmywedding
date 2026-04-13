@@ -38,6 +38,31 @@ interface GroupData {
   extra_passes_confirmed?: number
 }
 
+interface OrnateCardProps {
+  children: React.ReactNode
+  className?: string
+  cardBackground: string
+  cardBorderColor: string
+  accent: string
+}
+
+const OrnateCard = ({ children, className = '', cardBackground, cardBorderColor, accent }: OrnateCardProps) => (
+  <div className={`relative p-6 sm:p-8 md:p-12 rounded-2xl border shadow-lg overflow-hidden ${className}`}
+    style={{
+      backgroundColor: cardBackground, borderColor: cardBorderColor,
+      boxShadow: `0 8px 32px rgba(0,0,0,0.08), 0 0 0 1px ${accent}08`,
+    }}>
+    <OrnateCorner position="top-left" color={`${accent}45`} size="sm" />
+    <OrnateCorner position="top-right" color={`${accent}45`} size="sm" />
+    <OrnateCorner position="bottom-left" color={`${accent}35`} size="sm" />
+    <OrnateCorner position="bottom-right" color={`${accent}35`} size="sm" />
+    <CandleGlow position="center" intensity="subtle" />
+    <div className="absolute top-0 left-[15%] right-[15%] h-0.5"
+      style={{ background: `linear-gradient(90deg, transparent, ${accent}50, transparent)` }} />
+    <div className="relative z-10">{children}</div>
+  </div>
+)
+
 export function RSVPHaciendaVariant({
   weddingNameId, theme, alignment, sectionTitle, sectionSubtitle,
   showTravelInfo = true, showCustomQuestions = false, customQuestions = [],
@@ -217,27 +242,6 @@ export function RSVPHaciendaVariant({
 
   const hasAtLeastOneResponse = guests.some((g) => g.attending !== null)
 
-  /** Ornate card wrapper with baroque-inspired decoration */
-  const OrnateCard = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
-    <div className={`relative p-6 sm:p-8 md:p-12 rounded-2xl border shadow-lg overflow-hidden ${className}`}
-      style={{
-        backgroundColor: cardBackground, borderColor: cardBorderColor,
-        boxShadow: `0 8px 32px rgba(0,0,0,0.08), 0 0 0 1px ${accent}08`,
-      }}>
-      {/* Ornate corners */}
-      <OrnateCorner position="top-left" color={`${accent}45`} size="sm" />
-      <OrnateCorner position="top-right" color={`${accent}45`} size="sm" />
-      <OrnateCorner position="bottom-left" color={`${accent}35`} size="sm" />
-      <OrnateCorner position="bottom-right" color={`${accent}35`} size="sm" />
-      {/* Warm inner glow */}
-      <CandleGlow position="center" intensity="subtle" />
-      {/* Top gold accent line */}
-      <div className="absolute top-0 left-[15%] right-[15%] h-0.5"
-        style={{ background: `linear-gradient(90deg, transparent, ${accent}50, transparent)` }} />
-      <div className="relative z-10">{children}</div>
-    </div>
-  )
-
   /* Loading */
   if (isLoading) {
     return (
@@ -256,7 +260,7 @@ export function RSVPHaciendaVariant({
         <BotanicalCorner position="top-left" color={`${accent}55`} size="sm" />
         <div className="max-w-2xl mx-auto px-6 sm:px-8 py-16 sm:py-20 relative z-10">
           <AnimatedSection>
-            <OrnateCard>
+            <OrnateCard cardBackground={cardBackground} cardBorderColor={cardBorderColor} accent={accent}>
               <div className="text-center space-y-5">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full" style={{ backgroundColor: `${accent}15` }}>
                   <Sparkles className="w-8 h-8" style={{ color: accent }} />
@@ -317,7 +321,7 @@ export function RSVPHaciendaVariant({
         <BotanicalCorner position="bottom-right" color={`${accent}52`} size="sm" />
         <div className="max-w-xl mx-auto px-6 sm:px-8 py-16 sm:py-20 relative z-10">
           <AnimatedSection>
-            <OrnateCard>
+            <OrnateCard cardBackground={cardBackground} cardBorderColor={cardBorderColor} accent={accent}>
               <div className="space-y-6" style={{ textAlign }}>
                 <h2 className="text-3xl sm:text-4xl md:text-5xl" style={{ fontFamily: 'var(--font-display, cursive)', color: renderTitleColor, fontWeight: 400 }}>{title}</h2>
                 <FloralDivider color={accent} />
@@ -337,7 +341,7 @@ export function RSVPHaciendaVariant({
       <BotanicalCorner position="bottom-left" color={`${accent}45`} size="sm" />
       <div className="max-w-2xl mx-auto px-6 sm:px-8 py-14 sm:py-18 relative z-10">
         <AnimatedSection>
-          <OrnateCard>
+          <OrnateCard cardBackground={cardBackground} cardBorderColor={cardBorderColor} accent={accent}>
             <form onSubmit={handleSubmitClick} className="space-y-7" style={{ textAlign }}>
               <div className="space-y-3">
                 <h2 className="text-2xl sm:text-3xl md:text-4xl" style={{ fontFamily: 'var(--font-display, cursive)', color: renderTitleColor, fontWeight: 400 }}>{title}</h2>
