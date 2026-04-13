@@ -230,19 +230,19 @@ export function EventDetailsElegantVariant(props: BaseEventDetailsProps) {
                 )}
 
                 {/* Map Link */}
-                {showMapLinks && event.address && (
+                {showMapLinks && (event.address || event.mapLink) && (
                   <Button 
                     asChild
                     variant="outline" 
                     size="sm"
                     className="rounded-full px-5 h-8 text-sm"
-                    style={{ 
+                    style={{
                       borderColor: ornamentColor,
                       color: cardTitleColor
                     }}
                   >
                     <a 
-                      href={getMapUrl(event.address)} 
+                      href={getMapUrl(event.address || '', event.mapLink)} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="flex items-center gap-1.5"

@@ -4,7 +4,7 @@ import React from 'react'
 import { MapPin, Clock, ExternalLink } from 'lucide-react'
 import { SectionWrapper } from '../section-wrapper'
 import { AnimatedSection } from '../animated-section'
-import { BaseEventDetailsProps, buildEventList, getMapUrl, getColorScheme, formatWeddingTime } from './types'
+import { BaseEventDetailsProps, buildEventList, getMapUrl, getColorScheme, formatWeddingTime, groupEventsByDate, formatDayLabel } from './types'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { useScrollAnimation } from '@/hooks/use-scroll-animation'
 import { HaciendaTilePattern, CandleGlow, HaciendaSectionTitle, FloralDivider, VineAccent, OrnateCorner } from '../hacienda-ornaments'
@@ -22,14 +22,16 @@ const EVENT_ICONS = [
 /** Centered event block with large medallion ornament. */
 function EventBlock({
   event, index, total, accent,
-  textColor, titleColor, mutedColor, showMapLinks, formatTime,
+  textColor, titleColor, mutedColor, showMapLinks, formatTime, hideDivider,
 }: {
   event: any; index: number; total: number
   accent: string
   textColor: string; titleColor: string; mutedColor: string
   showMapLinks: boolean; formatTime: (t: string | null) => string
+  hideDivider?: boolean
 }) {
   const { ref, isVisible } = useScrollAnimation({ threshold: 0.15, triggerOnce: false })
+  const { t } = useI18n()
   const isLast = index === total - 1
 
   return (
@@ -102,17 +104,17 @@ function EventBlock({
           </p>
         )}
 
-        {showMapLinks && event.address && (
-          <a href={getMapUrl(event.address)} target="_blank" rel="noopener noreferrer"
+        {showMapLinks && (event.address || event.mapLink) && (
+          <a href={getMapUrl(event.address || '', event.mapLink)} target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 mt-4 text-xs font-light tracking-wide uppercase transition-all duration-300 hover:opacity-70 group"
             style={{ color: accent }}>
             <ExternalLink className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-            <span>Ver mapa</span>
+            <span>{t('eventDetails.viewOnMap')}</span>
           </a>
         )}
       </div>
 
-      {!isLast && (
+      {!isLast && !hideDivider && (
         <div className="my-14 sm:my-16 flex justify-center">
           <div
             className="w-32 h-10 sm:w-40 sm:h-12 opacity-70"
@@ -172,9 +174,10 @@ export function EventDetailsHaciendaVariant(props: BaseEventDetailsProps) {
   const {
     wedding, theme, alignment, showMapLinks = true, showMap = true,
     venueImageUrl, mapAddress: mapAddressOverride, sectionTitle, sectionSubtitle, useColorBackground, backgroundColorChoice,
+    dayLabels,
   } = props
 
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const { bgColor, sectionTextColor, sectionTextColorAlt, subtitleColor, isColored } = getColorScheme(
     theme, backgroundColorChoice, useColorBackground
   )
@@ -197,9 +200,15 @@ export function EventDetailsHaciendaVariant(props: BaseEventDetailsProps) {
   const events = buildEventList(props)
   if (events.length === 0) return null
 
+  const dayGroups = groupEventsByDate(events, wedding.wedding_date || undefined)
+  const hasMultipleDays = dayGroups.length > 1
+
   // Map address: use explicit override, else first event with an address
   const autoMapAddress = events.find(e => e.address)?.address
   const mapAddress = mapAddressOverride || autoMapAddress
+
+  // Track global event index for icon assignment
+  let globalEventIndex = 0
 
   return (
     <SectionWrapper
@@ -224,15 +233,43 @@ export function EventDetailsHaciendaVariant(props: BaseEventDetailsProps) {
         </AnimatedSection>
 
         <div className="w-full">
-          {events.map((event, index) => (
-            <EventBlock
-              key={event.id}
-              event={event} index={index} total={events.length}
-              accent={accent}
-              textColor={renderTextColor} titleColor={renderTitleColor} mutedColor={renderMutedColor}
-              showMapLinks={showMapLinks} formatTime={formatWeddingTime}
-            />
-          ))}
+          {dayGroups.map((group, groupIndex) => {
+            const dayLabel = hasMultipleDays ? formatDayLabel(group.date, locale, dayLabels) : null
+            const renderedEvents = group.events.map((event) => {
+              const idx = globalEventIndex++
+              const isLastOverall = idx === events.length - 1
+              return (
+                <EventBlock
+                  key={event.id}
+                  event={event} index={idx} total={events.length}
+                  accent={accent}
+                  textColor={renderTextColor} titleColor={renderTitleColor} mutedColor={renderMutedColor}
+                  showMapLinks={showMapLinks} formatTime={formatWeddingTime}
+                  hideDivider={isLastOverall}
+                />
+              )
+            })
+
+            return (
+              <React.Fragment key={group.date || groupIndex}>
+                {dayLabel && (
+                  <AnimatedSection className={groupIndex > 0 ? 'mt-8 sm:mt-10 mb-8 sm:mb-10' : 'mb-8 sm:mb-10'}>
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1 h-px" style={{ backgroundColor: `${accent}40` }} />
+                      <span
+                        className="text-sm sm:text-base font-light tracking-[0.2em] uppercase whitespace-nowrap"
+                        style={{ color: accent, fontFamily: 'var(--font-heading, serif)' }}
+                      >
+                        {dayLabel}
+                      </span>
+                      <div className="flex-1 h-px" style={{ backgroundColor: `${accent}40` }} />
+                    </div>
+                  </AnimatedSection>
+                )}
+                {renderedEvents}
+              </React.Fragment>
+            )
+          })}
         </div>
 
         {/* Venue photo — independent of map */}

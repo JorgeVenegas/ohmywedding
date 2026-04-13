@@ -150,7 +150,13 @@ export const en: Translations = {
     venuePlaceholder: 'e.g., St. Mary\'s Church, The Grand Ballroom',
     addressDescription: 'Full address with street, city, and zip code',
     addressPlaceholder: 'e.g., 123 Main Street, New York, NY 10001',
-    descriptionDescription: 'Additional details or instructions for guests (optional)'
+    descriptionDescription: 'Additional details or instructions for guests (optional)',
+    dayLabels: 'Day Labels',
+    dayLabelsDescription: 'Custom label for each day (e.g. "Wedding Day", "The Next Day")',
+    dayLabelPlaceholder: 'e.g., Wedding Day',
+    mapLink: 'Map Link',
+    mapLinkPlaceholder: 'https://maps.google.com/...',
+    mapLinkDescription: 'Direct link to the location on maps. If empty, it will be generated from the address.'
   },
 
   // RSVP Section

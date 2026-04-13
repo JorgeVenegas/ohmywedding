@@ -16,6 +16,8 @@ const defaultPermissions: WeddingPermissions = {
   canEdit: false,
   canDelete: false,
   canManageCollaborators: false,
+  canManageInvitations: false,
+  canManageGuests: false,
   isOwner: false,
   isCollaborator: false,
   role: 'guest',

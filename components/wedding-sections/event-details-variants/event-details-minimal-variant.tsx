@@ -179,9 +179,9 @@ export function EventDetailsMinimalVariant(props: BaseEventDetailsProps) {
                   )}
 
                   {/* Map Link */}
-                  {showMapLinks && event.address && (
+                  {showMapLinks && (event.address || event.mapLink) && (
                     <a 
-                      href={getMapUrl(event.address)} 
+                      href={getMapUrl(event.address || '', event.mapLink)} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-sm hover:underline"

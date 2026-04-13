@@ -2818,7 +2818,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               // Free users can open and edit but save is gated inside the modal
               setShowInviteTemplateModal(true)
             },
-            showInviteSettings: weddingPermissions.canEdit,
+            showInviteSettings: weddingPermissions.canManageInvitations,
             onOpenSendInvites: () => {
               // Check if user has premium access
               if (!canAccessFeature('invitations_panel_enabled')) {

@@ -6,6 +6,8 @@ export type WeddingPermissions = {
   canEdit: boolean
   canDelete: boolean
   canManageCollaborators: boolean
+  canManageInvitations: boolean
+  canManageGuests: boolean
   isOwner: boolean
   isCollaborator: boolean
   role: 'owner' | 'editor' | 'guest'
@@ -16,6 +18,8 @@ const defaultPermissions: WeddingPermissions = {
   canEdit: false,
   canDelete: false,
   canManageCollaborators: false,
+  canManageInvitations: false,
+  canManageGuests: false,
   isOwner: false,
   isCollaborator: false,
   role: 'guest',

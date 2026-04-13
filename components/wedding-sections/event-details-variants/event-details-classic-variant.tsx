@@ -226,9 +226,9 @@ export function EventDetailsClassicVariant(props: BaseEventDetailsProps) {
             )}
 
             {/* Map Link */}
-            {showMapLinks && event.address && (
+            {showMapLinks && (event.address || event.mapLink) && (
               <a 
-                href={getMapUrl(event.address)} 
+                href={getMapUrl(event.address || '', event.mapLink)} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm font-medium hover:underline transition-colors"

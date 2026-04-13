@@ -8,6 +8,8 @@ export type WeddingPermissions = {
   canEdit: boolean
   canDelete: boolean
   canManageCollaborators: boolean
+  canManageInvitations: boolean
+  canManageGuests: boolean
   isOwner: boolean
   isCollaborator: boolean
   role: 'owner' | 'editor' | 'guest'
@@ -58,6 +60,8 @@ export async function GET(
         canEdit: false,
         canDelete: false,
         canManageCollaborators: false,
+        canManageInvitations: false,
+        canManageGuests: false,
         isOwner: false,
         isCollaborator: false,
         role: 'guest',
@@ -99,6 +103,8 @@ export async function GET(
       canEdit: isOwner || isSuperuser || (isCollaborator && (granularPermissions?.can_edit_page_design ?? false)),
       canDelete: isOwner || isSuperuser,
       canManageCollaborators: isOwner || isSuperuser || (isCollaborator && (granularPermissions?.can_manage_collaborators ?? false)),
+      canManageInvitations: isOwner || isSuperuser || (isCollaborator && (granularPermissions?.can_manage_invitations ?? false)),
+      canManageGuests: isOwner || isSuperuser || (isCollaborator && (granularPermissions?.can_manage_guests ?? false)),
       isOwner: isOwner || isSuperuser,
       isCollaborator,
       role,

@@ -279,9 +279,9 @@ export function EventDetailsSplitVariant(props: BaseEventDetailsProps) {
                     )}
 
                     {/* Map Link */}
-                    {showMapLinks && event.address && (
+                    {showMapLinks && (event.address || event.mapLink) && (
                       <a 
-                        href={getMapUrl(event.address)} 
+                        href={getMapUrl(event.address || '', event.mapLink)} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 text-sm uppercase tracking-widest font-light transition-all hover:gap-3"
@@ -424,9 +424,9 @@ export function EventDetailsSplitVariant(props: BaseEventDetailsProps) {
                     )}
 
                     {/* Map Link */}
-                    {showMapLinks && event.address && (
+                    {showMapLinks && (event.address || event.mapLink) && (
                       <a 
-                        href={getMapUrl(event.address)} 
+                        href={getMapUrl(event.address || '', event.mapLink)} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 text-sm uppercase tracking-widest font-light transition-all hover:gap-3"

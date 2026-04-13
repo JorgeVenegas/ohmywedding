@@ -153,6 +153,12 @@ export interface Translations {
     addressDescription: string
     addressPlaceholder: string
     descriptionDescription: string
+    dayLabels: string
+    dayLabelsDescription: string
+    dayLabelPlaceholder: string
+    mapLink: string
+    mapLinkPlaceholder: string
+    mapLinkDescription: string
   }
 
   // RSVP Section

@@ -206,7 +206,7 @@ export function EventDetailsTimelineVariant(props: BaseEventDetailsProps) {
                   )}
 
                   {/* Map Link */}
-                  {showMapLinks && event.address && (
+                  {showMapLinks && (event.address || event.mapLink) && (
                     <Button 
                       asChild
                       variant="ghost" 
@@ -215,7 +215,7 @@ export function EventDetailsTimelineVariant(props: BaseEventDetailsProps) {
                       style={{ color: cardTitleColor }}
                     >
                       <a 
-                        href={getMapUrl(event.address)} 
+                        href={getMapUrl(event.address || '', event.mapLink)} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="flex items-center gap-1 text-sm hover:underline"

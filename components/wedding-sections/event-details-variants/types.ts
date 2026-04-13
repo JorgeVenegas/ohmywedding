@@ -13,6 +13,7 @@ export interface CustomEvent {
   time: string
   venue: string
   address?: string
+  mapLink?: string // Custom map link (e.g. Google Maps URL)
   description?: string
   imageUrl?: string // Optional image for the event
   order: number // For custom ordering
@@ -25,6 +26,7 @@ export interface BaseEventDetailsProps {
   theme?: Partial<ThemeConfig>
   alignment?: Partial<AlignmentConfig>
   events?: CustomEvent[] // New primary way to manage events
+  dayLabels?: Record<string, string> // Custom labels for each date (e.g. { "2026-05-30": "Wedding Day" })
   showMapLinks?: boolean
   showMap?: boolean
   mapAddress?: string
@@ -389,9 +391,49 @@ export function sortEventsByDateTime(events: CustomEvent[], weddingDate?: string
   })
 }
 
+// Group sorted events by their effective date
+export function groupEventsByDate(
+  events: CustomEvent[],
+  weddingDate?: string
+): { date: string; events: CustomEvent[] }[] {
+  const groups: { date: string; events: CustomEvent[] }[] = []
+  for (const event of events) {
+    const effectiveDate = event.useWeddingDate ? (weddingDate || event.date || '') : (event.date || weddingDate || '')
+    const lastGroup = groups[groups.length - 1]
+    if (lastGroup && lastGroup.date === effectiveDate) {
+      lastGroup.events.push(event)
+    } else {
+      groups.push({ date: effectiveDate, events: [event] })
+    }
+  }
+  return groups
+}
+
+// Format a date string for display as a day header
+export function formatDayLabel(
+  dateStr: string,
+  locale: string,
+  dayLabels?: Record<string, string>
+): string {
+  // If there's a custom label, use it
+  if (dayLabels && dayLabels[dateStr]) {
+    return dayLabels[dateStr]
+  }
+  // Otherwise format the date nicely
+  if (!dateStr) return ''
+  const [year, month, day] = dateStr.split('-').map(Number)
+  const date = new Date(year, month - 1, day)
+  return date.toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
 // Helper to build unified event list (supports both new events array and legacy ceremony/reception props)
 export function buildEventList(props: BaseEventDetailsProps): CustomEvent[] {
-  const { 
+  const {
     events, 
     wedding,
     showCeremony, 
@@ -460,7 +502,8 @@ export function buildEventList(props: BaseEventDetailsProps): CustomEvent[] {
   return sortEventsByDateTime(legacyEvents, wedding.wedding_date || undefined)
 }
 
-// Helper to get map URL
-export function getMapUrl(address: string): string {
+// Helper to get map URL - uses custom link if provided, otherwise generates from address
+export function getMapUrl(address: string, mapLink?: string): string {
+  if (mapLink) return mapLink
   return `https://maps.google.com/?q=${encodeURIComponent(address)}`
 }

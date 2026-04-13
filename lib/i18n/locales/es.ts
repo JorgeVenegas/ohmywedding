@@ -150,7 +150,13 @@ export const es: Translations = {
     venuePlaceholder: 'ej., Iglesia Santa María, El Gran Salón',
     addressDescription: 'Dirección completa con calle, ciudad y código postal',
     addressPlaceholder: 'ej., Calle Principal 123, Ciudad de México, CDMX 01000',
-    descriptionDescription: 'Detalles adicionales o instrucciones para los invitados (opcional)'
+    descriptionDescription: 'Detalles adicionales o instrucciones para los invitados (opcional)',
+    dayLabels: 'Etiquetas por Dia',
+    dayLabelsDescription: 'Etiqueta personalizada para cada dia (ej. "Dia de la Boda", "El Dia Siguiente")',
+    dayLabelPlaceholder: 'ej., Dia de la Boda',
+    mapLink: 'Enlace al Mapa',
+    mapLinkPlaceholder: 'https://maps.google.com/...',
+    mapLinkDescription: 'Enlace directo a la ubicacion en el mapa. Si esta vacio, se generara a partir de la direccion.'
   },
 
   // RSVP Section

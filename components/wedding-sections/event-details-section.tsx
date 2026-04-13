@@ -48,7 +48,8 @@ export function EventDetailsSection({
   variant = 'classic',
   showVariantSwitcher = true,
   useColorBackground = false,
-  backgroundColorChoice = 'none'
+  backgroundColorChoice = 'none',
+  dayLabels
 }: EventDetailsSectionProps) {
   const { t } = useI18n()
   
@@ -143,7 +144,8 @@ export function EventDetailsSection({
     useColorBackground: config.useColorBackground ?? false,
     backgroundColorChoice: config.backgroundColorChoice || 'none',
     ceremonyTextAlignment: config.ceremonyTextAlignment || 'center',
-    receptionTextAlignment: config.receptionTextAlignment || 'center'
+    receptionTextAlignment: config.receptionTextAlignment || 'center',
+    dayLabels: config.dayLabels || dayLabels
   }
 
   const renderEventDetailsContent = (activeVariant: string) => {

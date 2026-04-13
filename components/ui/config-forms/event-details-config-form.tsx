@@ -10,7 +10,7 @@ import { VariantDropdown } from '@/components/ui/variant-dropdown'
 import { usePageConfig } from '@/components/contexts/page-config-context'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { Check, Plus, Trash2, GripVertical, ChevronDown, ChevronUp } from 'lucide-react'
-import { CustomEvent, EventType } from '@/components/wedding-sections/event-details-variants/types'
+import { CustomEvent, EventType, groupEventsByDate } from '@/components/wedding-sections/event-details-variants/types'
 
 type BackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
 
@@ -64,6 +64,7 @@ interface EventDetailsConfigFormProps {
     receptionImageUrl?: string
     ceremonyDescription?: string
     receptionDescription?: string
+    dayLabels?: Record<string, string>
   }
   wedding?: {
     partner1_first_name?: string
@@ -594,6 +595,20 @@ export function EventDetailsConfigForm({ config, wedding, onChange }: EventDetai
                       />
                     </div>
 
+                    {/* Custom Map Link */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {t('eventDetails.mapLink')}
+                      </label>
+                      <Input
+                        type="url"
+                        value={event.mapLink || ''}
+                        onChange={(e) => updateEvent(index, 'mapLink', e.target.value)}
+                        placeholder={t('eventDetails.mapLinkPlaceholder')}
+                      />
+                      <p className="text-xs text-gray-400 mt-1">{t('eventDetails.mapLinkDescription')}</p>
+                    </div>
+
                     {/* Description */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -624,6 +639,50 @@ export function EventDetailsConfigForm({ config, wedding, onChange }: EventDetai
           </div>
         )}
       </div>
+
+      {/* Day Labels - only shown when events span multiple days */}
+      {(() => {
+        const dayGroups = groupEventsByDate(events, weddingDate)
+        if (dayGroups.length < 2) return null
+        const currentLabels = config.dayLabels || {}
+        return (
+          <div className="p-4 border border-gray-200 rounded-lg space-y-4">
+            <div>
+              <h4 className="font-medium text-gray-900 text-sm">{t('eventDetails.dayLabels')}</h4>
+              <p className="text-xs text-gray-500 mt-1">{t('eventDetails.dayLabelsDescription')}</p>
+            </div>
+            {dayGroups.map((group, idx) => {
+              const dateStr = group.date
+              const formattedDate = dateStr ? (() => {
+                const [y, m, d] = dateStr.split('-').map(Number)
+                const date = new Date(y, m - 1, d)
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+              })() : `Day ${idx + 1}`
+              return (
+                <div key={dateStr || idx}>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    {formattedDate}
+                  </label>
+                  <Input
+                    type="text"
+                    value={currentLabels[dateStr] || ''}
+                    onChange={(e) => {
+                      const updated = { ...currentLabels }
+                      if (e.target.value) {
+                        updated[dateStr] = e.target.value
+                      } else {
+                        delete updated[dateStr]
+                      }
+                      onChange('dayLabels', Object.keys(updated).length > 0 ? updated : undefined)
+                    }}
+                    placeholder={t('eventDetails.dayLabelPlaceholder')}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        )
+      })()}
     </div>
   )
 }
