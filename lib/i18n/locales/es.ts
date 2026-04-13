@@ -1632,6 +1632,12 @@ export const es: Translations = {
         gallery: 'Galería',
         general: 'General',
         collaborators: 'Colaboradores',
+        dashboardSections: 'Secciones del Panel',
+      },
+      dashboardSections: {
+        title: 'Secciones del Panel',
+        description: 'Elige qué secciones son visibles en el panel para todos los usuarios',
+        allEnabled: 'Todas las secciones están habilitadas actualmente',
       },
       subscription: {
         title: 'Suscripción y Funciones',

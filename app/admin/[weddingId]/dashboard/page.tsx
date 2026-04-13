@@ -29,6 +29,7 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
   const [hasWebsite, setHasWebsite] = useState<boolean | null>(null)
   const [isLegacy, setIsLegacy] = useState(false)
   const [coupleNames, setCoupleNames] = useState<string | null>(null)
+  const [dashboardSections, setDashboardSections] = useState<Record<string, boolean>>({})
 
   // Check if tutorial should be shown (per-user, via needs_onboarding table)
   useEffect(() => {
@@ -43,6 +44,22 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
         if (data) setShowTutorial(true)
       })
   }, [user])
+
+  // Fetch dashboard sections settings
+  useEffect(() => {
+    async function fetchDashboardSections() {
+      try {
+        const res = await fetch(`/api/weddings/${weddingId}/settings`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.settings?.dashboard_sections) {
+            setDashboardSections(data.settings.dashboard_sections)
+          }
+        }
+      } catch {}
+    }
+    fetchDashboardSections()
+  }, [weddingId])
 
   // Check if wedding has a website — detect legacy dynamically (no is_legacy column read)
   useEffect(() => {
@@ -86,8 +103,9 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
   }
 
   const sections = [
-    websiteCard,
+    { ...websiteCard, sectionKey: 'website' },
     {
+      sectionKey: 'invitations',
       title: t('admin.dashboard.cards.invitations.title'),
       description: t('admin.dashboard.cards.invitations.description'),
       icon: Mail,
@@ -95,6 +113,7 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       color: "primary" as const,
     },
     {
+      sectionKey: 'registry',
       title: t('admin.dashboard.cards.registry.title'),
       description: t('admin.dashboard.cards.registry.description'),
       icon: Gift,
@@ -102,6 +121,7 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       color: "accent" as const,
     },
     {
+      sectionKey: 'seating',
       title: t('admin.dashboard.cards.seating.title'),
       description: t('admin.dashboard.cards.seating.description'),
       icon: LayoutGrid,
@@ -109,6 +129,7 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       color: "accent" as const,
     },
     {
+      sectionKey: 'dishes',
       title: t('admin.dashboard.cards.dishes.title'),
       description: t('admin.dashboard.cards.dishes.description'),
       icon: UtensilsCrossed,
@@ -116,6 +137,7 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       color: "accent" as const,
     },
     {
+      sectionKey: 'itinerary',
       title: t('admin.dashboard.cards.itinerary.title'),
       description: t('admin.dashboard.cards.itinerary.description'),
       icon: CalendarDays,
@@ -123,6 +145,7 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       color: "accent" as const,
     },
     {
+      sectionKey: 'suppliers',
       title: t('admin.dashboard.cards.suppliers.title'),
       description: t('admin.dashboard.cards.suppliers.description'),
       icon: Handshake,
@@ -130,6 +153,7 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       color: "accent" as const,
     },
     {
+      sectionKey: 'summary',
       title: t('admin.dashboard.cards.summary.title'),
       description: t('admin.dashboard.cards.summary.description'),
       icon: FileText,
@@ -137,6 +161,7 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       color: "secondary" as const,
     },
     {
+      sectionKey: 'settings',
       title: t('admin.dashboard.cards.settings.title'),
       description: t('admin.dashboard.cards.settings.description'),
       icon: Settings,
@@ -144,7 +169,13 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       color: "secondary" as const,
       ownerOnly: true,
     },
-  ].filter(s => !('ownerOnly' in s) || !s.ownerOnly || weddingPerms.isOwner)
+  ].filter(s => {
+    // Owner-only sections (settings)
+    if ('ownerOnly' in s && s.ownerOnly && !weddingPerms.isOwner) return false
+    // Dashboard sections toggle (website and settings are always shown)
+    if (s.sectionKey !== 'website' && s.sectionKey !== 'settings' && dashboardSections[s.sectionKey] === false) return false
+    return true
+  })
 
   return (
     <main className="min-h-screen bg-background">

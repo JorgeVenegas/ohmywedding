@@ -1636,6 +1636,12 @@ export const en: Translations = {
         gallery: 'Gallery',
         general: 'General',
         collaborators: 'Collaborators',
+        dashboardSections: 'Dashboard Sections',
+      },
+      dashboardSections: {
+        title: 'Dashboard Sections',
+        description: 'Choose which sections are visible on the dashboard for all users',
+        allEnabled: 'All sections are currently enabled',
       },
       subscription: {
         title: 'Subscription & Features',

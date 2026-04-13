@@ -30,6 +30,7 @@ import {
   Check,
   X,
   UserCog,
+  LayoutGrid,
 } from "lucide-react"
 
 interface WeddingFeatures {
@@ -56,6 +57,7 @@ interface WeddingSettings {
   gallery_moderation_enabled: boolean
   timezone: string
   language: string
+  dashboard_sections: Record<string, boolean>
 }
 
 interface Subscription {
@@ -77,7 +79,7 @@ interface SettingsPageProps {
   params: Promise<{ weddingId: string }>
 }
 
-type Section = "subscription" | "features" | "rsvp" | "invitations" | "gallery" | "general" | "collaborators"
+type Section = "subscription" | "features" | "rsvp" | "invitations" | "gallery" | "general" | "collaborators" | "dashboardSections"
 
 export default function SettingsPage({ params }: SettingsPageProps) {
   const { weddingId } = use(params)
@@ -159,6 +161,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
     { id: "gallery", label: t('admin.settings.nav.gallery'), icon: Image },
     { id: "general", label: t('admin.settings.nav.general'), icon: Globe },
     { id: "collaborators", label: t('admin.settings.nav.collaborators'), icon: UserCog },
+    { id: "dashboardSections", label: t('admin.settings.nav.dashboardSections'), icon: LayoutGrid },
   ]
 
   // Show loading while data or permissions are being fetched
@@ -691,6 +694,18 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                   <CollaboratorManager weddingNameId={decodeURIComponent(weddingId)} />
                 </div>
               )}
+
+              {activeSection === "dashboardSections" && (
+                <DashboardSectionsTab
+                  dashboardSections={settings?.dashboard_sections ?? {}}
+                  onChange={(sections) => {
+                    if (settings) {
+                      setSettings({ ...settings, dashboard_sections: sections })
+                      setHasChanges(true)
+                    }
+                  }}
+                />
+              )}
             </Card>
 
             {/* Save Button */}
@@ -825,3 +840,105 @@ function FeatureStatusCard({
     </div>
   )
 }
+
+// Dashboard section keys matching the dashboard cards (excluding website and settings which are always shown)
+const DASHBOARD_SECTION_KEYS = [
+  "invitations",
+  "registry",
+  "seating",
+  "dishes",
+  "itinerary",
+  "suppliers",
+  "summary",
+] as const
+
+type DashboardSectionKey = typeof DASHBOARD_SECTION_KEYS[number]
+
+const SECTION_ICONS: Record<DashboardSectionKey, React.ComponentType<{ className?: string }>> = {
+  invitations: Mail,
+  registry: Gift,
+  seating: LayoutGrid,
+  dishes: Calendar,
+  itinerary: Calendar,
+  suppliers: Users,
+  summary: Settings,
+}
+
+interface DashboardSectionsTabProps {
+  dashboardSections: Record<string, boolean>
+  onChange: (sections: Record<string, boolean>) => void
+}
+
+function DashboardSectionsTab({ dashboardSections, onChange }: DashboardSectionsTabProps) {
+  const { t } = useTranslation()
+
+  const isSectionEnabled = (key: DashboardSectionKey) => {
+    return dashboardSections[key] !== false // Default to enabled if not set
+  }
+
+  const toggleSection = (key: DashboardSectionKey) => {
+    onChange({
+      ...dashboardSections,
+      [key]: !isSectionEnabled(key),
+    })
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-semibold text-foreground mb-1">
+          {t('admin.settings.dashboardSections.title')}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          {t('admin.settings.dashboardSections.description')}
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {DASHBOARD_SECTION_KEYS.map((key) => {
+          const Icon = SECTION_ICONS[key]
+          const enabled = isSectionEnabled(key)
+          const cardKey = key as keyof typeof cardTitleKeys
+          return (
+            <div
+              key={key}
+              className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                enabled ? 'border-border bg-card' : 'border-border/50 bg-muted/30 opacity-75'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+                  enabled ? 'bg-primary/10' : 'bg-muted'
+                }`}>
+                  <Icon className={`h-5 w-5 ${enabled ? 'text-primary' : 'text-muted-foreground'}`} />
+                </div>
+                <div>
+                  <p className={`text-sm font-medium ${enabled ? 'text-foreground' : 'text-muted-foreground'}`}>
+                    {t(`admin.dashboard.cards.${cardKey}.title` as any)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t(`admin.dashboard.cards.${cardKey}.description` as any)}
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={enabled}
+                onCheckedChange={() => toggleSection(key)}
+              />
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+const cardTitleKeys = {
+  invitations: 'invitations',
+  registry: 'registry',
+  seating: 'seating',
+  dishes: 'dishes',
+  itinerary: 'itinerary',
+  suppliers: 'suppliers',
+  summary: 'summary',
+} as const

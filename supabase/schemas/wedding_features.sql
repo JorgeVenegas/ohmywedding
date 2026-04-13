@@ -40,6 +40,9 @@ CREATE TABLE IF NOT EXISTS public.wedding_settings (
   timezone TEXT DEFAULT 'UTC',
   language TEXT DEFAULT 'en',
   
+  -- Dashboard Sections (owner can enable/disable sections for all users)
+  dashboard_sections JSONB DEFAULT '{}'::jsonb,
+  
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

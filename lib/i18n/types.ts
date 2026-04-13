@@ -1499,6 +1499,12 @@ export interface Translations {
         gallery: string
         general: string
         collaborators: string
+        dashboardSections: string
+      }
+      dashboardSections: {
+        title: string
+        description: string
+        allEnabled: string
       }
       subscription: {
         title: string
