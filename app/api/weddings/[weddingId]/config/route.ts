@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient, createAdminSupabaseClient } from '@/lib/supabase-server'
+import { createServerSupabaseClient, createAdminSupabaseClient, getCollaboratorPermissions } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -173,6 +173,14 @@ export async function PUT(
     
     if (!isOwner && !isCollaborator && !isSuperuser) {
       return NextResponse.json({ error: 'Forbidden - you do not have permission to edit this wedding' }, { status: 403 })
+    }
+
+    // Check granular permissions for collaborators
+    if (isCollaborator && !isOwner && !isSuperuser) {
+      const collabPerms = await getCollaboratorPermissions(existingWedding.id, user.email!)
+      if (!collabPerms.can_edit_page_design) {
+        return NextResponse.json({ error: 'You do not have permission to edit the wedding page design' }, { status: 403 })
+      }
     }
     
     const body = await request.json()

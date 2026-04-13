@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createServerSupabaseClient, getCollaboratorPermissions } from '@/lib/supabase-server'
 import { createDefaultPageConfig } from '@/lib/page-config'
 
 export const dynamic = 'force-dynamic'
@@ -39,6 +39,14 @@ export async function POST(
     const isCollaborator = wedding.collaborator_emails?.includes(user.email?.toLowerCase() || '')
     if (!isOwner && !isCollaborator) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    // Check granular permissions for collaborators
+    if (isCollaborator && !isOwner) {
+      const collabPerms = await getCollaboratorPermissions(wedding.id, user.email!)
+      if (!collabPerms.can_edit_page_design) {
+        return NextResponse.json({ error: 'You do not have permission to edit the wedding page design' }, { status: 403 })
+      }
     }
 
     // Check if website already exists

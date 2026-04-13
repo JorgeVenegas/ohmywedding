@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase-server"
+import { createServerSupabaseClient, createAdminSupabaseClient } from "@/lib/supabase-server"
 
 export async function GET(
   request: NextRequest,
@@ -10,10 +10,18 @@ export async function GET(
     const decodedWeddingId = decodeURIComponent(weddingId)
     const supabase = await createServerSupabaseClient()
 
+    // Authenticate
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const adminClient = createAdminSupabaseClient()
+
     // First, get the wedding UUID from the wedding_name_id
-    const { data: wedding, error: weddingError } = await supabase
+    const { data: wedding, error: weddingError } = await adminClient
       .from("weddings")
-      .select("id")
+      .select("id, owner_id, collaborator_emails")
       .eq("wedding_name_id", decodedWeddingId)
       .single()
 
@@ -21,21 +29,40 @@ export async function GET(
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
     }
 
+    // Authorize: owner, superuser, or collaborator
+    const isOwner = wedding.owner_id === user.id
+    const isCollaborator = wedding.collaborator_emails?.includes(user.email?.toLowerCase() || '') || false
+
+    let isSuperuser = false
+    if (user.email) {
+      const { data: superuserCheck } = await adminClient
+        .from('superusers')
+        .select('id')
+        .eq('email', user.email.toLowerCase())
+        .eq('is_active', true)
+        .single()
+      isSuperuser = !!superuserCheck
+    }
+
+    if (!isOwner && !isCollaborator && !isSuperuser) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
     // Get wedding settings
-    const { data: settings, error: settingsError } = await supabase
+    const { data: settings, error: settingsError } = await adminClient
       .from("wedding_settings")
       .select("*")
       .eq("wedding_id", wedding.id)
       .single()
 
     if (settingsError && settingsError.code !== "PGRST116") {
-      // PGRST116 = no rows returned
-      throw settingsError
+      console.error("[settings GET] Error fetching settings:", settingsError)
+      return NextResponse.json({ error: "Failed to fetch wedding settings" }, { status: 500 })
     }
 
     // If no settings exist, create default ones
     if (!settings) {
-      const { data: newSettings, error: insertError } = await supabase
+      const { data: newSettings, error: insertError } = await adminClient
         .from("wedding_settings")
         .insert({
           wedding_id: wedding.id,
@@ -51,13 +78,17 @@ export async function GET(
         .select()
         .single()
 
-      if (insertError) throw insertError
+      if (insertError) {
+        console.error("[settings GET] Error creating default settings:", insertError)
+        return NextResponse.json({ error: "Failed to create wedding settings" }, { status: 500 })
+      }
 
       return NextResponse.json({ settings: newSettings })
     }
 
     return NextResponse.json({ settings })
   } catch (error) {
+    console.error("[settings GET] Unexpected error:", error)
     return NextResponse.json(
       { error: "Failed to fetch wedding settings" },
       { status: 500 }
@@ -75,10 +106,18 @@ export async function PUT(
     const body = await request.json()
     const supabase = await createServerSupabaseClient()
 
+    // Authenticate
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const adminClient = createAdminSupabaseClient()
+
     // First, get the wedding UUID from the wedding_name_id
-    const { data: wedding, error: weddingError } = await supabase
+    const { data: wedding, error: weddingError } = await adminClient
       .from("weddings")
-      .select("id")
+      .select("id, owner_id, collaborator_emails")
       .eq("wedding_name_id", decodedWeddingId)
       .single()
 
@@ -86,12 +125,33 @@ export async function PUT(
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
     }
 
-    const { data, error } = await supabase
+    // Authorize: only owner or superuser can update settings
+    const isOwner = wedding.owner_id === user.id
+
+    let isSuperuser = false
+    if (user.email) {
+      const { data: superuserCheck } = await adminClient
+        .from('superusers')
+        .select('id')
+        .eq('email', user.email.toLowerCase())
+        .eq('is_active', true)
+        .single()
+      isSuperuser = !!superuserCheck
+    }
+
+    if (!isOwner && !isSuperuser) {
+      return NextResponse.json({ error: "Forbidden - only the owner can update settings" }, { status: 403 })
+    }
+
+    // Sanitize: strip any fields that shouldn't be user-settable
+    const { id, wedding_id, created_at, ...safeBody } = body
+
+    const { data, error } = await adminClient
       .from("wedding_settings")
       .upsert(
         {
           wedding_id: wedding.id,
-          ...body,
+          ...safeBody,
         },
         {
           onConflict: "wedding_id",
@@ -100,10 +160,14 @@ export async function PUT(
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error("[settings PUT] Error updating settings:", error)
+      return NextResponse.json({ error: "Failed to update wedding settings" }, { status: 500 })
+    }
 
     return NextResponse.json({ settings: data })
   } catch (error) {
+    console.error("[settings PUT] Unexpected error:", error)
     return NextResponse.json(
       { error: "Failed to update wedding settings" },
       { status: 500 }

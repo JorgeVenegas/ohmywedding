@@ -25,6 +25,42 @@ function getCookieDomain(host: string): string | undefined {
   return undefined
 }
 
+// Check granular collaborator permissions from the collaborator_permissions table
+// Returns the permission flags for a collaborator, or null if not a collaborator
+export async function getCollaboratorPermissions(
+  weddingId: string, // UUID
+  collaboratorEmail: string
+) {
+  const adminClient = createAdminSupabaseClient()
+  const { data: permissions } = await adminClient
+    .from('collaborator_permissions')
+    .select('*')
+    .eq('wedding_id', weddingId)
+    .eq('collaborator_email', collaboratorEmail.toLowerCase())
+    .single()
+
+  // Return defaults if no row exists (default: view-only)
+  if (!permissions) {
+    return {
+      can_edit_details: false,
+      can_edit_page_design: false,
+      can_manage_guests: false,
+      can_view_guests: true,
+      can_manage_invitations: false,
+      can_view_invitations: true,
+      can_manage_registry: false,
+      can_view_registry: true,
+      can_manage_gallery: false,
+      can_view_gallery: true,
+      can_manage_rsvps: false,
+      can_view_rsvps: true,
+      can_manage_collaborators: false,
+    }
+  }
+
+  return permissions
+}
+
 // Admin client with service role key that bypasses RLS
 export function createAdminSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!

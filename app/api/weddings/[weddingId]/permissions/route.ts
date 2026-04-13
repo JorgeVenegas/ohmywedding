@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createServerSupabaseClient, getCollaboratorPermissions } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -40,7 +40,7 @@ export async function GET(
     // Get wedding info
     const { data: wedding, error: weddingError } = await supabase
       .from('weddings')
-      .select('owner_id, is_demo')
+      .select('id, owner_id, is_demo')
       .eq('wedding_name_id', weddingId)
       .single()
 
@@ -101,17 +101,26 @@ export async function GET(
     if (isOwner || isSuperuser) role = 'owner'
     else if (isCollaborator) role = 'editor'
 
+    // For collaborators, fetch granular permissions
+    let granularPermissions = null
+    if (isCollaborator && !isOwner && !isSuperuser) {
+      granularPermissions = await getCollaboratorPermissions(wedding.id, user.email!)
+    }
+
     const permissions: WeddingPermissions = {
-      canEdit: isOwner || isCollaborator || isSuperuser,
+      canEdit: isOwner || isSuperuser || (isCollaborator && (granularPermissions?.can_edit_page_design ?? false)),
       canDelete: isOwner || isSuperuser,
-      canManageCollaborators: isOwner || isSuperuser,
+      canManageCollaborators: isOwner || isSuperuser || (isCollaborator && (granularPermissions?.can_manage_collaborators ?? false)),
       isOwner: isOwner || isSuperuser,
       isCollaborator,
       role,
       userId: user.id
     }
 
-    const response = NextResponse.json({ permissions })
+    const response = NextResponse.json({ 
+      permissions,
+      ...(granularPermissions ? { granularPermissions } : {})
+    })
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
     return response
 

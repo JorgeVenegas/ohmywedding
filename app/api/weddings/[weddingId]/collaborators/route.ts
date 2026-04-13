@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createServerSupabaseClient, getCollaboratorPermissions } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -31,11 +31,11 @@ export async function GET(
     }
 
     // Get wedding - first try with collaborator_emails, fallback to just owner_id
-    let wedding: { owner_id: string | null; collaborator_emails?: string[] } | null = null
+    let wedding: { id: string; owner_id: string | null; collaborator_emails?: string[] } | null = null
     
     const { data: weddingData, error } = await supabase
       .from('weddings')
-      .select('owner_id')
+      .select('id, owner_id')
       .eq('wedding_name_id', weddingId)
       .single()
 
@@ -43,7 +43,7 @@ export async function GET(
       return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
     }
 
-    wedding = { owner_id: weddingData.owner_id, collaborator_emails: [] }
+    wedding = { id: weddingData.id, owner_id: weddingData.owner_id, collaborator_emails: [] }
 
     // Try to get collaborator_emails if the column exists
     try {
@@ -78,6 +78,14 @@ export async function GET(
 
     if (!isOwner && !isCollaborator && !isSuperuser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Collaborators without can_manage_collaborators can only see their own status
+    if (isCollaborator && !isOwner && !isSuperuser) {
+      const collabPerms = await getCollaboratorPermissions(wedding!.id, user.email!)
+      if (!collabPerms.can_manage_collaborators) {
+        return NextResponse.json({ error: 'You do not have permission to view collaborators' }, { status: 403 })
+      }
     }
 
     return NextResponse.json({
