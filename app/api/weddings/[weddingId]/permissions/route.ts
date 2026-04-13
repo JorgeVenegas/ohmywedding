@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient, getCollaboratorPermissions } from '@/lib/supabase-server'
+import { createServerSupabaseClient, createAdminSupabaseClient, getCollaboratorPermissions } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -37,10 +37,12 @@ export async function GET(
       }
     }
 
-    // Get wedding info
-    const { data: wedding, error: weddingError } = await supabase
+    const adminClient = createAdminSupabaseClient()
+
+    // Get wedding info using admin client to avoid RLS issues
+    const { data: wedding, error: weddingError } = await adminClient
       .from('weddings')
-      .select('id, owner_id, is_demo')
+      .select('id, owner_id, is_demo, collaborator_emails')
       .eq('wedding_name_id', weddingId)
       .single()
 
@@ -48,21 +50,7 @@ export async function GET(
       return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
     }
 
-    // Try to get collaborator_emails if the column exists
-    let collaboratorEmails: string[] = []
-    try {
-      const { data: weddingWithCollabs } = await supabase
-        .from('weddings')
-        .select('collaborator_emails')
-        .eq('wedding_name_id', weddingId)
-        .single()
-      
-      if (weddingWithCollabs?.collaborator_emails) {
-        collaboratorEmails = weddingWithCollabs.collaborator_emails
-      }
-    } catch {
-      // Column doesn't exist yet, ignore
-    }
+    const collaboratorEmails: string[] = wedding.collaborator_emails || []
 
     // No user logged in - guests cannot edit
     if (!user) {
@@ -84,7 +72,7 @@ export async function GET(
     // Check if user is a superuser (has all permissions)
     let isSuperuser = false
     if (user.email) {
-      const { data: superuserCheck } = await supabase
+      const { data: superuserCheck } = await adminClient
         .from('superusers')
         .select('id')
         .eq('email', user.email.toLowerCase())

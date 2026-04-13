@@ -34,8 +34,10 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get wedding ID
-    const { data: wedding, error: weddingError } = await supabase
+    const adminClient = createAdminSupabaseClient()
+
+    // Get wedding ID using admin client to avoid RLS issues
+    const { data: wedding, error: weddingError } = await adminClient
       .from('weddings')
       .select('id, owner_id')
       .eq('wedding_name_id', weddingId)
@@ -47,16 +49,25 @@ export async function GET(
 
     const decodedEmail = decodeURIComponent(email).toLowerCase()
 
-    // Check if requesting user is owner or the collaborator themselves
+    // Check if requesting user is owner, superuser, or the collaborator themselves
     const isOwner = wedding.owner_id === user.id
     const isSelf = user.email?.toLowerCase() === decodedEmail
 
-    if (!isOwner && !isSelf) {
+    let isSuperuser = false
+    if (user.email) {
+      const { data: superuserCheck } = await adminClient
+        .from('superusers')
+        .select('id')
+        .eq('email', user.email.toLowerCase())
+        .eq('is_active', true)
+        .single()
+      isSuperuser = !!superuserCheck
+    }
+
+    if (!isOwner && !isSelf && !isSuperuser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    // Use admin client to bypass RLS — access is already verified above
-    const adminClient = createAdminSupabaseClient()
     const { data: permissions, error: permError } = await adminClient
       .from('collaborator_permissions')
       .select('*')
@@ -109,8 +120,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get wedding ID
-    const { data: wedding, error: weddingError } = await supabase
+    const adminClient = createAdminSupabaseClient()
+
+    // Get wedding ID using admin client to avoid RLS issues
+    const { data: wedding, error: weddingError } = await adminClient
       .from('weddings')
       .select('id, owner_id')
       .eq('wedding_name_id', weddingId)
@@ -120,8 +133,21 @@ export async function PUT(
       return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
     }
 
-    // Only owner can update permissions
-    if (wedding.owner_id !== user.id) {
+    // Only owner or superuser can update permissions
+    const isOwner = wedding.owner_id === user.id
+
+    let isSuperuser = false
+    if (user.email) {
+      const { data: superuserCheck } = await adminClient
+        .from('superusers')
+        .select('id')
+        .eq('email', user.email.toLowerCase())
+        .eq('is_active', true)
+        .single()
+      isSuperuser = !!superuserCheck
+    }
+
+    if (!isOwner && !isSuperuser) {
       return NextResponse.json({ error: 'Only the owner can update permissions' }, { status: 403 })
     }
 
@@ -129,8 +155,6 @@ export async function PUT(
     const body = await request.json()
     const permissions: Partial<CollaboratorPermissions> = body
 
-    // Use admin client to bypass RLS — ownership is already verified above
-    const adminClient = createAdminSupabaseClient()
     const { data, error: upsertError } = await adminClient
       .from('collaborator_permissions')
       .upsert({

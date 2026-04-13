@@ -109,36 +109,23 @@ export async function PUT(
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
     
-    // First, check if the wedding exists and get owner info
-    let existingWedding = null
-    const { data: weddingData, error: findError } = await supabase
-      .from('weddings')
-      .select('id, date_id, wedding_name_id, owner_id')
-      .eq('wedding_name_id', weddingId)
-      .single()
-
-    if (weddingData) {
-      existingWedding = weddingData
-    } else {
-      // Fallback: use admin client in case RLS is interfering
-      console.warn('[config PUT] Anon lookup failed, trying admin client:', { weddingId, error: findError?.message })
-      const adminClient = createAdminSupabaseClient()
-      const { data: adminWedding, error: adminError } = await adminClient
-        .from('weddings')
-        .select('id, date_id, wedding_name_id, owner_id')
-        .eq('wedding_name_id', weddingId)
-        .single()
-
-      if (adminError || !adminWedding) {
-        console.error('[config PUT] Wedding not found even with admin client:', { weddingId, error: adminError?.message })
-        return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
-      }
-      existingWedding = adminWedding
-    }
-    
     // Check permissions
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized - please log in' }, { status: 401 })
+    }
+
+    // Use admin client for all lookups to avoid RLS issues
+    const adminClient = createAdminSupabaseClient()
+    
+    // Get the wedding with owner and collaborator info
+    const { data: existingWedding, error: findError } = await adminClient
+      .from('weddings')
+      .select('id, date_id, wedding_name_id, owner_id, collaborator_emails')
+      .eq('wedding_name_id', weddingId)
+      .single()
+
+    if (findError || !existingWedding) {
+      return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
     }
     
     const isOwner = existingWedding.owner_id === user.id
@@ -146,7 +133,7 @@ export async function PUT(
     // Check if user is a superuser
     let isSuperuser = false
     if (user.email) {
-      const { data: superuserCheck } = await supabase
+      const { data: superuserCheck } = await adminClient
         .from('superusers')
         .select('id')
         .eq('email', user.email.toLowerCase())
@@ -156,20 +143,9 @@ export async function PUT(
     }
     
     // Check if user is a collaborator
-    let isCollaborator = false
-    try {
-      const { data: weddingWithCollabs } = await supabase
-        .from('weddings')
-        .select('collaborator_emails')
-        .eq('wedding_name_id', weddingId)
-        .single()
-      
-      if (weddingWithCollabs?.collaborator_emails && user.email) {
-        isCollaborator = weddingWithCollabs.collaborator_emails.includes(user.email.toLowerCase())
-      }
-    } catch {
-      // Column doesn't exist yet
-    }
+    const isCollaborator = user.email 
+      ? (existingWedding.collaborator_emails || []).includes(user.email.toLowerCase()) 
+      : false
     
     if (!isOwner && !isCollaborator && !isSuperuser) {
       return NextResponse.json({ error: 'Forbidden - you do not have permission to edit this wedding' }, { status: 403 })
@@ -191,8 +167,6 @@ export async function PUT(
     }
 
     // Validate config against wedding plan features
-    const adminClient = createAdminSupabaseClient()
-    
     // Get wedding plan
     const { data: weddingSubscription } = await adminClient
       .from('wedding_subscriptions')
