@@ -127,14 +127,20 @@ export function SectionSelectorModal({
   // Date-dependent sections that require a wedding date
   const dateDependentSections = ['countdown']
 
+  // Section types that can have more than one instance on the page
+  const multiInstanceTypes = ['banner']
+
   // Filter out already enabled sections and date-dependent sections if no date
   const availableSections = AVAILABLE_SECTIONS.filter(section => {
+    // Multi-instance sections are always available regardless of whether one already exists
+    if (multiInstanceTypes.includes(section.id)) return true
+
     // Skip if already enabled
     if (enabledComponents.includes(section.id)) return false
-    
+
     // Skip date-dependent sections if no wedding date is set
     if (!hasWeddingDate && dateDependentSections.includes(section.id)) return false
-    
+
     return true
   })
 
@@ -172,7 +178,7 @@ export function SectionSelectorModal({
           <div className="p-3 overflow-y-auto max-h-[50vh]">
             {availableSections.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                <p className="text-sm">All available sections have been added.</p>
+                <p className="text-sm">All sections have been added.</p>
               </div>
             ) : (
               <div className="space-y-2">

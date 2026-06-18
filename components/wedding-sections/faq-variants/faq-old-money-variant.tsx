@@ -154,8 +154,7 @@ export function FAQOldMoneyVariant({
             <p
               data-custom-font
               style={{
-                fontFamily: 'var(--font-heading, serif)',
-                fontStyle: 'italic',
+                fontFamily: 'var(--font-body, sans-serif)',
                 fontWeight: 300,
                 fontSize: '1.0625rem',
                 color: muted,

@@ -47,6 +47,7 @@ export function RegistrySection({
   customItems = [],
   showCustomRegistry = false,
   showDescription = true,
+  showMessage = true,
   cashRegistry,
   variant = 'cards',
   showVariantSwitcher = true,
@@ -110,6 +111,7 @@ export function RegistrySection({
     customItems,
     showCustomRegistry,
     showDescription,
+    showMessage,
     cashRegistry,
     useColorBackground,
     backgroundColorChoice
@@ -159,6 +161,7 @@ export function RegistrySection({
     customItems: config.customItems || customItems,
     showCustomRegistry: config.showCustomRegistry ?? showCustomRegistry,
     showDescription: config.showDescription ?? showDescription,
+    showMessage: config.showMessage ?? showMessage,
     cashRegistry: config.cashRegistry ?? cashRegistry,
     useColorBackground: config.useColorBackground ?? useColorBackground,
     backgroundColorChoice: config.backgroundColorChoice || backgroundColorChoice,
@@ -191,7 +194,10 @@ export function RegistrySection({
       registries: config.registries || registries,
       customItems: config.customItems || customItems,
       showCustomRegistry: config.showCustomRegistry ?? showCustomRegistry,
-      showDescription: config.showDescription ?? showDescription,      cashRegistry: config.cashRegistry ?? cashRegistry,      useColorBackground: config.useColorBackground ?? useColorBackground,
+      showDescription: config.showDescription ?? showDescription,
+      showMessage: config.showMessage ?? showMessage,
+      cashRegistry: config.cashRegistry ?? cashRegistry,
+      useColorBackground: config.useColorBackground ?? useColorBackground,
       backgroundColorChoice: config.backgroundColorChoice || backgroundColorChoice
     })
   }

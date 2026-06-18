@@ -212,22 +212,28 @@ function ConfigBasedWeddingRendererContent({
   }
 
   // Handler for adding new sections
+  // Section types that can have more than one instance on the page
+  const MULTI_INSTANCE_TYPES = ['banner']
+
   const handleAddSection = (position: number, sectionType: string) => {
+    const isMultiInstance = MULTI_INSTANCE_TYPES.includes(sectionType)
+
     // Check if the component already exists in the array
     const existingComponent = config.components.find(comp => comp.type === sectionType)
-    
+
     // Build the new list of enabled components in the correct order
     const newEnabledComponents = [...allComponents]
-    
-    if (existingComponent && !existingComponent.enabled) {
+
+    if (existingComponent && !existingComponent.enabled && !isMultiInstance) {
       // Component exists but is disabled, enable it and insert at position
       newEnabledComponents.splice(position, 0, { ...existingComponent, enabled: true })
-    } else if (!existingComponent) {
-      // Component doesn't exist, create a new one and insert at position
-      // For multiple instances of the same type, add a simple counter suffix
-      const existingOfType = config.components.filter(c => c.type === sectionType || c.id.startsWith(`${sectionType}-`))
-      const componentId = existingOfType.length > 0 ? `${sectionType}-${existingOfType.length + 1}` : sectionType
-      
+    } else if (!existingComponent || isMultiInstance) {
+      // Component doesn't exist, OR this type supports multiple instances — create a new one
+      // Use timestamp suffix to guarantee uniqueness across add/remove cycles
+      const componentId = existingComponent || isMultiInstance
+        ? `${sectionType}-${Date.now()}`
+        : sectionType
+
       const newComponent = {
         id: componentId,
         type: sectionType,
@@ -237,7 +243,7 @@ function ConfigBasedWeddingRendererContent({
       }
       newEnabledComponents.splice(position, 0, newComponent)
     } else {
-      // Component already exists and is enabled, do nothing
+      // Single-instance component already exists and is enabled, do nothing
       return
     }
     

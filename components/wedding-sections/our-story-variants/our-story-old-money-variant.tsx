@@ -69,10 +69,10 @@ export function OurStoryOldMoneyVariant({
     fontStyle: 'italic' as const,
     fontWeight: 400,
     fontSize: '3.75em',
-    lineHeight: 0.72,
-    float: 'left' as const,
-    marginRight: '0.1em',
-    marginTop: '0.05em',
+    lineHeight: 0.82,
+    display: 'inline-block' as const,
+    verticalAlign: 'baseline' as const,
+    marginRight: '0.07em',
     color: accent,
   }
 

@@ -70,7 +70,7 @@ export function DressCodeOldMoneyVariant({
                 fontFamily: 'var(--font-display, serif)',
                 fontStyle: 'italic',
                 fontWeight: 300,
-                fontSize: 'clamp(1.75rem, 3vw, 2.2rem)',
+                fontSize: 'clamp(2.25rem, 4vw, 3rem)',
                 color: muted,
                 lineHeight: 1.2,
                 marginBottom: '3rem',
