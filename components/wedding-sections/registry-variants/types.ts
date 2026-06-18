@@ -55,6 +55,7 @@ export interface BaseRegistryProps {
   customItems?: CustomRegistryItem[]
   showCustomRegistry?: boolean
   showDescription?: boolean
+  showMessage?: boolean
   cashRegistry?: CashRegistry
   useColorBackground?: boolean
   backgroundColorChoice?: BackgroundColorChoice

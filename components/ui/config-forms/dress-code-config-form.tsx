@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ImageUpload } from '@/components/ui/image-upload'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { BackgroundColorPicker, type BackgroundColorChoice } from './shared'
+import { VariantDropdown } from '@/components/ui/variant-dropdown'
 import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -26,6 +27,11 @@ interface DressCodeConfigFormProps {
 export function DressCodeConfigForm({ config, onChange }: DressCodeConfigFormProps) {
   const { t } = useI18n()
 
+  const variantOptions = [
+    { value: 'hacienda', label: 'Hacienda', description: 'Rustic hacienda-style dress code with botanical accents' },
+    { value: 'old-money', label: 'Old Money', description: 'Heraldic crest with letterpress-style dress code display' }
+  ]
+
   const images = config.images || []
 
   const addImage = (url: string) => {
@@ -39,6 +45,18 @@ export function DressCodeConfigForm({ config, onChange }: DressCodeConfigFormPro
 
   return (
     <div className="space-y-6">
+      {/* Variant Selection */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {t('config.variant')}
+        </label>
+        <VariantDropdown
+          options={variantOptions}
+          value={config.variant || 'hacienda'}
+          onChange={(value) => onChange('variant', value)}
+        />
+      </div>
+
       {/* Section Title */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">

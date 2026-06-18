@@ -8,6 +8,7 @@ import {
   GalleryListVariant,
   GalleryCollageVariant,
   GalleryHaciendaVariant,
+  GalleryOldMoneyVariant,
   BaseGalleryProps
 } from './gallery-variants'
 import { 
@@ -21,7 +22,7 @@ import { useI18n } from '@/components/contexts/i18n-context'
 type BackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
 
 interface GallerySectionProps extends Omit<BaseGalleryProps, 'backgroundColorChoice'> {
-  variant?: 'carousel' | 'masonry' | 'grid' | 'list' | 'collage' | 'hacienda'
+  variant?: 'carousel' | 'masonry' | 'grid' | 'list' | 'collage' | 'hacienda' | 'old-money'
   showVariantSwitcher?: boolean
   dateId?: string
   backgroundColorChoice?: BackgroundColorChoice
@@ -101,6 +102,12 @@ export function GallerySection({
       label: 'Hacienda',
       description: 'Hacienda-style masonry with archway frames',
       deluxeOnly: true
+    },
+    {
+      value: 'old-money',
+      label: 'Old Money',
+      description: 'Sepia-tinted grid with inset borders and antique gold hover accents',
+      deluxeOnly: true
     }
   ]
 
@@ -152,6 +159,8 @@ export function GallerySection({
         return <GalleryCollageVariant {...commonProps} />
       case 'hacienda':
         return <GalleryHaciendaVariant {...commonProps} />
+      case 'old-money':
+        return <GalleryOldMoneyVariant {...commonProps} />
       case 'grid':
       default:
         return <GalleryGridVariant {...commonProps} />

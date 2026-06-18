@@ -4,11 +4,12 @@ import React from 'react'
 import { type Wedding } from '@/lib/wedding-data'
 import { 
   HeroBackgroundVariant,
-  HeroSideBySideVariant, 
+  HeroSideBySideVariant,
   HeroFramedVariant,
   HeroMinimalVariant,
   HeroStackedVariant,
   HeroHaciendaVariant,
+  HeroOldMoneyVariant,
   BaseHeroProps
 } from './hero-variants'
 import { 
@@ -20,7 +21,7 @@ import {
 import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
 
 interface HeroSectionProps extends BaseHeroProps {
-  variant?: 'background' | 'side-by-side' | 'framed' | 'minimal' | 'stacked' | 'hacienda'
+  variant?: 'background' | 'side-by-side' | 'framed' | 'minimal' | 'stacked' | 'hacienda' | 'old-money'
   imagePosition?: 'left' | 'right' // for side-by-side variant
   frameStyle?: 'circular' | 'rounded' | 'square' | 'polaroid' // for framed variant
   imageSize?: 'small' | 'medium' | 'large' // for framed variant
@@ -39,6 +40,7 @@ interface HeroSectionProps extends BaseHeroProps {
   backgroundColorChoice?: 'primary' | 'secondary' | 'accent' // for side-by-side variant
   taglineTopPadding?: number // hacienda: top padding above lema
   taglineFontSize?: string // hacienda: font size of lema
+  textPosition?: 'top' | 'center' | 'bottom' // old-money: vertical text placement
 }
 
 export function HeroSection({
@@ -68,7 +70,8 @@ export function HeroSection({
   overlayOpacity = 40,
   imageBrightness = 100,
   useColorBackground = false,
-  backgroundColorChoice = 'primary'
+  backgroundColorChoice = 'primary',
+  textPosition = 'bottom'
 }: HeroSectionProps) {
   // Check if hero image is provided
   const hasHeroImage = !!heroImageUrl && heroImageUrl.trim() !== ''
@@ -135,6 +138,12 @@ export function HeroSection({
       label: 'Hacienda',
       description: 'Dark botanical overlay with filigree corners and elegant accents',
       deluxeOnly: true
+    },
+    {
+      value: 'old-money',
+      label: 'Old Money',
+      description: 'Dark ink overlay with engraved double-rule border frame and laurel crest',
+      deluxeOnly: true
     }
   ]
 
@@ -167,7 +176,8 @@ export function HeroSection({
     useColorBackground,
     backgroundColorChoice,
     taglineTopPadding: 0,
-    taglineFontSize: 'sm'
+    taglineFontSize: 'sm',
+    textPosition: 'bottom'
   })
 
   // Helper to check if tagline is an old hardcoded English default
@@ -273,11 +283,25 @@ export function HeroSection({
             taglineFontSize={config.taglineFontSize ?? 'sm'}
           />
         )
+      case 'old-money':
+        return (
+          <HeroOldMoneyVariant
+            {...commonProps}
+            overlayOpacity={config.overlayOpacity ?? 55}
+            imageBrightness={config.imageBrightness ?? 75}
+            backgroundGradient={config.backgroundGradient ?? false}
+            gradientColor1={config.gradientColor1}
+            gradientColor2={config.gradientColor2}
+            taglineTopPadding={config.taglineTopPadding ?? 0}
+            taglineFontSize={config.taglineFontSize ?? 'sm'}
+            textPosition={config.textPosition ?? 'bottom'}
+          />
+        )
       case 'background':
       default:
         return (
-          <HeroBackgroundVariant 
-            {...commonProps} 
+          <HeroBackgroundVariant
+            {...commonProps}
             overlayOpacity={config.overlayOpacity ?? 40}
             backgroundGradient={config.backgroundGradient ?? false}
             gradientColor1={config.gradientColor1}
@@ -321,7 +345,8 @@ export function HeroSection({
         useColorBackground: config.useColorBackground ?? useColorBackground,
         backgroundColorChoice: config.backgroundColorChoice || backgroundColorChoice,
         taglineTopPadding: config.taglineTopPadding ?? 0,
-        taglineFontSize: config.taglineFontSize ?? 'sm'
+        taglineFontSize: config.taglineFontSize ?? 'sm',
+        textPosition: config.textPosition ?? 'bottom'
       }
       customizeContext.openCustomizer(sectionId, sectionType, configToPass)
     }

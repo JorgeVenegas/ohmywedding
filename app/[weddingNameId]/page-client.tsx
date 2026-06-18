@@ -7,6 +7,7 @@ import { PageConfigProvider, usePageConfig } from "@/components/contexts/page-co
 import { I18nProvider, useTranslation } from "@/components/contexts/i18n-context"
 import { EnvelopeProvider, useEnvelope } from "@/components/contexts/envelope-context"
 import { HaciendaEnvelope } from "@/components/envelope/hacienda-envelope"
+import { OldMoneyEnvelope } from "@/components/envelope/old-money-envelope"
 import { notFound, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Wedding } from "@/lib/wedding-data"
@@ -42,7 +43,7 @@ interface EnvelopeContentProps {
   coupleInitials: string
   weddingDate: string
   guestGroup: GuestGroup | null
-  variant?: 'classic' | 'hacienda'
+  variant?: 'classic' | 'hacienda' | 'old-money'
   decorationImageUrl?: string
   decorationSize?: 'sm' | 'md' | 'lg' | 'xl'
   namesSize?: 'sm' | 'md' | 'lg' | 'xl'
@@ -65,7 +66,7 @@ function EnvelopeContent({
   coupleInitials,
   weddingDate,
   guestGroup,
-  variant = 'classic',
+  variant = 'classic' as 'classic' | 'hacienda' | 'old-money',
   decorationImageUrl,
   decorationSize,
   namesSize,
@@ -76,6 +77,30 @@ function EnvelopeContent({
   if (variant === 'hacienda') {
     return (
       <HaciendaEnvelope
+        envelopeFalling={envelopeFalling}
+        envelopeOpening={envelopeOpening}
+        handleEnvelopeClick={handleEnvelopeClick}
+        primaryColor={primaryColor}
+        secondaryColor={secondaryColor}
+        textColor={textColor}
+        secondaryTextColor={secondaryTextColor}
+        displayFontFamily={displayFontFamily}
+        bodyFontFamily={bodyFontFamily}
+        coupleNames={coupleNames}
+        coupleInitials={coupleInitials}
+        weddingDate={weddingDate}
+        guestGroup={guestGroup}
+        decorationImageUrl={decorationImageUrl}
+        decorationSize={decorationSize}
+        namesSize={namesSize}
+        decorationVerticalPos={decorationVerticalPos}
+      />
+    )
+  }
+
+  if (variant === 'old-money') {
+    return (
+      <OldMoneyEnvelope
         envelopeFalling={envelopeFalling}
         envelopeOpening={envelopeOpening}
         handleEnvelopeClick={handleEnvelopeClick}
@@ -175,13 +200,13 @@ function EnvelopeContent({
             
             <div className="mb-4 sm:mb-8">
               {coupleInitials && coupleInitials.includes('<span') ? (
-                <h1 
-                  className="font-serif text-6xl sm:text-8xl md:text-9xl mb-3 sm:mb-6 drop-shadow-lg" 
-                  style={{ color: textColor }}
+                <h1
+                  className="font-serif text-6xl sm:text-8xl md:text-9xl mb-3 sm:mb-6 drop-shadow-lg"
+                  style={{ color: textColor, fontFamily: displayFontFamily }}
                   dangerouslySetInnerHTML={{ __html: coupleInitials }}
                 />
               ) : (
-                <h1 className="font-serif text-6xl sm:text-8xl md:text-9xl mb-3 sm:mb-6 drop-shadow-lg" style={{ color: textColor }}>
+                <h1 className="font-serif text-6xl sm:text-8xl md:text-9xl mb-3 sm:mb-6 drop-shadow-lg" style={{ color: textColor, fontFamily: displayFontFamily }}>
                   {coupleInitials || "You're Invited"}
                 </h1>
               )}
@@ -495,24 +520,25 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
   // Enable variant switchers based on demo mode or default to editing enabled
   const showVariantSwitchers = isDemoMode || true
 
+  // Format wedding date using locale from wedding page_config and UTC to avoid timezone issues
+  const locale = wedding.page_config?.siteSettings?.locale || 'en'
+  const conjunction = locale === 'es' ? 'Y' : '&'
+
   // Build couple names for envelope
   const partner1Names = [wedding.partner1_first_name, wedding.partner1_last_name].filter(Boolean)
   const partner2Names = [wedding.partner2_first_name, wedding.partner2_last_name].filter(Boolean)
   const partner1 = partner1Names.join(' ')
   const partner2 = partner2Names.join(' ')
-  const coupleNames = [partner1, partner2].filter(Boolean).join(' & ')
-  
+  const coupleNames = [partner1, partner2].filter(Boolean).join(` ${conjunction} `)
+
   // Get initials for envelope display
   const partner1Initial = wedding.partner1_first_name?.charAt(0)?.toUpperCase() || ''
   const partner2Initial = wedding.partner2_first_name?.charAt(0)?.toUpperCase() || ''
-  const coupleInitials = partner1Initial && partner2Initial 
-    ? `${partner1Initial}${partner2Initial}`.split('').map((char, idx) => 
-        idx === 1 ? `<span class="text-[0.6em]">&</span>${char}` : char
+  const coupleInitials = partner1Initial && partner2Initial
+    ? `${partner1Initial}${partner2Initial}`.split('').map((char, idx) =>
+        idx === 1 ? `<span class="text-[0.6em]">${conjunction}</span>${char}` : char
       ).join('')
     : [partner1Initial, partner2Initial].filter(Boolean).join(' ')
-  
-  // Format wedding date using locale from wedding page_config and UTC to avoid timezone issues
-  const locale = wedding.page_config?.siteSettings?.locale || 'en'
   const weddingDate = wedding.wedding_date ? (() => {
     // Parse as UTC to avoid timezone shift
     const [year, month, day] = wedding.wedding_date.split('-').map(Number)
@@ -529,7 +555,7 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
   const hasEnvelope = true
 
   return (
-    <>
+    <I18nProvider initialLocale={locale}>
       <EnvelopeProvider hasEnvelope={hasEnvelope}>
         <PageConfigProvider weddingNameId={weddingNameId}>
           <WeddingContentWithCurtain
@@ -548,7 +574,7 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
           />
         </PageConfigProvider>
       </EnvelopeProvider>
-    </>
+    </I18nProvider>
   )
 }
 
@@ -585,6 +611,16 @@ function WeddingContentWithCurtain({
   const [curtainFalling, setCurtainFalling] = useState(false)
   const [curtainComplete, setCurtainComplete] = useState(false)
   const [curtainColor, setCurtainColor] = useState('#c9a961') // Start with golden
+
+  // Re-format date using the LIVE config locale (weddingDate prop was formatted with the stale DB locale)
+  const liveLocale = config.siteSettings.locale || 'en'
+  const liveWeddingDate = wedding.wedding_date ? (() => {
+    const [year, month, day] = wedding.wedding_date.split('-').map(Number)
+    const date = new Date(Date.UTC(year, month - 1, day))
+    return new Intl.DateTimeFormat(liveLocale === 'es' ? 'es-ES' : 'en-US', {
+      year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC',
+    }).format(date)
+  })() : weddingDate
 
   // Calculate envelope color
   const getEnvelopeColor = (): string => {
@@ -666,14 +702,14 @@ function WeddingContentWithCurtain({
 
       {/* Envelope screen with parallel animations */}
       {showEnvelope && !envelopeComplete && (
-        <EnvelopeWithI18n 
+        <EnvelopeWithI18n
           isMobile={isMobile}
           envelopeFalling={envelopeFalling}
           envelopeOpening={envelopeOpening}
           handleEnvelopeClick={handleEnvelopeClick}
           coupleNames={coupleNames}
           coupleInitials={coupleInitials}
-          weddingDate={weddingDate}
+          weddingDate={liveWeddingDate}
           guestGroup={guestGroup}
         />
       )}

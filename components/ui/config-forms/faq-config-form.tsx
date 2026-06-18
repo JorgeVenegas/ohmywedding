@@ -153,7 +153,8 @@ export function FAQConfigForm({ config, onChange }: FAQConfigFormProps) {
     { value: 'cards', label: t('config.cardsGrid'), description: t('config.cardsGridDesc') },
     { value: 'elegant', label: t('config.elegant'), description: t('config.elegantScriptDesc') },
     { value: 'simple', label: t('config.simpleList'), description: t('config.simpleListDesc') },
-    { value: 'hacienda', label: 'Hacienda', description: 'Elegant hacienda-style FAQ with iron accents' }
+    { value: 'hacienda', label: 'Hacienda', description: 'Elegant hacienda-style FAQ with iron accents' },
+    { value: 'old-money', label: 'Old Money', description: 'Roman-numeral accordion with framed border and antique gold rules' }
   ]
 
   const currentChoice = config.backgroundColorChoice || (config.useColorBackground ? 'primary' : 'none')

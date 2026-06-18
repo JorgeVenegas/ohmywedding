@@ -170,6 +170,11 @@ export function GalleryConfigForm({ config, onChange, weddingNameId }: GalleryCo
       value: 'hacienda',
       label: 'Hacienda',
       description: 'Hacienda-style tight collage gallery'
+    },
+    {
+      value: 'old-money',
+      label: 'Old Money',
+      description: 'Sepia-tinted gallery with letterpress inset frames'
     }
   ]
 

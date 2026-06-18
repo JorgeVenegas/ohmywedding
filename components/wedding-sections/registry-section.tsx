@@ -7,6 +7,7 @@ import {
   RegistryElegantVariant,
   RegistryGridVariant,
   RegistryHaciendaVariant,
+  RegistryOldMoneyVariant,
   BaseRegistryProps
 } from './registry-variants'
 import { 
@@ -30,7 +31,7 @@ function isOldHardcodedDefault(value: string | undefined, type: 'title' | 'subti
 }
 
 interface RegistrySectionProps extends BaseRegistryProps {
-  variant?: 'cards' | 'minimal' | 'elegant' | 'grid' | 'hacienda'
+  variant?: 'cards' | 'minimal' | 'elegant' | 'grid' | 'hacienda' | 'old-money'
   showVariantSwitcher?: boolean
   showDescription?: boolean
   weddingNameId?: string
@@ -90,6 +91,12 @@ export function RegistrySection({
       value: 'hacienda',
       label: 'Hacienda',
       description: 'Elegant hacienda-style registry cards',
+      deluxeOnly: true
+    },
+    {
+      value: 'old-money',
+      label: 'Old Money',
+      description: 'Letterpress-styled registry list with engraved borders',
       deluxeOnly: true
     }
   ]
@@ -168,6 +175,8 @@ export function RegistrySection({
         return <RegistryGridVariant {...commonProps} />
       case 'hacienda':
         return <RegistryHaciendaVariant {...commonProps} />
+      case 'old-money':
+        return <RegistryOldMoneyVariant {...commonProps} />
       case 'cards':
       default:
         return <RegistryCardsVariant {...commonProps} />

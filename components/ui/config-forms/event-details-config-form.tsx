@@ -65,6 +65,8 @@ interface EventDetailsConfigFormProps {
     ceremonyDescription?: string
     receptionDescription?: string
     dayLabels?: Record<string, string>
+    iconWeight?: 'fine' | 'light' | 'regular' | 'bold'
+    iconSize?: 'sm' | 'md' | 'lg' | 'xl'
   }
   wedding?: {
     partner1_first_name?: string
@@ -255,6 +257,7 @@ export function EventDetailsConfigForm({ config, wedding, onChange }: EventDetai
             { value: 'minimal', label: t('config.minimalClean'), description: t('config.minimalCleanDesc') },
             { value: 'split', label: t('config.splitLayout'), description: t('config.splitLayoutDesc') },
             { value: 'hacienda', label: 'Hacienda', description: 'Hacienda-style event details with medallions' },
+            { value: 'old-money', label: 'Old Money', description: 'Framed event cards with antique gold rules and double hairlines' },
           ]}
         />
       </div>
@@ -398,6 +401,57 @@ export function EventDetailsConfigForm({ config, wedding, onChange }: EventDetai
         )}
       </div>
 
+      {/* Icon Scale — old-money only */}
+      {config.variant === 'old-money' && (
+        <div className="p-4 border border-gray-200 rounded-lg space-y-4">
+          <h4 className="font-medium text-gray-900 text-sm">Icon Appearance</h4>
+
+          <div className="space-y-2">
+            <label className="block text-xs text-gray-500 uppercase tracking-wide">Size</label>
+            <div className="flex gap-2">
+              {([
+                { value: 'sm', label: 'Small' },
+                { value: 'md', label: 'Medium' },
+                { value: 'lg', label: 'Large' },
+                { value: 'xl', label: 'X-Large' },
+              ] as const).map(({ value, label }) => (
+                <Button
+                  key={value}
+                  variant={(config.iconSize ?? 'lg') === value ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 text-xs"
+                  onClick={() => onChange('iconSize', value)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-xs text-gray-500 uppercase tracking-wide">Weight</label>
+            <div className="flex gap-2">
+              {([
+                { value: 'fine', label: 'Fine' },
+                { value: 'light', label: 'Light' },
+                { value: 'regular', label: 'Regular' },
+                { value: 'bold', label: 'Bold' },
+              ] as const).map(({ value, label }) => (
+                <Button
+                  key={value}
+                  variant={(config.iconWeight ?? 'regular') === value ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 text-xs"
+                  onClick={() => onChange('iconWeight', value)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Events Management */}
       <div className="p-4 border border-gray-200 rounded-lg space-y-4">
         <div className="flex items-center justify-between">
@@ -528,6 +582,59 @@ export function EventDetailsConfigForm({ config, wedding, onChange }: EventDetai
                         placeholder={t(`eventDetails.eventTypes.${event.type}`)}
                       />
                     </div>
+
+                    {/* Icon picker — old-money only */}
+                    {config.variant === 'old-money' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Icon
+                        </label>
+                        <div className="flex gap-2 flex-wrap">
+                          {[
+                            '/assets/Icons/Asset%201.svg',
+                            '/assets/Icons/Asset%202.svg',
+                            '/assets/Icons/Asset%203.svg',
+                            '/assets/Icons/Asset%204.svg',
+                            '/assets/Icons/Asset%205.svg',
+                            '/assets/Icons/Asset%206.svg',
+                            '/assets/Icons/Asset%207.svg',
+                            '/assets/Icons/Bouquet.svg',
+                            '/assets/Icons/BrideGroom.svg',
+                            '/assets/Icons/Camera.svg',
+                            '/assets/Icons/Chruch.svg',
+                            '/assets/Icons/Dresscode.svg',
+                            '/assets/Icons/Rings.svg',
+                            '/assets/Icons/Shoes.svg',
+                            '/assets/Icons/Toast.svg',
+                          ].map((src, i) => {
+                            const selected = (event.iconIndex ?? index % 15) === i
+                            return (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => updateEvent(index, 'iconIndex', i)}
+                                className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center transition-all ${
+                                  selected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
+                                }`}
+                              >
+                                <div
+                                  style={{
+                                    width: '24px',
+                                    height: '24px',
+                                    maskImage: `url('${src}')`,
+                                    WebkitMaskImage: `url('${src}')`,
+                                    maskSize: 'contain',
+                                    maskRepeat: 'no-repeat',
+                                    maskPosition: 'center',
+                                    backgroundColor: selected ? '#3b82f6' : '#6b7280',
+                                  }}
+                                />
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Use Wedding Date Toggle */}
                     <div className="flex items-center justify-between">

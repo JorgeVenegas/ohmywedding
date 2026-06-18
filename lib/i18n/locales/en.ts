@@ -197,6 +197,8 @@ export const en: Translations = {
     confirmAttendance: 'Confirm Attendance',
     declineWithRegrets: 'Decline with Regrets',
     guestOf: 'Guest of',
+    guest: 'guest',
+    guests: 'guests',
     plusOne: 'Plus One',
     children: 'Children',
     adultsOnly: 'Adults Only',

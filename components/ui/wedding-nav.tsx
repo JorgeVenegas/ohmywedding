@@ -160,7 +160,7 @@ export function WeddingNav({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const rafRef = useRef<number | null>(null)
   const navRef = useRef<HTMLElement | null>(null)
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
 
   // Section labels mapping using i18n
   const getSectionLabel = (sectionId: string): string => {
@@ -272,7 +272,7 @@ export function WeddingNav({
   const person1Initial = getInitial(person1Name)
   const person2Initial = getInitial(person2Name)
   const initials = person1Initial && person2Initial
-    ? `${person1Initial}<span style="font-size: 0.7em; margin: 0 0.1em;">&</span>${person2Initial}`
+    ? `${person1Initial}<span style="font-size: 0.7em; margin: 0 0.1em;">${locale === 'es' ? 'Y' : '&'}</span>${person2Initial}`
     : [person1Initial, person2Initial].filter(Boolean).join('')
 
   // Valid section ids that we support in navigation

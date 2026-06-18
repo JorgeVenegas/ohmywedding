@@ -424,6 +424,28 @@ export const FONT_PAIRING_CATEGORIES: FontPairingCategory[] = [
         googleFonts: 'Lora:wght@400;600&family=Merriweather:wght@300;400;700'
       },
       {
+        id: 'perandory-editorial',
+        name: 'Perandory Editorial',
+        display: 'Perandory',
+        heading: 'Cormorant Garamond',
+        body: 'Lato',
+        displayFamily: '"Perandory", serif',
+        headingFamily: '"Cormorant Garamond", serif',
+        bodyFamily: '"Lato", sans-serif',
+        googleFonts: 'Cormorant+Garamond:wght@400;600&family=Lato:wght@300;400;700'
+      },
+      {
+        id: 'perandory-modern',
+        name: 'Perandory Modern',
+        display: 'Perandory',
+        heading: 'Montserrat',
+        body: 'Open Sans',
+        displayFamily: '"Perandory", serif',
+        headingFamily: '"Montserrat", sans-serif',
+        bodyFamily: '"Open Sans", sans-serif',
+        googleFonts: 'Montserrat:wght@400;600&family=Open+Sans:wght@300;400;600'
+      },
+      {
         id: 'artistic-bold',
         name: 'Artistic Bold',
         display: 'Abril Fatface',
@@ -537,6 +559,9 @@ export const FONT_PAIRINGS: FontPairing[] = FONT_PAIRING_CATEGORIES.flatMap(cat 
 // Available fonts list for individual selection
 export const AVAILABLE_FONTS: AvailableFont[] = [
   // Custom/Display fonts
+  { name: 'Glamour', family: "'Glamour', serif", category: 'Display' },
+  { name: 'Perandory', family: "'Perandory', serif", category: 'Display' },
+  { name: 'Symphony Pro', family: "'Symphony Pro', serif", category: 'Display' },
   { name: 'Beacon Aesthetic', family: '"Beacon Aesthetic", serif', category: 'Display' },
   { name: 'Macker', family: '"Macker", sans-serif', category: 'Display' },
   { name: 'Milven', family: '"Milven", serif', category: 'Display' },
@@ -546,6 +571,7 @@ export const AVAILABLE_FONTS: AvailableFont[] = [
   { name: 'Bodoni Moda', family: '"Bodoni Moda", serif', category: 'Display' },
   { name: 'Cinzel', family: '"Cinzel", serif', category: 'Display' },
   // Calligraphic/Script fonts
+  { name: 'Aston Script', family: "'Aston Script', cursive", category: 'Calligraphic' },
   { name: 'Brittany Signature', family: '"Brittany Signature", cursive', category: 'Calligraphic' },
   { name: 'Arabilla Signature', family: '"Arabilla Signature", cursive', category: 'Calligraphic' },
   { name: 'Autographer', family: '"Autographer", cursive', category: 'Calligraphic' },

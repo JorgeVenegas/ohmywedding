@@ -42,13 +42,28 @@ export async function POST(request: Request) {
         }
 
         // Check page config for requirePhoneVerification setting
+        // Try wedding_websites first, fall back to legacy weddings.page_config
         const { data: website } = await supabaseAdmin
           .from('wedding_websites')
           .select('page_config')
           .eq('wedding_id', groupCheck.wedding_id)
           .single()
 
-        const pageConfig = website?.page_config as Record<string, any> | null
+        let pageConfig = website?.page_config as Record<string, any> | null
+
+        // Fallback: older weddings may store config in weddings.page_config
+        if (!pageConfig || (pageConfig.sectionConfigs?.rsvp?.requirePhoneVerification === undefined)) {
+          const { data: legacyWedding } = await supabaseAdmin
+            .from('weddings')
+            .select('page_config')
+            .eq('id', groupCheck.wedding_id)
+            .single()
+          const legacyConfig = legacyWedding?.page_config as Record<string, any> | null
+          if (legacyConfig?.sectionConfigs?.rsvp?.requirePhoneVerification !== undefined) {
+            pageConfig = legacyConfig
+          }
+        }
+
         const rsvpConfig = pageConfig?.sectionConfigs?.rsvp || {}
         const requirePhoneVerification = rsvpConfig.requirePhoneVerification ?? true
 

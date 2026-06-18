@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ImageUpload } from '@/components/ui/image-upload'
 import { useI18n } from '@/components/contexts/i18n-context'
 import { BackgroundColorPicker, type BackgroundColorChoice } from './shared'
+import { VariantDropdown } from '@/components/ui/variant-dropdown'
 import { Trash2, Plus, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -23,6 +24,7 @@ interface HotelItem {
 
 interface HotelSuggestionsConfigFormProps {
   config: {
+    variant?: string
     sectionTitle?: string
     sectionSubtitle?: string
     hotels?: HotelItem[]
@@ -31,6 +33,11 @@ interface HotelSuggestionsConfigFormProps {
   }
   onChange: (key: string, value: unknown) => void
 }
+
+const variantOptions = [
+  { value: 'hacienda', label: 'Hacienda', description: 'Rustic hacienda-style hotel cards with warm tones' },
+  { value: 'old-money', label: 'Old Money', description: 'Side-image hotel cards with letterpress borders and booking codes' }
+]
 
 export function HotelSuggestionsConfigForm({ config, onChange }: HotelSuggestionsConfigFormProps) {
   const { t } = useI18n()
@@ -58,6 +65,18 @@ export function HotelSuggestionsConfigForm({ config, onChange }: HotelSuggestion
 
   return (
     <div className="space-y-6">
+      {/* Variant Selection */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {t('config.variant')}
+        </label>
+        <VariantDropdown
+          options={variantOptions}
+          value={config.variant || 'hacienda'}
+          onChange={(value) => onChange('variant', value)}
+        />
+      </div>
+
       {/* Section Title */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">

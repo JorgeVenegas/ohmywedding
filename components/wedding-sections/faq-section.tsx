@@ -8,6 +8,7 @@ import {
   FAQElegantVariant,
   FAQSimpleVariant,
   FAQHaciendaVariant,
+  FAQOldMoneyVariant,
   BaseFAQProps
 } from './faq-variants'
 import { 
@@ -31,7 +32,7 @@ function isOldHardcodedDefault(value: string | undefined, type: 'title' | 'subti
 }
 
 interface FAQSectionProps extends BaseFAQProps {
-  variant?: 'accordion' | 'minimal' | 'cards' | 'elegant' | 'simple' | 'hacienda'
+  variant?: 'accordion' | 'minimal' | 'cards' | 'elegant' | 'simple' | 'hacienda' | 'old-money'
   showVariantSwitcher?: boolean
 }
 
@@ -89,6 +90,12 @@ export function FAQSection({
       value: 'hacienda',
       label: 'Hacienda',
       description: 'Botanical hacienda-themed FAQ with ornamental dividers',
+      deluxeOnly: true
+    },
+    {
+      value: 'old-money',
+      label: 'Old Money',
+      description: 'Roman-numeral accordion with framed border and antique gold rules',
       deluxeOnly: true
     }
   ]
@@ -164,6 +171,8 @@ export function FAQSection({
         return <FAQSimpleVariant {...commonProps} />
       case 'hacienda':
         return <FAQHaciendaVariant {...commonProps} />
+      case 'old-money':
+        return <FAQOldMoneyVariant {...commonProps} />
       case 'accordion':
       default:
         return <FAQAccordionVariant {...commonProps} />

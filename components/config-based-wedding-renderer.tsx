@@ -141,33 +141,33 @@ function ConfigBasedWeddingRendererContent({
     config.siteSettings.theme?.colors?.accent
   ])
 
-  // Load Google Fonts dynamically when fonts change
+  // Load Google Fonts and update CSS variables when fonts change
   React.useEffect(() => {
     const fonts = config.siteSettings.theme?.fonts
-    if (fonts?.googleFonts) {
-      // Remove existing font link if any
+    if (!fonts) return
+
+    // Always update CSS variables — regardless of whether it's a Google Font or local font
+    if (fonts.displayFamily) {
+      document.documentElement.style.setProperty('--font-display', fonts.displayFamily)
+    }
+    if (fonts.headingFamily) {
+      document.documentElement.style.setProperty('--font-heading', fonts.headingFamily)
+    }
+    if (fonts.bodyFamily) {
+      document.documentElement.style.setProperty('--font-body', fonts.bodyFamily)
+    }
+
+    // Only fetch Google Fonts stylesheet when needed
+    if (fonts.googleFonts) {
       const existingLink = document.getElementById('custom-google-fonts')
       if (existingLink) {
         existingLink.remove()
       }
-      
-      // Add new font link
       const link = document.createElement('link')
       link.id = 'custom-google-fonts'
       link.rel = 'stylesheet'
       link.href = `https://fonts.googleapis.com/css2?family=${fonts.googleFonts}&display=swap`
       document.head.appendChild(link)
-      
-      // Apply fonts to CSS variables
-      if (fonts.displayFamily) {
-        document.documentElement.style.setProperty('--font-display', fonts.displayFamily)
-      }
-      if (fonts.headingFamily) {
-        document.documentElement.style.setProperty('--font-heading', fonts.headingFamily)
-      }
-      if (fonts.bodyFamily) {
-        document.documentElement.style.setProperty('--font-body', fonts.bodyFamily)
-      }
     }
   }, [
     config.siteSettings.theme?.fonts?.googleFonts,

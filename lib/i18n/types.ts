@@ -199,6 +199,8 @@ export interface Translations {
     confirmAttendance: string
     declineWithRegrets: string
     guestOf: string
+    guest: string
+    guests: string
     plusOne: string
     children: string
     adultsOnly: string

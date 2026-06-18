@@ -8,6 +8,7 @@ import {
   EventDetailsMinimalVariant,
   EventDetailsSplitVariant,
   EventDetailsHaciendaVariant,
+  EventDetailsOldMoneyVariant,
   BaseEventDetailsProps
 } from './event-details-variants'
 import { 
@@ -21,7 +22,7 @@ import { useI18n } from '@/components/contexts/i18n-context'
 type BackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
 
 interface EventDetailsSectionProps extends Omit<BaseEventDetailsProps, 'backgroundColorChoice'> {
-  variant?: 'classic' | 'elegant' | 'timeline' | 'minimal' | 'split' | 'hacienda'
+  variant?: 'classic' | 'elegant' | 'timeline' | 'minimal' | 'split' | 'hacienda' | 'old-money'
   showVariantSwitcher?: boolean
   dateId?: string
   showPhotos?: boolean
@@ -94,6 +95,12 @@ export function EventDetailsSection({
       label: 'Hacienda',
       description: 'Vertical timeline with charro-inspired styling and botanical accents',
       deluxeOnly: true
+    },
+    {
+      value: 'old-money',
+      label: 'Old Money',
+      description: 'Framed event cards with engraved rules and antique gold accents',
+      deluxeOnly: true
     }
   ]
 
@@ -117,7 +124,9 @@ export function EventDetailsSection({
     venueImageUrl: undefined as string | undefined,
     mapAddress: undefined as string | undefined,
     ceremonyTextAlignment: 'center',
-    receptionTextAlignment: 'center'
+    receptionTextAlignment: 'center',
+    iconWeight: 'regular',
+    iconSize: 'lg'
   })
 
   const commonProps = {
@@ -145,7 +154,9 @@ export function EventDetailsSection({
     backgroundColorChoice: config.backgroundColorChoice || 'none',
     ceremonyTextAlignment: config.ceremonyTextAlignment || 'center',
     receptionTextAlignment: config.receptionTextAlignment || 'center',
-    dayLabels: config.dayLabels || dayLabels
+    dayLabels: config.dayLabels || dayLabels,
+    iconWeight: config.iconWeight ?? 'regular',
+    iconSize: config.iconSize ?? 'lg'
   }
 
   const renderEventDetailsContent = (activeVariant: string) => {
@@ -160,6 +171,8 @@ export function EventDetailsSection({
         return <EventDetailsSplitVariant {...commonProps} />
       case 'hacienda':
         return <EventDetailsHaciendaVariant {...commonProps} />
+      case 'old-money':
+        return <EventDetailsOldMoneyVariant {...commonProps} />
       case 'classic':
       default:
         return <EventDetailsClassicVariant {...commonProps} />

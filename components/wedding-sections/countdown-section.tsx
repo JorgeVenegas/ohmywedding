@@ -8,6 +8,7 @@ import {
   CountdownElegantVariant,
   CountdownModernVariant,
   CountdownHaciendaVariant,
+  CountdownOldMoneyVariant,
   BaseCountdownProps
 } from './countdown-variants'
 import { 
@@ -29,7 +30,7 @@ function isOldHardcodedDefault(value: string | undefined): boolean {
 }
 
 interface CountdownSectionProps extends BaseCountdownProps {
-  variant?: 'classic' | 'minimal' | 'circular' | 'elegant' | 'modern' | 'hacienda'
+  variant?: 'classic' | 'minimal' | 'circular' | 'elegant' | 'modern' | 'hacienda' | 'old-money'
   showVariantSwitcher?: boolean
 }
 
@@ -95,6 +96,12 @@ export function CountdownSection({
       label: 'Hacienda',
       description: 'Warm botanical elegance with ornamental flourishes - exclusive deluxe design',
       deluxeOnly: true
+    },
+    {
+      value: 'old-money',
+      label: 'Old Money',
+      description: 'Engraved framed numbers with double-rule borders and antique gold accents',
+      deluxeOnly: true
     }
   ]
 
@@ -154,6 +161,8 @@ export function CountdownSection({
         return <CountdownModernVariant {...commonProps} />
       case 'hacienda':
         return <CountdownHaciendaVariant {...commonProps} />
+      case 'old-money':
+        return <CountdownOldMoneyVariant {...commonProps} />
       case 'classic':
       default:
         return <CountdownClassicVariant {...commonProps} />

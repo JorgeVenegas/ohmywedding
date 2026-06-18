@@ -9,6 +9,7 @@ import {
   OurStoryBookletVariant,
   OurStorySplitVariant,
   OurStoryHaciendaVariant,
+  OurStoryOldMoneyVariant,
   BaseOurStoryProps,
 } from './our-story-variants'
 import { 
@@ -19,7 +20,7 @@ import {
 import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
 
 interface OurStorySectionProps extends BaseOurStoryProps {
-  variant?: 'timeline' | 'cards' | 'minimal' | 'zigzag' | 'booklet' | 'split' | 'hacienda'
+  variant?: 'timeline' | 'cards' | 'minimal' | 'zigzag' | 'booklet' | 'split' | 'hacienda' | 'old-money'
   showVariantSwitcher?: boolean
   showHowWeMetPhoto?: boolean
   showProposalPhoto?: boolean
@@ -89,6 +90,12 @@ export function OurStorySection({
       value: 'hacienda',
       label: 'Hacienda',
       description: 'Lush botanical hacienda style with arch frames and antique accents',
+      deluxeOnly: true
+    },
+    {
+      value: 'old-money',
+      label: 'Old Money',
+      description: 'Refined parchment aesthetic with engraved rules, laurel crest, and antique gold',
       deluxeOnly: true
     }
   ]
@@ -172,6 +179,8 @@ export function OurStorySection({
         return <OurStorySplitVariant {...commonProps} />
       case 'hacienda':
         return <OurStoryHaciendaVariant {...commonProps} />
+      case 'old-money':
+        return <OurStoryOldMoneyVariant {...commonProps} />
       case 'cards':
       default:
         return <OurStoryCardsVariant {...commonProps} />

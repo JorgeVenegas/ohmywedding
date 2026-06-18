@@ -109,19 +109,21 @@ export function HaciendaEnvelope({
         >
           <div className="text-center w-full px-6" style={{ overflow: 'visible' }}>
             {(() => {
-              const parts = (coupleNames || "You're Invited").split(/\s*&\s*/)
+              const isSpanish = /\sY\s/.test(coupleNames || '')
+              const sep = isSpanish ? 'Y' : '&'
+              const parts = (coupleNames || "You're Invited").split(/\s+Y\s+|\s*&\s*/)
               return parts.length === 2 ? (
                 <>
                   {/* Mobile: single element with line breaks — prevents inter-element clipping on iOS */}
                   <p className="drop-shadow-sm sm:hidden"
                     style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', fontSize: NAMES_SIZES[namesSize].main, lineHeight: 1.3, overflow: 'visible', padding: '0.4em 0' }}>
                     {parts[0].trim()}<br/>
-                    <span style={{ fontSize: NAMES_SIZES[namesSize].amp, opacity: 0.75 }}>&amp;</span><br/>
+                    <span style={{ fontSize: NAMES_SIZES[namesSize].amp, opacity: 0.75 }}>{sep}</span><br/>
                     {parts[1].trim()}
                   </p>
                   <p className="hidden sm:block drop-shadow-sm"
                     style={{ color: secondaryTextColor, fontFamily: displayFontFamily || 'serif', fontSize: NAMES_SIZES[namesSize].main, lineHeight: 1.3, overflow: 'visible', padding: '0.4em 0' }}>
-                    {parts[0].trim()}&nbsp;<span style={{ opacity: 0.75 }}>&amp;</span>&nbsp;{parts[1].trim()}
+                    {parts[0].trim()}&nbsp;<span style={{ opacity: 0.75 }}>{sep}</span>&nbsp;{parts[1].trim()}
                   </p>
                 </>
               ) : (

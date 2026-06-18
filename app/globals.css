@@ -76,6 +76,54 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Perandory';
+  src: url('/fonts/PERANDORY/Perandory-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Perandory';
+  src: url('/fonts/PERANDORY/Perandory-Semi-Condensed.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Perandory';
+  src: url('/fonts/PERANDORY/Perandory-Condensed.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Glamour';
+  src: url('/fonts/Glamour.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Aston Script';
+  src: url('/fonts/Aston Script 2.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Symphony Pro';
+  src: url('/fonts/symphony-pro-regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /* Hide system cursor on landing page when custom cursor is visible */

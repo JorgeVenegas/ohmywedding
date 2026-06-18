@@ -3,6 +3,7 @@
 import React from 'react'
 import {
   HotelSuggestionsHaciendaVariant,
+  HotelSuggestionsOldMoneyVariant,
   BaseHotelSuggestionsProps
 } from './hotel-suggestions-variants'
 import {
@@ -12,7 +13,7 @@ import {
 import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
 
 interface HotelSuggestionsSectionProps extends BaseHotelSuggestionsProps {
-  variant?: 'hacienda'
+  variant?: 'hacienda' | 'old-money'
   showVariantSwitcher?: boolean
 }
 
@@ -53,6 +54,8 @@ export function HotelSuggestionsSection({
 
   const renderContent = () => {
     switch (activeVariant) {
+      case 'old-money':
+        return <HotelSuggestionsOldMoneyVariant {...commonProps} />
       case 'hacienda':
       default:
         return <HotelSuggestionsHaciendaVariant {...commonProps} />

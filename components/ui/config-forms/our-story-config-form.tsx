@@ -124,7 +124,8 @@ export function OurStoryConfigForm({ config, onChange, weddingNameId }: OurStory
     { value: 'zigzag', label: t('config.zigzag'), description: t('config.zigzagDesc') },
     { value: 'booklet', label: t('config.booklet'), description: t('config.bookletDesc') },
     { value: 'split', label: t('config.splitView'), description: t('config.splitViewDesc') },
-    { value: 'hacienda', label: 'Hacienda', description: 'Rustic hacienda-style story layout' }
+    { value: 'hacienda', label: 'Hacienda', description: 'Rustic hacienda-style story layout' },
+    { value: 'old-money', label: 'Old Money', description: 'Roman-numeral chapter layout with letterpress borders' }
   ]
 
   const currentChoice = config.backgroundColorChoice || (config.useColorBackground ? 'primary' : 'none')

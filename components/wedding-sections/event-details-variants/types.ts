@@ -18,6 +18,7 @@ export interface CustomEvent {
   imageUrl?: string // Optional image for the event
   order: number // For custom ordering
   useWeddingDate?: boolean // If true, use wedding date instead of custom date
+  iconIndex?: number // Index into EVENT_ICONS array (old-money variant)
 }
 
 export interface BaseEventDetailsProps {

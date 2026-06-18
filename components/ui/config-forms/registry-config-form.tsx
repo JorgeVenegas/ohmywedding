@@ -20,6 +20,7 @@ interface RegistryConfigFormProps {
     registries?: RegistryProvider[]
     customItems?: CustomRegistryItem[]
     showCustomRegistry?: boolean
+    showMessage?: boolean
     cashRegistry?: CashRegistry
     useColorBackground?: boolean
     backgroundColorChoice?: BackgroundColorChoice
@@ -97,7 +98,8 @@ export function RegistryConfigForm({ config, onChange }: RegistryConfigFormProps
     { value: 'minimal', label: 'Minimal', description: 'Clean and simple list style' },
     { value: 'elegant', label: 'Elegant', description: 'Romantic style with decorations' },
     { value: 'grid', label: 'Grid', description: 'Compact grid for many items' },
-    { value: 'hacienda', label: 'Hacienda', description: 'Elegant hacienda-style registry cards' }
+    { value: 'hacienda', label: 'Hacienda', description: 'Elegant hacienda-style registry cards' },
+    { value: 'old-money', label: 'Old Money', description: 'Letterpress-styled registry list with engraved borders' }
   ]
 
   // Filter out providers that are already added
@@ -153,6 +155,14 @@ export function RegistryConfigForm({ config, onChange }: RegistryConfigFormProps
             onChange={(e) => onChange('message', e.target.value)}
             placeholder={t('registry.message')}
             rows={3}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-gray-700">Show message</span>
+          <Switch
+            checked={config.showMessage !== false}
+            onCheckedChange={(checked) => onChange('showMessage', checked)}
           />
         </div>
       </div>

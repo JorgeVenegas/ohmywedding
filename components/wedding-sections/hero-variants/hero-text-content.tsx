@@ -84,8 +84,9 @@ export function HeroTextContent({
             ? 'text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl text-white drop-shadow-lg' 
             : 'text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-slate-800'
         }`}
-        style={{ 
+        style={{
           color: isOverlay ? 'white' : (theme?.colors?.foreground || '#1f2937'),
+          fontFamily: 'var(--font-display, serif)',
           lineHeight: 1.3,
           overflow: 'visible',
           padding: '0.4em 0',

@@ -200,11 +200,18 @@ export function ViewportWrapper({ children }: ViewportWrapperProps) {
       })
     })
 
-    // Observe the document head for style changes
+    // Observe document.head for new style/font nodes
     observer.observe(document.head, {
       childList: true,
       subtree: true,
       characterData: true,
+      attributes: true,
+      attributeFilter: ['style']
+    })
+
+    // ALSO observe document.documentElement for CSS variable changes
+    // (CSS vars are set via documentElement.style.setProperty, not on head)
+    observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['style']
     })

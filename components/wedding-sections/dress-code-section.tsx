@@ -3,6 +3,7 @@
 import React from 'react'
 import {
   DressCodeHaciendaVariant,
+  DressCodeOldMoneyVariant,
   BaseDressCodeProps
 } from './dress-code-variants'
 import {
@@ -13,7 +14,7 @@ import {
 import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper'
 
 interface DressCodeSectionProps extends BaseDressCodeProps {
-  variant?: 'hacienda'
+  variant?: 'hacienda' | 'old-money'
   showVariantSwitcher?: boolean
 }
 
@@ -60,6 +61,8 @@ export function DressCodeSection({
 
   const renderContent = () => {
     switch (activeVariant) {
+      case 'old-money':
+        return <DressCodeOldMoneyVariant {...commonProps} />
       case 'hacienda':
       default:
         return <DressCodeHaciendaVariant {...commonProps} />

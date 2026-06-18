@@ -4,22 +4,22 @@
     <style>
       .cls-1 { fill: none; }
       .cls-2 { fill: none; }
-      .cls-3 { fill: #000000; stroke: #000000; stroke-width: 1.5px; }
-      .cls-4 { fill: #000000; stroke: #000000; stroke-width: 1.5px; }
+      .cls-3 { fill: none; stroke: #000000; stroke-width: 0.7px; }
+      .cls-4 { fill: none; stroke: #000000; stroke-width: 0.7px; }
       .cls-5 { fill: none; }
       .cls-6 { fill: none; }
       .cls-7 { fill: none; }
-      .cls-8 { fill: #000000; stroke: #000000; stroke-width: 1.5px; }
-      .cls-9 { fill: #000000; stroke: #000000; stroke-width: 1.5px; }
-      .cls-10 { fill: #000000; stroke: #000000; stroke-width: 1.5px; }
+      .cls-8 { fill: none; stroke: #000000; stroke-width: 0.7px; }
+      .cls-9 { fill: none; stroke: #000000; stroke-width: 0.7px; }
+      .cls-10 { fill: none; stroke: #000000; stroke-width: 0.7px; }
       .cls-11 { fill: none; }
       .cls-12 { fill: none; }
       .cls-13 { fill: none; }
-      .cls-14 { fill: #000000; stroke: #000000; stroke-width: 1.5px; }
+      .cls-14 { fill: none; stroke: #000000; stroke-width: 0.7px; }
       .cls-15 { fill: none; }
-      .cls-16 { fill: #000000; stroke: #000000; stroke-width: 1.5px; }
-      .cls-17 { fill: #000000; stroke: #000000; stroke-width: 1.5px; }
-      .cls-18 { fill: #000000; stroke: #000000; stroke-width: 1.5px; }
+      .cls-16 { fill: none; stroke: #000000; stroke-width: 0.7px; }
+      .cls-17 { fill: none; stroke: #000000; stroke-width: 0.7px; }
+      .cls-18 { fill: none; stroke: #000000; stroke-width: 0.7px; }
       .cls-19 { fill: none; }
     </style>
   </defs>

@@ -110,7 +110,8 @@ export function CountdownConfigForm({ config, onChange }: CountdownConfigFormPro
     { value: 'circular', label: t('config.circularProgress'), description: t('countdown.title') },
     { value: 'elegant', label: t('config.elegantScript'), description: t('config.elegantScriptDesc') },
     { value: 'modern', label: t('config.modernBold'), description: t('config.timelineDesc') },
-    { value: 'hacienda', label: 'Hacienda', description: 'Ornamental hacienda-style countdown' }
+    { value: 'hacienda', label: 'Hacienda', description: 'Ornamental hacienda-style countdown' },
+    { value: 'old-money', label: 'Old Money', description: 'Framed countdown with antique gold accents and double hairline rules' }
   ]
 
   const currentChoice = config.backgroundColorChoice || (config.useColorBackground ? 'primary' : 'none')

@@ -6,6 +6,7 @@ import {
   RSVPMinimalisticVariant,
   RSVPCardsVariant,
   RSVPHaciendaVariant,
+  RSVPOldMoneyVariant,
   BaseRSVPProps,
   CustomQuestion
 } from './rsvp-variants'
@@ -18,7 +19,7 @@ import { EditableSectionWrapper } from '@/components/ui/editable-section-wrapper
 import { useI18n } from '@/components/contexts/i18n-context'
 
 interface RSVPSectionProps extends BaseRSVPProps {
-  variant?: 'elegant' | 'minimalistic' | 'cards' | 'hacienda'
+  variant?: 'elegant' | 'minimalistic' | 'cards' | 'hacienda' | 'old-money'
   showVariantSwitcher?: boolean
   groupId?: string
 }
@@ -75,6 +76,12 @@ export function RSVPSection({
       label: 'Hacienda',
       description: 'Elegant hacienda-themed RSVP with ornamental accents',
       deluxeOnly: true
+    },
+    {
+      value: 'old-money',
+      label: 'Old Money',
+      description: 'Framed parchment card with double-rule borders and antique gold',
+      deluxeOnly: true
     }
   ]
 
@@ -121,6 +128,8 @@ export function RSVPSection({
         return <RSVPCardsVariant {...commonProps} />
       case 'hacienda':
         return <RSVPHaciendaVariant {...commonProps} />
+      case 'old-money':
+        return <RSVPOldMoneyVariant {...commonProps} />
       case 'elegant':
       default:
         return <RSVPElegantVariant {...commonProps} />

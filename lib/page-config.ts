@@ -46,7 +46,7 @@ export interface PageConfiguration {
     }
     envelope?: {
       colorChoice?: 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
-      variant?: 'classic' | 'hacienda'
+      variant?: 'classic' | 'hacienda' | 'old-money'
       decorationImageUrl?: string
       decorationSize?: 'sm' | 'md' | 'lg' | 'xl'
       namesSize?: 'sm' | 'md' | 'lg' | 'xl'
