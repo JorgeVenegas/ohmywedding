@@ -1,8 +1,8 @@
 "use client"
 
-import React from 'react'
+import React, { useState } from 'react'
 import Image from 'next/image'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, Copy, Check } from 'lucide-react'
 import { BaseRegistryProps, getProviderLogoUrl, getColorScheme } from './types'
 import { AnimatedSection } from '../animated-section'
 import { useI18n } from '@/components/contexts/i18n-context'
@@ -48,6 +48,14 @@ export function RegistryOldMoneyVariant({
 
   const title = sectionTitle || t('registry.title')
   const registryMessage = message || t('registry.message')
+
+  const [copied, setCopied] = useState(false)
+  const copyClabe = (clabe: string) => {
+    navigator.clipboard.writeText(clabe).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
 
   return (
     <section id="registry" className="relative overflow-hidden" style={{ backgroundColor: bg }}>
@@ -189,15 +197,57 @@ export function RegistryOldMoneyVariant({
                 </p>
               )}
               {cashRegistry.bank && (
-                <div className="space-y-2">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {cashRegistry.accountOwner && (
-                    <p data-custom-font style={{ fontFamily: 'var(--font-heading, serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(1.25rem, 2.5vw, 1.625rem)', color: ink, lineHeight: 1.2 }}>
-                      {cashRegistry.accountOwner}
-                    </p>
+                    <div>
+                      <p data-custom-font style={{ fontFamily: 'var(--font-heading, serif)', fontWeight: 400, fontSize: '10px', letterSpacing: '0.38em', textTransform: 'uppercase', color: `${ink}55`, marginBottom: '0.3rem' }}>
+                        {t('registry.accountOwner') || 'Nombre'}
+                      </p>
+                      <p data-custom-font style={{ fontFamily: 'var(--font-heading, serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(1.25rem, 2.5vw, 1.625rem)', color: ink, lineHeight: 1.2 }}>
+                        {cashRegistry.accountOwner}
+                      </p>
+                    </div>
                   )}
-                  <p data-custom-font style={{ fontFamily: 'var(--font-body, sans-serif)', fontWeight: 300, fontSize: '1rem', color: muted }}>{cashRegistry.bank}</p>
+                  <div>
+                    <p data-custom-font style={{ fontFamily: 'var(--font-heading, serif)', fontWeight: 400, fontSize: '10px', letterSpacing: '0.38em', textTransform: 'uppercase', color: `${ink}55`, marginBottom: '0.3rem' }}>
+                      {t('registry.bank') || 'Banco'}
+                    </p>
+                    <p data-custom-font style={{ fontFamily: 'var(--font-body, sans-serif)', fontWeight: 400, fontSize: '1rem', color: ink }}>
+                      {cashRegistry.bank}
+                    </p>
+                  </div>
                   {cashRegistry.clabe && (
-                    <p data-custom-font style={{ fontFamily: 'var(--font-body, sans-serif)', fontWeight: 300, fontSize: '0.9375rem', color: muted, letterSpacing: '0.1em' }}>{cashRegistry.clabe}</p>
+                    <div>
+                      <p data-custom-font style={{ fontFamily: 'var(--font-heading, serif)', fontWeight: 400, fontSize: '10px', letterSpacing: '0.38em', textTransform: 'uppercase', color: `${ink}55`, marginBottom: '0.3rem' }}>
+                        CLABE
+                      </p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <p data-custom-font style={{ fontFamily: 'var(--font-body, sans-serif)', fontWeight: 400, fontSize: '1rem', color: ink, letterSpacing: '0.12em' }}>
+                          {cashRegistry.clabe}
+                        </p>
+                        <button
+                          onClick={() => copyClabe(cashRegistry.clabe!)}
+                          title="Copiar CLABE"
+                          style={{
+                            flexShrink: 0,
+                            display: 'flex', alignItems: 'center', gap: '0.3rem',
+                            padding: '0.35rem 0.75rem',
+                            border: `1px solid ${copied ? ink : `${ink}30`}`,
+                            background: copied ? ink : 'transparent',
+                            color: copied ? bg : `${ink}70`,
+                            fontFamily: 'var(--font-heading, sans-serif)',
+                            fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase',
+                            cursor: 'pointer',
+                            transition: 'all 200ms',
+                          }}
+                        >
+                          {copied
+                            ? <><Check style={{ width: '10px', height: '10px' }} /> Copiado</>
+                            : <><Copy style={{ width: '10px', height: '10px' }} /> Copiar</>
+                          }
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
