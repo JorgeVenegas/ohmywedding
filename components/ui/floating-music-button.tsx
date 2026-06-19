@@ -26,10 +26,9 @@ export function FloatingMusicButton() {
         aria-label={isPlaying ? 'Pause music' : 'Play music'}
         style={{
           position: 'fixed',
-          bottom: '1.5rem',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 50,
+          top: '1.25rem',
+          left: '1.25rem',
+          zIndex: 10,
           height: 36,
           borderRadius: 18,
           padding: '0 12px 0 10px',
@@ -46,12 +45,12 @@ export function FloatingMusicButton() {
         }}
         onMouseEnter={(e) => {
           const b = e.currentTarget as HTMLButtonElement
-          b.style.transform = 'translateX(-50%) scale(1.05)'
+          b.style.transform = 'scale(1.05)'
           b.style.boxShadow = '0 4px 16px rgba(0,0,0,0.14)'
         }}
         onMouseLeave={(e) => {
           const b = e.currentTarget as HTMLButtonElement
-          b.style.transform = 'translateX(-50%) scale(1)'
+          b.style.transform = 'scale(1)'
           b.style.boxShadow = '0 2px 12px rgba(0,0,0,0.10)'
         }}
       >

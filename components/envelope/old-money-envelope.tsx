@@ -115,6 +115,29 @@ export function OldMoneyEnvelope({
         <div className="fixed inset-0 z-[29]" style={{ pointerEvents: 'auto' }} />
       )}
 
+      {/* ── SEAL — standalone fixed element so its shadow never gets clipped ── */}
+      <div
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          zIndex: 35,
+          pointerEvents: 'none',
+          transition: 'transform 1100ms cubic-bezier(0.4, 0, 0.2, 1)',
+          transform: envelopeFalling
+            ? `translate(-50%, calc(-50% - 50vh - ${Math.ceil(sealPx / 2) + 8}px))`
+            : 'translate(-50%, -50%)',
+        }}
+      >
+        {decorationImageUrl ? (
+          <div style={{ width: sealPx, height: sealPx, filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.36))' }}>
+            <Image src={decorationImageUrl} alt="Seal" width={sealPx} height={sealPx} className="w-full h-full object-contain" unoptimized />
+          </div>
+        ) : (
+          <GoldSeal px={sealPx} />
+        )}
+      </div>
+
       {/* ── TOP PANEL ─ slides UP ───────────────────────────────────── */}
       <div
         className="z-[32]"
@@ -144,24 +167,7 @@ export function OldMoneyEnvelope({
           }} />
         </div>
 
-        {/* Gold seal — sits at the bottom edge, half-protruding below the seam */}
-        <div style={{
-          position: 'absolute',
-          bottom: 0, left: '50%',
-          transform: 'translate(-50%, 50%)',
-          zIndex: 10,
-          pointerEvents: 'none',
-        }}>
-          {decorationImageUrl ? (
-            <div style={{ width: sealPx, height: sealPx, filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.32))' }}>
-              <Image src={decorationImageUrl} alt="Seal" width={sealPx} height={sealPx} className="w-full h-full object-contain" unoptimized />
-            </div>
-          ) : (
-            <GoldSeal px={sealPx} />
-          )}
-        </div>
-
-        {/* Content — spacer between top ornament and names */}
+        {/* Content */}
         <div
           className="absolute flex flex-col"
           style={{
