@@ -116,6 +116,7 @@ export function OldMoneyEnvelope({
       )}
 
       {/* ── SEAL — standalone fixed element so its shadow never gets clipped ── */}
+      {/* padding expands the GPU compositing layer so drop-shadow has room from first paint */}
       <div
         style={{
           position: 'fixed',
@@ -123,6 +124,8 @@ export function OldMoneyEnvelope({
           left: '50%',
           zIndex: 35,
           pointerEvents: 'none',
+          padding: 40,
+          filter: decorationImageUrl ? 'drop-shadow(0 6px 22px rgba(0,0,0,0.38))' : undefined,
           transition: 'transform 1100ms cubic-bezier(0.4, 0, 0.2, 1)',
           transform: envelopeFalling
             ? `translate(-50%, calc(-50% - 50vh - ${Math.ceil(sealPx / 2) + 8}px))`
@@ -130,9 +133,14 @@ export function OldMoneyEnvelope({
         }}
       >
         {decorationImageUrl ? (
-          <div style={{ width: sealPx, height: sealPx, filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.36))' }}>
-            <Image src={decorationImageUrl} alt="Seal" width={sealPx} height={sealPx} className="w-full h-full object-contain" unoptimized />
-          </div>
+          <Image
+            src={decorationImageUrl}
+            alt="Seal"
+            width={sealPx}
+            height={sealPx}
+            style={{ width: sealPx, height: sealPx, objectFit: 'contain', display: 'block' }}
+            unoptimized
+          />
         ) : (
           <GoldSeal px={sealPx} />
         )}
