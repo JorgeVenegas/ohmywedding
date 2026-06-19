@@ -10,6 +10,7 @@ export { DressCodeSection } from './dress-code-section'
 export { CountdownSection } from './countdown-section'
 export { RegistrySection } from './registry-section'
 export { HotelSuggestionsSection } from './hotel-suggestions-section'
+export { MusicSection } from './music-section'
 
 // Export base section utilities  
 export { 

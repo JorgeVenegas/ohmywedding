@@ -6,6 +6,8 @@ import { ConfigBasedWeddingRenderer } from "@/components/config-based-wedding-re
 import { PageConfigProvider, usePageConfig } from "@/components/contexts/page-config-context"
 import { I18nProvider, useTranslation } from "@/components/contexts/i18n-context"
 import { EnvelopeProvider, useEnvelope } from "@/components/contexts/envelope-context"
+import { MusicPlayerProvider } from "@/components/contexts/music-player-context"
+import { FloatingMusicButton } from "@/components/ui/floating-music-button"
 import { HaciendaEnvelope } from "@/components/envelope/hacienda-envelope"
 import { OldMoneyEnvelope } from "@/components/envelope/old-money-envelope"
 import { notFound, useSearchParams } from "next/navigation"
@@ -558,6 +560,7 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
     <I18nProvider initialLocale={locale}>
       <EnvelopeProvider hasEnvelope={hasEnvelope}>
         <PageConfigProvider weddingNameId={weddingNameId}>
+          <MusicPlayerProvider>
           <WeddingContentWithCurtain
             wedding={wedding}
             weddingNameId={weddingNameId}
@@ -572,6 +575,7 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
             weddingDate={weddingDate}
             guestGroup={guestGroup}
           />
+          </MusicPlayerProvider>
         </PageConfigProvider>
       </EnvelopeProvider>
     </I18nProvider>
@@ -714,10 +718,11 @@ function WeddingContentWithCurtain({
         />
       )}
       
-      <ConfigBasedWeddingRenderer 
+      <ConfigBasedWeddingRenderer
         wedding={wedding}
         weddingNameId={weddingNameId}
       />
+      <FloatingMusicButton />
     </>
   )
 }

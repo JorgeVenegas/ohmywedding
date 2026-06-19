@@ -233,7 +233,7 @@ export function SettingsPanel({
   envelopeDecorationVerticalPos: envelopeDecorationVerticalPosProp,
   onEnvelopeDecorationVerticalPosChange,
   currentLocale = 'en',
-  onLocaleChange
+  onLocaleChange,
 }: SettingsPanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('details')
   const [details, setDetails] = useState<WeddingDetails | null>(null)
@@ -1414,7 +1414,7 @@ export function SettingsPanel({
                   />
                 )}
               </div>
-              
+
               {/* Navigation Settings */}
               <div className="border-t border-gray-200 pt-6">
                 <div className="flex items-center gap-2 mb-3">

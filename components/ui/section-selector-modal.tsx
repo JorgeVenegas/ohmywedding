@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react'
-import { X, Crown, Heart, Clock, MapPin, Image, Mail, HelpCircle, Gift, Shirt, Hotel } from 'lucide-react'
+import { X, Crown, Heart, Clock, MapPin, Image, Mail, HelpCircle, Gift, Shirt, Hotel, Music } from 'lucide-react'
 import { Button } from './button'
 
 // Gold color for elegant icons
@@ -80,6 +80,12 @@ const AVAILABLE_SECTIONS: SectionType[] = [
     name: 'Hotel Suggestions',
     description: 'Recommend nearby hotels for out-of-town guests',
     icon: <Hotel className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
+  },
+  {
+    id: 'music',
+    name: 'Música',
+    description: 'Player con la canción especial de tu boda',
+    icon: <Music className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
   }
 ]
 

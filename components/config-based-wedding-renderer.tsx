@@ -18,7 +18,8 @@ import {
   CountdownSection,
   RegistrySection,
   DressCodeSection,
-  HotelSuggestionsSection
+  HotelSuggestionsSection,
+  MusicSection
 } from './wedding-sections'
 import { BannerSection } from './wedding-sections/banner-section'
 import { VariantProvider } from './contexts/variant-context'
@@ -541,6 +542,15 @@ function ConfigBasedWeddingRendererContent({
       case 'hotel-suggestions':
         renderedComponent = (
           <HotelSuggestionsSection
+            key={component.id}
+            {...commonProps}
+            {...mergedProps}
+          />
+        )
+        break
+      case 'music':
+        renderedComponent = (
+          <MusicSection
             key={component.id}
             {...commonProps}
             {...mergedProps}
