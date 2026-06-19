@@ -2,14 +2,16 @@
 
 import React from 'react'
 import { useMusicPlayer } from '@/components/contexts/music-player-context'
+import { useEnvelope } from '@/components/contexts/envelope-context'
 
 const BAR_DELAYS = ['0s', '0.18s', '0.09s']
 const BAR_HEIGHTS = [12, 9, 14] // staggered max heights
 
 export function FloatingMusicButton() {
   const { isPlaying, hasMusic, toggle } = useMusicPlayer()
+  const { isOpened } = useEnvelope()
 
-  if (!hasMusic) return null
+  if (!hasMusic || !isOpened) return null
 
   return (
     <>
@@ -25,7 +27,8 @@ export function FloatingMusicButton() {
         style={{
           position: 'fixed',
           bottom: '1.5rem',
-          left: '1.5rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
           zIndex: 50,
           height: 36,
           borderRadius: 18,
@@ -43,12 +46,12 @@ export function FloatingMusicButton() {
         }}
         onMouseEnter={(e) => {
           const b = e.currentTarget as HTMLButtonElement
-          b.style.transform = 'scale(1.05)'
+          b.style.transform = 'translateX(-50%) scale(1.05)'
           b.style.boxShadow = '0 4px 16px rgba(0,0,0,0.14)'
         }}
         onMouseLeave={(e) => {
           const b = e.currentTarget as HTMLButtonElement
-          b.style.transform = 'scale(1)'
+          b.style.transform = 'translateX(-50%) scale(1)'
           b.style.boxShadow = '0 2px 12px rgba(0,0,0,0.10)'
         }}
       >
