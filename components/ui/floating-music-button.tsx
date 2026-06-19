@@ -26,9 +26,9 @@ export function FloatingMusicButton() {
         aria-label={isPlaying ? 'Pause music' : 'Play music'}
         style={{
           position: 'fixed',
-          top: '1.25rem',
-          left: '1.25rem',
-          zIndex: 10,
+          top: 'max(env(safe-area-inset-top, 0px) + 0.5rem, 4rem)',
+          left: 'max(env(safe-area-inset-left, 0px) + 0.75rem, 0.75rem)',
+          zIndex: 25,
           height: 36,
           borderRadius: 18,
           padding: '0 12px 0 10px',
