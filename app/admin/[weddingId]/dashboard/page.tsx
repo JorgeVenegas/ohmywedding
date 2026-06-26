@@ -3,7 +3,8 @@ import { use, useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { LogOut, ArrowRight, Mail, Gift, Settings, LayoutGrid, Globe, Sparkles, UtensilsCrossed, CalendarDays, FileText, Handshake } from "lucide-react"
+import { LogOut, ArrowRight, Mail, Gift, Settings, LayoutGrid, Globe, Sparkles, UtensilsCrossed, CalendarDays, FileText, Handshake, CircleX } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
 import { Header } from "@/components/header"
 import { ActivityFeed } from "@/components/ui/activity-feed"
 import { InvitationStatsCard } from "@/components/ui/invitation-stats-card"
@@ -31,6 +32,9 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
   const [coupleNames, setCoupleNames] = useState<string | null>(null)
   const [dashboardSections, setDashboardSections] = useState<Record<string, boolean>>({})
   const [sectionsLoaded, setSectionsLoaded] = useState(false)
+  const [isReady, setIsReady] = useState<boolean | null>(null)
+  const [readyStatusManagedBy, setReadyStatusManagedBy] = useState<'owner' | 'all'>('owner')
+  const [savingReadyStatus, setSavingReadyStatus] = useState(false)
 
   // Check if tutorial should be shown (per-user, via needs_onboarding table)
   useEffect(() => {
@@ -46,22 +50,30 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       })
   }, [user])
 
-  // Fetch dashboard sections settings
+  // Fetch dashboard sections settings and ready status
   useEffect(() => {
-    async function fetchDashboardSections() {
+    async function fetchDashboardData() {
       try {
-        const res = await fetch(`/api/weddings/${weddingId}/settings`)
-        if (res.ok) {
-          const data = await res.json()
+        const [settingsRes, readyStatusRes] = await Promise.all([
+          fetch(`/api/weddings/${weddingId}/settings`),
+          fetch(`/api/weddings/${weddingId}/ready-status`),
+        ])
+        if (settingsRes.ok) {
+          const data = await settingsRes.json()
           if (data.settings?.dashboard_sections) {
             setDashboardSections(data.settings.dashboard_sections)
           }
+        }
+        if (readyStatusRes.ok) {
+          const data = await readyStatusRes.json()
+          setIsReady(data.is_ready)
+          setReadyStatusManagedBy(data.ready_status_managed_by)
         }
       } catch {} finally {
         setSectionsLoaded(true)
       }
     }
-    fetchDashboardSections()
+    fetchDashboardData()
   }, [weddingId])
 
   // Check if wedding has a website — detect legacy dynamically (no is_legacy column read)
@@ -200,6 +212,51 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
 
       {/* Main Content */}
       <div className="page-container">
+        {/* Not-Ready Banner */}
+        {isReady === false && (
+          <div className="mb-6 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 p-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <CircleX className="h-5 w-5 text-amber-600 dark:text-amber-500 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-amber-900 dark:text-amber-100">Wedding not ready</p>
+                <p className="text-sm text-amber-700 dark:text-amber-200">
+                  Activity tracking is paused. Invitation views and RSVPs won't be recorded until you mark it as Ready.
+                </p>
+              </div>
+            </div>
+            {(weddingPerms.isOwner || readyStatusManagedBy === 'all') && (
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-xs text-amber-700 dark:text-amber-300 font-medium">Mark Ready</span>
+                <Switch
+                  checked={false}
+                  disabled={savingReadyStatus}
+                  onCheckedChange={async () => {
+                    setSavingReadyStatus(true)
+                    try {
+                      const res = await fetch(`/api/weddings/${weddingId}/ready-status`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ is_ready: true }),
+                      })
+                      if (res.ok) setIsReady(true)
+                    } finally {
+                      setSavingReadyStatus(false)
+                    }
+                  }}
+                />
+              </div>
+            )}
+            {weddingPerms.isOwner && (
+              <Link
+                href={getCleanAdminUrl(weddingId, 'settings')}
+                className="text-xs text-amber-700 dark:text-amber-300 underline underline-offset-2 flex-shrink-0"
+              >
+                Settings
+              </Link>
+            )}
+          </div>
+        )}
+
         {/* Welcome Section */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-2">

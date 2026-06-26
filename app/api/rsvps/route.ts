@@ -197,25 +197,34 @@ export async function POST(request: Request) {
 
         // Log activity if status changed to confirmed or declined
         if (confirmationStatus !== 'pending' && oldStatus !== confirmationStatus) {
-          const activityType = confirmationStatus === 'confirmed' ? 'rsvp_confirmed' : 'rsvp_declined'
-          const description = confirmationStatus === 'confirmed' 
-            ? `${guestData.name} confirmed attendance`
-            : `${guestData.name} declined attendance`
+          // Only log activity when wedding is marked ready
+          const { data: weddingStatus } = await supabaseAdmin
+            .from('weddings')
+            .select('is_ready')
+            .eq('id', guestData.wedding_id)
+            .single()
 
-          await supabaseAdmin
-            .from('activity_logs')
-            .insert({
-              wedding_id: guestData.wedding_id,
-              guest_group_id: body.groupId,
-              guest_id: guest.guestId,
-              activity_type: activityType,
-              description: description,
-              metadata: {
-                source: 'guest_rsvp',
-                old_status: oldStatus,
-                new_status: confirmationStatus
-              }
-            })
+          if (weddingStatus?.is_ready) {
+            const activityType = confirmationStatus === 'confirmed' ? 'rsvp_confirmed' : 'rsvp_declined'
+            const description = confirmationStatus === 'confirmed'
+              ? `${guestData.name} confirmed attendance`
+              : `${guestData.name} declined attendance`
+
+            await supabaseAdmin
+              .from('activity_logs')
+              .insert({
+                wedding_id: guestData.wedding_id,
+                guest_group_id: body.groupId,
+                guest_id: guest.guestId,
+                activity_type: activityType,
+                description: description,
+                metadata: {
+                  source: 'guest_rsvp',
+                  old_status: oldStatus,
+                  new_status: confirmationStatus
+                }
+              })
+          }
         }
       }
 

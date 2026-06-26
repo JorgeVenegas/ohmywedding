@@ -109,7 +109,7 @@ export function MusicOldMoneyVariant({
                     {songTitle || 'Nuestra Canción'}
                   </span>
                   {artistName && (
-                    <span data-custom-font style={{ fontSize: '13px', color: muted, letterSpacing: '0.1em', flexShrink: 0 }}>
+                    <span data-custom-font style={{ fontSize: '18px', color: muted, letterSpacing: '0.1em', flexShrink: 0 }}>
                       {artistName}
                     </span>
                   )}
@@ -129,8 +129,8 @@ export function MusicOldMoneyVariant({
                     </div>
                     {showTimes && duration > 0 && (
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
-                        <span data-custom-font style={{ fontSize: '10px', color: muted, letterSpacing: '0.05em', fontVariantNumeric: 'tabular-nums' }}>{fmtTime(currentTime)}</span>
-                        <span data-custom-font style={{ fontSize: '10px', color: muted, letterSpacing: '0.05em', fontVariantNumeric: 'tabular-nums' }}>{fmtTime(duration)}</span>
+                        <span data-custom-font style={{ fontSize: '18px', color: muted, letterSpacing: '0.05em', fontVariantNumeric: 'tabular-nums' }}>{fmtTime(currentTime)}</span>
+                        <span data-custom-font style={{ fontSize: '18px', color: muted, letterSpacing: '0.05em', fontVariantNumeric: 'tabular-nums' }}>{fmtTime(duration)}</span>
                       </div>
                     )}
                   </div>
@@ -138,7 +138,7 @@ export function MusicOldMoneyVariant({
               </div>
 
               {showControls && showTimes && duration > 0 && (
-                <span data-custom-font style={{ flexShrink: 0, fontSize: '10px', color: muted, letterSpacing: '0.05em', fontVariantNumeric: 'tabular-nums' }}>
+                <span data-custom-font style={{ flexShrink: 0, fontSize: '18px', color: muted, letterSpacing: '0.05em', fontVariantNumeric: 'tabular-nums' }}>
                   {fmtTime(currentTime)}
                 </span>
               )}
@@ -176,7 +176,7 @@ export function MusicOldMoneyVariant({
               style={{
                 fontFamily: 'var(--font-heading, serif)',
                 fontWeight: 400,
-                fontSize: '10px',
+                fontSize: '18px',
                 letterSpacing: '0.45em',
                 textTransform: 'uppercase',
                 color: muted,
@@ -294,10 +294,10 @@ export function MusicOldMoneyVariant({
                 {/* Time labels */}
                 {showTimes && duration > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '-1.75rem' }}>
-                    <span data-custom-font style={{ fontSize: '10px', fontFamily: 'var(--font-heading, serif)', letterSpacing: '0.1em', color: muted }}>
+                    <span data-custom-font style={{ fontSize: '18px', fontFamily: 'var(--font-heading, serif)', letterSpacing: '0.1em', color: muted }}>
                       {fmtTime(currentTime)}
                     </span>
-                    <span data-custom-font style={{ fontSize: '10px', fontFamily: 'var(--font-heading, serif)', letterSpacing: '0.1em', color: muted }}>
+                    <span data-custom-font style={{ fontSize: '18px', fontFamily: 'var(--font-heading, serif)', letterSpacing: '0.1em', color: muted }}>
                       {fmtTime(duration)}
                     </span>
                   </div>

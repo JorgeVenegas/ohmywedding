@@ -19,7 +19,9 @@ import {
   RegistrySection,
   DressCodeSection,
   HotelSuggestionsSection,
-  MusicSection
+  MusicSection,
+  NotesSection,
+  SpecialGuestsSection
 } from './wedding-sections'
 import { BannerSection } from './wedding-sections/banner-section'
 import { VariantProvider } from './contexts/variant-context'
@@ -338,6 +340,41 @@ function ConfigBasedWeddingRendererContent({
           description: '',
           images: [],
         }
+      case 'special-guests':
+        return {
+          showTitle: true,
+          showSubtitle: true,
+          showIntroText: true,
+          showParents: true,
+          brideParents: [
+            { id: 'bp-1', name: '', role: '' },
+            { id: 'bp-2', name: '', role: '' },
+          ],
+          showBrideParents: true,
+          groomParents: [
+            { id: 'gp-1', name: '', role: '' },
+            { id: 'gp-2', name: '', role: '' },
+          ],
+          showGroomParents: true,
+          partyGroups: [
+            { id: 'group-1', title: '', show: true, people: [{ id: 'bm-1', name: '', role: '' }] },
+            { id: 'group-2', title: '', show: true, people: [{ id: 'gm-1', name: '', role: '' }] },
+          ],
+          useColorBackground: false,
+          backgroundColorChoice: 'none',
+        }
+      case 'notes':
+        return {
+          sectionTitle: 'A Note From Us',
+          sectionSubtitle: 'Just a thought',
+          bodyText: 'We\'re so grateful you\'ll be celebrating with us. This is a space to share anything you\'d like your guests to know.',
+          showTitle: true,
+          showSubtitle: true,
+          showBodyText: true,
+          sectionHeight: 'normal',
+          useColorBackground: false,
+          backgroundColorChoice: 'none',
+        }
       default:
         return {}
     }
@@ -551,6 +588,24 @@ function ConfigBasedWeddingRendererContent({
       case 'music':
         renderedComponent = (
           <MusicSection
+            key={component.id}
+            {...commonProps}
+            {...mergedProps}
+          />
+        )
+        break
+      case 'notes':
+        renderedComponent = (
+          <NotesSection
+            key={component.id}
+            {...commonProps}
+            {...mergedProps}
+          />
+        )
+        break
+      case 'special-guests':
+        renderedComponent = (
+          <SpecialGuestsSection
             key={component.id}
             {...commonProps}
             {...mergedProps}

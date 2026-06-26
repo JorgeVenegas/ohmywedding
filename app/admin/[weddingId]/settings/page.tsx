@@ -31,6 +31,8 @@ import {
   X,
   UserCog,
   LayoutGrid,
+  CircleCheck,
+  CircleX,
 } from "lucide-react"
 
 interface WeddingFeatures {
@@ -79,7 +81,7 @@ interface SettingsPageProps {
   params: Promise<{ weddingId: string }>
 }
 
-type Section = "subscription" | "features" | "rsvp" | "invitations" | "gallery" | "general" | "collaborators" | "dashboardSections"
+type Section = "status" | "subscription" | "features" | "rsvp" | "invitations" | "gallery" | "general" | "collaborators" | "dashboardSections"
 
 export default function SettingsPage({ params }: SettingsPageProps) {
   const { weddingId } = use(params)
@@ -90,8 +92,11 @@ export default function SettingsPage({ params }: SettingsPageProps) {
   const [planFeatures, setPlanFeatures] = useState<PlanFeatures | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [activeSection, setActiveSection] = useState<Section>("subscription")
+  const [activeSection, setActiveSection] = useState<Section>("status")
   const [hasChanges, setHasChanges] = useState(false)
+  const [isReady, setIsReady] = useState(false)
+  const [readyStatusManagedBy, setReadyStatusManagedBy] = useState<'owner' | 'all'>('owner')
+  const [savingStatus, setSavingStatus] = useState(false)
   const { t } = useTranslation()
 
   useEffect(() => {
@@ -101,10 +106,11 @@ export default function SettingsPage({ params }: SettingsPageProps) {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const [featuresRes, settingsRes, subscriptionRes] = await Promise.all([
+      const [featuresRes, settingsRes, subscriptionRes, readyStatusRes] = await Promise.all([
         fetch(`/api/weddings/${weddingId}/features`),
         fetch(`/api/weddings/${weddingId}/settings`),
         fetch(`/api/user/subscription`),
+        fetch(`/api/weddings/${weddingId}/ready-status`),
       ])
 
       if (featuresRes.ok) {
@@ -121,6 +127,12 @@ export default function SettingsPage({ params }: SettingsPageProps) {
         const data = await subscriptionRes.json()
         setSubscription(data.subscription)
         setPlanFeatures(data.features)
+      }
+
+      if (readyStatusRes.ok) {
+        const data = await readyStatusRes.json()
+        setIsReady(data.is_ready)
+        setReadyStatusManagedBy(data.ready_status_managed_by)
       }
     } catch (error) {
     } finally {
@@ -153,7 +165,27 @@ export default function SettingsPage({ params }: SettingsPageProps) {
     }
   }
 
+  const saveReadyStatus = async (updates: { is_ready?: boolean; ready_status_managed_by?: 'owner' | 'all' }) => {
+    try {
+      setSavingStatus(true)
+      const res = await fetch(`/api/weddings/${weddingId}/ready-status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setIsReady(data.is_ready)
+        setReadyStatusManagedBy(data.ready_status_managed_by)
+      }
+    } catch (error) {
+    } finally {
+      setSavingStatus(false)
+    }
+  }
+
   const menuItems = [
+    { id: "status", label: "Wedding Status", icon: CircleCheck },
     { id: "subscription", label: t('admin.settings.nav.subscription'), icon: Crown },
     { id: "features", label: t('admin.settings.features.title'), icon: Settings },
     { id: "rsvp", label: t('admin.settings.nav.rsvp'), icon: Users },
@@ -253,6 +285,108 @@ export default function SettingsPage({ params }: SettingsPageProps) {
           {/* Content Area */}
           <div className="flex-1">
             <Card className="p-6">
+              {activeSection === "status" && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-xl font-semibold text-foreground mb-1">Wedding Status</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Control whether your wedding is active. Only ready weddings record invitation views, RSVPs, and other activity.
+                    </p>
+                  </div>
+
+                  {/* Status indicator */}
+                  <div className={`rounded-lg border-2 p-6 transition-colors ${
+                    isReady
+                      ? 'border-green-500 bg-green-50 dark:bg-green-950/20'
+                      : 'border-border bg-card'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className={`h-14 w-14 rounded-full flex items-center justify-center ${
+                          isReady
+                            ? 'bg-green-100 dark:bg-green-900/40'
+                            : 'bg-muted'
+                        }`}>
+                          {isReady
+                            ? <CircleCheck className="h-8 w-8 text-green-600 dark:text-green-400" />
+                            : <CircleX className="h-8 w-8 text-muted-foreground" />
+                          }
+                        </div>
+                        <div>
+                          <p className="text-lg font-semibold">
+                            {isReady ? 'Ready' : 'Not Ready'}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {isReady
+                              ? 'Activity is being recorded. Invitations, RSVPs, and views are tracked.'
+                              : 'Activity is paused. No views or RSVPs will be recorded until you set this to Ready.'}
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={isReady}
+                        disabled={savingStatus}
+                        onCheckedChange={(value) => saveReadyStatus({ is_ready: value })}
+                      />
+                    </div>
+                  </div>
+
+                  {!isReady && (
+                    <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-lg p-4 flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-amber-900 dark:text-amber-100">Activity tracking is paused</p>
+                        <p className="text-sm text-amber-700 dark:text-amber-200 mt-1">
+                          Set the wedding to Ready when you're prepared to start sending invitations so that all activity is properly recorded from the beginning.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Who can change this */}
+                  <div className="border-t border-border pt-6 space-y-4">
+                    <div>
+                      <Label className="text-base font-medium">Who can change this status</Label>
+                      <p className="text-sm text-muted-foreground mt-1">By default only the owner can toggle the wedding status.</p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                        readyStatusManagedBy === 'owner' ? 'border-primary bg-primary/5' : 'border-border hover:bg-accent'
+                      }`}>
+                        <input
+                          type="radio"
+                          name="readyStatusManagedBy"
+                          value="owner"
+                          checked={readyStatusManagedBy === 'owner'}
+                          onChange={() => saveReadyStatus({ ready_status_managed_by: 'owner' })}
+                          className="mt-1"
+                        />
+                        <div>
+                          <p className="text-sm font-medium">Owner only</p>
+                          <p className="text-xs text-muted-foreground">Only you can mark the wedding as ready or not ready.</p>
+                        </div>
+                      </label>
+                      <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                        readyStatusManagedBy === 'all' ? 'border-primary bg-primary/5' : 'border-border hover:bg-accent'
+                      }`}>
+                        <input
+                          type="radio"
+                          name="readyStatusManagedBy"
+                          value="all"
+                          checked={readyStatusManagedBy === 'all'}
+                          onChange={() => saveReadyStatus({ ready_status_managed_by: 'all' })}
+                          className="mt-1"
+                        />
+                        <div>
+                          <p className="text-sm font-medium">Owner & Collaborators</p>
+                          <p className="text-xs text-muted-foreground">Collaborators can also toggle the wedding status from their dashboard.</p>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {activeSection === "subscription" && (
                 <div className="space-y-6">
                   <div>
@@ -709,7 +843,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
             </Card>
 
             {/* Save Button */}
-            {hasChanges && activeSection !== 'subscription' && activeSection !== 'features' && activeSection !== 'collaborators' && (
+            {hasChanges && activeSection !== 'status' && activeSection !== 'subscription' && activeSection !== 'features' && activeSection !== 'collaborators' && (
               <div className="mt-4 flex justify-end">
                 <Button
                   onClick={saveSettings}

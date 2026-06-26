@@ -11,6 +11,8 @@ export { CountdownSection } from './countdown-section'
 export { RegistrySection } from './registry-section'
 export { HotelSuggestionsSection } from './hotel-suggestions-section'
 export { MusicSection } from './music-section'
+export { NotesSection } from './notes-section'
+export { SpecialGuestsSection } from './special-guests-section'
 
 // Export base section utilities  
 export { 

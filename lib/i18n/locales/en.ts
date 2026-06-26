@@ -908,6 +908,16 @@ export const en: Translations = {
     es: 'ES',
   },
 
+  specialGuests: {
+    title: 'Our Wedding Party',
+    subtitle: 'The people we love',
+    intro: 'We are so grateful to have these wonderful people standing beside us on our special day.',
+    brideParentsTitle: 'Parents of the Bride',
+    groomParentsTitle: 'Parents of the Groom',
+    bridesmaids: 'Bridesmaids',
+    groomsmen: 'Groomsmen',
+  },
+
   // Landing page
   landing: {
     nav: {

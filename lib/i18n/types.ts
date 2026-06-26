@@ -2451,6 +2451,16 @@ export interface Translations {
     en: string
     es: string
   }
+
+  specialGuests: {
+    title: string
+    subtitle: string
+    intro: string
+    brideParentsTitle: string
+    groomParentsTitle: string
+    bridesmaids: string
+    groomsmen: string
+  }
 }
 
 // Type for translation function

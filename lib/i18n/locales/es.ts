@@ -904,6 +904,16 @@ export const es: Translations = {
     es: 'ES',
   },
 
+  specialGuests: {
+    title: 'Nuestro Cortejo',
+    subtitle: 'Las personas que amamos',
+    intro: 'Estamos muy agradecidos de contar con estas maravillosas personas a nuestro lado en este día tan especial.',
+    brideParentsTitle: 'Padres de la Novia',
+    groomParentsTitle: 'Padres del Novio',
+    bridesmaids: 'Damas de Honor',
+    groomsmen: 'Chambelanes',
+  },
+
   // Página principal
   landing: {
     nav: {

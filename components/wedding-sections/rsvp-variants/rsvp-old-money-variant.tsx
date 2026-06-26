@@ -215,7 +215,7 @@ export function RSVPOldMoneyVariant({
   // Micro-label: 11px uppercase tracked heading font
   const microLabel = {
     fontFamily: 'var(--font-heading, serif)',
-    fontSize: '11px',
+    fontSize: '18px',
     letterSpacing: '0.38em',
     textTransform: 'uppercase' as const,
     fontWeight: 400,
@@ -260,7 +260,7 @@ export function RSVPOldMoneyVariant({
                   {/* Attendance badge — ink for attending, muted hairline for not */}
                   <span style={{
                     fontFamily: 'var(--font-heading, serif)',
-                    fontSize: '10px', letterSpacing: '0.32em', textTransform: 'uppercase',
+                    fontSize: '18px', letterSpacing: '0.32em', textTransform: 'uppercase',
                     color: g.attending === true ? bg : `${ink}55`,
                     background: g.attending === true ? ink : 'transparent',
                     border: `1px solid ${g.attending === true ? ink : `${ink}30`}`,
@@ -362,7 +362,7 @@ export function RSVPOldMoneyVariant({
                         style={{
                           width: '100%', padding: '1rem 0',
                           fontFamily: 'var(--font-heading, serif)', fontWeight: 400,
-                          fontSize: '10px', letterSpacing: '0.34em', textTransform: 'uppercase',
+                          fontSize: '18px', letterSpacing: '0.34em', textTransform: 'uppercase',
                           transition: 'all 200ms',
                           border: `1px solid ${guest.attending === true ? ink : btnBorderIdle}`,
                           background: guest.attending === true ? ink : 'transparent',
@@ -379,7 +379,7 @@ export function RSVPOldMoneyVariant({
                         style={{
                           width: '100%', padding: '1rem 0',
                           fontFamily: 'var(--font-heading, serif)', fontWeight: 400,
-                          fontSize: '10px', letterSpacing: '0.34em', textTransform: 'uppercase',
+                          fontSize: '18px', letterSpacing: '0.34em', textTransform: 'uppercase',
                           transition: 'all 200ms',
                           border: `1px solid ${guest.attending === false ? btnBorderDecline : btnBorderIdle}`,
                           background: guest.attending === false ? btnBgDecline : 'transparent',
@@ -518,7 +518,7 @@ export function RSVPOldMoneyVariant({
                     padding: '1.125rem 0',
                     background: ink, color: bg,
                     fontFamily: 'var(--font-heading, serif)', fontWeight: 300,
-                    fontSize: '11px', letterSpacing: '0.42em', textTransform: 'uppercase',
+                    fontSize: '18px', letterSpacing: '0.42em', textTransform: 'uppercase',
                     border: 'none',
                   }}
                 >

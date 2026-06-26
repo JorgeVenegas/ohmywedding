@@ -101,7 +101,7 @@ export function OurStoryOldMoneyVariant({
             <p
               data-custom-font
               className="uppercase tracking-[0.5em] mb-5"
-              style={{ color: mutedSubtle, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '11px' }}
+              style={{ color: mutedSubtle, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '18px' }}
             >
               {sectionSubtitle}
             </p>
@@ -157,7 +157,7 @@ export function OurStoryOldMoneyVariant({
               <p
                 data-custom-font
                 className="uppercase tracking-[0.4em] mb-4"
-                style={{ color: ink, fontFamily: 'var(--font-heading, serif)', fontWeight: 400, fontSize: '11px' }}
+                style={{ color: ink, fontFamily: 'var(--font-heading, serif)', fontWeight: 400, fontSize: '18px' }}
               >
                 {t('ourStory.howWeMet')}
               </p>
@@ -187,7 +187,7 @@ export function OurStoryOldMoneyVariant({
               <p
                 data-custom-font
                 className="uppercase tracking-[0.4em] mb-4"
-                style={{ color: ink, fontFamily: 'var(--font-heading, serif)', fontWeight: 400, fontSize: '11px' }}
+                style={{ color: ink, fontFamily: 'var(--font-heading, serif)', fontWeight: 400, fontSize: '18px' }}
               >
                 {t('ourStory.proposal')}
               </p>

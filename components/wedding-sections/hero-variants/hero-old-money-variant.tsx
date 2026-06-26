@@ -142,7 +142,7 @@ export function HeroOldMoneyVariant({
             className={`transition-all duration-1000 delay-[300ms] mb-5 ${envelopeOpened ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
           >
             <p
-              className="text-[10px] uppercase tracking-[0.55em] font-light"
+              className="text-[18px] uppercase tracking-[0.55em] font-light"
               style={{ color: 'rgba(255,255,255,0.50)', fontFamily: 'var(--font-heading, serif)' }}
             >
               {tagline || t('hero.weInviteYou')}
@@ -196,7 +196,7 @@ export function HeroOldMoneyVariant({
         >
           {formattedDate && (
             <span
-              className="text-[11px] sm:text-[12px] uppercase tracking-[0.45em] font-light"
+              className="text-[18px] sm:text-[18px] uppercase tracking-[0.45em] font-light"
               style={{ color: 'rgba(255,255,255,0.60)', fontFamily: 'var(--font-heading, serif)' }}
             >
               {formattedDate}
@@ -204,9 +204,9 @@ export function HeroOldMoneyVariant({
           )}
           {venueName && (
             <>
-              <span style={{ color: 'rgba(255,255,255,0.28)', fontSize: '10px' }}>·</span>
+              <span style={{ color: 'rgba(255,255,255,0.28)', fontSize: '18px' }}>·</span>
               <span
-                className="text-[11px] sm:text-[12px] uppercase tracking-[0.45em] font-light"
+                className="text-[18px] sm:text-[18px] uppercase tracking-[0.45em] font-light"
                 style={{ color: 'rgba(255,255,255,0.55)', fontFamily: 'var(--font-heading, serif)' }}
               >
                 {venueName}
@@ -226,7 +226,7 @@ export function HeroOldMoneyVariant({
                 e.preventDefault()
                 document.querySelector('#rsvp')?.scrollIntoView({ behavior: 'smooth' })
               }}
-              className="group inline-flex items-center gap-4 text-[10px] uppercase tracking-[0.5em] font-light transition-opacity duration-300 hover:opacity-60"
+              className="group inline-flex items-center gap-4 text-[18px] uppercase tracking-[0.5em] font-light transition-opacity duration-300 hover:opacity-60"
               style={{ color: 'rgba(255,255,255,0.65)', fontFamily: 'var(--font-heading, serif)' }}
             >
               <span>{t('hero.rsvpNow')}</span>
@@ -253,7 +253,7 @@ export function HeroOldMoneyVariant({
           style={{ color: 'rgba(255,255,255,0.35)' }}
         >
           <span
-            className="text-[9px] uppercase tracking-[0.4em]"
+            className="text-[11px] uppercase tracking-[0.4em]"
             style={{ fontFamily: 'var(--font-heading, serif)' }}
           >
             Scroll

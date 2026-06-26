@@ -41,11 +41,11 @@ export async function GET(request: NextRequest) {
       // Get wedding UUID from wedding_name_id
       const { data: wedding } = await supabase
         .from('weddings')
-        .select('id')
+        .select('id, is_ready')
         .eq('wedding_name_id', weddingId)
         .single()
 
-      if (wedding) {
+      if (wedding && wedding.is_ready) {
         // Insert the open record
         await supabase
           .from('invitation_opens')

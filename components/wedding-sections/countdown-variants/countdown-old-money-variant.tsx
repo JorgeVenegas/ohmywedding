@@ -95,8 +95,8 @@ export function CountdownOldMoneyVariant({
               {sectionSubtitle && (
                 <p
                   data-custom-font
-                  className="text-[10px] uppercase tracking-[0.5em] mb-5"
-                  style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '10px' }}
+                  className="uppercase tracking-[0.5em] mb-5"
+                  style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '18px' }}
                 >
                   {sectionSubtitle}
                 </p>
@@ -146,8 +146,8 @@ export function CountdownOldMoneyVariant({
               </div>
               <p
                 data-custom-font
-                className="mt-3 text-[9px] sm:text-[10px] uppercase tracking-[0.45em]"
-                style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '10px' }}
+                className="mt-3 uppercase tracking-[0.45em]"
+                style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '18px' }}
               >
                 {unit.label}
               </p>

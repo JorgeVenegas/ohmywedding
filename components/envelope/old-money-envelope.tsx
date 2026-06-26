@@ -111,6 +111,16 @@ export function OldMoneyEnvelope({
 
   return (
     <>
+      <style>{`
+        @keyframes omEnvelopeBlink {
+          0%, 100% { opacity: 0.85; }
+          50% { opacity: 0.2; }
+        }
+        .om-tap-blink {
+          animation: omEnvelopeBlink 1.6s ease-in-out infinite;
+        }
+      `}</style>
+
       {!envelopeFalling && (
         <div className="fixed inset-0 z-[29]" style={{ pointerEvents: 'auto' }} />
       )}
@@ -330,36 +340,32 @@ export function OldMoneyEnvelope({
             </div>
           ) : null}
 
-          {/* Spacer */}
-          <div style={{ flex: 1 }} />
+          {/* Spacer — tap cue lives here so it's centered in the lower card area */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {!envelopeFalling && !envelopeOpening && (
+              <p
+                className="om-tap-blink"
+                style={{
+                  fontFamily: bodyFont,
+                  fontSize: 'clamp(13px, 2.5vw, 18px)',
+                  letterSpacing: '0.32em',
+                  textTransform: 'uppercase',
+                  color: CARD_INK,
+                  opacity: 0.85,
+                  textAlign: 'center',
+                  pointerEvents: 'none',
+                }}
+              >
+                {t('common.tapToOpen')}
+              </p>
+            )}
+          </div>
 
           {/* Bottom ornament rule */}
           <div style={{ width: '100%', flexShrink: 0, marginBottom: '8px' }}>
             <OrnamentRule bodyFont={bodyFont} />
           </div>
         </div>
-
-        {/* Tap to open — in the primary strip at bottom */}
-        {!envelopeFalling && !envelopeOpening && (
-          <div
-            className="absolute left-0 right-0 text-center pointer-events-none"
-            style={{ bottom: '0', height: FRAME, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
-            <p
-              className="animate-pulse"
-              style={{
-                fontFamily: bodyFont,
-                fontSize: '7px',
-                letterSpacing: '0.28em',
-                textTransform: 'uppercase',
-                color: textColor,
-                opacity: 0.6,
-              }}
-            >
-              {t('common.tapToOpen')}
-            </p>
-          </div>
-        )}
       </div>
 
     </>

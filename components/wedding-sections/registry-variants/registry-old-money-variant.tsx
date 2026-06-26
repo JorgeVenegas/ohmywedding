@@ -68,8 +68,8 @@ export function RegistryOldMoneyVariant({
             {sectionSubtitle && (
               <p
                 data-custom-font
-                className="text-[10px] uppercase tracking-[0.5em] mb-5"
-                style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '11px' }}
+                className="uppercase tracking-[0.5em] mb-5"
+                style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '18px' }}
               >
                 {sectionSubtitle}
               </p>
@@ -200,7 +200,7 @@ export function RegistryOldMoneyVariant({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {cashRegistry.accountOwner && (
                     <div>
-                      <p data-custom-font style={{ fontFamily: 'var(--font-heading, serif)', fontWeight: 400, fontSize: '10px', letterSpacing: '0.38em', textTransform: 'uppercase', color: `${ink}55`, marginBottom: '0.3rem' }}>
+                      <p data-custom-font style={{ fontFamily: 'var(--font-heading, serif)', fontWeight: 400, fontSize: '18px', letterSpacing: '0.38em', textTransform: 'uppercase', color: `${ink}55`, marginBottom: '0.3rem' }}>
                         {t('registry.accountOwner') || 'Nombre'}
                       </p>
                       <p data-custom-font style={{ fontFamily: 'var(--font-heading, serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(1.25rem, 2.5vw, 1.625rem)', color: ink, lineHeight: 1.2 }}>
@@ -209,7 +209,7 @@ export function RegistryOldMoneyVariant({
                     </div>
                   )}
                   <div>
-                    <p data-custom-font style={{ fontFamily: 'var(--font-heading, serif)', fontWeight: 400, fontSize: '10px', letterSpacing: '0.38em', textTransform: 'uppercase', color: `${ink}55`, marginBottom: '0.3rem' }}>
+                    <p data-custom-font style={{ fontFamily: 'var(--font-heading, serif)', fontWeight: 400, fontSize: '18px', letterSpacing: '0.38em', textTransform: 'uppercase', color: `${ink}55`, marginBottom: '0.3rem' }}>
                       {t('registry.bank') || 'Banco'}
                     </p>
                     <p data-custom-font style={{ fontFamily: 'var(--font-body, sans-serif)', fontWeight: 400, fontSize: '1rem', color: ink }}>
@@ -218,7 +218,7 @@ export function RegistryOldMoneyVariant({
                   </div>
                   {cashRegistry.clabe && (
                     <div>
-                      <p data-custom-font style={{ fontFamily: 'var(--font-heading, serif)', fontWeight: 400, fontSize: '10px', letterSpacing: '0.38em', textTransform: 'uppercase', color: `${ink}55`, marginBottom: '0.3rem' }}>
+                      <p data-custom-font style={{ fontFamily: 'var(--font-heading, serif)', fontWeight: 400, fontSize: '18px', letterSpacing: '0.38em', textTransform: 'uppercase', color: `${ink}55`, marginBottom: '0.3rem' }}>
                         CLABE
                       </p>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>

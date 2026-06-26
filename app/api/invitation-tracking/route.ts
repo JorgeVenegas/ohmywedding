@@ -45,13 +45,18 @@ export async function POST(request: NextRequest) {
     // Get wedding with owner and collaborator info
     const { data: wedding, error: weddingError } = await supabase
       .from('weddings')
-      .select('id, owner_id, collaborator_emails')
+      .select('id, owner_id, collaborator_emails, is_ready')
       .eq('wedding_name_id', weddingId)
       .single()
 
     if (weddingError || !wedding) {
       console.error('Wedding not found:', weddingId, weddingError)
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
+    }
+
+    // Skip all tracking when wedding is not marked ready
+    if (!wedding.is_ready) {
+      return NextResponse.json({ success: true, skipped: true })
     }
 
     // Check if the current user is the wedding owner or collaborator

@@ -53,8 +53,8 @@ export function HotelSuggestionsOldMoneyVariant({
             {sectionSubtitle && (
               <p
                 data-custom-font
-                className="text-[10px] uppercase tracking-[0.5em] mb-5"
-                style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '11px' }}
+                className="uppercase tracking-[0.5em] mb-5"
+                style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '18px' }}
               >
                 {sectionSubtitle}
               </p>
@@ -111,8 +111,8 @@ export function HotelSuggestionsOldMoneyVariant({
                       {hotel.priceRange && (
                         <p
                           data-custom-font
-                          className="text-[11px] uppercase tracking-[0.5em] mb-3"
-                          style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '11px' }}
+                          className="uppercase tracking-[0.5em] mb-3"
+                          style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '18px' }}
                         >
                           {hotel.priceRange}
                         </p>
@@ -145,25 +145,25 @@ export function HotelSuggestionsOldMoneyVariant({
                     <div className="flex flex-col gap-3">
                       {hotel.address && (
                         <div>
-                          <p data-custom-font className="text-[11px] uppercase tracking-[0.4em] mb-1" style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '11px' }}>Address</p>
+                          <p data-custom-font className="uppercase tracking-[0.4em] mb-1" style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '18px' }}>Address</p>
                           <p data-custom-font style={{ fontFamily: 'var(--font-body, sans-serif)', fontWeight: 300, fontSize: '0.9375rem', color: muted }}>{hotel.address}</p>
                         </div>
                       )}
                       {hotel.distanceToVenue && (
                         <div>
-                          <p data-custom-font className="text-[11px] uppercase tracking-[0.4em] mb-1" style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '11px' }}>Distance</p>
+                          <p data-custom-font className="uppercase tracking-[0.4em] mb-1" style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '18px' }}>Distance</p>
                           <p data-custom-font style={{ fontFamily: 'var(--font-body, sans-serif)', fontWeight: 300, fontSize: '0.9375rem', color: muted }}>{hotel.distanceToVenue}</p>
                         </div>
                       )}
                       {hotel.phone && (
                         <div>
-                          <p data-custom-font className="text-[11px] uppercase tracking-[0.4em] mb-1" style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '11px' }}>Phone</p>
+                          <p data-custom-font className="uppercase tracking-[0.4em] mb-1" style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '18px' }}>Phone</p>
                           <a href={`tel:${hotel.phone}`} data-custom-font style={{ fontFamily: 'var(--font-body, sans-serif)', fontWeight: 300, fontSize: '0.9375rem', color: muted }}>{hotel.phone}</a>
                         </div>
                       )}
                       {hotel.bookingCode && (
                         <div>
-                          <p data-custom-font className="text-[11px] uppercase tracking-[0.4em] mb-1" style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '11px' }}>{t('hotelSuggestions.bookingCode')}</p>
+                          <p data-custom-font className="uppercase tracking-[0.4em] mb-1" style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '18px' }}>{t('hotelSuggestions.bookingCode')}</p>
                           <p data-custom-font style={{ fontFamily: 'var(--font-body, sans-serif)', fontWeight: 300, fontSize: '0.9375rem', color: muted }}>{hotel.bookingCode}</p>
                         </div>
                       )}
@@ -173,7 +173,7 @@ export function HotelSuggestionsOldMoneyVariant({
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-2 mt-2 group transition-opacity hover:opacity-50"
-                          style={{ fontFamily: 'var(--font-heading, serif)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.45em', fontWeight: 300, color: ink }}
+                          style={{ fontFamily: 'var(--font-heading, serif)', fontSize: '18px', textTransform: 'uppercase', letterSpacing: '0.45em', fontWeight: 300, color: ink }}
                         >
                           {t('hotelSuggestions.bookNow')}
                           <span className="h-px w-4 group-hover:w-7 transition-all duration-400 block" style={{ background: ink }} />

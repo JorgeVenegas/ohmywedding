@@ -62,8 +62,8 @@ export function GalleryOldMoneyVariant({
           {sectionSubtitle && (
             <p
               data-custom-font
-              className="text-[10px] uppercase tracking-[0.5em] mb-5"
-              style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '10px' }}
+              className="uppercase tracking-[0.5em] mb-5"
+              style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '18px' }}
             >
               {sectionSubtitle}
             </p>
@@ -86,7 +86,7 @@ export function GalleryOldMoneyVariant({
             {photos.length > 0 && (
               <p
                 data-custom-font
-                style={{ fontFamily: 'var(--font-heading, serif)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.45em', color: muted, fontWeight: 300, whiteSpace: 'nowrap', paddingBottom: '0.4rem' }}
+                style={{ fontFamily: 'var(--font-heading, serif)', fontSize: '18px', textTransform: 'uppercase', letterSpacing: '0.45em', color: muted, fontWeight: 300, whiteSpace: 'nowrap', paddingBottom: '0.4rem' }}
               >
                 {photos.length} {photos.length === 1 ? 'image' : 'images'}
               </p>
@@ -213,11 +213,11 @@ export function GalleryOldMoneyVariant({
           </div>
 
           <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
-            <p style={{ fontFamily: 'var(--font-heading, serif)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.4em', color: 'rgba(255,255,255,0.4)' }}>
+            <p style={{ fontFamily: 'var(--font-heading, serif)', fontSize: '18px', textTransform: 'uppercase', letterSpacing: '0.4em', color: 'rgba(255,255,255,0.4)' }}>
               {photos[lightboxIndex].caption || ''}
             </p>
             {photos.length > 1 && (
-              <p style={{ fontFamily: 'var(--font-heading, serif)', fontSize: '10px', letterSpacing: '0.3em', color: 'rgba(255,255,255,0.35)' }}>
+              <p style={{ fontFamily: 'var(--font-heading, serif)', fontSize: '18px', letterSpacing: '0.3em', color: 'rgba(255,255,255,0.35)' }}>
                 {lightboxIndex + 1} / {photos.length}
               </p>
             )}

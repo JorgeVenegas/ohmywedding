@@ -273,7 +273,7 @@ export async function PUT(request: Request) {
     // Check wedding ownership
     const { data: wedding, error: weddingError } = await supabase
       .from("weddings")
-      .select("owner_id, collaborator_emails")
+      .select("owner_id, collaborator_emails, is_ready")
       .eq("id", existingGuest.wedding_id)
       .single()
 
@@ -330,12 +330,12 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    // Log activity if confirmation status changed
+    // Log activity if confirmation status changed (only when wedding is ready)
     const oldStatus = existingGuest.confirmation_status
     const newStatus = body.confirmationStatus
-    if (newStatus && oldStatus !== newStatus && (newStatus === 'confirmed' || newStatus === 'declined')) {
+    if (newStatus && oldStatus !== newStatus && (newStatus === 'confirmed' || newStatus === 'declined') && wedding?.is_ready) {
       const activityType = newStatus === 'confirmed' ? 'rsvp_confirmed' : 'rsvp_declined'
-      const description = newStatus === 'confirmed' 
+      const description = newStatus === 'confirmed'
         ? `${existingGuest.name} confirmed by owner`
         : `${existingGuest.name} declined by owner`
 

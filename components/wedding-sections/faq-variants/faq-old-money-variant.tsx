@@ -70,8 +70,8 @@ export function FAQOldMoneyVariant({
             {sectionSubtitle && (
               <p
                 data-custom-font
-                className="text-[10px] uppercase tracking-[0.5em] mb-5"
-                style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '11px' }}
+                className="uppercase tracking-[0.5em] mb-5"
+                style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '18px' }}
               >
                 {sectionSubtitle}
               </p>

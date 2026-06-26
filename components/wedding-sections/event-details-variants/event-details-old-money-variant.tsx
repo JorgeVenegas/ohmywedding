@@ -102,8 +102,8 @@ export function EventDetailsOldMoneyVariant({
             {sectionSubtitle && (
               <p
                 data-custom-font
-                className="text-[10px] uppercase tracking-[0.5em] mb-5"
-                style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '11px' }}
+                className="uppercase tracking-[0.5em] mb-5"
+                style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '18px' }}
               >
                 {sectionSubtitle}
               </p>
@@ -132,8 +132,8 @@ export function EventDetailsOldMoneyVariant({
                 <div className="mb-12">
                   <p
                     data-custom-font
-                    className="text-[10px] uppercase tracking-[0.5em]"
-                    style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '11px' }}
+                    className="uppercase tracking-[0.5em]"
+                    style={{ color: muted, fontFamily: 'var(--font-heading, serif)', fontWeight: 300, fontSize: '18px' }}
                   >
                     {formatDayLabel(group.date, locale, dayLabels)}
                   </p>
@@ -265,7 +265,7 @@ export function EventDetailsOldMoneyVariant({
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-2 mt-5 group transition-opacity duration-200 hover:opacity-50"
-                          style={{ fontFamily: 'var(--font-heading, serif)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.45em', fontWeight: 300, color: muted }}
+                          style={{ fontFamily: 'var(--font-heading, serif)', fontSize: '18px', textTransform: 'uppercase', letterSpacing: '0.45em', fontWeight: 300, color: muted }}
                         >
                           {t('eventDetails.viewOnMap')}
                           <span className="block h-px w-5 group-hover:w-8 transition-all duration-400" style={{ background: muted }} />
