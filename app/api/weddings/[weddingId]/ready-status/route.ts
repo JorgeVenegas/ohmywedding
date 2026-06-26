@@ -4,6 +4,8 @@ import { createServerSupabaseClient, createAdminSupabaseClient } from "@/lib/sup
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ weddingId: string }> }
@@ -19,11 +21,12 @@ export async function GET(
     }
 
     const adminClient = createAdminSupabaseClient()
+    const isUUID = UUID_REGEX.test(decodedWeddingId)
 
     const { data: wedding, error } = await adminClient
       .from("weddings")
       .select("id, owner_id, collaborator_emails, is_ready, ready_status_managed_by")
-      .eq("wedding_name_id", decodedWeddingId)
+      .eq(isUUID ? "id" : "wedding_name_id", decodedWeddingId)
       .single()
 
     if (error || !wedding) {
@@ -67,11 +70,12 @@ export async function PATCH(
     }
 
     const adminClient = createAdminSupabaseClient()
+    const isUUID = UUID_REGEX.test(decodedWeddingId)
 
     const { data: wedding, error } = await adminClient
       .from("weddings")
       .select("id, owner_id, collaborator_emails, is_ready, ready_status_managed_by")
-      .eq("wedding_name_id", decodedWeddingId)
+      .eq(isUUID ? "id" : "wedding_name_id", decodedWeddingId)
       .single()
 
     if (error || !wedding) {

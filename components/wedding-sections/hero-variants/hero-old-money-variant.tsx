@@ -239,31 +239,6 @@ export function HeroOldMoneyVariant({
         )}
       </div>
 
-      {/* Scroll cue */}
-      <div
-        className={`absolute bottom-8 right-8 sm:right-14 z-20 transition-all duration-1000 delay-[1200ms] ${envelopeOpened ? 'opacity-100' : 'opacity-0'}`}
-      >
-        <a
-          href="#countdown"
-          onClick={(e) => {
-            e.preventDefault()
-            document.querySelector('#countdown')?.scrollIntoView({ behavior: 'smooth' })
-          }}
-          className="flex flex-col items-center gap-2 cursor-pointer"
-          style={{ color: 'rgba(255,255,255,0.35)' }}
-        >
-          <span
-            className="text-[11px] uppercase tracking-[0.4em]"
-            style={{ fontFamily: 'var(--font-heading, serif)' }}
-          >
-            Scroll
-          </span>
-          <div
-            className="h-8 w-px"
-            style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.4), transparent)' }}
-          />
-        </a>
-      </div>
     </SectionWrapper>
   )
 }

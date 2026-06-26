@@ -23,7 +23,7 @@ function PersonEntry({ person, nameColor, roleColor }: { person: GuestPerson; na
           fontFamily: 'var(--font-display, serif)',
           fontStyle: 'italic',
           fontWeight: 300,
-          fontSize: 'clamp(1.15rem, 2vw, 1.4rem)',
+          fontSize: 'clamp(1.5rem, 3vw, 2rem)',
           lineHeight: 1.2,
           color: nameColor,
         }}
