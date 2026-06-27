@@ -55,6 +55,12 @@ function getLuminance(hex: string): number {
   return 0.2126 * toLinear(((num >> 16) & 255) / 255) + 0.7152 * toLinear(((num >> 8) & 255) / 255) + 0.0722 * toLinear((num & 255) / 255)
 }
 
+function contrastRatio(lum1: number, lum2: number): number {
+  const lighter = Math.max(lum1, lum2)
+  const darker  = Math.min(lum1, lum2)
+  return (lighter + 0.05) / (darker + 0.05)
+}
+
 export function getColorScheme(
   theme: Partial<ThemeConfig> | undefined,
   backgroundColorChoice: BackgroundColorChoice | undefined,
@@ -97,6 +103,12 @@ export function getColorScheme(
   }
   const isLightBg = bgLuminance > 0.5
 
+  // On a light colored bg, prefer the theme primary if it has enough contrast (≥ 3.5:1).
+  // Fall back to foreground (dark) when contrast is insufficient.
+  const primaryLum = getLuminance(primary.startsWith('#') ? primary : '#d4a574')
+  const primaryOnBgContrast = isColored && isLightBg ? contrastRatio(bgLuminance, primaryLum) : 0
+  const primaryOnLight = primaryOnBgContrast >= 3.5 ? primary : foreground
+
   return {
     bgColor,
     isColored,
@@ -104,6 +116,6 @@ export function getColorScheme(
     ink: isColored ? (isLightBg ? foreground : '#ffffff') : foreground,
     muted: isColored ? (isLightBg ? muted : 'rgba(255,255,255,0.7)') : muted,
     hairline: isColored ? (isLightBg ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.2)') : 'rgba(33,29,26,0.12)',
-    primary: isColored ? (isLightBg ? foreground : '#ffffff') : (theme?.colors?.primary || foreground),
+    primary: isColored ? (isLightBg ? primaryOnLight : '#ffffff') : (theme?.colors?.primary || foreground),
   }
 }
