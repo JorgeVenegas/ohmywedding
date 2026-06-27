@@ -24,6 +24,7 @@ function PersonEntry({ person, nameColor, roleColor }: { person: GuestPerson; na
           fontWeight: 300,
           fontSize: 'clamp(1.5rem, 3vw, 2rem)',
           lineHeight: 1.2,
+          letterSpacing: '0.08em',
           color: nameColor,
         }}
       >
@@ -87,7 +88,7 @@ export function SpecialGuestsOldMoneyVariant({
   return (
     <section id="special-guests" className="relative overflow-hidden" style={{ backgroundColor: bg }}>
       <div
-        className="max-w-3xl mx-auto px-8 sm:px-14 md:px-16"
+        className="max-w-3xl mx-auto px-8 sm:px-14 md:px-16 text-center sm:text-left"
         style={{ paddingTop: 'clamp(5rem, 10vw, 8rem)', paddingBottom: 'clamp(5rem, 10vw, 8rem)' }}
       >
         {/* Section header */}
@@ -197,6 +198,7 @@ export function SpecialGuestsOldMoneyVariant({
                       fontWeight: 300,
                       fontSize: 'clamp(1rem, 2vw, 1.2rem)',
                       lineHeight: 1.25,
+                      letterSpacing: '0.08em',
                       color: primaryColor,
                     }}
                   >
