@@ -20,8 +20,7 @@ function PersonEntry({ person, nameColor, roleColor }: { person: GuestPerson; na
       <p
         data-custom-font
         style={{
-          fontFamily: 'var(--font-display, serif)',
-          fontStyle: 'italic',
+          fontFamily: 'var(--font-heading, serif)',
           fontWeight: 300,
           fontSize: 'clamp(1.5rem, 3vw, 2rem)',
           lineHeight: 1.2,
@@ -34,11 +33,9 @@ function PersonEntry({ person, nameColor, roleColor }: { person: GuestPerson; na
         <p
           data-custom-font
           style={{
-            fontFamily: 'var(--font-heading, serif)',
+            fontFamily: 'var(--font-body, sans-serif)',
             fontWeight: 300,
-            fontSize: '12px',
-            letterSpacing: '0.25em',
-            textTransform: 'uppercase',
+            fontSize: '13px',
             color: roleColor,
             marginTop: '0.2rem',
           }}
@@ -196,8 +193,7 @@ export function SpecialGuestsOldMoneyVariant({
                   <p
                     data-custom-font
                     style={{
-                      fontFamily: 'var(--font-display, serif)',
-                      fontStyle: 'italic',
+                      fontFamily: 'var(--font-heading, serif)',
                       fontWeight: 300,
                       fontSize: 'clamp(1rem, 2vw, 1.2rem)',
                       lineHeight: 1.25,
@@ -210,11 +206,9 @@ export function SpecialGuestsOldMoneyVariant({
                     <p
                       data-custom-font
                       style={{
-                        fontFamily: 'var(--font-heading, serif)',
+                        fontFamily: 'var(--font-body, sans-serif)',
                         fontWeight: 300,
-                        fontSize: '11px',
-                        letterSpacing: '0.2em',
-                        textTransform: 'uppercase',
+                        fontSize: '12px',
                         color: mutedColor,
                         marginTop: '0.2rem',
                       }}

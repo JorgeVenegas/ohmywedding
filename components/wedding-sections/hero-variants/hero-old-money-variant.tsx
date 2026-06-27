@@ -196,7 +196,7 @@ export function HeroOldMoneyVariant({
         >
           {formattedDate && (
             <span
-              className="text-[18px] sm:text-[18px] uppercase tracking-[0.45em] font-light"
+              className="text-[16px] sm:text-[16px] uppercase tracking-[0.45em] font-light"
               style={{ color: 'rgba(255,255,255,0.60)', fontFamily: 'var(--font-heading, serif)' }}
             >
               {formattedDate}
@@ -204,9 +204,9 @@ export function HeroOldMoneyVariant({
           )}
           {venueName && (
             <>
-              <span style={{ color: 'rgba(255,255,255,0.28)', fontSize: '18px' }}>·</span>
+              <span style={{ color: 'rgba(255,255,255,0.28)', fontSize: '16px' }}>·</span>
               <span
-                className="text-[18px] sm:text-[18px] uppercase tracking-[0.45em] font-light"
+                className="text-[16px] sm:text-[16px] uppercase tracking-[0.45em] font-light"
                 style={{ color: 'rgba(255,255,255,0.55)', fontFamily: 'var(--font-heading, serif)' }}
               >
                 {venueName}
