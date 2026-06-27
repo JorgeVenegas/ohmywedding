@@ -101,11 +101,34 @@ export interface GroupTravelForm {
 }
 
 export const TAG_COLORS: Record<string, string> = {
-  family: "bg-blue-100 text-blue-700 border-blue-200",
-  friends: "bg-green-100 text-green-700 border-green-200",
-  work: "bg-purple-100 text-purple-700 border-purple-200",
-  neighbors: "bg-orange-100 text-orange-700 border-orange-200",
-  default: "bg-gray-100 text-gray-700 border-gray-200",
+  family: "bg-sky-50 text-sky-600 border-sky-200",
+  friends: "bg-emerald-50 text-emerald-600 border-emerald-200",
+  work: "bg-violet-50 text-violet-600 border-violet-200",
+  neighbors: "bg-amber-50 text-amber-600 border-amber-200",
+  default: "bg-gray-50 text-gray-500 border-gray-200",
+}
+
+const FALLBACK_TAG_PALETTE = [
+  "bg-rose-50 text-rose-500 border-rose-200",
+  "bg-fuchsia-50 text-fuchsia-500 border-fuchsia-200",
+  "bg-pink-50 text-pink-500 border-pink-200",
+  "bg-indigo-50 text-indigo-500 border-indigo-200",
+  "bg-teal-50 text-teal-600 border-teal-200",
+  "bg-cyan-50 text-cyan-600 border-cyan-200",
+  "bg-lime-50 text-lime-600 border-lime-200",
+  "bg-orange-50 text-orange-500 border-orange-200",
+  "bg-purple-50 text-purple-500 border-purple-200",
+  "bg-blue-50 text-blue-500 border-blue-200",
+]
+
+export function getTagColorClass(tag: string): string {
+  const lower = tag.toLowerCase()
+  if (TAG_COLORS[lower]) return TAG_COLORS[lower]
+  let hash = 0
+  for (let i = 0; i < lower.length; i++) {
+    hash = (hash * 31 + lower.charCodeAt(i)) >>> 0
+  }
+  return FALLBACK_TAG_PALETTE[hash % FALLBACK_TAG_PALETTE.length]
 }
 
 export const PREDEFINED_TAGS = ["family", "friends", "work", "neighbors"]

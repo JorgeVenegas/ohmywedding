@@ -116,7 +116,6 @@ export function OurStoryOldMoneyVariant({
               fontSize: 'clamp(2.4rem, 5vw, 4.5rem)',
               color: primary,
               lineHeight: 1.15,
-              maxWidth: '18ch',
             }}
           >
             {title}

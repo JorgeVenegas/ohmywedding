@@ -23,7 +23,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Guest, ColumnVisibility, TAG_COLORS, resolveInvitedBy } from "../types"
+import { Guest, ColumnVisibility, getTagColorClass, resolveInvitedBy } from "../types"
 import { useTranslation } from "@/components/contexts/i18n-context"
 
 export type SortColumn = 'name' | 'group' | 'status' | null
@@ -47,9 +47,7 @@ interface GuestsTableFlatProps {
   partnerNames: { partner1: string; partner2: string }
 }
 
-function getTagColor(tag: string): string {
-  return TAG_COLORS[tag.toLowerCase()] || TAG_COLORS.default
-}
+const getTagColor = (tag: string) => getTagColorClass(tag)
 
 function getStatusBadgeClass(status: string): string {
   switch (status) {

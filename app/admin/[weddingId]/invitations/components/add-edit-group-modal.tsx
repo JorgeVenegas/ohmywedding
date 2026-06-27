@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { X, Tag, Plus, Users } from "lucide-react"
-import { Guest, PREDEFINED_TAGS, TAG_COLORS } from "../types"
+import { Guest, PREDEFINED_TAGS, getTagColorClass } from "../types"
 import { useTranslation } from '@/components/contexts/i18n-context'
 
 interface TempGuestForm {
@@ -56,9 +56,7 @@ interface AddEditGroupModalProps {
   isAddingGuest?: boolean
 }
 
-function getTagColor(tag: string): string {
-  return TAG_COLORS[tag] || TAG_COLORS.default
-}
+const getTagColor = (tag: string) => getTagColorClass(tag)
 
 export function AddEditGroupModal({
   isOpen,

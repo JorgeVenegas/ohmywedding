@@ -37,7 +37,7 @@ import {
   TimelineData,
   ColumnVisibility,
   GroupTravelForm,
-  TAG_COLORS,
+  getTagColorClass,
   PREDEFINED_TAGS,
   resolveInvitedBy,
   nameToInvitedByKey,
@@ -189,6 +189,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   // Multi-select states
   const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set())
+  const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set())
   const [showAssignGroupModal, setShowAssignGroupModal] = useState(false)
   const [showBulkInvitedByModal, setShowBulkInvitedByModal] = useState(false)
   const [bulkInvitedBy, setBulkInvitedBy] = useState<string[]>([])
@@ -1318,6 +1319,42 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     setSelectedGuestIds(new Set())
   }
 
+  const toggleGroupSelection = (groupId: string) => {
+    setSelectedGroupIds(prev => {
+      const next = new Set(prev)
+      if (next.has(groupId)) next.delete(groupId)
+      else next.add(groupId)
+      return next
+    })
+  }
+
+  const handleBulkDeleteGroups = () => {
+    if (selectedGroupIds.size === 0) return
+    const count = selectedGroupIds.size
+    setConfirmDialog({
+      isOpen: true,
+      title: t('admin.invitations.toasts.deleteGroupTitle'),
+      message: t('admin.invitations.confirmDelete.guestsMessage', { count }),
+      confirmLabel: t('common.delete'),
+      confirmVariant: 'destructive',
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }))
+        try {
+          await Promise.all(
+            Array.from(selectedGroupIds).map(id =>
+              fetch(`/api/guest-groups?id=${id}`, { method: 'DELETE' })
+            )
+          )
+          await fetchGuestGroups()
+          setSelectedGroupIds(new Set())
+          setNotification({ isOpen: true, type: 'success', title: t('common.deleted'), message: t('admin.invitations.toasts.groupDeleted') })
+        } catch {
+          setNotification({ isOpen: true, type: 'error', title: t('common.error'), message: t('admin.invitations.toasts.groupDeleteError') })
+        }
+      }
+    })
+  }
+
   const handleAssignToGroup = async () => {
     if (selectedGuestIds.size === 0 || isSubmittingAssign) return
     setIsSubmittingAssign(true)
@@ -2440,9 +2477,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     }
   }
 
-  const getTagColor = (tag: string) => {
-    return TAG_COLORS[tag.toLowerCase()] || TAG_COLORS.default
-  }
+  const getTagColor = (tag: string) => getTagColorClass(tag)
 
   // ── Normalize invited_by across all guest data ──────────────────────
   // Converts any legacy raw name strings (e.g. "Jorge") to references
@@ -2724,6 +2759,17 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     return filtered
   }, [normalizedGroups, searchQuery, statusFilter, tagFilter, invitedByFilter, openedFilter, sortColumn, sortDirection])
 
+  const isAllGroupsSelected = filteredGroups.length > 0 && selectedGroupIds.size === filteredGroups.length
+  const isSomeGroupsSelected = selectedGroupIds.size > 0 && selectedGroupIds.size < filteredGroups.length
+
+  const toggleSelectAllGroups = () => {
+    if (selectedGroupIds.size === filteredGroups.length) {
+      setSelectedGroupIds(new Set())
+    } else {
+      setSelectedGroupIds(new Set(filteredGroups.map(g => g.id)))
+    }
+  }
+
   // Calculate filtered statistics based on filtered guests
   const filteredGuestCount = filteredGuests.length
   const filteredConfirmedGuests = filteredGuests.filter(g => g.confirmation_status === 'confirmed').length
@@ -2926,6 +2972,12 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               toggleGuestSelection={toggleGuestSelection}
               isGroupFullySelected={isGroupFullySelected}
               isGroupPartiallySelected={isGroupPartiallySelected}
+              selectedGroupIds={selectedGroupIds}
+              toggleGroupSelection={toggleGroupSelection}
+              toggleSelectAllGroups={toggleSelectAllGroups}
+              isAllGroupsSelected={isAllGroupsSelected}
+              isSomeGroupsSelected={isSomeGroupsSelected}
+              onBulkDeleteGroups={handleBulkDeleteGroups}
               visibleColumns={visibleColumns}
               sortColumn={sortColumn}
               sortDirection={sortDirection}

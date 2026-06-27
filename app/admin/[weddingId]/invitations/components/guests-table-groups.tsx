@@ -45,7 +45,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Guest, GuestGroup, ColumnVisibility, TAG_COLORS, resolveInvitedBy } from "../types"
+import { Guest, GuestGroup, ColumnVisibility, getTagColorClass, resolveInvitedBy } from "../types"
 import type { PlanType } from "@/lib/subscription-shared"
 import { useTranslation } from "@/components/contexts/i18n-context"
 
@@ -65,6 +65,12 @@ interface GuestsTableGroupsProps {
   toggleGuestSelection: (guestId: string) => void
   isGroupFullySelected: (groupGuests: Guest[]) => boolean
   isGroupPartiallySelected: (groupGuests: Guest[]) => boolean
+  selectedGroupIds: Set<string>
+  toggleGroupSelection: (groupId: string) => void
+  toggleSelectAllGroups: () => void
+  isAllGroupsSelected: boolean
+  isSomeGroupsSelected: boolean
+  onBulkDeleteGroups: () => void
   visibleColumns: ColumnVisibility
   sortColumn: SortColumn
   sortDirection: SortDirection
@@ -90,9 +96,7 @@ interface GuestsTableGroupsProps {
   planType: PlanType
 }
 
-function getTagColor(tag: string): string {
-  return TAG_COLORS[tag.toLowerCase()] || TAG_COLORS.default
-}
+const getTagColor = (tag: string) => getTagColorClass(tag)
 
 function getStatusBadgeClass(status: string): string {
   switch (status) {
@@ -118,6 +122,12 @@ export function GuestsTableGroups({
   toggleGuestSelection,
   isGroupFullySelected,
   isGroupPartiallySelected,
+  selectedGroupIds,
+  toggleGroupSelection,
+  toggleSelectAllGroups,
+  isAllGroupsSelected,
+  isSomeGroupsSelected,
+  onBulkDeleteGroups,
   visibleColumns,
   sortColumn,
   sortDirection,
@@ -154,11 +164,53 @@ export function GuestsTableGroups({
           </p>
         </div>
       ) : (
+        <div>
+          {/* Bulk-group action bar */}
+          {selectedGroupIds.size > 0 && (
+            <div className="flex items-center justify-between px-4 py-2.5 bg-primary/5 border-b border-primary/20">
+              <span className="text-sm font-medium text-foreground">
+                {selectedGroupIds.size} {selectedGroupIds.size === 1 ? 'group' : 'groups'} selected
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs h-7"
+                  onClick={() => { /* clear group selection — handled by parent via toggleSelectAllGroups */ toggleSelectAllGroups() }}
+                >
+                  Clear
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="text-xs h-7 gap-1.5"
+                  onClick={onBulkDeleteGroups}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Delete {selectedGroupIds.size} {selectedGroupIds.size === 1 ? 'group' : 'groups'}
+                </Button>
+              </div>
+            </div>
+          )}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/20 border-b border-border">
               <tr>
-                <th className="px-2 py-2 w-8"></th>
+                <th className="px-2 py-2 w-8">
+                  <button
+                    onClick={toggleSelectAllGroups}
+                    className={`w-4 h-4 border rounded flex items-center justify-center mx-auto ${
+                      isAllGroupsSelected
+                        ? 'bg-primary border-primary'
+                        : isSomeGroupsSelected
+                          ? 'bg-primary/50 border-primary'
+                          : 'border-border'
+                    }`}
+                  >
+                    {isAllGroupsSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                    {isSomeGroupsSelected && !isAllGroupsSelected && <div className="w-2 h-0.5 bg-primary-foreground" />}
+                  </button>
+                </th>
                 <th className="px-2 py-2 w-8"></th>
                 <th className="px-3 py-2 text-left">
                   <button
@@ -242,21 +294,19 @@ export function GuestsTableGroups({
                     {/* Group Row */}
                     <tr
                       className={`border-b border-border hover:bg-muted/30 transition-colors cursor-pointer ${index % 2 === 0 ? "bg-background" : "bg-muted/10"
-                        } ${isExpanded ? "bg-muted/40" : ""} ${isGroupFullySelected(group.guests) ? "bg-primary/5" : ""}`}
+                        } ${isExpanded ? "bg-muted/40" : ""} ${selectedGroupIds.has(group.id) ? "bg-primary/5" : ""}`}
                       onClick={() => toggleGroupExpansion(group.id)}
                     >
                       <td className="px-2 py-2 text-center" onClick={(e) => e.stopPropagation()}>
                         <button
-                          onClick={() => toggleSelectGroup(group.guests)}
-                          className={`w-4 h-4 border rounded flex items-center justify-center ${isGroupFullySelected(group.guests)
+                          onClick={() => toggleGroupSelection(group.id)}
+                          className={`w-4 h-4 border rounded flex items-center justify-center ${
+                            selectedGroupIds.has(group.id)
                               ? 'bg-primary border-primary'
-                              : isGroupPartiallySelected(group.guests)
-                                ? 'bg-primary/50 border-primary'
-                                : 'border-border'
-                            }`}
+                              : 'border-border'
+                          }`}
                         >
-                          {isGroupFullySelected(group.guests) && <Check className="w-3 h-3 text-primary-foreground" />}
-                          {isGroupPartiallySelected(group.guests) && <div className="w-2 h-0.5 bg-primary-foreground" />}
+                          {selectedGroupIds.has(group.id) && <Check className="w-3 h-3 text-primary-foreground" />}
                         </button>
                       </td>
                       <td className="px-2 py-2 text-center">
@@ -1093,6 +1143,7 @@ export function GuestsTableGroups({
               )}
             </tbody>
           </table>
+        </div>
         </div>
       )}
     </Card>

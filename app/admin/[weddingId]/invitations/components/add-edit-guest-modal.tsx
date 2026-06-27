@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { X, Tag, Plus, FileText } from "lucide-react"
-import { GuestGroup, PREDEFINED_TAGS, TAG_COLORS } from "../types"
+import { GuestGroup, PREDEFINED_TAGS, getTagColorClass } from "../types"
 import type { PartnerOption } from "../types"
 import { useTranslation } from '@/components/contexts/i18n-context'
 
@@ -50,9 +50,7 @@ interface AddEditGuestModalProps {
   isSubmitting?: boolean
 }
 
-function getTagColor(tag: string): string {
-  return TAG_COLORS[tag] || TAG_COLORS.default
-}
+const getTagColor = (tag: string) => getTagColorClass(tag)
 
 export function AddEditGuestModal({
   isOpen,
