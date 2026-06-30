@@ -92,8 +92,8 @@ export function MusicOldMoneyVariant({
                 </button>
               )}
 
-              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', minWidth: 0 }}>
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                <div>
                   <span
                     style={{
                       fontFamily: 'var(--font-display, serif)',
@@ -101,15 +101,16 @@ export function MusicOldMoneyVariant({
                       fontWeight: 300,
                       fontSize: '1.375rem',
                       color: ink,
-                      whiteSpace: 'nowrap',
+                      display: 'block',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {songTitle || 'Nuestra Canción'}
                   </span>
                   {artistName && (
-                    <span data-custom-font style={{ fontSize: '18px', color: muted, letterSpacing: '0.1em', flexShrink: 0 }}>
+                    <span data-custom-font style={{ fontSize: '13px', color: muted, letterSpacing: '0.1em', display: 'block' }}>
                       {artistName}
                     </span>
                   )}

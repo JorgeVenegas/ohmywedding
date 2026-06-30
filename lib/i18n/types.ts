@@ -871,6 +871,25 @@ export interface Translations {
     minutesAgo: string
     hoursAgo: string
     daysAgo: string
+    // Activity descriptions
+    invitationOpenedDesc: string
+    rsvpConfirmedDesc: string
+    rsvpDeclinedDesc: string
+    rsvpUpdatedDesc: string
+    guestAddedDesc: string
+    guestRemovedDesc: string
+    groupAddedDesc: string
+    groupRemovedDesc: string
+    messageSentDesc: string
+    registryContributionDesc: string
+    // Completed payments
+    completedPayments: string
+    noCompletedPayments: string
+    recentPaymentsHint: string
+    contributedTo: string
+    contributed: string
+    showingLatest: string
+    retry: string
     // Invitation stats
     invitationStats: string
     openRate: string

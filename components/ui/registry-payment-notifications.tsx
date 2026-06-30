@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Gift, RefreshCw, Clock } from "lucide-react"
+import { useTranslation } from "@/components/contexts/i18n-context"
 
 interface ContributionNotification {
   id: string
@@ -19,23 +20,8 @@ interface RegistryPaymentNotificationsProps {
   limit?: number
 }
 
-function formatTimeAgo(dateString: string): string {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
-
-  if (diffMins < 1) return "Just now"
-  if (diffMins < 60) return `${diffMins}m ago`
-  if (diffHours < 24) return `${diffHours}h ago`
-  if (diffDays < 7) return `${diffDays}d ago`
-
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
-}
-
 export function RegistryPaymentNotifications({ weddingId, limit = 5 }: RegistryPaymentNotificationsProps) {
+  const { t } = useTranslation()
   const [items, setItems] = useState<ContributionNotification[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -48,8 +34,8 @@ export function RegistryPaymentNotifications({ weddingId, limit = 5 }: RegistryP
       if (!res.ok) throw new Error("Failed to load payments")
       const data = await res.json()
       setItems(data.contributions || [])
-    } catch (err) {
-      setError("Failed to load payments")
+    } catch {
+      setError(t('activity.noCompletedPayments'))
     } finally {
       setLoading(false)
     }
@@ -59,10 +45,26 @@ export function RegistryPaymentNotifications({ weddingId, limit = 5 }: RegistryP
     fetchData()
   }, [weddingId, limit])
 
+  function formatTimeAgo(dateString: string): string {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return t('activity.justNow')
+    if (diffMins < 60) return t('activity.minutesAgo', { count: diffMins })
+    if (diffHours < 24) return t('activity.hoursAgo', { count: diffHours })
+    if (diffDays < 7) return t('activity.daysAgo', { count: diffDays })
+
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  }
+
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-foreground">Completed Payments</h3>
+        <h3 className="font-semibold text-foreground">{t('activity.completedPayments')}</h3>
         <Button variant="ghost" size="sm" onClick={fetchData} className="h-7 px-2">
           <RefreshCw className="w-3.5 h-3.5" />
         </Button>
@@ -85,14 +87,14 @@ export function RegistryPaymentNotifications({ weddingId, limit = 5 }: RegistryP
           <p className="text-sm text-muted-foreground mb-2">{error}</p>
           <Button variant="ghost" size="sm" onClick={fetchData}>
             <RefreshCw className="w-4 h-4 mr-1" />
-            Retry
+            {t('activity.retry')}
           </Button>
         </div>
       ) : items.length === 0 ? (
         <div className="text-center py-6">
           <Clock className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">No completed payments yet</p>
-          <p className="text-xs text-muted-foreground mt-1">Recent completed payments will appear here</p>
+          <p className="text-sm text-muted-foreground">{t('activity.noCompletedPayments')}</p>
+          <p className="text-xs text-muted-foreground mt-1">{t('activity.recentPaymentsHint')}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -103,8 +105,10 @@ export function RegistryPaymentNotifications({ weddingId, limit = 5 }: RegistryP
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-foreground leading-tight">
-                  {item.contributorName} contributed ${item.amount.toFixed(2)}
-                  {item.itemTitle ? ` to ${item.itemTitle}` : ""}
+                  {item.itemTitle
+                    ? t('activity.contributedTo', { name: item.contributorName, amount: item.amount.toFixed(2), item: item.itemTitle })
+                    : t('activity.contributed', { name: item.contributorName, amount: item.amount.toFixed(2) })
+                  }
                 </p>
                 {item.message && (
                   <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.message}</p>

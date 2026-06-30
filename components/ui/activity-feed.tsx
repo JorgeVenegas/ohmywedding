@@ -18,6 +18,7 @@ import {
   RefreshCw,
   Clock,
 } from "lucide-react"
+import { useTranslation } from "@/components/contexts/i18n-context"
 
 interface Activity {
   id: string
@@ -65,29 +66,14 @@ const ACTIVITY_COLORS: Record<string, string> = {
   registry_contribution: "text-pink-500 bg-pink-50",
 }
 
-function formatTimeAgo(dateString: string): string {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
-
-  if (diffMins < 1) return "Just now"
-  if (diffMins < 60) return `${diffMins}m ago`
-  if (diffHours < 24) return `${diffHours}h ago`
-  if (diffDays < 7) return `${diffDays}d ago`
-  
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
-export function ActivityFeed({ 
-  weddingId, 
-  limit = 10, 
+export function ActivityFeed({
+  weddingId,
+  limit = 10,
   showTitle = true,
   showViewAll = true,
-  compact = false 
+  compact = false
 }: ActivityFeedProps) {
+  const { t } = useTranslation()
   const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -102,8 +88,8 @@ export function ActivityFeed({
       if (!response.ok) throw new Error("Failed to fetch activities")
       const data = await response.json()
       setActivities(data.activities || [])
-    } catch (err) {
-      setError("Failed to load activity")
+    } catch {
+      setError(t('activity.noRecentActivity'))
     } finally {
       setLoading(false)
     }
@@ -113,21 +99,56 @@ export function ActivityFeed({
     fetchActivities()
   }, [weddingId, limit])
 
-  const getActivityIcon = (type: string) => {
-    const Icon = ACTIVITY_ICONS[type] || Clock
-    return Icon
+  function formatTimeAgo(dateString: string): string {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return t('activity.justNow')
+    if (diffMins < 60) return t('activity.minutesAgo', { count: diffMins })
+    if (diffHours < 24) return t('activity.hoursAgo', { count: diffHours })
+    if (diffDays < 7) return t('activity.daysAgo', { count: diffDays })
+
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
   }
 
-  const getActivityColor = (type: string) => {
-    return ACTIVITY_COLORS[type] || "text-gray-500 bg-gray-50"
+  function getActivityDescription(activity: Activity): string {
+    const name = activity.groupName || activity.guestName || '—'
+    switch (activity.type) {
+      case 'invitation_opened':    return t('activity.invitationOpenedDesc', { name })
+      case 'rsvp_confirmed':       return t('activity.rsvpConfirmedDesc', { name })
+      case 'rsvp_declined':        return t('activity.rsvpDeclinedDesc', { name })
+      case 'rsvp_updated':         return t('activity.rsvpUpdatedDesc', { name })
+      case 'guest_added':          return t('activity.guestAddedDesc', { name })
+      case 'guest_removed':        return t('activity.guestRemovedDesc', { name })
+      case 'group_added':          return t('activity.groupAddedDesc', { name })
+      case 'group_removed':        return t('activity.groupRemovedDesc', { name })
+      case 'message_sent':         return t('activity.messageSentDesc', { name })
+      case 'registry_contribution':return t('activity.registryContributionDesc', { name })
+      default:                     return activity.description
+    }
   }
+
+  const titleNode = showTitle && (
+    <div className="flex items-center justify-between mb-3">
+      <h3 className="font-semibold text-foreground">{t('activity.recentActivity')}</h3>
+      {!loading && (
+        <Button variant="ghost" size="sm" onClick={fetchActivities} className="h-7 px-2">
+          <RefreshCw className="w-3.5 h-3.5" />
+        </Button>
+      )}
+    </div>
+  )
 
   if (loading) {
     return (
       <Card className={`${compact ? 'p-3' : 'p-4'}`}>
         {showTitle && (
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-foreground">Recent Activity</h3>
+            <h3 className="font-semibold text-foreground">{t('activity.recentActivity')}</h3>
           </div>
         )}
         <div className="space-y-3">
@@ -148,16 +169,12 @@ export function ActivityFeed({
   if (error) {
     return (
       <Card className={`${compact ? 'p-3' : 'p-4'}`}>
-        {showTitle && (
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-foreground">Recent Activity</h3>
-          </div>
-        )}
+        {titleNode}
         <div className="text-center py-4">
           <p className="text-sm text-muted-foreground mb-2">{error}</p>
           <Button variant="ghost" size="sm" onClick={fetchActivities}>
             <RefreshCw className="w-4 h-4 mr-1" />
-            Retry
+            {t('activity.retry')}
           </Button>
         </div>
       </Card>
@@ -167,17 +184,11 @@ export function ActivityFeed({
   if (activities.length === 0) {
     return (
       <Card className={`${compact ? 'p-3' : 'p-4'}`}>
-        {showTitle && (
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-foreground">Recent Activity</h3>
-          </div>
-        )}
+        {titleNode}
         <div className="text-center py-6">
           <Clock className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">No activity yet</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Activity will appear here when guests interact with your wedding site
-          </p>
+          <p className="text-sm text-muted-foreground">{t('activity.noRecentActivity')}</p>
+          <p className="text-xs text-muted-foreground mt-1">{t('activity.noActivityYet')}</p>
         </div>
       </Card>
     )
@@ -185,23 +196,16 @@ export function ActivityFeed({
 
   return (
     <Card className={`${compact ? 'p-3' : 'p-4'}`}>
-      {showTitle && (
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-foreground">Recent Activity</h3>
-          <Button variant="ghost" size="sm" onClick={fetchActivities} className="h-7 px-2">
-            <RefreshCw className="w-3.5 h-3.5" />
-          </Button>
-        </div>
-      )}
-      
+      {titleNode}
+
       <div className={`space-y-${compact ? '2' : '3'}`}>
         {activities.map((activity) => {
-          const Icon = getActivityIcon(activity.type)
-          const colorClass = getActivityColor(activity.type)
-          
+          const Icon = ACTIVITY_ICONS[activity.type] || Clock
+          const colorClass = ACTIVITY_COLORS[activity.type] || "text-gray-500 bg-gray-50"
+
           return (
-            <div 
-              key={activity.id} 
+            <div
+              key={activity.id}
               className={`flex items-start gap-${compact ? '2' : '3'} ${compact ? 'py-1' : 'py-1.5'}`}
             >
               <div className={`p-1.5 rounded-full ${colorClass} flex-shrink-0`}>
@@ -209,7 +213,7 @@ export function ActivityFeed({
               </div>
               <div className="flex-1 min-w-0">
                 <p className={`${compact ? 'text-xs' : 'text-sm'} text-foreground leading-tight`}>
-                  {activity.description}
+                  {getActivityDescription(activity)}
                 </p>
                 <p className={`${compact ? 'text-[10px]' : 'text-xs'} text-muted-foreground mt-0.5`}>
                   {formatTimeAgo(activity.createdAt)}
@@ -223,7 +227,7 @@ export function ActivityFeed({
       {showViewAll && activities.length >= limit && (
         <div className="mt-3 pt-3 border-t border-border">
           <p className="text-xs text-center text-muted-foreground">
-            Showing latest {limit} activities
+            {t('activity.showingLatest', { count: limit })}
           </p>
         </div>
       )}

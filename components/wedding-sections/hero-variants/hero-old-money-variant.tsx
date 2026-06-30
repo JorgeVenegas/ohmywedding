@@ -235,6 +235,14 @@ export function HeroOldMoneyVariant({
                 style={{ background: 'rgba(255,255,255,0.4)' }}
               />
             </a>
+
+            {/* Scroll cue */}
+            <div className="mt-6 flex flex-col items-start gap-1" style={{ opacity: 0.35 }}>
+              <div style={{ width: '1px', height: '28px', background: 'rgba(255,255,255,0.6)' }} />
+              <svg width="8" height="5" viewBox="0 0 8 5" fill="none">
+                <polyline points="0,0 4,4.5 8,0" stroke="rgba(255,255,255,0.8)" strokeWidth="1" fill="none" />
+              </svg>
+            </div>
           </div>
         )}
       </div>

@@ -174,12 +174,18 @@ export function RSVPOldMoneyVariant({
     message,
   })
 
+  const scrollToRsvp = () => {
+    setTimeout(() => {
+      document.querySelector('#rsvp')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 150)
+  }
+
   const handleDirectSubmit = async () => {
     setSubmitError(''); setSubmitting(true)
     try {
       const res = await fetch('/api/rsvps', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildBody()) })
       const data = await res.json()
-      if (res.ok) { setSubmitted(true); setIsEditing(false) }
+      if (res.ok) { setSubmitted(true); setIsEditing(false); scrollToRsvp() }
       else { setSubmitError(data.error || t('rsvp.error')) }
     } catch { setSubmitError(t('rsvp.error')) }
     finally { setSubmitting(false) }
@@ -190,7 +196,7 @@ export function RSVPOldMoneyVariant({
     try {
       const res = await fetch('/api/rsvps', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildBody(token)) })
       const data = await res.json()
-      if (res.ok) { setSubmitted(true); setIsEditing(false) }
+      if (res.ok) { setSubmitted(true); setIsEditing(false); scrollToRsvp() }
       else { setSubmitError(data.error || t('rsvp.error')) }
     } catch { setSubmitError(t('rsvp.error')) }
     finally { setSubmitting(false) }
@@ -250,15 +256,19 @@ export function RSVPOldMoneyVariant({
             <div style={{ height: '1px', background: hairline }} />
             {guests.map(g => (
               <div key={g.id}>
-                <div className="flex items-center justify-between py-5 sm:py-6">
+                <div className="py-5 sm:py-6">
+                  {/* Name */}
                   <span style={{
+                    display: 'block',
                     fontFamily: 'var(--font-heading, serif)', fontStyle: 'italic', fontWeight: 400,
-                    fontSize: 'clamp(2.5rem, 13vw, 5rem)', color: ink,
+                    fontSize: 'clamp(2rem, 10vw, 4rem)', color: ink,
+                    marginBottom: '0.75rem',
                   }}>
                     {g.name}
                   </span>
-                  {/* Attendance badge — ink for attending, muted hairline for not */}
+                  {/* Attendance badge */}
                   <span style={{
+                    display: 'inline-block',
                     fontFamily: 'var(--font-heading, serif)',
                     fontSize: '18px', letterSpacing: '0.32em', textTransform: 'uppercase',
                     color: g.attending === true ? bg : `${ink}55`,
@@ -272,6 +282,24 @@ export function RSVPOldMoneyVariant({
                 <div style={{ height: '1px', background: hairline }} />
               </div>
             ))}
+
+            {/* Extra passes confirmed */}
+            {(groupData?.extra_passes || 0) > 0 && (
+              <div className="py-5">
+                <p style={{ ...microLabel, marginBottom: '0.5rem' }}>{t('rsvp.additionalGuests')}</p>
+                <span style={{
+                  display: 'inline-block',
+                  fontFamily: 'var(--font-heading, serif)', fontWeight: 300,
+                  fontSize: 'clamp(1.5rem, 5vw, 2.25rem)', color: ink,
+                }}>
+                  {extraPassesAttending}
+                  <span style={{ fontSize: '18px', letterSpacing: '0.2em', color: `${ink}55`, marginLeft: '0.5rem' }}>
+                    / {groupData?.extra_passes}
+                  </span>
+                </span>
+                <div style={{ height: '1px', background: hairline, marginTop: '1.5rem' }} />
+              </div>
+            )}
 
             <button
               onClick={() => setIsEditing(true)}
