@@ -226,23 +226,19 @@ export function HeroOldMoneyVariant({
                 e.preventDefault()
                 document.querySelector('#rsvp')?.scrollIntoView({ behavior: 'smooth' })
               }}
-              className="group inline-flex items-center gap-4 text-[18px] uppercase tracking-[0.5em] font-light transition-opacity duration-300 hover:opacity-60"
+              className="inline-flex items-center text-[18px] uppercase tracking-[0.5em] font-light transition-opacity duration-300 hover:opacity-60"
               style={{ color: 'rgba(255,255,255,0.65)', fontFamily: 'var(--font-heading, serif)' }}
             >
-              <span>{t('hero.rsvpNow')}</span>
-              <span
-                className="block h-px w-8 group-hover:w-14 transition-all duration-500"
-                style={{ background: 'rgba(255,255,255,0.4)' }}
-              />
+              {t('hero.rsvpNow')}
             </a>
 
             {/* Scroll cue */}
-            <div className="mt-5" style={{ animation: 'omw-bounce 2s ease-in-out infinite', display: 'inline-block' }}>
-              <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ opacity: 0.4 }}>
-                <polyline points="1,1 5,5 9,1" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            <div className="mt-4" style={{ animation: 'omw-bounce 2s ease-in-out infinite', display: 'inline-block' }}>
+              <svg width="8" height="5" viewBox="0 0 8 5" fill="none" style={{ opacity: 0.75 }}>
+                <polyline points="0.5,0.5 4,4 7.5,0.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <style>{`@keyframes omw-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(4px)} }`}</style>
+            <style>{`@keyframes omw-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(3px)} }`}</style>
           </div>
         )}
       </div>

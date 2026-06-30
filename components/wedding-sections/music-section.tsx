@@ -179,6 +179,26 @@ export function MusicSection({
     sync({ isPlaying, onPlayPause, hasMusic: !!effectiveUrl })
   }, [isPlaying, onPlayPause, effectiveUrl, sync])
 
+  // Media Session — shows song artwork on iOS lock screen / Control Center
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return
+    const ogImage = typeof document !== 'undefined'
+      ? document.querySelector('meta[property="og:image"]')?.getAttribute('content') ?? ''
+      : ''
+    const title  = config.songTitle  ?? songTitle  ?? ''
+    const artist = config.artistName ?? artistName ?? ''
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title,
+      artist,
+      ...(ogImage ? { artwork: [{ src: ogImage, sizes: '512x512', type: 'image/jpeg' }] } : {}),
+    })
+    const audio = audioRef.current
+    if (audio) {
+      navigator.mediaSession.setActionHandler('play',  () => audio.play().catch(() => {}))
+      navigator.mediaSession.setActionHandler('pause', () => audio.pause())
+    }
+  }, [isPlaying, config.songTitle, config.artistName, songTitle, artistName])
+
   useEffect(() => {
     return () => { unregister() }
   }, [unregister])
