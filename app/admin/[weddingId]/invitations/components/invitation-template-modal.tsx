@@ -92,7 +92,9 @@ const TEMPLATE_EXAMPLES: Record<Locale, Array<{ id: string; template: string }>>
 // Variable definitions
 const GUEST_VARIABLES = [
   { var: '{{groupname}}', label: 'Group Name', desc: 'Name of the guest group' },
+  { var: '{{groupfirstname}}', label: 'Group First Name', desc: 'First word of the group name' },
   { var: '{{guestname}}', label: 'Guest Name', desc: 'Individual guest name' },
+  { var: '{{guestfirstname}}', label: 'Guest First Name', desc: 'First word of the guest name' },
   { var: '{{groupinvitationurl}}', label: 'Invitation URL', desc: 'Direct link to invitation' },
   { var: '{{weddingurl}}', label: 'Wedding URL', desc: 'Generic wedding link (no group)' },
 ]
@@ -112,7 +114,9 @@ const VENUE_VARIABLES = [
 
 const ALL_VARIABLES = [
   { var: '{{groupname}}', label: 'Group Name' },
+  { var: '{{groupfirstname}}', label: 'Group First Name' },
   { var: '{{guestname}}', label: 'Guest Name' },
+  { var: '{{guestfirstname}}', label: 'Guest First Name' },
   { var: '{{groupinvitationurl}}', label: 'Invitation URL' },
   { var: '{{weddingurl}}', label: 'Wedding URL' },
   { var: '{{partner1}}', label: 'Partner 1' },
