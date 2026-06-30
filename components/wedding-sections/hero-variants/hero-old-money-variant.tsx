@@ -237,12 +237,12 @@ export function HeroOldMoneyVariant({
             </a>
 
             {/* Scroll cue */}
-            <div className="mt-6 flex flex-col items-start gap-1" style={{ opacity: 0.35 }}>
-              <div style={{ width: '1px', height: '28px', background: 'rgba(255,255,255,0.6)' }} />
-              <svg width="8" height="5" viewBox="0 0 8 5" fill="none">
-                <polyline points="0,0 4,4.5 8,0" stroke="rgba(255,255,255,0.8)" strokeWidth="1" fill="none" />
+            <div className="mt-5" style={{ animation: 'omw-bounce 2s ease-in-out infinite', display: 'inline-block' }}>
+              <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ opacity: 0.4 }}>
+                <polyline points="1,1 5,5 9,1" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
+            <style>{`@keyframes omw-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(4px)} }`}</style>
           </div>
         )}
       </div>
