@@ -200,11 +200,16 @@ export function InvitationTemplateModal({
       ? formatWeddingDate(weddingDetails.wedding_date, locale)
       : 'TBD'
 
+    const guestFirstName = (data.guestName || '').split(/\s+/)[0] || ''
+    const groupFirstName = (data.groupName || '').split(/\s+/)[0] || ''
+
     return template
       .replace(/\{\{groupname\}\}/gi, data.groupName || '')
+      .replace(/\{\{groupfirstname\}\}/gi, groupFirstName)
       .replace(/\{\{groupinvitationurl\}\}/gi, invitationUrl)
       .replace(/\{\{weddingurl\}\}/gi, baseUrl)
       .replace(/\{\{guestname\}\}/gi, data.guestName || '')
+      .replace(/\{\{guestfirstname\}\}/gi, guestFirstName)
       .replace(/\{\{partner1\}\}/gi, partner1)
       .replace(/\{\{partner2\}\}/gi, partner2)
       .replace(/\{\{weddingdate\}\}/gi, formattedDate)
