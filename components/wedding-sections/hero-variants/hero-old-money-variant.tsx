@@ -116,7 +116,7 @@ export function HeroOldMoneyVariant({
       </div>
 
       {/* Content — anchored by textPosition */}
-      <div className={`relative z-20 h-full flex flex-col px-8 sm:px-14 md:px-20 ${
+      <div className={`relative z-20 h-full flex flex-col px-8 sm:px-14 md:px-20 text-center sm:text-left items-center sm:items-start ${
         textPosition === 'top' ? 'justify-start pt-20 sm:pt-24' :
         textPosition === 'center' ? 'justify-center' :
         'justify-end pb-12 sm:pb-16'
@@ -186,13 +186,13 @@ export function HeroOldMoneyVariant({
 
         {/* Hairline */}
         <div
-          className={`mt-6 transition-all duration-1000 delay-[600ms] ${envelopeOpened ? 'opacity-100' : 'opacity-0'}`}
-          style={{ height: '1px', background: 'rgba(255,255,255,0.25)', maxWidth: '420px' }}
+          className={`mt-6 mx-auto sm:mx-0 transition-all duration-1000 delay-[600ms] ${envelopeOpened ? 'opacity-100' : 'opacity-0'}`}
+          style={{ height: '1px', background: 'rgba(255,255,255,0.25)', maxWidth: '420px', width: '100%' }}
         />
 
         {/* Date + venue */}
         <div
-          className={`mt-5 flex flex-wrap items-center gap-3 transition-all duration-1000 delay-[700ms] ${envelopeOpened ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          className={`mt-5 flex flex-wrap items-center justify-center sm:justify-start gap-3 transition-all duration-1000 delay-[700ms] ${envelopeOpened ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
         >
           {formattedDate && (
             <span

@@ -1845,8 +1845,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     // Open WhatsApp with each guest that has a phone number
     for (const guest of guestsWithPhone) {
       let phoneNumber = guest.phone_number!.replace(/[^0-9]/g, '')
-      // Add +52 country code if not present
-      if (!phoneNumber.startsWith('52')) {
+      // Only add +52 if the number is short enough that it likely has no country code
+      if (phoneNumber.length <= 10) {
         phoneNumber = '52' + phoneNumber
       }
       const encodedMessage = encodeURIComponent(personalizedMessage)
@@ -1917,8 +1917,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
     if (phoneNumber) {
       let cleanPhone = phoneNumber.replace(/[^0-9]/g, '')
-      // Add +52 country code if not present
-      if (!cleanPhone.startsWith('52')) {
+      // Only add +52 if the number is short enough that it likely has no country code
+      if (cleanPhone.length <= 10) {
         cleanPhone = '52' + cleanPhone
       }
       const encodedMessage = encodeURIComponent(personalizedMessage)
