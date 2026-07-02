@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useState, useEffect, useCallback } from "react"
+import { use, useState, useEffect, useCallback, useRef } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Header } from "@/components/header"
@@ -84,6 +84,7 @@ export default function ActivityPage({ params }: Props) {
   const [offset, setOffset] = useState(0)
   const [typeFilter, setTypeFilter] = useState<string>("")
   const [showFilterMenu, setShowFilterMenu] = useState(false)
+  const filterRef = useRef<HTMLDivElement>(null)
 
   const filterOptions = [
     { value: '', label: t('activity.recentActivity') },
@@ -145,6 +146,17 @@ export default function ActivityPage({ params }: Props) {
     fetchActivities(true)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [decodedWeddingId, typeFilter])
+
+  useEffect(() => {
+    if (!showFilterMenu) return
+    function handleClickOutside(e: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setShowFilterMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showFilterMenu])
 
   function formatFullDate(dateString: string): { relative: string; absolute: string } {
     const date = new Date(dateString)
@@ -237,7 +249,7 @@ export default function ActivityPage({ params }: Props) {
                 )}
 
                 {/* Filter */}
-                <div className="relative">
+                <div className="relative" ref={filterRef}>
                   <Button
                     variant={typeFilter ? "secondary" : "outline"}
                     size="sm"
@@ -393,9 +405,6 @@ export default function ActivityPage({ params }: Props) {
         </div>
       </div>
 
-      {showFilterMenu && (
-        <div className="fixed inset-0 z-40" onClick={() => setShowFilterMenu(false)} />
-      )}
     </main>
   )
 }

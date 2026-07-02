@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase-client"
 import { SubscriptionProvider } from "@/components/contexts/subscription-context"
 import { PlanIndicator } from "@/components/plan-indicator"
 import { FreeTrialBanner } from "@/components/ui/free-trial-banner"
-import { useTranslation } from "@/components/contexts/i18n-context"
+import { useTranslation, I18nProvider } from "@/components/contexts/i18n-context"
+import type { Locale } from "@/lib/i18n"
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -17,6 +18,7 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [weddingId, setWeddingId] = useState<string>('')
+  const [weddingLocale, setWeddingLocale] = useState<Locale>('en')
   const router = useRouter()
   const { t } = useTranslation()
 
@@ -27,7 +29,7 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
         // Decode the weddingId in case it's URL encoded
         const decodedWeddingId = decodeURIComponent(resolvedParams.weddingId)
         setWeddingId(decodedWeddingId)
-        
+
         const supabase = createClient()
 
         // Use getSession() to check auth. This reads from cookies/cache
@@ -36,7 +38,7 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
         // creates a redirect loop (admin → signOut → login → admin → signOut...).
         const { data: { session } } = await supabase.auth.getSession()
         const user = session?.user ?? null
-        
+
         if (!user) {
           // Not logged in — redirect to same-origin /login.
           // The middleware already serves /login on subdomains, so this
@@ -46,17 +48,28 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
           return
         }
 
-        // Use the permissions API to check access
-        const response = await fetch(`/api/weddings/${decodedWeddingId}/permissions`)
-        
-        if (!response.ok) {
+        // Fetch permissions and wedding settings in parallel
+        const [permissionsResponse, settingsResponse] = await Promise.all([
+          fetch(`/api/weddings/${decodedWeddingId}/permissions`),
+          fetch(`/api/weddings/${decodedWeddingId}/settings`),
+        ])
+
+        if (!permissionsResponse.ok) {
           setIsAuthorized(false)
           setIsLoading(false)
           return
         }
 
-        const { permissions } = await response.json()
-        
+        const { permissions } = await permissionsResponse.json()
+
+        // Apply the wedding's configured language to the admin UI
+        if (settingsResponse.ok) {
+          const { settings } = await settingsResponse.json()
+          if (settings?.language) {
+            setWeddingLocale(settings.language as Locale)
+          }
+        }
+
         // Allow access if user can edit (owner, collaborator, or unowned wedding)
         if (permissions.canEdit || permissions.role === 'owner' || permissions.role === 'editor') {
           setIsAuthorized(true)
@@ -105,10 +118,12 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
   }
 
   return (
-    <SubscriptionProvider weddingId={weddingId}>
-      <FreeTrialBanner />
-      {children}
-      <PlanIndicator />
-    </SubscriptionProvider>
+    <I18nProvider initialLocale={weddingLocale}>
+      <SubscriptionProvider weddingId={weddingId}>
+        <FreeTrialBanner />
+        {children}
+        <PlanIndicator />
+      </SubscriptionProvider>
+    </I18nProvider>
   )
 }
