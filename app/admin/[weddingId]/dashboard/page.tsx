@@ -356,7 +356,11 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
           
           {/* Recent Activity */}
           <div className="xl:col-span-2">
-            <ActivityFeed weddingId={decodedWeddingId} limit={8} />
+            <ActivityFeed
+              weddingId={decodedWeddingId}
+              limit={8}
+              viewAllHref={`/admin/${encodeURIComponent(decodedWeddingId)}/activity`}
+            />
           </div>
 
           {/* Completed Payments */}

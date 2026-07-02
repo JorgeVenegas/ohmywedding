@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const weddingId = searchParams.get('weddingId')
     const limit = parseInt(searchParams.get('limit') || '20')
+    const offset = parseInt(searchParams.get('offset') || '0')
     const activityType = searchParams.get('type')
     const groupId = searchParams.get('groupId')
 
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
       `)
       .eq('wedding_id', wedding.id)
       .order('created_at', { ascending: false })
-      .limit(effectiveLimit)
+      .range(offset, offset + effectiveLimit - 1)
 
     // Premium: Only show last 7 days
     if (plan === 'premium') {

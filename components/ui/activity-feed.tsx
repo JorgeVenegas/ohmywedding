@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -17,6 +18,7 @@ import {
   Gift,
   RefreshCw,
   Clock,
+  ArrowRight,
 } from "lucide-react"
 import { useTranslation } from "@/components/contexts/i18n-context"
 
@@ -36,6 +38,7 @@ interface ActivityFeedProps {
   showTitle?: boolean
   showViewAll?: boolean
   compact?: boolean
+  viewAllHref?: string
 }
 
 const ACTIVITY_ICONS: Record<string, typeof Eye> = {
@@ -71,7 +74,8 @@ export function ActivityFeed({
   limit = 10,
   showTitle = true,
   showViewAll = true,
-  compact = false
+  compact = false,
+  viewAllHref,
 }: ActivityFeedProps) {
   const { t } = useTranslation()
   const [activities, setActivities] = useState<Activity[]>([])
@@ -135,11 +139,21 @@ export function ActivityFeed({
   const titleNode = showTitle && (
     <div className="flex items-center justify-between mb-3">
       <h3 className="font-semibold text-foreground">{t('activity.recentActivity')}</h3>
-      {!loading && (
-        <Button variant="ghost" size="sm" onClick={fetchActivities} className="h-7 px-2">
-          <RefreshCw className="w-3.5 h-3.5" />
-        </Button>
-      )}
+      <div className="flex items-center gap-1">
+        {viewAllHref && (
+          <Link href={viewAllHref}>
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-muted-foreground gap-1">
+              {t('activity.viewAllActivity')}
+              <ArrowRight className="w-3 h-3" />
+            </Button>
+          </Link>
+        )}
+        {!loading && (
+          <Button variant="ghost" size="sm" onClick={fetchActivities} className="h-7 px-2">
+            <RefreshCw className="w-3.5 h-3.5" />
+          </Button>
+        )}
+      </div>
     </div>
   )
 
@@ -225,10 +239,17 @@ export function ActivityFeed({
       </div>
 
       {showViewAll && activities.length >= limit && (
-        <div className="mt-3 pt-3 border-t border-border">
-          <p className="text-xs text-center text-muted-foreground">
-            {t('activity.showingLatest', { count: limit })}
-          </p>
+        <div className="mt-3 pt-3 border-t border-border flex items-center justify-center">
+          {viewAllHref ? (
+            <Link href={viewAllHref} className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+              {t('activity.viewAllActivity')}
+              <ArrowRight className="w-3 h-3" />
+            </Link>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              {t('activity.showingLatest', { count: limit })}
+            </p>
+          )}
         </div>
       )}
     </Card>

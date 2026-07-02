@@ -112,7 +112,10 @@ export function RSVPOldMoneyVariant({
           setGuests(mappedGuests)
           const hasResponded = data.guests.some((g: any) => g.confirmation_status && g.confirmation_status !== 'pending')
           setSubmitted(hasResponded)
-          if (hasResponded) setExtraPassesAttending(data.extra_passes_confirmed || 0)
+          if (hasResponded) {
+            setExtraPassesAttending(data.extra_passes_confirmed || 0)
+            setMessage(data.message || '')
+          }
         }
       } catch {}
       finally { setLoading(false) }

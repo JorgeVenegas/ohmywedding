@@ -88,7 +88,8 @@ export async function GET(
       guests: guestsWithStatus,
       hasSubmitted: allResponded,
       extra_passes: group.extra_passes || 0,
-      extra_passes_confirmed: group.extra_passes_confirmed || 0
+      extra_passes_confirmed: group.extra_passes_confirmed || 0,
+      message: group.message || '',
     })
   } catch (error) {
     return NextResponse.json(
