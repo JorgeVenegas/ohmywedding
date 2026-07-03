@@ -8,6 +8,7 @@ export const es: Translations = {
     from: 'De',
     to: 'Para',
     save: 'Guardar',
+    saveChanges: 'Guardar Cambios',
     cancel: 'Cancelar',
     edit: 'Editar',
     delete: 'Eliminar',

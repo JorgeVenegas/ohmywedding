@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase-client"
 import { SubscriptionProvider } from "@/components/contexts/subscription-context"
 import { PlanIndicator } from "@/components/plan-indicator"
 import { FreeTrialBanner } from "@/components/ui/free-trial-banner"
-import { useTranslation, I18nProvider } from "@/components/contexts/i18n-context"
+import { useI18n } from "@/components/contexts/i18n-context"
 import type { Locale } from "@/lib/i18n"
 
 interface AdminLayoutProps {
@@ -18,9 +18,8 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [weddingId, setWeddingId] = useState<string>('')
-  const [weddingLocale, setWeddingLocale] = useState<Locale>('en')
   const router = useRouter()
-  const { t } = useTranslation()
+  const { t, setLocale } = useI18n()
 
   useEffect(() => {
     async function checkAuthorization() {
@@ -66,7 +65,7 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
         if (settingsResponse.ok) {
           const { settings } = await settingsResponse.json()
           if (settings?.language) {
-            setWeddingLocale(settings.language as Locale)
+            setLocale(settings.language as Locale)
           }
         }
 
@@ -118,12 +117,10 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
   }
 
   return (
-    <I18nProvider initialLocale={weddingLocale}>
-      <SubscriptionProvider weddingId={weddingId}>
-        <FreeTrialBanner />
-        {children}
-        <PlanIndicator />
-      </SubscriptionProvider>
-    </I18nProvider>
+    <SubscriptionProvider weddingId={weddingId}>
+      <FreeTrialBanner />
+      {children}
+      <PlanIndicator />
+    </SubscriptionProvider>
   )
 }

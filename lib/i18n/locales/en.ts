@@ -8,6 +8,7 @@ export const en: Translations = {
     from: 'From',
     to: 'To',
     save: 'Save',
+    saveChanges: 'Save Changes',
     cancel: 'Cancel',
     edit: 'Edit',
     delete: 'Delete',

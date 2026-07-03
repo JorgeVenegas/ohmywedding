@@ -165,6 +165,31 @@ export async function PUT(
       return NextResponse.json({ error: "Failed to update wedding settings" }, { status: 500 })
     }
 
+    // Keep page_config.siteSettings.locale in sync with wedding_settings.language
+    // so the website editor and guest site use the same language as the admin UI.
+    if (safeBody.language) {
+      const { data: weddingData } = await adminClient
+        .from("weddings")
+        .select("page_config")
+        .eq("id", wedding.id)
+        .single()
+
+      if (weddingData) {
+        const currentConfig = (weddingData.page_config as Record<string, any>) || {}
+        const updatedConfig = {
+          ...currentConfig,
+          siteSettings: {
+            ...(currentConfig.siteSettings || {}),
+            locale: safeBody.language,
+          },
+        }
+        await adminClient
+          .from("weddings")
+          .update({ page_config: updatedConfig })
+          .eq("id", wedding.id)
+      }
+    }
+
     return NextResponse.json({ settings: data })
   } catch (error) {
     console.error("[settings PUT] Unexpected error:", error)

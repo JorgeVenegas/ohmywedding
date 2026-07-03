@@ -10,6 +10,7 @@ export interface Translations {
     from: string
     to: string
     save: string
+    saveChanges: string
     cancel: string
     edit: string
     delete: string
