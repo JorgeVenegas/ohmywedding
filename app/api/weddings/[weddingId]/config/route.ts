@@ -242,6 +242,16 @@ export async function PUT(
       .update({ has_website: true, updated_at: new Date().toISOString() })
       .eq('id', existingWedding.id)
 
+    // Keep wedding_settings.language in sync with page_config.siteSettings.locale
+    if (config.siteSettings?.locale) {
+      await adminClient
+        .from('wedding_settings')
+        .upsert(
+          { wedding_id: existingWedding.id, language: config.siteSettings.locale },
+          { onConflict: 'wedding_id' }
+        )
+    }
+
     return NextResponse.json({
       success: true,
       config: updatedWebsite?.page_config || config,

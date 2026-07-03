@@ -918,7 +918,11 @@ export const en: Translations = {
     responses: 'Responses',
     attending: 'Attending',
     notAttending: 'Not Attending',
-    pending: 'Pending'
+    pending: 'Pending',
+    allTimeViews: 'All-time views',
+    openedOf: '{{opened}} of {{total}} groups',
+    invitationOpens: 'Invitation Opens',
+    failedToLoadStats: 'Failed to load stats',
   },
 
   // Language switcher

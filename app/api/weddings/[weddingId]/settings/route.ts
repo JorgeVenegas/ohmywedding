@@ -168,25 +168,50 @@ export async function PUT(
     // Keep page_config.siteSettings.locale in sync with wedding_settings.language
     // so the website editor and guest site use the same language as the admin UI.
     if (safeBody.language) {
-      const { data: weddingData } = await adminClient
-        .from("weddings")
+      // Primary table: wedding_websites.page_config
+      const { data: websiteData } = await adminClient
+        .from("wedding_websites")
         .select("page_config")
-        .eq("id", wedding.id)
+        .eq("wedding_id", wedding.id)
         .single()
 
-      if (weddingData) {
-        const currentConfig = (weddingData.page_config as Record<string, any>) || {}
-        const updatedConfig = {
-          ...currentConfig,
-          siteSettings: {
-            ...(currentConfig.siteSettings || {}),
-            locale: safeBody.language,
-          },
-        }
+      if (websiteData) {
+        const currentConfig = (websiteData.page_config as Record<string, any>) || {}
         await adminClient
+          .from("wedding_websites")
+          .update({
+            page_config: {
+              ...currentConfig,
+              siteSettings: {
+                ...(currentConfig.siteSettings || {}),
+                locale: safeBody.language,
+              },
+            },
+          })
+          .eq("wedding_id", wedding.id)
+      } else {
+        // Legacy fallback: weddings.page_config
+        const { data: weddingData } = await adminClient
           .from("weddings")
-          .update({ page_config: updatedConfig })
+          .select("page_config")
           .eq("id", wedding.id)
+          .single()
+
+        if (weddingData?.page_config) {
+          const currentConfig = (weddingData.page_config as Record<string, any>) || {}
+          await adminClient
+            .from("weddings")
+            .update({
+              page_config: {
+                ...currentConfig,
+                siteSettings: {
+                  ...(currentConfig.siteSettings || {}),
+                  locale: safeBody.language,
+                },
+              },
+            })
+            .eq("id", wedding.id)
+        }
       }
     }
 

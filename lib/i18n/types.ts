@@ -921,6 +921,10 @@ export interface Translations {
     attending: string
     notAttending: string
     pending: string
+    allTimeViews: string
+    openedOf: string
+    invitationOpens: string
+    failedToLoadStats: string
   }
 
   // Landing page

@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { getCleanAdminUrl } from "@/lib/admin-url"
-import { useTranslation } from "@/components/contexts/i18n-context"
+import { useI18n } from "@/components/contexts/i18n-context"
 import { useWeddingPermissions } from "@/hooks/use-auth"
 import {
   Settings,
@@ -97,7 +97,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
   const [isReady, setIsReady] = useState(false)
   const [readyStatusManagedBy, setReadyStatusManagedBy] = useState<'owner' | 'all'>('owner')
   const [savingStatus, setSavingStatus] = useState(false)
-  const { t } = useTranslation()
+  const { t, setLocale } = useI18n()
 
   useEffect(() => {
     fetchData()
@@ -151,6 +151,10 @@ export default function SettingsPage({ params }: SettingsPageProps) {
 
       if (settingsRes.ok) {
         setHasChanges(false)
+        // Apply the new language immediately — no refresh needed
+        if (settings?.language) {
+          setLocale(settings.language as import("@/lib/i18n").Locale)
+        }
       }
     } catch (error) {
     } finally {
@@ -880,7 +884,7 @@ interface FeatureItemProps {
 }
 
 function FeatureItem({ label, description, available, isPremium }: FeatureItemProps) {
-  const { t } = useTranslation()
+  const { t } = useI18n()
   return (
     <div className="flex items-start gap-3 p-3 rounded-lg bg-card/50 border border-border/50">
       <div className={`flex-shrink-0 mt-0.5 h-6 w-6 rounded-full flex items-center justify-center ${
@@ -929,7 +933,7 @@ function FeatureStatusCard({
   enabled,
   isPremium,
 }: FeatureStatusCardProps) {
-  const { t } = useTranslation()
+  const { t } = useI18n()
   return (
     <div className={`flex items-start justify-between p-4 rounded-lg border transition-colors ${
       available 
@@ -1014,7 +1018,7 @@ interface DashboardSectionsTabProps {
 }
 
 function DashboardSectionsTab({ dashboardSections, onChange }: DashboardSectionsTabProps) {
-  const { t } = useTranslation()
+  const { t } = useI18n()
 
   const isSectionEnabled = (key: DashboardSectionKey) => {
     return dashboardSections[key] !== false // Default to enabled if not set

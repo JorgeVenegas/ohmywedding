@@ -914,7 +914,11 @@ export const es: Translations = {
     responses: 'Respuestas',
     attending: 'Asistirán',
     notAttending: 'No Asistirán',
-    pending: 'Pendientes'
+    pending: 'Pendientes',
+    allTimeViews: 'Vistas totales',
+    openedOf: '{{opened}} de {{total}} grupos',
+    invitationOpens: 'Aperturas de Invitaciones',
+    failedToLoadStats: 'Error al cargar estadísticas',
   },
 
   // Selector de idioma
