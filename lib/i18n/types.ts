@@ -1493,6 +1493,9 @@ export interface Translations {
         itinerary: { title: string; description: string }
         suppliers: { title: string; description: string }
         summary: { title: string; description: string }
+        invitationOpens: { title: string; description: string }
+        recentActivity: { title: string; description: string }
+        payments: { title: string; description: string }
       }
     }
     selector: {
@@ -1532,6 +1535,8 @@ export interface Translations {
         title: string
         description: string
         allEnabled: string
+        cards: string
+        panels: string
       }
       subscription: {
         title: string

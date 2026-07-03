@@ -1640,6 +1640,9 @@ export const en: Translations = {
         suppliers: { title: 'Suppliers', description: 'Track vendors, contracts, budgets, and payments for all your wedding suppliers' },
         summary: { title: 'Wedding Summary', description: 'View a complete overview of your wedding and export it as PDF' },
         settings: { title: 'Settings', description: 'Configure features, RSVP options, invitations, and general preferences' },
+        invitationOpens: { title: 'Invitation Opens', description: 'Track how many guests have opened their invitation' },
+        recentActivity: { title: 'Recent Activity', description: 'Real-time feed of guest interactions and RSVP events' },
+        payments: { title: 'Recent Payments', description: 'Track completed registry gift payments from guests' },
       },
     },
     selector: {
@@ -1679,6 +1682,8 @@ export const en: Translations = {
         title: 'Dashboard Sections',
         description: 'Choose which sections are visible on the dashboard for all users',
         allEnabled: 'All sections are currently enabled',
+        cards: 'Management Cards',
+        panels: 'Activity Panels',
       },
       subscription: {
         title: 'Subscription & Features',

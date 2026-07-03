@@ -1636,6 +1636,9 @@ export const es: Translations = {
         suppliers: { title: 'Proveedores', description: 'Llevar el control de proveedores, contratos, presupuestos y pagos de tu boda' },
         summary: { title: 'Resumen de Boda', description: 'Ve una vista completa de tu boda y expórtala como PDF' },
         settings: { title: 'Configuración', description: 'Configura funciones, opciones de RSVP, invitaciones y preferencias generales' },
+        invitationOpens: { title: 'Aperturas de Invitación', description: 'Ve cuántos invitados han abierto su invitación' },
+        recentActivity: { title: 'Actividad Reciente', description: 'Feed en tiempo real de interacciones de invitados y eventos de RSVP' },
+        payments: { title: 'Pagos Recientes', description: 'Seguimiento de pagos de regalos de mesa de regalos completados' },
       },
     },
     selector: {
@@ -1675,6 +1678,8 @@ export const es: Translations = {
         title: 'Secciones del Panel',
         description: 'Elige qué secciones son visibles en el panel para todos los usuarios',
         allEnabled: 'Todas las secciones están habilitadas actualmente',
+        cards: 'Tarjetas de Gestión',
+        panels: 'Paneles de Actividad',
       },
       subscription: {
         title: 'Suscripción y Funciones',

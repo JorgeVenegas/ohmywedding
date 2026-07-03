@@ -350,22 +350,27 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
         </div>
 
         {/* Activity & Stats Section */}
-        <div className="mt-12 grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {/* Invitation Stats */}
-          <InvitationStatsCard weddingId={decodedWeddingId} />
-          
-          {/* Recent Activity */}
-          <div className="xl:col-span-2">
-            <ActivityFeed
-              weddingId={decodedWeddingId}
-              limit={8}
-              viewAllHref={`/admin/${encodeURIComponent(decodedWeddingId)}/activity`}
-            />
-          </div>
+        {(dashboardSections.invitationOpens !== false || dashboardSections.recentActivity !== false || dashboardSections.payments !== false) && (
+          <div className="mt-12 grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {dashboardSections.invitationOpens !== false && (
+              <InvitationStatsCard weddingId={decodedWeddingId} />
+            )}
 
-          {/* Completed Payments */}
-          <RegistryPaymentNotifications weddingId={decodedWeddingId} />
-        </div>
+            {dashboardSections.recentActivity !== false && (
+              <div className={dashboardSections.invitationOpens !== false ? "xl:col-span-2" : "md:col-span-2 xl:col-span-3"}>
+                <ActivityFeed
+                  weddingId={decodedWeddingId}
+                  limit={8}
+                  viewAllHref={`/admin/${encodeURIComponent(decodedWeddingId)}/activity`}
+                />
+              </div>
+            )}
+
+            {dashboardSections.payments !== false && (
+              <RegistryPaymentNotifications weddingId={decodedWeddingId} />
+            )}
+          </div>
+        )}
       </div>
     </main>
   )

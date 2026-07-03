@@ -976,7 +976,7 @@ function FeatureStatusCard({
 }
 
 // Dashboard section keys matching the dashboard cards (excluding website and settings which are always shown)
-const DASHBOARD_SECTION_KEYS = [
+const DASHBOARD_CARD_KEYS = [
   "invitations",
   "registry",
   "seating",
@@ -986,7 +986,14 @@ const DASHBOARD_SECTION_KEYS = [
   "summary",
 ] as const
 
-type DashboardSectionKey = typeof DASHBOARD_SECTION_KEYS[number]
+// Activity panel keys for the bottom section of the dashboard
+const DASHBOARD_PANEL_KEYS = [
+  "invitationOpens",
+  "recentActivity",
+  "payments",
+] as const
+
+type DashboardSectionKey = typeof DASHBOARD_CARD_KEYS[number] | typeof DASHBOARD_PANEL_KEYS[number]
 
 const SECTION_ICONS: Record<DashboardSectionKey, React.ComponentType<{ className?: string }>> = {
   invitations: Mail,
@@ -996,6 +1003,9 @@ const SECTION_ICONS: Record<DashboardSectionKey, React.ComponentType<{ className
   itinerary: Calendar,
   suppliers: Users,
   summary: Settings,
+  invitationOpens: Mail,
+  recentActivity: Calendar,
+  payments: Gift,
 }
 
 interface DashboardSectionsTabProps {
@@ -1017,6 +1027,39 @@ function DashboardSectionsTab({ dashboardSections, onChange }: DashboardSections
     })
   }
 
+  const renderRow = (key: DashboardSectionKey) => {
+    const Icon = SECTION_ICONS[key]
+    const enabled = isSectionEnabled(key)
+    return (
+      <div
+        key={key}
+        className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+          enabled ? 'border-border bg-card' : 'border-border/50 bg-muted/30 opacity-75'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+            enabled ? 'bg-primary/10' : 'bg-muted'
+          }`}>
+            <Icon className={`h-5 w-5 ${enabled ? 'text-primary' : 'text-muted-foreground'}`} />
+          </div>
+          <div>
+            <p className={`text-sm font-medium ${enabled ? 'text-foreground' : 'text-muted-foreground'}`}>
+              {t(`admin.dashboard.cards.${key}.title` as any)}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t(`admin.dashboard.cards.${key}.description` as any)}
+            </p>
+          </div>
+        </div>
+        <Switch
+          checked={enabled}
+          onCheckedChange={() => toggleSection(key)}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -1028,51 +1071,25 @@ function DashboardSectionsTab({ dashboardSections, onChange }: DashboardSections
         </p>
       </div>
 
-      <div className="space-y-3">
-        {DASHBOARD_SECTION_KEYS.map((key) => {
-          const Icon = SECTION_ICONS[key]
-          const enabled = isSectionEnabled(key)
-          const cardKey = key as keyof typeof cardTitleKeys
-          return (
-            <div
-              key={key}
-              className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
-                enabled ? 'border-border bg-card' : 'border-border/50 bg-muted/30 opacity-75'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
-                  enabled ? 'bg-primary/10' : 'bg-muted'
-                }`}>
-                  <Icon className={`h-5 w-5 ${enabled ? 'text-primary' : 'text-muted-foreground'}`} />
-                </div>
-                <div>
-                  <p className={`text-sm font-medium ${enabled ? 'text-foreground' : 'text-muted-foreground'}`}>
-                    {t(`admin.dashboard.cards.${cardKey}.title` as any)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {t(`admin.dashboard.cards.${cardKey}.description` as any)}
-                  </p>
-                </div>
-              </div>
-              <Switch
-                checked={enabled}
-                onCheckedChange={() => toggleSection(key)}
-              />
-            </div>
-          )
-        })}
+      <div className="space-y-6">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+            {t('admin.settings.dashboardSections.cards')}
+          </p>
+          <div className="space-y-3">
+            {DASHBOARD_CARD_KEYS.map(renderRow)}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+            {t('admin.settings.dashboardSections.panels')}
+          </p>
+          <div className="space-y-3">
+            {DASHBOARD_PANEL_KEYS.map(renderRow)}
+          </div>
+        </div>
       </div>
     </div>
   )
 }
-
-const cardTitleKeys = {
-  invitations: 'invitations',
-  registry: 'registry',
-  seating: 'seating',
-  dishes: 'dishes',
-  itinerary: 'itinerary',
-  suppliers: 'suppliers',
-  summary: 'summary',
-} as const
