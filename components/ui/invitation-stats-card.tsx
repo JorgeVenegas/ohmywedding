@@ -13,6 +13,7 @@ import {
   RefreshCw,
   TrendingUp,
   Users,
+  Lock,
 } from "lucide-react"
 
 interface InvitationStats {
@@ -80,7 +81,7 @@ export function InvitationStatsCard({ weddingId, compact = false }: InvitationSt
 
   if (loading) {
     return (
-      <Card className={`${compact ? 'p-3' : 'p-4'}`}>
+      <Card className={`${compact ? 'p-3' : 'p-4'} h-full`}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-foreground">{t('activity.invitationOpens')}</h3>
         </div>
@@ -95,7 +96,7 @@ export function InvitationStatsCard({ weddingId, compact = false }: InvitationSt
 
   if (error) {
     return (
-      <Card className={`${compact ? 'p-3' : 'p-4'}`}>
+      <Card className={`${compact ? 'p-3' : 'p-4'} h-full`}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-foreground">{t('activity.invitationOpens')}</h3>
         </div>
@@ -111,7 +112,18 @@ export function InvitationStatsCard({ weddingId, compact = false }: InvitationSt
   }
 
   if (restricted) {
-    return null
+    return (
+      <Card className={`${compact ? 'p-3' : 'p-4'} h-full`}>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-foreground">{t('activity.invitationOpens')}</h3>
+        </div>
+        <div className="flex flex-col items-center justify-center py-6 text-center gap-2">
+          <Lock className="w-7 h-7 text-muted-foreground/50" />
+          <p className="text-sm font-medium text-muted-foreground">Premium feature</p>
+          <p className="text-xs text-muted-foreground/70">Upgrade to track invitation opens and device analytics.</p>
+        </div>
+      </Card>
+    )
   }
 
   if (!stats) return null

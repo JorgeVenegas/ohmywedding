@@ -15,3 +15,6 @@ create policy "Users can complete own onboarding"
 
 create policy "Users can insert own onboarding"
   on "needs_onboarding" for insert with check (auth.uid() = user_id);
+
+create policy "Service role can insert onboarding"
+  on "needs_onboarding" for insert with check (auth.uid() = user_id);

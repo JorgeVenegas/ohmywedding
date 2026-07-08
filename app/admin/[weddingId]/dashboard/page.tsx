@@ -3,12 +3,13 @@ import { use, useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { LogOut, ArrowRight, Mail, Gift, Settings, LayoutGrid, Globe, Sparkles, UtensilsCrossed, CalendarDays, FileText, Handshake, CircleX } from "lucide-react"
+import { LogOut, ArrowRight, Mail, Gift, Settings, LayoutGrid, Globe, Sparkles, UtensilsCrossed, CalendarDays, FileText, Handshake, CircleX, CalendarClock } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { Header } from "@/components/header"
 import { ActivityFeed } from "@/components/ui/activity-feed"
 import { InvitationStatsCard } from "@/components/ui/invitation-stats-card"
 import { RegistryPaymentNotifications } from "@/components/ui/registry-payment-notifications"
+import { UpcomingEventsCard } from "@/components/ui/upcoming-events-card"
 import { OnboardingTutorial } from "@/components/ui/onboarding-tutorial"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { getWeddingPath } from "@/lib/wedding-url"
@@ -165,6 +166,14 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       description: t('admin.dashboard.cards.suppliers.description'),
       icon: Handshake,
       href: getCleanAdminUrl(weddingId, 'suppliers'),
+      color: "accent" as const,
+    },
+    {
+      sectionKey: 'timeline',
+      title: t('admin.dashboard.cards.timeline.title'),
+      description: t('admin.dashboard.cards.timeline.description'),
+      icon: CalendarClock,
+      href: getCleanAdminUrl(weddingId, 'timeline'),
       color: "accent" as const,
     },
     {
@@ -351,13 +360,15 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
 
         {/* Activity & Stats Section */}
         {(dashboardSections.invitationOpens !== false || dashboardSections.recentActivity !== false || dashboardSections.payments !== false) && (
-          <div className="mt-12 grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="mt-12 grid md:grid-cols-2 xl:grid-cols-3 gap-6 items-stretch">
             {dashboardSections.invitationOpens !== false && (
-              <InvitationStatsCard weddingId={decodedWeddingId} />
+              <div className="h-full">
+                <InvitationStatsCard weddingId={decodedWeddingId} />
+              </div>
             )}
 
             {dashboardSections.recentActivity !== false && (
-              <div className={dashboardSections.invitationOpens !== false ? "xl:col-span-2" : "md:col-span-2 xl:col-span-3"}>
+              <div className={`h-full ${dashboardSections.invitationOpens !== false ? "xl:col-span-2" : "md:col-span-2 xl:col-span-3"}`}>
                 <ActivityFeed
                   weddingId={decodedWeddingId}
                   limit={8}
@@ -367,8 +378,19 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
             )}
 
             {dashboardSections.payments !== false && (
-              <RegistryPaymentNotifications weddingId={decodedWeddingId} />
+              <div className="h-full">
+                <RegistryPaymentNotifications weddingId={decodedWeddingId} />
+              </div>
             )}
+          </div>
+        )}
+
+        {dashboardSections.timeline !== false && (
+          <div className="mt-6">
+            <UpcomingEventsCard
+              weddingId={decodedWeddingId}
+              viewAllHref={getCleanAdminUrl(weddingId, 'timeline')}
+            />
           </div>
         )}
       </div>

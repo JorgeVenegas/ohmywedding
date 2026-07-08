@@ -48,6 +48,12 @@ CREATE TABLE IF NOT EXISTS public.subscription_orders (
   -- Link to created subscription
   wedding_subscription_id UUID REFERENCES public.wedding_subscriptions(id) ON DELETE SET NULL,
 
+  -- Payment method and discount tracking
+  payment_method TEXT CHECK (payment_method IS NULL OR payment_method IN ('card', 'msi', 'transfer')),
+  global_discount_id UUID REFERENCES public.global_discounts(id) ON DELETE SET NULL,
+  global_discount_percent INTEGER,
+  original_amount_cents INTEGER,
+
   -- Metadata
   metadata JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

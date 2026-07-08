@@ -45,6 +45,30 @@ create table "guests" (
 -- Index for ungrouped guests queries
 create index "idx_guests_ungrouped" on guests (wedding_id) where guest_group_id is null;
 
+-- Restricted read policies (narrower than "Anyone can view" in 07_policies.sql)
+-- These coexist with the broader policies defined there
+create policy "Owners and collaborators can view guest groups"
+  on guest_groups
+  for select using (
+    wedding_id in (
+      select id from weddings
+      where owner_id = auth.uid()
+        or owner_id is null
+        or auth.email() = any(collaborator_emails)
+    )
+  );
+
+create policy "Owners and collaborators can view guests"
+  on guests
+  for select using (
+    wedding_id in (
+      select id from weddings
+      where owner_id = auth.uid()
+        or owner_id is null
+        or auth.email() = any(collaborator_emails)
+    )
+  );
+
 -- RSVP responses table - Public RSVP submissions
 create table "rsvps" (
   "id" uuid primary key default gen_random_uuid(),

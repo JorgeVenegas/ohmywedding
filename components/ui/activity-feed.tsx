@@ -159,7 +159,7 @@ export function ActivityFeed({
 
   if (loading) {
     return (
-      <Card className={`${compact ? 'p-3' : 'p-4'}`}>
+      <Card className={`${compact ? 'p-3' : 'p-4'} h-full`}>
         {showTitle && (
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-foreground">{t('activity.recentActivity')}</h3>
@@ -182,7 +182,7 @@ export function ActivityFeed({
 
   if (error) {
     return (
-      <Card className={`${compact ? 'p-3' : 'p-4'}`}>
+      <Card className={`${compact ? 'p-3' : 'p-4'} h-full`}>
         {titleNode}
         <div className="text-center py-4">
           <p className="text-sm text-muted-foreground mb-2">{error}</p>
@@ -197,7 +197,7 @@ export function ActivityFeed({
 
   if (activities.length === 0) {
     return (
-      <Card className={`${compact ? 'p-3' : 'p-4'}`}>
+      <Card className={`${compact ? 'p-3' : 'p-4'} h-full`}>
         {titleNode}
         <div className="text-center py-6">
           <Clock className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
@@ -209,7 +209,7 @@ export function ActivityFeed({
   }
 
   return (
-    <Card className={`${compact ? 'p-3' : 'p-4'}`}>
+    <Card className={`${compact ? 'p-3' : 'p-4'} h-full`}>
       {titleNode}
 
       <div className={`space-y-${compact ? '2' : '3'}`}>

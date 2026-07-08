@@ -33,6 +33,7 @@ import {
   LayoutGrid,
   CircleCheck,
   CircleX,
+  CalendarClock,
 } from "lucide-react"
 
 interface WeddingFeatures {
@@ -987,6 +988,7 @@ const DASHBOARD_CARD_KEYS = [
   "dishes",
   "itinerary",
   "suppliers",
+  "timeline",
   "summary",
 ] as const
 
@@ -1006,6 +1008,7 @@ const SECTION_ICONS: Record<DashboardSectionKey, React.ComponentType<{ className
   dishes: Calendar,
   itinerary: Calendar,
   suppliers: Users,
+  timeline: CalendarClock,
   summary: Settings,
   invitationOpens: Mail,
   recentActivity: Calendar,

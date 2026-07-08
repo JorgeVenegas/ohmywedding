@@ -512,3 +512,14 @@
 .section-move-down {
   animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
+
+/* react-day-picker: dot indicator for days with events */
+.rdp-day--has-event .rdp-day_button::after {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: hsl(var(--primary));
+  margin: 0 auto;
+}

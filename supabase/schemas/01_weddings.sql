@@ -28,6 +28,9 @@ create table "weddings" (
   "stripe_onboarding_completed" boolean default false, -- Whether the couple has completed Stripe Connect onboarding
   "payouts_enabled" boolean default false, -- Whether the connected account can receive payouts
   "has_website" boolean not null default false, -- Whether the wedding has a website configured in wedding_websites
+  "is_ready" boolean not null default false, -- Whether the wedding is marked as ready for guests
+  "ready_status_managed_by" text not null default 'owner'
+    check ("ready_status_managed_by" in ('owner', 'all')),
   "created_at" timestamp with time zone default now(),
   "updated_at" timestamp with time zone default now()
 );
@@ -42,3 +45,16 @@ create table "wedding_schedule" (
   "display_order" integer default 0,
   "created_at" timestamp with time zone default now()
 );
+
+-- Indexes on weddings
+create index if not exists "idx_weddings_is_demo" on weddings (is_demo) where is_demo = true;
+create index if not exists "idx_weddings_stripe_account_id" on weddings (stripe_account_id) where stripe_account_id is not null;
+create index if not exists "weddings_is_ready_idx" on weddings (id, is_ready);
+
+-- RLS policies defined in 07_policies.sql
+-- "Anyone can read demo weddings" is defined here since it references is_demo
+-- which is defined in this file and not known to 07_policies.sql ordering
+create policy "Anyone can read demo weddings"
+  on "weddings"
+  for select
+  using (is_demo = true);

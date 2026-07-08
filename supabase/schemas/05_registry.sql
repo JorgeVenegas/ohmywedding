@@ -61,6 +61,47 @@ create table "registry_contributions" (
   "created_at" timestamp with time zone default now()
 );
 
--- Note: Registry item current_amount is synced by the webhook handler in
--- app/api/registry/webhook/route.ts when payment_status changes to 'completed'
--- This approach is more reliable than database triggers for Stripe Connect payments
+-- Sync trigger: automatically recalculate current_amount when contributions change
+create or replace function public.sync_registry_item_amount()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_item_id uuid;
+  v_new_amount numeric;
+begin
+  if TG_OP = 'DELETE' then
+    v_item_id := OLD.custom_registry_item_id;
+  else
+    v_item_id := NEW.custom_registry_item_id;
+  end if;
+
+  select coalesce(sum(amount), 0)
+  into v_new_amount
+  from registry_contributions
+  where custom_registry_item_id = v_item_id
+    and payment_status = 'completed';
+
+  update custom_registry_items
+  set current_amount = v_new_amount,
+      updated_at = now()
+  where id = v_item_id;
+
+  if TG_OP = 'DELETE' then
+    return OLD;
+  else
+    return NEW;
+  end if;
+end;
+$$;
+
+drop trigger if exists trg_sync_registry_amount on registry_contributions;
+
+create trigger trg_sync_registry_amount
+after insert or update or delete on registry_contributions
+for each row
+execute function sync_registry_item_amount();
+
+grant execute on function public.sync_registry_item_amount() to authenticated, anon, service_role;

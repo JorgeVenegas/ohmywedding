@@ -62,7 +62,7 @@ export function RegistryPaymentNotifications({ weddingId, limit = 5 }: RegistryP
   }
 
   return (
-    <Card className="p-4">
+    <Card className="p-4 h-full">
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-semibold text-foreground">{t('activity.completedPayments')}</h3>
         <Button variant="ghost" size="sm" onClick={fetchData} className="h-7 px-2">

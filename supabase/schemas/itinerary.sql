@@ -23,3 +23,18 @@ create trigger "update_itinerary_events_updated_at"
   before update on itinerary_events
   for each row
   execute function update_updated_at_column();
+
+-- RLS Policies
+alter table "itinerary_events" enable row level security;
+
+create policy "Users can view itinerary for their weddings" on itinerary_events
+  for select using (
+    wedding_id in (select id from weddings where owner_id = auth.uid())
+    or wedding_id in (select id from weddings where auth.jwt()->>'email' = any(collaborator_emails))
+  );
+
+create policy "Users can manage itinerary for their weddings" on itinerary_events
+  for all using (
+    wedding_id in (select id from weddings where owner_id = auth.uid())
+    or wedding_id in (select id from weddings where auth.jwt()->>'email' = any(collaborator_emails))
+  );

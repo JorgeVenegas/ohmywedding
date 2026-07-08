@@ -56,6 +56,7 @@ create table "menu_courses" (
   "course_number" integer not null check (course_number between 1 and 5),
   "course_name" text,
   "dish_id" uuid references dishes(id) on delete set null,
+  "dish_name" text,
   unique("menu_id", "course_number")
 );
 
@@ -77,3 +78,74 @@ create trigger "update_menus_updated_at"
   before update on menus
   for each row
   execute function update_updated_at_column();
+
+-- RLS Policies
+alter table "dishes" enable row level security;
+alter table "guest_dish_assignments" enable row level security;
+alter table "menus" enable row level security;
+alter table "menu_courses" enable row level security;
+alter table "guest_menu_assignments" enable row level security;
+
+create policy "Users can view dishes for their weddings" on dishes
+  for select using (
+    wedding_id in (select id from weddings where owner_id = auth.uid())
+    or wedding_id in (select id from weddings where auth.jwt()->>'email' = any(collaborator_emails))
+  );
+
+create policy "Users can manage dishes for their weddings" on dishes
+  for all using (
+    wedding_id in (select id from weddings where owner_id = auth.uid())
+    or wedding_id in (select id from weddings where auth.jwt()->>'email' = any(collaborator_emails))
+  );
+
+create policy "Users can view dish assignments for their weddings" on guest_dish_assignments
+  for select using (
+    wedding_id in (select id from weddings where owner_id = auth.uid())
+    or wedding_id in (select id from weddings where auth.jwt()->>'email' = any(collaborator_emails))
+  );
+
+create policy "Users can manage dish assignments for their weddings" on guest_dish_assignments
+  for all using (
+    wedding_id in (select id from weddings where owner_id = auth.uid())
+    or wedding_id in (select id from weddings where auth.jwt()->>'email' = any(collaborator_emails))
+  );
+
+create policy "Users can view menus for their weddings" on menus
+  for select using (
+    wedding_id in (select id from weddings where owner_id = auth.uid())
+    or wedding_id in (select id from weddings where auth.jwt()->>'email' = any(collaborator_emails))
+  );
+
+create policy "Users can manage menus for their weddings" on menus
+  for all using (
+    wedding_id in (select id from weddings where owner_id = auth.uid())
+    or wedding_id in (select id from weddings where auth.jwt()->>'email' = any(collaborator_emails))
+  );
+
+create policy "Users can view menu courses for their weddings" on menu_courses
+  for select using (
+    menu_id in (select id from menus where
+      wedding_id in (select id from weddings where owner_id = auth.uid())
+      or wedding_id in (select id from weddings where auth.jwt()->>'email' = any(collaborator_emails))
+    )
+  );
+
+create policy "Users can manage menu courses for their weddings" on menu_courses
+  for all using (
+    menu_id in (select id from menus where
+      wedding_id in (select id from weddings where owner_id = auth.uid())
+      or wedding_id in (select id from weddings where auth.jwt()->>'email' = any(collaborator_emails))
+    )
+  );
+
+create policy "Users can view menu assignments for their weddings" on guest_menu_assignments
+  for select using (
+    wedding_id in (select id from weddings where owner_id = auth.uid())
+    or wedding_id in (select id from weddings where auth.jwt()->>'email' = any(collaborator_emails))
+  );
+
+create policy "Users can manage menu assignments for their weddings" on guest_menu_assignments
+  for all using (
+    wedding_id in (select id from weddings where owner_id = auth.uid())
+    or wedding_id in (select id from weddings where auth.jwt()->>'email' = any(collaborator_emails))
+  );

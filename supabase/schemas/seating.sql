@@ -63,3 +63,44 @@ create trigger "update_seating_tables_updated_at"
   before update on seating_tables
   for each row
   execute function update_updated_at_column();
+
+-- RLS Policies
+alter table "seating_tables" enable row level security;
+alter table "seating_assignments" enable row level security;
+alter table "venue_elements" enable row level security;
+
+create policy "Wedding owners and collaborators can manage seating tables"
+  on seating_tables for all
+  using (
+    auth.uid() is not null and
+    wedding_id in (
+      select id from weddings
+      where owner_id = auth.uid()
+        or owner_id is null
+        or auth.jwt() ->> 'email' = any(collaborator_emails)
+    )
+  );
+
+create policy "Wedding owners and collaborators can manage seating assignments"
+  on seating_assignments for all
+  using (
+    auth.uid() is not null and
+    wedding_id in (
+      select id from weddings
+      where owner_id = auth.uid()
+        or owner_id is null
+        or auth.jwt() ->> 'email' = any(collaborator_emails)
+    )
+  );
+
+create policy "Wedding owners and collaborators can manage venue elements"
+  on venue_elements for all
+  using (
+    auth.uid() is not null and
+    wedding_id in (
+      select id from weddings
+      where owner_id = auth.uid()
+        or owner_id is null
+        or auth.jwt() ->> 'email' = any(collaborator_emails)
+    )
+  );

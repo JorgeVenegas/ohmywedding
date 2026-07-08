@@ -1501,6 +1501,7 @@ export interface Translations {
         invitationOpens: { title: string; description: string }
         recentActivity: { title: string; description: string }
         payments: { title: string; description: string }
+        timeline: { title: string; description: string }
       }
     }
     selector: {
@@ -2467,6 +2468,74 @@ export interface Translations {
         updated: string
         deleted: string
         paymentAdded: string
+        paymentUpdated: string
+        paymentDeleted: string
+        error: string
+      }
+    }
+    timeline: {
+      title: string
+      description: string
+      addEvent: string
+      editEvent: string
+      listView: string
+      calendarView: string
+      noEvents: string
+      noEventsDescription: string
+      upcomingEvents: string
+      viewAll: string
+      filters: {
+        all: string
+        today: string
+        thisWeek: string
+        thisMonth: string
+      }
+      groups: {
+        overdue: string
+        today: string
+        thisWeek: string
+        thisMonth: string
+        later: string
+        completed: string
+      }
+      statuses: {
+        all: string
+        todo: string
+        in_progress: string
+        completed: string
+        cancelled: string
+      }
+      categories: {
+        payment: string
+        save_the_date: string
+        invitations: string
+        communications: string
+        logistics: string
+        other: string
+      }
+      fields: {
+        title: string
+        titlePlaceholder: string
+        description: string
+        descriptionPlaceholder: string
+        category: string
+        status: string
+        startDate: string
+        dueDate: string
+        reminderDays: string
+        assignee: string
+        reviewer: string
+        unassigned: string
+        amount: string
+        supplier: string
+        paymentDate: string
+        notes: string
+      }
+      notifications: {
+        created: string
+        updated: string
+        deleted: string
+        statusChanged: string
         paymentUpdated: string
         paymentDeleted: string
         error: string
