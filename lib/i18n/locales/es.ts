@@ -1634,6 +1634,7 @@ export const es: Translations = {
           descriptionEdit: 'Ve y personaliza tu sitio web de boda',
         },
         invitations: { title: 'Invitaciones e Invitados', description: 'Administra grupos de invitados, invitaciones, RSVPs y seguimiento de confirmaciones' },
+        inbox: { title: 'Bandeja de entrada', description: 'Envía mensajes a tus invitados por WhatsApp y responde sus preguntas y RSVPs' },
         registry: { title: 'Mesa de Regalos', description: 'Administra tu mesa de regalos y listas de deseos de tu boda' },
         seating: { title: 'Mapa de Asientos', description: 'Diseña tu plano, organiza mesas y asigna invitados a sus asientos' },
         dishes: { title: 'Platos y Menú', description: 'Crea platos, gestiona opciones dietéticas y asigna comidas a los invitados' },

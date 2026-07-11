@@ -3,7 +3,7 @@ import { use, useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { LogOut, ArrowRight, Mail, Gift, Settings, LayoutGrid, Globe, Sparkles, UtensilsCrossed, CalendarDays, FileText, Handshake, CircleX, CalendarClock } from "lucide-react"
+import { LogOut, ArrowRight, Mail, Gift, Settings, LayoutGrid, Globe, Sparkles, UtensilsCrossed, CalendarDays, FileText, Handshake, CircleX, CalendarClock, MessageCircle } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { Header } from "@/components/header"
 import { ActivityFeed } from "@/components/ui/activity-feed"
@@ -36,6 +36,15 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
   const [isReady, setIsReady] = useState<boolean | null>(null)
   const [readyStatusManagedBy, setReadyStatusManagedBy] = useState<'owner' | 'all'>('owner')
   const [savingReadyStatus, setSavingReadyStatus] = useState(false)
+  const [messagingEnabled, setMessagingEnabled] = useState(false)
+
+  // Restricted-rollout gate for the Inbox card — see lib/messaging/feature-flag.ts
+  useEffect(() => {
+    fetch(`/api/messaging/feature-flag?weddingId=${encodeURIComponent(decodedWeddingId)}`)
+      .then((res) => (res.ok ? res.json() : { enabled: false }))
+      .then((data) => setMessagingEnabled(Boolean(data.enabled)))
+      .catch(() => setMessagingEnabled(false))
+  }, [decodedWeddingId])
 
   // Check if tutorial should be shown (per-user, via needs_onboarding table)
   useEffect(() => {
@@ -129,6 +138,14 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       color: "primary" as const,
     },
     {
+      sectionKey: 'inbox',
+      title: t('admin.dashboard.cards.inbox.title'),
+      description: t('admin.dashboard.cards.inbox.description'),
+      icon: MessageCircle,
+      href: getCleanAdminUrl(weddingId, 'inbox'),
+      color: "primary" as const,
+    },
+    {
       sectionKey: 'registry',
       title: t('admin.dashboard.cards.registry.title'),
       description: t('admin.dashboard.cards.registry.description'),
@@ -198,6 +215,8 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
     if ('ownerOnly' in s && s.ownerOnly && !weddingPerms.isOwner) return false
     // Dashboard sections toggle (website and settings are always shown)
     if (s.sectionKey !== 'website' && s.sectionKey !== 'settings' && dashboardSections[s.sectionKey] === false) return false
+    // Restricted rollout — hides until MESSAGING_ENABLED_WEDDING_IDS/MESSAGING_GA allows it
+    if (s.sectionKey === 'inbox' && !messagingEnabled) return false
     return true
   })
 

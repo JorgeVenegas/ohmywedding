@@ -1491,6 +1491,7 @@ export interface Translations {
           descriptionEdit: string
         }
         invitations: { title: string; description: string }
+        inbox: { title: string; description: string }
         registry: { title: string; description: string }
         settings: { title: string; description: string }
         seating: { title: string; description: string }

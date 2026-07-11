@@ -1638,6 +1638,7 @@ export const en: Translations = {
           descriptionEdit: 'View and customize your wedding website',
         },
         invitations: { title: 'Invitations & Guests', description: 'Manage guest groups, invitations, RSVPs, and track confirmations' },
+        inbox: { title: 'Inbox', description: 'Message guests on WhatsApp and reply to their questions and RSVPs' },
         registry: { title: 'Registry', description: 'Manage your wedding gift registries and wishlists' },
         seating: { title: 'Seating Chart', description: 'Design your floor plan, arrange tables, and assign guests to their seats' },
         dishes: { title: 'Dishes & Menu', description: 'Create dishes, manage dietary options, and assign meals to guests' },
