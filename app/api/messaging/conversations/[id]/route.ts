@@ -7,8 +7,9 @@ export const runtime = 'nodejs'
 
 // GET /api/messaging/conversations/[id] — everything the guest context panel
 // needs in one call: the conversation, its contact, and (if linked) the guest,
-// their group, and the group's other members. Read-only, cookie-scoped client —
-// RLS on conversations/contacts/guests/guest_groups already gates access.
+// their group, the group's other members, menu/dish/seating assignments, and
+// when they last responded to the RSVP. Read-only, cookie-scoped client — RLS
+// on conversations/contacts/guests/guest_groups/etc. already gates access.
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
@@ -30,11 +31,34 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     let guest = null
     let group = null
     let groupMembers: Array<{ id: string; name: string; confirmation_status: string }> = []
+    let dishAssignment = null
+    let menuAssignment = null
+    let seatAssignment = null
+    let rsvpRespondedAt: string | null = null
 
     const guestId = (conversation.contacts as { guest_id: string | null } | null)?.guest_id
     if (guestId) {
-      const { data: guestRow } = await supabase.from("guests").select("*").eq("id", guestId).single()
+      const [guestResult, dishResult, menuResult, seatResult, rsvpActivityResult] = await Promise.all([
+        supabase.from("guests").select("*").eq("id", guestId).single(),
+        supabase.from("guest_dish_assignments").select("*, dishes(id, name, category)").eq("guest_id", guestId).maybeSingle(),
+        supabase.from("guest_menu_assignments").select("*, menus(id, name)").eq("guest_id", guestId).maybeSingle(),
+        supabase.from("seating_assignments").select("*, seating_tables(id, name)").eq("guest_id", guestId).maybeSingle(),
+        supabase
+          .from("activity_logs")
+          .select("created_at, activity_type")
+          .eq("guest_id", guestId)
+          .in("activity_type", ["rsvp_confirmed", "rsvp_declined"])
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ])
+
+      const guestRow = guestResult.data
       guest = guestRow
+      dishAssignment = dishResult.data
+      menuAssignment = menuResult.data
+      seatAssignment = seatResult.data
+      rsvpRespondedAt = rsvpActivityResult.data?.created_at ?? null
 
       if (guestRow?.guest_group_id) {
         const { data: groupRow } = await supabase
@@ -53,7 +77,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       }
     }
 
-    return NextResponse.json({ conversation, guest, group, groupMembers })
+    return NextResponse.json({
+      conversation,
+      guest,
+      group,
+      groupMembers,
+      dishAssignment,
+      menuAssignment,
+      seatAssignment,
+      rsvpRespondedAt,
+    })
   } catch (error) {
     console.error("GET /api/messaging/conversations/[id] failed:", error)
     return NextResponse.json({ error: "Failed to load conversation" }, { status: 500 })

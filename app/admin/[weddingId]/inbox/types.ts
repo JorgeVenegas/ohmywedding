@@ -57,9 +57,29 @@ export interface GroupMember {
   confirmation_status: "pending" | "confirmed" | "declined"
 }
 
+export interface DishAssignment {
+  id: string
+  dishes: { id: string; name: string; category: string } | null
+}
+
+export interface MenuAssignment {
+  id: string
+  menus: { id: string; name: string } | null
+}
+
+export interface SeatAssignment {
+  id: string
+  seat_number: number | null
+  seating_tables: { id: string; name: string } | null
+}
+
 export interface ConversationDetail {
   conversation: Conversation
   guest: ContextGuest | null
   group: ContextGroup | null
   groupMembers: GroupMember[]
+  dishAssignment: DishAssignment | null
+  menuAssignment: MenuAssignment | null
+  seatAssignment: SeatAssignment | null
+  rsvpRespondedAt: string | null
 }

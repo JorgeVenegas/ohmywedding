@@ -1,6 +1,8 @@
 "use client"
 
 import { formatDistanceToNowStrict } from "date-fns"
+import { es as esLocale } from "date-fns/locale"
+import { useTranslation } from "@/components/contexts/i18n-context"
 import type { Conversation } from "../types"
 
 interface ConversationListProps {
@@ -15,23 +17,24 @@ function initials(name: string | null, fallback: string) {
 }
 
 export function ConversationList({ conversations, selectedId, onSelect }: ConversationListProps) {
+  const { t, locale } = useTranslation()
   const openCount = conversations.filter((c) => c.status === "open").length
 
   return (
     <div className="flex h-full flex-col border-r border-border bg-muted/20">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <span className="text-sm font-semibold text-foreground">Conversations</span>
+        <span className="text-sm font-semibold text-foreground">{t('admin.inbox.conversationList.title')}</span>
         <span className="text-xs text-muted-foreground">
-          {openCount} open
+          {t('admin.inbox.conversationList.openCount', { count: openCount })}
         </span>
       </div>
       <div className="flex-1 overflow-y-auto">
         {conversations.length === 0 && (
-          <div className="p-6 text-center text-sm text-muted-foreground">No conversations yet.</div>
+          <div className="p-6 text-center text-sm text-muted-foreground">{t('admin.inbox.conversationList.empty')}</div>
         )}
         {conversations.map((conversation) => {
           const contact = conversation.contacts
-          const name = contact?.display_name || contact?.external_address || "Unknown"
+          const name = contact?.display_name || contact?.external_address || t('admin.inbox.unknownContact')
           const active = conversation.id === selectedId
           return (
             <button
@@ -49,12 +52,14 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
                   <span className="truncate text-sm font-semibold text-foreground">{name}</span>
                   {conversation.last_message_at && (
                     <time className="flex-shrink-0 text-[10px] text-muted-foreground">
-                      {formatDistanceToNowStrict(new Date(conversation.last_message_at))}
+                      {formatDistanceToNowStrict(new Date(conversation.last_message_at), {
+                        locale: locale === 'es' ? esLocale : undefined,
+                      })}
                     </time>
                   )}
                 </div>
                 <p className="truncate text-xs text-muted-foreground">
-                  {conversation.last_message_preview || "No messages yet"}
+                  {conversation.last_message_preview || t('admin.inbox.conversationList.noMessagesPreview')}
                 </p>
               </div>
               {conversation.unread_count > 0 && (

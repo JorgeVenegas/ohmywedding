@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useTranslation } from "@/components/contexts/i18n-context"
 
 interface ComposerProps {
   onSend: (body: string) => Promise<void>
@@ -10,6 +11,7 @@ interface ComposerProps {
 }
 
 export function Composer({ onSend, disabled }: ComposerProps) {
+  const { t } = useTranslation()
   const [value, setValue] = useState("")
   const [sending, setSending] = useState(false)
 
@@ -36,7 +38,7 @@ export function Composer({ onSend, disabled }: ComposerProps) {
             handleSend()
           }
         }}
-        placeholder="Type a message…"
+        placeholder={t('admin.inbox.composer.placeholder')}
         disabled={disabled || sending}
         className="flex-1 rounded-full border border-border bg-background px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
       />

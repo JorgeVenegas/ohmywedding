@@ -4,6 +4,7 @@ import { use, useCallback, useEffect, useState } from "react"
 import { MessageCircleOff } from "lucide-react"
 import { Header } from "@/components/header"
 import { getCleanAdminUrl } from "@/lib/admin-url"
+import { useTranslation } from "@/components/contexts/i18n-context"
 import { useMessagingRealtime } from "@/hooks/use-messaging-realtime"
 import { ConversationList, MessageThread, GuestContextPanel, ConnectWhatsappForm } from "./components"
 import type { Conversation, ConversationDetail, Message } from "./types"
@@ -13,6 +14,7 @@ interface InboxPageProps {
 }
 
 export default function InboxPage({ params }: InboxPageProps) {
+  const { t } = useTranslation()
   const { weddingId: rawWeddingId } = use(params)
   const weddingId = decodeURIComponent(rawWeddingId)
 
@@ -108,10 +110,8 @@ export default function InboxPage({ params }: InboxPageProps) {
         <Header showBackButton backHref={getCleanAdminUrl(weddingId, "dashboard")} />
         <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
           <MessageCircleOff className="h-8 w-8 text-muted-foreground" />
-          <p className="text-sm font-medium text-foreground">Inbox isn't available for this wedding yet</p>
-          <p className="max-w-sm text-sm text-muted-foreground">
-            WhatsApp messaging is rolling out gradually. Reach out if you'd like early access.
-          </p>
+          <p className="text-sm font-medium text-foreground">{t('admin.inbox.notAvailable.title')}</p>
+          <p className="max-w-sm text-sm text-muted-foreground">{t('admin.inbox.notAvailable.description')}</p>
         </div>
       </main>
     )
@@ -123,7 +123,7 @@ export default function InboxPage({ params }: InboxPageProps) {
       <ConnectWhatsappForm weddingId={weddingId} />
 
       {loading || messagingEnabled === null ? (
-        <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">Loading inbox…</div>
+        <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">{t('admin.inbox.loading')}</div>
       ) : (
         <div className="grid flex-1 grid-cols-[260px_1fr_290px] overflow-hidden">
           <ConversationList conversations={conversations} selectedId={selectedId} onSelect={handleSelect} />

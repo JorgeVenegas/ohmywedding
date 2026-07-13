@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { CheckCircle2, ChevronDown, ChevronUp, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { useTranslation } from "@/components/contexts/i18n-context"
 
 interface WhatsappAccountSummary {
   id: string
@@ -27,6 +28,7 @@ const emptyForm = {
 }
 
 export function ConnectWhatsappForm({ weddingId }: ConnectWhatsappFormProps) {
+  const { t } = useTranslation()
   const [account, setAccount] = useState<WhatsappAccountSummary | null | undefined>(undefined)
   const [expanded, setExpanded] = useState(false)
   const [form, setForm] = useState(emptyForm)
@@ -65,10 +67,11 @@ export function ConnectWhatsappForm({ weddingId }: ConnectWhatsappFormProps) {
     return (
       <div className="flex items-center justify-between border-b border-border bg-emerald-50 px-4 py-2 text-xs text-emerald-800">
         <span className="flex items-center gap-1.5 font-medium">
-          <CheckCircle2 className="h-3.5 w-3.5" /> WhatsApp connected — {account.display_phone_number}
+          <CheckCircle2 className="h-3.5 w-3.5" />{" "}
+          {t('admin.inbox.connectWhatsapp.connectedPrefix', { phone: account.display_phone_number })}
         </span>
         <button onClick={() => setExpanded(true)} className="underline">
-          Edit
+          {t('admin.inbox.connectWhatsapp.edit')}
         </button>
       </div>
     )
@@ -82,38 +85,40 @@ export function ConnectWhatsappForm({ weddingId }: ConnectWhatsappFormProps) {
       >
         <span className="flex items-center gap-1.5">
           <MessageCircle className="h-3.5 w-3.5 text-amber-600" />
-          {account ? "WhatsApp not fully connected — finish setup" : "Connect a WhatsApp number to start sending"}
+          {account
+            ? t('admin.inbox.connectWhatsapp.notFullyConnected')
+            : t('admin.inbox.connectWhatsapp.connectPrompt')}
         </span>
         {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
       </button>
       {expanded && (
         <Card className="mx-4 mb-3 space-y-2 p-4">
-          <p className="text-xs text-muted-foreground">
-            No Meta Business App is connected yet, so this is a manual stand-in for Embedded Signup — enter the
-            values from your Meta App's WhatsApp product. Until an access token is set, messages are logged but not
-            actually delivered.
-          </p>
+          <p className="text-xs text-muted-foreground">{t('admin.inbox.connectWhatsapp.setupDescription')}</p>
           <div className="grid grid-cols-2 gap-2">
-            <LabeledInput label="WABA ID" value={form.wabaId} onChange={(v) => setForm((f) => ({ ...f, wabaId: v }))} />
             <LabeledInput
-              label="Phone Number ID"
+              label={t('admin.inbox.connectWhatsapp.wabaId')}
+              value={form.wabaId}
+              onChange={(v) => setForm((f) => ({ ...f, wabaId: v }))}
+            />
+            <LabeledInput
+              label={t('admin.inbox.connectWhatsapp.phoneNumberId')}
               value={form.phoneNumberId}
               onChange={(v) => setForm((f) => ({ ...f, phoneNumberId: v }))}
             />
             <LabeledInput
-              label="Display Phone Number"
+              label={t('admin.inbox.connectWhatsapp.displayPhoneNumber')}
               value={form.displayPhoneNumber}
               onChange={(v) => setForm((f) => ({ ...f, displayPhoneNumber: v }))}
-              placeholder="+1 555 019 2231"
+              placeholder={t('admin.inbox.connectWhatsapp.phonePlaceholder')}
             />
             <LabeledInput
-              label="Display Name"
+              label={t('admin.inbox.connectWhatsapp.displayName')}
               value={form.displayName}
               onChange={(v) => setForm((f) => ({ ...f, displayName: v }))}
             />
             <div className="col-span-2">
               <LabeledInput
-                label="Access Token (optional for now)"
+                label={t('admin.inbox.connectWhatsapp.accessToken')}
                 value={form.accessTokenSecret}
                 onChange={(v) => setForm((f) => ({ ...f, accessTokenSecret: v }))}
                 type="password"
@@ -125,7 +130,7 @@ export function ConnectWhatsappForm({ weddingId }: ConnectWhatsappFormProps) {
             onClick={handleSave}
             disabled={saving || !form.wabaId || !form.phoneNumberId || !form.displayPhoneNumber}
           >
-            {saving ? "Saving…" : "Save"}
+            {saving ? t('admin.inbox.connectWhatsapp.saving') : t('admin.inbox.connectWhatsapp.save')}
           </Button>
         </Card>
       )}

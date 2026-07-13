@@ -2542,6 +2542,90 @@ export interface Translations {
         error: string
       }
     }
+    inbox: {
+      notAvailable: {
+        title: string
+        description: string
+      }
+      loading: string
+      unknownContact: string
+      connectWhatsapp: {
+        connectedPrefix: string
+        edit: string
+        notFullyConnected: string
+        connectPrompt: string
+        setupDescription: string
+        wabaId: string
+        phoneNumberId: string
+        displayPhoneNumber: string
+        displayName: string
+        accessToken: string
+        phonePlaceholder: string
+        saving: string
+        save: string
+      }
+      conversationList: {
+        title: string
+        openCount: string
+        empty: string
+        noMessagesPreview: string
+      }
+      messageThread: {
+        selectConversation: string
+        noMessages: string
+        notSent: string
+        status: {
+          pending: string
+          sent: string
+          delivered: string
+          read: string
+          failed: string
+        }
+        session: {
+          none: string
+          closed: string
+          open: string
+        }
+      }
+      composer: {
+        placeholder: string
+      }
+      guestPanel: {
+        selectConversation: string
+        notLinked: {
+          title: string
+          description: string
+        }
+        searchPlaceholder: string
+        noMatchingGuests: string
+        linkedToGuest: string
+        rsvpStatus: string
+        respondedAt: string
+        confirm: string
+        decline: string
+        guestGroup: string
+        guestsCount: string
+        extraPasses: string
+        thisChat: string
+        details: string
+        dietary: string
+        travel: string
+        travelingFrom: string
+        traveling: string
+        tags: string
+        viewFullProfile: string
+        status: {
+          pending: string
+          confirmed: string
+          declined: string
+        }
+        menuSeating: {
+          title: string
+          tableAndSeat: string
+          noneAssigned: string
+        }
+      }
+    }
   }
 
   // Language switcher
