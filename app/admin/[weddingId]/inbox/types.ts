@@ -55,6 +55,8 @@ export interface GroupMember {
   id: string
   name: string
   confirmation_status: "pending" | "confirmed" | "declined"
+  seat_number: number | null
+  table_name: string | null
 }
 
 export interface DishAssignment {
@@ -65,6 +67,12 @@ export interface DishAssignment {
 export interface MenuAssignment {
   id: string
   menus: { id: string; name: string } | null
+}
+
+export interface MenuCourse {
+  course_number: number
+  course_name: string | null
+  dish: { name: string; category: string } | null
 }
 
 export interface SeatAssignment {
@@ -80,6 +88,7 @@ export interface ConversationDetail {
   groupMembers: GroupMember[]
   dishAssignment: DishAssignment | null
   menuAssignment: MenuAssignment | null
+  menuCourses: MenuCourse[]
   seatAssignment: SeatAssignment | null
   rsvpRespondedAt: string | null
 }

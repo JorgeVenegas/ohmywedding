@@ -2768,10 +2768,15 @@ export const en: Translations = {
           confirmed: 'Confirmed',
           declined: 'Declined',
         },
-        menuSeating: {
-          title: 'Menu & seating',
-          tableAndSeat: '{{table}} · Seat {{seat}}',
-          noneAssigned: 'Not assigned yet',
+        unassigned: 'Unassigned',
+        seating: {
+          title: 'Seating',
+          seatLabel: 'Seat {{number}}',
+          noneAssigned: 'No table assigned yet',
+        },
+        menu: {
+          title: 'Menu',
+          noneAssigned: 'No menu selected yet',
         },
       },
     },

@@ -5,6 +5,13 @@ import { isMessagingEnabledForWeddingUuid } from "@/lib/messaging/feature-flag"
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
+// Supabase's inferred type for a joined belongs-to relation is `T[]`, but at
+// runtime it's a single object (or null) since the FK is unique on this side.
+function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) return value[0] ?? null
+  return value ?? null
+}
+
 // GET /api/messaging/conversations/[id] — everything the guest context panel
 // needs in one call: the conversation, its contact, and (if linked) the guest,
 // their group, the group's other members, menu/dish/seating assignments, and
@@ -30,11 +37,22 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     let guest = null
     let group = null
-    let groupMembers: Array<{ id: string; name: string; confirmation_status: string }> = []
+    let groupMembers: Array<{
+      id: string
+      name: string
+      confirmation_status: string
+      seat_number: number | null
+      table_name: string | null
+    }> = []
     let dishAssignment = null
     let menuAssignment = null
     let seatAssignment = null
     let rsvpRespondedAt: string | null = null
+    let menuCourses: Array<{
+      course_number: number
+      course_name: string | null
+      dish: { name: string; category: string } | null
+    }> = []
 
     const guestId = (conversation.contacts as { guest_id: string | null } | null)?.guest_id
     if (guestId) {
@@ -60,6 +78,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       seatAssignment = seatResult.data
       rsvpRespondedAt = rsvpActivityResult.data?.created_at ?? null
 
+      // Full course-by-course breakdown for the assigned menu, not just its name.
+      const assignedMenuId = (menuAssignment as { menus?: { id: string } | null } | null)?.menus?.id
+      if (assignedMenuId) {
+        const { data: courses } = await supabase
+          .from("menu_courses")
+          .select("course_number, course_name, dishes(name, category)")
+          .eq("menu_id", assignedMenuId)
+          .order("course_number")
+        menuCourses = (courses ?? []).map((c) => ({
+          course_number: c.course_number,
+          course_name: c.course_name,
+          dish: firstOrNull(c.dishes) as { name: string; category: string } | null,
+        }))
+      }
+
       if (guestRow?.guest_group_id) {
         const { data: groupRow } = await supabase
           .from("guest_groups")
@@ -73,7 +106,29 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           .select("id, name, confirmation_status")
           .eq("guest_group_id", guestRow.guest_group_id)
           .order("name")
-        groupMembers = members ?? []
+
+        // Seat/table per member, so the panel can show the whole group's seating
+        // at a glance, not just the guest linked to this conversation.
+        const memberIds = (members ?? []).map((m) => m.id)
+        const seatByGuest = new Map<string, { seat_number: number | null; table_name: string | null }>()
+        if (memberIds.length > 0) {
+          const { data: seats } = await supabase
+            .from("seating_assignments")
+            .select("guest_id, seat_number, seating_tables(name)")
+            .in("guest_id", memberIds)
+          for (const s of seats ?? []) {
+            seatByGuest.set(s.guest_id, {
+              seat_number: s.seat_number,
+              table_name: (firstOrNull(s.seating_tables) as { name: string } | null)?.name ?? null,
+            })
+          }
+        }
+
+        groupMembers = (members ?? []).map((m) => ({
+          ...m,
+          seat_number: seatByGuest.get(m.id)?.seat_number ?? null,
+          table_name: seatByGuest.get(m.id)?.table_name ?? null,
+        }))
       }
     }
 
@@ -84,6 +139,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       groupMembers,
       dishAssignment,
       menuAssignment,
+      menuCourses,
       seatAssignment,
       rsvpRespondedAt,
     })

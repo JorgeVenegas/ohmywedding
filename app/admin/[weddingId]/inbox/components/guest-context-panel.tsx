@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { es as esLocale } from "date-fns/locale"
-import { Check, X, Search, ExternalLink, UtensilsCrossed, Armchair } from "lucide-react"
+import { Check, X, Search, ExternalLink, UtensilsCrossed, Armchair, Salad, Plane, Tag } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { useTranslation } from "@/components/contexts/i18n-context"
@@ -28,6 +28,23 @@ const STATUS_STYLES: Record<string, string> = {
   confirmed: "bg-emerald-100 text-emerald-700",
   declined: "bg-red-100 text-red-700",
   pending: "bg-amber-100 text-amber-700",
+}
+
+// Dish category -> accent dot color. Menus/dishes have no stored "color" field
+// in the schema, so this derives a consistent, at-a-glance color code from the
+// category enum instead (appetizer/soup/salad/main/dessert/drink/other).
+const CATEGORY_DOT: Record<string, string> = {
+  appetizer: "bg-amber-400",
+  soup: "bg-orange-400",
+  salad: "bg-emerald-400",
+  main: "bg-rose-400",
+  dessert: "bg-fuchsia-400",
+  drink: "bg-sky-400",
+  other: "bg-stone-400",
+}
+
+function initials(name: string) {
+  return name.trim().slice(0, 2).toUpperCase()
 }
 
 function StatusPill({ status }: { status: string }) {
@@ -128,12 +145,11 @@ export function GuestContextPanel({ weddingId, contactId, detail, onLinked }: Gu
     )
   }
 
-  const { guest, group, groupMembers, dishAssignment, menuAssignment, seatAssignment, rsvpRespondedAt } = detail
+  const { guest, group, groupMembers, dishAssignment, menuAssignment, menuCourses, seatAssignment, rsvpRespondedAt } = detail
   if (!guest) return null
 
-  const respondedAtLabel = rsvpRespondedAt
-    ? format(new Date(rsvpRespondedAt), "PPp", { locale: locale === "es" ? esLocale : undefined })
-    : null
+  const dateLocale = locale === "es" ? esLocale : undefined
+  const respondedAtLabel = rsvpRespondedAt ? format(new Date(rsvpRespondedAt), "PPp", { locale: dateLocale }) : null
 
   const updateRsvp = async (status: "confirmed" | "declined") => {
     setUpdating(true)
@@ -160,25 +176,26 @@ export function GuestContextPanel({ weddingId, contactId, detail, onLinked }: Gu
 
   return (
     <div className="h-full overflow-y-auto border-l border-border bg-muted/10">
-      <div className="border-b border-border p-4">
-        <p className="text-sm font-semibold text-foreground">{guest.name}</p>
-        <p className="mt-0.5 text-xs text-emerald-600">{t('admin.inbox.guestPanel.linkedToGuest')}</p>
-      </div>
-
-      <div className="border-b border-border p-4">
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          {t('admin.inbox.guestPanel.rsvpStatus')}
-        </p>
-        <div className="flex items-center gap-2">
-          <StatusPill status={guest.confirmation_status} />
-          {guest.confirmation_status !== "pending" && respondedAtLabel && (
-            <span className="text-[11px] text-muted-foreground">
-              {t('admin.inbox.guestPanel.respondedAt', { date: respondedAtLabel })}
-            </span>
-          )}
+      {/* Profile header */}
+      <div className="border-b border-border bg-gradient-to-br from-primary/10 via-transparent to-transparent p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary ring-2 ring-primary/25">
+            {initials(guest.name)}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-serif text-lg font-semibold leading-tight text-foreground">{guest.name}</p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+              <StatusPill status={guest.confirmation_status} />
+              {guest.confirmation_status !== "pending" && respondedAtLabel && (
+                <span className="text-[11px] text-muted-foreground">
+                  {t('admin.inbox.guestPanel.respondedAt', { date: respondedAtLabel })}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
         {guest.confirmation_status === "pending" && (
-          <div className="mt-2 flex gap-2">
+          <div className="mt-3 flex gap-2">
             <Button
               size="sm"
               variant="outline"
@@ -201,6 +218,75 @@ export function GuestContextPanel({ weddingId, contactId, detail, onLinked }: Gu
         )}
       </div>
 
+      {/* Seating spotlight — the one thing that used to be missing entirely */}
+      <div className="border-b border-border p-4">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {t('admin.inbox.guestPanel.seating.title')}
+        </p>
+        {seatAssignment?.seating_tables?.name ? (
+          <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2.5">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <Armchair className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-foreground">{seatAssignment.seating_tables.name}</p>
+              {seatAssignment.seat_number != null && (
+                <p className="text-xs text-muted-foreground">
+                  {t('admin.inbox.guestPanel.seating.seatLabel', { number: seatAssignment.seat_number })}
+                </p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-border px-3 py-2.5 text-xs text-muted-foreground">
+            {t('admin.inbox.guestPanel.seating.noneAssigned')}
+          </div>
+        )}
+      </div>
+
+      {/* Menu, with course-by-course breakdown and category color coding */}
+      <div className="border-b border-border p-4">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {t('admin.inbox.guestPanel.menu.title')}
+        </p>
+        {menuAssignment?.menus?.name ? (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <UtensilsCrossed className="h-3.5 w-3.5 flex-shrink-0 text-primary" />
+              {menuAssignment.menus.name}
+            </div>
+            {menuCourses.length > 0 && (
+              <div className="space-y-1 pl-[22px]">
+                {menuCourses.map((course) => (
+                  <div key={course.course_number} className="flex items-center gap-2 text-xs">
+                    <span
+                      className={`h-2 w-2 flex-shrink-0 rounded-full ${
+                        course.dish ? CATEGORY_DOT[course.dish.category] ?? CATEGORY_DOT.other : "bg-muted-foreground/30"
+                      }`}
+                    />
+                    <span className="flex-shrink-0 text-muted-foreground">
+                      {course.course_name || `${t('admin.dishes.course')} ${course.course_number}`}
+                    </span>
+                    <span className="truncate text-foreground">{course.dish?.name ?? "—"}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : dishAssignment?.dishes?.name ? (
+          <div className="flex items-center gap-2 text-sm">
+            <span className={`h-2 w-2 flex-shrink-0 rounded-full ${CATEGORY_DOT[dishAssignment.dishes.category] ?? CATEGORY_DOT.other}`} />
+            <span className="text-foreground">{dishAssignment.dishes.name}</span>
+            <span className="text-xs text-muted-foreground">
+              ({t(`admin.dishes.categories.${dishAssignment.dishes.category}`)})
+            </span>
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">{t('admin.inbox.guestPanel.menu.noneAssigned')}</p>
+        )}
+      </div>
+
+      {/* Group roster — every member's RSVP AND seat, not just this guest's */}
       {group && (
         <div className="border-b border-border p-4">
           <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -215,58 +301,46 @@ export function GuestContextPanel({ weddingId, contactId, detail, onLinked }: Gu
           </p>
           <div className="space-y-1">
             {groupMembers.map((member) => (
-              <div key={member.id} className="flex items-center justify-between text-xs">
-                <span className={member.id === guest.id ? "font-semibold text-foreground" : "text-muted-foreground"}>
+              <div
+                key={member.id}
+                className={`flex items-center justify-between gap-2 rounded-md px-1.5 py-1 text-xs ${
+                  member.id === guest.id ? "bg-primary/10" : ""
+                }`}
+              >
+                <span className={`truncate ${member.id === guest.id ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
                   {member.name}
                   {member.id === guest.id ? ` ${t('admin.inbox.guestPanel.thisChat')}` : ""}
                 </span>
-                <StatusPill status={member.confirmation_status} />
+                <div className="flex flex-shrink-0 items-center gap-1.5">
+                  <span className="text-[10px] text-muted-foreground">
+                    {member.table_name
+                      ? member.seat_number != null
+                        ? `${member.table_name} · #${member.seat_number}`
+                        : member.table_name
+                      : t('admin.inbox.guestPanel.unassigned')}
+                  </span>
+                  <StatusPill status={member.confirmation_status} />
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      <div className="border-b border-border p-4 space-y-1.5">
-        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          {t('admin.inbox.guestPanel.menuSeating.title')}
-        </p>
-        <div className="flex gap-2 text-xs">
-          <UtensilsCrossed className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
-          <span className="text-foreground">
-            {menuAssignment?.menus?.name ??
-              dishAssignment?.dishes?.name ??
-              t('admin.inbox.guestPanel.menuSeating.noneAssigned')}
-          </span>
-        </div>
-        <div className="flex gap-2 text-xs">
-          <Armchair className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
-          <span className="text-foreground">
-            {seatAssignment?.seating_tables?.name
-              ? seatAssignment.seat_number
-                ? t('admin.inbox.guestPanel.menuSeating.tableAndSeat', {
-                    table: seatAssignment.seating_tables.name,
-                    seat: seatAssignment.seat_number,
-                  })
-                : seatAssignment.seating_tables.name
-              : t('admin.inbox.guestPanel.menuSeating.noneAssigned')}
-          </span>
-        </div>
-      </div>
-
-      <div className="border-b border-border p-4 space-y-1.5">
+      {/* Dietary, travel, tags */}
+      <div className="border-b border-border p-4 space-y-2">
         <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           {t('admin.inbox.guestPanel.details')}
         </p>
         {guest.dietary_restrictions && (
-          <div className="flex gap-2 text-xs">
-            <span className="w-16 flex-shrink-0 text-muted-foreground">{t('admin.inbox.guestPanel.dietary')}</span>
+          <div className="flex items-start gap-2 text-xs">
+            <Salad className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
             <span className="text-foreground">{guest.dietary_restrictions}</span>
           </div>
         )}
         {guest.is_traveling && (
-          <div className="flex gap-2 text-xs">
-            <span className="w-16 flex-shrink-0 text-muted-foreground">{t('admin.inbox.guestPanel.travel')}</span>
+          <div className="flex items-start gap-2 text-xs">
+            <Plane className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
             <span className="text-foreground">
               {guest.traveling_from
                 ? t('admin.inbox.guestPanel.travelingFrom', { location: guest.traveling_from })
@@ -276,8 +350,8 @@ export function GuestContextPanel({ weddingId, contactId, detail, onLinked }: Gu
           </div>
         )}
         {guest.tags?.length > 0 && (
-          <div className="flex gap-2 text-xs">
-            <span className="w-16 flex-shrink-0 text-muted-foreground">{t('admin.inbox.guestPanel.tags')}</span>
+          <div className="flex items-start gap-2 text-xs">
+            <Tag className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
             <span className="text-foreground">{guest.tags.join(", ")}</span>
           </div>
         )}

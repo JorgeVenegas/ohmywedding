@@ -2619,9 +2619,14 @@ export interface Translations {
           confirmed: string
           declined: string
         }
-        menuSeating: {
+        unassigned: string
+        seating: {
           title: string
-          tableAndSeat: string
+          seatLabel: string
+          noneAssigned: string
+        }
+        menu: {
+          title: string
           noneAssigned: string
         }
       }

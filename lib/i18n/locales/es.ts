@@ -2764,10 +2764,15 @@ export const es: Translations = {
           confirmed: 'Confirmado',
           declined: 'Rechazado',
         },
-        menuSeating: {
-          title: 'Menú y asientos',
-          tableAndSeat: '{{table}} · Asiento {{seat}}',
-          noneAssigned: 'Aún no asignado',
+        unassigned: 'Sin asignar',
+        seating: {
+          title: 'Asientos',
+          seatLabel: 'Asiento {{number}}',
+          noneAssigned: 'Aún no hay mesa asignada',
+        },
+        menu: {
+          title: 'Menú',
+          noneAssigned: 'Aún no hay menú seleccionado',
         },
       },
     },
