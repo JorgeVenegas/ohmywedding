@@ -42,8 +42,8 @@ function LinkContactPanel({ weddingId, contactId, onLinked }: { weddingId: strin
 
   useEffect(() => {
     fetch(`/api/guests?weddingId=${encodeURIComponent(weddingId)}`)
-      .then((res) => (res.ok ? res.json() : { guests: [] }))
-      .then((data) => setGuests(data.guests ?? []))
+      .then((res) => (res.ok ? res.json() : { data: [] }))
+      .then((data) => setGuests(data.data ?? []))
       .catch(() => setGuests([]))
   }, [weddingId])
 
