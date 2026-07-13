@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import { motion } from "framer-motion"
 import { Composer } from "./composer"
 import { useTranslation } from "@/components/contexts/i18n-context"
 import type { Conversation, Message, MessageStatus } from "../types"
@@ -9,11 +10,23 @@ interface MessageThreadProps {
   conversation: Conversation | null
   messages: Message[]
   onSend: (body: string) => Promise<void>
+  onTyping?: () => void
 }
 
-export function MessageThread({ conversation, messages, onSend }: MessageThreadProps) {
+export function MessageThread({ conversation, messages, onSend, onTyping }: MessageThreadProps) {
   const { t } = useTranslation()
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  // Only animate messages that just arrived/were just sent — not the whole
+  // history replaying every time a conversation is opened or refetched.
+  const previousMessageIds = useRef<Set<string>>(new Set())
+  const previousConversationId = useRef<string | null>(null)
+  const conversationChanged = conversation?.id !== previousConversationId.current
+  const newMessageIds = conversationChanged
+    ? new Set<string>()
+    : new Set(messages.filter((m) => !previousMessageIds.current.has(m.id)).map((m) => m.id))
+  previousConversationId.current = conversation?.id ?? null
+  previousMessageIds.current = new Set(messages.map((m) => m.id))
 
   const STATUS_LABEL: Record<MessageStatus, string> = {
     pending: t('admin.inbox.messageThread.status.pending'),
@@ -69,29 +82,37 @@ export function MessageThread({ conversation, messages, onSend }: MessageThreadP
         )}
         {messages.map((message) => {
           const notConfigured = message.status === "failed" && message.error_code === "no_provider_configured"
+          const fromRight = message.direction === "outbound"
           return (
-            <div key={message.id} className={`flex ${message.direction === "outbound" ? "justify-end" : "justify-start"}`}>
+            <motion.div
+              key={message.id}
+              layout
+              initial={newMessageIds.has(message.id) ? { opacity: 0, y: 10, scale: 0.96, x: fromRight ? 8 : -8 } : false}
+              animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
+              transition={{ type: "spring", stiffness: 500, damping: 32, mass: 0.6 }}
+              className={`flex ${fromRight ? "justify-end" : "justify-start"}`}
+            >
               <div
                 className={`max-w-[65%] rounded-2xl border px-3.5 py-2 text-sm ${
-                  message.direction === "outbound"
+                  fromRight
                     ? "rounded-br-sm border-primary bg-muted text-foreground"
                     : "rounded-bl-sm border-transparent bg-muted text-foreground"
                 }`}
               >
                 <p className="whitespace-pre-wrap break-words">{message.body || `[${message.message_type}]`}</p>
-                {message.direction === "outbound" && (
+                {fromRight && (
                   <p className={`mt-1 text-[10px] ${notConfigured ? "font-semibold text-amber-600" : "text-muted-foreground"}`}>
                     {notConfigured ? t('admin.inbox.messageThread.notSent') : STATUS_LABEL[message.status]}
                   </p>
                 )}
               </div>
-            </div>
+            </motion.div>
           )
         })}
         <div ref={bottomRef} />
       </div>
 
-      <Composer onSend={onSend} />
+      <Composer onSend={onSend} onTyping={onTyping} />
     </div>
   )
 }

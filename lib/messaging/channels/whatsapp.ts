@@ -1,6 +1,6 @@
 import crypto from "crypto"
 import type { ChannelAdapter } from "../channel-adapter"
-import type { MessageType, ParsedWebhookEvent, SendMessageParams, SendMessageResult } from "../types"
+import type { MessageType, ParsedWebhookEvent, SendMessageParams, SendMessageResult, WhatsappAccount } from "../types"
 
 const GRAPH_API_VERSION = "v21.0"
 
@@ -174,4 +174,43 @@ export const whatsappAdapter: ChannelAdapter = {
       }
     }
   },
+}
+
+// WhatsApp-only, so it's not on ChannelAdapter (email/sms have no such concept).
+// Shows "typing…" to the guest; Meta auto-dismisses it after 25s or on our next
+// reply, whichever comes first, and marks the referenced inbound message as read
+// as a side effect. `messageId` must be the channel_message_id of an inbound
+// message — Meta rejects arbitrary/outbound IDs.
+export async function sendTypingIndicator(
+  account: WhatsappAccount,
+  messageId: string
+): Promise<{ ok: boolean; errorCode?: string }> {
+  if (!account.access_token_secret) {
+    return { ok: false, errorCode: "no_provider_configured" }
+  }
+
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/${GRAPH_API_VERSION}/${account.phone_number_id}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${account.access_token_secret}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          status: "read",
+          message_id: messageId,
+          typing_indicator: { type: "text" },
+        }),
+      }
+    )
+    if (!response.ok) {
+      return { ok: false, errorCode: `http_${response.status}` }
+    }
+    return { ok: true }
+  } catch {
+    return { ok: false, errorCode: "network_error" }
+  }
 }

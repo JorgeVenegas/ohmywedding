@@ -1,19 +1,25 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTranslation } from "@/components/contexts/i18n-context"
 
 interface ComposerProps {
   onSend: (body: string) => Promise<void>
+  onTyping?: () => void
   disabled?: boolean
 }
 
-export function Composer({ onSend, disabled }: ComposerProps) {
+// Meta dismisses a typing indicator after 25s, so re-firing sooner than that is
+// wasted API calls; a little under it keeps "typing…" visible without gaps.
+const TYPING_REFIRE_MS = 20_000
+
+export function Composer({ onSend, onTyping, disabled }: ComposerProps) {
   const { t } = useTranslation()
   const [value, setValue] = useState("")
   const [sending, setSending] = useState(false)
+  const lastTypingSentAt = useRef(0)
 
   const handleSend = async () => {
     const body = value.trim()
@@ -27,11 +33,22 @@ export function Composer({ onSend, disabled }: ComposerProps) {
     }
   }
 
+  const handleChange = (next: string) => {
+    setValue(next)
+    if (next.trim() && onTyping) {
+      const now = Date.now()
+      if (now - lastTypingSentAt.current > TYPING_REFIRE_MS) {
+        lastTypingSentAt.current = now
+        onTyping()
+      }
+    }
+  }
+
   return (
     <div className="flex items-center gap-2 border-t border-border px-4 py-3">
       <input
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => handleChange(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault()

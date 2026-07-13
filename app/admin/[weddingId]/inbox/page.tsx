@@ -102,6 +102,13 @@ export default function InboxPage({ params }: InboxPageProps) {
     [selectedId, loadConversationDetail, loadConversations]
   )
 
+  const handleTyping = useCallback(() => {
+    if (!selectedId) return
+    // Best-effort — Meta's typing indicator is cosmetic, so a failed/slow call
+    // here shouldn't affect the composer.
+    fetch(`/api/messaging/conversations/${selectedId}/typing`, { method: "POST" }).catch(() => {})
+  }, [selectedId])
+
   const selectedConversation = conversations.find((c) => c.id === selectedId) ?? detail?.conversation ?? null
 
   if (messagingEnabled === false) {
@@ -127,7 +134,7 @@ export default function InboxPage({ params }: InboxPageProps) {
       ) : (
         <div className="grid flex-1 grid-cols-[260px_1fr_290px] overflow-hidden">
           <ConversationList conversations={conversations} selectedId={selectedId} onSelect={handleSelect} />
-          <MessageThread conversation={selectedConversation} messages={messages} onSend={handleSend} />
+          <MessageThread conversation={selectedConversation} messages={messages} onSend={handleSend} onTyping={handleTyping} />
           <GuestContextPanel
             weddingId={weddingId}
             contactId={selectedConversation?.contact_id ?? null}
