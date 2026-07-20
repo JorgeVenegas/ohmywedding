@@ -1997,6 +1997,11 @@ export const es: Translations = {
       signIn: 'Inicia sesión',
       signUp: 'Regístrate',
       andCreateWedding: 'y crea una boda',
+      sidePanel: {
+        kicker: 'Bienvenido de Vuelta',
+        title: 'Tu Boda, Siempre al Alcance',
+        subtitle: 'Inicia sesión para seguir planificando tu día perfecto.',
+      },
     },
     createWedding: {
       essentialDetails: 'Detalles Esenciales',

@@ -2001,6 +2001,11 @@ export const en: Translations = {
       signIn: 'Sign in',
       signUp: 'Sign up',
       andCreateWedding: 'create a wedding',
+      sidePanel: {
+        kicker: 'Welcome Back',
+        title: 'Your Wedding, Always Within Reach',
+        subtitle: 'Sign in to keep planning your perfect day.',
+      },
     },
     createWedding: {
       essentialDetails: 'Essential Details',

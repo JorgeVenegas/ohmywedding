@@ -1559,6 +1559,11 @@ export interface Translations {
       signIn: string
       signUp: string
       andCreateWedding: string
+      sidePanel: {
+        kicker: string
+        title: string
+        subtitle: string
+      }
     }
     createWedding: {
       essentialDetails: string
