@@ -1266,9 +1266,9 @@ export const es: Translations = {
       subtitle2: 'única,',
       subtitle3: 'personal, a tu medida',
       subtitle4: 'e inolvidable.',
-      description: 'Diseña una invitación de boda que se sienta como ustedes — y ten visibilidad total de confirmaciones, regalos y tu organizador de bodas en todo momento.',
+      description: 'Diseñamos una invitación de boda que se sienta como ustedes — y te damos visibilidad total de confirmaciones, regalos y tu organizador de bodas en todo momento.',
       rotatingWords: ['personal', 'a tu medida', 'inolvidable', 'única'],
-      cta: 'Diseñar mi Invitación',
+      cta: 'Quiero Mi Invitación',
       secondary: 'Ver Ejemplos',
       scrollToExplore: 'Desliza para Explorar',
       stats: {
@@ -1280,8 +1280,8 @@ export const es: Translations = {
       label: 'Por que OhMyWedding',
       title: 'Una invitación construida',
       subtitle: 'alrededor de tu historia',
-      description1: 'Tu invitación de boda debe sentirse tan personal como su relación. Elige las secciones que más te importan — su historia, el lugar, la cuenta regresiva — y comparte actualizaciones en tiempo real con tu organizador de bodas para que todos estén al tanto.',
-      description2: 'Nada de plantillas genéricas. Solo una invitación elegante y a tu medida, con total transparencia con quienes te ayudan a planear.',
+      description1: 'Tu invitación de boda debe sentirse tan personal como su relación. Cuéntanos su historia, el lugar, su estilo — y nosotros la construimos para ustedes, mientras mantenemos a tu organizador de bodas al tanto en todo momento.',
+      description2: 'Nada de plantillas genéricas. Una invitación elegante y a tu medida, creada para ustedes — con total transparencia con quienes te ayudan a planear.',
       pills: {
         templates: 'Listo en Minutos',
         domain: 'Tu Propio Dominio',
@@ -1289,7 +1289,7 @@ export const es: Translations = {
         customization: 'Personalizable',
       },
       testimonial: {
-        quote: '"Crear nuestro sitio web de boda fue increíblemente fácil. El diseño superó todas nuestras expectativas."',
+        quote: '"El proceso fue increíblemente sencillo. El diseño superó todas nuestras expectativas."',
         author: '— Jorge & Yuli, Casados en marzo de 2026',
       },
     },
@@ -1396,10 +1396,10 @@ export const es: Translations = {
     },
     finalCta: {
       label: 'Empieza Ahora',
-      title: 'Diseña tu invitación',
-      subtitle: 'exactamente a tu manera',
-      description: 'Tu historia de amor es única, tu invitación también. Organiza todo en un solo lugar — con transparencia total para ti y tu organizador.',
-      cta: 'Empezar a Diseñar',
+      title: 'Tu invitación,',
+      subtitle: 'diseñada para ustedes',
+      description: 'Tu historia de amor es única, tu invitación también. Nosotros nos encargamos del diseño — tú te quedas al mando de todo lo demás, con transparencia total para ti y tu organizador.',
+      cta: 'Comenzar',
       note: 'Toma menos de 5 minutos',
     },
     plannerTeaser: {
@@ -1434,9 +1434,9 @@ export const es: Translations = {
       invitationStyle: {
         title: '¿Qué tipo de invitación tienes en mente?',
         options: {
-          simple: { title: 'Simple y lista para enviar', description: 'Una plantilla, sin decisiones de diseño' },
-          unique: { title: 'Única, a tu estilo', description: 'Tus colores, secciones e historia' },
-          custom: { title: 'Totalmente personalizada', description: 'Diseñada desde cero por nuestro equipo' },
+          simple: { title: 'Simple y atemporal', description: 'Limpia y elegante — nosotros nos encargamos del diseño, sin decisiones necesarias' },
+          unique: { title: 'Única, a tu estilo', description: 'La creamos alrededor de tus colores, secciones e historia' },
+          custom: { title: 'Totalmente a medida', description: 'Diseñada desde cero por nuestro equipo, completamente personalizada' },
         },
       },
       managementNeed: {

@@ -32,7 +32,7 @@ function LoginForm() {
 
   const router = useRouter()
   const searchParams = useSearchParams()
-  const rawRedirect = searchParams.get("redirect") || "/"
+  const rawRedirect = searchParams.get("redirect") || "/admin"
   const redirectTo = decodeURIComponent(rawRedirect)
   const errorParam = searchParams.get("error")
   const backHref = resolveLandingBackHref(searchParams.get("from"))

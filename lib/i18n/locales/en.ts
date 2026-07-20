@@ -1270,9 +1270,9 @@ export const en: Translations = {
       subtitle2: 'one of a kind,',
       subtitle3: 'personal, custom',
       subtitle4: 'and unforgettable.',
-      description: 'Design a wedding invitation that feels like you — then keep full visibility into RSVPs, gifts, and your wedding planner every step of the way.',
+      description: 'We design a wedding invitation that feels like you — and give you full visibility into RSVPs, gifts, and your wedding planner every step of the way.',
       rotatingWords: ['personal', 'custom', 'unforgettable', 'one of a kind'],
-      cta: 'Design My Invitation',
+      cta: 'Get My Invitation',
       secondary: 'See Examples',
       scrollToExplore: 'Scroll to Explore',
       stats: {
@@ -1284,8 +1284,8 @@ export const en: Translations = {
       label: 'Why OhMyWedding',
       title: 'An invitation built around',
       subtitle: 'your story',
-      description1: 'Your wedding invitation should feel as personal as your relationship. Choose the sections that matter to you — your story, your venue, your countdown — and share real-time updates with your wedding planner so everyone stays on the same page.',
-      description2: 'No templates that feel generic. Just a custom, elegant invitation and total transparency with the people helping you plan.',
+      description1: 'Your wedding invitation should feel as personal as your relationship. Tell us your story, your venue, your style — and we build it for you, while keeping your wedding planner in the loop every step of the way.',
+      description2: 'No generic templates. A custom, elegant invitation crafted around you — and total transparency with the people helping you plan.',
       pills: {
         templates: 'Ready in Minutes',
         domain: 'Your Own Domain',
@@ -1293,7 +1293,7 @@ export const en: Translations = {
         customization: 'Fully Customizable',
       },
       testimonial: {
-        quote: '"Creating our wedding website was incredibly easy. The design exceeded all our expectations."',
+        quote: '"Getting our wedding website was so easy. The design exceeded all our expectations."',
         author: '— Jorge & Yuli, Married March 2026',
       },
     },
@@ -1400,10 +1400,10 @@ export const en: Translations = {
     },
     finalCta: {
       label: 'Get Started',
-      title: 'Design your invitation',
-      subtitle: 'exactly your way',
-      description: 'Your love story is unique, your invitation should be too. Organize everything in one place — with full transparency for you and your planner.',
-      cta: 'Start Designing',
+      title: 'Your invitation,',
+      subtitle: 'designed just for you',
+      description: 'Your love story is unique, your invitation should be too. We take care of the design — you stay in control of everything else, with full transparency for you and your planner.',
+      cta: 'Get Started',
       note: 'Takes less than 5 minutes',
     },
     plannerTeaser: {
@@ -1438,9 +1438,9 @@ export const en: Translations = {
       invitationStyle: {
         title: 'What kind of invitation are you dreaming of?',
         options: {
-          simple: { title: 'Simple & ready to send', description: 'One template, no design decisions needed' },
-          unique: { title: 'Uniquely yours', description: 'Your colors, sections, and story' },
-          custom: { title: 'Fully custom, made for us', description: 'Designed from scratch by our team' },
+          simple: { title: 'Simple & timeless', description: 'Clean and elegant — we handle the design, no decisions needed' },
+          unique: { title: 'Uniquely yours', description: 'We craft it around your colors, sections, and story' },
+          custom: { title: 'Fully bespoke', description: 'Designed from scratch by our team, completely custom' },
         },
       },
       managementNeed: {

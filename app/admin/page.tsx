@@ -43,9 +43,12 @@ export default function WeddingSelectorPage() {
       .then(res => res.json())
       .then(data => {
         const list = data.weddings || []
-        // Auto-redirect if only one wedding
+        if (list.length === 0) {
+          router.replace('/create-wedding')
+          return
+        }
         if (list.length === 1) {
-          router.replace(`/admin/${list[0].id}/dashboard`)
+          router.replace(`/admin/${list[0].wedding_name_id}/dashboard`)
           return
         }
         setWeddings(list)
