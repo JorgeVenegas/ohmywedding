@@ -1,7 +1,23 @@
 import { createAdminSupabaseClient } from "@/lib/supabase-server"
-import { whatsappAdapter } from "./channels/whatsapp"
+import { whatsappAdapter, getSharedWhatsappAccount } from "./channels/whatsapp"
 import { isMessagingEnabledForWeddingUuid } from "./feature-flag"
 import type { MessageStatus, ParsedWebhookEvent, WebhookEventRow, WhatsappAccount } from "./types"
+
+// Sent to a sender who can't be matched to ANY wedding at all (not a wedding's
+// own connected number, and their phone doesn't match any guest list either) —
+// the whole point is to be understandable regardless of the guest's language,
+// so it's one message, both languages, not locale-detected.
+const UNRECOGNIZED_SENDER_REPLY =
+  "Hi! You've reached OhMyWedding (ohmy.wedding). This number isn't linked to a specific wedding in our system, " +
+  "so we're unable to share any information here. If you're looking for a couple's wedding, please check the " +
+  "invitation link you received or contact them directly.\n\n" +
+  "¡Hola! Escribiste a OhMyWedding (ohmy.wedding). Este número no está vinculado a una boda específica en nuestro " +
+  "sistema, así que no podemos compartir información aquí. Si buscas la boda de una pareja, revisa el enlace de " +
+  "invitación que recibiste o contáctalos directamente."
+
+function normalizePhoneDigits(phone: string): string {
+  return phone.replace(/\D/g, "")
+}
 
 // Higher rank never gets overwritten by a lower one (design doc §3.6) — a late
 // "sent" webhook must not downgrade a message that's already "delivered"/"read",
@@ -36,47 +52,182 @@ async function findAccountByPhoneNumberId(
   return (data as WhatsappAccount | null) ?? null
 }
 
+// Tie-break for a phone number that resolves to more than one wedding: prefer
+// whichever is soonest-upcoming, falling back to the most recently past.
+async function pickWeddingByDate(
+  supabase: ReturnType<typeof createAdminSupabaseClient>,
+  weddingIds: string[]
+): Promise<string> {
+  if (weddingIds.length === 1) return weddingIds[0]
+  const { data } = await supabase.from("weddings").select("id, wedding_date").in("id", weddingIds)
+  const rows = data ?? []
+  const today = new Date().toISOString().slice(0, 10)
+  const upcoming = rows
+    .filter((w) => w.wedding_date >= today)
+    .sort((a, b) => (a.wedding_date < b.wedding_date ? -1 : 1))
+  if (upcoming.length > 0) return upcoming[0].id
+  const past = rows.filter((w) => w.wedding_date < today).sort((a, b) => (a.wedding_date > b.wedding_date ? -1 : 1))
+  return past[0]?.id ?? weddingIds[0]
+}
+
+// Reused when the sender's number has messaged in before, under the shared
+// number (any wedding) — keeps a thread anchored to whichever wedding it was
+// first resolved to, without re-running the guest-phone match every time.
+async function findExistingContactWedding(
+  supabase: ReturnType<typeof createAdminSupabaseClient>,
+  channelId: string,
+  externalAddress: string
+): Promise<string | null> {
+  const { data } = await supabase
+    .from("contacts")
+    .select("wedding_id")
+    .eq("channel_id", channelId)
+    .eq("external_address", externalAddress)
+  const weddingIds = [...new Set((data ?? []).map((c) => c.wedding_id as string))]
+  if (weddingIds.length === 0) return null
+  return pickWeddingByDate(supabase, weddingIds)
+}
+
+// The only way to know which wedding a message to the SHARED number is about:
+// match the sender's phone against every wedding's guest list. No functional
+// index on guests.phone_number today — the ILIKE narrows the scan to a cheap
+// prefilter, then a full digit-normalized comparison confirms the match. Fine
+// at current scale; worth a trigram/functional index if guest volume grows a
+// lot.
+async function findGuestMatchByPhone(
+  supabase: ReturnType<typeof createAdminSupabaseClient>,
+  fromAddress: string
+): Promise<{ weddingId: string; guestId: string } | null> {
+  const senderDigits = normalizePhoneDigits(fromAddress)
+  if (senderDigits.length < 7) return null // too short to safely match
+  const last10 = senderDigits.slice(-10)
+
+  const { data: candidates } = await supabase
+    .from("guests")
+    .select("id, wedding_id, phone_number")
+    .not("phone_number", "is", null)
+    .ilike("phone_number", `%${last10}%`)
+
+  const matches = (candidates ?? []).filter((g) => {
+    const guestDigits = normalizePhoneDigits(g.phone_number ?? "")
+    return guestDigits.length >= 7 && guestDigits.slice(-10) === last10
+  })
+  if (matches.length === 0) return null
+
+  const weddingIds = [...new Set(matches.map((m) => m.wedding_id as string))]
+  const weddingId = await pickWeddingByDate(supabase, weddingIds)
+  const guestId = matches.find((m) => m.wedding_id === weddingId)!.id as string
+  return { weddingId, guestId }
+}
+
+async function replyToUnrecognizedSender(fromAddress: string): Promise<void> {
+  const sharedAccount = getSharedWhatsappAccount()
+  if (!sharedAccount) return // no shared account configured — nothing to reply with
+  await whatsappAdapter.send({ account: sharedAccount, toAddress: fromAddress, body: UNRECOGNIZED_SENDER_REPLY })
+}
+
 async function handleInboundMessage(
   supabase: ReturnType<typeof createAdminSupabaseClient>,
   event: Extract<ParsedWebhookEvent, { kind: "inbound_message" }>,
   webhookEventId: string
 ) {
-  const account = await findAccountByPhoneNumberId(supabase, event.phoneNumberId)
-  if (!account) {
-    // Not one of ours (or not configured yet) — nothing to attach this to.
-    return { ok: false as const, reason: "unknown_phone_number_id" }
-  }
-  if (!(await isMessagingEnabledForWeddingUuid(supabase, account.wedding_id))) {
-    // Wedding has a connected number but isn't on the rollout allowlist —
-    // acknowledge and drop, same as an unrecognized number. The raw payload is
-    // already durable in webhook_events either way (design doc §4.2).
-    return { ok: false as const, reason: "messaging_not_enabled_for_wedding" }
-  }
   const channelId = await getWhatsappChannelId(supabase)
 
-  const { data: contact, error: contactError } = await supabase
+  // A wedding's own connected number resolves directly, same as before this
+  // change. Anything else (the shared platform number, or a truly unrecognized
+  // phone_number_id) falls back to matching the sender's phone against every
+  // wedding's guest list.
+  const customAccount = await findAccountByPhoneNumberId(supabase, event.phoneNumberId)
+
+  let weddingId: string
+  let channelAccountId: string | null
+  let autoLinkGuestId: string | null = null
+
+  if (customAccount) {
+    weddingId = customAccount.wedding_id
+    channelAccountId = customAccount.id
+  } else {
+    const existingWeddingId = await findExistingContactWedding(supabase, channelId, event.fromAddress)
+    if (existingWeddingId) {
+      weddingId = existingWeddingId
+    } else {
+      const guestMatch = await findGuestMatchByPhone(supabase, event.fromAddress)
+      if (!guestMatch) {
+        await replyToUnrecognizedSender(event.fromAddress)
+        return { ok: false as const, reason: "unrecognized_sender" }
+      }
+      weddingId = guestMatch.weddingId
+      autoLinkGuestId = guestMatch.guestId
+    }
+    channelAccountId = null
+  }
+
+  if (!(await isMessagingEnabledForWeddingUuid(supabase, weddingId))) {
+    // Wedding resolved but isn't on the rollout allowlist — acknowledge and
+    // drop, same as before. The raw payload is already durable in
+    // webhook_events either way (design doc §4.2).
+    return { ok: false as const, reason: "messaging_not_enabled_for_wedding" }
+  }
+
+  // Select-then-insert rather than a blind upsert: a returning sender's contact
+  // (and any manual guest link a host already made) must not get its guest_id
+  // silently overwritten by auto-linking on every subsequent message.
+  const { data: existingContact } = await supabase
     .from("contacts")
-    .upsert(
-      {
-        wedding_id: account.wedding_id,
+    .select("id")
+    .eq("wedding_id", weddingId)
+    .eq("channel_id", channelId)
+    .eq("external_address", event.fromAddress)
+    .maybeSingle()
+
+  let contactId: string
+  if (existingContact) {
+    contactId = existingContact.id
+    // Still keep the display name fresh, same as the old blind upsert did.
+    await supabase.from("contacts").update({ display_name: event.profileName ?? null }).eq("id", contactId)
+  } else {
+    const { data: newContact, error: insertError } = await supabase
+      .from("contacts")
+      .insert({
+        wedding_id: weddingId,
         channel_id: channelId,
         external_address: event.fromAddress,
         display_name: event.profileName ?? null,
-      },
-      { onConflict: "wedding_id,channel_id,external_address", ignoreDuplicates: false }
-    )
-    .select("id")
-    .single()
-  if (contactError || !contact) throw contactError ?? new Error("contact upsert failed")
+        guest_id: autoLinkGuestId,
+      })
+      .select("id")
+      .single()
+
+    if (insertError) {
+      // Unique violation = lost a race with a concurrent insert for the same
+      // contact (two webhook deliveries for a brand-new sender processed at
+      // once) — use the row the other one created instead of failing.
+      if (insertError.code === "23505") {
+        const { data: raceWinner } = await supabase
+          .from("contacts")
+          .select("id")
+          .eq("wedding_id", weddingId)
+          .eq("channel_id", channelId)
+          .eq("external_address", event.fromAddress)
+          .single()
+        if (!raceWinner) throw insertError
+        contactId = raceWinner.id
+      } else {
+        throw insertError
+      }
+    } else {
+      contactId = newContact!.id
+    }
+  }
 
   const { data: conversation, error: conversationError } = await supabase
     .from("conversations")
     .upsert(
       {
-        wedding_id: account.wedding_id,
-        contact_id: contact.id,
+        wedding_id: weddingId,
+        contact_id: contactId,
         channel_id: channelId,
-        channel_account_id: account.id,
+        channel_account_id: channelAccountId,
       },
       { onConflict: "wedding_id,contact_id,channel_id", ignoreDuplicates: false }
     )
@@ -91,7 +242,7 @@ async function handleInboundMessage(
     .upsert(
       {
         conversation_id: conversation.id,
-        wedding_id: account.wedding_id,
+        wedding_id: weddingId,
         direction: "inbound",
         sender_type: "guest",
         body: event.body ?? null,

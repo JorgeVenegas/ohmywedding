@@ -7,9 +7,10 @@ import { X } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useTranslation } from '@/components/contexts/i18n-context'
 import { LanguageSwitcher } from '@/components/ui/language-switcher'
+import type { LandingSource } from '@/lib/landing-source'
 import { AuthButtons, type UserWedding } from './auth-buttons'
 
-export function LuxuryHeader() {
+export function LuxuryHeader({ source }: { source?: LandingSource } = {}) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const [isScrolled, setIsScrolled] = useState(false)
@@ -119,7 +120,7 @@ export function LuxuryHeader() {
 
             <div className="hidden md:flex items-center gap-2 lg:gap-4">
               <LanguageSwitcher variant="pill" />
-              <AuthButtons userWeddings={userWeddings} weddingsLoading={weddingsLoading} />
+              <AuthButtons source={source} userWeddings={userWeddings} weddingsLoading={weddingsLoading} />
             </div>
 
             <button
@@ -197,7 +198,7 @@ export function LuxuryHeader() {
             <div className="flex items-center justify-center">
               <LanguageSwitcher variant="pill" />
             </div>
-            <AuthButtons isMobile userWeddings={userWeddings} weddingsLoading={weddingsLoading} />
+            <AuthButtons isMobile source={source} userWeddings={userWeddings} weddingsLoading={weddingsLoading} />
           </div>
         </div>
       </div>

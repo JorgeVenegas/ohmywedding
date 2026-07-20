@@ -36,6 +36,7 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
   const [isReady, setIsReady] = useState<boolean | null>(null)
   const [readyStatusManagedBy, setReadyStatusManagedBy] = useState<'owner' | 'all'>('owner')
   const [savingReadyStatus, setSavingReadyStatus] = useState(false)
+  const [guestCount, setGuestCount] = useState<number | null>(null)
   const [messagingEnabled, setMessagingEnabled] = useState(false)
 
   // Restricted-rollout gate for the Inbox card — see lib/messaging/feature-flag.ts
@@ -110,6 +111,13 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
           const p2 = data.partner2_first_name
           setCoupleNames(p2 ? `${p1} & ${p2}` : p1)
         }
+
+        // Guest count gates the not-ready banner — only worth surfacing once there's a real guest list
+        const { count } = await supabase
+          .from('guests')
+          .select('*', { count: 'exact', head: true })
+          .eq('wedding_id', data.id)
+        setGuestCount(count ?? 0)
       } else {
         // Wedding not found — default to showing create card
         setHasWebsite(false)
@@ -240,49 +248,16 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
 
       {/* Main Content */}
       <div className="page-container">
-        {/* Not-Ready Banner */}
-        {isReady === false && (
-          <div className="mb-6 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 p-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-              <CircleX className="h-5 w-5 text-amber-600 dark:text-amber-500 flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-amber-900 dark:text-amber-100">Wedding not ready</p>
-                <p className="text-sm text-amber-700 dark:text-amber-200">
-                  Activity tracking is paused. Invitation views and RSVPs won't be recorded until you mark it as Ready.
-                </p>
-              </div>
-            </div>
-            {(weddingPerms.isOwner || readyStatusManagedBy === 'all') && (
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-xs text-amber-700 dark:text-amber-300 font-medium">Mark Ready</span>
-                <Switch
-                  checked={false}
-                  disabled={savingReadyStatus}
-                  onCheckedChange={async () => {
-                    setSavingReadyStatus(true)
-                    try {
-                      const res = await fetch(`/api/weddings/${weddingId}/ready-status`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ is_ready: true }),
-                      })
-                      if (res.ok) setIsReady(true)
-                    } finally {
-                      setSavingReadyStatus(false)
-                    }
-                  }}
-                />
-              </div>
-            )}
-            {weddingPerms.isOwner && (
-              <Link
-                href={getCleanAdminUrl(weddingId, 'settings')}
-                className="text-xs text-amber-700 dark:text-amber-300 underline underline-offset-2 flex-shrink-0"
-              >
-                Settings
-              </Link>
-            )}
-          </div>
+        {/* Not-Ready notice — compact link, full alert lives in the Activity Tracking section below */}
+        {isReady === false && guestCount !== null && guestCount >= 10 && (
+          <a
+            href="#activity-tracking"
+            className="mb-6 flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300 hover:underline w-fit"
+          >
+            <CircleX className="h-4 w-4 flex-shrink-0" />
+            <span className="font-medium">{t('admin.dashboard.notReadyBanner.title')}</span>
+            <span className="text-amber-700/70 dark:text-amber-300/70">— {t('admin.dashboard.notReadyBanner.viewInActivityTracking')}</span>
+          </a>
         )}
 
         {/* Welcome Section */}
@@ -378,8 +353,53 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
         </div>
 
         {/* Activity & Stats Section */}
-        {(dashboardSections.invitationOpens !== false || dashboardSections.recentActivity !== false || dashboardSections.payments !== false) && (
-          <div className="mt-12 grid md:grid-cols-2 xl:grid-cols-3 gap-6 items-stretch">
+        <div id="activity-tracking" className="mt-12 scroll-mt-6">
+          {isReady === false && guestCount !== null && guestCount >= 10 && (
+            <div className="mb-6 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 p-4 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <CircleX className="h-5 w-5 text-amber-600 dark:text-amber-500 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-amber-900 dark:text-amber-100">{t('admin.dashboard.notReadyBanner.title')}</p>
+                  <p className="text-sm text-amber-700 dark:text-amber-200">
+                    {t('admin.dashboard.notReadyBanner.description')}
+                  </p>
+                </div>
+              </div>
+              {(weddingPerms.isOwner || readyStatusManagedBy === 'all') && (
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-xs text-amber-700 dark:text-amber-300 font-medium">{t('admin.dashboard.notReadyBanner.markReady')}</span>
+                  <Switch
+                    checked={false}
+                    disabled={savingReadyStatus}
+                    onCheckedChange={async () => {
+                      setSavingReadyStatus(true)
+                      try {
+                        const res = await fetch(`/api/weddings/${weddingId}/ready-status`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ is_ready: true }),
+                        })
+                        if (res.ok) setIsReady(true)
+                      } finally {
+                        setSavingReadyStatus(false)
+                      }
+                    }}
+                  />
+                </div>
+              )}
+              {weddingPerms.isOwner && (
+                <Link
+                  href={getCleanAdminUrl(weddingId, 'settings')}
+                  className="text-xs text-amber-700 dark:text-amber-300 underline underline-offset-2 flex-shrink-0"
+                >
+                  {t('admin.dashboard.notReadyBanner.settings')}
+                </Link>
+              )}
+            </div>
+          )}
+
+          {(dashboardSections.invitationOpens !== false || dashboardSections.recentActivity !== false || dashboardSections.payments !== false) && (
+          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6 items-stretch">
             {dashboardSections.invitationOpens !== false && (
               <div className="h-full">
                 <InvitationStatsCard weddingId={decodedWeddingId} />
@@ -402,7 +422,8 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
               </div>
             )}
           </div>
-        )}
+          )}
+        </div>
 
         {dashboardSections.timeline !== false && (
           <div className="mt-6">

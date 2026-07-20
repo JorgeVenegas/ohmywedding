@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createAdminSupabaseClient, createServerSupabaseClient } from "@/lib/supabase-server"
-import { whatsappAdapter } from "@/lib/messaging/channels/whatsapp"
+import { whatsappAdapter, getSharedWhatsappAccount } from "@/lib/messaging/channels/whatsapp"
 import { isMessagingEnabledForWeddingUuid } from "@/lib/messaging/feature-flag"
-import type { WhatsappAccount } from "@/lib/messaging/types"
+import type { WhatsappAccount, WhatsappSendableAccount } from "@/lib/messaging/types"
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -82,7 +82,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to create message" }, { status: 500 })
     }
 
-    let account: WhatsappAccount | null = null
+    // Prefer the wedding's own connected number if it has one; otherwise fall
+    // back to the shared platform account (env vars) that covers everyone else.
+    let account: WhatsappSendableAccount | null = null
     if (conversation.channel_account_id) {
       const { data } = await admin
         .from("whatsapp_accounts")
@@ -90,6 +92,9 @@ export async function POST(request: NextRequest) {
         .eq("id", conversation.channel_account_id)
         .maybeSingle()
       account = (data as WhatsappAccount | null) ?? null
+    }
+    if (!account) {
+      account = getSharedWhatsappAccount()
     }
 
     const result = account

@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/tooltip'
 
 export function PlanIndicator() {
-  const { planType, loading } = useSubscriptionContext()
+  const { planType, loading, weddingId } = useSubscriptionContext()
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const pathname = usePathname()
 
@@ -127,6 +127,7 @@ export function PlanIndicator() {
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         reason="plan_indicator"
+        weddingId={weddingId ?? undefined}
       />
     </>
   )

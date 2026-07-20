@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Header } from "@/components/header"
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
 import { useTranslation } from "@/components/contexts/i18n-context"
+import { resolveLandingBackHref } from "@/lib/landing-source"
 
 function LoginForm() {
   const [email, setEmail] = useState("")
@@ -20,13 +21,14 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const { t } = useTranslation()
-  
+
   const router = useRouter()
   const searchParams = useSearchParams()
   const rawRedirect = searchParams.get("redirect") || "/"
   // Decode the redirect URL - could be a full URL (from subdomain) or a path (from main domain)
   const redirectTo = decodeURIComponent(rawRedirect)
   const errorParam = searchParams.get("error")
+  const backHref = resolveLandingBackHref(searchParams.get("from"))
   
   // Check if redirectTo is a full URL or just a path
   const isFullUrl = redirectTo.startsWith('http://') || redirectTo.startsWith('https://')
@@ -138,7 +140,7 @@ function LoginForm() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-background to-muted flex flex-col">
       {/* Header */}
-      <Header showBackButton backHref="/" hideLogoText={false} rightContent={<LanguageSwitcher variant="buttons" />} />
+      <Header showBackButton backHref={backHref} hideLogoText={false} rightContent={<LanguageSwitcher variant="buttons" />} />
 
       {/* Login Form */}
       <div className="flex-1 flex items-center justify-center px-4 py-12">

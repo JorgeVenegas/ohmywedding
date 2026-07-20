@@ -49,6 +49,10 @@ export interface ContextGroup {
   name: string | null
   extra_passes: number
   extra_passes_confirmed: number
+  invitation_sent: boolean
+  invitation_sent_at: string | null
+  first_opened_at: string | null
+  open_count: number
 }
 
 export interface GroupMember {

@@ -777,6 +777,7 @@ export const es: Translations = {
     siteLanguage: 'Idioma del Sitio',
     selectLanguage: 'Seleccionar Idioma',
     weddingDetails: 'Detalles de la Boda',
+    designLockedNotice: 'Los cambios de diseño los hace nuestro equipo — contáctanos para solicitar actualizaciones',
     theme: 'Tema',
     sharing: 'Compartir',
     addSection: 'Agregar Sección',
@@ -1061,6 +1062,8 @@ export const es: Translations = {
       title: 'Un solo pago,',
       subtitle: 'sin sorpresas',
       description: 'Elige el plan que se adapte a tu boda. Pago unico, sin suscripciones.',
+      invitationGroup: 'Invitación',
+      managementGroup: 'Gestión',
       comparePlans: 'Comparar Planes',
       features: 'Características',
       free: 'Lovers',
@@ -1246,6 +1249,442 @@ export const es: Translations = {
       termsOfService: 'Términos de Servicio',
       madeWith: 'Hecho con',
       privacyDescription: 'Valoramos tu privacidad. Tus datos están encriptados y nunca se comparten con terceros.',
+    },
+  },
+
+  // Página de aterrizaje para parejas (/couples) — invitaciones personalizadas + transparencia con el organizador
+  landingCouples: {
+    hero: {
+      title: 'Invitaciones tan únicas como tu historia',
+      taglines: [
+        { text: 'Cada detalle cuenta.', highlight: 'La invitación también.' },
+        { text: 'La historia de su boda', highlight: 'comienza aquí.' },
+        { text: 'Mucho más que', highlight: 'una invitación.' },
+        { text: 'El primer recuerdo de una', highlight: 'boda inolvidable.' },
+      ],
+      subtitle: 'Tu invitación es',
+      subtitle2: 'única,',
+      subtitle3: 'personal, a tu medida',
+      subtitle4: 'e inolvidable.',
+      description: 'Diseña una invitación de boda que se sienta como ustedes — y ten visibilidad total de confirmaciones, regalos y tu organizador de bodas en todo momento.',
+      rotatingWords: ['personal', 'a tu medida', 'inolvidable', 'única'],
+      cta: 'Diseñar mi Invitación',
+      secondary: 'Ver Ejemplos',
+      scrollToExplore: 'Desliza para Explorar',
+      stats: {
+        couples: 'Parejas Felices',
+        rating: 'Calificacion',
+      },
+    },
+    about: {
+      label: 'Por que OhMyWedding',
+      title: 'Una invitación construida',
+      subtitle: 'alrededor de tu historia',
+      description1: 'Tu invitación de boda debe sentirse tan personal como su relación. Elige las secciones que más te importan — su historia, el lugar, la cuenta regresiva — y comparte actualizaciones en tiempo real con tu organizador de bodas para que todos estén al tanto.',
+      description2: 'Nada de plantillas genéricas. Solo una invitación elegante y a tu medida, con total transparencia con quienes te ayudan a planear.',
+      pills: {
+        templates: 'Listo en Minutos',
+        domain: 'Tu Propio Dominio',
+        notifications: 'Todo Centralizado',
+        customization: 'Personalizable',
+      },
+      testimonial: {
+        quote: '"Crear nuestro sitio web de boda fue increíblemente fácil. El diseño superó todas nuestras expectativas."',
+        author: '— Jorge & Yuli, Casados en marzo de 2026',
+      },
+    },
+    features: {
+      label: 'Funcionalidades',
+      title: 'Una invitación de boda,',
+      subtitle: 'hecha completamente a tu manera',
+      description: 'Cada detalle de tu invitación, personalizado y organizado — con tu organizador de bodas siempre al tanto.',
+      items: {
+        invitationTracking: {
+          title: 'Seguimiento de Invitaciones',
+          description: 'Sabe exactamente quién abrió tu invitación con seguimiento en tiempo real y analíticas detalladas.',
+        },
+        rsvpDashboard: {
+          title: 'Panel de Confirmaciones',
+          description: 'Administra las respuestas de invitados, preferencias de comida y disposición de mesas en un solo lugar.',
+        },
+        subdomain: {
+          title: 'Tu Propio Subdominio',
+          description: 'Obtén una dirección web personalizada que refleje la identidad única de tu boda.',
+        },
+        messageTemplates: {
+          title: 'Plantillas de Mensajes',
+          description: 'Plantillas curadas para invitaciones, agradecimientos y más.',
+        },
+        notifications: {
+          title: 'Notificaciones Inteligentes',
+          description: 'Mantente al día con alertas de actividad e informes semanales sobre tu página de boda.',
+        },
+        luxuryExperience: {
+          title: 'Compartido con tu Organizador',
+          description: 'Dale a tu organizador de bodas acceso en tiempo real a la lista de invitados, confirmaciones y actividad — transparencia total, sin idas y vueltas.',
+        },
+      },
+    },
+    experience: {
+      label: 'Tu Invitación',
+      title: 'Cada seccion',
+      subtitle: 'pensada para ti',
+      sections: {
+        hero: {
+          title: 'Portada',
+          subtitle: 'Primeras Impresiones',
+          description: 'Una bienvenida impresionante que establece el tono de toda tu celebración.',
+        },
+        countdown: {
+          title: 'Cuenta Regresiva',
+          subtitle: 'La Anticipación',
+          description: 'Genera emoción con una elegante cuenta regresiva para tu día especial.',
+        },
+        ourStory: {
+          title: 'Nuestra Historia',
+          subtitle: 'Tu Camino',
+          description: 'Comparte cómo comenzó tu historia de amor y los momentos que los llevaron a la eternidad.',
+        },
+        eventDetails: {
+          title: 'Detalles del Evento',
+          subtitle: 'El Lugar',
+          description: 'Todos los detalles importantes que tus invitados necesitan, presentados de forma hermosa.',
+        },
+        rsvp: {
+          title: 'Confirmación',
+          subtitle: 'La Respuesta',
+          description: 'Recolección elegante de respuestas con preferencias de comida y solicitudes especiales.',
+        },
+        gallery: {
+          title: 'Galería',
+          subtitle: 'Tus Momentos',
+          description: 'Muestra tus fotos más preciadas en una galería hermosa y curada.',
+        },
+      },
+    },
+    goldenBanner: {
+      quote: 'Tu invitación es única, tu planeación también',
+    },
+    templates: {
+      label: 'Plantillas',
+      title: 'Un diseño único',
+      subtitle: 'para cada pareja',
+      previewTemplate: 'Vista Previa',
+      viewAll: 'Ver Todas las Plantillas',
+    },
+    testimonials: {
+      label: 'Testimonios',
+      title: 'Amado por Parejas',
+      subtitle: 'de Todo el Mundo',
+      items: [
+        {
+          quote: 'El seguimiento de confirmaciones nos ahorró horas de trabajo, y nuestro organizador de bodas también podía ver todo en tiempo real — transparencia total desde el primer día.',
+          author: 'Juliana & Oscar',
+          role: 'Casados en febrero de 2026',
+        },
+        {
+          quote: 'Nuestros invitados quedaron encantados con lo hermoso y facil de usar que era el sitio web. Combino perfectamente con el estilo de nuestra boda.',
+          author: 'America & Alan',
+          role: 'Casados en abril de 2026',
+        },
+        {
+          quote: 'La mejor inversion para nuestra boda. El seguimiento de invitaciones y el panel de confirmaciones hicieron la planificacion mucho mas sencilla.',
+          author: 'Jorge & Yuli',
+          role: 'Casados en marzo de 2026',
+        },
+      ],
+    },
+    finalCta: {
+      label: 'Empieza Ahora',
+      title: 'Diseña tu invitación',
+      subtitle: 'exactamente a tu manera',
+      description: 'Tu historia de amor es única, tu invitación también. Organiza todo en un solo lugar — con transparencia total para ti y tu organizador.',
+      cta: 'Empezar a Diseñar',
+      note: 'Toma menos de 5 minutos',
+    },
+    plannerTeaser: {
+      label: 'Para Tu Organizador',
+      title: '¿Trabajas con un',
+      subtitle: 'organizador de bodas?',
+      description: 'Puede co-administrar todo contigo — desde la lista de invitados hasta la logística del día — en el mismo panel que usas tú.',
+      items: [
+        { title: 'Panel compartido', description: 'Invita a tu organizador a ver y gestionar todo junto a ti.' },
+        { title: 'Acceso como colaborador', description: 'Dale exactamente los permisos que necesita, ni más ni menos.' },
+        { title: 'Transparencia total', description: 'Obtiene las mismas herramientas que usan los organizadores profesionales.' },
+        { title: 'Soporte prioritario', description: 'Una línea dedicada para organizadores que gestionan bodas en nuestra plataforma.' },
+      ],
+      cta: 'Ver herramientas para organizadores',
+    },
+    pricingQuiz: {
+      skip: 'Omitir — mostrar todos los planes',
+      takeQuiz: 'Responder el cuestionario',
+      retake: 'Volver a responder',
+      processing: 'Buscando tu plan perfecto...',
+      progressHint: 'Responde algunas preguntas para encontrar tu plan perfecto',
+      stepOf: 'Paso {{current}} de {{total}}',
+      selectCta: 'Seleccionar',
+      guestCount: {
+        title: '¿Cuántos invitados esperas?',
+        options: {
+          under100: { title: 'Menos de 100', description: 'Una celebración íntima' },
+          '100to250': { title: '100–250', description: 'Una celebración mediana' },
+          over250: { title: '250+', description: 'Una celebración grande' },
+        },
+      },
+      invitationStyle: {
+        title: '¿Qué tipo de invitación tienes en mente?',
+        options: {
+          simple: { title: 'Simple y lista para enviar', description: 'Una plantilla, sin decisiones de diseño' },
+          unique: { title: 'Única, a tu estilo', description: 'Tus colores, secciones e historia' },
+          custom: { title: 'Totalmente personalizada', description: 'Diseñada desde cero por nuestro equipo' },
+        },
+      },
+      managementNeed: {
+        title: '¿Qué tan involucrados quieren estar en la gestión de invitados?',
+        options: {
+          essentials: { title: 'Solo lo esencial', description: 'Lista de invitados y confirmaciones' },
+          fullToolkit: { title: 'El kit completo', description: 'Mesas, mesa de regalos, reportes y más' },
+          hasPlanner: { title: 'Tenemos un organizador de bodas', description: 'Queremos colaborar juntos' },
+        },
+      },
+      result: {
+        eyebrow: 'Según tus respuestas',
+        heading: 'Tu plan recomendado',
+        bundleLabel: 'Invitación + Gestión',
+        bundleBadge: '50% de descuento en Gestión',
+        bundleTotalNote: 'pago único · ambos planes incluidos',
+        bundleCta: 'Empezar',
+        bundleFlowNote: 'Se completa en dos pasos rápidos — paga tu invitación y luego añade la gestión.',
+        invitationAxisLabel: 'invitación',
+        managementAxisLabel: 'gestión de invitados',
+        discountNote: '50% de descuento en gestión, incluido con tu invitación',
+        invitationOnlyLabel: '¿Solo quieres la invitación?',
+        plannerNudge: '¿Trabajas con un organizador de bodas? Puede co-administrar todo contigo.',
+        plannerNudgeCta: 'Ver herramientas para organizadores',
+      },
+    },
+  },
+
+  // Página de aterrizaje para organizadores de bodas (/planners) — gestión operativa + transparencia con las parejas
+  landingPlanners: {
+    hero: {
+      title: 'Gestión de Bodas, Simplificada',
+      taglines: [
+        { text: 'Cada boda,', highlight: 'perfectamente coordinada.' },
+        { text: 'Menos seguimiento.', highlight: 'Más planificación.' },
+        { text: 'Más bodas.', highlight: 'Menos caos.' },
+        { text: 'La plataforma detrás de', highlight: 'bodas extraordinarias.' },
+      ],
+      subtitle: 'Cada boda que organizas',
+      subtitle2: 'ordenada,',
+      subtitle3: 'cada pareja',
+      subtitle4: 'totalmente informada.',
+      description: 'Administra cada boda desde un solo panel — invitados, confirmaciones, itinerarios y regalos — mientras mantienes a tus parejas siempre al tanto.',
+      rotatingWords: ['ordenado', 'sin esfuerzo', 'transparente', 'bajo control'],
+      cta: 'Empezar a Gestionar',
+      secondary: 'Ver Ejemplos',
+      scrollToExplore: 'Desliza para Explorar',
+      stats: {
+        couples: 'Bodas Gestionadas',
+        rating: 'Calificacion',
+      },
+    },
+    about: {
+      label: 'Por que los Organizadores nos Eligen',
+      title: 'Todo lo que necesitas para gestionar',
+      subtitle: 'cada boda',
+      description1: 'Organizar varias bodas a la vez significa manejar listas de invitados, confirmaciones, proveedores e itinerarios de cada cliente. OhMyWedding te da un solo panel para administrarlo todo — con un sitio web hermoso y con su propia marca para cada pareja con la que trabajas.',
+      description2: 'Menos hojas de cálculo, menos idas y vueltas, más tiempo para enfocarte en la boda en sí.',
+      pills: {
+        templates: 'Listo en Minutos',
+        domain: 'Subdominios por Cliente',
+        notifications: 'Todo Centralizado',
+        customization: 'Personalizable',
+      },
+      testimonial: {
+        quote: '"Gestionar tres bodas a la vez solía significar tres hojas de cálculo distintas. Ahora es un solo panel — y a mis parejas les encanta la transparencia."',
+        author: '— Studio Bloom Events',
+      },
+    },
+    features: {
+      label: 'Funcionalidades',
+      title: 'Gestiona cada boda,',
+      subtitle: 'sin el caos',
+      description: 'Herramientas operativas poderosas, pensadas para organizadores que manejan varias bodas a la vez.',
+      items: {
+        invitationTracking: {
+          title: 'Seguimiento de Actividad de Invitados',
+          description: 'Ve exactamente quién abrió las invitaciones e interactuó con cada sitio de boda, de todos tus clientes, en tiempo real.',
+        },
+        rsvpDashboard: {
+          title: 'Panel de Confirmaciones',
+          description: 'Administra respuestas, preferencias de comida y acomodo de mesas de cada boda que gestionas — todo en un solo lugar.',
+        },
+        subdomain: {
+          title: 'Sitios con Marca del Cliente',
+          description: 'Dale a cada pareja su propio subdominio personalizado, con un estilo acorde a su boda.',
+        },
+        messageTemplates: {
+          title: 'Plantillas de Mensajes',
+          description: 'Plantillas curadas y reutilizables para invitaciones, actualizaciones y agradecimientos en todos tus clientes.',
+        },
+        notifications: {
+          title: 'Reportes de Actividad',
+          description: 'Reportes diarios y semanales de la actividad de invitados en cada boda, para que nada se te escape.',
+        },
+        luxuryExperience: {
+          title: 'Transparencia con el Cliente',
+          description: 'Dale a tus parejas visibilidad en tiempo real del avance de su propia boda — sin más llamadas de seguimiento.',
+        },
+      },
+    },
+    experience: {
+      label: 'Sitios de tus Clientes',
+      title: 'Cada seccion',
+      subtitle: 'que puedes construir',
+      sections: {
+        hero: {
+          title: 'Portada',
+          subtitle: 'Primeras Impresiones',
+          description: 'Una bienvenida impresionante que marca el tono de la celebración de cada pareja.',
+        },
+        countdown: {
+          title: 'Cuenta Regresiva',
+          subtitle: 'La Anticipación',
+          description: 'Genera emoción con una elegante cuenta regresiva para el gran día.',
+        },
+        ourStory: {
+          title: 'Nuestra Historia',
+          subtitle: 'Su Camino',
+          description: 'Ayuda a cada pareja a compartir cómo comenzó su historia de amor.',
+        },
+        eventDetails: {
+          title: 'Detalles del Evento',
+          subtitle: 'El Lugar',
+          description: 'Todos los detalles importantes que los invitados necesitan, presentados de forma hermosa.',
+        },
+        rsvp: {
+          title: 'Confirmación',
+          subtitle: 'La Respuesta',
+          description: 'Recolección elegante de respuestas con preferencias de comida y solicitudes especiales.',
+        },
+        gallery: {
+          title: 'Galería',
+          subtitle: 'Sus Momentos',
+          description: 'Muestra las fotos más preciadas de cada pareja en una galería hermosa y curada.',
+        },
+      },
+    },
+    goldenBanner: {
+      quote: 'Cada boda es única, tu forma de trabajar debería ser sencilla',
+    },
+    templates: {
+      label: 'Plantillas',
+      title: 'Un diseño a la medida',
+      subtitle: 'para cada cliente',
+      previewTemplate: 'Vista Previa',
+      viewAll: 'Ver Todas las Plantillas',
+    },
+    testimonials: {
+      label: 'Testimonios',
+      title: 'Confiado por Organizadores',
+      subtitle: 'de Bodas en Todo el Mundo',
+      items: [
+        {
+          quote: 'Ahora gestiono seis bodas a la vez sin perder la cabeza. Cada pareja tiene su propio panel, y yo tengo una sola vista de todo.',
+          author: 'Studio Bloom Events',
+          role: 'Estudio de Organización de Bodas',
+        },
+        {
+          quote: 'A mis clientes les encanta poder revisar confirmaciones y actividad de invitados ellos mismos. Redujo a la mitad nuestras llamadas de seguimiento.',
+          author: 'Casa Elegante Planning',
+          role: 'Organizador de Bodas Integral',
+        },
+        {
+          quote: 'Los subdominios con marca de cada cliente nos hacen ver increíblemente profesionales. Ahora es parte de nuestro pitch para nuevas parejas.',
+          author: 'Marisol Events Co.',
+          role: 'Organizadora de Bodas y Eventos',
+        },
+      ],
+    },
+    finalCta: {
+      label: 'Empieza Ahora',
+      title: 'Gestiona cada boda',
+      subtitle: 'desde un solo lugar',
+      description: 'Reúne cada cliente, cada lista de invitados y cada confirmación en un solo panel — con transparencia total para las parejas a las que sirves.',
+      cta: 'Empezar a Gestionar',
+      note: 'Toma menos de 5 minutos',
+    },
+    coupleTeaser: {
+      label: 'Para Tu Pareja',
+      title: 'Cada boda que gestionas',
+      subtitle: 'recibe una invitación hermosa',
+      description: 'Cada pareja que gestionas recibe una invitación digital personalizada — diseñada a su historia, no una plantilla genérica.',
+      items: [
+        { title: 'Diseño personalizado', description: 'Colores, tipografías y secciones a la medida de cada pareja.' },
+        { title: 'Opción totalmente a medida', description: 'Nuestro equipo de diseño puede crear invitaciones completamente personalizadas para tus mejores clientes.' },
+        { title: 'Saludos personalizados por invitado', description: 'Cada invitado ve una invitación dirigida a él.' },
+        { title: 'Galerías de fotos ilimitadas', description: 'Deja que cada pareja muestre su historia por completo.' },
+      ],
+      cta: 'Ver diseños de invitaciones',
+    },
+    pricingQuiz: {
+      skip: 'Omitir — mostrar todos los planes',
+      takeQuiz: 'Responder el cuestionario',
+      retake: 'Volver a responder',
+      processing: 'Preparando tu recomendación...',
+      progressHint: 'Responde algunas preguntas para encontrar el plan ideal para tu estudio',
+      stepOf: 'Paso {{current}} de {{total}}',
+      selectCta: 'Seleccionar',
+      billingMode: {
+        title: '¿Estás planeando para una sola boda, o esto es continuo para tu negocio?',
+        options: {
+          single: { title: 'Una sola boda', description: 'Lo necesito para una pareja en este momento' },
+          ongoing: { title: 'Continuo, varias bodas al año', description: 'Gestiono bodas como mi negocio' },
+        },
+      },
+      volume: {
+        title: '¿Aproximadamente cuántas bodas gestionas al año?',
+        options: {
+          low: { title: '1–5', description: 'Una práctica boutique' },
+          mid: { title: '6–15', description: 'Un estudio en crecimiento' },
+          high: { title: '16+', description: 'Una agencia a gran escala' },
+        },
+      },
+      priority: {
+        title: '¿Qué es lo más importante para ti en el día a día?',
+        options: {
+          branding: { title: 'Transparencia con el cliente y marca propia', description: 'Marca blanca en todo para mis clientes' },
+          dashboard: { title: 'Gestionar todo desde un solo lugar', description: 'Un panel único para cada boda' },
+          support: { title: 'Soporte prioritario para mi equipo', description: 'Ayuda rápida cuando la necesito' },
+        },
+      },
+      result: {
+        eyebrow: 'Según tus respuestas',
+        heading: 'Tu plan recomendado',
+        recommendedBadge: 'Recomendado para ti',
+        subscriptionBadge: 'Suscripción',
+        subscriptionTagline: 'Diseñado para organizadores que gestionan bodas todo el año',
+        subscriptionDescription: 'Un solo plan para cada boda que gestionas — con un precio a la medida de tu estudio, no por evento.',
+        subscriptionPrice: 'Precio a medida',
+        subscriptionEmailSubject: 'Interesado en Agency Unlimited — Suscripción para Organizadores de Bodas',
+        talkToUsCta: 'Hablemos',
+      },
+    },
+  },
+
+  // Página de selección de audiencia en "/"
+  audienceChooser: {
+    kicker: 'OhMyWedding',
+    title: 'Soy...',
+    cta: 'Entrar',
+    couple: {
+      label: 'Una Pareja',
+      sublabel: 'Planeando nuestra boda',
+    },
+    planner: {
+      label: 'Organizador de Bodas',
+      sublabel: 'Gestiono bodas para clientes',
     },
   },
 
@@ -1615,6 +2054,11 @@ export const es: Translations = {
       checkEmailTitle: '¡Boda Creada!',
       checkEmailDesc: 'Enviamos un enlace de acceso a {email}. Haz clic en él para ir directamente al panel de tu boda.',
       checkSpam: '¿No lo ves? Revisa tu carpeta de spam o correo no deseado.',
+      sidePanel: {
+        kicker: 'OhMyWedding',
+        title: 'Tu Historia de Amor, Bellamente Contada',
+        subtitle: 'Crea un sitio web de boda que tus invitados amarán, en solo minutos.',
+      },
     },
   },
 
@@ -1646,6 +2090,47 @@ export const es: Translations = {
         recentActivity: { title: 'Actividad Reciente', description: 'Feed en tiempo real de interacciones de invitados y eventos de RSVP' },
         payments: { title: 'Pagos Recientes', description: 'Seguimiento de pagos de regalos de mesa de regalos completados' },
         timeline: { title: 'Cronograma', description: 'Planifica y da seguimiento a los hitos y fechas clave de la boda' },
+      },
+      onboarding: {
+        skipTour: 'Saltar tour',
+        back: 'Atrás',
+        next: 'Siguiente',
+        getStarted: 'Comenzar',
+        close: 'Cerrar',
+        demoVideoComingSoon: 'Video de demostración próximamente',
+        steps: {
+          welcome: {
+            title: '¡Bienvenido a OhMyWedding!',
+            description: 'Hagamos un recorrido rápido. Todo lo que necesitas para planear y celebrar tu día perfecto — en un solo lugar hermoso.',
+          },
+          website: {
+            title: 'Sitio Web de Boda',
+            description: 'Crea un sitio web de boda personalizado y espectacular con temas, colores y secciones a tu medida. Comparte tu historia de amor con cada invitado.',
+          },
+          invitations: {
+            title: 'Invitaciones e Invitados',
+            description: 'Envía hermosas invitaciones digitales, administra tu lista de invitados, da seguimiento a confirmaciones y organiza grupos — todo sin esfuerzo.',
+          },
+          seating: {
+            title: 'Diseño de Mesas',
+            description: 'Diseña tu plano y organiza las mesas con nuestro editor de arrastrar y soltar. Asigna invitados con un clic.',
+          },
+          registry: {
+            title: 'Mesa de Regalos',
+            description: 'Crea mesas de regalos personalizadas y deja que tus invitados contribuyan a lo que más importa — desde fondos de luna de miel hasta esenciales para el nuevo hogar.',
+          },
+          itinerary: {
+            title: 'Itinerario del Evento',
+            description: 'Planea y comparte tu itinerario con los invitados. De la ceremonia a la recepción — mantén a todos informados y a tiempo.',
+          },
+        },
+      },
+      notReadyBanner: {
+        title: 'Boda no lista',
+        description: 'El seguimiento de actividad está en pausa. Las visitas a la invitación y las confirmaciones no se registrarán hasta que la marques como Lista.',
+        markReady: 'Marcar como Lista',
+        settings: 'Configuración',
+        viewInActivityTracking: 'Ver detalles en Seguimiento de Actividad',
       },
     },
     selector: {
@@ -1680,6 +2165,7 @@ export const es: Translations = {
         general: 'General',
         collaborators: 'Colaboradores',
         dashboardSections: 'Secciones del Panel',
+        messaging: 'Mensajería',
       },
       dashboardSections: {
         title: 'Secciones del Panel',
@@ -1687,6 +2173,21 @@ export const es: Translations = {
         allEnabled: 'Todas las secciones están habilitadas actualmente',
         cards: 'Tarjetas de Gestión',
         panels: 'Paneles de Actividad',
+      },
+      messaging: {
+        description: 'Cada boda envía y recibe mensajes de WhatsApp a través de nuestro número compartido de forma predeterminada — no requiere configuración. Conecta tu propio número aquí solo si quieres un número de WhatsApp dedicado para esta boda.',
+        connectedPrefix: 'Conectado — {{phone}}',
+        notFullyConnected: 'No está completamente conectado — termina la configuración abajo, o déjalo en blanco para seguir usando el número compartido',
+        notConnectedYet: 'Usando el número de WhatsApp compartido de la plataforma. Completa los campos de abajo solo si quieres el tuyo propio.',
+        setupDescription: 'Estos campos son opcionales — déjalos en blanco para seguir usando el número compartido.',
+        wabaId: 'ID de WABA',
+        phoneNumberId: 'ID del número de teléfono',
+        displayPhoneNumber: 'Número de teléfono a mostrar',
+        displayName: 'Nombre a mostrar',
+        accessToken: 'Token de acceso (opcional por ahora)',
+        phonePlaceholder: '+1 555 019 2231',
+        saving: 'Guardando…',
+        save: 'Guardar',
       },
       subscription: {
         title: 'Suscripción y Funciones',
@@ -2693,22 +3194,6 @@ export const es: Translations = {
       },
       loading: 'Cargando bandeja de entrada…',
       unknownContact: 'Desconocido',
-      connectWhatsapp: {
-        connectedPrefix: 'WhatsApp conectado — {{phone}}',
-        edit: 'Editar',
-        notFullyConnected: 'WhatsApp no está completamente conectado — termina la configuración',
-        connectPrompt: 'Conecta un número de WhatsApp para empezar a enviar mensajes',
-        setupDescription:
-          'Aún no hay una App de Negocios de Meta conectada, así que esto es un reemplazo manual del registro asistido — ingresa los valores del producto WhatsApp de tu App de Meta. Hasta que se configure un token de acceso, los mensajes se registran pero no se entregan realmente.',
-        wabaId: 'ID de WABA',
-        phoneNumberId: 'ID del número de teléfono',
-        displayPhoneNumber: 'Número de teléfono a mostrar',
-        displayName: 'Nombre a mostrar',
-        accessToken: 'Token de acceso (opcional por ahora)',
-        phonePlaceholder: '+1 555 019 2231',
-        saving: 'Guardando…',
-        save: 'Guardar',
-      },
       conversationList: {
         title: 'Conversaciones',
         openCount: '{{count}} abiertas',
@@ -2718,7 +3203,7 @@ export const es: Translations = {
       messageThread: {
         selectConversation: 'Selecciona una conversación para ver los mensajes.',
         noMessages: 'Aún no hay mensajes.',
-        notSent: 'No enviado — conecta WhatsApp abajo',
+        notSent: 'No enviado — la mensajería aún no está configurada',
         status: {
           pending: 'Enviando…',
           sent: 'Enviado',
@@ -2773,6 +3258,14 @@ export const es: Translations = {
         menu: {
           title: 'Menú',
           noneAssigned: 'Aún no hay menú seleccionado',
+        },
+        invitation: {
+          title: 'Invitación',
+          sentAt: 'Enviada el {{date}}',
+          notSent: 'Aún no enviada',
+          openedCount: 'Abierta {{count}} vez/veces · primera vez el {{date}}',
+          notOpened: 'Aún no abierta',
+          viewLink: 'Ver invitación',
         },
       },
     },

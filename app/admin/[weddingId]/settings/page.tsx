@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { useI18n } from "@/components/contexts/i18n-context"
 import { useWeddingPermissions } from "@/hooks/use-auth"
+import { WhatsappAccountSettings } from "./components/whatsapp-account-settings"
 import {
   Settings,
   Users,
@@ -34,6 +35,7 @@ import {
   CircleCheck,
   CircleX,
   CalendarClock,
+  MessageCircle,
 } from "lucide-react"
 
 interface WeddingFeatures {
@@ -82,7 +84,7 @@ interface SettingsPageProps {
   params: Promise<{ weddingId: string }>
 }
 
-type Section = "status" | "subscription" | "features" | "rsvp" | "invitations" | "gallery" | "general" | "collaborators" | "dashboardSections"
+type Section = "status" | "subscription" | "features" | "rsvp" | "invitations" | "gallery" | "general" | "collaborators" | "dashboardSections" | "messaging"
 
 export default function SettingsPage({ params }: SettingsPageProps) {
   const { weddingId } = use(params)
@@ -199,6 +201,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
     { id: "general", label: t('admin.settings.nav.general'), icon: Globe },
     { id: "collaborators", label: t('admin.settings.nav.collaborators'), icon: UserCog },
     { id: "dashboardSections", label: t('admin.settings.nav.dashboardSections'), icon: LayoutGrid },
+    { id: "messaging", label: t('admin.settings.nav.messaging'), icon: MessageCircle },
   ]
 
   // Show loading while data or permissions are being fetched
@@ -834,6 +837,20 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                 </div>
               )}
 
+              {activeSection === "messaging" && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-xl font-semibold text-foreground mb-1">
+                      {t('admin.settings.nav.messaging')}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      {t('admin.settings.messaging.description')}
+                    </p>
+                  </div>
+                  <WhatsappAccountSettings weddingId={decodeURIComponent(weddingId)} />
+                </div>
+              )}
+
               {activeSection === "dashboardSections" && (
                 <DashboardSectionsTab
                   dashboardSections={settings?.dashboard_sections ?? {}}
@@ -848,7 +865,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
             </Card>
 
             {/* Save Button */}
-            {hasChanges && activeSection !== 'status' && activeSection !== 'subscription' && activeSection !== 'features' && activeSection !== 'collaborators' && (
+            {hasChanges && activeSection !== 'status' && activeSection !== 'subscription' && activeSection !== 'features' && activeSection !== 'collaborators' && activeSection !== 'messaging' && (
               <div className="mt-4 flex justify-end">
                 <Button
                   onClick={saveSettings}

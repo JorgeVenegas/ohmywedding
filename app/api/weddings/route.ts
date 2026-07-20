@@ -208,12 +208,30 @@ export async function POST(request: Request) {
       .from('wedding_subscriptions')
       .upsert({ wedding_id: data.id, plan: 'free' }, { onConflict: 'wedding_id', ignoreDuplicates: true })
 
+    // Seed the wedding's language from the locale the creator was using on the
+    // create-wedding page, so the dashboard and public site open in that language
+    // instead of always defaulting to English.
+    const locale = body.locale === 'es' ? 'es' : body.locale === 'en' ? 'en' : null
+
+    // Always create the wedding_settings row so the language is set from creation
+    // (it would otherwise lazily default to 'en' on first settings fetch).
+    await adminClient
+      .from('wedding_settings')
+      .upsert(
+        { wedding_id: data.id, ...(locale ? { language: locale } : {}) },
+        { onConflict: 'wedding_id', ignoreDuplicates: true }
+      )
+
     // Bootstrap a wedding_websites row so the config endpoint always has an entry.
     // Without this, the first PUT to /config must create it, and any failure leaves the wedding
     // without a website entry (the row is required for the website editor to function).
+    // Mirror the locale into page_config.siteSettings so the public site matches too.
     await adminClient
       .from('wedding_websites')
-      .upsert({ wedding_id: data.id, page_config: {} }, { onConflict: 'wedding_id', ignoreDuplicates: true })
+      .upsert(
+        { wedding_id: data.id, page_config: locale ? { siteSettings: { locale } } : {} },
+        { onConflict: 'wedding_id', ignoreDuplicates: true }
+      )
 
     // Handle gift code redemption if provided
     if (body.giftCode) {

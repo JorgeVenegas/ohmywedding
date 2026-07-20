@@ -7,15 +7,15 @@ import { useTranslation } from '@/components/contexts/i18n-context'
 import { motion, useInView } from 'framer-motion'
 
 const featureItems = [
-  { icon: <Eye className="w-7 h-7" />, titleKey: 'landing.features.items.invitationTracking.title' as const, descriptionKey: 'landing.features.items.invitationTracking.description' as const, color: "#DDA46F", image: "/images/demo_images/demo-img-40.jpg" },
-  { icon: <CheckCircle2 className="w-7 h-7" />, titleKey: 'landing.features.items.rsvpDashboard.title' as const, descriptionKey: 'landing.features.items.rsvpDashboard.description' as const, color: "#424b1e", image: "/images/demo_images/demo-img-41.jpg" },
-  { icon: <Globe className="w-7 h-7" />, titleKey: 'landing.features.items.subdomain.title' as const, descriptionKey: 'landing.features.items.subdomain.description' as const, color: "#732c2c", image: "/images/demo_images/demo-img-42.jpg" },
-  { icon: <Send className="w-7 h-7" />, titleKey: 'landing.features.items.messageTemplates.title' as const, descriptionKey: 'landing.features.items.messageTemplates.description' as const, color: "#172815", image: "/images/demo_images/demo-img-43.jpg" },
-  { icon: <Bell className="w-7 h-7" />, titleKey: 'landing.features.items.notifications.title' as const, descriptionKey: 'landing.features.items.notifications.description' as const, color: "#DDA46F", image: "/images/demo_images/demo-img-44.jpg" },
-  { icon: <Crown className="w-7 h-7" />, titleKey: 'landing.features.items.luxuryExperience.title' as const, descriptionKey: 'landing.features.items.luxuryExperience.description' as const, color: "#420c14", image: "/images/demo_images/demo-img-45.jpg" },
+  { icon: <Eye className="w-7 h-7" />, titleKey: 'features.items.invitationTracking.title' as const, descriptionKey: 'features.items.invitationTracking.description' as const, color: "#DDA46F", image: "/images/demo_images/demo-img-40.jpg" },
+  { icon: <CheckCircle2 className="w-7 h-7" />, titleKey: 'features.items.rsvpDashboard.title' as const, descriptionKey: 'features.items.rsvpDashboard.description' as const, color: "#424b1e", image: "/images/demo_images/demo-img-41.jpg" },
+  { icon: <Globe className="w-7 h-7" />, titleKey: 'features.items.subdomain.title' as const, descriptionKey: 'features.items.subdomain.description' as const, color: "#732c2c", image: "/images/demo_images/demo-img-42.jpg" },
+  { icon: <Send className="w-7 h-7" />, titleKey: 'features.items.messageTemplates.title' as const, descriptionKey: 'features.items.messageTemplates.description' as const, color: "#172815", image: "/images/demo_images/demo-img-43.jpg" },
+  { icon: <Bell className="w-7 h-7" />, titleKey: 'features.items.notifications.title' as const, descriptionKey: 'features.items.notifications.description' as const, color: "#DDA46F", image: "/images/demo_images/demo-img-44.jpg" },
+  { icon: <Crown className="w-7 h-7" />, titleKey: 'features.items.luxuryExperience.title' as const, descriptionKey: 'features.items.luxuryExperience.description' as const, color: "#420c14", image: "/images/demo_images/demo-img-45.jpg" },
 ]
 
-export function FeaturesSection() {
+export function FeaturesSection({ ns = 'landing' }: { ns?: string }) {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-100px" })
   const { t } = useTranslation()
@@ -37,14 +37,14 @@ export function FeaturesSection() {
           className="text-center mb-12 sm:mb-24"
         >
           <span className="text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.3em] sm:tracking-[0.4em] uppercase mb-4 sm:mb-6 block">
-            {t('landing.features.label')}
+            {t(`${ns}.features.label`)}
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl text-[#f5f2eb] mb-6 sm:mb-8 leading-tight">
-            <span className="font-serif font-light block">{t('landing.features.title')}</span>
-            <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] block mt-1 sm:mt-2">{t('landing.features.subtitle')}</span>
+            <span className="font-serif font-light block">{t(`${ns}.features.title`)}</span>
+            <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] block mt-1 sm:mt-2">{t(`${ns}.features.subtitle`)}</span>
           </h2>
           <p className="text-[#f5f2eb]/50 text-sm sm:text-lg max-w-2xl mx-auto leading-relaxed px-2">
-            {t('landing.features.description')}
+            {t(`${ns}.features.description`)}
           </p>
         </motion.div>
 
@@ -61,7 +61,7 @@ export function FeaturesSection() {
                 <div className="relative aspect-video rounded-2xl overflow-hidden mb-6 bg-[#f5f2eb]/5">
                   <Image
                     src={feature.image}
-                    alt={t(feature.titleKey)}
+                    alt={t(`${ns}.${feature.titleKey}`)}
                     fill
                     className="object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-700"
                     loading="lazy"
@@ -77,8 +77,8 @@ export function FeaturesSection() {
                   </div>
                 </div>
                 
-                <h3 className="text-xl font-serif text-[#f5f2eb] mb-3">{t(feature.titleKey)}</h3>
-                <p className="text-[#f5f2eb]/50 leading-relaxed text-sm">{t(feature.descriptionKey)}</p>
+                <h3 className="text-xl font-serif text-[#f5f2eb] mb-3">{t(`${ns}.${feature.titleKey}`)}</h3>
+                <p className="text-[#f5f2eb]/50 leading-relaxed text-sm">{t(`${ns}.${feature.descriptionKey}`)}</p>
               </div>
             </motion.div>
           ))}

@@ -20,6 +20,7 @@ export function Composer({ onSend, onTyping, disabled }: ComposerProps) {
   const [value, setValue] = useState("")
   const [sending, setSending] = useState(false)
   const lastTypingSentAt = useRef(0)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const handleSend = async () => {
     const body = value.trim()
@@ -30,6 +31,9 @@ export function Composer({ onSend, onTyping, disabled }: ComposerProps) {
       setValue("")
     } finally {
       setSending(false)
+      // Deferred a tick: the input is still `disabled` (sending=true) at this
+      // point until React re-renders, and a disabled input can't take focus.
+      setTimeout(() => inputRef.current?.focus(), 0)
     }
   }
 
@@ -47,6 +51,7 @@ export function Composer({ onSend, onTyping, disabled }: ComposerProps) {
   return (
     <div className="flex items-center gap-2 border-t border-border px-4 py-3">
       <input
+        ref={inputRef}
         value={value}
         onChange={(e) => handleChange(e.target.value)}
         onKeyDown={(e) => {

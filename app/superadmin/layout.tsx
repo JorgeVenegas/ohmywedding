@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server"
+import { isSuperUser } from "@/lib/superadmin"
 import { redirect } from "next/navigation"
 import { SuperadminSidebar } from "@/components/superadmin/sidebar"
 
@@ -30,13 +31,7 @@ export default async function SuperadminLayout({
   }
   
   // Check if user is a superuser
-  const { data: superuser, error: superuserError } = await supabase
-    .from('superusers')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
-  
-  if (!superuser) {
+  if (!(await isSuperUser(supabase, { userId: user.id }))) {
     redirect('/')
   }
   

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { STRIPE_API_VERSION } from '@/lib/stripe-config'
+import { deriveLegacyPlan, type InvitationTier, type ManagementTier } from '@/lib/subscription-shared'
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -46,7 +47,7 @@ async function findOrder(
   if (checkoutSessionId) {
     const { data } = await supabase
       .from('subscription_orders')
-      .select('id, wedding_id, user_id, to_plan')
+      .select('id, wedding_id, user_id, to_plan, axis, tier')
       .eq('stripe_checkout_session_id', checkoutSessionId)
       .maybeSingle()
     if (data) return data
@@ -55,7 +56,7 @@ async function findOrder(
   if (paymentIntentId) {
     const { data } = await supabase
       .from('subscription_orders')
-      .select('id, wedding_id, user_id, to_plan')
+      .select('id, wedding_id, user_id, to_plan, axis, tier')
       .eq('stripe_payment_intent_id', paymentIntentId)
       .maybeSingle()
     if (data) return data
@@ -194,8 +195,8 @@ export async function POST(request: Request) {
           break
         }
 
-        const { wedding_id: weddingId, user_id: userId, to_plan: planType } = order
-        console.log(`[webhook] Order data: wedding=${weddingId}, user=${userId}, plan=${planType}`)
+        const { wedding_id: weddingId, user_id: userId, to_plan: planType, axis, tier } = order
+        console.log(`[webhook] Order data: wedding=${weddingId}, user=${userId}, plan=${planType}, axis=${axis}, tier=${tier}`)
 
         if (!userId || !weddingId || !planType || !['premium', 'deluxe'].includes(planType)) {
           console.error('[webhook] Missing required data in order:', { userId, weddingId, planType })
@@ -223,17 +224,41 @@ export async function POST(request: Request) {
           console.error('[webhook] Could not detect payment method:', pmErr)
         }
 
-        // Activate the subscription
+        // Activate the subscription. Axis+tier orders (new two-axis checkout) write
+        // the specific invitation_tier/management_tier column plus a recomputed
+        // legacy `plan` (so existing plan-based feature gates keep working);
+        // legacy orders (old single-ladder checkout) just write `plan` as before.
+        let subscriptionUpdate: Record<string, unknown> = {
+          wedding_id: weddingId,
+          plan: planType,
+          updated_at: new Date().toISOString(),
+        }
+
+        if (axis && tier) {
+          const { data: existingSub } = await supabaseAdmin
+            .from('wedding_subscriptions')
+            .select('invitation_tier, management_tier')
+            .eq('wedding_id', weddingId)
+            .maybeSingle()
+
+          const invitationTier: InvitationTier = axis === 'invitation'
+            ? (tier as InvitationTier)
+            : ((existingSub?.invitation_tier as InvitationTier) || 'basic')
+          const managementTier: ManagementTier = axis === 'management'
+            ? (tier as ManagementTier)
+            : ((existingSub?.management_tier as ManagementTier) || 'basic')
+
+          subscriptionUpdate = {
+            wedding_id: weddingId,
+            [axis === 'invitation' ? 'invitation_tier' : 'management_tier']: tier,
+            plan: deriveLegacyPlan(invitationTier, managementTier),
+            updated_at: new Date().toISOString(),
+          }
+        }
+
         const { data: subscription, error: subscriptionError } = await supabaseAdmin
           .from('wedding_subscriptions')
-          .upsert(
-            {
-              wedding_id: weddingId,
-              plan: planType,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: 'wedding_id' }
-          )
+          .upsert(subscriptionUpdate, { onConflict: 'wedding_id' })
           .select('id')
           .single()
 

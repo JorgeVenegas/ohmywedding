@@ -3,11 +3,11 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import Image from "next/image"
-import { 
-  LayoutDashboard, 
-  Heart, 
-  Settings2, 
-  CreditCard, 
+import {
+  LayoutDashboard,
+  Heart,
+  Settings2,
+  CreditCard,
   Activity,
   Crown,
   LogOut,
@@ -15,6 +15,7 @@ import {
   Ticket,
   Tag,
   Award,
+  SlidersHorizontal,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase-client"
@@ -64,6 +65,11 @@ const navItems = [
     title: "Activity Log",
     href: "/superadmin/activity",
     icon: Activity,
+  },
+  {
+    title: "Settings",
+    href: "/superadmin/settings",
+    icon: SlidersHorizontal,
   },
 ]
 

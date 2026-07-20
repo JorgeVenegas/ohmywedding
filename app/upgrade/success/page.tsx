@@ -17,6 +17,7 @@ import {
   Calendar,
   Loader2
 } from "lucide-react"
+import { MANAGEMENT_CARDS, MANAGEMENT_PRICING, formatMXNFromCents, type ManagementTier } from "@/lib/subscription-shared"
 
 function UpgradeSuccessContent() {
   const searchParams = useSearchParams()
@@ -24,6 +25,61 @@ function UpgradeSuccessContent() {
   const paymentIntentClientSecret = searchParams.get('payment_intent_client_secret')
   const redirectStatus = searchParams.get('redirect_status')
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
+  const [pendingBundle, setPendingBundle] = useState<ManagementTier | null>(null)
+  const [bundleLoading, setBundleLoading] = useState(false)
+  const [bundleError, setBundleError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (status !== 'success') return
+    try {
+      const raw = sessionStorage.getItem('omw_pending_bundle')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (parsed?.axis === 'management' && parsed?.tier in MANAGEMENT_CARDS) {
+          setPendingBundle(parsed.tier as ManagementTier)
+        }
+      }
+    } catch {
+      // ignore — bundle continuation is a nice-to-have
+    }
+  }, [status])
+
+  const handleAddManagement = async () => {
+    if (!pendingBundle) return
+    setBundleLoading(true)
+    setBundleError(null)
+    try {
+      const weddingsRes = await fetch('/api/weddings')
+      const weddingsData = await weddingsRes.json()
+      const weddings = weddingsData.weddings || []
+      if (weddings.length === 0) throw new Error('No wedding found')
+      const res = await fetch(`/api/weddings/${weddings[0].id}/subscription/checkout-tier`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          axis: 'management',
+          tier: pendingBundle,
+          paymentMethod: 'card',
+          source: 'bundle_upsell',
+          bundleDiscount: true,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Checkout failed')
+      if (data.url) {
+        sessionStorage.removeItem('omw_pending_bundle')
+        window.location.href = data.url
+      }
+    } catch (err) {
+      setBundleError(err instanceof Error ? err.message : 'Something went wrong')
+      setBundleLoading(false)
+    }
+  }
+
+  const handleDismissBundle = () => {
+    try { sessionStorage.removeItem('omw_pending_bundle') } catch {}
+    setPendingBundle(null)
+  }
 
   useEffect(() => {
     async function verifyPayment() {
@@ -151,6 +207,36 @@ function UpgradeSuccessContent() {
           <Heart className="w-6 h-6 text-[#DDA46F] animate-bounce" />
         </div>
       </Card>
+
+      {/* Bundle continuation — offered when the couple started from the "Get Both" flow */}
+      {pendingBundle && (
+        <Card className="relative overflow-hidden border-[#DDA46F]/40 bg-gradient-to-br from-[#420c14] to-[#5a1a22] p-6 mb-10 text-[#f5f2eb]">
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 rounded-full bg-[#DDA46F] flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-7 h-7 text-[#420c14]" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-xl font-bold mb-1">One more step — add {MANAGEMENT_CARDS[pendingBundle].name} Management</h2>
+              <p className="text-[#f5f2eb]/70 mb-4">{MANAGEMENT_CARDS[pendingBundle].description}</p>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-2xl font-bold">{formatMXNFromCents(Math.round(MANAGEMENT_PRICING[pendingBundle].price_mxn / 2))}</span>
+                <span className="text-sm line-through text-[#f5f2eb]/40">{MANAGEMENT_PRICING[pendingBundle].priceDisplayMXN}</span>
+                <span className="text-xs px-2 py-1 rounded-full bg-[#DDA46F] text-[#420c14] font-medium">50% OFF</span>
+              </div>
+              {bundleError && <p className="text-sm text-red-300 mb-3">{bundleError}</p>}
+              <div className="flex flex-wrap gap-3">
+                <Button onClick={handleAddManagement} disabled={bundleLoading} className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14]">
+                  {bundleLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                  Add Management — 50% Off
+                </Button>
+                <Button variant="ghost" onClick={handleDismissBundle} className="text-[#f5f2eb]/60 hover:text-[#f5f2eb] hover:bg-[#f5f2eb]/10">
+                  No thanks
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Next Steps */}
       <div className="mb-10">

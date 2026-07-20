@@ -1,14 +1,27 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { es as esLocale } from "date-fns/locale"
-import { Check, X, Search, ExternalLink, UtensilsCrossed, Armchair, Salad, Plane, Tag } from "lucide-react"
+import { Check, X, Search, ExternalLink, UtensilsCrossed, Armchair, Salad, Plane, Tag, Mail, MailCheck, Eye, EyeOff, Users, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { getCleanAdminUrl } from "@/lib/admin-url"
+import { getWeddingUrl } from "@/lib/wedding-url"
 import { useTranslation } from "@/components/contexts/i18n-context"
+import { useSubscriptionContext } from "@/components/contexts/subscription-context"
+import { avatarPalette } from "../lib/avatar-color"
+import type { PlanType } from "@/lib/subscription-shared"
 import type { ConversationDetail } from "../types"
+
+// Same construction as getInvitationUrl() in the invitations admin page
+// (app/admin/[weddingId]/invitations/page.tsx) — no shared helper exists yet,
+// so this mirrors it rather than importing a client-page-local function.
+function buildInvitationUrl(weddingNameId: string, groupId: string, plan: PlanType): string {
+  const baseUrl = getWeddingUrl(weddingNameId, "", plan)
+  const separator = baseUrl.includes("?") ? "&" : "?"
+  return `${baseUrl}${separator}groupId=${groupId}`
+}
 
 interface GuestSearchResult {
   id: string
@@ -45,6 +58,27 @@ const CATEGORY_DOT: Record<string, string> = {
 
 function initials(name: string) {
   return name.trim().slice(0, 2).toUpperCase()
+}
+
+// Colored icon chip + label — gives each section its own visual landmark so
+// the eye can jump straight to "seating" or "menu" without reading every line.
+function SectionTitle({
+  icon: Icon,
+  color,
+  children,
+}: {
+  icon: ComponentType<{ className?: string }>
+  color: string
+  children: ReactNode
+}) {
+  return (
+    <div className="mb-2 flex items-center gap-1.5">
+      <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full ${color}`}>
+        <Icon className="h-2.5 w-2.5" />
+      </span>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{children}</p>
+    </div>
+  )
 }
 
 function StatusPill({ status }: { status: string }) {
@@ -127,6 +161,7 @@ function LinkContactPanel({ weddingId, contactId, onLinked }: { weddingId: strin
 
 export function GuestContextPanel({ weddingId, contactId, detail, onLinked }: GuestContextPanelProps) {
   const { t, locale } = useTranslation()
+  const { planType } = useSubscriptionContext()
   const [updating, setUpdating] = useState(false)
 
   if (!contactId) {
@@ -139,7 +174,7 @@ export function GuestContextPanel({ weddingId, contactId, detail, onLinked }: Gu
 
   if (!detail || !detail.conversation.contacts?.guest_id) {
     return (
-      <div className="h-full overflow-y-auto border-l border-border bg-muted/10">
+      <div className="h-full min-h-0 overflow-y-auto border-l border-border bg-muted/10">
         <LinkContactPanel weddingId={weddingId} contactId={contactId} onLinked={onLinked} />
       </div>
     )
@@ -150,6 +185,8 @@ export function GuestContextPanel({ weddingId, contactId, detail, onLinked }: Gu
 
   const dateLocale = locale === "es" ? esLocale : undefined
   const respondedAtLabel = rsvpRespondedAt ? format(new Date(rsvpRespondedAt), "PPp", { locale: dateLocale }) : null
+  const invitationUrl = group ? buildInvitationUrl(weddingId, group.id, planType) : null
+  const avatar = avatarPalette(guest.id)
 
   const updateRsvp = async (status: "confirmed" | "declined") => {
     setUpdating(true)
@@ -175,11 +212,13 @@ export function GuestContextPanel({ weddingId, contactId, detail, onLinked }: Gu
   }
 
   return (
-    <div className="h-full overflow-y-auto border-l border-border bg-muted/10">
+    <div className="h-full min-h-0 overflow-y-auto border-l border-border bg-muted/10">
       {/* Profile header */}
       <div className="border-b border-border bg-gradient-to-br from-primary/10 via-transparent to-transparent p-4">
         <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary ring-2 ring-primary/25">
+          <div
+            className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold ring-2 ${avatar.bg} ${avatar.text} ${avatar.ring}`}
+          >
             {initials(guest.name)}
           </div>
           <div className="min-w-0 flex-1">
@@ -218,11 +257,61 @@ export function GuestContextPanel({ weddingId, contactId, detail, onLinked }: Gu
         )}
       </div>
 
+      {/* Invitation: sent/opened status plus a direct link to what the guest sees */}
+      {group && (
+        <div className="border-b border-border p-4">
+          <SectionTitle icon={Mail} color="bg-sky-100 text-sky-600">
+            {t('admin.inbox.guestPanel.invitation.title')}
+          </SectionTitle>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 text-xs">
+              {group.invitation_sent ? (
+                <MailCheck className="h-3.5 w-3.5 flex-shrink-0 text-emerald-600" />
+              ) : (
+                <Mail className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+              )}
+              <span className="text-foreground">
+                {group.invitation_sent && group.invitation_sent_at
+                  ? t('admin.inbox.guestPanel.invitation.sentAt', {
+                      date: format(new Date(group.invitation_sent_at), "PP", { locale: dateLocale }),
+                    })
+                  : t('admin.inbox.guestPanel.invitation.notSent')}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              {group.open_count > 0 ? (
+                <Eye className="h-3.5 w-3.5 flex-shrink-0 text-emerald-600" />
+              ) : (
+                <EyeOff className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+              )}
+              <span className="text-foreground">
+                {group.open_count > 0 && group.first_opened_at
+                  ? t('admin.inbox.guestPanel.invitation.openedCount', {
+                      count: group.open_count,
+                      date: format(new Date(group.first_opened_at), "PP", { locale: dateLocale }),
+                    })
+                  : t('admin.inbox.guestPanel.invitation.notOpened')}
+              </span>
+            </div>
+            {invitationUrl && (
+              <a
+                href={invitationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
+                {t('admin.inbox.guestPanel.invitation.viewLink')} <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Seating spotlight — the one thing that used to be missing entirely */}
       <div className="border-b border-border p-4">
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <SectionTitle icon={Armchair} color="bg-amber-100 text-amber-700">
           {t('admin.inbox.guestPanel.seating.title')}
-        </p>
+        </SectionTitle>
         {seatAssignment?.seating_tables?.name ? (
           <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2.5">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
@@ -246,9 +335,9 @@ export function GuestContextPanel({ weddingId, contactId, detail, onLinked }: Gu
 
       {/* Menu, with course-by-course breakdown and category color coding */}
       <div className="border-b border-border p-4">
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <SectionTitle icon={UtensilsCrossed} color="bg-rose-100 text-rose-600">
           {t('admin.inbox.guestPanel.menu.title')}
-        </p>
+        </SectionTitle>
         {menuAssignment?.menus?.name ? (
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -289,9 +378,9 @@ export function GuestContextPanel({ weddingId, contactId, detail, onLinked }: Gu
       {/* Group roster — every member's RSVP AND seat, not just this guest's */}
       {group && (
         <div className="border-b border-border p-4">
-          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <SectionTitle icon={Users} color="bg-violet-100 text-violet-600">
             {t('admin.inbox.guestPanel.guestGroup')}
-          </p>
+          </SectionTitle>
           <p className="text-sm font-semibold text-foreground">{group.name || "Unnamed group"}</p>
           <p className="mb-2 text-xs text-muted-foreground">
             {t('admin.inbox.guestPanel.guestsCount', { count: groupMembers.length })}
@@ -329,9 +418,9 @@ export function GuestContextPanel({ weddingId, contactId, detail, onLinked }: Gu
 
       {/* Dietary, travel, tags */}
       <div className="border-b border-border p-4 space-y-2">
-        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <SectionTitle icon={Info} color="bg-stone-100 text-stone-600">
           {t('admin.inbox.guestPanel.details')}
-        </p>
+        </SectionTitle>
         {guest.dietary_restrictions && (
           <div className="flex items-start gap-2 text-xs">
             <Salad className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />

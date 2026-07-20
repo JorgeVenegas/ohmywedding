@@ -10,10 +10,12 @@ interface EditingModeContextType {
   permissions: WeddingPermissions
   permissionsLoading: boolean
   canEdit: boolean
+  canEditDesign: boolean
 }
 
 const defaultPermissions: WeddingPermissions = {
   canEdit: false,
+  canEditDesign: false,
   canDelete: false,
   canManageCollaborators: false,
   canManageInvitations: false,
@@ -43,35 +45,36 @@ export function EditingModeProvider({
     loading: permissionsLoading 
   } = useWeddingPermissions(weddingNameId)
 
-  // If user can't edit, force editing mode off
+  // If user can't edit the design, force editing mode off
   useEffect(() => {
-    if (!permissionsLoading && !permissions.canEdit && isEditingMode) {
+    if (!permissionsLoading && !permissions.canEditDesign && isEditingMode) {
       setIsEditingMode(false)
     }
-  }, [permissions.canEdit, permissionsLoading, isEditingMode])
+  }, [permissions.canEditDesign, permissionsLoading, isEditingMode])
 
   const toggleEditingMode = () => {
-    if (permissions.canEdit) {
+    if (permissions.canEditDesign) {
       setIsEditingMode(prev => !prev)
     }
   }
 
   const setEditingMode = (isEditing: boolean) => {
-    if (isEditing && !permissions.canEdit) {
+    if (isEditing && !permissions.canEditDesign) {
       return // Don't allow editing if no permission
     }
     setIsEditingMode(isEditing)
   }
 
   return (
-    <EditingModeContext.Provider 
-      value={{ 
-        isEditingMode, 
-        toggleEditingMode, 
+    <EditingModeContext.Provider
+      value={{
+        isEditingMode,
+        toggleEditingMode,
         setEditingMode,
         permissions,
         permissionsLoading,
-        canEdit: permissions.canEdit
+        canEdit: permissions.canEdit,
+        canEditDesign: permissions.canEditDesign
       }}
     >
       {children}

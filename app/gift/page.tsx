@@ -11,18 +11,19 @@ import {
   Crown,
   Check,
   Sparkles,
-  ArrowLeft,
   Gift,
   Loader2,
   Copy,
   Heart,
   Tag,
 } from "lucide-react"
+import { Header } from "@/components/header"
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
 import { useGlobalDiscount } from "@/hooks/use-global-discount"
 import { PromoCountdown } from "@/components/ui/promo-countdown"
 import { PromoPriceDisplay } from "@/components/ui/promo-price-display"
 import { useI18n } from "@/components/contexts/i18n-context"
+import { resolveBackHref, withLandingSource } from "@/lib/landing-source"
 
 const planIds = [
   { id: "premium" as const, featured: true },
@@ -37,6 +38,9 @@ function GiftPageContent() {
   const [selectedPlan, setSelectedPlan] = useState<"premium" | "deluxe">(
     searchParams.get("plan") === "deluxe" ? "deluxe" : "premium"
   )
+  const landingSource = searchParams.get("from")
+  const weddingIdParam = searchParams.get("weddingId")
+  const backHref = resolveBackHref({ weddingId: weddingIdParam, from: landingSource }, 'pricing')
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { discount, getDiscountedPrice, getDiscountPercent, appliesToPlan } = useGlobalDiscount()
@@ -70,7 +74,9 @@ function GiftPageContent() {
     setError(null)
 
     if (!user) {
-      router.push(`/login?redirect=/gift?plan=${planId}`)
+      const redirectParams = new URLSearchParams(searchParams.toString())
+      redirectParams.set('plan', planId)
+      router.push(`/login?redirect=${encodeURIComponent(`/gift?${redirectParams.toString()}`)}`)
       return
     }
 
@@ -105,6 +111,8 @@ function GiftPageContent() {
 
   return (
     <div className="min-h-screen bg-[#f5f2eb]">
+      <Header showBackButton backHref={backHref} rightContent={<LanguageSwitcher variant="buttons" className="text-[#420c14]" textColor="#420c14" />} />
+
       {/* Background decorations */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -120,31 +128,6 @@ function GiftPageContent() {
       </div>
 
       <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        {/* Nav */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="flex items-center justify-between mb-12"
-        >
-          <Link href="/" className="flex items-center gap-3">
-            <span className="text-[#420c14] font-['Elegant',cursive] text-3xl leading-none">Oh</span>
-            <div>
-              <p className="text-[10px] font-bold text-[#420c14] tracking-[0.2em] uppercase leading-tight">My Wedding</p>
-              <p className="text-[7px] sm:text-[10px] text-[#420c14]/40 tracking-widest mt-0.5">WEDDING WEBSITES</p>
-            </div>
-          </Link>
-          <div className="flex items-center gap-4">
-            <LanguageSwitcher variant="buttons" className="text-[#420c14]" textColor="#420c14" />
-            <Link
-              href="/#pricing"
-              className="inline-flex items-center gap-2 text-[#420c14]/60 hover:text-[#420c14] transition-colors text-sm tracking-wider"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              {G.back}
-            </Link>
-          </div>
-        </motion.div>
 
         {/* Header */}
         <motion.div
@@ -339,7 +322,7 @@ function GiftPageContent() {
           className="text-center text-[#420c14]/40 text-xs mt-8"
         >
           {G.upgradingOwn}{" "}
-          <Link href="/upgrade" className="underline hover:text-[#420c14]/70 transition-colors">
+          <Link href={weddingIdParam ? `/upgrade?weddingId=${encodeURIComponent(weddingIdParam)}` : withLandingSource('/upgrade', landingSource)} className="underline hover:text-[#420c14]/70 transition-colors">
             {G.goToUpgrade}
           </Link>
         </motion.p>

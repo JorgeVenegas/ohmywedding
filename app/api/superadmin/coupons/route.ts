@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { isSuperUser } from '@/lib/superadmin'
 import { STRIPE_API_VERSION } from '@/lib/stripe-config'
 
 export const dynamic = 'force-dynamic'
@@ -12,13 +13,9 @@ async function verifySuperadmin(supabase: Awaited<ReturnType<typeof createServer
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { user: null, error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
 
-  const { data: superuser } = await supabase
-    .from('superusers')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
-
-  if (!superuser) return { user: null, error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
+  if (!(await isSuperUser(supabase, { userId: user.id }))) {
+    return { user: null, error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
+  }
   return { user, error: null }
 }
 

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createAdminSupabaseClient, createServerSupabaseClient } from "@/lib/supabase-server"
-import { sendTypingIndicator } from "@/lib/messaging/channels/whatsapp"
+import { sendTypingIndicator, getSharedWhatsappAccount } from "@/lib/messaging/channels/whatsapp"
 import { isMessagingEnabledForWeddingUuid } from "@/lib/messaging/feature-flag"
-import type { WhatsappAccount } from "@/lib/messaging/types"
+import type { WhatsappAccount, WhatsappSendableAccount } from "@/lib/messaging/types"
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -42,15 +42,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ sent: false, error: "Not authorized for this wedding" }, { status: 403 })
     }
 
-    if (!conversation.channel_account_id) {
-      return NextResponse.json({ sent: false })
+    // Prefer the wedding's own connected number if it has one; otherwise fall
+    // back to the shared platform account (env vars).
+    let account: WhatsappSendableAccount | null = null
+    if (conversation.channel_account_id) {
+      const { data } = await admin
+        .from("whatsapp_accounts")
+        .select("*")
+        .eq("id", conversation.channel_account_id)
+        .maybeSingle()
+      account = (data as WhatsappAccount | null) ?? null
     }
-
-    const { data: account } = await admin
-      .from("whatsapp_accounts")
-      .select("*")
-      .eq("id", conversation.channel_account_id)
-      .maybeSingle()
+    if (!account) {
+      account = getSharedWhatsappAccount()
+    }
     if (!account?.access_token_secret) {
       return NextResponse.json({ sent: false })
     }
@@ -68,7 +73,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ sent: false })
     }
 
-    const result = await sendTypingIndicator(account as WhatsappAccount, lastInbound.channel_message_id)
+    const result = await sendTypingIndicator(account, lastInbound.channel_message_id)
     return NextResponse.json({ sent: result.ok })
   } catch (error) {
     console.error("messaging typing indicator failed:", error)

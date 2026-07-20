@@ -1,6 +1,12 @@
 import crypto from "crypto"
 import type { ChannelAdapter } from "../channel-adapter"
-import type { MessageType, ParsedWebhookEvent, SendMessageParams, SendMessageResult, WhatsappAccount } from "../types"
+import type {
+  MessageType,
+  ParsedWebhookEvent,
+  SendMessageParams,
+  SendMessageResult,
+  WhatsappSendableAccount,
+} from "../types"
 
 const GRAPH_API_VERSION = "v21.0"
 
@@ -10,6 +16,23 @@ const GRAPH_API_VERSION = "v21.0"
 // an env var rather than on whatsapp_accounts.
 function getAppSecret(): string | null {
   return process.env.WHATSAPP_APP_SECRET || null
+}
+
+// The platform-wide default account, used for weddings that haven't connected
+// their own WABA. Most weddings will send/receive through this. A wedding that
+// *has* connected its own number (whatsapp_accounts row) still takes priority
+// wherever that lookup succeeds — see lib/messaging/process-webhook-event.ts
+// and the send/typing routes.
+export interface SharedWhatsappAccount extends WhatsappSendableAccount {
+  phone_number_id: string
+  access_token_secret: string
+}
+
+export function getSharedWhatsappAccount(): SharedWhatsappAccount | null {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID
+  const accessTokenSecret = process.env.WHATSAPP_ACCESS_TOKEN_SECRET
+  if (!phoneNumberId || !accessTokenSecret) return null
+  return { phone_number_id: phoneNumberId, access_token_secret: accessTokenSecret }
 }
 
 function mapMetaMessageType(type: string): MessageType {
@@ -182,7 +205,7 @@ export const whatsappAdapter: ChannelAdapter = {
 // as a side effect. `messageId` must be the channel_message_id of an inbound
 // message — Meta rejects arbitrary/outbound IDs.
 export async function sendTypingIndicator(
-  account: WhatsappAccount,
+  account: WhatsappSendableAccount,
   messageId: string
 ): Promise<{ ok: boolean; errorCode?: string }> {
   if (!account.access_token_secret) {

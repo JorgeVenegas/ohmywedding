@@ -387,3 +387,200 @@ export function hasPlanLevel(userPlan: PlanType, requiredPlan: PlanType): boolea
   }
   return planLevels[userPlan] >= planLevels[requiredPlan]
 }
+
+// Formats a centavos amount the same way the static priceDisplayMXN strings
+// above are written (e.g. 37500 -> "$375 MXN"), for prices computed at runtime
+// (discounts, totals) rather than read directly off a pricing constant.
+export function formatMXNFromCents(cents: number): string {
+  return `$${Math.round(cents / 100).toLocaleString('en-US')} MXN`
+}
+
+// --- Two-axis pricing: Invitation and Management are independently purchasable ---
+// Final tier pricing: Basic $1,000 MXN, mid tier (Personalized/Pro) $4,000 MXN,
+// top tier (Bespoke/Agency) $7,000 MXN — same 20:1 MXN:USD ratio used elsewhere
+// in this file. No longer tied to the legacy PRICING.premium/deluxe ladder.
+
+export type InvitationTier = 'basic' | 'personalized' | 'bespoke'
+export type ManagementTier = 'basic' | 'pro' | 'agency'
+export type PricingAxis = 'invitation' | 'management'
+
+export const INVITATION_PRICING = {
+  basic: {
+    name: 'Basic',
+    tagline: 'A beautiful invitation, ready to send',
+    price_usd: 5000, // $50 USD in cents
+    price_mxn: 100000, // $1,000 MXN in centavos
+    priceDisplay: '$50 USD',
+    priceDisplayMXN: '$1,000 MXN',
+    period: 'one-time',
+    description: 'One template, ready to go — no design decisions required.',
+  },
+  personalized: {
+    name: 'Personalized',
+    tagline: 'Your story, your sections, your look',
+    price_usd: 20000, // $200 USD in cents
+    price_mxn: 400000, // $4,000 MXN in centavos
+    priceDisplay: '$200 USD',
+    priceDisplayMXN: '$4,000 MXN',
+    period: 'one-time',
+    description: 'Choose your template, colors, and which sections tell your story.',
+  },
+  bespoke: {
+    name: 'Bespoke',
+    tagline: 'Custom-built by our design team',
+    price_usd: 35000, // $350 USD in cents
+    price_mxn: 700000, // $7,000 MXN in centavos
+    priceDisplay: '$350 USD',
+    priceDisplayMXN: '$7,000 MXN',
+    period: 'one-time',
+    description: 'We design your invitation from scratch, on your own custom domain.',
+  },
+} as const
+
+export const MANAGEMENT_PRICING = {
+  basic: {
+    name: 'Basic',
+    tagline: 'Guests and RSVPs, organized',
+    price_usd: 5000, // $50 USD in cents
+    price_mxn: 100000, // $1,000 MXN in centavos
+    priceDisplay: '$50 USD',
+    priceDisplayMXN: '$1,000 MXN',
+    period: 'one-time',
+    description: 'Guest list and RSVP tracking — the essentials.',
+  },
+  pro: {
+    name: 'Pro',
+    tagline: 'The full planning toolkit',
+    price_usd: 20000, // $200 USD in cents
+    price_mxn: 400000, // $4,000 MXN in centavos
+    priceDisplay: '$200 USD',
+    priceDisplayMXN: '$4,000 MXN',
+    period: 'one-time',
+    description: 'Message templates, activity reports, seating chart, and registry.',
+  },
+  agency: {
+    name: 'Agency',
+    tagline: 'Built for wedding planners',
+    price_usd: 35000, // $350 USD in cents
+    price_mxn: 700000, // $7,000 MXN in centavos
+    priceDisplay: '$350 USD',
+    priceDisplayMXN: '$7,000 MXN',
+    period: 'one-time',
+    description: 'Manage every wedding you run from one dashboard, with client transparency built in.',
+  },
+} as const
+
+export const INVITATION_CARDS = {
+  basic: {
+    ...INVITATION_PRICING.basic,
+    features: [
+      'Hero, Our Story & Details sections',
+      'RSVP* (requires Management plan)',
+      'Basic envelope design',
+      'Limited color & font variants',
+    ],
+    cta: 'Get Started',
+    href: '/create-wedding?axis=invitation&tier=basic&source=pricing_invitation_basic',
+  },
+  personalized: {
+    ...INVITATION_PRICING.personalized,
+    features: [
+      'Hero, Our Story & Details sections',
+      'RSVP* (requires Management plan)',
+      'Dresscode & Hotel suggestions sections',
+      'Registry section',
+      'Personalized envelope design',
+      'Unlimited color & font variants',
+      'Guest-personalized greetings',
+      'Clean subdomain, no branding',
+      'Unlimited photos',
+    ],
+    cta: 'Upgrade to Personalized',
+    href: '/upgrade?axis=invitation&tier=personalized&source=pricing_invitation_personalized',
+  },
+  bespoke: {
+    ...INVITATION_PRICING.bespoke,
+    features: [
+      'All Personalized sections',
+      'RSVP* (requires Management plan)',
+      'Our People section',
+      'Music & playlist section',
+      'Unique envelope design',
+      'Unique custom page design',
+      'Special & custom fonts',
+      'Custom-built by our design team',
+      'Your own bespoke domain',
+    ],
+    cta: 'Go Bespoke',
+    href: '/upgrade?axis=invitation&tier=bespoke&source=pricing_invitation_bespoke',
+  },
+} as const
+
+export const MANAGEMENT_CARDS = {
+  basic: {
+    ...MANAGEMENT_PRICING.basic,
+    features: [
+      'Guest list & RSVP tracking',
+      'Up to 100 guests',
+      'Last 3 activities',
+    ],
+    cta: 'Get Started',
+    href: '/create-wedding?axis=management&tier=basic&source=pricing_management_basic',
+  },
+  pro: {
+    ...MANAGEMENT_PRICING.pro,
+    features: [
+      'Everything in Basic',
+      'Message templates',
+      'Activity reports',
+      'Seating chart designer',
+      'Registry with secure payouts',
+      'Unlimited guests & groups',
+      'Collaborator access',
+    ],
+    cta: 'Upgrade to Pro',
+    href: '/upgrade?axis=management&tier=pro&source=pricing_management_pro',
+  },
+  agency: {
+    ...MANAGEMENT_PRICING.agency,
+    features: [
+      'Everything in Pro',
+      'Multi-wedding dashboard',
+      'Send invitations with one click',
+      'AI chatbot answers guest FAQs automatically',
+      'AI wedding planning assistant',
+      'White-label branding',
+      'Priority support',
+    ],
+    cta: 'Go Agency',
+    href: '/upgrade?axis=management&tier=agency&source=pricing_management_agency',
+  },
+} as const
+
+// Subscription pricing for all management tiers.
+// Monthly = 1.5 × per-wedding price, Annual = 10 × per-wedding price.
+// At 1.5 weddings/month (18/year) monthly breaks even; at 10/year annual breaks even.
+export const MANAGEMENT_SUBSCRIPTION_PRICING = {
+  basic: {
+    monthly: { price_mxn: 150000, priceDisplayMXN: '$1,500 MXN', period: '/month', periodES: '/mes' },
+    annual:  { price_mxn: 1000000, priceDisplayMXN: '$10,000 MXN', period: '/year', periodES: '/año', perMonthDisplayMXN: '$833 MXN', savingsPercent: 44 },
+  },
+  pro: {
+    monthly: { price_mxn: 600000, priceDisplayMXN: '$6,000 MXN', period: '/month', periodES: '/mes' },
+    annual:  { price_mxn: 4000000, priceDisplayMXN: '$40,000 MXN', period: '/year', periodES: '/año', perMonthDisplayMXN: '$3,333 MXN', savingsPercent: 44 },
+  },
+  agency: {
+    monthly: { price_mxn: 1050000, priceDisplayMXN: '$10,500 MXN', period: '/month', periodES: '/mes' },
+    annual:  { price_mxn: 7000000, priceDisplayMXN: '$70,000 MXN', period: '/year', periodES: '/año', perMonthDisplayMXN: '$5,833 MXN', savingsPercent: 44 },
+  },
+} as const
+
+// Backward-compatible mapping from the two independent axes to the legacy
+// single-ladder PlanType, so the ~30 existing plan-tier checks across the app
+// (requireFeature, canAccessFeature, middleware subdomain routing, etc.) keep
+// working unchanged while those axes are purchased independently.
+export function deriveLegacyPlan(invitationTier: InvitationTier, managementTier: ManagementTier): PlanType {
+  if (invitationTier === 'bespoke' || managementTier === 'agency') return 'deluxe'
+  if (invitationTier === 'personalized' || managementTier === 'pro') return 'premium'
+  return 'free'
+}

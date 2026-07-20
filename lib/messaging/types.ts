@@ -142,8 +142,17 @@ export type ParsedWebhookEvent =
       errorMessage?: string
     }
 
+// The minimal shape send()/sendTypingIndicator() actually need — satisfied by
+// both a whatsapp_accounts row (a wedding's own connected number) and the
+// shared platform account built from env vars (lib/messaging/channels/whatsapp.ts's
+// getSharedWhatsappAccount()), so callers can pass either interchangeably.
+export interface WhatsappSendableAccount {
+  phone_number_id: string
+  access_token_secret: string | null
+}
+
 export interface SendMessageParams {
-  account: WhatsappAccount
+  account: WhatsappSendableAccount
   toAddress: string
   body: string
 }

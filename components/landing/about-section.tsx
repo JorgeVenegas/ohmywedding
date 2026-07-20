@@ -6,7 +6,7 @@ import { Crown, Globe, Bell, Palette, Star } from 'lucide-react'
 import { useTranslation } from '@/components/contexts/i18n-context'
 import { motion, useInView } from 'framer-motion'
 
-export function AboutSection() {
+export function AboutSection({ ns = 'landing' }: { ns?: string }) {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-100px" })
   const { t } = useTranslation()
@@ -23,25 +23,25 @@ export function AboutSection() {
             transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
           >
             <span className="text-[#424b1e] text-[10px] sm:text-xs tracking-[0.3em] sm:tracking-[0.4em] uppercase mb-4 sm:mb-6 block">
-              {t('landing.about.label')}
+              {t(`${ns}.about.label`)}
             </span>
             
             <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#420c14] mb-6 sm:mb-10 leading-[1.1]">
-              <span className="font-serif font-light block">{t('landing.about.title')}</span>
-              <span className="font-['Elegant',cursive] text-[#732c2c] text-[1.5em] block mt-1 sm:mt-2">{t('landing.about.subtitle')}</span>
+              <span className="font-serif font-light block">{t(`${ns}.about.title`)}</span>
+              <span className="font-['Elegant',cursive] text-[#732c2c] text-[1.5em] block mt-1 sm:mt-2">{t(`${ns}.about.subtitle`)}</span>
             </h2>
             
             <div className="space-y-4 sm:space-y-6 text-[#420c14]/60 text-sm sm:text-lg leading-relaxed">
-              <p>{t('landing.about.description1')}</p>
-              <p>{t('landing.about.description2')}</p>
+              <p>{t(`${ns}.about.description1`)}</p>
+              <p>{t(`${ns}.about.description2`)}</p>
             </div>
             
             <div className="mt-8 sm:mt-12 grid grid-cols-2 gap-4 sm:gap-6">
               {[
-                { icon: <Crown className="w-4 h-4 sm:w-5 sm:h-5" />, label: t('landing.about.pills.templates') },
-                { icon: <Globe className="w-4 h-4 sm:w-5 sm:h-5" />, label: t('landing.about.pills.domain') },
-                { icon: <Bell className="w-4 h-4 sm:w-5 sm:h-5" />, label: t('landing.about.pills.notifications') },
-                { icon: <Palette className="w-4 h-4 sm:w-5 sm:h-5" />, label: t('landing.about.pills.customization') },
+                { icon: <Crown className="w-4 h-4 sm:w-5 sm:h-5" />, label: t(`${ns}.about.pills.templates`) },
+                { icon: <Globe className="w-4 h-4 sm:w-5 sm:h-5" />, label: t(`${ns}.about.pills.domain`) },
+                { icon: <Bell className="w-4 h-4 sm:w-5 sm:h-5" />, label: t(`${ns}.about.pills.notifications`) },
+                { icon: <Palette className="w-4 h-4 sm:w-5 sm:h-5" />, label: t(`${ns}.about.pills.customization`) },
               ].map((item, index) => (
                 <motion.div
                   key={index}
@@ -92,9 +92,9 @@ export function AboutSection() {
                 ))}
               </div>
               <p className="text-[#f5f2eb]/80 text-xs sm:text-sm italic leading-relaxed text-center lg:text-left">
-                {t('landing.about.testimonial.quote')}
+                {t(`${ns}.about.testimonial.quote`)}
               </p>
-              <p className="text-[#DDA46F] text-[10px] sm:text-xs mt-2 sm:mt-3 tracking-wider text-center lg:text-left">{t('landing.about.testimonial.author')}</p>
+              <p className="text-[#DDA46F] text-[10px] sm:text-xs mt-2 sm:mt-3 tracking-wider text-center lg:text-left">{t(`${ns}.about.testimonial.author`)}</p>
             </motion.div>
             
             <div className="absolute -inset-4 sm:-inset-6 border border-[#DDA46F]/20 rounded-[1.5rem] sm:rounded-[2rem] pointer-events-none" />

@@ -17,58 +17,22 @@ import {
   Play,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from '@/components/contexts/i18n-context'
 
-interface OnboardingStep {
+interface OnboardingStepMeta {
+  key: 'welcome' | 'website' | 'invitations' | 'seating' | 'registry' | 'itinerary'
   icon: React.ReactNode
-  title: string
-  description: string
   color: string
   image: string
 }
 
-const STEPS: OnboardingStep[] = [
-  {
-    icon: <Sparkles className="w-7 h-7" />,
-    title: 'Welcome to OhMyWedding!',
-    description: "Let's take a quick tour. Everything you need to plan and celebrate your perfect day — all in one beautiful place.",
-    color: '#DDA46F',
-    image: '/images/demo_images/demo-img-3.jpg',
-  },
-  {
-    icon: <Globe className="w-7 h-7" />,
-    title: 'Wedding Website',
-    description: 'Create a stunning personalized wedding website with custom themes, colors, and sections. Share your love story with every guest.',
-    color: '#9ba082',
-    image: '/images/demo_images/demo-img-12.jpg',
-  },
-  {
-    icon: <Mail className="w-7 h-7" />,
-    title: 'Invitations & Guests',
-    description: 'Send beautiful digital invitations, manage your guest list, track RSVPs, and organize groups — all effortlessly.',
-    color: '#c9956e',
-    image: '/images/demo_images/demo-img-27.jpg',
-  },
-  {
-    icon: <LayoutGrid className="w-7 h-7" />,
-    title: 'Seating Layout',
-    description: 'Design your floor plan and arrange tables with our drag-and-drop editor. Assign guests with a click.',
-    color: '#b08e7a',
-    image: '/images/demo_images/demo-img-18.jpg',
-  },
-  {
-    icon: <Gift className="w-7 h-7" />,
-    title: 'Gift Registry',
-    description: 'Create custom registries and let your guests contribute to what matters most — from honeymoon funds to new home essentials.',
-    color: '#732c2c',
-    image: '/images/demo_images/demo-img-34.jpg',
-  },
-  {
-    icon: <CalendarDays className="w-7 h-7" />,
-    title: 'Event Itinerary',
-    description: 'Plan and share your event schedule with guests. From ceremony to reception — keep everyone informed and on time.',
-    color: '#6b7a48',
-    image: '/images/demo_images/demo-img-41.jpg',
-  },
+const STEP_META: OnboardingStepMeta[] = [
+  { key: 'welcome', icon: <Sparkles className="w-7 h-7" />, color: '#DDA46F', image: '/images/demo_images/demo-img-3.jpg' },
+  { key: 'website', icon: <Globe className="w-7 h-7" />, color: '#9ba082', image: '/images/demo_images/demo-img-12.jpg' },
+  { key: 'invitations', icon: <Mail className="w-7 h-7" />, color: '#c9956e', image: '/images/demo_images/demo-img-27.jpg' },
+  { key: 'seating', icon: <LayoutGrid className="w-7 h-7" />, color: '#b08e7a', image: '/images/demo_images/demo-img-18.jpg' },
+  { key: 'registry', icon: <Gift className="w-7 h-7" />, color: '#732c2c', image: '/images/demo_images/demo-img-34.jpg' },
+  { key: 'itinerary', icon: <CalendarDays className="w-7 h-7" />, color: '#6b7a48', image: '/images/demo_images/demo-img-41.jpg' },
 ]
 
 interface OnboardingTutorialProps {
@@ -76,8 +40,15 @@ interface OnboardingTutorialProps {
 }
 
 export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
+  const { t } = useTranslation()
   const [currentStep, setCurrentStep] = useState(0)
   const [direction, setDirection] = useState(0)
+
+  const STEPS = STEP_META.map((meta) => ({
+    ...meta,
+    title: t(`admin.dashboard.onboarding.steps.${meta.key}.title`),
+    description: t(`admin.dashboard.onboarding.steps.${meta.key}.description`),
+  }))
 
   const handleComplete = useCallback(async () => {
     try {
@@ -144,7 +115,7 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
           <button
             onClick={handleComplete}
             className="absolute top-3 right-3 z-20 p-1.5 rounded-full bg-black/10 hover:bg-black/20 text-[#420c14]/60 hover:text-[#420c14] transition-all"
-            aria-label="Close"
+            aria-label={t('admin.dashboard.onboarding.close')}
           >
             <X className="w-4 h-4" />
           </button>
@@ -192,7 +163,7 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
                       >
                         <Play className="w-3.5 h-3.5 text-white fill-white ml-0.5" />
                       </div>
-                      <span className="text-xs font-medium text-[#420c14]/70">Demo video coming soon</span>
+                      <span className="text-xs font-medium text-[#420c14]/70">{t('admin.dashboard.onboarding.demoVideoComingSoon')}</span>
                     </div>
                   </div>
                 </motion.div>
@@ -268,7 +239,7 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
                     onClick={handleComplete}
                     className="text-xs text-[#420c14]/40 hover:text-[#420c14]/70 transition-colors text-left"
                   >
-                    Skip tour
+                    {t('admin.dashboard.onboarding.skipTour')}
                   </button>
                 </div>
 
@@ -282,7 +253,7 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
                       className="text-[#420c14]/50 hover:text-[#420c14] hover:bg-[#420c14]/5"
                     >
                       <ChevronLeft className="w-4 h-4 mr-0.5" />
-                      Back
+                      {t('admin.dashboard.onboarding.back')}
                     </Button>
                   )}
                   <Button
@@ -291,7 +262,7 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
                     className="font-semibold text-white"
                     style={{ backgroundColor: step.color }}
                   >
-                    {isLast ? 'Get Started' : 'Next'}
+                    {isLast ? t('admin.dashboard.onboarding.getStarted') : t('admin.dashboard.onboarding.next')}
                     {!isLast && <ChevronRight className="w-4 h-4 ml-0.5" />}
                   </Button>
                 </div>

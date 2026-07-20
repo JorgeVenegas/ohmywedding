@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useTranslation } from '@/components/contexts/i18n-context'
 import { motion, useInView } from 'framer-motion'
 
-export function GoldenBannerSection() {
+export function GoldenBannerSection({ ns = 'landing' }: { ns?: string }) {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-100px" })
   const { t } = useTranslation()
@@ -34,7 +34,7 @@ export function GoldenBannerSection() {
             className="text-[#420c14] leading-[1.2] text-[8em]"
             style={{ textShadow: '0 2px 20px rgba(221,164,111,0.3)' }}
           >
-            <span className="font-serif text-[2.15em] md:text-[3.15em]">&ldquo;{t('landing.goldenBanner.quote')}&rdquo;</span>
+            <span className="font-serif text-[2.15em] md:text-[3.15em]">&ldquo;{t(`${ns}.goldenBanner.quote`)}&rdquo;</span>
           </p>
         </motion.div>
       </div>

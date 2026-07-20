@@ -1,6 +1,117 @@
 // Supported locales
 export type Locale = 'en' | 'es'
 
+// Cross-sell section introducing the other audience's offering
+// (`plannerTeaser` on /couples, `coupleTeaser` on /planners) — always 4 items.
+export interface AudienceTeaserCopy {
+  label: string
+  title: string
+  subtitle: string
+  description: string
+  items: [
+    { title: string; description: string },
+    { title: string; description: string },
+    { title: string; description: string },
+    { title: string; description: string },
+  ]
+  cta: string
+}
+
+// Interactive pricing quiz copy for the couples landing page
+export interface CouplePricingQuizCopy {
+  skip: string
+  takeQuiz: string
+  retake: string
+  processing: string
+  progressHint: string
+  stepOf: string
+  selectCta: string
+  guestCount: {
+    title: string
+    options: {
+      under100: { title: string; description: string }
+      '100to250': { title: string; description: string }
+      over250: { title: string; description: string }
+    }
+  }
+  invitationStyle: {
+    title: string
+    options: {
+      simple: { title: string; description: string }
+      unique: { title: string; description: string }
+      custom: { title: string; description: string }
+    }
+  }
+  managementNeed: {
+    title: string
+    options: {
+      essentials: { title: string; description: string }
+      fullToolkit: { title: string; description: string }
+      hasPlanner: { title: string; description: string }
+    }
+  }
+  result: {
+    eyebrow: string
+    heading: string
+    bundleLabel: string
+    bundleBadge: string
+    bundleTotalNote: string
+    bundleCta: string
+    bundleFlowNote: string
+    invitationAxisLabel: string
+    managementAxisLabel: string
+    discountNote: string
+    invitationOnlyLabel: string
+    plannerNudge: string
+    plannerNudgeCta: string
+  }
+}
+
+// Interactive pricing quiz copy for the planners landing page
+export interface PlannerPricingQuizCopy {
+  skip: string
+  takeQuiz: string
+  retake: string
+  processing: string
+  progressHint: string
+  stepOf: string
+  selectCta: string
+  billingMode: {
+    title: string
+    options: {
+      single: { title: string; description: string }
+      ongoing: { title: string; description: string }
+    }
+  }
+  volume: {
+    title: string
+    options: {
+      low: { title: string; description: string }
+      mid: { title: string; description: string }
+      high: { title: string; description: string }
+    }
+  }
+  priority: {
+    title: string
+    options: {
+      branding: { title: string; description: string }
+      dashboard: { title: string; description: string }
+      support: { title: string; description: string }
+    }
+  }
+  result: {
+    eyebrow: string
+    heading: string
+    recommendedBadge: string
+    subscriptionBadge: string
+    subscriptionTagline: string
+    subscriptionDescription: string
+    subscriptionPrice: string
+    subscriptionEmailSubject: string
+    talkToUsCta: string
+  }
+}
+
 // Translation keys structure
 export interface Translations {
   // Common UI elements
@@ -783,6 +894,7 @@ export interface Translations {
     siteLanguage: string
     selectLanguage: string
     weddingDetails: string
+    designLockedNotice: string
     theme: string
     sharing: string
     addSection: string
@@ -945,6 +1057,7 @@ export interface Translations {
     }
     hero: {
       title: string
+      taglines?: Array<{ text: string; highlight: string }>
       subtitle: string
       subtitle2: string
       subtitle3: string
@@ -1008,6 +1121,8 @@ export interface Translations {
       title: string
       subtitle: string
       description: string
+      invitationGroup: string
+      managementGroup: string
       comparePlans: string
       features: string
       free: string
@@ -1128,6 +1243,35 @@ export interface Translations {
       termsOfService: string
       madeWith: string
       privacyDescription: string
+    }
+  }
+
+  // Retargeted copy for the audience-specific landing pages (/couples, /planners).
+  // `nav`, `pricing`, and `footer` are intentionally omitted — those sections stay
+  // shared/unparametrized (read from the plain `landing` namespace) on every page.
+  // `plannerTeaser`/`coupleTeaser` are the cross-sell sections introducing the other
+  // audience's offering, and `pricingQuiz` drives each page's interactive pricing quiz.
+  landingCouples: Omit<Translations['landing'], 'nav' | 'pricing' | 'footer'> & {
+    plannerTeaser: AudienceTeaserCopy
+    pricingQuiz: CouplePricingQuizCopy
+  }
+  landingPlanners: Omit<Translations['landing'], 'nav' | 'pricing' | 'footer'> & {
+    coupleTeaser: AudienceTeaserCopy
+    pricingQuiz: PlannerPricingQuizCopy
+  }
+
+  // Root "/" audience chooser page
+  audienceChooser: {
+    kicker: string
+    title: string
+    cta: string
+    couple: {
+      label: string
+      sublabel: string
+    }
+    planner: {
+      label: string
+      sublabel: string
     }
   }
 
@@ -1472,6 +1616,11 @@ export interface Translations {
       checkEmailTitle: string
       checkEmailDesc: string
       checkSpam: string
+      sidePanel: {
+        kicker: string
+        title: string
+        subtitle: string
+      }
     }
   }
 
@@ -1503,6 +1652,29 @@ export interface Translations {
         recentActivity: { title: string; description: string }
         payments: { title: string; description: string }
         timeline: { title: string; description: string }
+      }
+      onboarding: {
+        skipTour: string
+        back: string
+        next: string
+        getStarted: string
+        close: string
+        demoVideoComingSoon: string
+        steps: {
+          welcome: { title: string; description: string }
+          website: { title: string; description: string }
+          invitations: { title: string; description: string }
+          seating: { title: string; description: string }
+          registry: { title: string; description: string }
+          itinerary: { title: string; description: string }
+        }
+      }
+      notReadyBanner: {
+        title: string
+        description: string
+        markReady: string
+        settings: string
+        viewInActivityTracking: string
       }
     }
     selector: {
@@ -1537,6 +1709,7 @@ export interface Translations {
         general: string
         collaborators: string
         dashboardSections: string
+        messaging: string
       }
       dashboardSections: {
         title: string
@@ -1544,6 +1717,21 @@ export interface Translations {
         allEnabled: string
         cards: string
         panels: string
+      }
+      messaging: {
+        description: string
+        connectedPrefix: string
+        notFullyConnected: string
+        notConnectedYet: string
+        setupDescription: string
+        wabaId: string
+        phoneNumberId: string
+        displayPhoneNumber: string
+        displayName: string
+        accessToken: string
+        phonePlaceholder: string
+        saving: string
+        save: string
       }
       subscription: {
         title: string
@@ -2549,21 +2737,6 @@ export interface Translations {
       }
       loading: string
       unknownContact: string
-      connectWhatsapp: {
-        connectedPrefix: string
-        edit: string
-        notFullyConnected: string
-        connectPrompt: string
-        setupDescription: string
-        wabaId: string
-        phoneNumberId: string
-        displayPhoneNumber: string
-        displayName: string
-        accessToken: string
-        phonePlaceholder: string
-        saving: string
-        save: string
-      }
       conversationList: {
         title: string
         openCount: string
@@ -2628,6 +2801,14 @@ export interface Translations {
         menu: {
           title: string
           noneAssigned: string
+        }
+        invitation: {
+          title: string
+          sentAt: string
+          notSent: string
+          openedCount: string
+          notOpened: string
+          viewLink: string
         }
       }
     }

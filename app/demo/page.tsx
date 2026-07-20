@@ -1,7 +1,9 @@
 "use client"
 
+import { Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useSearchParams } from 'next/navigation'
 import { PAGE_TEMPLATES, TEMPLATE_CATEGORIES } from '@/lib/page-templates'
 import { COLOR_THEMES, FONT_PAIRINGS } from '@/lib/theme-config'
 import { Button } from '@/components/ui/button'
@@ -9,6 +11,7 @@ import { Card } from '@/components/ui/card'
 import { Header } from '@/components/header'
 import { Eye, ArrowRight, Sparkles, Palette, Type } from 'lucide-react'
 import { useState } from 'react'
+import { resolveLandingBackHref, withLandingSource } from '@/lib/landing-source'
 
 // Demo images assignment per template
 const TEMPLATE_DEMO_IMAGES: Record<string, string> = {
@@ -20,8 +23,11 @@ const TEMPLATE_DEMO_IMAGES: Record<string, string> = {
   'simple-love': '/images/demo_images/demo-img-50.jpg',
 }
 
-export default function DemoPage() {
+function DemoPageContent() {
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+  const landingSource = searchParams.get('from')
+  const backHref = resolveLandingBackHref(landingSource)
 
   const filteredTemplates = categoryFilter
     ? PAGE_TEMPLATES.filter(t => t.category === categoryFilter)
@@ -31,10 +37,10 @@ export default function DemoPage() {
     <main className="min-h-screen bg-background">
       <Header
         showBackButton
-        backHref="/"
+        backHref={backHref}
         title="Template Gallery"
         rightContent={
-          <Link href="/create-wedding">
+          <Link href={withLandingSource('/create-wedding', landingSource)}>
             <Button size="sm" className="gap-2">
               <Sparkles className="w-4 h-4" />
               Create Your Own
@@ -222,7 +228,7 @@ export default function DemoPage() {
             <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
               Use our AI-powered designer to create a custom wedding website based on your vision. Just describe what you want!
             </p>
-            <Link href="/create-wedding">
+            <Link href={withLandingSource('/create-wedding', landingSource)}>
               <Button size="lg" className="gap-2">
                 <Sparkles className="w-5 h-5" />
                 Create with AI
@@ -232,5 +238,13 @@ export default function DemoPage() {
         </div>
       </div>
     </main>
+  )
+}
+
+export default function DemoPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <DemoPageContent />
+    </Suspense>
   )
 }

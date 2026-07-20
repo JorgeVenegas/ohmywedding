@@ -1,11 +1,14 @@
 'use client'
 
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Sparkles, ArrowRight, ArrowDown, Star, Play } from 'lucide-react'
 import { useTranslation } from '@/components/contexts/i18n-context'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { getTranslations } from '@/lib/i18n'
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
+import { withLandingSource, type LandingSource } from '@/lib/landing-source'
+import { RotatingVideoBackground } from '@/components/ui/rotating-video-background'
 
 const heroVideos = [
   "/videos/vid1.mp4",
@@ -16,60 +19,32 @@ const heroVideos = [
   "/videos/vid12.mp4",
 ]
 
-export function HeroSection() {
+export function HeroSection({ ns = 'landing', source }: { ns?: string, source?: LandingSource }) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const videoRefs = useRef<(HTMLVideoElement | null)[]>([])
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
-  const [videosReady, setVideosReady] = useState(false)
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
+  const [tagline, setTagline] = useState<{ text: string; highlight: string } | null>(null)
+
+  useEffect(() => {
+    const raw = getTranslations(locale) as Record<string, any>
+    const phrases: Array<{ text: string; highlight: string }> | undefined = raw[ns]?.hero?.taglines
+    if (phrases?.length) {
+      setTagline(phrases[Math.floor(Math.random() * phrases.length)])
+    }
+  }, [locale, ns])
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"]
   })
-  
+
   const y = useTransform(scrollYProgress, [0, 1], [0, 300])
   const opacity = useTransform(scrollYProgress, [0, 0.6], [1, 0])
-
-  // Lazy-load all videos after initial page paint so load time is unaffected
-  useEffect(() => {
-    const timer = setTimeout(() => setVideosReady(true), 100)
-    return () => clearTimeout(timer)
-  }, [])
-
-  // Play the current video whenever index changes or videos mount
-  useEffect(() => {
-    const video = videoRefs.current[currentVideoIndex]
-    if (!video) return
-    video.currentTime = 0
-    video.play().catch(() => {})
-  }, [currentVideoIndex, videosReady])
-
-  const handleVideoEnd = useCallback((index: number) => {
-    setCurrentVideoIndex((prev) => {
-      if (prev !== index) return prev
-      return (prev + 1) % heroVideos.length
-    })
-  }, [])
 
   return (
     <section ref={containerRef} className="relative min-h-[110vh] flex items-center justify-center overflow-hidden">
       {/* Video Background — all videos kept in DOM once ready for seamless transitions */}
       <div className="absolute inset-0 z-0">
-        {videosReady && heroVideos.map((src, i) => (
-          <video
-            key={src}
-            ref={(el) => { videoRefs.current[i] = el }}
-            muted
-            playsInline
-            preload="auto"
-            onEnded={() => handleVideoEnd(i)}
-            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
-            style={{ opacity: i === currentVideoIndex ? 1 : 0, pointerEvents: 'none' }}
-          >
-            <source src={src} type="video/mp4" />
-          </video>
-        ))}
+        <RotatingVideoBackground videos={heroVideos} />
         <div className="absolute inset-0 bg-[#420c14]/40" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#420c14]/30 via-transparent to-[#420c14]" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#172815]/20 via-transparent to-[#172815]/20" />
@@ -88,7 +63,7 @@ export function HeroSection() {
         >
           <span className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-8 py-2 sm:py-3 rounded-full bg-[#f5f2eb]/5 backdrop-blur-md border border-[#DDA46F]/20 text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.2em] sm:tracking-[0.4em] uppercase">
             <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
-            {t('landing.hero.title')}
+            {t(`${ns}.hero.title`)}
             <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
           </span>
         </motion.div>
@@ -100,56 +75,100 @@ export function HeroSection() {
           className="mb-4 sm:mb-8 leading-tight tracking-tight"
           style={{ textShadow: '0 4px 30px rgba(0,0,0,0.4), 0 2px 10px rgba(0,0,0,0.3)' }}
         >
-          {/* Line 1 */}
-          <span className="block leading-[1.35]">
-            <span
-              className="font-serif font-light text-[#f5f2eb] text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl"
-              style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
-            >
-              {t('landing.hero.subtitle')}{' '}
-            </span>
-            <span
-              className="relative inline-block font-serif font-light text-[#f5f2eb] text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl pb-1 sm:pb-2"
-              style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
-            >
-              {t('landing.hero.subtitle2')}
-              <svg
-                className="absolute -bottom-0.5 left-0 w-full overflow-visible"
-                height="10"
-                viewBox="0 0 100 10"
-                preserveAspectRatio="none"
-                fill="none"
-                aria-hidden="true"
+          <AnimatePresence mode="wait">
+            {tagline ? (
+              <motion.span
+                key={tagline.text}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                className="block leading-[1.35]"
               >
-                <path d="M1,6 Q25,2 50,6 Q75,10 99,6" stroke="#DDA46F" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            </span>
-          </span>
-          {/* Line 2 */}
-          <span className="block leading-[1.35]">
-            <span
-              className="font-serif font-light text-[#f5f2eb] text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl"
-              style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
-            >
-              {t('landing.hero.subtitle3')}{' '}
-            </span>
-            <span
-              className="relative inline-block font-serif font-light text-[#f5f2eb] text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl pb-1 sm:pb-2"
-              style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
-            >
-              {t('landing.hero.subtitle4')}
-              <svg
-                className="absolute -bottom-0.5 left-0 w-full overflow-visible"
-                height="10"
-                viewBox="0 0 100 10"
-                preserveAspectRatio="none"
-                fill="none"
-                aria-hidden="true"
+                <span
+                  className="font-serif font-light text-[#f5f2eb] text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl"
+                  style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
+                >
+                  {tagline.text}{' '}
+                </span>
+                <span
+                  className="relative inline-block font-serif font-light text-[#f5f2eb] text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl pb-1 sm:pb-2"
+                  style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
+                >
+                  {tagline.highlight}
+                  <svg
+                    className="absolute -bottom-0.5 left-0 w-full overflow-visible"
+                    height="10"
+                    viewBox="0 0 100 10"
+                    preserveAspectRatio="none"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path d="M1,6 Q25,2 50,6 Q75,10 99,6" stroke="#DDA46F" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                </span>
+              </motion.span>
+            ) : (
+              <motion.span
+                key="fallback"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
               >
-                <path d="M1,6 Q25,2 50,6 Q75,10 99,6" stroke="#DDA46F" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            </span>
-          </span>
+                {/* Line 1 */}
+                <span className="block leading-[1.35]">
+                  <span
+                    className="font-serif font-light text-[#f5f2eb] text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl"
+                    style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
+                  >
+                    {t(`${ns}.hero.subtitle`)}{' '}
+                  </span>
+                  <span
+                    className="relative inline-block font-serif font-light text-[#f5f2eb] text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl pb-1 sm:pb-2"
+                    style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
+                  >
+                    {t(`${ns}.hero.subtitle2`)}
+                    <svg
+                      className="absolute -bottom-0.5 left-0 w-full overflow-visible"
+                      height="10"
+                      viewBox="0 0 100 10"
+                      preserveAspectRatio="none"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path d="M1,6 Q25,2 50,6 Q75,10 99,6" stroke="#DDA46F" strokeWidth="1.8" strokeLinecap="round" />
+                    </svg>
+                  </span>
+                </span>
+                {/* Line 2 */}
+                <span className="block leading-[1.35]">
+                  <span
+                    className="font-serif font-light text-[#f5f2eb] text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl"
+                    style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
+                  >
+                    {t(`${ns}.hero.subtitle3`)}{' '}
+                  </span>
+                  <span
+                    className="relative inline-block font-serif font-light text-[#f5f2eb] text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl pb-1 sm:pb-2"
+                    style={{ textShadow: '0 4px 30px rgba(0,0,0,0.5)' }}
+                  >
+                    {t(`${ns}.hero.subtitle4`)}
+                    <svg
+                      className="absolute -bottom-0.5 left-0 w-full overflow-visible"
+                      height="10"
+                      viewBox="0 0 100 10"
+                      preserveAspectRatio="none"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path d="M1,6 Q25,2 50,6 Q75,10 99,6" stroke="#DDA46F" strokeWidth="1.8" strokeLinecap="round" />
+                    </svg>
+                  </span>
+                </span>
+              </motion.span>
+            )}
+          </AnimatePresence>
         </motion.h1>
 
         <motion.p
@@ -158,7 +177,7 @@ export function HeroSection() {
           transition={{ duration: 1.2, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className="text-sm sm:text-lg md:text-xl text-[#f5f2eb]/60 max-w-2xl mx-auto mb-5 sm:mb-10 leading-relaxed font-light tracking-wide px-2"
         >
-          {t('landing.hero.description')}
+          {t(`${ns}.hero.description`)}
         </motion.p>
 
         <motion.div
@@ -167,12 +186,12 @@ export function HeroSection() {
           transition={{ duration: 1.2, delay: 1, ease: [0.22, 1, 0.36, 1] }}
           className="flex flex-col sm:flex-row gap-3 sm:gap-5 justify-center items-center"
         >
-          <Link href="/create-wedding">
-            <Button 
-              size="lg" 
+          <Link href={withLandingSource('/create-wedding', source)}>
+            <Button
+              size="lg"
               className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] h-12 sm:h-16 px-6 sm:px-12 text-sm sm:text-base tracking-[0.1em] sm:tracking-[0.15em] font-medium group transition-all duration-700 w-full sm:w-auto"
             >
-              {t('landing.hero.cta')}
+              {t(`${ns}.hero.cta`)}
               <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 sm:ml-3 transition-transform duration-500 group-hover:translate-x-2" />
             </Button>
           </Link>
@@ -183,7 +202,7 @@ export function HeroSection() {
               className="border-[#f5f2eb]/30 text-[#f5f2eb] hover:bg-[#f5f2eb]/10 hover:border-[#f5f2eb]/50 h-12 sm:h-16 px-6 sm:px-12 text-sm sm:text-base tracking-[0.1em] sm:tracking-[0.15em] backdrop-blur-sm transition-all duration-700 w-full sm:w-auto"
             >
               <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
-              {t('landing.hero.secondary')}
+              {t(`${ns}.hero.secondary`)}
             </Button>
           </Link>
         </motion.div>
@@ -196,7 +215,7 @@ export function HeroSection() {
           className="mt-8 sm:mt-16 flex justify-center gap-8 sm:gap-16 md:gap-24"
         >
           {[
-            { value: '4.9', label: t('landing.hero.stats.rating'), icon: <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-[#DDA46F] text-[#DDA46F] inline ml-1" /> },
+            { value: '4.9', label: t(`${ns}.hero.stats.rating`), icon: <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-[#DDA46F] text-[#DDA46F] inline ml-1" /> },
           ].map((stat, index) => (
             <div key={index} className="text-center">
               <div className="text-xl sm:text-3xl md:text-4xl font-serif text-[#DDA46F] flex items-center justify-center">
@@ -221,7 +240,7 @@ export function HeroSection() {
           transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
           className="flex flex-col items-center gap-3 text-[#f5f2eb]/40"
         >
-          <span className="text-xs tracking-[0.4em] uppercase">{t('landing.hero.scrollToExplore')}</span>
+          <span className="text-xs tracking-[0.4em] uppercase">{t(`${ns}.hero.scrollToExplore`)}</span>
           <ArrowDown className="w-5 h-5" />
         </motion.div>
       </motion.div>

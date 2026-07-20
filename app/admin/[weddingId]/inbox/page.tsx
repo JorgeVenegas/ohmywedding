@@ -6,7 +6,7 @@ import { Header } from "@/components/header"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { useTranslation } from "@/components/contexts/i18n-context"
 import { useMessagingRealtime } from "@/hooks/use-messaging-realtime"
-import { ConversationList, MessageThread, GuestContextPanel, ConnectWhatsappForm } from "./components"
+import { ConversationList, MessageThread, GuestContextPanel } from "./components"
 import type { Conversation, ConversationDetail, Message } from "./types"
 
 interface InboxPageProps {
@@ -90,6 +90,25 @@ export default function InboxPage({ params }: InboxPageProps) {
   const handleSend = useCallback(
     async (body: string) => {
       if (!selectedId) return
+
+      // Optimistic bubble: appears instantly with a "sending" (clock) status
+      // instead of waiting on the round trip, then gets reconciled with the
+      // real row (real id, real status) once the send completes.
+      const optimisticId = `optimistic-${crypto.randomUUID()}`
+      const optimisticMessage: Message = {
+        id: optimisticId,
+        conversation_id: selectedId,
+        direction: "outbound",
+        sender_type: "host",
+        body,
+        message_type: "text",
+        status: "pending",
+        error_code: null,
+        error_message: null,
+        created_at: new Date().toISOString(),
+      }
+      setMessages((prev) => [...prev, optimisticMessage])
+
       const res = await fetch("/api/messaging/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -97,6 +116,10 @@ export default function InboxPage({ params }: InboxPageProps) {
       })
       if (res.ok) {
         await Promise.all([loadConversationDetail(selectedId), loadConversations()])
+      } else {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === optimisticId ? { ...m, status: "failed", error_code: "send_failed" } : m))
+        )
       }
     },
     [selectedId, loadConversationDetail, loadConversations]
@@ -113,7 +136,7 @@ export default function InboxPage({ params }: InboxPageProps) {
 
   if (messagingEnabled === false) {
     return (
-      <main className="flex min-h-screen flex-col bg-background">
+      <main className="flex h-screen flex-col overflow-hidden bg-background">
         <Header showBackButton backHref={getCleanAdminUrl(weddingId, "dashboard")} />
         <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
           <MessageCircleOff className="h-8 w-8 text-muted-foreground" />
@@ -125,14 +148,14 @@ export default function InboxPage({ params }: InboxPageProps) {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-background">
+    <main className="flex h-screen flex-col overflow-hidden bg-background">
       <Header showBackButton backHref={getCleanAdminUrl(weddingId, "dashboard")} />
-      <ConnectWhatsappForm weddingId={weddingId} />
+      <div className="h-[3px] w-full flex-shrink-0 bg-gradient-to-r from-primary via-accent to-secondary" />
 
       {loading || messagingEnabled === null ? (
         <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">{t('admin.inbox.loading')}</div>
       ) : (
-        <div className="grid flex-1 grid-cols-[260px_1fr_290px] overflow-hidden">
+        <div className="grid min-h-0 flex-1 grid-cols-[260px_1fr_290px] overflow-hidden">
           <ConversationList conversations={conversations} selectedId={selectedId} onSelect={handleSelect} />
           <MessageThread conversation={selectedConversation} messages={messages} onSend={handleSend} onTyping={handleTyping} />
           <GuestContextPanel

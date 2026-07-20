@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { createClient } from '@supabase/supabase-js'
+import { isSuperUser } from '@/lib/superadmin'
 import Stripe from 'stripe'
 import { STRIPE_API_VERSION } from '@/lib/stripe-config'
 
@@ -17,14 +18,7 @@ async function verifySuperadmin() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const { data: superuser } = await supabaseAdmin
-    .from('superusers')
-    .select('user_id')
-    .eq('user_id', user.id)
-    .eq('is_active', true)
-    .maybeSingle()
-
-  return superuser ? user : null
+  return (await isSuperUser(supabaseAdmin, { userId: user.id })) ? user : null
 }
 
 const getStripe = () => {

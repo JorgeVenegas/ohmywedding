@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient, createAdminSupabaseClient, getCollaboratorPermissions } from '@/lib/supabase-server'
+import { isSuperUser } from '@/lib/superadmin'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 export type WeddingPermissions = {
   canEdit: boolean
+  canEditDesign: boolean
   canDelete: boolean
   canManageCollaborators: boolean
   canManageInvitations: boolean
@@ -44,7 +46,7 @@ export async function GET(
     // Get wedding info using admin client to avoid RLS issues
     const { data: wedding, error: weddingError } = await adminClient
       .from('weddings')
-      .select('id, owner_id, is_demo, collaborator_emails')
+      .select('id, owner_id, is_demo, collaborator_emails, design_self_serve_locked')
       .eq('wedding_name_id', weddingId)
       .single()
 
@@ -58,6 +60,7 @@ export async function GET(
     if (!user) {
       const permissions: WeddingPermissions = {
         canEdit: false,
+        canEditDesign: false,
         canDelete: false,
         canManageCollaborators: false,
         canManageInvitations: false,
@@ -74,17 +77,9 @@ export async function GET(
     const isOwner = wedding.owner_id === user.id
     
     // Check if user is a superuser (has all permissions)
-    let isSuperuser = false
-    if (user.email) {
-      const { data: superuserCheck } = await adminClient
-        .from('superusers')
-        .select('id')
-        .eq('email', user.email.toLowerCase())
-        .eq('is_active', true)
-        .single()
-      isSuperuser = !!superuserCheck
-    }
-    
+    const isSuperuser = await isSuperUser(adminClient, { email: user.email })
+
+
     // Check if user is a collaborator by email
     const isCollaborator = user.email ? collaboratorEmails.includes(user.email.toLowerCase()) : false
 
@@ -99,8 +94,14 @@ export async function GET(
       granularPermissions = await getCollaboratorPermissions(wedding.id, user.email!)
     }
 
+    // Design editing is now centralized to superusers, except on weddings
+    // that already had a self-edited site before the lockdown (grandfathered).
+    const canSelfServeDesign = !wedding.design_self_serve_locked &&
+      (isOwner || (isCollaborator && (granularPermissions?.can_edit_page_design ?? false)))
+
     const permissions: WeddingPermissions = {
       canEdit: isOwner || isSuperuser || (isCollaborator && (granularPermissions?.can_edit_page_design ?? false)),
+      canEditDesign: isSuperuser || canSelfServeDesign,
       canDelete: isOwner || isSuperuser,
       canManageCollaborators: isOwner || isSuperuser || (isCollaborator && (granularPermissions?.can_manage_collaborators ?? false)),
       canManageInvitations: isOwner || isSuperuser || (isCollaborator && (granularPermissions?.can_manage_invitations ?? false)),

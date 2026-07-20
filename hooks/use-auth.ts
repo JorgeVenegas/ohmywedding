@@ -4,6 +4,7 @@ import type { User } from '@supabase/supabase-js'
 
 export type WeddingPermissions = {
   canEdit: boolean
+  canEditDesign: boolean
   canDelete: boolean
   canManageCollaborators: boolean
   canManageInvitations: boolean
@@ -16,6 +17,7 @@ export type WeddingPermissions = {
 
 const defaultPermissions: WeddingPermissions = {
   canEdit: false,
+  canEditDesign: false,
   canDelete: false,
   canManageCollaborators: false,
   canManageInvitations: false,

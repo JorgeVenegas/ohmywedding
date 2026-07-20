@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient, getCollaboratorPermissions } from '@/lib/supabase-server'
+import { createServerSupabaseClient, createAdminSupabaseClient, getCollaboratorPermissions } from '@/lib/supabase-server'
+import { isSuperUser } from '@/lib/superadmin'
 import { createDefaultPageConfig } from '@/lib/page-config'
 
 export const dynamic = 'force-dynamic'
@@ -24,8 +25,8 @@ export async function POST(
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(weddingId)
     const query = supabase
       .from('weddings')
-      .select('id, owner_id, collaborator_emails, wedding_name_id')
-    
+      .select('id, owner_id, collaborator_emails, wedding_name_id, design_self_serve_locked')
+
     const { data: wedding, error: weddingError } = isUUID
       ? await query.eq('id', weddingId).single()
       : await query.eq('wedding_name_id', weddingId).single()
@@ -37,15 +38,22 @@ export async function POST(
     // Check permissions
     const isOwner = wedding.owner_id === user.id
     const isCollaborator = wedding.collaborator_emails?.includes(user.email?.toLowerCase() || '')
-    if (!isOwner && !isCollaborator) {
+    const isSuperuser = await isSuperUser(createAdminSupabaseClient(), { email: user.email })
+    if (!isOwner && !isCollaborator && !isSuperuser) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Check granular permissions for collaborators
-    if (isCollaborator && !isOwner) {
-      const collabPerms = await getCollaboratorPermissions(wedding.id, user.email!)
-      if (!collabPerms.can_edit_page_design) {
-        return NextResponse.json({ error: 'You do not have permission to edit the wedding page design' }, { status: 403 })
+    // Design changes are now centralized to superusers, except on weddings that
+    // already had a self-edited site before the lockdown (grandfathered).
+    if (!isSuperuser) {
+      if (wedding.design_self_serve_locked) {
+        return NextResponse.json({ error: 'Design changes for this wedding are now handled by our team' }, { status: 403 })
+      }
+      if (isCollaborator && !isOwner) {
+        const collabPerms = await getCollaboratorPermissions(wedding.id, user.email!)
+        if (!collabPerms.can_edit_page_design) {
+          return NextResponse.json({ error: 'You do not have permission to edit the wedding page design' }, { status: 403 })
+        }
       }
     }
 

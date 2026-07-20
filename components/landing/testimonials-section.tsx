@@ -6,20 +6,20 @@ import { Star } from 'lucide-react'
 import { useTranslation } from '@/components/contexts/i18n-context'
 import { motion, useInView } from 'framer-motion'
 
-function useTestimonials() {
+function useTestimonials(ns: string) {
   const { t } = useTranslation()
   return [
-    { quote: t('landing.testimonials.items.0.quote'), author: t('landing.testimonials.items.0.author'), role: t('landing.testimonials.items.0.role'), image: "/images/demo_images/demo-img-46.jpg" },
-    { quote: t('landing.testimonials.items.1.quote'), author: t('landing.testimonials.items.1.author'), role: t('landing.testimonials.items.1.role'), image: "/images/demo_images/demo-img-47.jpg" },
-    { quote: t('landing.testimonials.items.2.quote'), author: t('landing.testimonials.items.2.author'), role: t('landing.testimonials.items.2.role'), image: "/images/demo_images/demo-img-48.jpg" },
+    { quote: t(`${ns}.testimonials.items.0.quote`), author: t(`${ns}.testimonials.items.0.author`), role: t(`${ns}.testimonials.items.0.role`), image: "/images/demo_images/demo-img-46.jpg" },
+    { quote: t(`${ns}.testimonials.items.1.quote`), author: t(`${ns}.testimonials.items.1.author`), role: t(`${ns}.testimonials.items.1.role`), image: "/images/demo_images/demo-img-47.jpg" },
+    { quote: t(`${ns}.testimonials.items.2.quote`), author: t(`${ns}.testimonials.items.2.author`), role: t(`${ns}.testimonials.items.2.role`), image: "/images/demo_images/demo-img-48.jpg" },
   ]
 }
 
-export function TestimonialsSection() {
+export function TestimonialsSection({ ns = 'landing' }: { ns?: string }) {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-100px" })
   const { t } = useTranslation()
-  const testimonials = useTestimonials()
+  const testimonials = useTestimonials(ns)
 
   return (
     <section ref={ref} className="py-20 sm:py-40 bg-[#172815] relative overflow-hidden">
@@ -33,11 +33,11 @@ export function TestimonialsSection() {
           className="text-center mb-12 sm:mb-24"
         >
           <span className="text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.3em] sm:tracking-[0.4em] uppercase mb-4 sm:mb-6 block">
-            {t('landing.testimonials.label')}
+            {t(`${ns}.testimonials.label`)}
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl text-[#f5f2eb] mb-6 sm:mb-8">
-            <span className="font-serif font-light">{t('landing.testimonials.title')}</span>
-            <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] block mt-1 sm:mt-2">{t('landing.testimonials.subtitle')}</span>
+            <span className="font-serif font-light">{t(`${ns}.testimonials.title`)}</span>
+            <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] block mt-1 sm:mt-2">{t(`${ns}.testimonials.subtitle`)}</span>
           </h2>
         </motion.div>
 

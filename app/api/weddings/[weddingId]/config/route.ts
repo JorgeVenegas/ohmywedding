@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient, createAdminSupabaseClient, getCollaboratorPermissions } from '@/lib/supabase-server'
+import { isSuperUser } from '@/lib/superadmin'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -120,45 +121,40 @@ export async function PUT(
     // Get the wedding with owner and collaborator info
     const { data: existingWedding, error: findError } = await adminClient
       .from('weddings')
-      .select('id, date_id, wedding_name_id, owner_id, collaborator_emails')
+      .select('id, date_id, wedding_name_id, owner_id, collaborator_emails, design_self_serve_locked')
       .eq('wedding_name_id', weddingId)
       .single()
 
     if (findError || !existingWedding) {
       return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
     }
-    
+
     const isOwner = existingWedding.owner_id === user.id
-    
-    // Check if user is a superuser
-    let isSuperuser = false
-    if (user.email) {
-      const { data: superuserCheck } = await adminClient
-        .from('superusers')
-        .select('id')
-        .eq('email', user.email.toLowerCase())
-        .eq('is_active', true)
-        .single()
-      isSuperuser = !!superuserCheck
-    }
-    
+    const isSuperuser = await isSuperUser(adminClient, { email: user.email })
+
     // Check if user is a collaborator
-    const isCollaborator = user.email 
-      ? (existingWedding.collaborator_emails || []).includes(user.email.toLowerCase()) 
+    const isCollaborator = user.email
+      ? (existingWedding.collaborator_emails || []).includes(user.email.toLowerCase())
       : false
-    
+
     if (!isOwner && !isCollaborator && !isSuperuser) {
       return NextResponse.json({ error: 'Forbidden - you do not have permission to edit this wedding' }, { status: 403 })
     }
 
-    // Check granular permissions for collaborators
-    if (isCollaborator && !isOwner && !isSuperuser) {
-      const collabPerms = await getCollaboratorPermissions(existingWedding.id, user.email!)
-      if (!collabPerms.can_edit_page_design) {
-        return NextResponse.json({ error: 'You do not have permission to edit the wedding page design' }, { status: 403 })
+    // Design changes are now centralized to superusers, except on weddings that
+    // already had a self-edited site before the lockdown (grandfathered).
+    if (!isSuperuser) {
+      if (existingWedding.design_self_serve_locked) {
+        return NextResponse.json({ error: 'Design changes for this wedding are now handled by our team' }, { status: 403 })
+      }
+      if (isCollaborator && !isOwner) {
+        const collabPerms = await getCollaboratorPermissions(existingWedding.id, user.email!)
+        if (!collabPerms.can_edit_page_design) {
+          return NextResponse.json({ error: 'You do not have permission to edit the wedding page design' }, { status: 403 })
+        }
       }
     }
-    
+
     const body = await request.json()
     const { config } = body
 

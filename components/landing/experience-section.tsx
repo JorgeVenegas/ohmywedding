@@ -14,7 +14,7 @@ const experienceData = [
   { id: 'gallery', key: 'gallery' as const, video: "/videos/vid21.mp4", image: "/images/demo_images/demo-img-20.jpg", carouselImage: "/images/demo_images/demo-img-48.jpg" },
 ]
 
-export function ExperienceSection() {
+export function ExperienceSection({ ns = 'landing' }: { ns?: string }) {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-50px" })
   const [activeIndex, setActiveIndex] = useState(0)
@@ -65,12 +65,12 @@ export function ExperienceSection() {
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
           >
             <span className="text-[#DDA46F] text-[10px] sm:text-xs tracking-[0.3em] sm:tracking-[0.5em] uppercase mb-4 sm:mb-8 block">
-              {t('landing.experience.label')}
+              {t(`${ns}.experience.label`)}
             </span>
-            
+
             <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#f5f2eb] mb-8 sm:mb-12 leading-[1.05]">
-              <span className="font-serif font-light block">{t('landing.experience.title')}</span>
-              <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] block mt-1 sm:mt-2">{t('landing.experience.subtitle')}</span>
+              <span className="font-serif font-light block">{t(`${ns}.experience.title`)}</span>
+              <span className="font-['Elegant',cursive] text-[#DDA46F] text-[1.5em] block mt-1 sm:mt-2">{t(`${ns}.experience.subtitle`)}</span>
             </h2>
 
             <div className="space-y-1 sm:space-y-1.5">
@@ -87,7 +87,7 @@ export function ExperienceSection() {
                   <div className="p-2.5 sm:p-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-serif text-sm sm:text-base text-[#f5f2eb] truncate">{t(`landing.experience.sections.${exp.key}.title`)}</h3>
+                        <h3 className="font-serif text-sm sm:text-base text-[#f5f2eb] truncate">{t(`${ns}.experience.sections.${exp.key}.title`)}</h3>
                       </div>
                       <div
                         className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#DDA46F] flex-shrink-0 transition-opacity duration-400"
@@ -118,7 +118,7 @@ export function ExperienceSection() {
                 >
                   <Image
                     src={experienceData[activeIndex].carouselImage}
-                    alt={t(`landing.experience.sections.${experienceData[activeIndex].key}.title`)}
+                    alt={t(`${ns}.experience.sections.${experienceData[activeIndex].key}.title`)}
                     fill
                     className="object-cover"
                     loading="lazy"

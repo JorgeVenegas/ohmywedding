@@ -3,19 +3,30 @@
 import type React from "react"
 import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import { Header } from "@/components/header"
-import { Heart, Calendar, Mail, CheckCircle } from "lucide-react"
+import { Heart, Calendar, Mail, CheckCircle, ArrowLeft } from "lucide-react"
 import { useTranslation } from "@/components/contexts/i18n-context"
 import { createClient } from "@/lib/supabase-client"
+import { resolveLandingBackHref, withLandingSource } from "@/lib/landing-source"
+import { RotatingVideoBackground } from "@/components/ui/rotating-video-background"
+
+const sideVideos = [
+  "/videos/vid15.mp4",
+  "/videos/vid1.mp4",
+  "/videos/vid9.mp4",
+]
 
 function CreateWeddingPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
+  const landingSource = searchParams.get('from')
+  const backHref = resolveLandingBackHref(landingSource)
 
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -62,6 +73,7 @@ function CreateWeddingPageContent() {
           weddingDate: formData.hasWeddingDate && formData.weddingDate ? formData.weddingDate : undefined,
           ownerEmail: !isLoggedIn ? formData.ownerEmail.trim() : undefined,
           redirectOrigin: typeof window !== 'undefined' ? window.location.origin : undefined,
+          locale,
         }),
       })
 
@@ -79,10 +91,26 @@ function CreateWeddingPageContent() {
       }
 
       const plan = searchParams.get('plan')
+      const axis = searchParams.get('axis')
+      const tier = searchParams.get('tier')
+      const bundleDiscount = searchParams.get('bundleDiscount')
       const paymentMethod = searchParams.get('paymentMethod') || 'card'
       const source = searchParams.get('source') || 'create_wedding'
 
-      if (plan === 'premium' || plan === 'deluxe') {
+      if (axis && tier) {
+        // New two-axis tier purchase (including 'basic' — there's no free tier,
+        // so every wedding needs at least one real purchase to become usable).
+        const upgradeParams = new URLSearchParams({
+          axis,
+          tier,
+          paymentMethod,
+          weddingId: result.weddingId,
+          autoCheckout: '1',
+          source,
+        })
+        if (bundleDiscount === '1') upgradeParams.set('bundleDiscount', '1')
+        router.push(withLandingSource(`/upgrade?${upgradeParams.toString()}`, landingSource))
+      } else if (plan === 'premium' || plan === 'deluxe') {
         const upgradeParams = new URLSearchParams({
           plan,
           paymentMethod,
@@ -90,7 +118,7 @@ function CreateWeddingPageContent() {
           autoCheckout: '1',
           source,
         })
-        router.push(`/upgrade?${upgradeParams.toString()}`)
+        router.push(withLandingSource(`/upgrade?${upgradeParams.toString()}`, landingSource))
       } else {
         router.push(`/admin/${result.weddingNameId}/dashboard`)
       }
@@ -104,41 +132,8 @@ function CreateWeddingPageContent() {
     formData.partner2FirstName.trim() &&
     (isLoggedIn || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.ownerEmail.trim()))
 
-  // Success screen — email was sent
-  if (emailSentTo) {
-    return (
-      <main className="min-h-screen bg-background">
-        <Header showBackButton backHref="/" title={t('auth.createWedding.essentialDetails')} />
-        <div className="max-w-lg mx-auto px-4 sm:px-6 py-12">
-          <Card className="p-8 text-center space-y-4">
-            <div className="flex justify-center">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <CheckCircle className="w-8 h-8 text-primary" />
-              </div>
-            </div>
-            <h2 className="font-serif text-2xl text-foreground">{t('auth.createWedding.checkEmailTitle')}</h2>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              {t('auth.createWedding.checkEmailDesc').replace('{email}', emailSentTo)}
-            </p>
-            <div className="flex items-center justify-center gap-2 text-sm font-medium text-primary bg-primary/5 py-2 px-4 rounded-lg">
-              <Mail className="w-4 h-4 flex-shrink-0" />
-              {emailSentTo}
-            </div>
-            <p className="text-xs text-muted-foreground">{t('auth.createWedding.checkSpam')}</p>
-          </Card>
-        </div>
-      </main>
-    )
-  }
-
   return (
     <main className="min-h-screen bg-background">
-      <Header
-        showBackButton
-        backHref="/"
-        title={t('auth.createWedding.essentialDetails')}
-      />
-
       {isSubmitting && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
           <Card className="p-8 max-w-sm w-full mx-4">
@@ -153,123 +148,196 @@ function CreateWeddingPageContent() {
         </div>
       )}
 
-      <div className="max-w-lg mx-auto px-4 sm:px-6 py-12">
-        <form onSubmit={handleSubmit}>
-          <Card className="p-6 space-y-6">
-            <div>
-              <h2 className="font-serif text-2xl text-foreground mb-1">{t('auth.createWedding.yourNames')}</h2>
-              <p className="text-sm text-muted-foreground">{t('auth.createWedding.essentialDetailsDesc')}</p>
-            </div>
+      <div className="flex flex-col lg:flex-row min-h-screen bg-[#420c14] lg:bg-background">
+        {/* Video panel — desktop only, mobile keeps the plain single-column form */}
+        <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
+          <RotatingVideoBackground videos={sideVideos} />
+          <div className="absolute inset-0 bg-[#420c14]/50" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#420c14]/80 via-[#420c14]/10 to-[#420c14]/40" />
+          <div className="relative h-full flex flex-col items-start justify-end p-12 xl:p-16">
+            <span className="text-[#DDA46F] text-xs tracking-[0.3em] uppercase mb-4">
+              {t('auth.createWedding.sidePanel.kicker')}
+            </span>
+            <h2 className="font-serif font-light text-3xl xl:text-4xl text-[#f5f2eb] leading-tight mb-4 max-w-md">
+              {t('auth.createWedding.sidePanel.title')}
+            </h2>
+            <p className="text-[#f5f2eb]/70 text-sm xl:text-base leading-relaxed max-w-sm">
+              {t('auth.createWedding.sidePanel.subtitle')}
+            </p>
+          </div>
+        </div>
 
-            {/* Partner 1 */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-foreground">{t('auth.createWedding.firstName')} *</label>
-                <Input
-                  value={formData.partner1FirstName}
-                  onChange={(e) => handleChange('partner1FirstName', e.target.value)}
-                  placeholder="Emma"
-                  required
-                  autoFocus
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-foreground">
-                  {t('auth.createWedding.lastName')}{' '}
-                  <span className="text-muted-foreground font-normal">{t('auth.createWedding.optional')}</span>
-                </label>
-                <Input
-                  value={formData.partner1LastName}
-                  onChange={(e) => handleChange('partner1LastName', e.target.value)}
-                  placeholder="Smith"
-                />
-              </div>
-            </div>
+        {/* Form column */}
+        <div className="flex-1 lg:w-1/2 px-4 sm:px-6 py-8 sm:py-12 flex flex-col">
+          <div className="w-full max-w-lg mx-auto mb-6 sm:mb-8">
+            <Link href={backHref} className="inline-flex items-center gap-2 text-[#f5f2eb]/70 hover:text-[#f5f2eb] lg:text-muted-foreground lg:hover:text-primary transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm font-light">{t('common.back')}</span>
+            </Link>
+          </div>
 
-            <div className="flex items-center gap-4">
-              <div className="flex-1 border-t border-border" />
-              <Heart className="w-4 h-4 text-primary opacity-50 flex-shrink-0" />
-              <div className="flex-1 border-t border-border" />
-            </div>
-
-            {/* Partner 2 */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-foreground">{t('auth.createWedding.firstName')} *</label>
-                <Input
-                  value={formData.partner2FirstName}
-                  onChange={(e) => handleChange('partner2FirstName', e.target.value)}
-                  placeholder="James"
-                  required
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-foreground">
-                  {t('auth.createWedding.lastName')}{' '}
-                  <span className="text-muted-foreground font-normal">{t('auth.createWedding.optional')}</span>
-                </label>
-                <Input
-                  value={formData.partner2LastName}
-                  onChange={(e) => handleChange('partner2LastName', e.target.value)}
-                  placeholder="Johnson"
-                />
-              </div>
-            </div>
-
-            {/* Wedding Date */}
-            <div className="border-t border-border pt-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">{t('auth.createWedding.iHaveDate')}</span>
+          <div className="flex-1 flex items-center justify-center">
+          <div className="w-full max-w-lg">
+            {emailSentTo ? (
+              <Card className="p-8 text-center space-y-4">
+                <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                  <Image
+                    src="/images/logos/OMW Logo Gold.png"
+                    alt="OhMyWedding"
+                    width={40}
+                    height={40}
+                    className="h-9 sm:h-10 w-auto"
+                    priority
+                  />
+                  <span className="font-serif text-xl sm:text-2xl font-light text-foreground tracking-[0.08em]">OhMyWedding</span>
+                </Link>
+                <div className="flex justify-center">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <CheckCircle className="w-8 h-8 text-primary" />
+                  </div>
                 </div>
-                <Switch
-                  checked={formData.hasWeddingDate}
-                  onCheckedChange={(v) => handleChange('hasWeddingDate', v)}
-                />
-              </div>
-              {formData.hasWeddingDate && (
-                <Input
-                  type="date"
-                  value={formData.weddingDate}
-                  onChange={(e) => handleChange('weddingDate', e.target.value)}
-                  className="w-full"
-                />
-              )}
-            </div>
+                <h2 className="font-serif text-2xl text-foreground">{t('auth.createWedding.checkEmailTitle')}</h2>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  {t('auth.createWedding.checkEmailDesc').replace('{email}', emailSentTo)}
+                </p>
+                <div className="flex items-center justify-center gap-2 text-sm font-medium text-primary bg-primary/5 py-2 px-4 rounded-lg">
+                  <Mail className="w-4 h-4 flex-shrink-0" />
+                  {emailSentTo}
+                </div>
+                <p className="text-xs text-muted-foreground">{t('auth.createWedding.checkSpam')}</p>
+              </Card>
+            ) : (
+              <form onSubmit={handleSubmit}>
+                <Card className="p-6 space-y-6">
+                  <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                    <Image
+                      src="/images/logos/OMW Logo Gold.png"
+                      alt="OhMyWedding"
+                      width={40}
+                      height={40}
+                      className="h-9 sm:h-10 w-auto"
+                      priority
+                    />
+                    <span className="font-serif text-xl sm:text-2xl font-light text-foreground tracking-[0.08em]">OhMyWedding</span>
+                  </Link>
+                  <div>
+                    <h2 className="font-serif text-2xl text-foreground mb-1">{t('auth.createWedding.yourNames')}</h2>
+                    <p className="text-sm text-muted-foreground">{t('auth.createWedding.essentialDetailsDesc')}</p>
+                  </div>
 
-            {/* Email — only for unauthenticated users */}
-            {!isCheckingAuth && !isLoggedIn && (
-              <div className="border-t border-border pt-4 space-y-1">
-                <label className="text-sm font-medium text-foreground">
-                  {t('auth.createWedding.yourEmail')} *
-                </label>
-                <Input
-                  type="email"
-                  value={formData.ownerEmail}
-                  onChange={(e) => handleChange('ownerEmail', e.target.value)}
-                  placeholder="emma@example.com"
-                  required
-                />
-                <p className="text-xs text-muted-foreground">{t('auth.createWedding.emailHint')}</p>
-              </div>
+                  {/* Partner 1 */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-foreground">{t('auth.createWedding.firstName')} *</label>
+                      <Input
+                        value={formData.partner1FirstName}
+                        onChange={(e) => handleChange('partner1FirstName', e.target.value)}
+                        placeholder="Emma"
+                        required
+                        autoFocus
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-foreground">
+                        {t('auth.createWedding.lastName')}{' '}
+                        <span className="text-muted-foreground font-normal">{t('auth.createWedding.optional')}</span>
+                      </label>
+                      <Input
+                        value={formData.partner1LastName}
+                        onChange={(e) => handleChange('partner1LastName', e.target.value)}
+                        placeholder="Smith"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 border-t border-border" />
+                    <Heart className="w-4 h-4 text-primary opacity-50 flex-shrink-0" />
+                    <div className="flex-1 border-t border-border" />
+                  </div>
+
+                  {/* Partner 2 */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-foreground">{t('auth.createWedding.firstName')} *</label>
+                      <Input
+                        value={formData.partner2FirstName}
+                        onChange={(e) => handleChange('partner2FirstName', e.target.value)}
+                        placeholder="James"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-foreground">
+                        {t('auth.createWedding.lastName')}{' '}
+                        <span className="text-muted-foreground font-normal">{t('auth.createWedding.optional')}</span>
+                      </label>
+                      <Input
+                        value={formData.partner2LastName}
+                        onChange={(e) => handleChange('partner2LastName', e.target.value)}
+                        placeholder="Johnson"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Wedding Date */}
+                  <div className="border-t border-border pt-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm font-medium text-foreground">{t('auth.createWedding.iHaveDate')}</span>
+                      </div>
+                      <Switch
+                        checked={formData.hasWeddingDate}
+                        onCheckedChange={(v) => handleChange('hasWeddingDate', v)}
+                      />
+                    </div>
+                    {formData.hasWeddingDate && (
+                      <Input
+                        type="date"
+                        value={formData.weddingDate}
+                        onChange={(e) => handleChange('weddingDate', e.target.value)}
+                        className="w-full"
+                      />
+                    )}
+                  </div>
+
+                  {/* Email — only for unauthenticated users */}
+                  {!isCheckingAuth && !isLoggedIn && (
+                    <div className="border-t border-border pt-4 space-y-1">
+                      <label className="text-sm font-medium text-foreground">
+                        {t('auth.createWedding.yourEmail')} *
+                      </label>
+                      <Input
+                        type="email"
+                        value={formData.ownerEmail}
+                        onChange={(e) => handleChange('ownerEmail', e.target.value)}
+                        placeholder="emma@example.com"
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">{t('auth.createWedding.emailHint')}</p>
+                    </div>
+                  )}
+
+                  {submitError && (
+                    <p className="text-sm text-destructive">{submitError}</p>
+                  )}
+
+                  <Button
+                    type="submit"
+                    disabled={!isValid || isSubmitting || isCheckingAuth}
+                    className="w-full"
+                    size="lg"
+                  >
+                    <Heart className="w-4 h-4 mr-2" />
+                    {t('auth.createWedding.createBtn')}
+                  </Button>
+                </Card>
+              </form>
             )}
-
-            {submitError && (
-              <p className="text-sm text-destructive">{submitError}</p>
-            )}
-
-            <Button
-              type="submit"
-              disabled={!isValid || isSubmitting || isCheckingAuth}
-              className="w-full"
-              size="lg"
-            >
-              <Heart className="w-4 h-4 mr-2" />
-              {t('auth.createWedding.createBtn')}
-            </Button>
-          </Card>
-        </form>
+          </div>
+          </div>
+        </div>
       </div>
     </main>
   )

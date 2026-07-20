@@ -781,6 +781,7 @@ export const en: Translations = {
     siteLanguage: 'Site Language',
     selectLanguage: 'Select Language',
     weddingDetails: 'Wedding Details',
+    designLockedNotice: 'Design changes are made by our team — contact us to request updates',
     theme: 'Theme',
     sharing: 'Sharing',
     addSection: 'Add Section',
@@ -1065,6 +1066,8 @@ export const en: Translations = {
       title: 'One payment,',
       subtitle: 'no surprises',
       description: 'Pick the plan that fits your wedding. One-time payment, no subscriptions.',
+      invitationGroup: 'Invitation',
+      managementGroup: 'Management',
       comparePlans: 'Compare Plans',
       features: 'Features',
       free: 'Lovers',
@@ -1250,6 +1253,442 @@ export const en: Translations = {
       termsOfService: 'Terms of Service',
       madeWith: 'Made with',
       privacyDescription: 'We value your privacy. Your data is encrypted and never shared with third parties.',
+    },
+  },
+
+  // Couples-focused landing page (/couples) — personalized invitations + planner transparency
+  landingCouples: {
+    hero: {
+      title: 'Invitations As Unique As Your Story',
+      taglines: [
+        { text: 'Every detail matters.', highlight: 'The invitation, too.' },
+        { text: 'Your wedding story', highlight: 'starts here.' },
+        { text: 'More than', highlight: 'just an invitation.' },
+        { text: 'The first memory of', highlight: 'an unforgettable wedding.' },
+      ],
+      subtitle: 'Your invitation is',
+      subtitle2: 'one of a kind,',
+      subtitle3: 'personal, custom',
+      subtitle4: 'and unforgettable.',
+      description: 'Design a wedding invitation that feels like you — then keep full visibility into RSVPs, gifts, and your wedding planner every step of the way.',
+      rotatingWords: ['personal', 'custom', 'unforgettable', 'one of a kind'],
+      cta: 'Design My Invitation',
+      secondary: 'See Examples',
+      scrollToExplore: 'Scroll to Explore',
+      stats: {
+        couples: 'Happy Couples',
+        rating: 'Rating',
+      },
+    },
+    about: {
+      label: 'Why OhMyWedding',
+      title: 'An invitation built around',
+      subtitle: 'your story',
+      description1: 'Your wedding invitation should feel as personal as your relationship. Choose the sections that matter to you — your story, your venue, your countdown — and share real-time updates with your wedding planner so everyone stays on the same page.',
+      description2: 'No templates that feel generic. Just a custom, elegant invitation and total transparency with the people helping you plan.',
+      pills: {
+        templates: 'Ready in Minutes',
+        domain: 'Your Own Domain',
+        notifications: 'All Centralized',
+        customization: 'Fully Customizable',
+      },
+      testimonial: {
+        quote: '"Creating our wedding website was incredibly easy. The design exceeded all our expectations."',
+        author: '— Jorge & Yuli, Married March 2026',
+      },
+    },
+    features: {
+      label: 'Features',
+      title: 'A wedding invitation,',
+      subtitle: 'made entirely yours',
+      description: 'Every detail of your invitation, personalized and organized — with your wedding planner always in the loop.',
+      items: {
+        invitationTracking: {
+          title: 'Invitation Tracking',
+          description: 'Know exactly who opened your invitation with real-time tracking and detailed analytics.',
+        },
+        rsvpDashboard: {
+          title: 'RSVP Dashboard',
+          description: 'Manage guest responses, meal preferences, and seating arrangements all in one place.',
+        },
+        subdomain: {
+          title: 'Your Own Subdomain',
+          description: 'Get a personalized web address that reflects your wedding\'s unique identity.',
+        },
+        messageTemplates: {
+          title: 'Message Templates',
+          description: 'Curated message templates for invitations, thank you notes, and more.',
+        },
+        notifications: {
+          title: 'Smart Notifications',
+          description: 'Stay updated with activity alerts and weekly reports on your wedding page.',
+        },
+        luxuryExperience: {
+          title: 'Shared With Your Planner',
+          description: 'Give your wedding planner real-time access to guest lists, RSVPs, and activity — full transparency, zero back-and-forth.',
+        },
+      },
+    },
+    experience: {
+      label: 'Your Invitation',
+      title: 'Every Section',
+      subtitle: 'Designed for You',
+      sections: {
+        hero: {
+          title: 'Hero',
+          subtitle: 'First Impressions',
+          description: 'A stunning welcome that sets the tone for your entire celebration.',
+        },
+        countdown: {
+          title: 'Countdown',
+          subtitle: 'The Anticipation',
+          description: 'Build excitement with an elegant countdown to your special day.',
+        },
+        ourStory: {
+          title: 'Our Story',
+          subtitle: 'Your Journey',
+          description: 'Share how your love story began and the moments that led to forever.',
+        },
+        eventDetails: {
+          title: 'Event Details',
+          subtitle: 'The Venue',
+          description: 'All the important details your guests need, beautifully presented.',
+        },
+        rsvp: {
+          title: 'RSVP',
+          subtitle: 'The Response',
+          description: 'Elegant response collection with meal preferences and special requests.',
+        },
+        gallery: {
+          title: 'Gallery',
+          subtitle: 'Your Moments',
+          description: 'Showcase your most cherished photos in a beautiful, curated gallery.',
+        },
+      },
+    },
+    goldenBanner: {
+      quote: 'Your invitation is unique, your planning should be too',
+    },
+    templates: {
+      label: 'Templates',
+      title: 'A Unique Design',
+      subtitle: 'for Every Couple',
+      previewTemplate: 'Preview Template',
+      viewAll: 'View All Templates',
+    },
+    testimonials: {
+      label: 'Testimonials',
+      title: 'Loved by Couples',
+      subtitle: 'Worldwide',
+      items: [
+        {
+          quote: 'The RSVP tracking saved us hours of work, and our wedding planner could see everything in real time too — total transparency from day one.',
+          author: 'Juliana & Oscar',
+          role: 'Married February 2026',
+        },
+        {
+          quote: 'Our guests were amazed by how beautiful and easy to use the website was. It perfectly matched our wedding style.',
+          author: 'America & Alan',
+          role: 'Married April 2026',
+        },
+        {
+          quote: 'The best investment for our wedding. The invitation tracking and RSVP dashboard made planning so much simpler.',
+          author: 'Jorge & Yuli',
+          role: 'Married March 2026',
+        },
+      ],
+    },
+    finalCta: {
+      label: 'Get Started',
+      title: 'Design your invitation',
+      subtitle: 'exactly your way',
+      description: 'Your love story is unique, your invitation should be too. Organize everything in one place — with full transparency for you and your planner.',
+      cta: 'Start Designing',
+      note: 'Takes less than 5 minutes',
+    },
+    plannerTeaser: {
+      label: 'For Your Planner',
+      title: 'Working with a',
+      subtitle: 'wedding planner?',
+      description: 'They can co-manage everything with you — from guest lists to day-of logistics — on the same dashboard you use.',
+      items: [
+        { title: 'Shared dashboard', description: 'Invite your planner to see and manage everything alongside you.' },
+        { title: 'Collaborator access', description: 'Give them exactly the permissions they need, nothing more.' },
+        { title: 'Client transparency', description: 'They get the same tools professional planners use for their clients.' },
+        { title: 'Priority support', description: 'A dedicated line for planners managing weddings on our platform.' },
+      ],
+      cta: 'See tools for planners',
+    },
+    pricingQuiz: {
+      skip: 'Skip — show me all plans',
+      takeQuiz: 'Take the quiz instead',
+      retake: 'Retake the quiz',
+      processing: 'Finding your perfect plan...',
+      progressHint: 'Answer a few questions to find your perfect plan',
+      stepOf: 'Step {{current}} of {{total}}',
+      selectCta: 'Select',
+      guestCount: {
+        title: 'How many guests are you inviting?',
+        options: {
+          under100: { title: 'Under 100', description: 'An intimate celebration' },
+          '100to250': { title: '100–250', description: 'A mid-size celebration' },
+          over250: { title: '250+', description: 'A grand celebration' },
+        },
+      },
+      invitationStyle: {
+        title: 'What kind of invitation are you dreaming of?',
+        options: {
+          simple: { title: 'Simple & ready to send', description: 'One template, no design decisions needed' },
+          unique: { title: 'Uniquely yours', description: 'Your colors, sections, and story' },
+          custom: { title: 'Fully custom, made for us', description: 'Designed from scratch by our team' },
+        },
+      },
+      managementNeed: {
+        title: 'How hands-on do you want to be with guest management?',
+        options: {
+          essentials: { title: 'Just the essentials', description: 'Guest list & RSVP tracking' },
+          fullToolkit: { title: 'The full toolkit', description: 'Seating chart, registry, reports & more' },
+          hasPlanner: { title: 'I have a wedding planner', description: 'We want to collaborate together' },
+        },
+      },
+      result: {
+        eyebrow: 'Based on your answers',
+        heading: 'Your recommended plan',
+        bundleLabel: 'Invitation + Management',
+        bundleBadge: 'Save 50% on Management',
+        bundleTotalNote: 'one-time payment · both plans included',
+        bundleCta: 'Get Started',
+        bundleFlowNote: 'Completed in two quick steps — pay for your invitation, then add management.',
+        invitationAxisLabel: 'invitation',
+        managementAxisLabel: 'guest management',
+        discountNote: '50% off management, bundled with your invitation',
+        invitationOnlyLabel: 'Just want the invitation?',
+        plannerNudge: 'Working with a wedding planner? They can co-manage everything with you.',
+        plannerNudgeCta: 'See planner tools',
+      },
+    },
+  },
+
+  // Wedding-planner-focused landing page (/planners) — backend management + client transparency
+  landingPlanners: {
+    hero: {
+      title: 'Wedding Management, Simplified',
+      taglines: [
+        { text: 'Every wedding,', highlight: 'perfectly coordinated.' },
+        { text: 'Less chasing.', highlight: 'More planning.' },
+        { text: 'More weddings.', highlight: 'Less chaos.' },
+        { text: 'The platform behind', highlight: 'extraordinary weddings.' },
+      ],
+      subtitle: 'Every wedding you run',
+      subtitle2: 'organized,',
+      subtitle3: 'every client',
+      subtitle4: 'fully informed.',
+      description: 'Manage every wedding from one dashboard — guests, RSVPs, timelines and gifts — while keeping your couples fully in the loop.',
+      rotatingWords: ['organized', 'effortless', 'transparent', 'in control'],
+      cta: 'Start Managing',
+      secondary: 'See Examples',
+      scrollToExplore: 'Scroll to Explore',
+      stats: {
+        couples: 'Weddings Managed',
+        rating: 'Rating',
+      },
+    },
+    about: {
+      label: 'Why Wedding Planners Choose Us',
+      title: 'Everything you need to manage',
+      subtitle: 'every wedding',
+      description1: 'Running multiple weddings at once means juggling guest lists, RSVPs, vendors and timelines across every client. OhMyWedding gives you one dashboard to manage it all — with a beautiful, branded website for every couple you work with.',
+      description2: 'Fewer spreadsheets, less back-and-forth, more time to focus on the wedding itself.',
+      pills: {
+        templates: 'Ready in Minutes',
+        domain: 'Client Subdomains',
+        notifications: 'All Centralized',
+        customization: 'Fully Customizable',
+      },
+      testimonial: {
+        quote: '"Managing three weddings at once used to mean three different spreadsheets. Now it\'s just one dashboard — and my couples love the transparency."',
+        author: '— Studio Bloom Events',
+      },
+    },
+    features: {
+      label: 'Features',
+      title: 'Manage every wedding,',
+      subtitle: 'without the chaos',
+      description: 'Powerful backend tools built for planners running multiple weddings at once.',
+      items: {
+        invitationTracking: {
+          title: 'Guest Activity Tracking',
+          description: 'See exactly who\'s opened invitations and engaged with each wedding site, across every client, in real time.',
+        },
+        rsvpDashboard: {
+          title: 'RSVP Dashboard',
+          description: 'Manage responses, meal preferences, and seating for every wedding you run — all in one place.',
+        },
+        subdomain: {
+          title: 'Branded Client Sites',
+          description: 'Give every couple their own personalized subdomain, styled to match their wedding.',
+        },
+        messageTemplates: {
+          title: 'Message Templates',
+          description: 'Reusable, curated templates for invitations, updates, and thank-you notes across every client.',
+        },
+        notifications: {
+          title: 'Activity Reports',
+          description: 'Daily and weekly reports on guest activity for every wedding, so nothing slips through the cracks.',
+        },
+        luxuryExperience: {
+          title: 'Client Transparency',
+          description: 'Give your couples real-time visibility into their own wedding\'s progress — no more status-update calls.',
+        },
+      },
+    },
+    experience: {
+      label: 'Client Websites',
+      title: 'Every Section',
+      subtitle: 'You Can Build',
+      sections: {
+        hero: {
+          title: 'Hero',
+          subtitle: 'First Impressions',
+          description: 'A stunning welcome that sets the tone for every couple\'s celebration.',
+        },
+        countdown: {
+          title: 'Countdown',
+          subtitle: 'The Anticipation',
+          description: 'Build excitement with an elegant countdown to the big day.',
+        },
+        ourStory: {
+          title: 'Our Story',
+          subtitle: 'Their Journey',
+          description: 'Help every couple share how their love story began.',
+        },
+        eventDetails: {
+          title: 'Event Details',
+          subtitle: 'The Venue',
+          description: 'All the important details guests need, beautifully presented.',
+        },
+        rsvp: {
+          title: 'RSVP',
+          subtitle: 'The Response',
+          description: 'Elegant response collection with meal preferences and special requests.',
+        },
+        gallery: {
+          title: 'Gallery',
+          subtitle: 'Their Moments',
+          description: 'Showcase every couple\'s most cherished photos in a curated gallery.',
+        },
+      },
+    },
+    goldenBanner: {
+      quote: 'Every wedding is unique, your workflow should be effortless',
+    },
+    templates: {
+      label: 'Templates',
+      title: 'A Bespoke Design',
+      subtitle: 'for Every Client',
+      previewTemplate: 'Preview Template',
+      viewAll: 'View All Templates',
+    },
+    testimonials: {
+      label: 'Testimonials',
+      title: 'Trusted by Wedding Planners',
+      subtitle: 'Worldwide',
+      items: [
+        {
+          quote: 'I manage six weddings at a time now without losing my mind. Every couple gets their own dashboard, and I get one view of everything.',
+          author: 'Studio Bloom Events',
+          role: 'Wedding Planning Studio',
+        },
+        {
+          quote: 'My clients love being able to check RSVPs and guest activity themselves. It\'s cut our status-update calls in half.',
+          author: 'Casa Elegante Planning',
+          role: 'Full-Service Wedding Planner',
+        },
+        {
+          quote: 'The branded client subdomains make us look incredibly polished. It\'s become part of our pitch to new couples.',
+          author: 'Marisol Events Co.',
+          role: 'Wedding & Event Planner',
+        },
+      ],
+    },
+    finalCta: {
+      label: 'Get Started',
+      title: 'Manage every wedding',
+      subtitle: 'from one place',
+      description: 'Bring every client, every guest list, and every RSVP into a single dashboard — with full transparency for the couples you serve.',
+      cta: 'Start Managing',
+      note: 'Takes less than 5 minutes',
+    },
+    coupleTeaser: {
+      label: 'For Your Couple',
+      title: 'Every wedding you run',
+      subtitle: 'gets a beautiful invitation',
+      description: 'Each couple you manage gets a personalized digital invitation — designed to match their story, not a generic template.',
+      items: [
+        { title: 'Personalized design', description: 'Colors, fonts, and sections tailored to each couple.' },
+        { title: 'Custom-built option', description: 'Our design team can build fully bespoke invitations for your top clients.' },
+        { title: 'Guest-personalized greetings', description: 'Every guest sees an invitation addressed to them.' },
+        { title: 'Unlimited photo galleries', description: 'Let each couple showcase their story in full.' },
+      ],
+      cta: 'See invitation designs',
+    },
+    pricingQuiz: {
+      skip: 'Skip — show me all plans',
+      takeQuiz: 'Take the quiz instead',
+      retake: 'Retake the quiz',
+      processing: 'Building your recommendation...',
+      progressHint: 'Answer a few questions to find the plan that fits your studio',
+      stepOf: 'Step {{current}} of {{total}}',
+      selectCta: 'Select',
+      billingMode: {
+        title: 'Are you planning for one wedding, or is this ongoing for your business?',
+        options: {
+          single: { title: 'A single wedding', description: 'I need this for one couple right now' },
+          ongoing: { title: 'Ongoing, multiple weddings a year', description: 'I run weddings as my business' },
+        },
+      },
+      volume: {
+        title: 'About how many weddings do you run per year?',
+        options: {
+          low: { title: '1–5', description: 'A boutique practice' },
+          mid: { title: '6–15', description: 'A growing studio' },
+          high: { title: '16+', description: 'A full-scale agency' },
+        },
+      },
+      priority: {
+        title: 'What matters most to you day-to-day?',
+        options: {
+          branding: { title: 'Client transparency & branding', description: 'White-label everything for my clients' },
+          dashboard: { title: 'Managing everything from one place', description: 'A single dashboard for every wedding' },
+          support: { title: 'Priority support for my team', description: 'Fast help when something comes up' },
+        },
+      },
+      result: {
+        eyebrow: 'Based on your answers',
+        heading: 'Your recommended plan',
+        recommendedBadge: 'Recommended for you',
+        subscriptionBadge: 'Subscription',
+        subscriptionTagline: 'Built for planners running weddings year-round',
+        subscriptionDescription: 'One plan for every wedding you run — priced around your studio, not per event.',
+        subscriptionPrice: 'Custom pricing',
+        subscriptionEmailSubject: 'Interested in Agency Unlimited — Wedding Planner Subscription',
+        talkToUsCta: "Let's talk",
+      },
+    },
+  },
+
+  // Root "/" audience chooser page
+  audienceChooser: {
+    kicker: 'OhMyWedding',
+    title: 'I am...',
+    cta: 'Enter',
+    couple: {
+      label: 'A Couple',
+      sublabel: 'Planning our wedding',
+    },
+    planner: {
+      label: 'A Wedding Planner',
+      sublabel: 'Managing weddings for clients',
     },
   },
 
@@ -1619,6 +2058,11 @@ export const en: Translations = {
       checkEmailTitle: 'Wedding Created!',
       checkEmailDesc: "We sent an access link to {email}. Click the link in your email to go directly to your wedding dashboard.",
       checkSpam: "Don't see it? Check your spam or junk folder.",
+      sidePanel: {
+        kicker: 'OhMyWedding',
+        title: 'Your Love Story, Beautifully Told',
+        subtitle: 'Create a wedding website your guests will love, in just a few minutes.',
+      },
     },
   },
 
@@ -1650,6 +2094,47 @@ export const en: Translations = {
         recentActivity: { title: 'Recent Activity', description: 'Real-time feed of guest interactions and RSVP events' },
         payments: { title: 'Recent Payments', description: 'Track completed registry gift payments from guests' },
         timeline: { title: 'Timeline', description: 'Plan and track key wedding milestones and deadlines' },
+      },
+      onboarding: {
+        skipTour: 'Skip tour',
+        back: 'Back',
+        next: 'Next',
+        getStarted: 'Get Started',
+        close: 'Close',
+        demoVideoComingSoon: 'Demo video coming soon',
+        steps: {
+          welcome: {
+            title: 'Welcome to OhMyWedding!',
+            description: "Let's take a quick tour. Everything you need to plan and celebrate your perfect day — all in one beautiful place.",
+          },
+          website: {
+            title: 'Wedding Website',
+            description: 'Create a stunning personalized wedding website with custom themes, colors, and sections. Share your love story with every guest.',
+          },
+          invitations: {
+            title: 'Invitations & Guests',
+            description: 'Send beautiful digital invitations, manage your guest list, track RSVPs, and organize groups — all effortlessly.',
+          },
+          seating: {
+            title: 'Seating Layout',
+            description: 'Design your floor plan and arrange tables with our drag-and-drop editor. Assign guests with a click.',
+          },
+          registry: {
+            title: 'Gift Registry',
+            description: 'Create custom registries and let your guests contribute to what matters most — from honeymoon funds to new home essentials.',
+          },
+          itinerary: {
+            title: 'Event Itinerary',
+            description: 'Plan and share your event schedule with guests. From ceremony to reception — keep everyone informed and on time.',
+          },
+        },
+      },
+      notReadyBanner: {
+        title: 'Wedding not ready',
+        description: "Activity tracking is paused. Invitation views and RSVPs won't be recorded until you mark it as Ready.",
+        markReady: 'Mark Ready',
+        settings: 'Settings',
+        viewInActivityTracking: 'See details in Activity Tracking',
       },
     },
     selector: {
@@ -1684,6 +2169,7 @@ export const en: Translations = {
         general: 'General',
         collaborators: 'Collaborators',
         dashboardSections: 'Dashboard Sections',
+        messaging: 'Messaging',
       },
       dashboardSections: {
         title: 'Dashboard Sections',
@@ -1691,6 +2177,21 @@ export const en: Translations = {
         allEnabled: 'All sections are currently enabled',
         cards: 'Management Cards',
         panels: 'Activity Panels',
+      },
+      messaging: {
+        description: 'Every wedding sends and receives WhatsApp messages through our shared number by default — no setup needed. Connect your own number here only if you want a dedicated WhatsApp number for this wedding.',
+        connectedPrefix: 'Connected — {{phone}}',
+        notFullyConnected: 'Not fully connected — finish setup below, or leave blank to keep using the shared number',
+        notConnectedYet: "Using the platform's shared WhatsApp number. Fill in the fields below only if you want your own.",
+        setupDescription: 'These fields are optional — leave them blank to keep using the shared number.',
+        wabaId: 'WABA ID',
+        phoneNumberId: 'Phone Number ID',
+        displayPhoneNumber: 'Display Phone Number',
+        displayName: 'Display Name',
+        accessToken: 'Access Token (optional for now)',
+        phonePlaceholder: '+1 555 019 2231',
+        saving: 'Saving…',
+        save: 'Save',
       },
       subscription: {
         title: 'Subscription & Features',
@@ -2697,22 +3198,6 @@ export const en: Translations = {
       },
       loading: 'Loading inbox…',
       unknownContact: 'Unknown',
-      connectWhatsapp: {
-        connectedPrefix: 'WhatsApp connected — {{phone}}',
-        edit: 'Edit',
-        notFullyConnected: 'WhatsApp not fully connected — finish setup',
-        connectPrompt: 'Connect a WhatsApp number to start sending',
-        setupDescription:
-          "No Meta Business App is connected yet, so this is a manual stand-in for Embedded Signup — enter the values from your Meta App's WhatsApp product. Until an access token is set, messages are logged but not actually delivered.",
-        wabaId: 'WABA ID',
-        phoneNumberId: 'Phone Number ID',
-        displayPhoneNumber: 'Display Phone Number',
-        displayName: 'Display Name',
-        accessToken: 'Access Token (optional for now)',
-        phonePlaceholder: '+1 555 019 2231',
-        saving: 'Saving…',
-        save: 'Save',
-      },
       conversationList: {
         title: 'Conversations',
         openCount: '{{count}} open',
@@ -2722,7 +3207,7 @@ export const en: Translations = {
       messageThread: {
         selectConversation: 'Select a conversation to view messages.',
         noMessages: 'No messages yet.',
-        notSent: 'Not sent — connect WhatsApp below',
+        notSent: 'Not sent — messaging isn\'t set up yet',
         status: {
           pending: 'Sending…',
           sent: 'Sent',
@@ -2777,6 +3262,14 @@ export const en: Translations = {
         menu: {
           title: 'Menu',
           noneAssigned: 'No menu selected yet',
+        },
+        invitation: {
+          title: 'Invitation',
+          sentAt: 'Sent {{date}}',
+          notSent: 'Not sent yet',
+          openedCount: 'Opened {{count}} time(s) · first {{date}}',
+          notOpened: 'Not opened yet',
+          viewLink: 'View invitation',
         },
       },
     },

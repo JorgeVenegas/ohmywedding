@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useTranslation } from '@/components/contexts/i18n-context'
 import { motion } from 'framer-motion'
 import type { WeddingPlan } from '@/lib/wedding-url'
+import { withLandingSource, type LandingSource } from '@/lib/landing-source'
 
 export type UserWedding = {
   id: string
@@ -19,7 +20,7 @@ export type UserWedding = {
   plan?: WeddingPlan
 }
 
-export function AuthButtons({ isMobile = false, userWeddings: externalWeddings, weddingsLoading: externalLoading }: { isMobile?: boolean, userWeddings?: UserWedding[], weddingsLoading?: boolean }) {
+export function AuthButtons({ isMobile = false, source, userWeddings: externalWeddings, weddingsLoading: externalLoading }: { isMobile?: boolean, source?: LandingSource, userWeddings?: UserWedding[], weddingsLoading?: boolean }) {
   const { user, loading, signOut } = useAuth()
   const { t } = useTranslation()
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -105,7 +106,7 @@ export function AuthButtons({ isMobile = false, userWeddings: externalWeddings, 
                 </Button>
               </Link>
             ) : (
-              <Link href="/create-wedding" className="w-full">
+              <Link href={withLandingSource('/create-wedding', source)} className="w-full">
                 <Button className="w-full bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
                   {t('landing.nav.createWedding')}
                 </Button>
@@ -184,7 +185,7 @@ export function AuthButtons({ isMobile = false, userWeddings: externalWeddings, 
             </Button>
           </Link>
         ) : (
-          <Link href="/create-wedding">
+          <Link href={withLandingSource('/create-wedding', source)}>
             <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
               {t('landing.nav.createWedding')}
             </Button>
@@ -197,12 +198,12 @@ export function AuthButtons({ isMobile = false, userWeddings: externalWeddings, 
   if (isMobile) {
     return (
       <div className="flex flex-col gap-3 w-full">
-        <Link href="/login" className="w-full">
+        <Link href={withLandingSource('/login', source)} className="w-full">
           <Button variant="ghost" className="w-full text-[#f5f2eb]/80 hover:text-[#f5f2eb] hover:bg-[#f5f2eb]/10 transition-all duration-200">
             {t('landing.nav.signIn')}
           </Button>
         </Link>
-        <Link href="/create-wedding" className="w-full">
+        <Link href={withLandingSource('/create-wedding', source)} className="w-full">
           <Button className="w-full bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
             {t('landing.nav.getStarted')}
           </Button>
@@ -213,12 +214,12 @@ export function AuthButtons({ isMobile = false, userWeddings: externalWeddings, 
 
   return (
     <div className="flex gap-3">
-      <Link href="/login">
+      <Link href={withLandingSource('/login', source)}>
         <Button variant="ghost" className="text-[#f5f2eb]/80 hover:text-[#f5f2eb] hover:bg-[#f5f2eb]/10 transition-all duration-200">
           {t('landing.nav.signIn')}
         </Button>
       </Link>
-      <Link href="/create-wedding">
+      <Link href={withLandingSource('/create-wedding', source)}>
         <Button className="bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-medium transition-all duration-200">
           {t('landing.nav.getStarted')}
         </Button>

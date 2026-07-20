@@ -143,7 +143,7 @@ export function InvitationsChartsSection({
                 {t('admin.invitations.charts.confirmationOpensTrackingDesc')}
               </p>
               <a
-                href={`/upgrade?source=charts_tracking`}
+                href={`/upgrade?source=charts_tracking&weddingId=${encodeURIComponent(weddingId)}`}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
               >
                 {t('admin.invitations.charts.upgradeToPremium')}
