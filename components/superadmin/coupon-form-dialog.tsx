@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { WeddingDatePicker } from "@/components/ui/wedding-date-picker"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Loader2 } from "lucide-react"
@@ -217,11 +218,11 @@ export function CouponFormDialog({ open, onOpenChange, onSuccess }: CouponFormDi
           {/* Expiration */}
           <div className="space-y-1.5">
             <Label className="text-sm text-[#420c14]/70">Expiration Date</Label>
-            <Input
-              type="datetime-local"
+            <WeddingDatePicker
               value={expiresAt}
-              onChange={(e) => setExpiresAt(e.target.value)}
-              className="border-[#420c14]/15"
+              onChange={setExpiresAt}
+              placeholder="No expiry"
+              locale="en"
             />
           </div>
 

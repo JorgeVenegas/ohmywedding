@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { WeddingDatePicker } from "@/components/ui/wedding-date-picker"
 import {
   Select,
   SelectContent,
@@ -554,11 +555,11 @@ export default function NewQuotePage() {
 
           <div className="space-y-1.5">
             <Label className="text-sm text-[#420c14]/70">Code Expiry Date</Label>
-            <Input
-              type="datetime-local"
+            <WeddingDatePicker
               value={couponExpiresAt}
-              onChange={e => setCouponExpiresAt(e.target.value)}
-              className="border-[#420c14]/15"
+              onChange={setCouponExpiresAt}
+              placeholder="No expiry"
+              locale="en"
             />
           </div>
         </div>

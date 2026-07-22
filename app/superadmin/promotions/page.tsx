@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
+import { WeddingDatePicker } from '@/components/ui/wedding-date-picker'
 import {
   Tag,
   Plus,
@@ -508,20 +509,19 @@ export default function PromotionsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-medium text-[#420c14]/70 mb-1.5 block">Starts At</label>
-                <input
-                  type="datetime-local"
+                <WeddingDatePicker
                   value={formStartsAt}
-                  onChange={e => setFormStartsAt(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-[#420c14]/15 text-sm focus:outline-none focus:ring-2 focus:ring-[#DDA46F]/30 focus:border-[#DDA46F]"
+                  onChange={setFormStartsAt}
+                  locale="en"
                 />
               </div>
               <div>
                 <label className="text-xs font-medium text-[#420c14]/70 mb-1.5 block">Ends At <span className="text-[#420c14]/40">(optional)</span></label>
-                <input
-                  type="datetime-local"
+                <WeddingDatePicker
                   value={formEndsAt}
-                  onChange={e => setFormEndsAt(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-[#420c14]/15 text-sm focus:outline-none focus:ring-2 focus:ring-[#DDA46F]/30 focus:border-[#DDA46F]"
+                  onChange={setFormEndsAt}
+                  placeholder="No end date"
+                  locale="en"
                 />
               </div>
             </div>

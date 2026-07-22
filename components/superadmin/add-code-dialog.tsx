@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
+import { WeddingDatePicker } from "@/components/ui/wedding-date-picker"
 import { toast } from "sonner"
 
 interface AddCodeDialogProps {
@@ -97,11 +98,11 @@ export function AddCodeDialog({ open, onOpenChange, couponId, couponName, onSucc
 
           <div className="space-y-1.5">
             <Label className="text-sm text-[#420c14]/70">Expiration Date</Label>
-            <Input
-              type="datetime-local"
+            <WeddingDatePicker
               value={expiresAt}
-              onChange={(e) => setExpiresAt(e.target.value)}
-              className="border-[#420c14]/15"
+              onChange={setExpiresAt}
+              placeholder="No expiry"
+              locale="en"
             />
           </div>
 
