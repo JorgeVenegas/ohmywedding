@@ -255,30 +255,36 @@ export default function DishesPage({ params }: DishesPageProps) {
 
       <div className="page-container space-y-8">
 
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-[#DDA46F] mb-2">{t('admin.dashboard.management')}</p>
+          <h1 className="text-2xl font-serif text-[#420c14] mb-1">{t('admin.dishes.title')}</h1>
+          <p className="text-sm text-[#420c14]/60">{t('admin.dishes.pageDescription')}</p>
+        </div>
+
         {/* ── Stats ─────────────────────────────────────────────────────────── */}
         <div className="flex flex-wrap gap-4">
-          <Card className="p-4 flex-1 min-w-[120px]">
-            <div className="text-2xl font-bold">{menus.length}</div>
-            <div className="text-sm text-muted-foreground">{t('admin.dishes.stats.totalMenus')}</div>
+          <Card className="p-4 flex-1 min-w-[120px] border-[#420c14]/10">
+            <div className="text-2xl font-serif text-[#420c14]">{menus.length}</div>
+            <div className="text-sm text-[#420c14]/50">{t('admin.dishes.stats.totalMenus')}</div>
           </Card>
-          <Card className="p-4 flex-1 min-w-[120px]">
-            <div className="text-2xl font-bold text-emerald-600">{totalAssigned}</div>
-            <div className="text-sm text-muted-foreground">{t('admin.dishes.stats.assigned')}</div>
+          <Card className="p-4 flex-1 min-w-[120px] border-[#420c14]/10">
+            <div className="text-2xl font-serif text-[#420c14]">{totalAssigned}</div>
+            <div className="text-sm text-[#420c14]/50">{t('admin.dishes.stats.assigned')}</div>
           </Card>
-          <Card className="p-4 flex-1 min-w-[120px]">
-            <div className={`text-2xl font-bold ${confirmedGuests.length - totalAssigned > 0 ? 'text-amber-600' : 'text-muted-foreground'}`}>
+          <Card className="p-4 flex-1 min-w-[120px] border-[#420c14]/10">
+            <div className={`text-2xl font-serif ${confirmedGuests.length - totalAssigned > 0 ? 'text-[#DDA46F]' : 'text-[#420c14]/40'}`}>
               {Math.max(0, confirmedGuests.length - totalAssigned)}
             </div>
-            <div className="text-sm text-muted-foreground">{t('admin.dishes.stats.unassigned')}</div>
+            <div className="text-sm text-[#420c14]/50">{t('admin.dishes.stats.unassigned')}</div>
           </Card>
         </div>
 
         {/* ── Menus grid ─────────────────────────────────────────────────────── */}
         {menus.length === 0 ? (
           <Card className="p-12 text-center">
-            <UtensilsCrossed className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">{t('admin.dishes.empty.title')}</h3>
-            <p className="text-muted-foreground mb-6 max-w-sm mx-auto">{t('admin.dishes.empty.description')}</p>
+            <UtensilsCrossed className="w-12 h-12 mx-auto text-brand/30 mb-4" />
+            <h3 className="text-lg font-serif text-brand mb-2">{t('admin.dishes.empty.title')}</h3>
+            <p className="text-sm text-brand/50 mb-6 max-w-sm mx-auto">{t('admin.dishes.empty.description')}</p>
             <Button onClick={() => { setEditingMenu(null); setShowMenuModal(true) }}>
               <Plus className="w-4 h-4 mr-2" />
               {t('admin.dishes.addMenu')}
@@ -313,7 +319,7 @@ export default function DishesPage({ params }: DishesPageProps) {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-base leading-tight">{menu.name}</h3>
+                        <h3 className="font-serif text-base text-brand leading-tight">{menu.name}</h3>
                         {menu.description && (
                           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{menu.description}</p>
                         )}
@@ -378,8 +384,8 @@ export default function DishesPage({ params }: DishesPageProps) {
             {/* Header row: title + legend */}
             <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
               <div>
-                <h2 className="text-base font-semibold">{t('admin.dishes.guestAssignments')}</h2>
-                <p className="text-sm text-muted-foreground mt-0.5">
+                <h2 className="text-base font-serif text-brand">{t('admin.dishes.guestAssignments')}</h2>
+                <p className="text-sm text-brand/50 mt-0.5">
                   {totalAssigned}/{confirmedGuests.length} {t('admin.dishes.stats.assigned').toLowerCase()}
                 </p>
               </div>

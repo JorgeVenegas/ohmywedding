@@ -6,7 +6,7 @@ import { STRIPE_API_VERSION } from '@/lib/stripe-config'
 import {
   INVITATION_PRICING,
   MANAGEMENT_PRICING,
-  deriveLegacyPlan,
+  getTierLocaleCopy,
   type InvitationTier,
   type ManagementTier,
   type PricingAxis,
@@ -37,7 +37,8 @@ export async function POST(
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const { axis, tier, source, paymentMethod, bundleDiscount } = await request.json()
+    const { axis, tier, source, paymentMethod, bundleDiscount, cancelUrl, locale } = await request.json()
+    const stripeLocale = locale === 'es' ? 'es-419' : 'en'
     const { weddingId } = await params
 
     if (axis !== 'invitation' && axis !== 'management') {
@@ -139,9 +140,15 @@ export async function POST(
       ? `${wedding.partner1_first_name} & ${wedding.partner2_first_name}`
       : wedding.wedding_name_id
 
-    const productName = selectedAxis === 'invitation'
-      ? `OhMyWedding Invitation — ${tierInfo.name}`
-      : `OhMyWedding Management — ${tierInfo.name}`
+    const localeCopy = getTierLocaleCopy(selectedAxis, tier, locale || 'en')
+    const axisLabel = locale === 'es'
+      ? (selectedAxis === 'invitation' ? 'Invitación' : 'Gestión')
+      : (selectedAxis === 'invitation' ? 'Invitation' : 'Management')
+    const productName = `OhMyWedding ${axisLabel} — ${localeCopy.name}`
+    const forCouple = locale === 'es' ? `Para ${coupleDisplay}.` : `For ${coupleDisplay}.`
+    const bundleSuffix = locale === 'es'
+      ? '50% de descuento, incluido con plan de Invitación.'
+      : '50% off, bundled with an Invitation plan.'
 
     const paymentMethodConfig: any = selectedPaymentMethod === 'msi'
       ? {
@@ -153,6 +160,7 @@ export async function POST(
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
       currency: 'mxn',
+      locale: stripeLocale,
       ...paymentMethodConfig,
       line_items: [
         {
@@ -161,8 +169,8 @@ export async function POST(
             product_data: {
               name: selectedPaymentMethod === 'msi' ? `${productName} — Meses sin Intereses` : productName,
               description: isBundleDiscount
-                ? `${tierInfo.description} For ${coupleDisplay}. 50% off, bundled with an Invitation plan.`
-                : `${tierInfo.description} For ${coupleDisplay}.`,
+                ? `${localeCopy.description} ${forCouple} ${bundleSuffix}`
+                : `${localeCopy.description} ${forCouple}`,
             },
             unit_amount: priceInCents,
           },
@@ -181,7 +189,7 @@ export async function POST(
       },
       mode: 'payment',
       success_url: `${request.headers.get('origin')}/upgrade/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${request.headers.get('origin')}/upgrade`,
+      cancel_url: `${request.headers.get('origin')}${typeof cancelUrl === 'string' && cancelUrl.startsWith('/') && !cancelUrl.startsWith('//') ? cancelUrl : '/upgrade'}`,
       allow_promotion_codes: true,
     })
 
@@ -189,17 +197,16 @@ export async function POST(
     // this row (Stripe doesn't reliably carry session metadata to the PaymentIntent
     // event the webhook actually handles) — from_plan/to_plan are also populated
     // (derived) so this stays visible in the existing plan-funnel reporting.
-    const targetInvitationTier = selectedAxis === 'invitation' ? (tier as InvitationTier) : currentInvitationTier
-    const targetManagementTier = selectedAxis === 'management' ? (tier as ManagementTier) : currentManagementTier
-
-    await supabaseAdmin.from('subscription_orders').insert({
+    const { error: orderInsertError } = await supabaseAdmin.from('subscription_orders').insert({
       wedding_id: resolvedWeddingId,
       user_id: user.id,
       source: leadSource,
       axis: selectedAxis,
       tier,
-      from_plan: deriveLegacyPlan(currentInvitationTier, currentManagementTier),
-      to_plan: deriveLegacyPlan(targetInvitationTier, targetManagementTier),
+      from_plan: `${currentInvitationTier}+${currentManagementTier}`,
+      to_plan: selectedAxis === 'invitation'
+        ? `${tier}+${currentManagementTier}`
+        : `${currentInvitationTier}+${tier}`,
       stripe_checkout_session_id: checkoutSession.id,
       stripe_payment_intent_id: checkoutSession.payment_intent as string | null,
       stripe_customer_id: customerId,
@@ -216,6 +223,12 @@ export async function POST(
         ...(isBundleDiscount ? { discount: 'bundle_50' } : {}),
       },
     })
+
+    if (orderInsertError) {
+      console.error('[checkout-tier] Failed to insert subscription_orders:', orderInsertError)
+      // Non-blocking — Stripe session is already created; log and continue so payment can proceed.
+      // The webhook will still fire but won't find an order, so also store in session metadata.
+    }
 
     return NextResponse.json({ url: checkoutSession.url, sessionId: checkoutSession.id })
   } catch (error) {

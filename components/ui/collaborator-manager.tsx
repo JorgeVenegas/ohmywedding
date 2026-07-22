@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import { UserPlus, Trash2, Users, Settings2, ChevronDown, ChevronUp } from 'lucide-react'
 import { useCollaborators } from '@/hooks/use-auth'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { ConfirmDeleteDialog } from './confirm-delete-dialog'
+import { useI18n } from '@/components/contexts/i18n-context'
 
 interface CollaboratorPermissions {
   can_edit_details: boolean
@@ -35,8 +37,9 @@ interface CollaboratorManagerProps {
 }
 
 export function CollaboratorManager({ weddingNameId }: CollaboratorManagerProps) {
+  const { t } = useI18n()
   const { collaboratorEmails, loading: collaboratorsLoading, addCollaborator, removeCollaborator } = useCollaborators(weddingNameId)
-  
+
   const [newCollaboratorEmail, setNewCollaboratorEmail] = useState('')
   const [collaboratorError, setCollaboratorError] = useState<string | null>(null)
   const [isAddingCollaborator, setIsAddingCollaborator] = useState(false)
@@ -45,9 +48,8 @@ export function CollaboratorManager({ weddingNameId }: CollaboratorManagerProps)
   const [loadingPerms, setLoadingPerms] = useState<Record<string, boolean>>({})
   const [emailToDelete, setEmailToDelete] = useState<string | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  
-  // New collaborator permissions state
-  const [newCollabPerms, setNewCollabPerms] = useState<CollaboratorPermissions>({
+
+  const defaultPerms: CollaboratorPermissions = {
     can_edit_details: false,
     can_edit_page_design: false,
     can_manage_guests: false,
@@ -60,10 +62,11 @@ export function CollaboratorManager({ weddingNameId }: CollaboratorManagerProps)
     can_view_gallery: true,
     can_manage_rsvps: false,
     can_view_rsvps: true,
-    can_manage_collaborators: false
-  })
+    can_manage_collaborators: false,
+  }
 
-  // Fetch permissions for all collaborators
+  const [newCollabPerms, setNewCollabPerms] = useState<CollaboratorPermissions>(defaultPerms)
+
   useEffect(() => {
     async function fetchAllPermissions() {
       const perms: CollaboratorWithPermissions[] = []
@@ -80,7 +83,7 @@ export function CollaboratorManager({ weddingNameId }: CollaboratorManagerProps)
       }
       setCollaboratorsWithPerms(perms)
     }
-    
+
     if (collaboratorEmails.length > 0) {
       fetchAllPermissions()
     } else {
@@ -91,303 +94,206 @@ export function CollaboratorManager({ weddingNameId }: CollaboratorManagerProps)
   const handleAddCollaborator = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newCollaboratorEmail.trim()) return
-    
+
     setIsAddingCollaborator(true)
     setCollaboratorError(null)
-    
-    // Add collaborator
+
     const result = await addCollaborator(newCollaboratorEmail.trim())
-    
+
     if (result.success) {
-      // Set permissions
       try {
         const response = await fetch(
           `/api/weddings/${weddingNameId}/collaborators/${encodeURIComponent(newCollaboratorEmail.trim())}/permissions`,
           {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newCollabPerms)
+            body: JSON.stringify(newCollabPerms),
           }
         )
-        
+
         if (!response.ok) {
           throw new Error('Failed to set permissions')
         }
-        
-        toast.success('Collaborator added successfully', {
-          description: `${newCollaboratorEmail.trim()} has been added with the selected permissions.`
+
+        toast.success(t('admin.settings.collaborators.toasts.added'), {
+          description: t('admin.settings.collaborators.toasts.addedDescription').replace('{{email}}', newCollaboratorEmail.trim()),
         })
-        
+
         setNewCollaboratorEmail('')
-        // Reset to default permissions
-        setNewCollabPerms({
-          can_edit_details: false,
-          can_edit_page_design: false,
-          can_manage_guests: false,
-          can_view_guests: true,
-          can_manage_invitations: false,
-          can_view_invitations: true,
-          can_manage_registry: false,
-          can_view_registry: true,
-          can_manage_gallery: false,
-          can_view_gallery: true,
-          can_manage_rsvps: false,
-          can_view_rsvps: true,
-          can_manage_collaborators: false
-        })
+        setNewCollabPerms(defaultPerms)
       } catch (error) {
-        setCollaboratorError('Collaborator added but failed to set permissions')
-        toast.error('Failed to set permissions', {
-          description: 'The collaborator was added but permissions could not be set.'
+        setCollaboratorError(t('admin.settings.collaborators.errors.failedPermsSaved'))
+        toast.error(t('admin.settings.collaborators.toasts.failedToSetPerms'), {
+          description: t('admin.settings.collaborators.toasts.failedToSetPermsDesc'),
         })
       }
     } else {
-      setCollaboratorError(result.error || 'Failed to add collaborator')
-      toast.error('Failed to add collaborator', {
-        description: result.error || 'Please try again.'
+      setCollaboratorError(result.error || t('admin.settings.collaborators.toasts.failedToAdd'))
+      toast.error(t('admin.settings.collaborators.toasts.failedToAdd'), {
+        description: t('admin.settings.collaborators.toasts.tryAgain'),
       })
     }
-    
+
     setIsAddingCollaborator(false)
   }
 
   const updatePermissions = async (email: string, newPerms: Partial<CollaboratorPermissions>) => {
     setLoadingPerms(prev => ({ ...prev, [email]: true }))
-    
+
     try {
       const response = await fetch(
         `/api/weddings/${weddingNameId}/collaborators/${encodeURIComponent(email)}/permissions`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newPerms)
+          body: JSON.stringify(newPerms),
         }
       )
-      
+
       if (!response.ok) {
         throw new Error('Failed to update permissions')
       }
-      
-      // Update local state
+
       setCollaboratorsWithPerms(prev =>
         prev.map(c => c.email === email ? { ...c, permissions: { ...c.permissions, ...newPerms } } : c)
       )
-      
-      toast.success('Permissions updated', {
-        description: `Updated permissions for ${email}`
+
+      toast.success(t('admin.settings.collaborators.toasts.permissionsUpdated'), {
+        description: t('admin.settings.collaborators.toasts.permissionsUpdatedFor').replace('{{email}}', email),
       })
     } catch (error) {
       console.error('Error updating permissions:', error)
-      toast.error('Failed to update permissions', {
-        description: 'Please try again.'
+      toast.error(t('admin.settings.collaborators.toasts.failedToUpdatePermissions'), {
+        description: t('admin.settings.collaborators.toasts.tryAgain'),
       })
     } finally {
       setLoadingPerms(prev => ({ ...prev, [email]: false }))
     }
   }
 
-  const PermissionCheckboxes = ({ 
-    permissions, 
-    onUpdate 
-  }: { 
-    permissions: CollaboratorPermissions
-    onUpdate: (perms: Partial<CollaboratorPermissions>) => void 
+  const PermissionRow = ({
+    label,
+    checked,
+    onChange,
+  }: {
+    label: string
+    checked: boolean
+    onChange: (v: boolean) => void
   }) => (
-    <div className="space-y-3">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {/* Details & Design */}
-        <div className="space-y-2">
-          <h4 className="text-xs font-semibold text-gray-700">Page Management</h4>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={permissions.can_edit_details}
-              onChange={(e) => onUpdate({ can_edit_details: e.target.checked })}
-              className="rounded"
-            />
-            <span className="text-gray-700">Edit wedding details</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={permissions.can_edit_page_design}
-              onChange={(e) => onUpdate({ can_edit_page_design: e.target.checked })}
-              className="rounded"
-            />
-            <span className="text-gray-700">Edit page design</span>
-          </label>
+    <div className="flex items-center justify-between py-2">
+      <span className="text-sm text-[#420c14]/80">{label}</span>
+      <Switch checked={checked} onCheckedChange={onChange} />
+    </div>
+  )
+
+  const PermissionCheckboxes = ({
+    permissions,
+    onUpdate,
+  }: {
+    permissions: CollaboratorPermissions
+    onUpdate: (perms: Partial<CollaboratorPermissions>) => void
+  }) => (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-0">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#DDA46F] mb-1">{t('admin.settings.collaborators.permissionGroups.page')}</p>
+          <div className="divide-y divide-border/50">
+            <PermissionRow label={t('admin.settings.collaborators.permissionLabels.editDetails')} checked={permissions.can_edit_details} onChange={(v) => onUpdate({ can_edit_details: v })} />
+            <PermissionRow label={t('admin.settings.collaborators.permissionLabels.editPageDesign')} checked={permissions.can_edit_page_design} onChange={(v) => onUpdate({ can_edit_page_design: v })} />
+          </div>
         </div>
 
-        {/* Guests */}
-        <div className="space-y-2">
-          <h4 className="text-xs font-semibold text-gray-700">Guest List</h4>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={permissions.can_view_guests}
-              onChange={(e) => onUpdate({ can_view_guests: e.target.checked })}
-              className="rounded"
-            />
-            <span className="text-gray-700">View guests</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={permissions.can_manage_guests}
-              onChange={(e) => onUpdate({ can_manage_guests: e.target.checked })}
-              className="rounded"
-            />
-            <span className="text-gray-700">Manage guests</span>
-          </label>
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#DDA46F] mb-1">{t('admin.settings.collaborators.permissionGroups.guestList')}</p>
+          <div className="divide-y divide-border/50">
+            <PermissionRow label={t('admin.settings.collaborators.permissionLabels.viewGuests')} checked={permissions.can_view_guests} onChange={(v) => onUpdate({ can_view_guests: v })} />
+            <PermissionRow label={t('admin.settings.collaborators.permissionLabels.manageGuests')} checked={permissions.can_manage_guests} onChange={(v) => onUpdate({ can_manage_guests: v })} />
+          </div>
         </div>
 
-        {/* Invitations */}
-        <div className="space-y-2">
-          <h4 className="text-xs font-semibold text-gray-700">Invitations</h4>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={permissions.can_view_invitations}
-              onChange={(e) => onUpdate({ can_view_invitations: e.target.checked })}
-              className="rounded"
-            />
-            <span className="text-gray-700">View invitations</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={permissions.can_manage_invitations}
-              onChange={(e) => onUpdate({ can_manage_invitations: e.target.checked })}
-              className="rounded"
-            />
-            <span className="text-gray-700">Send invitations</span>
-          </label>
+        <div className="mt-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#DDA46F] mb-1">{t('admin.settings.collaborators.permissionGroups.invitations')}</p>
+          <div className="divide-y divide-border/50">
+            <PermissionRow label={t('admin.settings.collaborators.permissionLabels.viewInvitations')} checked={permissions.can_view_invitations} onChange={(v) => onUpdate({ can_view_invitations: v })} />
+            <PermissionRow label={t('admin.settings.collaborators.permissionLabels.sendInvitations')} checked={permissions.can_manage_invitations} onChange={(v) => onUpdate({ can_manage_invitations: v })} />
+          </div>
         </div>
 
-        {/* RSVPs */}
-        <div className="space-y-2">
-          <h4 className="text-xs font-semibold text-gray-700">RSVPs</h4>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={permissions.can_view_rsvps}
-              onChange={(e) => onUpdate({ can_view_rsvps: e.target.checked })}
-              className="rounded"
-            />
-            <span className="text-gray-700">View RSVPs</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={permissions.can_manage_rsvps}
-              onChange={(e) => onUpdate({ can_manage_rsvps: e.target.checked })}
-              className="rounded"
-            />
-            <span className="text-gray-700">Edit RSVPs</span>
-          </label>
+        <div className="mt-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#DDA46F] mb-1">{t('admin.settings.collaborators.permissionGroups.rsvps')}</p>
+          <div className="divide-y divide-border/50">
+            <PermissionRow label={t('admin.settings.collaborators.permissionLabels.viewRsvps')} checked={permissions.can_view_rsvps} onChange={(v) => onUpdate({ can_view_rsvps: v })} />
+            <PermissionRow label={t('admin.settings.collaborators.permissionLabels.editRsvps')} checked={permissions.can_manage_rsvps} onChange={(v) => onUpdate({ can_manage_rsvps: v })} />
+          </div>
         </div>
 
-        {/* Registry */}
-        <div className="space-y-2">
-          <h4 className="text-xs font-semibold text-gray-700">Registry</h4>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={permissions.can_view_registry}
-              onChange={(e) => onUpdate({ can_view_registry: e.target.checked })}
-              className="rounded"
-            />
-            <span className="text-gray-700">View registry</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={permissions.can_manage_registry}
-              onChange={(e) => onUpdate({ can_manage_registry: e.target.checked })}
-              className="rounded"
-            />
-            <span className="text-gray-700">Manage registry</span>
-          </label>
+        <div className="mt-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#DDA46F] mb-1">{t('admin.settings.collaborators.permissionGroups.registry')}</p>
+          <div className="divide-y divide-border/50">
+            <PermissionRow label={t('admin.settings.collaborators.permissionLabels.viewRegistry')} checked={permissions.can_view_registry} onChange={(v) => onUpdate({ can_view_registry: v })} />
+            <PermissionRow label={t('admin.settings.collaborators.permissionLabels.manageRegistry')} checked={permissions.can_manage_registry} onChange={(v) => onUpdate({ can_manage_registry: v })} />
+          </div>
         </div>
 
-        {/* Gallery */}
-        <div className="space-y-2">
-          <h4 className="text-xs font-semibold text-gray-700">Gallery</h4>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={permissions.can_view_gallery}
-              onChange={(e) => onUpdate({ can_view_gallery: e.target.checked })}
-              className="rounded"
-            />
-            <span className="text-gray-700">View gallery</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={permissions.can_manage_gallery}
-              onChange={(e) => onUpdate({ can_manage_gallery: e.target.checked })}
-              className="rounded"
-            />
-            <span className="text-gray-700">Manage photos</span>
-          </label>
+        <div className="mt-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#DDA46F] mb-1">{t('admin.settings.collaborators.permissionGroups.gallery')}</p>
+          <div className="divide-y divide-border/50">
+            <PermissionRow label={t('admin.settings.collaborators.permissionLabels.viewGallery')} checked={permissions.can_view_gallery} onChange={(v) => onUpdate({ can_view_gallery: v })} />
+            <PermissionRow label={t('admin.settings.collaborators.permissionLabels.managePhotos')} checked={permissions.can_manage_gallery} onChange={(v) => onUpdate({ can_manage_gallery: v })} />
+          </div>
         </div>
       </div>
 
-      {/* Collaborators Management */}
-      <div className="pt-2 border-t">
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
+      <div className="pt-3 border-t border-border/60">
+        <div className="flex items-center justify-between py-2">
+          <div>
+            <p className="text-sm font-medium text-[#420c14]">{t('admin.settings.collaborators.permissionLabels.manageCollaborators')}</p>
+            <p className="text-xs text-[#420c14]/50">{t('admin.settings.collaborators.permissionLabels.manageCollaboratorsDesc')}</p>
+          </div>
+          <Switch
             checked={permissions.can_manage_collaborators}
-            onChange={(e) => onUpdate({ can_manage_collaborators: e.target.checked })}
-            className="rounded"
+            onCheckedChange={(v) => onUpdate({ can_manage_collaborators: v })}
           />
-          <span className="text-gray-700 font-medium">Can manage other collaborators</span>
-        </label>
+        </div>
       </div>
     </div>
   )
 
   return (
     <div className="space-y-6">
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-sm font-medium text-blue-800 mb-1">Share with Wedding Planner or Collaborators</h3>
-        <p className="text-xs text-blue-700">
-          Add collaborators and customize their permissions. By default, they can view everything but not make changes.
-        </p>
+      <div className="bg-[#DDA46F]/6 border border-[#DDA46F]/20 rounded-xl p-4">
+        <h3 className="text-sm font-medium text-[#420c14] mb-1">{t('admin.settings.collaborators.shareTitle')}</h3>
+        <p className="text-xs text-[#420c14]/60">{t('admin.settings.collaborators.shareDescription')}</p>
       </div>
 
-      {/* Add Collaborator Form */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Add Collaborator by Email
+      <div className="space-y-4">
+        <label className="block text-sm font-medium text-[#420c14]">
+          {t('admin.settings.collaborators.addByEmail')}
         </label>
         <form onSubmit={handleAddCollaborator} className="space-y-4">
           <div className="flex gap-2">
             <Input
               type="email"
-              placeholder="planner@email.com"
+              placeholder={t('admin.settings.collaborators.emailPlaceholder')}
               value={newCollaboratorEmail}
               onChange={(e) => setNewCollaboratorEmail(e.target.value)}
               className="flex-1"
               disabled={isAddingCollaborator}
             />
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isAddingCollaborator || !newCollaboratorEmail.trim()}
               className="flex items-center gap-2"
             >
               <UserPlus className="w-4 h-4" />
-              Add
+              {t('admin.settings.collaborators.addButton')}
             </Button>
           </div>
 
-          {/* Permission settings for new collaborator */}
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Settings2 className="w-4 h-4 text-gray-600" />
-              <h4 className="text-sm font-medium text-gray-700">Permissions</h4>
+          <div className="rounded-xl border border-[#420c14]/8 bg-[#420c14]/3 p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Settings2 className="w-4 h-4 text-[#420c14]/50" />
+              <h4 className="text-sm font-medium text-[#420c14]">{t('admin.settings.collaborators.setPermissionsTitle')}</h4>
             </div>
             <PermissionCheckboxes
               permissions={newCollabPerms}
@@ -400,41 +306,42 @@ export function CollaboratorManager({ weddingNameId }: CollaboratorManagerProps)
         )}
       </div>
 
-      {/* Collaborators List */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3">
-          Current Collaborators
-        </h3>
-        
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#420c14]/40 mb-3">
+          {t('admin.settings.collaborators.currentCollaborators')}
+        </p>
+
         {collaboratorsLoading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#DDA46F]"></div>
           </div>
         ) : collaboratorEmails.length === 0 ? (
-          <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
-            <Users className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">No collaborators yet</p>
-            <p className="text-xs text-gray-400 mt-1">Add someone above to share access</p>
+          <div className="text-center py-10 bg-[#420c14]/3 rounded-xl border border-[#420c14]/8">
+            <Users className="w-9 h-9 text-[#420c14]/20 mx-auto mb-2" />
+            <p className="text-sm text-[#420c14]/50">{t('admin.settings.collaborators.noCollaborators')}</p>
+            <p className="text-xs text-[#420c14]/30 mt-1">{t('admin.settings.collaborators.noCollaboratorsHint')}</p>
           </div>
         ) : (
           <div className="space-y-2">
             {collaboratorsWithPerms.map(({ email, permissions }) => (
-              <div 
+              <div
                 key={email}
-                className="border border-gray-200 rounded-lg overflow-hidden"
+                className="border border-[#420c14]/10 rounded-xl overflow-hidden"
               >
-                <div className="flex items-center justify-between p-3 bg-gray-50">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-700">{email}</p>
-                    <p className="text-xs text-gray-500">
-                      {permissions.can_edit_details || permissions.can_manage_guests ? 'Editor' : 'Viewer'}
+                <div className="flex items-center justify-between p-3.5 bg-[#420c14]/3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[#420c14] truncate">{email}</p>
+                    <p className="text-xs text-[#420c14]/50 mt-0.5">
+                      {permissions.can_edit_details || permissions.can_manage_guests
+                        ? t('admin.settings.collaborators.editorRole')
+                        : t('admin.settings.collaborators.viewerRole')}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 ml-3">
                     <button
                       onClick={() => setExpandedCollaborator(expandedCollaborator === email ? null : email)}
-                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                      title="Edit permissions"
+                      className="p-1.5 text-[#420c14]/30 hover:text-[#420c14] hover:bg-[#420c14]/5 rounded-lg transition-colors"
+                      title={t('admin.settings.collaborators.editPermissionsTooltip')}
                     >
                       {expandedCollaborator === email ? (
                         <ChevronUp className="w-4 h-4" />
@@ -447,14 +354,14 @@ export function CollaboratorManager({ weddingNameId }: CollaboratorManagerProps)
                         setEmailToDelete(email)
                         setShowDeleteDialog(true)
                       }}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Remove collaborator"
+                      className="p-1.5 text-[#420c14]/30 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title={t('admin.settings.collaborators.removeCollaboratorTooltip')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-                
+
                 <AnimatePresence>
                   {expandedCollaborator === email && (
                     <motion.div
@@ -464,10 +371,10 @@ export function CollaboratorManager({ weddingNameId }: CollaboratorManagerProps)
                       transition={{ duration: 0.2, ease: 'easeInOut' }}
                       className="overflow-hidden"
                     >
-                      <div className="p-4 bg-white border-t border-gray-200">
+                      <div className="p-4 bg-background border-t border-[#420c14]/8">
                         {loadingPerms[email] ? (
                           <div className="flex items-center justify-center py-4">
-                            <div className="animate-spin rounded-full h-5 h-5 border-b-2 border-blue-600"></div>
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#DDA46F]"></div>
                           </div>
                         ) : (
                           <PermissionCheckboxes
@@ -490,8 +397,8 @@ export function CollaboratorManager({ weddingNameId }: CollaboratorManagerProps)
         onConfirm={async () => {
           if (emailToDelete) {
             await removeCollaborator(emailToDelete)
-            toast.success('Collaborator removed', {
-              description: `${emailToDelete} has been removed from this wedding.`
+            toast.success(t('admin.settings.collaborators.toasts.permissionsUpdated'), {
+              description: `${emailToDelete} has been removed from this wedding.`,
             })
           }
           setShowDeleteDialog(false)

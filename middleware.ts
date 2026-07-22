@@ -53,22 +53,17 @@ function getSubdomain(hostname: string): string | null {
   return null
 }
 
-// Helper to look up a wedding's plan by its wedding_name_id
-// This is completely independent of the logged-in user
-async function getWeddingPlan(weddingNameId: string): Promise<'free' | 'premium' | 'deluxe'> {
+type WeddingStatus = { hasPaid: boolean; isLocked: boolean }
+
+// Helper to look up a wedding's subscription status by its wedding_name_id
+async function getWeddingStatus(weddingNameId: string): Promise<WeddingStatus> {
   try {
-    // Use the service role key to bypass RLS entirely.
-    // The wedding_subscriptions table only allows owner SELECT via RLS,
-    // but we need to read the plan for ANY visitor to handle redirects.
-    // This is safe because middleware runs server-side only.
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
       {
         cookies: {
-          getAll() {
-            return []
-          },
+          getAll() { return [] },
           setAll() {},
         },
       }
@@ -76,65 +71,41 @@ async function getWeddingPlan(weddingNameId: string): Promise<'free' | 'premium'
 
     const { data: wedding, error: weddingError } = await supabase
       .from('weddings')
-      .select('id')
+      .select('id, is_locked')
       .eq('wedding_name_id', weddingNameId)
       .single()
 
     if (weddingError || !wedding) {
       console.warn(`Middleware: Wedding not found for ${weddingNameId}:`, weddingError?.message)
-      return 'free'
+      return { hasPaid: false, isLocked: false }
     }
 
-    const { data: weddingFeatures, error: featuresError } = await supabase
+    const isLocked = wedding.is_locked ?? false
+
+    const { data: sub } = await supabase
       .from('wedding_subscriptions')
-      .select('plan')
+      .select('invitation_tier, management_tier, plan')
       .eq('wedding_id', wedding.id)
       .single()
 
-    if (featuresError || !weddingFeatures) {
-      console.warn(`Middleware: Features not found for wedding ${wedding.id}:`, featuresError?.message)
-      return 'free'
-    }
+    if (!sub) return { hasPaid: false, isLocked }
 
-    const plan = (weddingFeatures.plan as 'free' | 'premium' | 'deluxe') || 'free'
-    console.log(`Middleware: Wedding ${weddingNameId} has plan: ${plan}`)
-    return plan
+    // Any non-basic tier, or legacy premium/deluxe plan = paid
+    const legacyPlan = (sub as any).plan as string | null
+    const hasPaid =
+      (sub.invitation_tier && sub.invitation_tier !== 'basic') ||
+      (sub.management_tier && sub.management_tier !== 'basic') ||
+      legacyPlan === 'premium' ||
+      legacyPlan === 'deluxe'
+
+    return { hasPaid: !!hasPaid, isLocked }
   } catch {
-    return 'free'
+    return { hasPaid: false, isLocked: false }
   }
 }
 
 // UUID regex for detecting weddingId path segments
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-// Helper to look up a wedding by UUID and return { weddingNameId, plan }
-// Used for redirecting /admin/{uuid}/... to the correct subdomain
-async function getWeddingByUuid(weddingId: string): Promise<{ weddingNameId: string; plan: 'free' | 'premium' | 'deluxe' } | null> {
-  try {
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { cookies: { getAll: () => [], setAll: () => {} } }
-    )
-
-    const { data: wedding, error } = await supabase
-      .from('weddings')
-      .select('wedding_name_id, wedding_subscriptions(plan)')
-      .eq('id', weddingId)
-      .single()
-
-    if (error || !wedding) return null
-
-    const sub = Array.isArray(wedding.wedding_subscriptions)
-      ? wedding.wedding_subscriptions[0]
-      : wedding.wedding_subscriptions
-    const plan = (sub?.plan as 'free' | 'premium' | 'deluxe') || 'free'
-
-    return { weddingNameId: wedding.wedding_name_id, plan }
-  } catch {
-    return null
-  }
-}
 
 // English-speaking countries (default to English)
 const ENGLISH_COUNTRIES = new Set(['US', 'CA', 'GB', 'AU', 'NZ', 'IE'])
@@ -148,9 +119,11 @@ export async function middleware(request: NextRequest) {
   // These should be processed directly without routing logic
   // =========================================================================
   if (
-    pathname.startsWith('/auth/callback') || 
+    pathname.startsWith('/auth/callback') ||
     pathname === '/login' ||
     pathname === '/create-wedding' ||
+    pathname === '/wedding-locked' ||
+    pathname.startsWith('/upgrade') ||
     pathname.startsWith('/api/registry/webhook') ||
     pathname.startsWith('/api/connect/webhook') ||
     pathname.startsWith('/api/subscriptions/webhook') ||
@@ -189,10 +162,17 @@ export async function middleware(request: NextRequest) {
         if (normalizedHost === 'localhost') {
           // fall through to normal processing
         } else {
-        // Check wedding plan to decide whether to redirect to subdomain
-        const plan = await getWeddingPlan(first)
+        // Check wedding status (paid tier + lock state)
+        const { hasPaid, isLocked } = await getWeddingStatus(first)
 
-        if (plan === 'premium' || plan === 'deluxe') {
+        if (isLocked) {
+          const url = request.nextUrl.clone()
+          url.pathname = '/wedding-locked'
+          url.searchParams.set('wedding', first)
+          return NextResponse.redirect(url)
+        }
+
+        if (hasPaid) {
           // Premium/Deluxe: redirect to subdomain URL.
           const protocol = request.nextUrl.protocol || 'http:'
           const targetHost = normalizedHost === 'ohmy.local'
@@ -242,12 +222,18 @@ export async function middleware(request: NextRequest) {
         const normalizedHost = hostWithoutPort.replace(/^www\./, '')
 
         if (normalizedHost === 'ohmy.local' || normalizedHost === 'ohmy.wedding') {
-          const plan = await getWeddingPlan(weddingNameId)
+          const { hasPaid, isLocked } = await getWeddingStatus(weddingNameId)
 
-          if (plan === 'premium' || plan === 'deluxe') {
+          if (isLocked) {
+            const url = request.nextUrl.clone()
+            url.pathname = '/wedding-locked'
+            url.searchParams.set('wedding', weddingNameId)
+            return NextResponse.redirect(url)
+          }
+
+          if (hasPaid) {
             const isRscRequest = request.headers.get('rsc') === '1' || request.nextUrl.searchParams.has('_rsc')
             if (isRscRequest) {
-              // RSC fetch: serve content on same origin, no cross-origin redirect
               return NextResponse.next()
             }
 
@@ -255,7 +241,6 @@ export async function middleware(request: NextRequest) {
             const targetHost = normalizedHost === 'ohmy.local'
               ? `${weddingNameId}.ohmy.local${port}`
               : `${weddingNameId}.ohmy.wedding`
-            // Strip /admin/{weddingNameId} and reconstruct as /admin{rest}
             const rest = pathname.slice(`/admin/${weddingNameId}`.length)
             const targetPath = rest ? `/admin${rest}` : '/admin/dashboard'
             return NextResponse.redirect(`${protocol}//${targetHost}${targetPath}`)
@@ -286,22 +271,29 @@ export async function middleware(request: NextRequest) {
       response.headers.set('x-wedding-subdomain', subdomain)
       return handleSupabaseAuth(request, response)
     } else {
-      // Check wedding plan - free weddings must not be on subdomains
-      const plan = await getWeddingPlan(subdomain)
+      // Check wedding status — paid tier + lock state
+      const { hasPaid, isLocked } = await getWeddingStatus(subdomain)
 
-      if (plan === 'free') {
-        // Free weddings are served path-based, not subdomain-based.
-        // Rewrite to a 404 page with subdomain info
+      if (isLocked) {
+        const url = request.nextUrl.clone()
+        url.hostname = hostname.replace(`${subdomain}.`, '')
+        url.pathname = '/wedding-locked'
+        url.searchParams.set('wedding', subdomain)
+        return NextResponse.redirect(url)
+      }
+
+      if (!hasPaid) {
+        // Unpaid weddings are served path-based, not subdomain-based.
         const url = request.nextUrl.clone()
         url.pathname = '/subdomain-not-available'
         url.searchParams.set('subdomain', subdomain)
-        
+
         const response = NextResponse.rewrite(url)
         response.headers.set('x-wedding-subdomain', subdomain)
         return handleSupabaseAuth(request, response)
       }
 
-      // Premium/Deluxe: serve normally on subdomain
+      // Paid plan: serve normally on subdomain
       if (pathname.startsWith('/admin')) {
         const adminPath = pathname.slice(6) // Remove '/admin' prefix, e.g., '/dashboard'
         

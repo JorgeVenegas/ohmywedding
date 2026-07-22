@@ -3,7 +3,13 @@ import Stripe from 'stripe'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { createClient } from '@supabase/supabase-js'
 import { STRIPE_API_VERSION } from '@/lib/stripe-config'
-import { PRICING, type PlanType } from '@/lib/subscription-shared'
+// Legacy checkout route for old premium/deluxe plans — kept for backward compat
+// New purchases use checkout-tier/route.ts instead
+type LegacyPlanType = 'none' | 'free' | 'premium' | 'deluxe'
+const LEGACY_PRICING: Record<'premium' | 'deluxe', { price_mxn: number }> = {
+  premium: { price_mxn: 400000 },
+  deluxe: { price_mxn: 700000 },
+}
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -34,7 +40,8 @@ export async function POST(
       )
     }
 
-    const { planType, source, leadId, promotionCodeId, couponId, promoCodeDbId, paymentMethod } = await request.json()
+    const { planType, source, leadId, promotionCodeId, couponId, promoCodeDbId, paymentMethod, locale } = await request.json()
+    const stripeLocale = locale === 'es' ? 'es-419' : 'en'
     const { weddingId } = await params
 
     // Validate plan
@@ -85,8 +92,8 @@ export async function POST(
     }
 
     // Validate plan upgrade - block same or lower plan upgrades
-    const PLAN_LEVELS: Record<PlanType, number> = { free: 0, premium: 1, deluxe: 2 }
-    
+    const PLAN_LEVELS: Record<LegacyPlanType, number> = { none: -1, free: 0, premium: 1, deluxe: 2 }
+
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -98,8 +105,8 @@ export async function POST(
       .eq('wedding_id', resolvedWeddingId)
       .maybeSingle()
     
-    const currentPlan: PlanType = (currentSub?.plan as PlanType) || 'free'
-    const targetPlan: PlanType = validatedPlanType
+    const currentPlan: LegacyPlanType = (currentSub?.plan as LegacyPlanType) || 'free'
+    const targetPlan: LegacyPlanType = validatedPlanType
     
     if (PLAN_LEVELS[targetPlan] <= PLAN_LEVELS[currentPlan]) {
       return NextResponse.json(
@@ -111,9 +118,9 @@ export async function POST(
     // Create Stripe checkout session
     const stripe = getStripe()
     
-    const originalPriceInCents = planType === 'premium' 
-      ? PRICING.premium.price_mxn 
-      : PRICING.deluxe.price_mxn
+    const originalPriceInCents = planType === 'premium'
+      ? LEGACY_PRICING.premium.price_mxn
+      : LEGACY_PRICING.deluxe.price_mxn
 
     // Fetch active global discount to get its linked Stripe coupon
     let globalDiscountId: string | null = null
@@ -233,6 +240,7 @@ export async function POST(
     const checkoutParams: any = {
       customer: customerId,
       currency: 'mxn',
+      locale: stripeLocale,
       ...paymentMethodConfig,
       line_items: [
         {

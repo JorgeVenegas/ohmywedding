@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { Clock, AlertTriangle, ArrowRight } from "lucide-react"
+import { Clock, Lock, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useSubscriptionContext } from "@/components/contexts/subscription-context"
 import { useTranslation } from "@/components/contexts/i18n-context"
@@ -22,13 +22,15 @@ function formatTimeLeft(ms: number): string {
 }
 
 export function FreeTrialBanner() {
-  const { planType, freeTrialStartedAt, weddingId, loading } = useSubscriptionContext()
+  const { hasPaidPlan, freeTrialStartedAt, weddingId, loading } = useSubscriptionContext()
   const { t } = useTranslation()
   const router = useRouter()
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
 
+  const isTrialPlan = !hasPaidPlan
+
   useEffect(() => {
-    if (planType !== "free" || !freeTrialStartedAt) {
+    if (!isTrialPlan || !freeTrialStartedAt) {
       setTimeLeft(null)
       return
     }
@@ -43,13 +45,13 @@ export function FreeTrialBanner() {
     tick()
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
-  }, [planType, freeTrialStartedAt])
+  }, [isTrialPlan, freeTrialStartedAt])
 
-  // Don't render while loading or if on a paid plan
-  if (loading || planType !== "free" || timeLeft === null) return null
+  if (loading || !isTrialPlan || timeLeft === null) return null
 
   const isExpired = timeLeft <= 0
   const isUrgent = timeLeft > 0 && timeLeft < 6 * 60 * 60 * 1000 // < 6 hours
+  const isNonePlan = false // no longer distinguishing "none" from "free" trial
 
   const upgradeHref = weddingId
     ? `/upgrade?weddingId=${weddingId}&source=free_trial_banner&autoCheckout=1`
@@ -71,11 +73,10 @@ export function FreeTrialBanner() {
         }`}
       >
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          {/* Left: icon + text */}
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex-shrink-0">
               {isExpired ? (
-                <AlertTriangle className="w-5 h-5 text-[#DDA46F]" />
+                <Lock className="w-5 h-5 text-[#DDA46F]" />
               ) : (
                 <Clock className="w-5 h-5 text-[#DDA46F]" />
               )}
@@ -83,21 +84,28 @@ export function FreeTrialBanner() {
             <div className="min-w-0">
               <p className="text-sm font-semibold text-[#f5f2eb] leading-tight">
                 {isExpired
-                  ? t("admin.layout.freeTrialBanner.expiredTitle")
-                  : `${t("admin.layout.freeTrialBanner.title")} `}
-                {!isExpired && (
-                  <span className="font-mono text-[#DDA46F] tabular-nums">
-                    {formatTimeLeft(timeLeft)}
-                  </span>
-                )}
+                  ? (isNonePlan
+                      ? t("admin.layout.freeTrialBanner.lockedExpiredTitle")
+                      : t("admin.layout.freeTrialBanner.expiredTitle"))
+                  : (
+                    <>
+                      {isNonePlan
+                        ? t("admin.layout.freeTrialBanner.lockedTitle")
+                        : t("admin.layout.freeTrialBanner.title")}{' '}
+                      <span className="font-mono text-[#DDA46F] tabular-nums">
+                        {formatTimeLeft(timeLeft)}
+                      </span>
+                    </>
+                  )}
               </p>
               <p className="text-xs text-[#f5f2eb]/70 mt-0.5 hidden sm:block">
-                {t("admin.layout.freeTrialBanner.description")}
+                {isNonePlan
+                  ? t("admin.layout.freeTrialBanner.lockedDescription")
+                  : t("admin.layout.freeTrialBanner.description")}
               </p>
             </div>
           </div>
 
-          {/* Right: CTA */}
           <Button
             size="sm"
             className="flex-shrink-0 bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-semibold text-xs gap-1.5 px-4 h-8"

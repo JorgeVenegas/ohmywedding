@@ -16,6 +16,7 @@ import {
   Tag,
   Award,
   SlidersHorizontal,
+  FileText,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase-client"
@@ -45,6 +46,11 @@ const navItems = [
     title: "Subscriptions",
     href: "/superadmin/subscriptions",
     icon: CreditCard,
+  },
+  {
+    title: "Quotes",
+    href: "/superadmin/quotes",
+    icon: FileText,
   },
   {
     title: "Coupons",

@@ -137,19 +137,19 @@ export function ActivityFeed({
   }
 
   const titleNode = showTitle && (
-    <div className="flex items-center justify-between mb-3">
-      <h3 className="font-semibold text-foreground">{t('activity.recentActivity')}</h3>
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="text-sm font-medium text-[#420c14]">{t('activity.recentActivity')}</h3>
       <div className="flex items-center gap-1">
         {viewAllHref && (
           <Link href={viewAllHref}>
-            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-muted-foreground gap-1">
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-[#420c14]/40 hover:text-[#420c14] gap-1">
               {t('activity.viewAllActivity')}
               <ArrowRight className="w-3 h-3" />
             </Button>
           </Link>
         )}
         {!loading && (
-          <Button variant="ghost" size="sm" onClick={fetchActivities} className="h-7 px-2">
+          <Button variant="ghost" size="sm" onClick={fetchActivities} className="h-7 px-2 text-[#420c14]/30 hover:text-[#420c14]">
             <RefreshCw className="w-3.5 h-3.5" />
           </Button>
         )}
@@ -159,19 +159,19 @@ export function ActivityFeed({
 
   if (loading) {
     return (
-      <Card className={`${compact ? 'p-3' : 'p-4'} h-full`}>
+      <Card className={`${compact ? 'p-3' : 'p-4'} h-full border-[#420c14]/10`}>
         {showTitle && (
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-foreground">{t('activity.recentActivity')}</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-[#420c14]">{t('activity.recentActivity')}</h3>
           </div>
         )}
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-start gap-3 animate-pulse">
-              <div className="w-8 h-8 rounded-full bg-muted" />
+              <div className="w-7 h-7 rounded-full bg-[#420c14]/8 flex-shrink-0" />
               <div className="flex-1">
-                <div className="h-4 bg-muted rounded w-3/4 mb-2" />
-                <div className="h-3 bg-muted rounded w-1/4" />
+                <div className="h-3.5 bg-[#420c14]/8 rounded w-3/4 mb-2" />
+                <div className="h-2.5 bg-[#420c14]/5 rounded w-1/4" />
               </div>
             </div>
           ))}
@@ -182,11 +182,11 @@ export function ActivityFeed({
 
   if (error) {
     return (
-      <Card className={`${compact ? 'p-3' : 'p-4'} h-full`}>
+      <Card className={`${compact ? 'p-3' : 'p-4'} h-full border-[#420c14]/10`}>
         {titleNode}
         <div className="text-center py-4">
-          <p className="text-sm text-muted-foreground mb-2">{error}</p>
-          <Button variant="ghost" size="sm" onClick={fetchActivities}>
+          <p className="text-sm text-[#420c14]/50 mb-2">{error}</p>
+          <Button variant="ghost" size="sm" onClick={fetchActivities} className="text-[#420c14]/50 hover:text-[#420c14]">
             <RefreshCw className="w-4 h-4 mr-1" />
             {t('activity.retry')}
           </Button>
@@ -197,22 +197,22 @@ export function ActivityFeed({
 
   if (activities.length === 0) {
     return (
-      <Card className={`${compact ? 'p-3' : 'p-4'} h-full`}>
+      <Card className={`${compact ? 'p-3' : 'p-4'} h-full border-[#420c14]/10`}>
         {titleNode}
         <div className="text-center py-6">
-          <Clock className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">{t('activity.noRecentActivity')}</p>
-          <p className="text-xs text-muted-foreground mt-1">{t('activity.noActivityYet')}</p>
+          <Clock className="w-7 h-7 text-[#420c14]/20 mx-auto mb-2" />
+          <p className="text-sm text-[#420c14]/50">{t('activity.noRecentActivity')}</p>
+          <p className="text-xs text-[#420c14]/35 mt-1">{t('activity.noActivityYet')}</p>
         </div>
       </Card>
     )
   }
 
   return (
-    <Card className={`${compact ? 'p-3' : 'p-4'} h-full`}>
+    <Card className={`${compact ? 'p-3' : 'p-4'} h-full border-[#420c14]/10`}>
       {titleNode}
 
-      <div className={`space-y-${compact ? '2' : '3'}`}>
+      <div className={`space-y-${compact ? '2' : '1'}`}>
         {activities.map((activity) => {
           const Icon = ACTIVITY_ICONS[activity.type] || Clock
           const colorClass = ACTIVITY_COLORS[activity.type] || "text-gray-500 bg-gray-50"
@@ -220,16 +220,16 @@ export function ActivityFeed({
           return (
             <div
               key={activity.id}
-              className={`flex items-start gap-${compact ? '2' : '3'} ${compact ? 'py-1' : 'py-1.5'}`}
+              className={`flex items-start gap-${compact ? '2' : '3'} ${compact ? 'py-1' : 'py-2'}`}
             >
-              <div className={`p-1.5 rounded-full ${colorClass} flex-shrink-0`}>
+              <div className={`p-1.5 rounded-full ${colorClass} flex-shrink-0 opacity-80`}>
                 <Icon className={`${compact ? 'w-3 h-3' : 'w-3.5 h-3.5'}`} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`${compact ? 'text-xs' : 'text-sm'} text-foreground leading-tight`}>
+                <p className={`${compact ? 'text-xs' : 'text-sm'} text-[#420c14] leading-snug`}>
                   {getActivityDescription(activity)}
                 </p>
-                <p className={`${compact ? 'text-[10px]' : 'text-xs'} text-muted-foreground mt-0.5`}>
+                <p className={`${compact ? 'text-[10px]' : 'text-xs'} text-[#420c14]/40 mt-0.5`}>
                   {formatTimeAgo(activity.createdAt)}
                 </p>
               </div>
@@ -239,14 +239,14 @@ export function ActivityFeed({
       </div>
 
       {showViewAll && activities.length >= limit && (
-        <div className="mt-3 pt-3 border-t border-border flex items-center justify-center">
+        <div className="mt-3 pt-3 border-t border-[#420c14]/10 flex items-center justify-center">
           {viewAllHref ? (
-            <Link href={viewAllHref} className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+            <Link href={viewAllHref} className="text-xs text-[#420c14]/40 hover:text-[#420c14] transition-colors flex items-center gap-1">
               {t('activity.viewAllActivity')}
               <ArrowRight className="w-3 h-3" />
             </Link>
           ) : (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[#420c14]/40">
               {t('activity.showingLatest', { count: limit })}
             </p>
           )}

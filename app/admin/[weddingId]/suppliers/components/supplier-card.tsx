@@ -53,8 +53,8 @@ export function SupplierCard({ supplier, onEdit, onDelete, onAddPayment, onEditP
         {/* Header row */}
         <div className="flex items-start gap-2">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-base leading-tight">{supplier.name}</h3>
-            <span className="inline-block text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full mt-1">
+            <h3 className="font-serif text-base text-brand leading-tight">{supplier.name}</h3>
+            <span className="inline-block text-xs text-brand/50 bg-brand/5 px-2 py-0.5 rounded-full mt-1">
               {categoryLabel}
             </span>
           </div>

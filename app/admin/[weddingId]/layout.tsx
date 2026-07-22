@@ -101,8 +101,8 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center max-w-md px-4">
-          <h1 className="text-2xl font-bold text-foreground mb-2">{t('admin.layout.noPermission')}</h1>
-          <p className="text-muted-foreground mb-6">
+          <h1 className="text-2xl font-serif text-brand mb-2">{t('admin.layout.noPermission')}</h1>
+          <p className="text-sm text-brand/50 mb-6">
             {t('admin.layout.noPermissionDescription')}
           </p>
           <button

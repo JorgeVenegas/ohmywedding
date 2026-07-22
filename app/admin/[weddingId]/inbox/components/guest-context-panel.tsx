@@ -11,14 +11,10 @@ import { getWeddingUrl } from "@/lib/wedding-url"
 import { useTranslation } from "@/components/contexts/i18n-context"
 import { useSubscriptionContext } from "@/components/contexts/subscription-context"
 import { avatarPalette } from "../lib/avatar-color"
-import type { PlanType } from "@/lib/subscription-shared"
 import type { ConversationDetail } from "../types"
 
-// Same construction as getInvitationUrl() in the invitations admin page
-// (app/admin/[weddingId]/invitations/page.tsx) — no shared helper exists yet,
-// so this mirrors it rather than importing a client-page-local function.
-function buildInvitationUrl(weddingNameId: string, groupId: string, plan: PlanType): string {
-  const baseUrl = getWeddingUrl(weddingNameId, "", plan)
+function buildInvitationUrl(weddingNameId: string, groupId: string, hasPaid: boolean): string {
+  const baseUrl = getWeddingUrl(weddingNameId, "", hasPaid ? 'paid' : 'free')
   const separator = baseUrl.includes("?") ? "&" : "?"
   return `${baseUrl}${separator}groupId=${groupId}`
 }
@@ -161,7 +157,7 @@ function LinkContactPanel({ weddingId, contactId, onLinked }: { weddingId: strin
 
 export function GuestContextPanel({ weddingId, contactId, detail, onLinked }: GuestContextPanelProps) {
   const { t, locale } = useTranslation()
-  const { planType } = useSubscriptionContext()
+  const { hasPaidPlan } = useSubscriptionContext()
   const [updating, setUpdating] = useState(false)
 
   if (!contactId) {
@@ -185,7 +181,7 @@ export function GuestContextPanel({ weddingId, contactId, detail, onLinked }: Gu
 
   const dateLocale = locale === "es" ? esLocale : undefined
   const respondedAtLabel = rsvpRespondedAt ? format(new Date(rsvpRespondedAt), "PPp", { locale: dateLocale }) : null
-  const invitationUrl = group ? buildInvitationUrl(weddingId, group.id, planType) : null
+  const invitationUrl = group ? buildInvitationUrl(weddingId, group.id, hasPaidPlan) : null
   const avatar = avatarPalette(guest.id)
 
   const updateRsvp = async (status: "confirmed" | "declined") => {

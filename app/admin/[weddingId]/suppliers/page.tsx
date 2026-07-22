@@ -175,26 +175,30 @@ export default function SuppliersPage({ params }: SuppliersPageProps) {
       />
 
       <div className="page-container space-y-8">
-        <p className="text-muted-foreground">{t('admin.suppliers.description')}</p>
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-[#DDA46F] mb-2">{t('admin.dashboard.management')}</p>
+          <h1 className="text-2xl font-serif text-[#420c14] mb-1">{t('admin.suppliers.title')}</h1>
+          <p className="text-sm text-[#420c14]/60">{t('admin.suppliers.description')}</p>
+        </div>
 
         {/* Stats */}
         {suppliers.length > 0 && (
           <div className="flex flex-wrap gap-4">
-            <Card className="p-4 flex-1 min-w-[120px]">
-              <div className="text-2xl font-bold">{suppliers.length}</div>
-              <div className="text-sm text-muted-foreground">{t('admin.suppliers.stats.total')}</div>
+            <Card className="p-4 flex-1 min-w-[120px] border-[#420c14]/10">
+              <div className="text-2xl font-serif text-[#420c14]">{suppliers.length}</div>
+              <div className="text-sm text-[#420c14]/50">{t('admin.suppliers.stats.total')}</div>
             </Card>
-            <Card className="p-4 flex-1 min-w-[120px]">
-              <div className="text-2xl font-bold">{formatCurrency(totalBudget)}</div>
-              <div className="text-sm text-muted-foreground">{t('admin.suppliers.stats.budget')}</div>
+            <Card className="p-4 flex-1 min-w-[120px] border-[#420c14]/10">
+              <div className="text-2xl font-serif text-[#420c14]">{formatCurrency(totalBudget)}</div>
+              <div className="text-sm text-[#420c14]/50">{t('admin.suppliers.stats.budget')}</div>
             </Card>
-            <Card className="p-4 flex-1 min-w-[120px]">
-              <div className="text-2xl font-bold text-emerald-600">{formatCurrency(totalCovered)}</div>
-              <div className="text-sm text-muted-foreground">{t('admin.suppliers.stats.covered')}</div>
+            <Card className="p-4 flex-1 min-w-[120px] border-[#420c14]/10">
+              <div className="text-2xl font-serif text-[#420c14]">{formatCurrency(totalCovered)}</div>
+              <div className="text-sm text-[#420c14]/50">{t('admin.suppliers.stats.covered')}</div>
             </Card>
-            <Card className="p-4 flex-1 min-w-[120px]">
-              <div className={`text-2xl font-bold ${totalRemaining > 0 ? 'text-amber-600' : 'text-muted-foreground'}`}>{formatCurrency(totalRemaining)}</div>
-              <div className="text-sm text-muted-foreground">{t('admin.suppliers.stats.remaining')}</div>
+            <Card className="p-4 flex-1 min-w-[120px] border-[#420c14]/10">
+              <div className={`text-2xl font-serif ${totalRemaining > 0 ? 'text-[#DDA46F]' : 'text-[#420c14]/40'}`}>{formatCurrency(totalRemaining)}</div>
+              <div className="text-sm text-[#420c14]/50">{t('admin.suppliers.stats.remaining')}</div>
             </Card>
           </div>
         )}
@@ -202,9 +206,9 @@ export default function SuppliersPage({ params }: SuppliersPageProps) {
         {/* Empty state */}
         {suppliers.length === 0 ? (
           <Card className="p-12 text-center">
-            <Handshake className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">{t('admin.suppliers.empty.title')}</h3>
-            <p className="text-muted-foreground mb-6 max-w-sm mx-auto">{t('admin.suppliers.empty.description')}</p>
+            <Handshake className="w-12 h-12 mx-auto text-brand/30 mb-4" />
+            <h3 className="text-lg font-serif text-brand mb-2">{t('admin.suppliers.empty.title')}</h3>
+            <p className="text-sm text-brand/50 mb-6 max-w-sm mx-auto">{t('admin.suppliers.empty.description')}</p>
             <Button onClick={openAddModal}>
               <Plus className="w-4 h-4 mr-2" />
               {t('admin.suppliers.addSupplier')}

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { STRIPE_API_VERSION } from '@/lib/stripe-config'
-import { deriveLegacyPlan, type InvitationTier, type ManagementTier } from '@/lib/subscription-shared'
+import { type InvitationTier, type ManagementTier } from '@/lib/subscription-shared'
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -36,32 +36,40 @@ async function resolveCheckoutSessionId(
   }
 }
 
-// Find the order row by checkout session ID or payment intent ID.
-// Returns the fields needed for subscription activation.
+type OrderRow = { id: string; wedding_id: string; user_id: string; to_plan: string; axis: string | null; tier: string | null; source: string | null; metadata: Record<string, string> | null }
+
+// Find all order rows by checkout session ID or payment intent ID.
+// Bundles create multiple rows per session; returns all of them.
+async function findOrders(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  checkoutSessionId: string | null,
+  paymentIntentId: string | null
+): Promise<OrderRow[]> {
+  if (checkoutSessionId) {
+    const { data } = await supabase
+      .from('subscription_orders')
+      .select('id, wedding_id, user_id, to_plan, axis, tier, source, metadata')
+      .eq('stripe_checkout_session_id', checkoutSessionId)
+    if (data && data.length > 0) return data
+  }
+  if (paymentIntentId) {
+    const { data } = await supabase
+      .from('subscription_orders')
+      .select('id, wedding_id, user_id, to_plan, axis, tier, source, metadata')
+      .eq('stripe_payment_intent_id', paymentIntentId)
+    if (data && data.length > 0) return data
+  }
+  return []
+}
+
+// Convenience wrapper for single-order callers that haven't changed yet
 async function findOrder(
   supabase: ReturnType<typeof getSupabaseAdmin>,
   checkoutSessionId: string | null,
   paymentIntentId: string | null
-) {
-  // Try by checkout session first (most reliable — set at checkout time)
-  if (checkoutSessionId) {
-    const { data } = await supabase
-      .from('subscription_orders')
-      .select('id, wedding_id, user_id, to_plan, axis, tier')
-      .eq('stripe_checkout_session_id', checkoutSessionId)
-      .maybeSingle()
-    if (data) return data
-  }
-  // Fallback: try by payment intent ID
-  if (paymentIntentId) {
-    const { data } = await supabase
-      .from('subscription_orders')
-      .select('id, wedding_id, user_id, to_plan, axis, tier')
-      .eq('stripe_payment_intent_id', paymentIntentId)
-      .maybeSingle()
-    if (data) return data
-  }
-  return null
+): Promise<OrderRow | null> {
+  const orders = await findOrders(supabase, checkoutSessionId, paymentIntentId)
+  return orders[0] ?? null
 }
 
 export async function POST(request: Request) {
@@ -94,40 +102,43 @@ export async function POST(request: Request) {
       // ─── checkout.session.completed ───────────────────────────────────
       // User finished the Stripe checkout form. For bank transfers this
       // fires immediately but payment is still pending.
-      // Backfill Stripe IDs on the order (PI ID may not have been known).
+      // Backfill the Stripe PI ID on ALL orders for this session (a two-axis
+      // quote creates two rows with the same stripe_checkout_session_id).
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
         const paymentIntentId = session.payment_intent as string | null
 
         console.log(`[webhook] checkout.session.completed — session=${session.id}, pi=${paymentIntentId}`)
 
-        const order = await findOrder(supabaseAdmin, session.id, paymentIntentId)
-        if (order) {
-          const { error } = await supabaseAdmin
-            .from('subscription_orders')
-            .update({
-              stripe_payment_intent_id: paymentIntentId,
-              stripe_customer_id: session.customer,
-              amount_cents: session.amount_total || 0,
-            })
-            .eq('id', order.id)
-          console.log(`[webhook] Updated order ${order.id} with PI ID. Error: ${error?.message || 'none'}`)
+        const orders = await findOrders(supabaseAdmin, session.id, paymentIntentId)
+        if (orders.length > 0) {
+          for (const order of orders) {
+            const { error } = await supabaseAdmin
+              .from('subscription_orders')
+              .update({
+                stripe_payment_intent_id: paymentIntentId,
+                stripe_customer_id: session.customer,
+                // Do NOT overwrite amount_cents here — it was set correctly per-axis at checkout.
+                // session.amount_total is the full session total, not the per-order amount.
+              })
+              .eq('id', order.id)
+            console.log(`[webhook] Updated order ${order.id} with PI ID. Error: ${error?.message || 'none'}`)
+          }
 
-          // If a coupon was applied (via Stripe promo code on hosted checkout), track it
+          // Coupon discount tracking (only applicable for non-quote checkouts that pass
+          // coupon_id in session metadata — quote checkouts track via coupon_redemptions).
           const totalDiscount = session.total_details?.amount_discount || 0
           if (totalDiscount > 0 && session.metadata) {
             const couponId = session.metadata.coupon_id
-            const promotionCodeId = session.metadata.promotion_code_id
-
             if (couponId) {
-              // Update existing redemption record with discount amounts
+              const firstOrder = orders[0]
               const { error: redemptionError } = await supabaseAdmin
                 .from('coupon_redemptions')
                 .update({
                   discount_amount_cents: totalDiscount,
                   original_amount_cents: (session.amount_total || 0) + totalDiscount,
                   final_amount_cents: session.amount_total || 0,
-                  subscription_order_id: order.id,
+                  subscription_order_id: firstOrder.id,
                   stripe_payment_intent_id: paymentIntentId,
                 })
                 .eq('stripe_checkout_session_id', session.id)
@@ -139,13 +150,11 @@ export async function POST(request: Request) {
                 console.log(`[webhook] Updated coupon redemption for session ${session.id}`)
               }
             } else {
-              // Coupon was applied on Stripe's hosted checkout page (not from upgrade page)
-              // Try to find the promo code from Stripe session and track it
               console.log(`[webhook] Discount found ($${totalDiscount / 100}) but no coupon_id in metadata — likely applied on Stripe checkout`)
             }
           }
         } else {
-          console.warn(`[webhook] No order found for session=${session.id}`)
+          console.warn(`[webhook] No orders found for session=${session.id}`)
         }
 
         break
@@ -189,33 +198,24 @@ export async function POST(request: Request) {
         const checkoutSessionId = await resolveCheckoutSessionId(stripe, pi.id)
         console.log(`[webhook] Resolved checkout session: ${checkoutSessionId || 'NOT FOUND'}`)
 
-        const order = await findOrder(supabaseAdmin, checkoutSessionId, pi.id)
-        if (!order) {
-          console.error(`[webhook] No order found for succeeded pi=${pi.id}, session=${checkoutSessionId}`)
+        const orders = await findOrders(supabaseAdmin, checkoutSessionId, pi.id)
+        if (!orders.length) {
+          console.error(`[webhook] No orders found for succeeded pi=${pi.id}, session=${checkoutSessionId}`)
           break
         }
 
-        const { wedding_id: weddingId, user_id: userId, to_plan: planType, axis, tier } = order
-        console.log(`[webhook] Order data: wedding=${weddingId}, user=${userId}, plan=${planType}, axis=${axis}, tier=${tier}`)
+        console.log(`[webhook] Found ${orders.length} order(s) for session ${checkoutSessionId}`)
 
-        if (!userId || !weddingId || !planType || !['premium', 'deluxe'].includes(planType)) {
-          console.error('[webhook] Missing required data in order:', { userId, weddingId, planType })
-          break
-        }
-
-        // Detect actual payment method from Stripe PaymentIntent
+        // Detect payment method once (shared across all orders in the session)
         let detectedPaymentMethod: string | null = null
         try {
-          const piDetails = await stripe.paymentIntents.retrieve(pi.id, {
-            expand: ['latest_charge'],
-          })
+          const piDetails = await stripe.paymentIntents.retrieve(pi.id, { expand: ['latest_charge'] })
           const charge = piDetails.latest_charge as Stripe.Charge | null
           if (charge?.payment_method_details) {
             const pmType = charge.payment_method_details.type
             if (pmType === 'customer_balance') {
               detectedPaymentMethod = 'transfer'
             } else if (pmType === 'card') {
-              // Check for installments (MSI)
               const installmentPlan = (charge.payment_method_details.card as any)?.installments?.plan
               detectedPaymentMethod = installmentPlan ? 'msi' : 'card'
             }
@@ -224,126 +224,127 @@ export async function POST(request: Request) {
           console.error('[webhook] Could not detect payment method:', pmErr)
         }
 
-        // Activate the subscription. Axis+tier orders (new two-axis checkout) write
-        // the specific invitation_tier/management_tier column plus a recomputed
-        // legacy `plan` (so existing plan-based feature gates keep working);
-        // legacy orders (old single-ladder checkout) just write `plan` as before.
-        let subscriptionUpdate: Record<string, unknown> = {
-          wedding_id: weddingId,
-          plan: planType,
-          updated_at: new Date().toISOString(),
-        }
+        let lastSubscriptionId: string | undefined
 
-        if (axis && tier) {
-          const { data: existingSub } = await supabaseAdmin
-            .from('wedding_subscriptions')
-            .select('invitation_tier, management_tier')
-            .eq('wedding_id', weddingId)
-            .maybeSingle()
+        // Process each order — sequential upserts so later ones see earlier writes
+        for (const order of orders) {
+          const { wedding_id: weddingId, user_id: userId, to_plan: planType, axis, tier } = order
+          console.log(`[webhook] Processing order ${order.id}: wedding=${weddingId}, plan=${planType}, axis=${axis}, tier=${tier}`)
 
-          const invitationTier: InvitationTier = axis === 'invitation'
-            ? (tier as InvitationTier)
-            : ((existingSub?.invitation_tier as InvitationTier) || 'basic')
-          const managementTier: ManagementTier = axis === 'management'
-            ? (tier as ManagementTier)
-            : ((existingSub?.management_tier as ManagementTier) || 'basic')
+          if (!userId || !weddingId || !planType) {
+            console.error('[webhook] Missing required data in order:', { userId, weddingId, planType })
+            continue
+          }
 
-          subscriptionUpdate = {
+          const subscriptionUpdate: Record<string, unknown> = {
             wedding_id: weddingId,
-            [axis === 'invitation' ? 'invitation_tier' : 'management_tier']: tier,
-            plan: deriveLegacyPlan(invitationTier, managementTier),
             updated_at: new Date().toISOString(),
           }
-        }
 
-        const { data: subscription, error: subscriptionError } = await supabaseAdmin
-          .from('wedding_subscriptions')
-          .upsert(subscriptionUpdate, { onConflict: 'wedding_id' })
-          .select('id')
-          .single()
+          if (axis && tier) {
+            subscriptionUpdate[axis === 'invitation' ? 'invitation_tier' : 'management_tier'] = tier
+          }
 
-        if (subscriptionError) {
-          console.error('[webhook] Failed to upsert wedding subscription:', subscriptionError)
-          throw subscriptionError
-        }
+          const { data: subscription, error: subscriptionError } = await supabaseAdmin
+            .from('wedding_subscriptions')
+            .upsert(subscriptionUpdate, { onConflict: 'wedding_id' })
+            .select('id')
+            .single()
 
-        console.log(`[webhook] Subscription upserted: ${subscription?.id}`)
+          if (subscriptionError) {
+            console.error(`[webhook] Failed to upsert subscription for order ${order.id}:`, subscriptionError)
+            throw subscriptionError
+          }
 
-        // Update order to completed
-        const orderUpdateData: any = {
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-          stripe_payment_intent_id: pi.id,
-          wedding_subscription_id: subscription?.id || null,
-        }
-        // Set payment method if detected (takes priority over what was set at checkout time)
-        if (detectedPaymentMethod) {
-          orderUpdateData.payment_method = detectedPaymentMethod
-        }
+          lastSubscriptionId = subscription?.id
+          console.log(`[webhook] Subscription upserted: ${subscription?.id}`)
 
-        const { error } = await supabaseAdmin
-          .from('subscription_orders')
-          .update(orderUpdateData)
-          .eq('id', order.id)
-
-        console.log(`[webhook] Updated order ${order.id} → completed. Error: ${error?.message || 'none'}`)
-        console.log(`[webhook] ✅ Subscription activated: wedding=${weddingId}, plan=${planType}`)
-
-        // Complete any coupon redemption linked to this order
-        const { error: redemptionError } = await supabaseAdmin
-          .from('coupon_redemptions')
-          .update({
+          const orderUpdateData: Record<string, unknown> = {
             status: 'completed',
+            completed_at: new Date().toISOString(),
             stripe_payment_intent_id: pi.id,
-            subscription_order_id: order.id,
-          })
-          .eq('subscription_order_id', order.id)
-          .eq('status', 'applied')
+            wedding_subscription_id: subscription?.id || null,
+          }
+          if (detectedPaymentMethod) {
+            orderUpdateData.payment_method = detectedPaymentMethod
+          }
 
-        if (redemptionError) {
-          console.error('[webhook] Error completing coupon redemption:', redemptionError)
-        }
+          const { error } = await supabaseAdmin
+            .from('subscription_orders')
+            .update(orderUpdateData)
+            .eq('id', order.id)
 
-        // Increment times_redeemed counters on coupons and promo codes
-        const { data: completedRedemptions } = await supabaseAdmin
-          .from('coupon_redemptions')
-          .select('coupon_id, promotion_code_id')
-          .eq('subscription_order_id', order.id)
-          .eq('status', 'completed')
+          console.log(`[webhook] Updated order ${order.id} → completed. Error: ${error?.message || 'none'}`)
+          console.log(`[webhook] ✅ Axis activated: wedding=${weddingId}, axis=${axis}, tier=${tier}`)
 
-        if (completedRedemptions && completedRedemptions.length > 0) {
-          for (const redemption of completedRedemptions) {
-            // Increment coupon counter
-            const { data: couponData } = await supabaseAdmin
-              .from('coupons')
-              .select('times_redeemed')
-              .eq('id', redemption.coupon_id)
-              .single()
+          // Coupon redemption — only increment counters if we're the one
+          // transitioning applied→completed (guards against double-count when
+          // the fulfill endpoint already ran on the success page).
+          const { data: justCompleted, error: redemptionError } = await supabaseAdmin
+            .from('coupon_redemptions')
+            .update({
+              status: 'completed',
+              stripe_payment_intent_id: pi.id,
+              subscription_order_id: order.id,
+            })
+            .eq('subscription_order_id', order.id)
+            .eq('status', 'applied')
+            .select('coupon_id, promotion_code_id')
 
-            if (couponData) {
-              await supabaseAdmin
+          if (redemptionError) {
+            console.error('[webhook] Error completing coupon redemption:', redemptionError)
+          }
+
+          if (justCompleted && justCompleted.length > 0) {
+            for (const redemption of justCompleted) {
+              const { data: couponData } = await supabaseAdmin
                 .from('coupons')
-                .update({ times_redeemed: (couponData.times_redeemed || 0) + 1 })
-                .eq('id', redemption.coupon_id)
-            }
-
-            // Increment promo code counter
-            if (redemption.promotion_code_id) {
-              const { data: promoData } = await supabaseAdmin
-                .from('coupon_promotion_codes')
                 .select('times_redeemed')
-                .eq('id', redemption.promotion_code_id)
+                .eq('id', redemption.coupon_id)
                 .single()
 
-              if (promoData) {
+              if (couponData) {
                 await supabaseAdmin
+                  .from('coupons')
+                  .update({ times_redeemed: (couponData.times_redeemed || 0) + 1 })
+                  .eq('id', redemption.coupon_id)
+              }
+
+              if (redemption.promotion_code_id) {
+                const { data: promoData } = await supabaseAdmin
                   .from('coupon_promotion_codes')
-                  .update({ times_redeemed: (promoData.times_redeemed || 0) + 1 })
+                  .select('times_redeemed')
                   .eq('id', redemption.promotion_code_id)
+                  .single()
+
+                if (promoData) {
+                  await supabaseAdmin
+                    .from('coupon_promotion_codes')
+                    .update({ times_redeemed: (promoData.times_redeemed || 0) + 1 })
+                    .eq('id', redemption.promotion_code_id)
+                }
               }
             }
+            console.log(`[webhook] Incremented coupon redemption counters for order ${order.id}`)
+          } else {
+            console.log(`[webhook] Coupon redemption for order ${order.id} already completed (by fulfill endpoint or previous webhook)`)
           }
-          console.log(`[webhook] Incremented coupon redemption counters`)
+        }
+
+        // If this was a quote checkout, mark the quote as paid and link the wedding
+        const quoteOrder = orders.find(o => o.source === 'quote' && o.metadata?.quote_id)
+        if (quoteOrder) {
+          const quoteId = quoteOrder.metadata!.quote_id
+          const { error: quoteError } = await supabaseAdmin
+            .from('quotes')
+            .update({ status: 'paid', wedding_id: quoteOrder.wedding_id })
+            .eq('id', quoteId)
+            .neq('status', 'paid')
+          if (quoteError) {
+            console.error(`[webhook] Failed to mark quote ${quoteId} as paid:`, quoteError)
+          } else {
+            console.log(`[webhook] ✅ Quote ${quoteId} marked as paid, linked to wedding ${quoteOrder.wedding_id}`)
+          }
         }
 
         break

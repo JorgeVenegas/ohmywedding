@@ -3,7 +3,9 @@ import Stripe from 'stripe'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { createClient } from '@supabase/supabase-js'
 import { STRIPE_API_VERSION } from '@/lib/stripe-config'
-import { PRICING } from '@/lib/subscription-shared'
+import { INVITATION_PRICING } from '@/lib/subscription-shared'
+// Legacy gift checkout stubs
+const PRICING: any = { premium: INVITATION_PRICING.personalized, deluxe: INVITATION_PRICING.bespoke }
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

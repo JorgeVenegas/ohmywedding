@@ -58,7 +58,14 @@ export function useAuth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('[useAuth] auth event:', event, session?.user?.email ?? 'no user')
-        setUser(session?.user ?? null)
+        // Use functional update to avoid replacing the user object on TOKEN_REFRESHED
+        // when the user ID hasn't changed — prevents unnecessary downstream re-renders
+        // (SubscriptionProvider, dashboard effects) on every tab focus / token refresh.
+        setUser(prev => {
+          const next = session?.user ?? null
+          if (prev?.id === next?.id) return prev
+          return next
+        })
         setLoading(false)
       }
     )

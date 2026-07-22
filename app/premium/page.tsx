@@ -24,7 +24,14 @@ import {
   FileText,
   Tag,
 } from "lucide-react"
-import { PRICING, PLAN_CARDS, COMPARISON_FEATURES } from "@/lib/subscription-shared"
+import { INVITATION_PRICING, MANAGEMENT_PRICING } from "@/lib/subscription-shared"
+// Legacy page - kept for existing links; the active upgrade flow is at /upgrade
+const PRICING: any = { premium: INVITATION_PRICING.personalized, deluxe: INVITATION_PRICING.bespoke }
+const PLAN_CARDS: any = {
+  premium: { ...INVITATION_PRICING.personalized, features: [], cta: 'Upgrade', href: '/upgrade' },
+  deluxe: { ...INVITATION_PRICING.bespoke, features: [], cta: 'Go Bespoke', href: '/upgrade' },
+}
+const COMPARISON_FEATURES: any[] = []
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
 import { useTranslation } from "@/components/contexts/i18n-context"
 import { getTranslations } from "@/lib/i18n"
@@ -364,14 +371,14 @@ function ComparisonSection() {
               </tr>
             </thead>
             <tbody>
-              {COMPARISON_FEATURES.map((cat) => (
+              {(COMPARISON_FEATURES as any[]).map((cat: any) => (
                 <React.Fragment key={cat.category}>
                   <tr>
                     <td colSpan={3} className="pt-6 pb-2 px-4 text-xs tracking-[0.2em] uppercase text-[#420c14]/40 font-medium">
                       {cat.category}
                     </td>
                   </tr>
-                  {cat.features.map((f) => (
+                  {cat.features.map((f: any) => (
                     <tr key={f.name} className="border-b border-[#420c14]/5">
                       <td className="py-3 px-4 text-[#420c14]/70">{f.name}</td>
                       <td className="py-3 px-4 text-center">

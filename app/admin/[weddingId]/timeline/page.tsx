@@ -165,7 +165,11 @@ export default function TimelinePage({ params }: { params: Promise<{ weddingId: 
       />
 
       <div className="page-container">
-        <p className="text-muted-foreground mb-6">{t('admin.timeline.description')}</p>
+        <div className="mb-6">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-[#DDA46F] mb-2">{t('admin.dashboard.management')}</p>
+          <h1 className="text-2xl font-serif text-[#420c14] mb-1">{t('admin.timeline.title')}</h1>
+          <p className="text-sm text-[#420c14]/60">{t('admin.timeline.description')}</p>
+        </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
           <div className="flex gap-1 flex-wrap">

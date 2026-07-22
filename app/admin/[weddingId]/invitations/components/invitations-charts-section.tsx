@@ -19,8 +19,6 @@ import {
 import { useTranslation } from '@/components/contexts/i18n-context'
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import type { GuestGroup, TimelineData } from "../types"
-import type { PlanType } from "@/lib/subscription-shared"
-
 interface InvitationsChartsSectionProps {
   weddingId: string
   chartsExpanded: boolean
@@ -36,7 +34,7 @@ interface InvitationsChartsSectionProps {
   timelineGroupFilter: string
   setTimelineGroupFilter: (filter: string) => void
   guestGroups: GuestGroup[]
-  planType: PlanType
+  hasPaidPlan: boolean
 }
 
 const TAG_PIE_COLORS: Record<string, string> = {
@@ -60,12 +58,12 @@ export function InvitationsChartsSection({
   timelineGroupFilter,
   setTimelineGroupFilter,
   guestGroups,
-  planType,
+  hasPaidPlan,
 }: InvitationsChartsSectionProps) {
   const router = useRouter()
   const { t } = useTranslation()
 
-  const hasTrackingAccess = planType !== 'free'
+  const hasTrackingAccess = hasPaidPlan
   const hasData = statusByInvitedByData.length > 0 || tagsByInvitedByData.length > 0 || !timelineLoading
 
   if (!hasData) return null
@@ -263,12 +261,12 @@ export function InvitationsChartsSection({
         {/* Empty State */}
         {hasTrackingAccess && !timelineLoading && (!timelineData || timelineData.chartData.length === 0) && (
           <Card className="p-4 sm:p-6 border shadow-sm">
-            <div className="h-[200px] flex flex-col items-center justify-center text-muted-foreground">
-              <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
-                <Clock className="w-6 h-6 text-muted-foreground/60" />
+            <div className="h-[200px] flex flex-col items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-brand/5 flex items-center justify-center mb-3">
+                <Clock className="w-6 h-6 text-brand/30" />
               </div>
-              <p className="text-sm font-medium">{t('admin.invitations.charts.noConfirmations')}</p>
-              <p className="text-xs mt-1">{t('admin.invitations.charts.noConfirmationsDesc')}</p>
+              <p className="text-sm font-serif text-brand/70">{t('admin.invitations.charts.noConfirmations')}</p>
+              <p className="text-xs text-brand/40 mt-1">{t('admin.invitations.charts.noConfirmationsDesc')}</p>
             </div>
           </Card>
         )}

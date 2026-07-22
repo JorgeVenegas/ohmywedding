@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server"
+import type { DesignStatus } from "@/lib/invitation-workflow"
 
 export interface Wedding {
   id: string
@@ -26,8 +27,13 @@ export interface Wedding {
   og_image_url: string | null
   created_at: string
   updated_at: string
+  has_website?: boolean
+  is_ready?: boolean
+  design_self_serve_locked?: boolean
+  invitation_design_status?: DesignStatus
   wedding_features?: {
-    plan?: 'free' | 'premium' | 'deluxe'
+    invitation_tier?: string
+    management_tier?: string
   }
 }
 

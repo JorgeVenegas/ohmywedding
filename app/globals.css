@@ -312,6 +312,9 @@
 @theme inline {
   --font-sans: "Geist", "Geist Fallback";
   --font-mono: "Geist Mono", "Geist Mono Fallback";
+  --font-serif: "Cormorant Garamond", ui-serif, Georgia, Cambria, serif;
+  --color-brand: #420c14;
+  --color-brand-gold: #DDA46F;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

@@ -35,7 +35,7 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {conversations.length === 0 && (
-          <div className="p-6 text-center text-sm text-muted-foreground">{t('admin.inbox.conversationList.empty')}</div>
+          <div className="p-6 text-center text-sm font-serif text-brand/50">{t('admin.inbox.conversationList.empty')}</div>
         )}
         {conversations.map((conversation) => {
           const contact = conversation.contacts

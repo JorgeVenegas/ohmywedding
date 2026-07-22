@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Search, Heart, Calendar, User, Loader2, ExternalLink, Crown, TrendingUp } from "lucide-react"
+import { Search, Heart, Calendar, User, Loader2, ExternalLink, Crown, TrendingUp, Palette } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "sonner"
 import Link from "next/link"
@@ -224,14 +224,21 @@ export default function WeddingsManagementPage() {
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <Link 
-                    href={getWeddingUrl(wedding.wedding_name_id, '', wedding.plan || 'free')} 
+                  <Link
+                    href={getWeddingUrl(wedding.wedding_name_id, '', wedding.plan || 'free')}
                     target="_blank"
                     className="w-10 h-10 rounded-xl bg-[#420c14]/5 flex items-center justify-center text-[#420c14]/40 hover:text-[#420c14] hover:bg-[#420c14]/10 transition-colors"
                   >
                     <ExternalLink className="w-4 h-4" />
                   </Link>
-                  <Button 
+                  <Link
+                    href={`/superadmin/weddings/${wedding.wedding_name_id}`}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-[#420c14]/10 text-[#420c14] px-4 py-2 text-sm font-medium hover:bg-[#420c14]/5 transition-colors"
+                  >
+                    <Palette className="w-3.5 h-3.5" />
+                    Design
+                  </Link>
+                  <Button
                     onClick={() => openChangePlanDialog(wedding)}
                     className="bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb] rounded-xl px-5"
                   >

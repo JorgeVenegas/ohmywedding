@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { AlertCircle, Check, Link2 } from "lucide-react"
+import { useI18n } from "@/components/contexts/i18n-context"
 
 interface UpdateWeddingNameIdProps {
   currentWeddingNameId: string
@@ -12,6 +13,7 @@ interface UpdateWeddingNameIdProps {
 
 export function UpdateWeddingNameId({ currentWeddingNameId }: UpdateWeddingNameIdProps) {
   const router = useRouter()
+  const { t } = useI18n()
   const [newNameId, setNewNameId] = useState("")
   const [isUpdating, setIsUpdating] = useState(false)
   const [error, setError] = useState("")
@@ -19,12 +21,12 @@ export function UpdateWeddingNameId({ currentWeddingNameId }: UpdateWeddingNameI
 
   const handleUpdate = async () => {
     if (!newNameId.trim()) {
-      setError("Please enter a new wedding name ID")
+      setError(t('admin.settings.weddingUrl.errors.enterNewId'))
       return
     }
 
     if (newNameId === currentWeddingNameId) {
-      setError("New ID must be different from current ID")
+      setError(t('admin.settings.weddingUrl.errors.mustBeDifferent'))
       return
     }
 
@@ -44,23 +46,22 @@ export function UpdateWeddingNameId({ currentWeddingNameId }: UpdateWeddingNameI
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || "Failed to update wedding name ID")
+        setError(data.error || t('admin.settings.weddingUrl.errors.failed'))
         setIsUpdating(false)
         return
       }
 
       setSuccess(true)
-      
-      // Redirect to the new wedding page
+
       const newUrl = `/${encodeURIComponent(newNameId)}`
-      
+
       setTimeout(() => {
         router.push(newUrl)
         router.refresh()
       }, 1500)
 
     } catch (err) {
-      setError("An unexpected error occurred")
+      setError(t('admin.settings.weddingUrl.errors.unexpected'))
       setIsUpdating(false)
     }
   }
@@ -69,28 +70,28 @@ export function UpdateWeddingNameId({ currentWeddingNameId }: UpdateWeddingNameI
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Link2 className="w-4 h-4 text-gray-600" />
-        <h3 className="text-sm font-medium text-gray-700">Wedding URL</h3>
+        <h3 className="text-sm font-medium text-gray-700">{t('admin.settings.weddingUrl.title')}</h3>
       </div>
-      
+
       <div className="space-y-3">
         <div>
-          <label className="block text-sm text-gray-600 mb-2">Current URL</label>
+          <label className="block text-sm text-gray-600 mb-2">{t('admin.settings.weddingUrl.currentUrl')}</label>
           <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700">
             {currentWeddingNameId}
           </div>
         </div>
-        
+
         <div>
-          <label className="block text-sm text-gray-600 mb-2">New URL</label>
+          <label className="block text-sm text-gray-600 mb-2">{t('admin.settings.weddingUrl.newUrl')}</label>
           <Input
             value={newNameId}
             onChange={(e) => setNewNameId(e.target.value)}
-            placeholder="e.g., john&jane"
+            placeholder={t('admin.settings.weddingUrl.placeholder')}
             disabled={isUpdating || success}
             className="text-sm"
           />
           <p className="text-xs text-gray-500 mt-1.5">
-            Choose a unique identifier for your wedding page
+            {t('admin.settings.weddingUrl.hint')}
           </p>
         </div>
 
@@ -104,7 +105,7 @@ export function UpdateWeddingNameId({ currentWeddingNameId }: UpdateWeddingNameI
         {success && (
           <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 px-3 py-2 rounded-lg">
             <Check className="w-3.5 h-3.5 flex-shrink-0" />
-            <span>Updated! Redirecting...</span>
+            <span>{t('admin.settings.weddingUrl.updatedMessage')}</span>
           </div>
         )}
 
@@ -114,11 +115,15 @@ export function UpdateWeddingNameId({ currentWeddingNameId }: UpdateWeddingNameI
           size="sm"
           className="w-full"
         >
-          {isUpdating ? "Updating..." : success ? "Updated!" : "Update URL"}
+          {isUpdating
+            ? t('admin.settings.weddingUrl.updatingButton')
+            : success
+            ? t('admin.settings.weddingUrl.updatedButton')
+            : t('admin.settings.weddingUrl.updateButton')}
         </Button>
-        
+
         <p className="text-xs text-gray-500">
-          Note: You'll need to update any shared links after changing the URL
+          {t('admin.settings.weddingUrl.note')}
         </p>
       </div>
     </div>

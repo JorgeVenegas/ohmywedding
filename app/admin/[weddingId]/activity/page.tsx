@@ -228,9 +228,9 @@ export default function ActivityPage({ params }: Props) {
           <div className="py-4">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">{t('activity.recentActivity')}</h1>
+                <h1 className="text-2xl font-serif text-[#420c14]">{t('activity.recentActivity')}</h1>
                 {plan && plan !== 'deluxe' && (
-                  <p className="text-sm text-muted-foreground mt-0.5">
+                  <p className="text-sm text-[#420c14]/50 mt-0.5">
                     {plan === 'free'
                       ? 'Solo se muestran las últimas 8 actividades en el plan gratuito'
                       : 'Se muestran actividades de los últimos 7 días en el plan premium'}
@@ -241,10 +241,10 @@ export default function ActivityPage({ params }: Props) {
               <div className="flex items-center gap-2">
                 {/* Count pill */}
                 {!loading && activities.length > 0 && (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
-                    <Clock className="w-3 h-3 text-muted-foreground" />
-                    <span className="text-foreground font-semibold">{activities.length}</span>
-                    <span className="text-muted-foreground">registros</span>
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#420c14]/5 text-xs font-medium">
+                    <Clock className="w-3 h-3 text-[#420c14]/40" />
+                    <span className="text-[#420c14] font-semibold">{activities.length}</span>
+                    <span className="text-[#420c14]/50">registros</span>
                   </div>
                 )}
 

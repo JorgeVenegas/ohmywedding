@@ -5,8 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
-import { INVITATION_CARDS, MANAGEMENT_CARDS, type PricingAxis } from "@/lib/subscription-shared"
-import { motion } from "framer-motion"
+import { INVITATION_CARDS, MANAGEMENT_CARDS, type PricingAxis, formatMXNFromCents } from "@/lib/subscription-shared"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   Crown,
   Check,
@@ -16,6 +16,7 @@ import {
   X,
   Gift,
   CreditCard,
+  Percent,
 } from "lucide-react"
 import { Header } from "@/components/header"
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
@@ -25,11 +26,25 @@ import { resolveBackHref } from "@/lib/landing-source"
 type PaymentMethod = 'card' | 'msi'
 type CheckoutTarget = { axis: PricingAxis; tier: string; bundleDiscount?: boolean }
 
+// Maps a selected plan to its same-tier companion on the other axis
+const COMPANION_TIER_MAP: Record<PricingAxis, Record<string, { axis: PricingAxis; tier: string }>> = {
+  invitation: {
+    basic:        { axis: 'management', tier: 'basic' },
+    personalized: { axis: 'management', tier: 'pro' },
+    bespoke:      { axis: 'management', tier: 'agency' },
+  },
+  management: {
+    basic:   { axis: 'invitation', tier: 'basic' },
+    pro:     { axis: 'invitation', tier: 'personalized' },
+    agency:  { axis: 'invitation', tier: 'bespoke' },
+  },
+}
+
 function UpgradePageContent() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
   const backHref = resolveBackHref({ weddingId: searchParams.get("weddingId"), from: searchParams.get("from") })
 
   const [isProcessing, setIsProcessing] = useState(false)
@@ -40,6 +55,8 @@ function UpgradePageContent() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     (searchParams.get('paymentMethod') as PaymentMethod) === 'msi' ? 'msi' : 'card'
   )
+  const [showCompanionDialog, setShowCompanionDialog] = useState(false)
+  const [companionMainTarget, setCompanionMainTarget] = useState<CheckoutTarget | null>(null)
 
   const leadSource = searchParams.get("source") || "direct"
   const preselectedWeddingId = searchParams.get("weddingId") || null
@@ -114,7 +131,7 @@ function UpgradePageContent() {
       const checkoutResponse = await fetch(`/api/weddings/${weddingId}/subscription/checkout-tier`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ axis: target.axis, tier: target.tier, source: leadSource, paymentMethod, bundleDiscount: target.bundleDiscount }),
+        body: JSON.stringify({ axis: target.axis, tier: target.tier, source: leadSource, paymentMethod, bundleDiscount: target.bundleDiscount, locale }),
       })
       const checkoutData = await checkoutResponse.json()
       if (!checkoutResponse.ok) throw new Error(checkoutData.error || 'Failed to create checkout session')
@@ -133,6 +150,17 @@ function UpgradePageContent() {
   const handleWeddingSelect = async (weddingId: string) => {
     if (!pendingTarget) return
     await proceedToCheckout(pendingTarget, weddingId)
+  }
+
+  // Intercepts plan selection to show companion bundle dialog first
+  const selectPlan = (target: CheckoutTarget) => {
+    const companion = COMPANION_TIER_MAP[target.axis]?.[target.tier]
+    if (companion) {
+      setCompanionMainTarget(target)
+      setShowCompanionDialog(true)
+    } else {
+      handleUpgrade(target)
+    }
   }
 
   const renderCardGroup = (axis: PricingAxis, cards: typeof INVITATION_CARDS | typeof MANAGEMENT_CARDS, groupLabel: string) => (
@@ -185,7 +213,7 @@ function UpgradePageContent() {
                 </div>
 
                 <Button
-                  onClick={() => handleUpgrade(target)}
+                  onClick={() => selectPlan(target)}
                   disabled={loading}
                   className={`w-full h-12 sm:h-14 text-sm sm:text-base tracking-wider transition-all duration-700 ${
                     isFeatured ? 'bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14]' : 'bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb]'
@@ -335,6 +363,105 @@ function UpgradePageContent() {
             <CreditCard className="w-4 h-4 inline mr-1" />{t('upgrade.guarantee.securePayment')}
           </p>
         </motion.div>
+
+        {/* Companion Bundle Dialog */}
+        <AnimatePresence>
+          {showCompanionDialog && companionMainTarget && (() => {
+            const companionRef = COMPANION_TIER_MAP[companionMainTarget.axis]?.[companionMainTarget.tier]
+            if (!companionRef) return null
+            const allCards = { ...INVITATION_CARDS, ...MANAGEMENT_CARDS }
+            const mainCards = companionMainTarget.axis === 'invitation' ? INVITATION_CARDS : MANAGEMENT_CARDS
+            const companionCards = companionRef.axis === 'invitation' ? INVITATION_CARDS : MANAGEMENT_CARDS
+            const mainCard = mainCards[companionMainTarget.tier as keyof typeof mainCards]
+            const companionCard = companionCards[companionRef.tier as keyof typeof companionCards]
+            if (!mainCard || !companionCard) return null
+
+            const halfPriceCents = Math.round(companionCard.price_mxn / 2)
+            const halfPriceDisplay = formatMXNFromCents(halfPriceCents)
+            const companionAxisLabel = companionRef.axis === 'invitation' ? 'Invitation Design' : 'Management'
+
+            return (
+              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.92, y: 20 }}
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  className="bg-[#f5f2eb] rounded-[2rem] shadow-2xl max-w-md w-full overflow-hidden"
+                >
+                  {/* Gold accent header */}
+                  <div className="h-1 bg-gradient-to-r from-[#DDA46F] via-[#f0c990] to-[#DDA46F]" />
+
+                  <div className="p-8">
+                    {/* Icon */}
+                    <div className="flex justify-center mb-5">
+                      <div className="w-14 h-14 rounded-2xl bg-[#DDA46F]/15 flex items-center justify-center">
+                        <Percent className="w-7 h-7 text-[#DDA46F]" />
+                      </div>
+                    </div>
+
+                    {/* Heading */}
+                    <h2 className="text-2xl font-serif text-[#420c14] text-center mb-2">Bundle & Save 50%</h2>
+                    <p className="text-xs tracking-[0.25em] uppercase text-[#DDA46F] text-center mb-6">Exclusive offer</p>
+
+                    {/* Selected plan */}
+                    <div className="bg-[#420c14]/5 border border-[#420c14]/10 rounded-xl px-4 py-3 mb-4">
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-[#420c14]/40 mb-1">You selected</p>
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-[#420c14]">
+                          {companionMainTarget.axis === 'invitation' ? 'Invitation Design' : 'Management'} · {mainCard.name}
+                        </span>
+                        <span className="text-sm font-semibold text-[#420c14]">{mainCard.priceDisplayMXN}</span>
+                      </div>
+                    </div>
+
+                    {/* Companion offer */}
+                    <div className="bg-[#DDA46F]/10 border border-[#DDA46F]/25 rounded-xl px-4 py-4 mb-6 relative overflow-hidden">
+                      <div className="absolute top-2 right-2">
+                        <span className="text-[9px] font-bold uppercase tracking-wider bg-[#DDA46F] text-[#420c14] px-2 py-0.5 rounded-full">
+                          50% off
+                        </span>
+                      </div>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-[#420c14]/40 mb-1">Add for just</p>
+                      <div className="flex items-baseline gap-2 mb-1">
+                        <span className="text-2xl font-serif text-[#420c14]">{halfPriceDisplay}</span>
+                        <span className="text-sm text-[#420c14]/40 line-through">{companionCard.priceDisplayMXN}</span>
+                      </div>
+                      <p className="text-sm text-[#420c14]/70 font-medium">
+                        {companionAxisLabel} · {companionCard.name}
+                      </p>
+                      <p className="text-xs text-[#420c14]/45 mt-1">{companionCard.tagline}</p>
+                    </div>
+
+                    {/* CTAs */}
+                    <div className="space-y-2.5">
+                      <Button
+                        onClick={() => {
+                          setShowCompanionDialog(false)
+                          handleUpgrade({ axis: companionRef.axis, tier: companionRef.tier, bundleDiscount: true })
+                        }}
+                        className="w-full h-12 bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14] font-semibold text-sm tracking-wide gap-2"
+                      >
+                        <Percent className="w-4 h-4" />
+                        Add {companionCard.name} bundle for {halfPriceDisplay}
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setShowCompanionDialog(false)
+                          handleUpgrade(companionMainTarget)
+                        }}
+                        variant="ghost"
+                        className="w-full h-10 text-[#420c14]/50 hover:text-[#420c14] hover:bg-[#420c14]/5 text-sm"
+                      >
+                        Continue with {mainCard.name} only
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            )
+          })()}
+        </AnimatePresence>
 
         {showWeddingSelector && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

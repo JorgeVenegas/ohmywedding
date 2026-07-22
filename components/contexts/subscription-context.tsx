@@ -3,18 +3,25 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase-client'
 import { useAuth } from '@/hooks/use-auth'
-import { 
-  type PlanType, 
-  type WeddingFeatures, 
+import {
+  type InvitationTier,
+  type ManagementTier,
+  type WeddingFeatures,
   getDefaultFeatures,
-  requiresPremium,
+  hasPaidInvitation,
+  hasPaidManagement,
+  hasPaidPlanFromTiers,
+  requiresInvitation,
+  requiresManagement,
 } from '@/lib/subscription-shared'
 
 interface SubscriptionContextValue {
-  planType: PlanType
+  invitationTier: InvitationTier
+  managementTier: ManagementTier
+  hasPaidPlan: boolean
+  isPremium: boolean // alias for hasPaidPlan
   features: WeddingFeatures
   loading: boolean
-  isPremium: boolean
   weddingId: string | null
   freeTrialStartedAt: string | null
   canAccessFeature: (feature: keyof WeddingFeatures) => boolean
@@ -30,16 +37,18 @@ interface SubscriptionProviderProps {
 
 export function SubscriptionProvider({ children, weddingId }: SubscriptionProviderProps) {
   const { user, loading: authLoading } = useAuth()
-  const [planType, setPlanType] = useState<PlanType>('free')
-  const [features, setFeatures] = useState<WeddingFeatures>(getDefaultFeatures('free'))
+  const [invitationTier, setInvitationTier] = useState<InvitationTier>('basic')
+  const [managementTier, setManagementTier] = useState<ManagementTier>('basic')
+  const [features, setFeatures] = useState<WeddingFeatures>(getDefaultFeatures('basic', 'basic'))
   const [loading, setLoading] = useState(true)
   const [isSuperuser, setIsSuperuser] = useState(false)
   const [freeTrialStartedAt, setFreeTrialStartedAt] = useState<string | null>(null)
 
   const fetchSubscriptionAndFeatures = useCallback(async () => {
     if (!user || !weddingId) {
-      setPlanType('free')
-      setFeatures(getDefaultFeatures('free'))
+      setInvitationTier('basic')
+      setManagementTier('basic')
+      setFeatures(getDefaultFeatures('basic', 'basic'))
       setIsSuperuser(false)
       setFreeTrialStartedAt(null)
       setLoading(false)
@@ -50,58 +59,54 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
       setLoading(true)
       const supabase = createClient()
 
-      // Check if user is a superuser first via API route (avoids RLS issues)
       let isSuperuserUser = false
       try {
         const response = await fetch('/api/user/is-superuser', {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
         })
         if (response.ok) {
-          const { isSuperuser } = await response.json()
-          isSuperuserUser = isSuperuser
+          const { isSuperuser: su } = await response.json()
+          isSuperuserUser = su
         }
-      } catch (err) {
-        // Silently fail superuser check - not critical
+      } catch {
         isSuperuserUser = false
       }
 
       setIsSuperuser(isSuperuserUser)
 
-      // Fetch wedding features (which includes the wedding's plan)
-      // weddingId could be either UUID or wedding_name_id — use a strict UUID regex
-      // since wedding_name_id can also contain hyphens (e.g. "jorge-yuli", "demo-luxury-noir")
       const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
       const isUUID = UUID_REGEX.test(weddingId)
-      
+
       const weddingQuery = supabase
         .from('weddings')
         .select('id, created_at')
-      
+
       const { data: wedding } = isUUID
         ? await weddingQuery.eq('id', weddingId).single()
         : await weddingQuery.eq('wedding_name_id', weddingId).single()
 
       if (wedding) {
-        const { data: weddingFeatures } = await supabase
+        const { data: sub } = await supabase
           .from('wedding_subscriptions')
-          .select('plan, created_at')
+          .select('invitation_tier, management_tier, plan, created_at')
           .eq('wedding_id', wedding.id)
           .single()
 
-        if (weddingFeatures) {
-          // Always use the wedding's plan as the source of truth
-          const weddingPlan = (weddingFeatures.plan as PlanType) || 'free'
-          setPlanType(weddingPlan)
-          // Track free trial start: subscription created_at is when the free trial began
-          // Fall back to the wedding's created_at for older records without a subscription row
-          setFreeTrialStartedAt(
-            weddingFeatures.created_at ?? (wedding as any).created_at ?? null
-          )
-          
-          // Superusers get all features enabled regardless of plan
+        if (sub) {
+          // Prefer explicit tier columns; fall back to legacy plan mapping for old records
+          const legacyPlan = (sub as any).plan as string | null
+          const invTier: InvitationTier =
+            (sub.invitation_tier as InvitationTier) ||
+            (legacyPlan === 'deluxe' ? 'bespoke' : legacyPlan === 'premium' ? 'personalized' : 'basic')
+          const mgmtTier: ManagementTier =
+            (sub.management_tier as ManagementTier) ||
+            (legacyPlan === 'deluxe' ? 'agency' : legacyPlan === 'premium' ? 'pro' : 'basic')
+
+          setInvitationTier(invTier)
+          setManagementTier(mgmtTier)
+          setFreeTrialStartedAt(sub.created_at ?? (wedding as any).created_at ?? null)
+
           if (isSuperuserUser) {
             setFeatures({
               rsvp_enabled: true,
@@ -112,14 +117,13 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
               seating_enabled: true,
             })
           } else {
-            setFeatures(getDefaultFeatures(weddingPlan))
+            setFeatures(getDefaultFeatures(invTier, mgmtTier))
           }
         } else {
-          // No subscription record yet — use wedding created_at as fallback
           setFreeTrialStartedAt((wedding as any).created_at ?? null)
+          setInvitationTier('basic')
+          setManagementTier('basic')
           if (isSuperuserUser) {
-            // Superuser still sees all features but plan stays free
-            setPlanType('free')
             setFeatures({
               rsvp_enabled: true,
               invitations_panel_enabled: true,
@@ -129,19 +133,18 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
               seating_enabled: true,
             })
           } else {
-            // No wedding subscription found, default to free
-            setPlanType('free')
-            setFeatures(getDefaultFeatures('free'))
+            setFeatures(getDefaultFeatures('basic', 'basic'))
           }
         }
       } else {
-        // Wedding not found
-        setPlanType('free')
-        setFeatures(getDefaultFeatures('free'))
+        setInvitationTier('basic')
+        setManagementTier('basic')
+        setFeatures(getDefaultFeatures('basic', 'basic'))
       }
-    } catch (error) {
-      setPlanType('free')
-      setFeatures(getDefaultFeatures('free'))
+    } catch {
+      setInvitationTier('basic')
+      setManagementTier('basic')
+      setFeatures(getDefaultFeatures('basic', 'basic'))
       setIsSuperuser(false)
       setFreeTrialStartedAt(null)
     } finally {
@@ -155,29 +158,24 @@ export function SubscriptionProvider({ children, weddingId }: SubscriptionProvid
     }
   }, [authLoading, fetchSubscriptionAndFeatures])
 
-  const isPremium = planType === 'premium' || planType === 'deluxe'
+  const hasPaidPlan = hasPaidPlanFromTiers(invitationTier, managementTier)
 
   const canAccessFeature = useCallback((feature: keyof WeddingFeatures): boolean => {
-    // Handle the plan field which is a string, not a boolean
-    if (feature === 'plan') {
-      return planType !== 'free'
-    }
-    // Defense-in-depth: premium features always require a paid plan,
-    // regardless of what the DB boolean says (prevents stale data issues).
-    // Superusers bypass this so they can still access everything.
-    if (!isSuperuser && requiresPremium(feature) && planType === 'free') {
-      return false
-    }
+    if (isSuperuser) return true
+    if (requiresInvitation(feature) && !hasPaidInvitation(invitationTier)) return false
+    if (requiresManagement(feature) && !hasPaidManagement(managementTier)) return false
     return features[feature] === true
-  }, [features, planType, isSuperuser])
+  }, [features, invitationTier, managementTier, isSuperuser])
 
   return (
-    <SubscriptionContext.Provider 
+    <SubscriptionContext.Provider
       value={{
-        planType,
+        invitationTier,
+        managementTier,
+        hasPaidPlan,
+        isPremium: hasPaidPlan,
         features,
         loading: loading || authLoading,
-        isPremium,
         weddingId,
         freeTrialStartedAt,
         canAccessFeature,
@@ -197,7 +195,6 @@ export function useSubscriptionContext() {
   return context
 }
 
-// HOC to wrap components that require premium access
 export function withPremiumCheck<P extends object>(
   WrappedComponent: React.ComponentType<P>,
   feature: keyof WeddingFeatures
@@ -216,9 +213,7 @@ export function withPremiumCheck<P extends object>(
     if (!canAccessFeature(feature)) {
       return (
         <div className="min-h-screen bg-background">
-          <div className="max-w-2xl mx-auto px-4 py-20">
-            {/* Import and use PremiumUpgradePrompt here */}
-          </div>
+          <div className="max-w-2xl mx-auto px-4 py-20" />
         </div>
       )
     }

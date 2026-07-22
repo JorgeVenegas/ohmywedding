@@ -9,6 +9,14 @@ export const runtime = 'nodejs'
 
 const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: STRIPE_API_VERSION as any })
 
+// Convert a date/datetime-local string to end-of-day UTC Unix timestamp.
+// datetime-local sends "2026-07-21T00:00" which is midnight UTC — already expired
+// in Mexico timezones. Using T23:59:59Z gives the full calendar day the user chose.
+function toEndOfDayUnix(dateStr: string): number {
+  const dateOnly = dateStr.split('T')[0]
+  return Math.floor(new Date(dateOnly + 'T23:59:59Z').getTime() / 1000)
+}
+
 async function verifySuperadmin(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { user: null, error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
@@ -114,7 +122,7 @@ export async function POST(request: NextRequest) {
         ? { percent_off: discountValue }
         : { amount_off: discountValue, currency: 'mxn' }),
       ...(maxRedemptions ? { max_redemptions: maxRedemptions } : {}),
-      ...(expiresAt ? { redeem_by: Math.floor(new Date(expiresAt).getTime() / 1000) } : {}),
+      ...(expiresAt ? { redeem_by: toEndOfDayUnix(expiresAt) } : {}),
     }
 
     const stripeCoupon = await stripe.coupons.create(stripeCouponParams)
@@ -151,7 +159,7 @@ export async function POST(request: NextRequest) {
       promotion: { coupon: stripeCoupon.id, type: 'coupon' },
       code: normalizedCode,
       ...(codeMaxRedemptions ? { max_redemptions: codeMaxRedemptions } : {}),
-      ...(expiresAt ? { expires_at: Math.floor(new Date(expiresAt).getTime() / 1000) } : {}),
+      ...(expiresAt ? { expires_at: toEndOfDayUnix(expiresAt) } : {}),
     }
 
     const stripePromo = await stripe.promotionCodes.create(stripePromoParams)

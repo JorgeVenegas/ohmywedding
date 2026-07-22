@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
+  RefreshCw,
 } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "sonner"
@@ -27,6 +28,7 @@ import {
 import { CouponFormDialog } from "@/components/superadmin/coupon-form-dialog"
 import { AddCodeDialog } from "@/components/superadmin/add-code-dialog"
 import { RedemptionsDialog } from "@/components/superadmin/coupon-redemptions-dialog"
+import { ConfirmDialog } from "@/components/superadmin/confirm-dialog"
 
 interface PromotionCode {
   id: string
@@ -68,6 +70,10 @@ export default function CouponsPage() {
   const [addCodeCoupon, setAddCodeCoupon] = useState<{ id: string; name: string } | null>(null)
   const [redemptionsCoupon, setRedemptionsCoupon] = useState<{ id: string; name: string } | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Coupon | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [lastSynced, setLastSynced] = useState<Date | null>(null)
 
   const fetchCoupons = useCallback(async () => {
     try {
@@ -83,9 +89,35 @@ export default function CouponsPage() {
     }
   }, [])
 
-  useEffect(() => {
-    fetchCoupons()
+  const runSync = useCallback(async (silent = false) => {
+    if (!silent) setSyncing(true)
+    else setSyncing(true) // show spinner either way, but don't show toast on silent
+    try {
+      const res = await fetch("/api/superadmin/coupons/sync", { method: "POST" })
+      const data = await res.json()
+      if (res.ok) {
+        await fetchCoupons()
+        setLastSynced(new Date())
+        if (!silent) {
+          const msg = data.changed > 0
+            ? `Synced — ${data.changed} value${data.changed !== 1 ? "s" : ""} updated`
+            : "All coupons already up to date"
+          toast.success(msg)
+        }
+      } else if (!silent) {
+        toast.error(data.error || "Sync failed")
+      }
+    } catch {
+      if (!silent) toast.error("Sync failed")
+    } finally {
+      setSyncing(false)
+    }
   }, [fetchCoupons])
+
+  useEffect(() => {
+    // Show local data immediately, then sync from Stripe in the background
+    fetchCoupons().then(() => runSync(true))
+  }, [fetchCoupons, runSync])
 
   const handleToggleActive = async (coupon: Coupon) => {
     setTogglingId(coupon.id)
@@ -110,16 +142,18 @@ export default function CouponsPage() {
     }
   }
 
-  const handleDelete = async (coupon: Coupon) => {
-    if (!confirm("Are you sure you want to delete this coupon? This cannot be undone.")) return
+  const handleSync = () => runSync(false)
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
     try {
-      const res = await fetch(`/api/superadmin/coupons/${coupon.id}`, {
+      const res = await fetch(`/api/superadmin/coupons/${deleteTarget.id}`, {
         method: "DELETE",
       })
-
       if (res.ok) {
         toast.success("Coupon deleted")
+        setDeleteTarget(null)
         fetchCoupons()
       } else {
         const data = await res.json()
@@ -127,6 +161,8 @@ export default function CouponsPage() {
       }
     } catch {
       toast.error("Failed to delete coupon")
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -185,10 +221,7 @@ export default function CouponsPage() {
     expired: coupons.filter(
       (c) => getCouponStatus(c) === "expired" || getCouponStatus(c) === "used_up"
     ).length,
-    totalRedemptions: coupons.reduce(
-      (sum, c) => sum + c.coupon_redemptions.filter((r) => r.status === "completed").length,
-      0
-    ),
+    totalRedemptions: coupons.reduce((sum, c) => sum + (c.times_redeemed || 0), 0),
     totalDiscountGiven: coupons.reduce(
       (sum, c) =>
         sum +
@@ -210,13 +243,31 @@ export default function CouponsPage() {
             Create and manage discount coupons synced with Stripe
           </p>
         </div>
-        <Button
-          onClick={() => setShowCreateDialog(true)}
-          className="bg-[#420c14] hover:bg-[#5a1a22] text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Create Coupon
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleSync}
+              disabled={syncing}
+              className="border-[#420c14]/20 text-[#420c14]/70 hover:bg-[#420c14]/5"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
+              {syncing ? "Syncing…" : "Sync with Stripe"}
+            </Button>
+            {lastSynced && !syncing && (
+              <span className="text-xs text-[#420c14]/35">
+                Synced {lastSynced.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            )}
+          </div>
+          <Button
+            onClick={() => setShowCreateDialog(true)}
+            className="bg-[#420c14] hover:bg-[#5a1a22] text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Create Coupon
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -280,9 +331,6 @@ export default function CouponsPage() {
           <div className="divide-y divide-[#420c14]/5">
             {coupons.map((coupon) => {
               const status = getCouponStatus(coupon)
-              const completedRedemptions = coupon.coupon_redemptions.filter(
-                (r) => r.status === "completed"
-              ).length
               const codes = coupon.coupon_promotion_codes
 
               return (
@@ -331,7 +379,7 @@ export default function CouponsPage() {
                           {coupon.applies_to_plans.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(", ")}
                         </span>
                         <span>
-                          Redeemed: {completedRedemptions}
+                          Redeemed: {coupon.times_redeemed}
                           {coupon.max_redemptions ? `/${coupon.max_redemptions}` : ""}
                         </span>
                         {coupon.expires_at && (
@@ -380,7 +428,7 @@ export default function CouponsPage() {
                           )}
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleDelete(coupon)}
+                          onClick={() => setDeleteTarget(coupon)}
                           className="text-red-600 focus:text-red-600"
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
@@ -397,6 +445,18 @@ export default function CouponsPage() {
       </div>
 
       {/* Dialogs */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={open => !open && setDeleteTarget(null)}
+        title="Delete coupon"
+        description={deleteTarget
+          ? `This will permanently delete "${deleteTarget.name}" and all its promotion codes from Stripe. Any client who has this code will no longer be able to use it.`
+          : ""}
+        confirmLabel="Delete coupon"
+        loading={deleting}
+        onConfirm={handleDelete}
+      />
+
       <CouponFormDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}

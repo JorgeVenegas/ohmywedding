@@ -380,29 +380,29 @@ export default function WeddingSummaryPage({ params }: SummaryPageProps) {
         <div ref={printRef} className="bg-white text-zinc-900">
           {/* Overview Stats */}
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-8">
-            <Card className="p-4 border-b-2 border-b-green-500">
-              <div className="text-2xl font-bold text-green-600">{stats.confirmed}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{t('admin.summary.stats.confirmed')}</div>
+            <Card className="p-4 border-[#420c14]/10">
+              <div className="text-2xl font-serif text-green-600">{stats.confirmed}</div>
+              <div className="text-xs text-[#420c14]/50 mt-0.5">{t('admin.summary.stats.confirmed')}</div>
             </Card>
-            <Card className="p-4 border-b-2 border-b-red-500">
-              <div className="text-2xl font-bold text-red-500">{stats.declined}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{t('admin.summary.stats.declined')}</div>
+            <Card className="p-4 border-[#420c14]/10">
+              <div className="text-2xl font-serif text-red-500">{stats.declined}</div>
+              <div className="text-xs text-[#420c14]/50 mt-0.5">{t('admin.summary.stats.declined')}</div>
             </Card>
-            <Card className="p-4 border-b-2 border-b-amber-400">
-              <div className="text-2xl font-bold text-amber-500">{stats.pending}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{t('admin.summary.stats.pending')}</div>
+            <Card className="p-4 border-[#420c14]/10">
+              <div className="text-2xl font-serif text-amber-500">{stats.pending}</div>
+              <div className="text-xs text-[#420c14]/50 mt-0.5">{t('admin.summary.stats.pending')}</div>
             </Card>
-            <Card className="p-4 border-b-2 border-b-primary/50">
-              <div className="text-2xl font-bold">{stats.totalTables}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{t('admin.summary.stats.tables')}</div>
+            <Card className="p-4 border-[#420c14]/10">
+              <div className="text-2xl font-serif text-[#420c14]">{stats.totalTables}</div>
+              <div className="text-xs text-[#420c14]/50 mt-0.5">{t('admin.summary.stats.tables')}</div>
             </Card>
-            <Card className="p-4 border-b-2 border-b-green-400/60">
-              <div className="text-2xl font-bold text-green-600">{stats.assignedGuests}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{t('admin.summary.stats.assigned')}</div>
+            <Card className="p-4 border-[#420c14]/10">
+              <div className="text-2xl font-serif text-[#420c14]">{stats.assignedGuests}</div>
+              <div className="text-xs text-[#420c14]/50 mt-0.5">{t('admin.summary.stats.assigned')}</div>
             </Card>
-            <Card className={`p-4 border-b-2 ${stats.unassignedGuests > 0 ? 'border-b-red-400' : 'border-b-muted'}`}>
-              <div className={`text-2xl font-bold ${stats.unassignedGuests > 0 ? 'text-red-500' : ''}`}>{stats.unassignedGuests}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{t('admin.summary.stats.unassigned')}</div>
+            <Card className="p-4 border-[#420c14]/10">
+              <div className={`text-2xl font-serif ${stats.unassignedGuests > 0 ? 'text-[#DDA46F]' : 'text-[#420c14]/40'}`}>{stats.unassignedGuests}</div>
+              <div className="text-xs text-[#420c14]/50 mt-0.5">{t('admin.summary.stats.unassigned')}</div>
             </Card>
           </div>
 

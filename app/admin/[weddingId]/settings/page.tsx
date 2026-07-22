@@ -1,7 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import React, { useState, useEffect, use } from "react"
+import React, { useState, useEffect, use, useCallback, Suspense } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
+import { createPortal } from "react-dom"
+import { motion, AnimatePresence } from "framer-motion"
 import { Header } from "@/components/header"
 import { UpdateWeddingNameId } from "@/components/ui/update-wedding-name-id"
 import { CollaboratorManager } from "@/components/ui/collaborator-manager"
@@ -9,7 +12,6 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { useI18n } from "@/components/contexts/i18n-context"
@@ -17,35 +19,40 @@ import { useWeddingPermissions } from "@/hooks/use-auth"
 import { WhatsappAccountSettings } from "./components/whatsapp-account-settings"
 import {
   Settings,
-  Users,
-  Mail,
-  Image,
-  Calendar,
-  Gift,
   Globe,
-  AlertCircle,
   Save,
   ChevronRight,
   Crown,
   Sparkles,
   Check,
-  X,
   UserCog,
   LayoutGrid,
-  CircleCheck,
-  CircleX,
-  CalendarClock,
   MessageCircle,
+  Mail,
+  Gift,
+  Calendar,
+  Users,
+  CalendarClock,
+  Clock,
+  Loader2,
+  Percent,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react"
+import { INVITATION_PRICING, MANAGEMENT_PRICING, getTierLocaleCopy, planLabel, type PricingAxis, type InvitationTier, type ManagementTier, formatMXNFromCents } from "@/lib/subscription-shared"
 
-interface WeddingFeatures {
-  id: string
-  wedding_id: string
-  rsvp_enabled: boolean
-  invitations_panel_enabled: boolean
-  gallery_enabled: boolean
-  registry_enabled: boolean
-  schedule_enabled: boolean
+// Maps a selected plan to its same-tier companion on the other axis
+const COMPANION_TIER_MAP: Record<PricingAxis, Record<string, { axis: PricingAxis; tier: string }>> = {
+  invitation: {
+    basic:        { axis: 'management', tier: 'basic' },
+    personalized: { axis: 'management', tier: 'pro' },
+    bespoke:      { axis: 'management', tier: 'agency' },
+  },
+  management: {
+    basic:   { axis: 'invitation', tier: 'basic' },
+    pro:     { axis: 'invitation', tier: 'personalized' },
+    agency:  { axis: 'invitation', tier: 'bespoke' },
+  },
 }
 
 interface WeddingSettings {
@@ -66,41 +73,64 @@ interface WeddingSettings {
 }
 
 interface Subscription {
-  plan: 'free' | 'premium'
-  status: string
+  plan: string
+  invitation_tier?: string | null
+  management_tier?: string | null
+  status?: string
   started_at?: string
   expires_at?: string
-}
-
-interface PlanFeatures {
-  rsvp_enabled: boolean
-  invitations_panel_enabled: boolean
-  gallery_enabled: boolean
-  registry_enabled: boolean
-  schedule_enabled: boolean
 }
 
 interface SettingsPageProps {
   params: Promise<{ weddingId: string }>
 }
 
-type Section = "status" | "subscription" | "features" | "rsvp" | "invitations" | "gallery" | "general" | "collaborators" | "dashboardSections" | "messaging"
+type Section = "general" | "subscription" | "collaborators" | "dashboardSections" | "messaging" | "danger"
 
 export default function SettingsPage({ params }: SettingsPageProps) {
+  return (
+    <Suspense>
+      <SettingsPageInner params={params} />
+    </Suspense>
+  )
+}
+
+function SettingsPageInner({ params }: SettingsPageProps) {
   const { weddingId } = use(params)
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const { permissions: weddingPerms, loading: permsLoading } = useWeddingPermissions(weddingId)
-  const [features, setFeatures] = useState<WeddingFeatures | null>(null)
   const [settings, setSettings] = useState<WeddingSettings | null>(null)
+  const [weddingUuid, setWeddingUuid] = useState<string | null>(null)
   const [subscription, setSubscription] = useState<Subscription | null>(null)
-  const [planFeatures, setPlanFeatures] = useState<PlanFeatures | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [activeSection, setActiveSection] = useState<Section>("status")
+
+  const validSections: Section[] = ["general", "subscription", "collaborators", "dashboardSections", "messaging", "danger"]
+  const sectionFromUrl = searchParams.get('section') as Section | null
+  const [activeSection, setActiveSection] = useState<Section>(
+    sectionFromUrl && validSections.includes(sectionFromUrl) ? sectionFromUrl : "general"
+  )
+
+  const navigateToSection = useCallback((section: Section) => {
+    setActiveSection(section)
+    const url = new URL(window.location.href)
+    url.searchParams.set('section', section)
+    router.replace(url.pathname + '?' + url.searchParams.toString(), { scroll: false })
+  }, [router])
   const [hasChanges, setHasChanges] = useState(false)
-  const [isReady, setIsReady] = useState(false)
-  const [readyStatusManagedBy, setReadyStatusManagedBy] = useState<'owner' | 'all'>('owner')
-  const [savingStatus, setSavingStatus] = useState(false)
+  const [isCheckingOut, setIsCheckingOut] = useState(false)
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
+  const [showCompanionDialog, setShowCompanionDialog] = useState(false)
+  const [companionMainTarget, setCompanionMainTarget] = useState<{ axis: PricingAxis; tier: string } | null>(null)
+  const [selectedCompanionTier, setSelectedCompanionTier] = useState<string | null>(null)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState("")
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const { t, setLocale } = useI18n()
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     fetchData()
@@ -109,33 +139,20 @@ export default function SettingsPage({ params }: SettingsPageProps) {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const [featuresRes, settingsRes, subscriptionRes, readyStatusRes] = await Promise.all([
-        fetch(`/api/weddings/${weddingId}/features`),
+      const [settingsRes, subscriptionRes] = await Promise.all([
         fetch(`/api/weddings/${weddingId}/settings`),
-        fetch(`/api/user/subscription`),
-        fetch(`/api/weddings/${weddingId}/ready-status`),
+        fetch(`/api/weddings/${weddingId}/subscription`),
       ])
-
-      if (featuresRes.ok) {
-        const data = await featuresRes.json()
-        setFeatures(data.features)
-      }
 
       if (settingsRes.ok) {
         const data = await settingsRes.json()
         setSettings(data.settings)
+        setWeddingUuid(data.settings?.wedding_id ?? null)
       }
 
       if (subscriptionRes.ok) {
         const data = await subscriptionRes.json()
         setSubscription(data.subscription)
-        setPlanFeatures(data.features)
-      }
-
-      if (readyStatusRes.ok) {
-        const data = await readyStatusRes.json()
-        setIsReady(data.is_ready)
-        setReadyStatusManagedBy(data.ready_status_managed_by)
       }
     } catch (error) {
     } finally {
@@ -154,7 +171,6 @@ export default function SettingsPage({ params }: SettingsPageProps) {
 
       if (settingsRes.ok) {
         setHasChanges(false)
-        // Apply the new language immediately — no refresh needed
         if (settings?.language) {
           setLocale(settings.language as import("@/lib/i18n").Locale)
         }
@@ -165,6 +181,73 @@ export default function SettingsPage({ params }: SettingsPageProps) {
     }
   }
 
+  const handleUpgradeFromSettings = async (target: { axis: PricingAxis; tier: string }) => {
+    if (!weddingUuid) return
+    setIsCheckingOut(true)
+    setCheckoutError(null)
+    try {
+      const res = await fetch(`/api/weddings/${weddingUuid}/subscription/checkout-tier`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ axis: target.axis, tier: target.tier, source: 'settings', cancelUrl: window.location.pathname + window.location.search, locale: settings?.language || 'en' }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to create checkout session')
+      if (data.url) window.location.href = data.url
+    } catch (err) {
+      setCheckoutError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setIsCheckingOut(false)
+    }
+  }
+
+  const handleDeleteWedding = async () => {
+    if (!weddingUuid) return
+    setIsDeleting(true)
+    try {
+      const res = await fetch(`/api/weddings/${weddingUuid}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const data = await res.json()
+        alert(data.error || 'Failed to delete wedding')
+        return
+      }
+      router.push('/admin')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleBundleCheckout = async (mainAxis: PricingAxis, mainTier: string, companionAxis: PricingAxis, companionTier: string) => {
+    if (!weddingUuid) return
+    setIsCheckingOut(true)
+    setCheckoutError(null)
+    try {
+      const res = await fetch(`/api/weddings/${weddingUuid}/subscription/checkout-bundle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mainAxis, mainTier, companionAxis, companionTier, source: 'settings_bundle', cancelUrl: window.location.pathname + window.location.search, locale: settings?.language || 'en' }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to create bundle checkout')
+      if (data.url) window.location.href = data.url
+    } catch (err) {
+      setCheckoutError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setIsCheckingOut(false)
+    }
+  }
+
+  const selectPlanFromSettings = (axis: PricingAxis, tier: string) => {
+    const companion = COMPANION_TIER_MAP[axis]?.[tier]
+    setCompanionMainTarget({ axis, tier })
+    if (companion) {
+      setSelectedCompanionTier(companion.tier)
+      setShowCompanionDialog(true)
+    } else {
+      handleUpgradeFromSettings({ axis, tier })
+    }
+  }
+
   const updateSetting = (key: keyof WeddingSettings, value: any) => {
     if (settings) {
       setSettings({ ...settings, [key]: value })
@@ -172,43 +255,19 @@ export default function SettingsPage({ params }: SettingsPageProps) {
     }
   }
 
-  const saveReadyStatus = async (updates: { is_ready?: boolean; ready_status_managed_by?: 'owner' | 'all' }) => {
-    try {
-      setSavingStatus(true)
-      const res = await fetch(`/api/weddings/${weddingId}/ready-status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setIsReady(data.is_ready)
-        setReadyStatusManagedBy(data.ready_status_managed_by)
-      }
-    } catch (error) {
-    } finally {
-      setSavingStatus(false)
-    }
-  }
-
-  const menuItems = [
-    { id: "status", label: "Wedding Status", icon: CircleCheck },
-    { id: "subscription", label: t('admin.settings.nav.subscription'), icon: Crown },
-    { id: "features", label: t('admin.settings.features.title'), icon: Settings },
-    { id: "rsvp", label: t('admin.settings.nav.rsvp'), icon: Users },
-    { id: "invitations", label: t('admin.settings.nav.invitations'), icon: Mail },
-    { id: "gallery", label: t('admin.settings.nav.gallery'), icon: Image },
+  const menuItems: { id: Section; label: string; icon: React.ComponentType<{ className?: string }>; danger?: boolean }[] = [
     { id: "general", label: t('admin.settings.nav.general'), icon: Globe },
+    { id: "subscription", label: t('admin.settings.nav.subscription'), icon: Crown },
     { id: "collaborators", label: t('admin.settings.nav.collaborators'), icon: UserCog },
     { id: "dashboardSections", label: t('admin.settings.nav.dashboardSections'), icon: LayoutGrid },
     { id: "messaging", label: t('admin.settings.nav.messaging'), icon: MessageCircle },
+    { id: "danger", label: t('admin.settings.nav.danger'), icon: AlertTriangle, danger: true },
   ]
 
-  // Show loading while data or permissions are being fetched
   if (loading || permsLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
+        <Header showBackButton backHref={getCleanAdminUrl(weddingId, "dashboard")} />
         <div className="page-container">
           <div className="flex items-center justify-center h-96">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -218,16 +277,15 @@ export default function SettingsPage({ params }: SettingsPageProps) {
     )
   }
 
-  // Only owners can access settings
   if (!weddingPerms.isOwner) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
+        <Header showBackButton backHref={getCleanAdminUrl(weddingId, "dashboard")} />
         <div className="page-container">
           <div className="flex items-center justify-center h-96">
             <div className="text-center max-w-md">
               <Settings className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2">{t('admin.settings.ownerOnly')}</h2>
+              <h2 className="text-base font-serif text-[#420c14] mb-2">{t('admin.settings.ownerOnly')}</h2>
               <p className="text-muted-foreground mb-6">{t('admin.settings.ownerOnlyDescription')}</p>
               <Button variant="outline" asChild>
                 <Link href={getCleanAdminUrl(weddingId, 'dashboard')}>{t('admin.settings.backToDashboard')}</Link>
@@ -239,26 +297,40 @@ export default function SettingsPage({ params }: SettingsPageProps) {
     )
   }
 
+  // Read tiers directly from wedding_subscriptions — the authoritative source.
+  // Fall back to deriving from legacy plan only when tier columns are absent.
+  const currentInvTier = (
+    subscription?.invitation_tier as 'basic' | 'personalized' | 'bespoke' | null | undefined
+  ) ?? (
+    subscription?.plan === 'deluxe' ? 'bespoke'
+    : subscription?.plan === 'premium' ? 'personalized'
+    : null
+  )
+  const currentMgmtTier = (
+    subscription?.management_tier as 'basic' | 'pro' | 'agency' | null | undefined
+  ) ?? (
+    subscription?.plan === 'deluxe' ? 'agency'
+    : subscription?.plan === 'premium' ? 'pro'
+    : null
+  )
+  const invTiers = ['basic', 'personalized', 'bespoke'] as const
+  const mgmtTiers = ['basic', 'pro', 'agency'] as const
+
   return (
+    <>
     <div className="min-h-screen bg-background">
-      <Header />
-      
+      <Header showBackButton backHref={getCleanAdminUrl(weddingId, "dashboard")} />
+
       <div className="page-container">
-        <div className="mb-12 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">{t('admin.settings.title')}</h1>
-            <p className="text-muted-foreground">
-              {t('admin.settings.description')}
-            </p>
-          </div>
-          <Button size="sm" variant="outline" asChild>
-            <Link href={getCleanAdminUrl(weddingId, "dashboard")}>{t('admin.settings.backToDashboard')}</Link>
-          </Button>
+        <div className="mb-8">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-[#DDA46F] mb-2">{t('admin.dashboard.management')}</p>
+          <h1 className="text-3xl font-serif text-[#420c14] mb-1">{t('admin.settings.title')}</h1>
+          <p className="text-sm text-[#420c14]/60">{t('admin.settings.description')}</p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar Navigation */}
-          <div className="lg:w-64 flex-shrink-0">
+          <div className="lg:w-56 flex-shrink-0">
             <Card className="p-2">
               <nav className="space-y-1">
                 {menuItems.map((item) => {
@@ -267,21 +339,23 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                   return (
                     <button
                       key={item.id}
-                      onClick={() => setActiveSection(item.id as Section)}
+                      onClick={() => navigateToSection(item.id)}
                       className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
-                        isActive
-                          ? "bg-primary/10 text-primary font-medium"
+                        item.danger
+                          ? isActive
+                            ? "bg-red-50 text-red-700 font-medium"
+                            : "text-red-500/70 hover:bg-red-50 hover:text-red-600"
+                          : isActive
+                          ? "bg-[#420c14]/8 text-[#420c14] font-medium"
                           : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <Icon className="h-5 w-5" />
-                        <span>{item.label}</span>
+                        <Icon className="h-4 w-4" />
+                        <span className="text-sm">{item.label}</span>
                       </div>
                       <ChevronRight
-                        className={`h-4 w-4 transition-opacity ${
-                          isActive ? "opacity-100" : "opacity-0"
-                        }`}
+                        className={`h-3.5 w-3.5 transition-opacity ${isActive ? "opacity-100" : "opacity-0"}`}
                       />
                     </button>
                   )
@@ -291,511 +365,25 @@ export default function SettingsPage({ params }: SettingsPageProps) {
           </div>
 
           {/* Content Area */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <Card className="p-6">
-              {activeSection === "status" && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-xl font-semibold text-foreground mb-1">Wedding Status</h2>
-                    <p className="text-sm text-muted-foreground">
-                      Control whether your wedding is active. Only ready weddings record invitation views, RSVPs, and other activity.
-                    </p>
-                  </div>
 
-                  {/* Status indicator */}
-                  <div className={`rounded-lg border-2 p-6 transition-colors ${
-                    isReady
-                      ? 'border-green-500 bg-green-50 dark:bg-green-950/20'
-                      : 'border-border bg-card'
-                  }`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className={`h-14 w-14 rounded-full flex items-center justify-center ${
-                          isReady
-                            ? 'bg-green-100 dark:bg-green-900/40'
-                            : 'bg-muted'
-                        }`}>
-                          {isReady
-                            ? <CircleCheck className="h-8 w-8 text-green-600 dark:text-green-400" />
-                            : <CircleX className="h-8 w-8 text-muted-foreground" />
-                          }
-                        </div>
-                        <div>
-                          <p className="text-lg font-semibold">
-                            {isReady ? 'Ready' : 'Not Ready'}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {isReady
-                              ? 'Activity is being recorded. Invitations, RSVPs, and views are tracked.'
-                              : 'Activity is paused. No views or RSVPs will be recorded until you set this to Ready.'}
-                          </p>
-                        </div>
-                      </div>
-                      <Switch
-                        checked={isReady}
-                        disabled={savingStatus}
-                        onCheckedChange={(value) => saveReadyStatus({ is_ready: value })}
-                      />
-                    </div>
-                  </div>
-
-                  {!isReady && (
-                    <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-lg p-4 flex items-start gap-3">
-                      <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-amber-900 dark:text-amber-100">Activity tracking is paused</p>
-                        <p className="text-sm text-amber-700 dark:text-amber-200 mt-1">
-                          Set the wedding to Ready when you're prepared to start sending invitations so that all activity is properly recorded from the beginning.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Who can change this */}
-                  <div className="border-t border-border pt-6 space-y-4">
-                    <div>
-                      <Label className="text-base font-medium">Who can change this status</Label>
-                      <p className="text-sm text-muted-foreground mt-1">By default only the owner can toggle the wedding status.</p>
-                    </div>
-                    <div className="space-y-2">
-                      <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                        readyStatusManagedBy === 'owner' ? 'border-primary bg-primary/5' : 'border-border hover:bg-accent'
-                      }`}>
-                        <input
-                          type="radio"
-                          name="readyStatusManagedBy"
-                          value="owner"
-                          checked={readyStatusManagedBy === 'owner'}
-                          onChange={() => saveReadyStatus({ ready_status_managed_by: 'owner' })}
-                          className="mt-1"
-                        />
-                        <div>
-                          <p className="text-sm font-medium">Owner only</p>
-                          <p className="text-xs text-muted-foreground">Only you can mark the wedding as ready or not ready.</p>
-                        </div>
-                      </label>
-                      <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                        readyStatusManagedBy === 'all' ? 'border-primary bg-primary/5' : 'border-border hover:bg-accent'
-                      }`}>
-                        <input
-                          type="radio"
-                          name="readyStatusManagedBy"
-                          value="all"
-                          checked={readyStatusManagedBy === 'all'}
-                          onChange={() => saveReadyStatus({ ready_status_managed_by: 'all' })}
-                          className="mt-1"
-                        />
-                        <div>
-                          <p className="text-sm font-medium">Owner & Collaborators</p>
-                          <p className="text-xs text-muted-foreground">Collaborators can also toggle the wedding status from their dashboard.</p>
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeSection === "subscription" && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-xl font-semibold text-foreground mb-1">
-                      {t('admin.settings.subscription.title')}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Manage your subscription and view available features
-                    </p>
-                  </div>
-
-                  {/* Current Plan Card */}
-                  <div className={`rounded-lg border-2 p-6 ${
-                    subscription?.plan === 'premium' 
-                      ? 'border-amber-500 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20' 
-                      : 'border-border bg-card'
-                  }`}>
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        {subscription?.plan === 'premium' ? (
-                          <div className="h-12 w-12 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-                            <Crown className="h-6 w-6 text-white" />
-                          </div>
-                        ) : (
-                          <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                            <Sparkles className="h-6 w-6 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div>
-                          <h3 className="text-2xl font-bold">
-                            {subscription?.plan === 'premium' ? 'Premium' : 'Free'}
-                          </h3>
-                          <p className="text-sm text-muted-foreground capitalize">
-                            {t('admin.settings.subscription.status')} {subscription?.status || t('admin.settings.active')}
-                          </p>
-                        </div>
-                      </div>
-                      {subscription?.plan === 'free' && (
-                        <Button className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white">
-                          <Crown className="h-4 w-4 mr-2" />
-                          {t('admin.settings.upgradeToPremium')}
-                        </Button>
-                      )}
-                    </div>
-
-                    {subscription?.expires_at && (
-                      <p className="text-sm text-muted-foreground mb-4">
-                        {subscription.plan === 'premium' 
-                          ? `${t('admin.settings.subscription.expires')} ${new Date(subscription.expires_at).toLocaleDateString()}`
-                          : ''}
-                      </p>
-                    )}
-
-                    {/* Features List */}
-                    <div className="space-y-3 mt-6">
-                      <h4 className="font-semibold text-foreground mb-3">{t('admin.settings.features.title')}</h4>
-                      <div className="grid gap-3">
-                        <FeatureItem
-                          label={t('admin.settings.features.rsvp.name')}
-                          description={t('admin.settings.features.rsvp.description')}
-                          available={planFeatures?.rsvp_enabled ?? false}
-                          isPremium
-                        />
-                        <FeatureItem
-                          label={t('admin.settings.features.invitations.name')}
-                          description={t('admin.settings.features.invitations.description')}
-                          available={planFeatures?.invitations_panel_enabled ?? false}
-                          isPremium
-                        />
-                        <FeatureItem
-                          label={t('admin.settings.features.gallery.name')}
-                          description={t('admin.settings.features.gallery.description')}
-                          available={planFeatures?.gallery_enabled ?? false}
-                        />
-                        <FeatureItem
-                          label={t('admin.settings.features.registry.name')}
-                          description={t('admin.settings.features.registry.description')}
-                          available={planFeatures?.registry_enabled ?? false}
-                        />
-                        <FeatureItem
-                          label={t('admin.settings.features.schedule.name')}
-                          description={t('admin.settings.features.schedule.description')}
-                          available={planFeatures?.schedule_enabled ?? false}
-                        />
-                      </div>
-                    </div>
-
-                    {subscription?.plan === 'free' && (
-                      <div className="mt-6 pt-6 border-t border-border">
-                        <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-lg p-4">
-                          <Sparkles className="h-5 w-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
-                          <div>
-                            <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
-                              Upgrade to unlock premium features
-                            </p>
-                            <p className="text-sm text-amber-700 dark:text-amber-200 mt-1">
-                              Get access to RSVP management and invitation tools to make your wedding planning easier.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {activeSection === "features" && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-xl font-semibold text-foreground mb-1">
-                      {t('admin.settings.features.title')}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      View your plan's features and their status
-                    </p>
-                  </div>
-
-                  {subscription?.plan === 'free' && (
-                    <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4 flex items-start gap-3">
-                      <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-500 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                          You're on the Free Plan
-                        </p>
-                        <p className="text-sm text-blue-700 dark:text-blue-200 mt-1">
-                          Some features require a Premium subscription. Visit the Subscription tab to upgrade.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-4">
-                    <FeatureStatusCard
-                      icon={Users}
-                      label={t('admin.settings.features.rsvp.name')}
-                      description={t('admin.settings.features.rsvp.description')}
-                      available={planFeatures?.rsvp_enabled ?? false}
-                      enabled={features?.rsvp_enabled ?? false}
-                      isPremium
-                    />
-                    <FeatureStatusCard
-                      icon={Mail}
-                      label={t('admin.settings.features.invitations.name')}
-                      description={t('admin.settings.features.invitations.description')}
-                      available={planFeatures?.invitations_panel_enabled ?? false}
-                      enabled={features?.invitations_panel_enabled ?? false}
-                      isPremium
-                    />
-                    <FeatureStatusCard
-                      icon={Image}
-                      label={t('admin.settings.features.gallery.name')}
-                      description={t('admin.settings.features.gallery.description')}
-                      available={planFeatures?.gallery_enabled ?? false}
-                      enabled={features?.gallery_enabled ?? false}
-                    />
-                    <FeatureStatusCard
-                      icon={Gift}
-                      label={t('admin.settings.features.registry.name')}
-                      description={t('admin.settings.features.registry.description')}
-                      available={planFeatures?.registry_enabled ?? false}
-                      enabled={features?.registry_enabled ?? false}
-                    />
-                    <FeatureStatusCard
-                      icon={Calendar}
-                      label={t('admin.settings.features.schedule.name')}
-                      description={t('admin.settings.features.schedule.description')}
-                      available={planFeatures?.schedule_enabled ?? false}
-                      enabled={features?.schedule_enabled ?? false}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {activeSection === "rsvp" && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-xl font-semibold text-foreground mb-1">
-                      {t('admin.settings.rsvpSettings.title')}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Configure how guests respond to your invitation
-                    </p>
-                  </div>
-
-                  {!planFeatures?.rsvp_enabled && (
-                    <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-lg p-4 flex items-start gap-3">
-                      <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
-                          RSVP is a Premium Feature
-                        </p>
-                        <p className="text-sm text-amber-700 dark:text-amber-200 mt-1">
-                          Upgrade to Premium to enable RSVP functionality.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-6">
-                    <div className="space-y-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <Label className="text-base font-medium">{t('admin.settings.rsvpSettings.travelConfirmation')}</Label>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Allow guests to provide travel information and manage their trip details
-                          </p>
-                        </div>
-                        <Switch
-                          checked={settings?.rsvp_travel_confirmation_enabled ?? true}
-                          onCheckedChange={(value) =>
-                            updateSetting("rsvp_travel_confirmation_enabled", value)
-                          }
-                          disabled={!planFeatures?.rsvp_enabled}
-                        />
-                      </div>
-
-                      {settings?.rsvp_travel_confirmation_enabled && (
-                        <div className="pl-6 space-y-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <Label>{t('admin.settings.rsvpSettings.requireTicket')}</Label>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Guests must upload their ticket when they indicate they will purchase one
-                              </p>
-                            </div>
-                            <Switch
-                              checked={settings?.rsvp_require_ticket_attachment ?? false}
-                              onCheckedChange={(value) =>
-                                updateSetting("rsvp_require_ticket_attachment", value)
-                              }
-                              disabled={!planFeatures?.rsvp_enabled}
-                            />
-                          </div>
-
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <Label>{t('admin.settings.rsvpSettings.requireReason')}</Label>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Guests must explain why they don't need a ticket
-                              </p>
-                            </div>
-                            <Switch
-                              checked={settings?.rsvp_require_no_ticket_reason ?? false}
-                              onCheckedChange={(value) =>
-                                updateSetting("rsvp_require_no_ticket_reason", value)
-                              }
-                              disabled={!planFeatures?.rsvp_enabled}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="border-t border-border pt-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <Label className="text-base font-medium">{t('admin.settings.rsvpSettings.allowPlusOnes')}</Label>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Let guests bring additional attendees
-                          </p>
-                        </div>
-                        <Switch
-                          checked={settings?.rsvp_allow_plus_ones ?? false}
-                          onCheckedChange={(value) =>
-                            updateSetting("rsvp_allow_plus_ones", value)
-                          }
-                          disabled={!planFeatures?.rsvp_enabled}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="border-t border-border pt-4">
-                      <Label className="text-base font-medium">{t('admin.settings.rsvpSettings.rsvpDeadline')}</Label>
-                      <p className="text-sm text-muted-foreground mt-1 mb-3">
-                        Last date for guests to submit their RSVP
-                      </p>
-                      <Input
-                        type="date"
-                        value={settings?.rsvp_deadline || ""}
-                        onChange={(e) => updateSetting("rsvp_deadline", e.target.value)}
-                        disabled={!planFeatures?.rsvp_enabled}
-                        className="max-w-xs"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeSection === "invitations" && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-xl font-semibold text-foreground mb-1">
-                      {t('admin.settings.nav.invitations')}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Customize your invitation messages and preferences
-                    </p>
-                  </div>
-
-                  {!planFeatures?.invitations_panel_enabled && (
-                    <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-lg p-4 flex items-start gap-3">
-                      <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
-                          Invitations is a Premium Feature
-                        </p>
-                        <p className="text-sm text-amber-700 dark:text-amber-200 mt-1">
-                          Upgrade to Premium to enable invitation management.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-base font-medium">Default Message</Label>
-                      <p className="text-sm text-muted-foreground mt-1 mb-3">
-                        This message will be pre-filled when sending invitations
-                      </p>
-                      <Textarea
-                        value={settings?.invitation_default_message || ""}
-                        onChange={(e) =>
-                          updateSetting("invitation_default_message", e.target.value)
-                        }
-                        disabled={!planFeatures?.invitations_panel_enabled}
-                        rows={4}
-                        placeholder="Enter your default invitation message..."
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeSection === "gallery" && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-xl font-semibold text-foreground mb-1">
-                      {t('admin.settings.nav.gallery')}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Configure photo gallery preferences
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <Label className="text-base font-medium">{t('admin.settings.gallerySettings.allowGuestUploads')}</Label>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Let guests upload their photos to the gallery
-                        </p>
-                      </div>
-                      <Switch
-                        checked={settings?.gallery_allow_guest_uploads ?? false}
-                        onCheckedChange={(value) =>
-                          updateSetting("gallery_allow_guest_uploads", value)
-                        }
-                      />
-                    </div>
-
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <Label className="text-base font-medium">{t('admin.settings.gallerySettings.moderation')}</Label>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Review and approve guest uploads before they appear
-                        </p>
-                      </div>
-                      <Switch
-                        checked={settings?.gallery_moderation_enabled ?? false}
-                        onCheckedChange={(value) =>
-                          updateSetting("gallery_moderation_enabled", value)
-                        }
-                        disabled={!settings?.gallery_allow_guest_uploads}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
+              {/* General */}
               {activeSection === "general" && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-semibold text-foreground mb-1">
-                      {t('admin.settings.nav.general')}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Configure timezone and language preferences
-                    </p>
+                    <h2 className="text-base font-serif text-[#420c14] mb-1">{t('admin.settings.nav.general')}</h2>
+                    <p className="text-sm text-muted-foreground">{t('admin.settings.generalSettings.description')}</p>
                   </div>
 
-                  <div className="space-y-6">
-                    <div className="rounded-lg border border-border/60 bg-background/60 p-4">
-                      <UpdateWeddingNameId currentWeddingNameId={decodeURIComponent(weddingId)} />
-                    </div>
+                  <div className="rounded-lg border border-border/60 bg-background/60 p-4">
+                    <UpdateWeddingNameId currentWeddingNameId={decodeURIComponent(weddingId)} />
+                  </div>
 
-                    <div className="space-y-4">
+                  <div className="space-y-5">
                     <div>
-                      <Label className="text-base font-medium">{t('admin.settings.generalSettings.timezone')}</Label>
-                      <p className="text-sm text-muted-foreground mt-1 mb-3">
-                        Default timezone for all dates and times
-                      </p>
+                      <Label className="text-sm font-medium">{t('admin.settings.generalSettings.timezone')}</Label>
+                      <p className="text-xs text-muted-foreground mt-0.5 mb-2">{t('admin.settings.generalSettings.timezoneDescription')}</p>
                       <Input
                         value={settings?.timezone || "America/New_York"}
                         onChange={(e) => updateSetting("timezone", e.target.value)}
@@ -805,52 +393,229 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                     </div>
 
                     <div>
-                      <Label className="text-base font-medium">{t('admin.settings.generalSettings.language')}</Label>
-                      <p className="text-sm text-muted-foreground mt-1 mb-3">
-                        Primary language for your wedding site
-                      </p>
+                      <Label className="text-sm font-medium">{t('admin.settings.generalSettings.language')}</Label>
+                      <p className="text-xs text-muted-foreground mt-0.5 mb-2">{t('admin.settings.generalSettings.languageDescription')}</p>
                       <select
                         value={settings?.language || "en"}
                         onChange={(e) => updateSetting("language", e.target.value)}
-                        className="max-w-xs h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        className="max-w-xs h-9 rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       >
                         <option value="en">English</option>
                         <option value="es">Español</option>
                       </select>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Plan */}
+              {activeSection === "subscription" && (
+                <div className="space-y-8">
+                  <div>
+                    <h2 className="text-base font-serif text-[#420c14] mb-1">{t('admin.settings.nav.subscription')}</h2>
+                    <p className="text-sm text-muted-foreground">{t('admin.settings.subscription.description')}</p>
+                  </div>
+
+                  {/* Current Plan Banner */}
+                  {(() => {
+                    const hasPaidSub = currentInvTier === 'personalized' || currentInvTier === 'bespoke' || currentMgmtTier === 'pro' || currentMgmtTier === 'agency'
+                    const isTopTier = currentInvTier === 'bespoke' || currentMgmtTier === 'agency'
+                    if (!hasPaidSub) {
+                      return (
+                        <div className="rounded-xl border-2 border-[#420c14]/12 bg-[#420c14]/3 p-5">
+                          <div className="flex items-center gap-3">
+                            <Clock className="h-5 w-5 text-[#420c14]/35" />
+                            <h3 className="font-serif text-lg text-[#420c14]/60">{t('admin.settings.subscription.trialTitle')}</h3>
+                            <span className="px-2 py-0.5 text-[9px] font-semibold bg-amber-100 text-amber-700 rounded-full uppercase tracking-widest">
+                              {t('admin.settings.subscription.trialBadge')}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {t('admin.settings.subscription.trialDescription')}
+                          </p>
+                        </div>
+                      )
+                    }
+                    return (
+                      <div className={`rounded-xl border-2 p-5 ${
+                        isTopTier
+                          ? 'border-[#8B0000] bg-gradient-to-br from-[#8B0000]/5 to-transparent'
+                          : 'border-[#DDA46F] bg-gradient-to-br from-[#DDA46F]/5 to-transparent'
+                      }`}>
+                        <div className="flex items-center gap-3">
+                          {isTopTier ? (
+                            <Crown className="h-5 w-5 text-[#8B0000]" />
+                          ) : (
+                            <Sparkles className="h-5 w-5 text-[#DDA46F]" />
+                          )}
+                          <h3 className="font-serif text-lg text-[#420c14]">
+                            {planLabel(currentInvTier || 'basic', currentMgmtTier || 'basic')}
+                          </h3>
+                          <span className="px-2 py-0.5 text-[9px] font-semibold bg-green-100 text-green-700 rounded-full uppercase tracking-widest">
+                            {t('admin.settings.subscription.activeBadge')}
+                          </span>
+                        </div>
+                        {subscription?.expires_at && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {t('admin.settings.subscription.expiresLabel').replace('{{date}}', new Date(subscription.expires_at).toLocaleDateString())}
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })()}
+
+                  {/* Invitation Design Plans */}
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#DDA46F] mb-4">
+                      {t('admin.settings.subscription.invitationDesign')}
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {invTiers.map((tier) => {
+                        const pricing = INVITATION_PRICING[tier]
+                        const locale = settings?.language || 'en'
+                        const localCopy = getTierLocaleCopy('invitation', tier, locale)
+                        const cardTagline = t(`admin.settings.bundleDialog.tiers.invitation.${tier}.tagline`)
+                        const cardFeatures = t(`admin.settings.bundleDialog.tiers.invitation.${tier}.features`).split('|')
+                        const cardCta = t(`admin.settings.bundleDialog.tiers.invitation.${tier}.cta`)
+                        const isActive = currentInvTier !== null && currentInvTier === tier
+                        const isUpgrade = currentInvTier === null
+                          ? true
+                          : invTiers.indexOf(tier) > invTiers.indexOf(currentInvTier as typeof invTiers[number])
+                        const isCheckingThisTier = isCheckingOut && companionMainTarget?.axis === 'invitation' && companionMainTarget?.tier === tier
+                        return (
+                          <div
+                            key={tier}
+                            className={`rounded-xl border-2 p-4 transition-all ${
+                              isActive
+                                ? 'border-[#DDA46F] bg-[#DDA46F]/5'
+                                : isUpgrade
+                                ? 'border-border bg-card'
+                                : 'border-border/40 bg-muted/20 opacity-55'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between mb-1.5">
+                              <h4 className="font-serif text-sm text-[#420c14]">{localCopy.name}</h4>
+                              {isActive && (
+                                <span className="px-1.5 py-0.5 text-[9px] font-semibold bg-[#DDA46F]/10 text-[#DDA46F] border border-[#DDA46F]/20 rounded-full uppercase tracking-widest">
+                                  {t('admin.settings.subscription.currentBadge')}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mb-2 leading-snug">{cardTagline}</p>
+                            <p className="text-sm font-semibold text-[#420c14] mb-3">{pricing.priceDisplayMXN}</p>
+                            <ul className="space-y-1.5 mb-4">
+                              {cardFeatures.slice(0, 3).map((f, i) => (
+                                <li key={i} className="flex items-start gap-2 text-[11px] text-muted-foreground leading-snug">
+                                  <Check className="h-3 w-3 text-[#DDA46F] mt-0.5 flex-shrink-0" />
+                                  <span>{f}</span>
+                                </li>
+                              ))}
+                            </ul>
+                            {isUpgrade && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="w-full text-xs h-8 border-[#DDA46F]/30 hover:border-[#DDA46F] hover:bg-[#DDA46F]/5 text-[#420c14] gap-1.5"
+                                disabled={isCheckingOut}
+                                onClick={() => selectPlanFromSettings('invitation', tier)}
+                              >
+                                {isCheckingThisTier && <Loader2 className="h-3 w-3 animate-spin" />}
+                                {cardCta}
+                              </Button>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {checkoutError && (
+                    <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                      {checkoutError}
+                    </p>
+                  )}
+
+                  {/* Management Plans */}
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#DDA46F] mb-4">
+                      {t('admin.settings.subscription.management')}
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {mgmtTiers.map((tier) => {
+                        const pricing = MANAGEMENT_PRICING[tier as ManagementTier]
+                        const locale = settings?.language || 'en'
+                        const localCopy = getTierLocaleCopy('management', tier, locale)
+                        const cardTagline = t(`admin.settings.bundleDialog.tiers.management.${tier}.tagline`)
+                        const cardFeatures = t(`admin.settings.bundleDialog.tiers.management.${tier}.features`).split('|')
+                        const cardCta = t(`admin.settings.bundleDialog.tiers.management.${tier}.cta`)
+                        const isActive = currentMgmtTier !== null && currentMgmtTier === tier
+                        const isUpgrade = currentMgmtTier === null
+                          ? true
+                          : mgmtTiers.indexOf(tier) > mgmtTiers.indexOf(currentMgmtTier as typeof mgmtTiers[number])
+                        const isCheckingThisTier = isCheckingOut && companionMainTarget?.axis === 'management' && companionMainTarget?.tier === tier
+                        return (
+                          <div
+                            key={tier}
+                            className={`rounded-xl border-2 p-4 transition-all ${
+                              isActive
+                                ? 'border-[#DDA46F] bg-[#DDA46F]/5'
+                                : isUpgrade
+                                ? 'border-border bg-card'
+                                : 'border-border/40 bg-muted/20 opacity-55'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between mb-1.5">
+                              <h4 className="font-serif text-sm text-[#420c14]">{localCopy.name}</h4>
+                              {isActive && (
+                                <span className="px-1.5 py-0.5 text-[9px] font-semibold bg-[#DDA46F]/10 text-[#DDA46F] border border-[#DDA46F]/20 rounded-full uppercase tracking-widest">
+                                  {t('admin.settings.subscription.currentBadge')}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mb-2 leading-snug">{cardTagline}</p>
+                            <p className="text-sm font-semibold text-[#420c14] mb-3">{pricing.priceDisplayMXN}</p>
+                            <ul className="space-y-1.5 mb-4">
+                              {cardFeatures.slice(0, 3).map((f, i) => (
+                                <li key={i} className="flex items-start gap-2 text-[11px] text-muted-foreground leading-snug">
+                                  <Check className="h-3 w-3 text-[#DDA46F] mt-0.5 flex-shrink-0" />
+                                  <span>{f}</span>
+                                </li>
+                              ))}
+                            </ul>
+                            {isUpgrade && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="w-full text-xs h-8 border-[#DDA46F]/30 hover:border-[#DDA46F] hover:bg-[#DDA46F]/5 text-[#420c14] gap-1.5"
+                                disabled={isCheckingOut}
+                                onClick={() => selectPlanFromSettings('management', tier)}
+                              >
+                                {isCheckingThisTier && <Loader2 className="h-3 w-3 animate-spin" />}
+                                {cardCta}
+                              </Button>
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 </div>
               )}
 
+              {/* portal rendered below at root level */}
+
+              {/* Collaborators */}
               {activeSection === "collaborators" && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-semibold text-foreground mb-1">
-                      {t('admin.settings.nav.collaborators')}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      {t('admin.settings.collaborators.description')}
-                    </p>
+                    <h2 className="text-base font-serif text-[#420c14] mb-1">{t('admin.settings.nav.collaborators')}</h2>
+                    <p className="text-sm text-muted-foreground">{t('admin.settings.collaborators.description')}</p>
                   </div>
                   <CollaboratorManager weddingNameId={decodeURIComponent(weddingId)} />
                 </div>
               )}
 
-              {activeSection === "messaging" && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-xl font-semibold text-foreground mb-1">
-                      {t('admin.settings.nav.messaging')}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      {t('admin.settings.messaging.description')}
-                    </p>
-                  </div>
-                  <WhatsappAccountSettings weddingId={decodeURIComponent(weddingId)} />
-                </div>
-              )}
-
+              {/* Sections */}
               {activeSection === "dashboardSections" && (
                 <DashboardSectionsTab
                   dashboardSections={settings?.dashboard_sections ?? {}}
@@ -862,20 +627,109 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                   }}
                 />
               )}
+
+              {/* Inbox / Messaging */}
+              {activeSection === "messaging" && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-base font-serif text-[#420c14] mb-1">{t('admin.settings.nav.messaging')}</h2>
+                    <p className="text-sm text-muted-foreground">{t('admin.settings.messaging.description')}</p>
+                  </div>
+                  <WhatsappAccountSettings weddingId={decodeURIComponent(weddingId)} />
+                </div>
+              )}
+
+              {/* Danger Zone */}
+              {activeSection === "danger" && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-base font-serif text-red-700 mb-1">{t('admin.settings.dangerZone.title')}</h2>
+                    <p className="text-sm text-muted-foreground">{t('admin.settings.dangerZone.description')}</p>
+                  </div>
+
+                  <div className="rounded-xl border-2 border-red-200 bg-red-50/40 p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="font-medium text-red-800 mb-1">{t('admin.settings.dangerZone.deleteTitle')}</h3>
+                        <p className="text-sm text-red-700/70 leading-relaxed max-w-md">
+                          {t('admin.settings.dangerZone.deleteDescription')}
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="shrink-0 border-red-300 text-red-700 hover:bg-red-100 hover:border-red-400 gap-2"
+                        onClick={() => { setDeleteConfirmText(""); setShowDeleteDialog(true) }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        {t('admin.settings.dangerZone.deleteButton')}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Delete confirmation dialog */}
+                  {showDeleteDialog && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border border-red-100">
+                        <div className="flex justify-center mb-5">
+                          <div className="w-14 h-14 rounded-2xl bg-red-100 flex items-center justify-center">
+                            <AlertTriangle className="w-7 h-7 text-red-600" />
+                          </div>
+                        </div>
+                        <h2 className="text-xl font-serif text-red-800 text-center mb-2">
+                          {t('admin.settings.dangerZone.confirmTitle')}
+                        </h2>
+                        <p className="text-sm text-red-700/70 text-center mb-1">
+                          {t('admin.settings.dangerZone.confirmDescription')}
+                        </p>
+                        <p className="text-xs text-red-600 text-center font-medium mb-5">
+                          {t('admin.settings.dangerZone.permanentWarning')}
+                        </p>
+                        <div className="mb-6">
+                          <Label className="text-sm text-red-800 mb-2 block">
+                            {t('admin.settings.dangerZone.typeToConfirm').replace('{{name}}', decodeURIComponent(weddingId))}
+                          </Label>
+                          <Input
+                            value={deleteConfirmText}
+                            onChange={(e) => setDeleteConfirmText(e.target.value)}
+                            placeholder={decodeURIComponent(weddingId)}
+                            className="border-red-200 focus:border-red-400 focus-visible:ring-red-200"
+                            disabled={isDeleting}
+                          />
+                        </div>
+                        <div className="flex gap-3">
+                          <Button
+                            variant="outline"
+                            className="flex-1 border-red-200 text-red-700"
+                            onClick={() => setShowDeleteDialog(false)}
+                            disabled={isDeleting}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            className="flex-1 bg-red-700 hover:bg-red-800 text-white gap-2"
+                            disabled={deleteConfirmText !== decodeURIComponent(weddingId) || isDeleting}
+                            onClick={handleDeleteWedding}
+                          >
+                            {isDeleting
+                              ? <><Loader2 className="h-4 w-4 animate-spin" />{t('admin.settings.dangerZone.deleting')}</>
+                              : <><Trash2 className="h-4 w-4" />{t('admin.settings.dangerZone.deleteConfirmButton')}</>
+                            }
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </Card>
 
-            {/* Save Button */}
-            {hasChanges && activeSection !== 'status' && activeSection !== 'subscription' && activeSection !== 'features' && activeSection !== 'collaborators' && activeSection !== 'messaging' && (
+            {/* Save Button — shown only for sections with editable settings */}
+            {hasChanges && activeSection !== 'subscription' && activeSection !== 'collaborators' && activeSection !== 'messaging' && activeSection !== 'danger' && (
               <div className="mt-4 flex justify-end">
-                <Button
-                  onClick={saveSettings}
-                  disabled={saving}
-                  className="gap-2"
-                  size="lg"
-                >
+                <Button onClick={saveSettings} disabled={saving} className="gap-2" size="lg">
                   {saving ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground" />
                       {t('admin.settings.saving')}
                     </>
                   ) : (
@@ -891,113 +745,167 @@ export default function SettingsPage({ params }: SettingsPageProps) {
         </div>
       </div>
     </div>
+
+    {/* Companion bundle dialog — rendered via portal so it covers the full screen */}
+    {mounted && showCompanionDialog && companionMainTarget && (() => {
+      const companionRef = COMPANION_TIER_MAP[companionMainTarget.axis]?.[companionMainTarget.tier]
+      if (!companionRef) return null
+      const dialogLocale = settings?.language || 'en'
+
+      // Main plan (full price)
+      const mainPricingData = companionMainTarget.axis === 'invitation'
+        ? INVITATION_PRICING[companionMainTarget.tier as InvitationTier]
+        : MANAGEMENT_PRICING[companionMainTarget.tier as ManagementTier]
+      if (!mainPricingData) return null
+      const mainCard = { ...mainPricingData, name: getTierLocaleCopy(companionMainTarget.axis, companionMainTarget.tier, dialogLocale).name }
+
+      // Companion axis tiers — all 3 options, user-selectable
+      const companionAxis = companionRef.axis
+      const companionTiers = companionAxis === 'invitation'
+        ? (['basic', 'personalized', 'bespoke'] as const)
+        : (['basic', 'pro', 'agency'] as const)
+      const activeTier = selectedCompanionTier || companionRef.tier
+
+      const companionPricingData = companionAxis === 'invitation'
+        ? INVITATION_PRICING[activeTier as InvitationTier]
+        : MANAGEMENT_PRICING[activeTier as ManagementTier]
+      if (!companionPricingData) return null
+      const companionCard = { ...companionPricingData, name: getTierLocaleCopy(companionAxis, activeTier, dialogLocale).name }
+
+      const companionHalfCents = Math.round(companionCard.price_mxn / 2)
+      const companionHalfDisplay = formatMXNFromCents(companionHalfCents)
+      const bundleTotalDisplay = formatMXNFromCents(mainCard.price_mxn + companionHalfCents)
+      const mainAxisLabel = companionMainTarget.axis === 'invitation' ? t('admin.settings.bundleDialog.invitationDesign') : t('admin.settings.bundleDialog.management')
+      const companionAxisLabel = companionAxis === 'invitation' ? t('admin.settings.bundleDialog.invitationDesign') : t('admin.settings.bundleDialog.management')
+
+      const tierTagline = t(`admin.settings.bundleDialog.tiers.${companionAxis}.${activeTier}.tagline`)
+      const tierFeatures = t(`admin.settings.bundleDialog.tiers.${companionAxis}.${activeTier}.features`).split('|')
+
+      return createPortal(
+        <AnimatePresence>
+          <motion.div
+            key="companion-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) setShowCompanionDialog(false) }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="bg-[#f5f2eb] rounded-[2rem] shadow-2xl max-w-md w-full overflow-hidden"
+            >
+              <div className="h-1 bg-gradient-to-r from-[#DDA46F] via-[#f0c990] to-[#DDA46F]" />
+              <div className="p-8">
+                <div className="flex justify-center mb-5">
+                  <div className="w-14 h-14 rounded-2xl bg-[#DDA46F]/15 flex items-center justify-center">
+                    <Percent className="w-7 h-7 text-[#DDA46F]" />
+                  </div>
+                </div>
+                <h2 className="text-2xl font-serif text-[#420c14] text-center mb-1">{t('admin.settings.bundleDialog.title')}</h2>
+                <p className="text-xs tracking-[0.25em] uppercase text-[#DDA46F] text-center mb-7">{t('admin.settings.bundleDialog.subtitle')}</p>
+
+                {/* Both line items */}
+                <div className="space-y-2 mb-5">
+                  {/* Main plan — full price */}
+                  <div className="flex items-center justify-between bg-white/70 border border-[#420c14]/8 rounded-xl px-4 py-3">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-[#420c14]/35 mb-0.5">{mainAxisLabel}</p>
+                      <p className="text-sm font-medium text-[#420c14]">{mainCard.name}</p>
+                    </div>
+                    <span className="text-sm font-semibold text-[#420c14]">{mainCard.priceDisplayMXN}</span>
+                  </div>
+
+                  {/* Companion plan — 50% off, selectable tier */}
+                  <div className="bg-[#DDA46F]/10 border border-[#DDA46F]/25 rounded-xl overflow-hidden">
+                    {/* Tier selector pills */}
+                    <div className="flex gap-1.5 px-4 pt-3 pb-2">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-[#420c14]/35 self-center mr-1">{companionAxisLabel}</p>
+                      {companionTiers.map((cTier) => {
+                        const cName = getTierLocaleCopy(companionAxis, cTier, dialogLocale).name
+                        const isSelected = cTier === activeTier
+                        return (
+                          <button
+                            key={cTier}
+                            onClick={() => setSelectedCompanionTier(cTier)}
+                            disabled={isCheckingOut}
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all ${
+                              isSelected
+                                ? 'bg-[#DDA46F] text-[#420c14]'
+                                : 'bg-[#420c14]/8 text-[#420c14]/50 hover:bg-[#420c14]/15'
+                            }`}
+                          >
+                            {cName}
+                          </button>
+                        )
+                      })}
+                      <span className="ml-auto text-[9px] font-bold uppercase tracking-wider text-[#420c14] bg-[#DDA46F] rounded-full px-2 py-0.5 self-center">50% off</span>
+                    </div>
+                    <div className="flex items-start justify-between px-4 pt-1 pb-2">
+                      <div>
+                        <p className="text-sm font-medium text-[#420c14]">{companionCard.name}</p>
+                        <p className="text-[11px] text-[#420c14]/50 mt-0.5 leading-snug max-w-[200px]">{tierTagline}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0 ml-3">
+                        <p className="text-sm font-semibold text-[#420c14]">{companionHalfDisplay}</p>
+                        <p className="text-xs text-[#420c14]/35 line-through">{companionCard.priceDisplayMXN}</p>
+                      </div>
+                    </div>
+                    <ul className="px-4 pb-3 space-y-1">
+                      {tierFeatures.map((f, i) => (
+                        <li key={i} className="flex items-center gap-2 text-[11px] text-[#420c14]/60">
+                          <Check className="h-3 w-3 text-[#DDA46F] flex-shrink-0" />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Total */}
+                <div className="flex items-center justify-between border-t border-[#420c14]/10 pt-4 mb-6">
+                  <span className="text-xs uppercase tracking-[0.2em] text-[#420c14]/40">{t('admin.settings.bundleDialog.total')}</span>
+                  <span className="text-lg font-serif font-semibold text-[#420c14]">{bundleTotalDisplay}</span>
+                </div>
+
+                <div className="space-y-2.5">
+                  <Button
+                    onClick={() => {
+                      handleBundleCheckout(
+                        companionMainTarget.axis, companionMainTarget.tier,
+                        companionAxis, activeTier
+                      )
+                    }}
+                    disabled={isCheckingOut}
+                    className="w-full h-12 bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb] font-semibold text-sm tracking-wide gap-2"
+                  >
+                    {isCheckingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <Percent className="w-4 h-4" />}
+                    {isCheckingOut ? t('admin.settings.bundleDialog.redirecting') : t('admin.settings.bundleDialog.addBundle').replace('{{price}}', bundleTotalDisplay)}
+                  </Button>
+                  <Button
+                    onClick={() => handleUpgradeFromSettings(companionMainTarget)}
+                    disabled={isCheckingOut}
+                    variant="ghost"
+                    className="w-full h-10 text-[#420c14]/45 hover:text-[#420c14] hover:bg-[#420c14]/5 text-sm"
+                  >
+                    {t('admin.settings.bundleDialog.continueWith').replace('{{axis}}', mainAxisLabel).replace('{{plan}}', mainCard.name)}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>,
+        document.body
+      )
+    })()}
+    </>
   )
 }
 
-interface FeatureItemProps {
-  label: string
-  description: string
-  available: boolean
-  isPremium?: boolean
-}
-
-function FeatureItem({ label, description, available, isPremium }: FeatureItemProps) {
-  const { t } = useI18n()
-  return (
-    <div className="flex items-start gap-3 p-3 rounded-lg bg-card/50 border border-border/50">
-      <div className={`flex-shrink-0 mt-0.5 h-6 w-6 rounded-full flex items-center justify-center ${
-        available 
-          ? 'bg-green-100 dark:bg-green-900/30' 
-          : 'bg-gray-100 dark:bg-gray-800'
-      }`}>
-        {available ? (
-          <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-        ) : (
-          <X className="h-4 w-4 text-gray-400 dark:text-gray-600" />
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-foreground">{label}</p>
-          {isPremium && (
-            <span className="px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 rounded">
-              Premium
-            </span>
-          )}
-        </div>
-        <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
-      </div>
-      {!available && (
-        <span className="text-xs text-muted-foreground flex-shrink-0">Not available</span>
-      )}
-    </div>
-  )
-}
-
-interface FeatureStatusCardProps {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  description: string
-  available: boolean
-  enabled: boolean
-  isPremium?: boolean
-}
-
-function FeatureStatusCard({
-  icon: Icon,
-  label,
-  description,
-  available,
-  enabled,
-  isPremium,
-}: FeatureStatusCardProps) {
-  const { t } = useI18n()
-  return (
-    <div className={`flex items-start justify-between p-4 rounded-lg border transition-colors ${
-      available 
-        ? 'border-border hover:border-border/80 bg-card' 
-        : 'border-border/50 bg-muted/30 opacity-75'
-    }`}>
-      <div className="flex gap-3 flex-1">
-        <div className="flex-shrink-0 mt-0.5">
-          <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
-            available ? 'bg-primary/10' : 'bg-muted'
-          }`}>
-            <Icon className={`h-5 w-5 ${available ? 'text-primary' : 'text-muted-foreground'}`} />
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <Label className={`text-base font-medium ${!available && 'text-muted-foreground'}`}>
-              {label}
-            </Label>
-            {isPremium && (
-              <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 rounded-full">
-                {t('admin.settings.premiumFeature')}
-              </span>
-            )}
-            {!available && (
-              <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 rounded-full">
-                {t('admin.settings.locked')}
-              </span>
-            )}
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">{description}</p>
-          {available && (
-            <div className="flex items-center gap-2 mt-2">
-              <div className={`h-2 w-2 rounded-full ${enabled ? 'bg-green-500' : 'bg-gray-400'}`} />
-              <span className="text-xs text-muted-foreground">
-                {enabled ? t('admin.settings.active') : t('admin.settings.inactive')}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Dashboard section keys matching the dashboard cards (excluding website and settings which are always shown)
+// Dashboard section keys matching the dashboard cards
 const DASHBOARD_CARD_KEYS = [
   "invitations",
   "registry",
@@ -1009,7 +917,6 @@ const DASHBOARD_CARD_KEYS = [
   "summary",
 ] as const
 
-// Activity panel keys for the bottom section of the dashboard
 const DASHBOARD_PANEL_KEYS = [
   "invitationOpens",
   "recentActivity",
@@ -1040,15 +947,10 @@ interface DashboardSectionsTabProps {
 function DashboardSectionsTab({ dashboardSections, onChange }: DashboardSectionsTabProps) {
   const { t } = useI18n()
 
-  const isSectionEnabled = (key: DashboardSectionKey) => {
-    return dashboardSections[key] !== false // Default to enabled if not set
-  }
+  const isSectionEnabled = (key: DashboardSectionKey) => dashboardSections[key] !== false
 
   const toggleSection = (key: DashboardSectionKey) => {
-    onChange({
-      ...dashboardSections,
-      [key]: !isSectionEnabled(key),
-    })
+    onChange({ ...dashboardSections, [key]: !isSectionEnabled(key) })
   }
 
   const renderRow = (key: DashboardSectionKey) => {
@@ -1062,10 +964,10 @@ function DashboardSectionsTab({ dashboardSections, onChange }: DashboardSections
         }`}
       >
         <div className="flex items-center gap-3">
-          <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
-            enabled ? 'bg-primary/10' : 'bg-muted'
+          <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${
+            enabled ? 'bg-[#420c14]/5' : 'bg-muted'
           }`}>
-            <Icon className={`h-5 w-5 ${enabled ? 'text-primary' : 'text-muted-foreground'}`} />
+            <Icon className={`h-4 w-4 ${enabled ? 'text-[#420c14]' : 'text-muted-foreground'}`} />
           </div>
           <div>
             <p className={`text-sm font-medium ${enabled ? 'text-foreground' : 'text-muted-foreground'}`}>
@@ -1076,10 +978,7 @@ function DashboardSectionsTab({ dashboardSections, onChange }: DashboardSections
             </p>
           </div>
         </div>
-        <Switch
-          checked={enabled}
-          onCheckedChange={() => toggleSection(key)}
-        />
+        <Switch checked={enabled} onCheckedChange={() => toggleSection(key)} />
       </div>
     )
   }
@@ -1087,31 +986,23 @@ function DashboardSectionsTab({ dashboardSections, onChange }: DashboardSections
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-foreground mb-1">
-          {t('admin.settings.dashboardSections.title')}
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          {t('admin.settings.dashboardSections.description')}
-        </p>
+        <h2 className="text-base font-serif text-[#420c14] mb-1">{t('admin.settings.dashboardSections.title')}</h2>
+        <p className="text-sm text-muted-foreground">{t('admin.settings.dashboardSections.description')}</p>
       </div>
 
       <div className="space-y-6">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-muted-foreground mb-3">
             {t('admin.settings.dashboardSections.cards')}
           </p>
-          <div className="space-y-3">
-            {DASHBOARD_CARD_KEYS.map(renderRow)}
-          </div>
+          <div className="space-y-2">{DASHBOARD_CARD_KEYS.map(renderRow)}</div>
         </div>
 
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-muted-foreground mb-3">
             {t('admin.settings.dashboardSections.panels')}
           </p>
-          <div className="space-y-3">
-            {DASHBOARD_PANEL_KEYS.map(renderRow)}
-          </div>
+          <div className="space-y-2">{DASHBOARD_PANEL_KEYS.map(renderRow)}</div>
         </div>
       </div>
     </div>

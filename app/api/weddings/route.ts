@@ -203,10 +203,11 @@ export async function POST(request: Request) {
       .from('needs_onboarding')
       .upsert({ user_id: ownerId }, { onConflict: 'user_id', ignoreDuplicates: true })
 
-    // Always create a free wedding_subscription row so we can track the trial start date.
+    // Create a subscription row with no tiers active (null = nothing purchased).
+    // invitation_tier and management_tier stay null until payment is confirmed.
     await adminClient
       .from('wedding_subscriptions')
-      .upsert({ wedding_id: data.id, plan: 'free' }, { onConflict: 'wedding_id', ignoreDuplicates: true })
+      .upsert({ wedding_id: data.id, plan: 'none', invitation_tier: null, management_tier: null }, { onConflict: 'wedding_id', ignoreDuplicates: true })
 
     // Seed the wedding's language from the locale the creator was using on the
     // create-wedding page, so the dashboard and public site open in that language

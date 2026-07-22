@@ -139,9 +139,9 @@ export default function InboxPage({ params }: InboxPageProps) {
       <main className="flex h-screen flex-col overflow-hidden bg-background">
         <Header showBackButton backHref={getCleanAdminUrl(weddingId, "dashboard")} />
         <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
-          <MessageCircleOff className="h-8 w-8 text-muted-foreground" />
-          <p className="text-sm font-medium text-foreground">{t('admin.inbox.notAvailable.title')}</p>
-          <p className="max-w-sm text-sm text-muted-foreground">{t('admin.inbox.notAvailable.description')}</p>
+          <MessageCircleOff className="h-8 w-8 text-brand/30" />
+          <p className="text-base font-serif text-brand">{t('admin.inbox.notAvailable.title')}</p>
+          <p className="max-w-sm text-sm text-brand/50">{t('admin.inbox.notAvailable.description')}</p>
         </div>
       </main>
     )

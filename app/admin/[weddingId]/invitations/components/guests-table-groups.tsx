@@ -46,7 +46,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Guest, GuestGroup, ColumnVisibility, getTagColorClass, resolveInvitedBy } from "../types"
-import type { PlanType } from "@/lib/subscription-shared"
 import { useTranslation } from "@/components/contexts/i18n-context"
 
 export type SortColumn = 'name' | 'group' | 'status' | null
@@ -93,7 +92,7 @@ interface GuestsTableGroupsProps {
   getInvitationUrl: (groupId?: string) => string
   navigateToGroupDetails: (groupId: string) => void
   partnerNames: { partner1: string; partner2: string }
-  planType: PlanType
+  hasPaidPlan: boolean
 }
 
 const getTagColor = (tag: string) => getTagColorClass(tag)
@@ -150,16 +149,16 @@ export function GuestsTableGroups({
   getInvitationUrl,
   navigateToGroupDetails,
   partnerNames,
-  planType,
+  hasPaidPlan,
 }: GuestsTableGroupsProps) {
   const { t } = useTranslation()
   return (
     <Card className="border border-border overflow-hidden shadow-sm">
       {filteredGroups.length === 0 && ungroupedGuests.length === 0 ? (
         <div className="p-12 text-center">
-          <Users2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">{t('admin.invitations.table.noGroupsFound')}</h3>
-          <p className="text-muted-foreground">
+          <Users2 className="w-12 h-12 text-brand/30 mx-auto mb-4" />
+          <h3 className="text-lg font-serif text-brand mb-2">{t('admin.invitations.table.noGroupsFound')}</h3>
+          <p className="text-sm text-brand/50">
             {guestGroupsCount === 0 ? t('admin.invitations.table.createFirstGroup') : t('admin.invitations.table.tryAdjustingFilters')}
           </p>
         </div>

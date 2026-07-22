@@ -21,6 +21,7 @@ const nextConfig: NextConfig = {
     '127.0.0.1',
     '0.0.0.0',
     'ohmy.local',
+    'messi-antonella.ohmy.local',
     '*.ohmy.local',
   ],
   images: {

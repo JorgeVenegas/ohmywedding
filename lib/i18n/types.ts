@@ -1295,6 +1295,27 @@ export interface Translations {
     errorGeneric: string
   }
 
+  upgradeModal: {
+    invitationAxis: string
+    managementAxis: string
+    viewAllPlans: string
+    maybeLater: string
+    whatsIncluded: string
+    onetime: string
+    popular: string
+    reasons: {
+      general: { title: string; description: string }
+      plan_indicator: { title: string; description: string }
+      custom_registry: { title: string; description: string }
+      guest_limit: { title: string; description: string }
+      group_limit: { title: string; description: string }
+      send_invites: { title: string; description: string }
+      invite_settings: { title: string; description: string }
+      invitation_tracking: { title: string; description: string }
+      rsvp_system: { title: string; description: string }
+    }
+  }
+
   // Upgrade page
   upgrade: {
     pageLabel: string
@@ -1637,12 +1658,16 @@ export interface Translations {
       welcomeBack: string
       manageDescription: string
       management: string
+      activityTracking: string
       cards: {
         website: {
           titleCreate: string
           titleEdit: string
           descriptionCreate: string
           descriptionEdit: string
+          titleInvitation: string
+          descriptionInvitation: string
+          badges: { queued: string; inDesign: string; reviewReady: string; approved: string }
         }
         invitations: { title: string; description: string }
         inbox: { title: string; description: string }
@@ -1697,6 +1722,9 @@ export interface Translations {
         expiredTitle: string
         description: string
         upgradeButton: string
+        lockedTitle: string
+        lockedExpiredTitle: string
+        lockedDescription: string
       }
     }
     settings: {
@@ -1715,6 +1743,20 @@ export interface Translations {
         collaborators: string
         dashboardSections: string
         messaging: string
+        danger: string
+      }
+      dangerZone: {
+        title: string
+        description: string
+        deleteTitle: string
+        deleteDescription: string
+        deleteButton: string
+        confirmTitle: string
+        confirmDescription: string
+        typeToConfirm: string
+        deleteConfirmButton: string
+        deleting: string
+        permanentWarning: string
       }
       dashboardSections: {
         title: string
@@ -1737,12 +1779,6 @@ export interface Translations {
         phonePlaceholder: string
         saving: string
         save: string
-      }
-      subscription: {
-        title: string
-        currentPlan: string
-        status: string
-        expires: string
       }
       features: {
         title: string
@@ -1770,9 +1806,118 @@ export interface Translations {
       generalSettings: {
         timezone: string
         language: string
+        description: string
+        timezoneDescription: string
+        languageDescription: string
+      }
+      weddingUrl: {
+        title: string
+        currentUrl: string
+        newUrl: string
+        placeholder: string
+        hint: string
+        updateButton: string
+        updatingButton: string
+        updatedButton: string
+        updatedMessage: string
+        note: string
+        errors: {
+          enterNewId: string
+          mustBeDifferent: string
+          failed: string
+          unexpected: string
+        }
+      }
+      subscription: {
+        title: string
+        currentPlan: string
+        status: string
+        expires: string
+        description: string
+        trialTitle: string
+        trialBadge: string
+        trialDescription: string
+        activeBadge: string
+        currentBadge: string
+        invitationDesign: string
+        management: string
+        expiresLabel: string
       }
       collaborators: {
         description: string
+        shareTitle: string
+        shareDescription: string
+        addByEmail: string
+        emailPlaceholder: string
+        addButton: string
+        setPermissionsTitle: string
+        currentCollaborators: string
+        noCollaborators: string
+        noCollaboratorsHint: string
+        editorRole: string
+        viewerRole: string
+        editPermissionsTooltip: string
+        removeCollaboratorTooltip: string
+        toasts: {
+          added: string
+          addedDescription: string
+          failedToSetPerms: string
+          failedToSetPermsDesc: string
+          failedToAdd: string
+          tryAgain: string
+          permissionsUpdated: string
+          permissionsUpdatedFor: string
+          failedToUpdatePermissions: string
+        }
+        errors: {
+          failedPermsSaved: string
+        }
+        permissionGroups: {
+          page: string
+          guestList: string
+          invitations: string
+          rsvps: string
+          registry: string
+          gallery: string
+        }
+        permissionLabels: {
+          editDetails: string
+          editPageDesign: string
+          viewGuests: string
+          manageGuests: string
+          viewInvitations: string
+          sendInvitations: string
+          viewRsvps: string
+          editRsvps: string
+          viewRegistry: string
+          manageRegistry: string
+          viewGallery: string
+          managePhotos: string
+          manageCollaborators: string
+          manageCollaboratorsDesc: string
+        }
+      }
+      bundleDialog: {
+        title: string
+        subtitle: string
+        invitationDesign: string
+        management: string
+        total: string
+        addBundle: string
+        redirecting: string
+        continueWith: string
+        tiers: {
+          invitation: {
+            basic: { tagline: string; features: string; cta: string }
+            personalized: { tagline: string; features: string; cta: string }
+            bespoke: { tagline: string; features: string; cta: string }
+          }
+          management: {
+            basic: { tagline: string; features: string; cta: string }
+            pro: { tagline: string; features: string; cta: string }
+            agency: { tagline: string; features: string; cta: string }
+          }
+        }
       }
       saving: string
       active: string
@@ -2366,6 +2511,7 @@ export interface Translations {
     }
     dishes: {
       title: string
+      pageDescription: string
       // Menus
       addMenu: string
       editMenu: string
@@ -2817,6 +2963,58 @@ export interface Translations {
         }
       }
     }
+    invitationProgress: {
+      label: string
+      title: string
+      description: string
+      backToDashboard: string
+      currentStatus: string
+      viewLiveSite: string
+      previewDesign: string
+      unableToLoad: string
+      approvalRequested: {
+        title: string
+        description: string
+        button: string
+      }
+      approveForm: {
+        title: string
+        notePlaceholder: string
+        confirm: string
+      }
+      reviewers: string
+      meetings: {
+        title: string
+        join: string
+        completed: string
+        cancelled: string
+      }
+      versions: {
+        title: string
+        active: string
+      }
+      current: string
+      statusLabels: {
+        not_started: string
+        design_started: string
+        ready_for_review: string
+        approved: string
+        live: string
+      }
+      statusDescriptions: {
+        not_started: string
+        design_started: string
+        ready_for_review: string
+        approved: string
+        live: string
+      }
+      meetingTypes: {
+        kickoff: string
+        review: string
+        final: string
+        other: string
+      }
+    }
   }
 
   // Language switcher
@@ -2834,6 +3032,16 @@ export interface Translations {
     groomParentsTitle: string
     bridesmaids: string
     groomsmen: string
+  }
+
+  weddingLocked: {
+    title: string
+    subtitle: string
+    description: string
+    deletionWarning: string
+    upgradeButton: string
+    contactSupport: string
+    alreadyPaid: string
   }
 }
 

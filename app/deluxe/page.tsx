@@ -30,7 +30,14 @@ import {
   Infinity,
   Tag,
 } from "lucide-react"
-import { PRICING, PLAN_CARDS, COMPARISON_FEATURES } from "@/lib/subscription-shared"
+import { INVITATION_PRICING, MANAGEMENT_PRICING } from "@/lib/subscription-shared"
+// Legacy page - kept for existing links; the active upgrade flow is at /upgrade
+const PRICING: any = { premium: INVITATION_PRICING.personalized, deluxe: INVITATION_PRICING.bespoke }
+const PLAN_CARDS: any = {
+  premium: { ...INVITATION_PRICING.personalized, features: [], cta: 'Upgrade', href: '/upgrade' },
+  deluxe: { ...INVITATION_PRICING.bespoke, features: [], cta: 'Go Bespoke', href: '/upgrade' },
+}
+const COMPARISON_FEATURES: any[] = []
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
 import { useTranslation } from "@/components/contexts/i18n-context"
 import { getTranslations } from "@/lib/i18n"

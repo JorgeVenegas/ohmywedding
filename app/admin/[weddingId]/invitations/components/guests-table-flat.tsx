@@ -82,9 +82,9 @@ export function GuestsTableFlat({
     <Card className="border border-border overflow-hidden shadow-sm">
       {filteredGuests.length === 0 ? (
         <div className="p-12 text-center">
-          <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">{t('admin.invitations.table.noGuestsFound')}</h3>
-          <p className="text-muted-foreground">
+          <Users className="w-12 h-12 text-brand/30 mx-auto mb-4" />
+          <h3 className="text-lg font-serif text-brand mb-2">{t('admin.invitations.table.noGuestsFound')}</h3>
+          <p className="text-sm text-brand/50">
             {totalGuests === 0 ? t('admin.invitations.table.addFirstGuest') : t('admin.invitations.table.tryAdjustingFilters')}
           </p>
         </div>

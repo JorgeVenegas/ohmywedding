@@ -69,22 +69,22 @@ export function InvitationsHeaderContent({
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">{t('admin.invitations.title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('admin.invitations.subtitle')}</p>
+        <h1 className="text-2xl font-serif text-[#420c14]">{t('admin.invitations.title')}</h1>
+        <p className="text-sm text-[#420c14]/60 mt-0.5">{t('admin.invitations.subtitle')}</p>
       </div>
       {/* Stats and Action Buttons */}
       <div className="flex items-center gap-4">
         {/* Stats Pills */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
-            <Users className="w-3 h-3 text-muted-foreground" />
-            <span className="text-muted-foreground">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#420c14]/5 text-xs font-medium">
+            <Users className="w-3 h-3 text-[#420c14]/40" />
+            <span className="text-[#420c14]/60">
               {hasActiveFilters ? `${filteredGroupsCount}/` : ''}{guestGroupsCount} {t('admin.invitations.header.groups')}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
-            <span className="text-foreground font-semibold">{displayedGuestCount}</span>
-            <span className="text-muted-foreground">{t('admin.invitations.header.guests')}{hasActiveFilters && totalGuests !== displayedGuestCount ? ` ${t('admin.invitations.header.of')} ${totalGuests}` : ''}</span>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#420c14]/5 text-xs font-medium">
+            <span className="text-[#420c14] font-semibold">{displayedGuestCount}</span>
+            <span className="text-[#420c14]/50">{t('admin.invitations.header.guests')}{hasActiveFilters && totalGuests !== displayedGuestCount ? ` ${t('admin.invitations.header.of')} ${totalGuests}` : ''}</span>
           </div>
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 text-xs font-medium">
             <div className="w-1.5 h-1.5 rounded-full bg-green-500" />

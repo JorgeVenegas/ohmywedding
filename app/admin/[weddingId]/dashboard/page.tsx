@@ -38,6 +38,8 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
   const [savingReadyStatus, setSavingReadyStatus] = useState(false)
   const [guestCount, setGuestCount] = useState<number | null>(null)
   const [messagingEnabled, setMessagingEnabled] = useState(false)
+  const [designSelfServeLocked, setDesignSelfServeLocked] = useState<boolean | null>(null)
+  const [invitationDesignStatus, setInvitationDesignStatus] = useState<string | null>(null)
 
   // Restricted-rollout gate for the Inbox card — see lib/messaging/feature-flag.ts
   useEffect(() => {
@@ -80,6 +82,11 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
           setIsReady(data.is_ready)
           setReadyStatusManagedBy(data.ready_status_managed_by)
         }
+        const designRes = await fetch(`/api/weddings/${weddingId}/design-status`)
+        if (designRes.ok) {
+          const data = await designRes.json()
+          setInvitationDesignStatus(data.status ?? null)
+        }
       } catch {} finally {
         setSectionsLoaded(true)
       }
@@ -96,7 +103,7 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       const isUUID = UUID_REGEX.test(decodedWeddingId)
       const query = supabase
         .from('weddings')
-        .select('id, has_website, page_config, partner1_first_name, partner2_first_name, wedding_websites(id)')
+        .select('id, has_website, page_config, partner1_first_name, partner2_first_name, design_self_serve_locked, wedding_websites(id)')
       const { data } = isUUID
         ? await query.eq('id', decodedWeddingId).maybeSingle()
         : await query.eq('wedding_name_id', decodedWeddingId).maybeSingle()
@@ -106,6 +113,7 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
         const hasLegacyConfig = !!data.page_config && typeof data.page_config === 'object' && Object.keys(data.page_config).length > 0
         setHasWebsite(!!(websiteRow) || data.has_website || hasLegacyConfig)
         setIsLegacy(!websiteRow && hasLegacyConfig)
+        setDesignSelfServeLocked(data.design_self_serve_locked ?? null)
         if (data.partner1_first_name) {
           const p1 = data.partner1_first_name
           const p2 = data.partner2_first_name
@@ -126,13 +134,45 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
     checkWebsite()
   }, [decodedWeddingId])
 
+  const websiteCardHref = (() => {
+    // Legacy / self-serve weddings — original behavior
+    if (!designSelfServeLocked) {
+      return hasWebsite ? getWeddingPath(weddingId) : getCleanAdminUrl(weddingId, 'create-website')
+    }
+    // Superadmin-designed weddings: live → go to the actual site; anything else → progress page
+    if (invitationDesignStatus === 'live') {
+      return getWeddingPath(weddingId)
+    }
+    return getCleanAdminUrl(weddingId, 'invitation-progress')
+  })()
+
+  const websiteCardBadge = (() => {
+    if (isLegacy) return 'Legacy'
+    if (designSelfServeLocked && invitationDesignStatus && invitationDesignStatus !== 'live') {
+      const labels: Record<string, string> = {
+        not_started: t('admin.dashboard.cards.website.badges.queued'),
+        design_started: t('admin.dashboard.cards.website.badges.inDesign'),
+        ready_for_review: t('admin.dashboard.cards.website.badges.reviewReady'),
+        approved: t('admin.dashboard.cards.website.badges.approved'),
+      }
+      return labels[invitationDesignStatus] ?? undefined
+    }
+    return undefined
+  })()
+
   const websiteCard = {
-    title: hasWebsite ? t('admin.dashboard.cards.website.titleEdit') : t('admin.dashboard.cards.website.titleCreate'),
-    description: hasWebsite ? t('admin.dashboard.cards.website.descriptionEdit') : t('admin.dashboard.cards.website.descriptionCreate'),
+    title: designSelfServeLocked
+      ? (invitationDesignStatus === 'live' ? t('admin.dashboard.cards.website.titleEdit') : t('admin.dashboard.cards.website.titleInvitation'))
+      : (hasWebsite ? t('admin.dashboard.cards.website.titleEdit') : t('admin.dashboard.cards.website.titleCreate')),
+    description: designSelfServeLocked
+      ? (invitationDesignStatus === 'live'
+          ? t('admin.dashboard.cards.website.descriptionEdit')
+          : t('admin.dashboard.cards.website.descriptionInvitation'))
+      : (hasWebsite ? t('admin.dashboard.cards.website.descriptionEdit') : t('admin.dashboard.cards.website.descriptionCreate')),
     icon: Globe,
-    href: hasWebsite ? getWeddingPath(weddingId) : getCleanAdminUrl(weddingId, 'create-website'),
+    href: websiteCardHref,
     color: "primary" as const,
-    badge: isLegacy ? 'Legacy' : undefined,
+    badge: websiteCardBadge,
   }
 
   const sections = [
@@ -262,28 +302,29 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
 
         {/* Welcome Section */}
         <div className="mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
-            {coupleNames ? (
-              <>{t('admin.dashboard.welcomeBack').replace(/[¡!]/g, '')}, <span className="text-primary">{coupleNames}</span>!</>
-            ) : t('admin.dashboard.welcomeBack')}
+          <p className="text-[10px] uppercase tracking-[0.3em] text-[#DDA46F] mb-3">
+            {t('admin.dashboard.welcomeBack')}
+          </p>
+          <h1 className="text-4xl font-serif text-[#420c14] mb-2">
+            {coupleNames ?? t('admin.dashboard.welcomeBack')}
           </h1>
-          <p className="text-lg text-muted-foreground">{t('admin.dashboard.manageDescription')}</p>
+          <p className="text-base text-[#420c14]/60">{t('admin.dashboard.manageDescription')}</p>
         </div>
 
         {/* Management Sections */}
         <div>
-          <h2 className="text-2xl font-bold text-foreground mb-6">{t('admin.dashboard.management')}</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-[#DDA46F] mb-6">{t('admin.dashboard.management')}</p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {!sectionsLoaded ? (
               Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i} className="p-6 border border-muted/20">
+                <Card key={i} className="p-6 border border-[#420c14]/8 rounded-2xl">
                   <div className="flex items-start justify-between mb-4">
-                    <div className="p-3 rounded-lg bg-muted/10">
-                      <div className="w-6 h-6 bg-muted animate-pulse rounded" />
+                    <div className="p-3 rounded-xl bg-[#420c14]/5">
+                      <div className="w-5 h-5 bg-[#420c14]/10 animate-pulse rounded" />
                     </div>
                   </div>
-                  <div className="h-5 w-36 bg-muted animate-pulse rounded mb-2" />
-                  <div className="h-4 w-full bg-muted/60 animate-pulse rounded" />
+                  <div className="h-4 w-36 bg-[#420c14]/8 animate-pulse rounded mb-2" />
+                  <div className="h-3 w-full bg-[#420c14]/5 animate-pulse rounded" />
                 </Card>
               ))
             ) : sections.map((section, index) => {
@@ -291,54 +332,34 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
               const badge = 'badge' in section ? section.badge : undefined
               const isWebsiteCard = index === 0
               const isWebsiteLoading = isWebsiteCard && hasWebsite === null
-              const colorClasses = {
-                primary: "border-primary/20 hover:border-primary/50 hover:bg-primary/5",
-                secondary: "border-secondary/20 hover:border-secondary/50 hover:bg-secondary/5",
-                accent: "border-accent/20 hover:border-accent/50 hover:bg-accent/5",
-              }
-              const iconColorClasses = {
-                primary: "text-primary",
-                secondary: "text-secondary",
-                accent: "text-accent",
-              }
               const cardContent = (
                 <Card
-                  className={`p-6 border transition-all duration-300 h-full ${
-                    isWebsiteLoading ? 'border-primary/20' : `cursor-pointer ${colorClasses[section.color as keyof typeof colorClasses]}`
+                  className={`p-6 border border-[#420c14]/10 rounded-2xl transition-all duration-200 h-full ${
+                    isWebsiteLoading ? '' : 'cursor-pointer hover:border-[#DDA46F]/40 hover:shadow-md hover:shadow-[#420c14]/5'
                   }`}
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div
-                      className={`p-3 rounded-lg ${
-                        section.color === "primary"
-                          ? "bg-primary/10"
-                          : section.color === "secondary"
-                            ? "bg-secondary/10"
-                            : "bg-accent/10"
-                      }`}
-                    >
-                      <Icon
-                        className={`w-6 h-6 ${iconColorClasses[section.color as keyof typeof iconColorClasses]}`}
-                      />
+                  <div className="flex items-start justify-between mb-5">
+                    <div className="p-2.5 rounded-xl bg-[#420c14]/5">
+                      <Icon className="w-5 h-5 text-[#420c14]" />
                     </div>
-                    {!isWebsiteLoading && <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />}
+                    {!isWebsiteLoading && <ArrowRight className="w-4 h-4 text-[#420c14]/20 group-hover:text-[#420c14]/50 transition-colors" />}
                   </div>
                   {isWebsiteLoading ? (
                     <>
-                      <div className="h-5 w-36 bg-muted animate-pulse rounded mb-2" />
-                      <div className="h-4 w-full bg-muted/60 animate-pulse rounded" />
+                      <div className="h-4 w-36 bg-[#420c14]/8 animate-pulse rounded mb-2" />
+                      <div className="h-3 w-full bg-[#420c14]/5 animate-pulse rounded" />
                     </>
                   ) : (
                     <>
-                      <h3 className="text-lg font-semibold text-foreground mb-2">
+                      <h3 className="text-base font-medium text-[#420c14] mb-1.5 leading-snug">
                         {section.title}
                         {badge && (
-                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground uppercase tracking-wider">
+                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#DDA46F]/10 text-[#DDA46F] border border-[#DDA46F]/20 uppercase tracking-wider">
                             {badge}
                           </span>
                         )}
                       </h3>
-                      <p className="text-sm text-muted-foreground">{section.description}</p>
+                      <p className="text-sm text-[#420c14]/55 leading-relaxed">{section.description}</p>
                     </>
                   )}
                 </Card>
@@ -353,7 +374,8 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
         </div>
 
         {/* Activity & Stats Section */}
-        <div id="activity-tracking" className="mt-12 scroll-mt-6">
+        <div id="activity-tracking" className="mt-14 scroll-mt-6">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-[#DDA46F] mb-6">{t('admin.dashboard.activityTracking')}</p>
           {isReady === false && guestCount !== null && guestCount >= 10 && (
             <div className="mb-6 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 p-4 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">

@@ -62,10 +62,10 @@ export function RegistryPaymentNotifications({ weddingId, limit = 5 }: RegistryP
   }
 
   return (
-    <Card className="p-4 h-full">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-foreground">{t('activity.completedPayments')}</h3>
-        <Button variant="ghost" size="sm" onClick={fetchData} className="h-7 px-2">
+    <Card className="p-4 h-full border-[#420c14]/10">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-medium text-[#420c14]">{t('activity.completedPayments')}</h3>
+        <Button variant="ghost" size="sm" onClick={fetchData} className="h-7 px-2 text-[#420c14]/30 hover:text-[#420c14]">
           <RefreshCw className="w-3.5 h-3.5" />
         </Button>
       </div>
@@ -74,46 +74,46 @@ export function RegistryPaymentNotifications({ weddingId, limit = 5 }: RegistryP
         <div className="space-y-3">
           {[1, 2].map((i) => (
             <div key={i} className="flex items-center gap-3 animate-pulse">
-              <div className="w-9 h-9 rounded-full bg-muted" />
+              <div className="w-8 h-8 rounded-full bg-[#420c14]/8 flex-shrink-0" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 bg-muted rounded w-3/4" />
-                <div className="h-3 bg-muted rounded w-1/3" />
+                <div className="h-3.5 bg-[#420c14]/8 rounded w-3/4" />
+                <div className="h-2.5 bg-[#420c14]/5 rounded w-1/3" />
               </div>
             </div>
           ))}
         </div>
       ) : error ? (
         <div className="text-center py-6">
-          <p className="text-sm text-muted-foreground mb-2">{error}</p>
-          <Button variant="ghost" size="sm" onClick={fetchData}>
+          <p className="text-sm text-[#420c14]/50 mb-2">{error}</p>
+          <Button variant="ghost" size="sm" onClick={fetchData} className="text-[#420c14]/50 hover:text-[#420c14]">
             <RefreshCw className="w-4 h-4 mr-1" />
             {t('activity.retry')}
           </Button>
         </div>
       ) : items.length === 0 ? (
         <div className="text-center py-6">
-          <Clock className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">{t('activity.noCompletedPayments')}</p>
-          <p className="text-xs text-muted-foreground mt-1">{t('activity.recentPaymentsHint')}</p>
+          <Clock className="w-7 h-7 text-[#420c14]/20 mx-auto mb-2" />
+          <p className="text-sm text-[#420c14]/50">{t('activity.noCompletedPayments')}</p>
+          <p className="text-xs text-[#420c14]/35 mt-1">{t('activity.recentPaymentsHint')}</p>
         </div>
       ) : (
         <div className="space-y-3">
           {items.map((item) => (
-            <div key={item.id} className="flex items-start gap-3">
-              <div className="p-2 rounded-full bg-secondary/15 text-secondary">
-                <Gift className="w-4 h-4" />
+            <div key={item.id} className="flex items-start gap-3 py-1.5">
+              <div className="p-1.5 rounded-full bg-[#DDA46F]/10 text-[#DDA46F] flex-shrink-0">
+                <Gift className="w-3.5 h-3.5" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-foreground leading-tight">
+                <p className="text-sm text-[#420c14] leading-snug">
                   {item.itemTitle
                     ? t('activity.contributedTo', { name: item.contributorName, amount: item.amount.toFixed(2), item: item.itemTitle })
                     : t('activity.contributed', { name: item.contributorName, amount: item.amount.toFixed(2) })
                   }
                 </p>
                 {item.message && (
-                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.message}</p>
+                  <p className="text-xs text-[#420c14]/45 mt-0.5 line-clamp-2">{item.message}</p>
                 )}
-                <p className="text-xs text-muted-foreground mt-0.5">{formatTimeAgo(item.createdAt)}</p>
+                <p className="text-xs text-[#420c14]/40 mt-0.5">{formatTimeAgo(item.createdAt)}</p>
               </div>
             </div>
           ))}

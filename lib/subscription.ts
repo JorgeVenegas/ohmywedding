@@ -3,205 +3,60 @@
 export * from './subscription-shared'
 
 import { createServerSupabaseClient } from "@/lib/supabase-server"
-import { 
-  type PlanType, 
-  type WeddingFeatures, 
-  type UserSubscription,
+import {
+  type InvitationTier,
+  type ManagementTier,
+  type WeddingFeatures,
   type FeatureKey,
-  type PlanFeatureRow,
-  type PlanPricing,
   getDefaultFeatures,
-  hasPlanLevel,
+  hasPaidPlanFromTiers,
 } from './subscription-shared'
 
-// =============================================================================
-// USER SUBSCRIPTION FUNCTIONS (DEPRECATED)
-// =============================================================================
-// Note: User subscriptions have been removed. Plans are now per-wedding.
-// Use getWeddingPlan() instead to get a wedding's plan.
+// FeatureKey needed for getWeddingFeatureLimit
+export type { FeatureKey }
 
 // =============================================================================
-// WEDDING PLAN FUNCTIONS (Database-driven)
+// WEDDING SUBSCRIPTION FUNCTIONS
 // =============================================================================
 
-// Get the plan for a specific wedding
-export async function getWeddingPlan(weddingId: string): Promise<PlanType> {
+interface WeddingTiers {
+  invitation_tier: InvitationTier
+  management_tier: ManagementTier
+}
+
+export async function getWeddingTiers(weddingId: string): Promise<WeddingTiers> {
   const supabase = await createServerSupabaseClient()
-  
+
   const { data, error } = await supabase
     .from('wedding_subscriptions')
-    .select('plan')
+    .select('invitation_tier, management_tier, plan')
     .eq('wedding_id', weddingId)
     .single()
-  
+
   if (error || !data) {
-    return 'free'
+    return { invitation_tier: 'basic', management_tier: 'basic' }
   }
-  
-  return (data.plan as PlanType) || 'free'
+
+  const legacyPlan = (data as any).plan as string | null
+  const invTier: InvitationTier =
+    (data.invitation_tier as InvitationTier) ||
+    (legacyPlan === 'deluxe' ? 'bespoke' : legacyPlan === 'premium' ? 'personalized' : 'basic')
+  const mgmtTier: ManagementTier =
+    (data.management_tier as ManagementTier) ||
+    (legacyPlan === 'deluxe' ? 'agency' : legacyPlan === 'premium' ? 'pro' : 'basic')
+
+  return { invitation_tier: invTier, management_tier: mgmtTier }
 }
 
-// Get a specific feature configuration for a plan
-export async function getPlanFeature(
-  plan: PlanType, 
-  featureKey: FeatureKey
-): Promise<PlanFeatureRow | null> {
-  const supabase = await createServerSupabaseClient()
-  
-  const { data, error } = await supabase
-    .from('plan_features')
-    .select('*')
-    .eq('plan', plan)
-    .eq('feature_key', featureKey)
-    .single()
-  
-  if (error || !data) {
-    return null
-  }
-  
-  return data as PlanFeatureRow
-}
-
-// Check if a feature is enabled for a plan
-export async function canAccessFeature(
-  plan: PlanType, 
-  featureKey: FeatureKey
-): Promise<boolean> {
-  const feature = await getPlanFeature(plan, featureKey)
-  return feature?.enabled ?? false
-}
-
-// Check if a wedding can access a feature
-export async function canWeddingAccessFeature(
-  weddingId: string, 
-  featureKey: FeatureKey
-): Promise<boolean> {
-  const plan = await getWeddingPlan(weddingId)
-  return canAccessFeature(plan, featureKey)
-}
-
-// Get the limit value for a feature
-export async function getFeatureLimit(
-  plan: PlanType, 
-  featureKey: FeatureKey
-): Promise<number | null> {
-  const feature = await getPlanFeature(plan, featureKey)
-  return feature?.limit_value ?? null
-}
-
-// Get the limit for a wedding's feature
-export async function getWeddingFeatureLimit(
-  weddingId: string, 
-  featureKey: FeatureKey
-): Promise<number | null> {
-  const plan = await getWeddingPlan(weddingId)
-  return getFeatureLimit(plan, featureKey)
-}
-
-// Get feature config JSON
-export async function getFeatureConfig<T = Record<string, unknown>>(
-  plan: PlanType, 
-  featureKey: FeatureKey
-): Promise<T | null> {
-  const feature = await getPlanFeature(plan, featureKey)
-  return (feature?.config_json as T) ?? null
-}
-
-// Get feature config for a wedding
-export async function getWeddingFeatureConfig<T = Record<string, unknown>>(
-  weddingId: string, 
-  featureKey: FeatureKey
-): Promise<T | null> {
-  const plan = await getWeddingPlan(weddingId)
-  return getFeatureConfig<T>(plan, featureKey)
-}
-
-// Get all features for a plan
-export async function getPlanFeatures(plan: PlanType): Promise<PlanFeatureRow[]> {
-  const supabase = await createServerSupabaseClient()
-  
-  const { data, error } = await supabase
-    .from('plan_features')
-    .select('*')
-    .eq('plan', plan)
-    .order('feature_key')
-  
-  if (error || !data) {
-    return []
-  }
-  
-  return data as PlanFeatureRow[]
-}
-
-// Get plan pricing
-export async function getPlanPricing(plan: PlanType): Promise<PlanPricing | null> {
-  const supabase = await createServerSupabaseClient()
-  
-  const { data, error } = await supabase
-    .from('plan_pricing')
-    .select('*')
-    .eq('plan', plan)
-    .single()
-  
-  if (error || !data) {
-    return null
-  }
-  
-  return data as PlanPricing
-}
-
-// Get all plan pricing
-export async function getAllPlanPricing(): Promise<PlanPricing[]> {
-  const supabase = await createServerSupabaseClient()
-  
-  const { data, error } = await supabase
-    .from('plan_pricing')
-    .select('*')
-    .order('price_usd')
-  
-  if (error || !data) {
-    return []
-  }
-  
-  return data as PlanPricing[]
-}
-
-// Get registry commission for a wedding (in centavos)
-export async function getRegistryCommission(weddingId: string): Promise<number> {
-  const config = await getWeddingFeatureConfig<{ commission_mxn: number }>(
-    weddingId, 
-    'registry_commission'
-  )
-  // Default to 20 MXN (2000 centavos) if not found
-  return config?.commission_mxn ?? 2000
-}
-
-// =============================================================================
-// LEGACY WEDDING FEATURES FUNCTIONS
-// =============================================================================
-
-// Server-side: Get wedding features (DEPRECATED - use plan-based features instead)
+// Get wedding features based on current tiers
 export async function getWeddingFeatures(weddingId: string): Promise<WeddingFeatures> {
-  const supabase = await createServerSupabaseClient()
-  
-  const { data, error } = await supabase
-    .from('wedding_subscriptions')
-    .select('plan')
-    .eq('wedding_id', weddingId)
-    .single()
-  
-  if (error || !data) {
-    // Return free defaults if no subscription found
-    return getDefaultFeatures('free')
-  }
-  
-  const plan = (data.plan as PlanType) || 'free'
-  return getDefaultFeatures(plan)
+  const { invitation_tier, management_tier } = await getWeddingTiers(weddingId)
+  return getDefaultFeatures(invitation_tier, management_tier)
 }
 
-// Server-side: Check if a specific feature is enabled for a wedding
+// Check if a specific feature is enabled for a wedding
 export async function isFeatureEnabled(
-  weddingId: string, 
+  weddingId: string,
   feature: keyof WeddingFeatures
 ): Promise<boolean> {
   const features = await getWeddingFeatures(weddingId)
@@ -209,16 +64,58 @@ export async function isFeatureEnabled(
   return typeof value === 'boolean' ? value : false
 }
 
-// Server-side: Check if user has premium or deluxe access (DEPRECATED - use wedding plans instead)
-export async function hasPremiumAccess(userId: string): Promise<boolean> {
-  // User subscriptions have been removed. Plans are now per-wedding.
-  // This function always returns false. Use wedding plan functions instead.
+// Check if a wedding has any paid plan
+export async function hasPaidPlan(weddingId: string): Promise<boolean> {
+  const { invitation_tier, management_tier } = await getWeddingTiers(weddingId)
+  return hasPaidPlanFromTiers(invitation_tier, management_tier)
+}
+
+// Get registry commission for a wedding (in centavos)
+export async function getRegistryCommission(weddingId: string): Promise<number> {
+  const supabase = await createServerSupabaseClient()
+  // Try reading from the plan_features table if it exists
+  try {
+    const { invitation_tier, management_tier } = await getWeddingTiers(weddingId)
+    const plan = management_tier === 'agency' ? 'deluxe' : management_tier === 'pro' ? 'premium' : 'free'
+    const { data } = await supabase
+      .from('plan_features')
+      .select('config_json')
+      .eq('plan', plan)
+      .eq('feature_key', 'registry_commission')
+      .single()
+    const config = data?.config_json as { commission_mxn?: number } | null
+    return config?.commission_mxn ?? 2000
+  } catch {
+    return 2000 // Default: 20 MXN
+  }
+}
+
+// Get a limit value for a feature by plan (reads from plan_features table)
+export async function getWeddingFeatureLimit(
+  weddingId: string,
+  featureKey: FeatureKey
+): Promise<number | null> {
+  const supabase = await createServerSupabaseClient()
+  try {
+    const { invitation_tier, management_tier } = await getWeddingTiers(weddingId)
+    const plan = management_tier === 'agency' ? 'deluxe' : management_tier === 'pro' ? 'premium' : 'free'
+    const { data } = await supabase
+      .from('plan_features')
+      .select('limit_value')
+      .eq('plan', plan)
+      .eq('feature_key', featureKey)
+      .single()
+    return data?.limit_value ?? null
+  } catch {
+    return null
+  }
+}
+
+// Deprecated stubs
+export async function hasPremiumAccess(_userId: string): Promise<boolean> {
   return false
 }
 
-// Server-side: Check if user has deluxe access (DEPRECATED - use wedding plans instead)
-export async function hasDeluxeAccess(userId: string): Promise<boolean> {
-  // User subscriptions have been removed. Plans are now per-wedding.
-  // This function always returns false. Use wedding plan functions instead.
+export async function hasDeluxeAccess(_userId: string): Promise<boolean> {
   return false
 }

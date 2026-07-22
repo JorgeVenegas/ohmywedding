@@ -146,15 +146,19 @@ export default function ItineraryPage({ params }: ItineraryPageProps) {
         }
       />
       <div className="page-container max-w-2xl">
-        <p className="text-muted-foreground mb-10">{t('admin.itinerary.description')}</p>
+        <div className="mb-8">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-[#DDA46F] mb-2">{t('admin.dashboard.management')}</p>
+          <h1 className="text-2xl font-serif text-[#420c14] mb-1">{t('admin.itinerary.title')}</h1>
+          <p className="text-sm text-[#420c14]/60">{t('admin.itinerary.description')}</p>
+        </div>
 
         {eventTree.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-5">
               <CalendarDays className="w-6 h-6 text-muted-foreground" />
             </div>
-            <h3 className="text-base font-semibold mb-1">{t('admin.itinerary.empty.title')}</h3>
-            <p className="text-sm text-muted-foreground mb-6 max-w-xs">{t('admin.itinerary.empty.description')}</p>
+            <h3 className="text-base font-serif text-[#420c14] mb-1">{t('admin.itinerary.empty.title')}</h3>
+            <p className="text-sm text-[#420c14]/50 mb-6 max-w-xs">{t('admin.itinerary.empty.description')}</p>
             <Button onClick={openAddModal} variant="outline" size="sm">
               <Plus className="w-4 h-4 mr-2" />
               {t('admin.itinerary.addEvent')}
@@ -168,11 +172,11 @@ export default function ItineraryPage({ params }: ItineraryPageProps) {
                 <div key={day}>
                   {/* Day heading */}
                   <div className="flex items-center gap-3 mb-6">
-                    <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-[#DDA46F]">
                       {formatDateHeading(day)}
                     </span>
                     {isWeddingDay && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-primary/10 text-primary border border-primary/20">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide bg-[#DDA46F]/10 text-[#DDA46F] border border-[#DDA46F]/20">
                         {t('admin.itinerary.weddingDay')}
                       </span>
                     )}

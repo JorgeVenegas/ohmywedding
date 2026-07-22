@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server"
 import { createServerSupabaseClient } from "@/lib/supabase-server"
-import type { WeddingFeatures, PlanType } from "@/lib/subscription-shared"
-import { getDefaultFeatures } from "@/lib/subscription-shared"
+import type { InvitationTier, ManagementTier, WeddingFeatures } from "@/lib/subscription-shared"
+import { getDefaultFeatures, hasPaidPlanFromTiers } from "@/lib/subscription-shared"
 
 export interface SubscriptionCheckResult {
   isAuthenticated: boolean
   userId: string | null
-  planType: PlanType
+  invitationTier: InvitationTier
+  managementTier: ManagementTier
+  hasPaidPlan: boolean
   features: WeddingFeatures
   error?: string
 }
@@ -14,21 +16,22 @@ export interface SubscriptionCheckResult {
 // Check subscription and features for API route
 export async function checkSubscription(weddingNameId?: string): Promise<SubscriptionCheckResult> {
   const supabase = await createServerSupabaseClient()
-  
-  // Get current user
+
   const { data: { user }, error: userError } = await supabase.auth.getUser()
-  
+
   if (userError || !user) {
     return {
       isAuthenticated: false,
       userId: null,
-      planType: 'free',
-      features: getDefaultFeatures('free'),
+      invitationTier: 'basic',
+      managementTier: 'basic',
+      hasPaidPlan: false,
+      features: getDefaultFeatures('basic', 'basic'),
       error: 'Not authenticated',
     }
   }
 
-  // Check if user is a superuser first
+  // Superusers get full access
   const { data: superuserData } = await supabase
     .from('superusers')
     .select('id')
@@ -40,49 +43,62 @@ export async function checkSubscription(weddingNameId?: string): Promise<Subscri
     return {
       isAuthenticated: true,
       userId: user.id,
-      planType: 'deluxe',
-      features: getDefaultFeatures('deluxe'),
+      invitationTier: 'bespoke',
+      managementTier: 'agency',
+      hasPaidPlan: true,
+      features: {
+        rsvp_enabled: true,
+        invitations_panel_enabled: true,
+        gallery_enabled: true,
+        registry_enabled: true,
+        schedule_enabled: true,
+        seating_enabled: true,
+      },
     }
   }
-  
-  // Get user subscription (DEPRECATED - user subscriptions have been removed)
-  // NOTE: Plans are now per-wedding, not per-user. Kept for backwards compatibility.
-  let planType: PlanType = 'free'
-  // Previously checked user_subscriptions, but this table has been removed.
-  // Plans are now determined at the wedding level.
-  
-  // If weddingNameId provided, also check wedding-specific features
+
   if (weddingNameId) {
     const { data: wedding } = await supabase
       .from('weddings')
       .select('id')
       .eq('wedding_name_id', weddingNameId)
       .single()
-    
+
     if (wedding) {
-      const { data: weddingFeatures } = await supabase
+      const { data: sub } = await supabase
         .from('wedding_subscriptions')
-        .select('plan')
+        .select('invitation_tier, management_tier, plan')
         .eq('wedding_id', wedding.id)
         .single()
-      
-      if (weddingFeatures) {
-        const weddingPlan = weddingFeatures.plan as PlanType
+
+      if (sub) {
+        const legacyPlan = (sub as any).plan as string | null
+        const invTier: InvitationTier =
+          (sub.invitation_tier as InvitationTier) ||
+          (legacyPlan === 'deluxe' ? 'bespoke' : legacyPlan === 'premium' ? 'personalized' : 'basic')
+        const mgmtTier: ManagementTier =
+          (sub.management_tier as ManagementTier) ||
+          (legacyPlan === 'deluxe' ? 'agency' : legacyPlan === 'premium' ? 'pro' : 'basic')
+
         return {
           isAuthenticated: true,
           userId: user.id,
-          planType: weddingPlan,
-          features: getDefaultFeatures(weddingPlan),
+          invitationTier: invTier,
+          managementTier: mgmtTier,
+          hasPaidPlan: hasPaidPlanFromTiers(invTier, mgmtTier),
+          features: getDefaultFeatures(invTier, mgmtTier),
         }
       }
     }
   }
-  
+
   return {
     isAuthenticated: true,
     userId: user.id,
-    planType,
-    features: getDefaultFeatures(planType),
+    invitationTier: 'basic',
+    managementTier: 'basic',
+    hasPaidPlan: false,
+    features: getDefaultFeatures('basic', 'basic'),
   }
 }
 
@@ -92,7 +108,7 @@ export async function requireFeature(
   weddingNameId?: string
 ): Promise<{ allowed: boolean; response?: NextResponse }> {
   const check = await checkSubscription(weddingNameId)
-  
+
   if (!check.isAuthenticated) {
     return {
       allowed: false,
@@ -102,13 +118,13 @@ export async function requireFeature(
       ),
     }
   }
-  
+
   if (!check.features[feature]) {
     return {
       allowed: false,
       response: NextResponse.json(
-        { 
-          error: 'This feature requires a Premium subscription',
+        {
+          error: 'This feature requires an upgraded plan',
           feature,
           upgrade_url: `/upgrade?source=api_gate_${feature}`,
         },
@@ -116,14 +132,14 @@ export async function requireFeature(
       ),
     }
   }
-  
+
   return { allowed: true }
 }
 
-// Helper to quickly check premium for API route and return error response if needed
-export async function requirePremium(weddingNameId?: string): Promise<{ allowed: boolean; response?: NextResponse }> {
+// Check if the wedding has any paid plan
+export async function requirePaidPlan(weddingNameId?: string): Promise<{ allowed: boolean; response?: NextResponse }> {
   const check = await checkSubscription(weddingNameId)
-  
+
   if (!check.isAuthenticated) {
     return {
       allowed: false,
@@ -133,19 +149,22 @@ export async function requirePremium(weddingNameId?: string): Promise<{ allowed:
       ),
     }
   }
-  
-  if (check.planType !== 'premium') {
+
+  if (!check.hasPaidPlan) {
     return {
       allowed: false,
       response: NextResponse.json(
-        { 
-          error: 'This feature requires a Premium subscription',
-          upgrade_url: '/upgrade?source=api_gate_premium',
+        {
+          error: 'This feature requires an upgraded plan',
+          upgrade_url: '/upgrade?source=api_gate_plan',
         },
         { status: 403 }
       ),
     }
   }
-  
+
   return { allowed: true }
 }
+
+// Deprecated alias — use requirePaidPlan
+export const requirePremium = requirePaidPlan

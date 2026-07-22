@@ -107,7 +107,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
   const { t, locale } = useTranslation()
 
   // Premium feature check
-  const { canAccessFeature, loading: subscriptionLoading, planType } = useSubscriptionContext()
+  const { canAccessFeature, loading: subscriptionLoading, invitationTier, hasPaidPlan } = useSubscriptionContext()
 
   const [guestGroups, setGuestGroups] = useState<GuestGroup[]>([])
   const [ungroupedGuests, setUngroupedGuests] = useState<Guest[]>([])
@@ -1819,7 +1819,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     }
 
     // Group-level send invites is only available for Deluxe plans
-    if (planType !== 'deluxe') {
+    if (invitationTier !== 'bespoke') {
       showUpgrade('send_invites')
       return
     }
@@ -1956,7 +1956,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   const handleSendAllInvites = () => {
     // Send all invites is only for Deluxe plans
-    if (planType !== 'deluxe') {
+    if (invitationTier !== 'bespoke') {
       setShowSendInvitesModal(false)
       showUpgrade('send_invites')
       return
@@ -2917,7 +2917,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             setShowGroupTravelDialog: setShowGroupTravelDialog,
             setBulkInvitedBy: setBulkInvitedBy,
             setShowBulkInvitedByModal: setShowBulkInvitedByModal,
-            planType: planType,
+            hasPaidPlan: hasPaidPlan,
           }}
         />
 
@@ -2936,7 +2936,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             timelineGroupFilter={timelineGroupFilter}
             setTimelineGroupFilter={setTimelineGroupFilter}
             guestGroups={guestGroups}
-            planType={planType}
+            hasPaidPlan={hasPaidPlan}
           />
         </div>
 
@@ -3005,7 +3005,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
               getInvitationUrl={getInvitationUrl}
               navigateToGroupDetails={navigateToGroupDetails}
               partnerNames={partnerNames}
-              planType={planType}
+              hasPaidPlan={hasPaidPlan}
             />
           )}
         </div>

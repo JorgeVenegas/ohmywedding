@@ -5,7 +5,13 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
-import { PLAN_CARDS, PRICING } from "@/lib/subscription-shared"
+import { INVITATION_PRICING } from "@/lib/subscription-shared"
+// Legacy gift page stubs
+const PRICING: any = { premium: INVITATION_PRICING.personalized, deluxe: INVITATION_PRICING.bespoke }
+const PLAN_CARDS: any = {
+  premium: { name: 'Personalized', price: '$200 USD', period: 'one-time' },
+  deluxe: { name: 'Bespoke', price: '$350 USD', period: 'one-time' },
+}
 import { motion } from "framer-motion"
 import {
   Crown,

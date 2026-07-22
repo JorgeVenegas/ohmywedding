@@ -79,15 +79,19 @@ export function InvitationStatsCard({ weddingId, compact = false }: InvitationSt
     fetchStats()
   }, [weddingId])
 
+  const cardTitle = (
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="text-sm font-medium text-[#420c14]">{t('activity.invitationOpens')}</h3>
+    </div>
+  )
+
   if (loading) {
     return (
-      <Card className={`${compact ? 'p-3' : 'p-4'} h-full`}>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-foreground">{t('activity.invitationOpens')}</h3>
-        </div>
+      <Card className={`${compact ? 'p-3' : 'p-4'} h-full border-[#420c14]/10`}>
+        {cardTitle}
         <div className="grid grid-cols-2 gap-3 animate-pulse">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-16 bg-muted rounded-lg" />
+            <div key={i} className="h-16 bg-[#420c14]/5 rounded-xl" />
           ))}
         </div>
       </Card>
@@ -96,13 +100,11 @@ export function InvitationStatsCard({ weddingId, compact = false }: InvitationSt
 
   if (error) {
     return (
-      <Card className={`${compact ? 'p-3' : 'p-4'} h-full`}>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-foreground">{t('activity.invitationOpens')}</h3>
-        </div>
+      <Card className={`${compact ? 'p-3' : 'p-4'} h-full border-[#420c14]/10`}>
+        {cardTitle}
         <div className="text-center py-4">
-          <p className="text-sm text-muted-foreground mb-2">{t('activity.failedToLoadStats')}</p>
-          <Button variant="ghost" size="sm" onClick={fetchStats}>
+          <p className="text-sm text-[#420c14]/50 mb-2">{t('activity.failedToLoadStats')}</p>
+          <Button variant="ghost" size="sm" onClick={fetchStats} className="text-[#420c14]/50 hover:text-[#420c14]">
             <RefreshCw className="w-4 h-4 mr-1" />
             {t('activity.retry')}
           </Button>
@@ -113,14 +115,12 @@ export function InvitationStatsCard({ weddingId, compact = false }: InvitationSt
 
   if (restricted) {
     return (
-      <Card className={`${compact ? 'p-3' : 'p-4'} h-full`}>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-foreground">{t('activity.invitationOpens')}</h3>
-        </div>
+      <Card className={`${compact ? 'p-3' : 'p-4'} h-full border-[#420c14]/10`}>
+        {cardTitle}
         <div className="flex flex-col items-center justify-center py-6 text-center gap-2">
-          <Lock className="w-7 h-7 text-muted-foreground/50" />
-          <p className="text-sm font-medium text-muted-foreground">Premium feature</p>
-          <p className="text-xs text-muted-foreground/70">Upgrade to track invitation opens and device analytics.</p>
+          <Lock className="w-7 h-7 text-[#420c14]/15" />
+          <p className="text-sm font-medium text-[#420c14]/50">Premium feature</p>
+          <p className="text-xs text-[#420c14]/35">Upgrade to track invitation opens and device analytics.</p>
         </div>
       </Card>
     )
@@ -128,92 +128,92 @@ export function InvitationStatsCard({ weddingId, compact = false }: InvitationSt
 
   if (!stats) return null
 
-  const openRate = stats.totalGroups > 0 
+  const openRate = stats.totalGroups > 0
     ? Math.round((stats.openedGroupsCount / stats.totalGroups) * 100)
     : 0
 
   return (
-    <Card className={`${compact ? 'p-3' : 'p-4'}`}>
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-foreground">{t('activity.invitationOpens')}</h3>
-        <Button variant="ghost" size="sm" onClick={fetchStats} className="h-7 px-2">
+    <Card className={`${compact ? 'p-3' : 'p-4'} border-[#420c14]/10`}>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-medium text-[#420c14]">{t('activity.invitationOpens')}</h3>
+        <Button variant="ghost" size="sm" onClick={fetchStats} className="h-7 px-2 text-[#420c14]/30 hover:text-[#420c14]">
           <RefreshCw className="w-3.5 h-3.5" />
         </Button>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-2 gap-2.5 mb-4">
         {/* Open Rate */}
-        <div className="p-3 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30">
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingUp className="w-4 h-4 text-blue-600" />
-            <span className="text-xs text-blue-600 font-medium">{t('activity.openRate')}</span>
+        <div className="p-3 rounded-xl bg-[#420c14]/5">
+          <div className="flex items-center gap-1.5 mb-1">
+            <TrendingUp className="w-3.5 h-3.5 text-[#420c14]/50" />
+            <span className="text-[10px] uppercase tracking-wide text-[#420c14]/50 font-medium">{t('activity.openRate')}</span>
           </div>
-          <p className="text-2xl font-bold text-blue-700">{openRate}%</p>
-          <p className="text-xs text-blue-600/70">
+          <p className="text-2xl font-serif text-[#420c14]">{openRate}%</p>
+          <p className="text-[10px] text-[#420c14]/40 mt-0.5">
             {t('activity.openedOf', { opened: String(stats.openedGroupsCount), total: String(stats.totalGroups) })}
           </p>
         </div>
 
         {/* Total Opens */}
-        <div className="p-3 rounded-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/30">
-          <div className="flex items-center gap-2 mb-1">
-            <Eye className="w-4 h-4 text-green-600" />
-            <span className="text-xs text-green-600 font-medium">{t('activity.totalOpens')}</span>
+        <div className="p-3 rounded-xl bg-[#DDA46F]/8">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Eye className="w-3.5 h-3.5 text-[#DDA46F]" />
+            <span className="text-[10px] uppercase tracking-wide text-[#DDA46F] font-medium">{t('activity.totalOpens')}</span>
           </div>
-          <p className="text-2xl font-bold text-green-700">{stats.totalOpens}</p>
-          <p className="text-xs text-green-600/70">
+          <p className="text-2xl font-serif text-[#420c14]">{stats.totalOpens}</p>
+          <p className="text-[10px] text-[#420c14]/40 mt-0.5">
             {t('activity.allTimeViews')}
           </p>
         </div>
 
         {/* Opened */}
-        <div className="p-3 rounded-lg bg-muted/50">
-          <div className="flex items-center gap-2 mb-1">
-            <Eye className="w-4 h-4 text-green-500" />
-            <span className="text-xs font-medium text-muted-foreground">{t('activity.opened')}</span>
+        <div className="p-3 rounded-xl bg-[#420c14]/5">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Eye className="w-3.5 h-3.5 text-[#420c14]/40" />
+            <span className="text-[10px] uppercase tracking-wide text-[#420c14]/40 font-medium">{t('activity.opened')}</span>
           </div>
-          <p className="text-xl font-bold text-foreground">{stats.openedGroupsCount}</p>
+          <p className="text-xl font-serif text-[#420c14]">{stats.openedGroupsCount}</p>
         </div>
 
         {/* Not Opened */}
-        <div className="p-3 rounded-lg bg-muted/50">
-          <div className="flex items-center gap-2 mb-1">
-            <EyeOff className="w-4 h-4 text-gray-400" />
-            <span className="text-xs font-medium text-muted-foreground">{t('activity.notOpened')}</span>
+        <div className="p-3 rounded-xl bg-[#420c14]/5">
+          <div className="flex items-center gap-1.5 mb-1">
+            <EyeOff className="w-3.5 h-3.5 text-[#420c14]/30" />
+            <span className="text-[10px] uppercase tracking-wide text-[#420c14]/30 font-medium">{t('activity.notOpened')}</span>
           </div>
-          <p className="text-xl font-bold text-foreground">{stats.unopenedGroupsCount}</p>
+          <p className="text-xl font-serif text-[#420c14]/60">{stats.unopenedGroupsCount}</p>
         </div>
       </div>
 
       {/* Device Breakdown */}
       {stats.totalOpens > 0 && (
-        <div className="border-t border-border pt-3">
-          <p className="text-xs text-muted-foreground mb-2">{t('activity.deviceBreakdown')}</p>
+        <div className="border-t border-[#420c14]/8 pt-3">
+          <p className="text-[10px] uppercase tracking-wide text-[#420c14]/40 mb-2">{t('activity.deviceBreakdown')}</p>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5">
-              <Smartphone className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="text-xs font-medium">
+              <Smartphone className="w-3.5 h-3.5 text-[#420c14]/35" />
+              <span className="text-xs font-medium text-[#420c14]">
                 {stats.deviceBreakdown.mobile}
-                <span className="text-muted-foreground ml-0.5">
+                <span className="text-[#420c14]/40 ml-0.5">
                   ({Math.round((stats.deviceBreakdown.mobile / stats.totalOpens) * 100)}%)
                 </span>
               </span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Tablet className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="text-xs font-medium">
+              <Tablet className="w-3.5 h-3.5 text-[#420c14]/35" />
+              <span className="text-xs font-medium text-[#420c14]">
                 {stats.deviceBreakdown.tablet}
-                <span className="text-muted-foreground ml-0.5">
+                <span className="text-[#420c14]/40 ml-0.5">
                   ({Math.round((stats.deviceBreakdown.tablet / stats.totalOpens) * 100)}%)
                 </span>
               </span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Monitor className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="text-xs font-medium">
+              <Monitor className="w-3.5 h-3.5 text-[#420c14]/35" />
+              <span className="text-xs font-medium text-[#420c14]">
                 {stats.deviceBreakdown.desktop}
-                <span className="text-muted-foreground ml-0.5">
+                <span className="text-[#420c14]/40 ml-0.5">
                   ({Math.round((stats.deviceBreakdown.desktop / stats.totalOpens) * 100)}%)
                 </span>
               </span>

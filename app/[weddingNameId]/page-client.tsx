@@ -358,7 +358,7 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
       const mainDomainPattern = /^[a-z0-9-]+\.ohmy\.(local|com)$/i
       const isSubdomain = mainDomainPattern.test(hostname)
 
-      if (isSubdomain && wedding && wedding.wedding_features?.plan === 'free') {
+      if (isSubdomain && wedding && !wedding.wedding_features?.invitation_tier && !wedding.wedding_features?.management_tier) {
         const subdomain = hostname.split('.')[0]
         const mainDomain = 'ohmy.local'
         const port = window.location.port ? `:${window.location.port}` : ''

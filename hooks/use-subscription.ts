@@ -3,69 +3,55 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase-client'
 import { useAuth } from '@/hooks/use-auth'
-import { 
-  type PlanType, 
-  type WeddingFeatures, 
+import {
+  type InvitationTier,
+  type ManagementTier,
+  type WeddingFeatures,
   getDefaultFeatures,
-  PLAN_FEATURES,
-  PRICING
+  hasPaidPlanFromTiers,
 } from '@/lib/subscription-shared'
-interface UseSubscriptionReturn {
-  planType: PlanType
+
+interface UseWeddingSubscriptionReturn {
+  invitationTier: InvitationTier
+  managementTier: ManagementTier
   features: WeddingFeatures
   loading: boolean
   error: string | null
+  hasPaidPlan: boolean
   isPremium: boolean
   canAccessFeature: (feature: keyof WeddingFeatures) => boolean
   refetch: () => Promise<void>
 }
 
-// Hook to get user's subscription status (DEPRECATED - plans are now per-wedding)
-export function useSubscription(): UseSubscriptionReturn {
-  // User subscriptions have been removed. Default to free.
-  // To get a wedding's plan, use useWeddingFeatures() instead.
-  const { user, loading: authLoading } = useAuth()
-  
-  const features = getDefaultFeatures('free')
-  const isPremium = false
-
-  const canAccessFeature = useCallback((feature: keyof WeddingFeatures): boolean => {
-    const value = features[feature]
-    // Handle the plan field which is a string, not a boolean
-    if (feature === 'plan') {
-      return value !== 'free'
-    }
-    return value === true
-  }, [features])
+// Deprecated: user-level subscription no longer exists — this is a stub.
+export function useSubscription() {
+  const { loading: authLoading } = useAuth()
+  const features = getDefaultFeatures('basic', 'basic')
 
   return {
-    planType: 'free',
+    invitationTier: 'basic' as InvitationTier,
+    managementTier: 'basic' as ManagementTier,
     features,
     loading: authLoading,
     error: null,
-    isPremium,
-    canAccessFeature,
+    hasPaidPlan: false,
+    isPremium: false,
+    canAccessFeature: (_feature: keyof WeddingFeatures) => false,
     refetch: async () => {},
   }
 }
 
-interface UseWeddingFeaturesReturn {
-  features: WeddingFeatures
-  loading: boolean
-  error: string | null
-  canAccessFeature: (feature: keyof WeddingFeatures) => boolean
-  refetch: () => Promise<void>
-}
-
-// Hook to get features for a specific wedding
-export function useWeddingFeatures(weddingId: string | null): UseWeddingFeaturesReturn {
-  const [features, setFeatures] = useState<WeddingFeatures>(getDefaultFeatures('free'))
+// Hook to get subscription for a specific wedding
+export function useWeddingFeatures(weddingId: string | null): UseWeddingSubscriptionReturn {
+  const [invitationTier, setInvitationTier] = useState<InvitationTier>('basic')
+  const [managementTier, setManagementTier] = useState<ManagementTier>('basic')
+  const [features, setFeatures] = useState<WeddingFeatures>(getDefaultFeatures('basic', 'basic'))
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const fetchFeatures = useCallback(async () => {
     if (!weddingId) {
-      setFeatures(getDefaultFeatures('free'))
+      setFeatures(getDefaultFeatures('basic', 'basic'))
       setLoading(false)
       return
     }
@@ -73,8 +59,7 @@ export function useWeddingFeatures(weddingId: string | null): UseWeddingFeatures
     try {
       setLoading(true)
       const supabase = createClient()
-      
-      // First get the wedding UUID from wedding_name_id
+
       const { data: wedding, error: weddingError } = await supabase
         .from('weddings')
         .select('id')
@@ -82,14 +67,14 @@ export function useWeddingFeatures(weddingId: string | null): UseWeddingFeatures
         .single()
 
       if (weddingError || !wedding) {
-        setFeatures(getDefaultFeatures('free'))
+        setFeatures(getDefaultFeatures('basic', 'basic'))
         setLoading(false)
         return
       }
 
       const { data, error: fetchError } = await supabase
         .from('wedding_subscriptions')
-        .select('plan')
+        .select('invitation_tier, management_tier, plan')
         .eq('wedding_id', wedding.id)
         .single()
 
@@ -98,16 +83,28 @@ export function useWeddingFeatures(weddingId: string | null): UseWeddingFeatures
       }
 
       if (data) {
-        const plan = data.plan as PlanType
-        setFeatures(getDefaultFeatures(plan))
+        const legacyPlan = (data as any).plan as string | null
+        const invTier: InvitationTier =
+          (data.invitation_tier as InvitationTier) ||
+          (legacyPlan === 'deluxe' ? 'bespoke' : legacyPlan === 'premium' ? 'personalized' : 'basic')
+        const mgmtTier: ManagementTier =
+          (data.management_tier as ManagementTier) ||
+          (legacyPlan === 'deluxe' ? 'agency' : legacyPlan === 'premium' ? 'pro' : 'basic')
+        setInvitationTier(invTier)
+        setManagementTier(mgmtTier)
+        setFeatures(getDefaultFeatures(invTier, mgmtTier))
       } else {
-        setFeatures(getDefaultFeatures('free'))
+        setInvitationTier('basic')
+        setManagementTier('basic')
+        setFeatures(getDefaultFeatures('basic', 'basic'))
       }
-      
+
       setError(null)
     } catch (err) {
       setError('Failed to fetch features')
-      setFeatures(getDefaultFeatures('free'))
+      setInvitationTier('basic')
+      setManagementTier('basic')
+      setFeatures(getDefaultFeatures('basic', 'basic'))
     } finally {
       setLoading(false)
     }
@@ -117,24 +114,24 @@ export function useWeddingFeatures(weddingId: string | null): UseWeddingFeatures
     fetchFeatures()
   }, [fetchFeatures])
 
+  const hasPaidPlan = hasPaidPlanFromTiers(invitationTier, managementTier)
+
   const canAccessFeature = useCallback((feature: keyof WeddingFeatures): boolean => {
-    const value = features[feature]
-    // Handle the plan field which is a string, not a boolean
-    if (feature === 'plan') {
-      return value !== 'free'
-    }
-    return value === true
+    return features[feature] === true
   }, [features])
 
   return {
+    invitationTier,
+    managementTier,
     features,
     loading,
     error,
+    hasPaidPlan,
+    isPremium: hasPaidPlan,
     canAccessFeature,
     refetch: fetchFeatures,
   }
 }
 
-// Re-export for convenience
-export { PLAN_FEATURES, PRICING, getDefaultFeatures }
-export type { PlanType, WeddingFeatures }
+export { getDefaultFeatures }
+export type { InvitationTier, ManagementTier, WeddingFeatures }

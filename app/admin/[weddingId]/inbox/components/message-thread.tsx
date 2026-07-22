@@ -118,7 +118,7 @@ export function MessageThread({ conversation, messages, onSend, onTyping }: Mess
 
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-[radial-gradient(ellipse_at_top,_rgba(212,165,116,0.05),_transparent_55%)] px-4 py-4">
         {messages.length === 0 && (
-          <p className="pt-8 text-center text-sm text-muted-foreground">{t('admin.inbox.messageThread.noMessages')}</p>
+          <p className="pt-8 text-center text-sm font-serif text-brand/50">{t('admin.inbox.messageThread.noMessages')}</p>
         )}
         {messages.map((message) => {
           const notConfigured = message.status === "failed" && message.error_code === "no_provider_configured"

@@ -46,9 +46,12 @@ function getPortSuffix(): string {
 }
 
 /**
- * Wedding plan type
+ * Wedding plan type for URL routing.
+ * 'paid' = any paid tier (subdomain routing).
+ * 'free' / 'none' = path-based routing.
+ * Legacy values 'premium' and 'deluxe' are treated as 'paid'.
  */
-export type WeddingPlan = 'free' | 'premium' | 'deluxe'
+export type WeddingPlan = 'none' | 'free' | 'paid' | 'premium' | 'deluxe'
 
 /**
  * Generate a URL for a wedding page, plan-aware.
@@ -73,8 +76,8 @@ export function getWeddingUrl(weddingNameId: string, path: string = '', plan: We
   
   const protocol = getProtocol()
 
-  // Free plan: always path-based on main domain
-  if (plan === 'free') {
+  // Free/unpaid: always path-based on main domain
+  if (plan === 'free' || plan === 'none') {
     if (typeof window !== 'undefined') {
       const host = window.location.hostname
       if (host === LOCAL_DOMAIN || host.endsWith(`.${LOCAL_DOMAIN}`)) {
@@ -154,7 +157,7 @@ export function getWeddingDisplayUrl(weddingNameId: string, plan: WeddingPlan = 
     const host = window.location.hostname
     if (host === LOCAL_DOMAIN || host.endsWith(`.${LOCAL_DOMAIN}`)) {
       const port = window.location.port ? `:${window.location.port}` : ''
-      if (plan === 'free') {
+      if (plan === 'free' || plan === 'none') {
         return `${LOCAL_DOMAIN}${port}/${weddingNameId}`
       }
       return `${weddingNameId}.${LOCAL_DOMAIN}${port}`
@@ -162,7 +165,7 @@ export function getWeddingDisplayUrl(weddingNameId: string, plan: WeddingPlan = 
   }
   
   const baseDomain = BASE_DOMAIN.replace(/^www\./, '')
-  if (plan === 'free') {
+  if (plan === 'free' || plan === 'none') {
     return `${baseDomain}/${weddingNameId}`
   }
   return `${weddingNameId}.${baseDomain}`

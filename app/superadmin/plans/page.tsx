@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase-client"
-import { PRICING } from "@/lib/subscription-shared"
+import { INVITATION_PRICING } from "@/lib/subscription-shared"
+const PRICING = { premium: INVITATION_PRICING.personalized, deluxe: INVITATION_PRICING.bespoke }
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"

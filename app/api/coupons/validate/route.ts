@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { PRICING, type PlanType } from '@/lib/subscription-shared'
+import { INVITATION_PRICING, MANAGEMENT_PRICING, type InvitationTier, type ManagementTier } from '@/lib/subscription-shared'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -15,14 +15,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const { code, planType } = await request.json()
+    const { code, axis, tier } = await request.json()
 
-    if (!code || !planType) {
-      return NextResponse.json({ error: 'Missing required fields: code, planType' }, { status: 400 })
+    if (!code) {
+      return NextResponse.json({ error: 'Missing required field: code' }, { status: 400 })
     }
 
-    if (!['premium', 'deluxe'].includes(planType)) {
-      return NextResponse.json({ error: 'Invalid plan type' }, { status: 400 })
+    const validAxes = ['invitation', 'management']
+    const validInvTiers = ['basic', 'personalized', 'bespoke']
+    const validMgmtTiers = ['basic', 'pro', 'agency']
+
+    if (axis && !validAxes.includes(axis)) {
+      return NextResponse.json({ error: 'Invalid axis' }, { status: 400 })
+    }
+    if (axis === 'invitation' && tier && !validInvTiers.includes(tier)) {
+      return NextResponse.json({ error: 'Invalid invitation tier' }, { status: 400 })
+    }
+    if (axis === 'management' && tier && !validMgmtTiers.includes(tier)) {
+      return NextResponse.json({ error: 'Invalid management tier' }, { status: 400 })
     }
 
     const normalizedCode = code.toUpperCase().trim()
@@ -78,14 +88,6 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Check plan applicability
-    if (!coupon.applies_to_plans.includes(planType)) {
-      return NextResponse.json({
-        valid: false,
-        reason: `This coupon is not valid for the ${planType} plan`,
-      })
-    }
-
     // Check promo code redemption limits
     if (promoCode.max_redemptions && promoCode.times_redeemed >= promoCode.max_redemptions) {
       return NextResponse.json({
@@ -102,19 +104,26 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Calculate discount — coupons apply against the FULL price (no stacking with global discounts)
-    // Only ONE promotion applies: either global promo OR user coupon, never both.
-    const pricing = PRICING[planType as PlanType]
-    const originalPrice = pricing.price_mxn
-
-    let discountAmount: number
-    if (coupon.discount_type === 'percent') {
-      discountAmount = Math.round(originalPrice * (coupon.discount_value / 100))
-    } else {
-      discountAmount = Math.min(coupon.discount_value, originalPrice)
+    // Compute original price if axis+tier provided
+    let originalPrice: number | null = null
+    if (axis && tier) {
+      const pricing = axis === 'invitation'
+        ? INVITATION_PRICING[tier as InvitationTier]
+        : MANAGEMENT_PRICING[tier as ManagementTier]
+      originalPrice = pricing?.price_mxn ?? null
     }
 
-    const finalPrice = originalPrice - discountAmount
+    let discountAmount: number | null = null
+    let finalPrice: number | null = null
+
+    if (originalPrice !== null) {
+      if (coupon.discount_type === 'percent') {
+        discountAmount = Math.round(originalPrice * (coupon.discount_value / 100))
+      } else {
+        discountAmount = Math.min(coupon.discount_value, originalPrice)
+      }
+      finalPrice = originalPrice - discountAmount
+    }
 
     return NextResponse.json({
       valid: true,

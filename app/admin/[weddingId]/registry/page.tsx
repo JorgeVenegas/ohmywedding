@@ -409,8 +409,9 @@ export default function RegistryPage({ params }: RegistryPageProps) {
             <div className="py-4">
               <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">{t('admin.registry.customRegistry')}</h1>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-[#DDA46F] mb-1">{t('admin.registry.title')}</p>
+                <h1 className="text-2xl font-serif text-[#420c14]">{t('admin.registry.customRegistry')}</h1>
+                <p className="text-sm text-[#420c14]/60 mt-0.5">
                   {t('admin.registry.description')}
                 </p>
               </div>
@@ -420,20 +421,20 @@ export default function RegistryPage({ params }: RegistryPageProps) {
                 {viewMode === 'items' ? (
                   <>
                     {/* Items Stats */}
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
-                      <LayoutGrid className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-foreground font-semibold">{items.length}</span>
-                      <span className="text-muted-foreground">{t('admin.registry.stats.items')}</span>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#420c14]/5 text-xs font-medium">
+                      <LayoutGrid className="w-3 h-3 text-[#420c14]/50" />
+                      <span className="text-[#420c14] font-semibold">{items.length}</span>
+                      <span className="text-[#420c14]/50">{t('admin.registry.stats.items')}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
-                      <DollarSign className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-foreground font-semibold">${totalGoal.toFixed(2)}</span>
-                      <span className="text-muted-foreground">{t('admin.registry.stats.goal')}</span>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#420c14]/5 text-xs font-medium">
+                      <DollarSign className="w-3 h-3 text-[#420c14]/50" />
+                      <span className="text-[#420c14] font-semibold">${totalGoal.toFixed(2)}</span>
+                      <span className="text-[#420c14]/50">{t('admin.registry.stats.goal')}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary/10 text-xs font-medium">
-                      <div className="w-1.5 h-1.5 rounded-full bg-secondary" />
-                      <span className="text-secondary font-semibold">${totalRaised.toFixed(2)}</span>
-                      <span className="text-muted-foreground">{t('admin.registry.stats.raised')}</span>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#DDA46F]/10 text-xs font-medium">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#DDA46F]" />
+                      <span className="text-[#DDA46F] font-semibold">${totalRaised.toFixed(2)}</span>
+                      <span className="text-[#420c14]/50">{t('admin.registry.stats.raised')}</span>
                     </div>
                     {/* Add Item Button */}
                     <Button
@@ -455,15 +456,15 @@ export default function RegistryPage({ params }: RegistryPageProps) {
                 ) : (
                   <>
                     {/* Contributions Stats */}
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 text-xs font-medium">
-                      <DollarSign className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-foreground font-semibold">{contributionStats.count}</span>
-                      <span className="text-muted-foreground">{t('admin.registry.stats.contributions')}</span>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#420c14]/5 text-xs font-medium">
+                      <DollarSign className="w-3 h-3 text-[#420c14]/50" />
+                      <span className="text-[#420c14] font-semibold">{contributionStats.count}</span>
+                      <span className="text-[#420c14]/50">{t('admin.registry.stats.contributions')}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary/10 text-xs font-medium">
-                      <div className="w-1.5 h-1.5 rounded-full bg-secondary" />
-                      <span className="text-secondary font-semibold">${contributionStats.amount.toFixed(2)}</span>
-                      <span className="text-muted-foreground">{t('admin.registry.stats.received')}</span>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#DDA46F]/10 text-xs font-medium">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#DDA46F]" />
+                      <span className="text-[#DDA46F] font-semibold">${contributionStats.amount.toFixed(2)}</span>
+                      <span className="text-[#420c14]/50">{t('admin.registry.stats.received')}</span>
                     </div>
                   </>
                 )}
@@ -668,7 +669,7 @@ export default function RegistryPage({ params }: RegistryPageProps) {
         {/* Form */}
         {showForm && (
           <Card className="p-6 mb-8 border border-border shadow-sm">
-            <h2 className="text-xl font-bold text-foreground mb-4">
+            <h2 className="text-xl font-serif text-brand mb-4">
               {editingItem ? "Edit Registry Item" : "Add New Registry Item"}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -783,7 +784,8 @@ export default function RegistryPage({ params }: RegistryPageProps) {
             </div>
           ) : items.length === 0 ? (
             <Card className="p-12 text-center border border-border">
-              <p className="text-muted-foreground mb-4">No registry items yet</p>
+              <p className="text-lg font-serif text-brand mb-1">No registry items yet</p>
+              <p className="text-sm text-brand/50 mb-4">Add your first item to get started</p>
               <Button onClick={() => setShowForm(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Create Your First Item
@@ -791,8 +793,8 @@ export default function RegistryPage({ params }: RegistryPageProps) {
             </Card>
           ) : filteredAndSortedItems.length === 0 ? (
             <Card className="p-12 text-center border border-border shadow-sm">
-              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <p className="text-muted-foreground">No items match your filters</p>
+              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-brand/30" />
+              <p className="font-serif text-brand/60">No items match your filters</p>
             </Card>
           ) : (
             filteredAndSortedItems.map((item) => (
@@ -815,7 +817,7 @@ export default function RegistryPage({ params }: RegistryPageProps) {
                   )}
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-bold text-foreground">{item.title}</h3>
+                      <h3 className="text-lg font-serif text-brand">{item.title}</h3>
                       <span
                         className={`text-xs px-2 py-1 rounded-full ${
                           item.is_active
@@ -909,8 +911,8 @@ export default function RegistryPage({ params }: RegistryPageProps) {
                 <AlertCircle className="w-6 h-6 text-destructive" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-foreground mb-2">Error</h3>
-                <p className="text-sm text-muted-foreground mb-4">{errorDialog.message}</p>
+                <h3 className="text-lg font-serif text-brand mb-2">Error</h3>
+                <p className="text-sm text-brand/50 mb-4">{errorDialog.message}</p>
                 <Button onClick={() => setErrorDialog({ show: false, message: "" })}>
                   Close
                 </Button>

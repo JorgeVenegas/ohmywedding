@@ -302,7 +302,7 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
         />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Card className="p-8 text-center">
-            <p className="text-muted-foreground">Group not found</p>
+            <p className="font-serif text-brand/60">Group not found</p>
             <Button
               variant="outline"
               className="mt-4"
@@ -333,8 +333,8 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
         {/* Group Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <Users className="w-6 h-6 text-primary" />
+            <h1 className="text-2xl font-serif text-brand flex items-center gap-2">
+              <Users className="w-6 h-6 text-brand-gold" />
               {group.name}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
@@ -554,7 +554,7 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
           </div>
 
           {group.guests.length === 0 && (
-            <p className="text-center text-muted-foreground py-4">No guests in this group</p>
+            <p className="text-center text-sm font-serif text-brand/50 py-4">No guests in this group</p>
           )}
         </Card>
 
@@ -593,7 +593,7 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
               ))}
             </div>
           ) : (
-            <p className="text-center text-muted-foreground py-4">No activity recorded yet</p>
+            <p className="text-center text-sm font-serif text-brand/50 py-4">No activity recorded yet</p>
           )}
 
           {/* Open Events */}

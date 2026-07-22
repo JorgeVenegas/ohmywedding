@@ -54,13 +54,13 @@ export function UpcomingEventsCard({ weddingId, viewAllHref }: UpcomingEventsCar
     new Date(dateStr + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-foreground">
+    <Card className="p-4 border-[#420c14]/10">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-medium text-[#420c14]">
           {t('admin.timeline.upcomingEvents')}
         </h3>
         <Link href={viewAllHref}>
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-muted-foreground gap-1">
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-[#420c14]/40 hover:text-[#420c14] gap-1">
             {t('admin.timeline.viewAll')}
             <ArrowRight className="w-3 h-3" />
           </Button>
@@ -71,21 +71,21 @@ export function UpcomingEventsCard({ weddingId, viewAllHref }: UpcomingEventsCar
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
             <div key={i} className="flex items-center gap-3 animate-pulse">
-              <div className="w-2 h-2 rounded-full bg-muted flex-shrink-0" />
-              <div className="h-4 bg-muted rounded flex-1" />
-              <div className="h-3 bg-muted rounded w-12 flex-shrink-0" />
+              <div className="w-2 h-2 rounded-full bg-[#420c14]/15 flex-shrink-0" />
+              <div className="h-3.5 bg-[#420c14]/8 rounded flex-1" />
+              <div className="h-2.5 bg-[#420c14]/5 rounded w-12 flex-shrink-0" />
             </div>
           ))}
         </div>
       ) : items.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-4">{t('admin.timeline.noEvents')}</p>
+        <p className="text-sm text-[#420c14]/40 text-center py-4">{t('admin.timeline.noEvents')}</p>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1">
           {items.map(item => (
-            <div key={item.id} className="flex items-center gap-3 py-1">
-              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${CATEGORY_COLORS[item.category]}`} />
-              <span className="flex-1 text-sm truncate">{item.title}</span>
-              <span className="text-xs text-muted-foreground flex-shrink-0">{formatDate(item.date)}</span>
+            <div key={item.id} className="flex items-center gap-3 py-1.5">
+              <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${CATEGORY_COLORS[item.category]}`} />
+              <span className="flex-1 text-sm text-[#420c14] truncate">{item.title}</span>
+              <span className="text-xs text-[#420c14]/40 flex-shrink-0">{formatDate(item.date)}</span>
             </div>
           ))}
         </div>

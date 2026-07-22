@@ -1,7 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server'
 import Stripe from 'stripe'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { PRICING } from '@/lib/subscription-shared'
+import { INVITATION_PRICING } from '@/lib/subscription-shared'
+const PRICING: any = { premium: INVITATION_PRICING.personalized, deluxe: INVITATION_PRICING.bespoke }
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

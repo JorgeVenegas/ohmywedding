@@ -15,18 +15,23 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Verify user owns the wedding
+    // Resolve wedding — accept both UUID and wedding_name_id slug
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(weddingId)
     const { data: wedding, error: weddingError } = await supabase
       .from("weddings")
-      .select("id, owner_id")
-      .eq("id", weddingId)
+      .select("id, owner_id, collaborator_emails")
+      .eq(isUuid ? "id" : "wedding_name_id", decodeURIComponent(weddingId))
       .single()
 
     if (weddingError || !wedding) {
       return NextResponse.json({ error: "Wedding not found" }, { status: 404 })
     }
 
-    if (wedding.owner_id !== user.id) {
+    const isOwnerOrCollaborator =
+      wedding.owner_id === user.id ||
+      (Array.isArray(wedding.collaborator_emails) && wedding.collaborator_emails.includes(user.email))
+
+    if (!isOwnerOrCollaborator) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
     }
 
@@ -34,7 +39,7 @@ export async function GET(
     const { data: subscription, error: subError } = await supabase
       .from("wedding_subscriptions")
       .select("*")
-      .eq("wedding_id", weddingId)
+      .eq("wedding_id", wedding.id)
       .single()
 
     if (subError && subError.code !== "PGRST116") {
@@ -46,7 +51,7 @@ export async function GET(
       const { data: newSub, error: insertError } = await supabase
         .from("wedding_subscriptions")
         .insert({
-          wedding_id: weddingId,
+          wedding_id: wedding.id,
           plan: 'free',
         })
         .select()

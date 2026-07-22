@@ -20,8 +20,6 @@ import {
   Trash2,
 } from "lucide-react"
 import type { GuestGroup, Guest, ColumnVisibility, PartnerOption } from "../types"
-import type { PlanType } from "@/lib/subscription-shared"
-
 export interface InvitationsToolbarProps {
   // View mode
   viewMode: 'flat' | 'groups'
@@ -75,7 +73,7 @@ export interface InvitationsToolbarProps {
   setBulkInvitedBy: (invitedBy: string[]) => void
   setShowBulkInvitedByModal: (show: boolean) => void
   // Plan
-  planType: PlanType
+  hasPaidPlan: boolean
 }
 
 export function InvitationsToolbarContent({
@@ -114,7 +112,7 @@ export function InvitationsToolbarContent({
   setShowGroupTravelDialog,
   setBulkInvitedBy,
   setShowBulkInvitedByModal,
-  planType,
+  hasPaidPlan,
 }: InvitationsToolbarProps) {
   const { t } = useTranslation()
   const hasActiveFilters = searchQuery || statusFilter !== 'all' || tagFilter !== 'all' || groupFilter !== 'all' || invitedByFilter !== 'all' || openedFilter !== 'all'
@@ -225,7 +223,7 @@ export function InvitationsToolbarContent({
               <option key={partner.key} value={partner.key}>{partner.name}</option>
             ))}
           </select>
-          {planType !== 'free' && (
+          {hasPaidPlan && (
             <select
               value={openedFilter}
               onChange={(e) => setOpenedFilter(e.target.value as typeof openedFilter)}

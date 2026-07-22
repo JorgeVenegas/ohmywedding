@@ -89,10 +89,11 @@ export default function WeddingSelectorPage() {
 
       <div className="page-container">
         <div className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-brand-gold mb-2">{t('admin.dashboard.management')}</p>
+          <h1 className="text-3xl md:text-4xl font-serif text-brand mb-2">
             {t('admin.selector.title')}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-brand/50">
             {t('admin.selector.description')}
           </p>
         </div>
@@ -118,12 +119,12 @@ export default function WeddingSelectorPage() {
                         <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
                       </div>
 
-                      <h3 className="text-lg font-semibold text-foreground mb-1">
+                      <h3 className="text-lg font-serif text-brand mb-1">
                         {wedding.partner1_first_name} & {wedding.partner2_first_name}
                       </h3>
 
                       {wedding.wedding_date && (
-                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-3">
+                        <div className="flex items-center gap-1.5 text-sm text-brand/50 mb-3">
                           <Calendar className="w-3.5 h-3.5" />
                           {new Date(wedding.wedding_date).toLocaleDateString(undefined, {
                             year: 'numeric',

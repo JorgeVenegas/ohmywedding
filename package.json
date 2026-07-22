@@ -1,6 +1,6 @@
 {
   "name": "ohmywedding",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "OhMyWedding - Create stunning, luxury wedding websites with beautiful designs, guest management, RSVPs, and registry features",
   "author": "OhMyWedding",
   "license": "MIT",
@@ -37,7 +37,13 @@
     "test:navigation": "tsx tests/navigation.test.ts",
     "db:backup": "./scripts/backup-local-db.sh",
     "db:restore": "./scripts/restore-local-db.sh",
-    "db:pull-prod": "npx supabase db dump --data-only --schema public -f .local-backups/prod_dump_$(date +%Y%m%d_%H%M%S).sql"
+    "db:pull-prod": "npx supabase db dump --data-only --schema public -f .local-backups/prod_dump_$(date +%Y%m%d_%H%M%S).sql",
+    "version:patch": "npm version patch --no-git-tag-version",
+    "version:minor": "npm version minor --no-git-tag-version",
+    "version:major": "npm version major --no-git-tag-version",
+    "release:patch": "npm version patch -m 'chore: bump version to %s'",
+    "release:minor": "npm version minor -m 'chore: bump version to %s'",
+    "release:major": "npm version major -m 'chore: bump version to %s'"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
