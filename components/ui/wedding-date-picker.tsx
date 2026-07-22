@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { DayPicker } from "react-day-picker"
 import { format, parse, isValid } from "date-fns"
 import { es } from "date-fns/locale"
@@ -38,18 +39,42 @@ export function WeddingDatePicker({
 }: WeddingDatePickerProps) {
   const [open, setOpen] = useState(false)
   const [month, setMonth] = useState<Date>(() => parseYMD(value) ?? new Date())
+  const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties>({})
   const containerRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const popoverRef = useRef<HTMLDivElement>(null)
   const selected = parseYMD(value)
 
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node
+      if (
+        containerRef.current && !containerRef.current.contains(target) &&
+        popoverRef.current && !popoverRef.current.contains(target)
+      ) {
         setOpen(false)
       }
     }
     document.addEventListener("mousedown", handler)
     return () => document.removeEventListener("mousedown", handler)
+  }, [open])
+
+  useEffect(() => {
+    if (!open || !buttonRef.current) return
+    const rect = buttonRef.current.getBoundingClientRect()
+    const spaceBelow = window.innerHeight - rect.bottom
+    const popoverHeight = 320
+    const top = spaceBelow >= popoverHeight
+      ? rect.bottom + window.scrollY + 6
+      : rect.top + window.scrollY - popoverHeight - 6
+    setPopoverStyle({
+      position: "absolute",
+      top,
+      left: rect.left + window.scrollX,
+      width: Math.max(rect.width, 280),
+      zIndex: 9999,
+    })
   }, [open])
 
   useEffect(() => {
@@ -77,6 +102,7 @@ export function WeddingDatePicker({
     <div ref={containerRef} className={cn("relative", className)}>
       {/* Trigger */}
       <button
+        ref={buttonRef}
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setOpen(v => !v)}
@@ -108,14 +134,15 @@ export function WeddingDatePicker({
         )}
       </button>
 
-      {/* Calendar popover */}
-      {open && (
+      {/* Calendar popover — rendered in a portal to escape dialog overflow:hidden */}
+      {open && typeof document !== "undefined" && createPortal(
         <div
+          ref={popoverRef}
+          style={popoverStyle}
           className={cn(
-            "absolute z-50 mt-1.5 rounded-xl border border-[#420c14]/10 bg-white shadow-xl shadow-[#420c14]/10",
+            "rounded-xl border border-[#420c14]/10 bg-white shadow-xl shadow-[#420c14]/10",
             "animate-in fade-in-0 zoom-in-95 duration-150 origin-top"
           )}
-          style={{ minWidth: 280 }}
         >
           <DayPicker
             mode="single"
@@ -170,7 +197,8 @@ export function WeddingDatePicker({
                   : <ChevronRight className="w-4 h-4" />,
             }}
           />
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
