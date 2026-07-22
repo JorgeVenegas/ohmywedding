@@ -45,6 +45,23 @@ export function WeddingDatePicker({
   const popoverRef = useRef<HTMLDivElement>(null)
   const selected = parseYMD(value)
 
+  const updatePosition = () => {
+    if (!buttonRef.current) return
+    const rect = buttonRef.current.getBoundingClientRect()
+    const spaceBelow = window.innerHeight - rect.bottom
+    const popoverHeight = 320
+    const top = spaceBelow >= popoverHeight
+      ? rect.bottom + window.scrollY + 6
+      : rect.top + window.scrollY - popoverHeight - 6
+    setPopoverStyle({
+      position: "absolute",
+      top,
+      left: rect.left + window.scrollX,
+      width: Math.max(rect.width, 280),
+      zIndex: 9999,
+    })
+  }
+
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
@@ -61,20 +78,14 @@ export function WeddingDatePicker({
   }, [open])
 
   useEffect(() => {
-    if (!open || !buttonRef.current) return
-    const rect = buttonRef.current.getBoundingClientRect()
-    const spaceBelow = window.innerHeight - rect.bottom
-    const popoverHeight = 320
-    const top = spaceBelow >= popoverHeight
-      ? rect.bottom + window.scrollY + 6
-      : rect.top + window.scrollY - popoverHeight - 6
-    setPopoverStyle({
-      position: "absolute",
-      top,
-      left: rect.left + window.scrollX,
-      width: Math.max(rect.width, 280),
-      zIndex: 9999,
-    })
+    if (!open) return
+    updatePosition()
+    window.addEventListener("scroll", updatePosition, { capture: true, passive: true })
+    window.addEventListener("resize", updatePosition, { passive: true })
+    return () => {
+      window.removeEventListener("scroll", updatePosition, { capture: true })
+      window.removeEventListener("resize", updatePosition)
+    }
   }, [open])
 
   useEffect(() => {

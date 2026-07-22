@@ -1,10 +1,59 @@
 import { notFound } from "next/navigation"
+import type { Metadata } from "next"
 import { createAdminSupabaseClient, createServerSupabaseClient } from "@/lib/supabase-server"
 import { isSuperUser } from "@/lib/superadmin"
 import type { Quote } from "@/lib/quote-types"
 import { QuotePageClient } from "./quote-page-client"
 
 export const dynamic = "force-dynamic"
+
+const OG_IMAGE = "/images/quotes/QUOTE-METADATA-IMAGE.png"
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ quoteId: string }>
+}): Promise<Metadata> {
+  const { quoteId } = await params
+  const admin = createAdminSupabaseClient()
+  const { data: quote } = await admin
+    .from("quotes")
+    .select("recipient_name, language")
+    .eq("id", quoteId)
+    .single()
+
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.ohmy.wedding"
+  const imageUrl = `${baseUrl}${OG_IMAGE}`
+  const lang = (quote?.language ?? "es") as "en" | "es"
+  const name = quote?.recipient_name ?? ""
+
+  const title = lang === "es"
+    ? `Tu propuesta OhMyWedding${name ? ` para ${name}` : ""} 💍`
+    : `Your OhMyWedding proposal${name ? ` for ${name}` : ""} 💍`
+
+  const description = lang === "es"
+    ? "Revisa tu propuesta personalizada. Planes de invitaciones y gestión de boda diseñados especialmente para ti."
+    : "Review your personalised proposal. Wedding invitation and management plans designed just for you."
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${baseUrl}/quotes/${quoteId}`,
+      siteName: "OhMyWedding",
+      images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imageUrl],
+    },
+  }
+}
 
 async function getQuote(quoteId: string): Promise<Quote | null> {
   try {

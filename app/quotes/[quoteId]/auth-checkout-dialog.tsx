@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Loader2, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase-client"
 import { WeddingDatePicker } from "@/components/ui/wedding-date-picker"
@@ -163,6 +163,12 @@ export function AuthCheckoutDialog({ lang, initialMode = 'choice', onClose, onRe
   const [selectedWeddingId, setSelectedWeddingId] = useState<string | null>(null)
 
   const t = T[lang]
+
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => { document.body.style.overflow = prev }
+  }, [])
 
   const goTo = (m: Mode) => { setError(null); setMode(m) }
 
