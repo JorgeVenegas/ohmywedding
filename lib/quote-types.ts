@@ -101,7 +101,7 @@ const MANAGEMENT_EXPANDED: Record<string, string[]> = {
   basic: [
     'Guest list management',
     'RSVP tracking & confirmations',
-    'Activity feed: see who opened your invitation, confirmed or declined (last 3 entries)',
+    'Activity feed: see who confirmed or declined (last 3 entries) — invitation opens not tracked',
   ],
   pro: [
     'Unlimited guests & guest groups',
@@ -166,7 +166,7 @@ const MANAGEMENT_EXPANDED_ES: Record<string, string[]> = {
   basic: [
     'Gestión de lista de invitados',
     'Seguimiento de RSVP y confirmaciones',
-    'Actividad reciente: ve quién abrió tu invitación, confirmó o declinó (últimas 3 entradas)',
+    'Actividad reciente: ve quién confirmó o declinó (últimas 3 entradas) — aperturas de invitación no incluidas',
   ],
   pro: [
     'Invitados y grupos ilimitados',
