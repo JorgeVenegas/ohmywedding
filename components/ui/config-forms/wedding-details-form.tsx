@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { WeddingDatePicker } from '@/components/ui/wedding-date-picker'
 import { Calendar, MapPin, Clock, Users, Save, Loader2 } from 'lucide-react'
 import { usePageConfigSafe } from '@/components/contexts/page-config-context'
 import { useI18n } from '@/components/contexts/i18n-context'
@@ -156,11 +157,9 @@ export function WeddingDetailsForm({ weddingNameId, initialDetails, onSave }: We
         
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">{t('config.date')}</label>
-          <Input
-            type="date"
+          <WeddingDatePicker
             value={details.wedding_date || ''}
-            onChange={(e) => handleChange('wedding_date', e.target.value)}
-            className="h-9"
+            onChange={(date) => handleChange('wedding_date', date)}
           />
         </div>
       </div>

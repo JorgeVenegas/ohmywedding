@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { WeddingDatePicker } from "@/components/ui/wedding-date-picker"
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
@@ -149,21 +150,16 @@ export function AddEditEventModal({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label htmlFor="start_date">{t('admin.timeline.fields.startDate')}</Label>
-              <Input
-                id="start_date"
-                type="date"
+              <WeddingDatePicker
                 value={form.start_date}
-                onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))}
+                onChange={date => setForm(f => ({ ...f, start_date: date }))}
               />
             </div>
             <div className="space-y-1">
               <Label htmlFor="due_date">{t('admin.timeline.fields.dueDate')} *</Label>
-              <Input
-                id="due_date"
-                type="date"
+              <WeddingDatePicker
                 value={form.due_date}
-                onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))}
-                required
+                onChange={date => setForm(f => ({ ...f, due_date: date }))}
               />
             </div>
           </div>

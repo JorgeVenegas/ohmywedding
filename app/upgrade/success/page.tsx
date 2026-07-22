@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { Heart, Calendar, ArrowRight, Loader2, CheckCircle2 } from "lucide-react"
+import { WeddingDatePicker } from "@/components/ui/wedding-date-picker"
 import {
   MANAGEMENT_CARDS,
   MANAGEMENT_PRICING,
@@ -500,12 +501,16 @@ function SuccessContent() {
                   Ya tenemos fecha de boda
                 </button>
                 {form.hasDate && (
-                  <Field
-                    label="Fecha de boda"
-                    type="date"
-                    value={form.date}
-                    onChange={v => setForm(f => ({ ...f, date: v }))}
-                  />
+                  <div className="relative pt-5">
+                    <label className="absolute top-0 left-0 text-[9px] uppercase tracking-[0.25em] text-[#DDA46F] font-medium">
+                      Fecha de boda
+                    </label>
+                    <WeddingDatePicker
+                      value={form.date}
+                      onChange={v => setForm(f => ({ ...f, date: v }))}
+                      locale="es"
+                    />
+                  </div>
                 )}
               </div>
 

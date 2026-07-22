@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { WeddingDatePicker } from '@/components/ui/wedding-date-picker'
 import { useTranslation } from '@/components/contexts/i18n-context'
 import type { SupplierPayment } from '../types'
 
@@ -74,10 +75,9 @@ export function PaymentModal({ open, onClose, onSave, payment, supplierName, sav
 
           <div>
             <label className="text-sm font-medium mb-1 block">{t('admin.suppliers.paymentDate')}</label>
-            <Input
-              type="date"
+            <WeddingDatePicker
               value={form.payment_date}
-              onChange={e => setForm(p => ({ ...p, payment_date: e.target.value }))}
+              onChange={date => setForm(p => ({ ...p, payment_date: date }))}
             />
           </div>
 

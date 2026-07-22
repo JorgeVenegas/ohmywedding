@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { WeddingDatePicker } from "@/components/ui/wedding-date-picker"
 import { useTranslation } from "@/components/contexts/i18n-context"
 import { TimelineItem } from "../types"
 
@@ -73,12 +74,9 @@ export function EditPaymentModal({ open, item, onClose, onSave }: EditPaymentMod
           </div>
           <div className="space-y-1">
             <Label htmlFor="payment_date">{t('admin.timeline.fields.paymentDate')} *</Label>
-            <Input
-              id="payment_date"
-              type="date"
+            <WeddingDatePicker
               value={form.payment_date}
-              onChange={e => setForm(f => ({ ...f, payment_date: e.target.value }))}
-              required
+              onChange={date => setForm(f => ({ ...f, payment_date: date }))}
             />
           </div>
           <div className="space-y-1">

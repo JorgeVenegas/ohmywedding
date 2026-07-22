@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
+import { WeddingDatePicker } from '@/components/ui/wedding-date-picker'
 import { Textarea } from '@/components/ui/textarea'
 import { ImageUpload } from '@/components/ui/image-upload'
 import { VariantDropdown } from '@/components/ui/variant-dropdown'
@@ -656,10 +657,9 @@ export function EventDetailsConfigForm({ config, wedding, onChange }: EventDetai
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           {t('eventDetails.eventDate')}
                         </label>
-                        <Input
-                          type="date"
+                        <WeddingDatePicker
                           value={event.date || ''}
-                          onChange={(e) => updateEvent(index, 'date', e.target.value)}
+                          onChange={(date) => updateEvent(index, 'date', date)}
                         />
                       </div>
                     )}

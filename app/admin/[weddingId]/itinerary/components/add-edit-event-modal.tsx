@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { WeddingDatePicker } from "@/components/ui/wedding-date-picker"
 import { useTranslation } from "@/components/contexts/i18n-context"
 import { ChevronDown, ChevronRight, Check, X, Pencil, Plus } from "lucide-react"
 import type { ItineraryEvent, SubEventInput } from "../types"
@@ -324,7 +325,7 @@ export function AddEditEventModal({
               </button>
             </div>
             {!isWeddingDay && (
-              <Input type="date" value={customDate} onChange={(e) => setCustomDate(e.target.value)} />
+              <WeddingDatePicker value={customDate} onChange={setCustomDate} />
             )}
           </div>
 

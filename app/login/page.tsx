@@ -94,18 +94,23 @@ function LoginForm() {
     const supabase = createClient()
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(finalRedirectUrl)}`,
-        },
+      const signupRes = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       })
+      const signupData = await signupRes.json()
 
-      if (error) {
-        setError(error.message)
+      if (!signupRes.ok) {
+        setError(signupData.error || "Failed to create account")
       } else {
-        setMessage("Check your email to confirm your account!")
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) {
+          setError(error.message)
+        } else if (data.session) {
+          window.location.href = finalRedirectUrl
+          return
+        }
       }
     } else {
       const { data, error } = await supabase.auth.signInWithPassword({

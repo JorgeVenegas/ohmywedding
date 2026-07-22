@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
+import { WeddingDatePicker } from "@/components/ui/wedding-date-picker"
 import { Heart, Calendar, Mail, CheckCircle, ArrowLeft } from "lucide-react"
 import { useTranslation } from "@/components/contexts/i18n-context"
 import { createClient } from "@/lib/supabase-client"
@@ -293,11 +294,10 @@ function CreateWeddingPageContent() {
                       />
                     </div>
                     {formData.hasWeddingDate && (
-                      <Input
-                        type="date"
+                      <WeddingDatePicker
                         value={formData.weddingDate}
-                        onChange={(e) => handleChange('weddingDate', e.target.value)}
-                        className="w-full"
+                        onChange={(date) => handleChange('weddingDate', date)}
+                        locale={locale === 'es' ? 'es' : 'en'}
                       />
                     )}
                   </div>

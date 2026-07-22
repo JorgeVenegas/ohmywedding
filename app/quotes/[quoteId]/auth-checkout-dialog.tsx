@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Loader2, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase-client"
+import { WeddingDatePicker } from "@/components/ui/wedding-date-picker"
 
 type Mode = 'choice' | 'signup' | 'login' | 'create-wedding' | 'pick-wedding'
 
@@ -169,10 +170,19 @@ export function AuthCheckoutDialog({ lang, initialMode = 'choice', onClose, onRe
     if (!email || !password || !partner1 || !partner2) { setError(t.fillRequired); return }
     setLoading(true); setError(null)
     try {
+      // Create user server-side (email_confirm: true) — no verification email
+      const signupRes = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      })
+      const signupData = await signupRes.json()
+      if (!signupRes.ok) { setError(signupData.error || "Failed to create account"); return }
+
+      // Sign in immediately — user is already confirmed
       const supabase = createClient()
-      const { data, error: authErr } = await supabase.auth.signUp({ email, password })
+      const { error: authErr } = await supabase.auth.signInWithPassword({ email, password })
       if (authErr) { setError(authErr.message); return }
-      if (!data.session) { setError(t.emailConfirm); return }
 
       const wRes = await fetch("/api/weddings", {
         method: "POST",
@@ -293,7 +303,7 @@ export function AuthCheckoutDialog({ lang, initialMode = 'choice', onClose, onRe
                 </div>
                 <div>
                   <FieldLabel label={t.dateLabel} hint={t.optional} />
-                  <TextInput type="date" value={weddingDate} onChange={e => setWeddingDate(e.target.value)} />
+                  <WeddingDatePicker value={weddingDate} onChange={setWeddingDate} locale={lang} />
                 </div>
               </div>
 
@@ -375,7 +385,7 @@ export function AuthCheckoutDialog({ lang, initialMode = 'choice', onClose, onRe
                 </div>
                 <div>
                   <FieldLabel label={t.dateLabel} hint={t.optional} />
-                  <TextInput type="date" value={weddingDate} onChange={e => setWeddingDate(e.target.value)} />
+                  <WeddingDatePicker value={weddingDate} onChange={setWeddingDate} locale={lang} />
                 </div>
               </div>
 
