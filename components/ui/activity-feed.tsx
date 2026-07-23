@@ -77,7 +77,7 @@ export function ActivityFeed({
   compact = false,
   viewAllHref,
 }: ActivityFeedProps) {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
   const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -119,19 +119,86 @@ export function ActivityFeed({
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
   }
 
+  function formatNames(names: string[]): string {
+    const es = locale === 'es'
+    if (names.length === 1) return names[0]
+    if (names.length === 2) return `${names[0]} ${es ? 'y' : 'and'} ${names[1]}`
+    return `${names.slice(0, -1).join(', ')} ${es ? 'y' : 'and'} ${names[names.length - 1]}`
+  }
+
   function getActivityDescription(activity: Activity): string {
     const name = activity.groupName || activity.guestName || '—'
+    const es = locale === 'es'
+
     switch (activity.type) {
-      case 'invitation_opened':    return t('activity.invitationOpenedDesc', { name })
-      case 'rsvp_confirmed':       return t('activity.rsvpConfirmedDesc', { name })
-      case 'rsvp_declined':        return t('activity.rsvpDeclinedDesc', { name })
+      case 'invitation_opened':
+        return t('activity.invitationOpenedDesc', { name })
+
+      case 'rsvp_confirmed':
+      case 'rsvp_declined': {
+        const meta = activity.metadata || {}
+        const guestNames: string[] = meta.guest_names || []
+        const groupName: string = meta.group_name || activity.groupName || ''
+        const extraPasses: number = meta.extra_passes || 0
+        const isConfirmed = activity.type === 'rsvp_confirmed'
+
+        // Legacy record — no grouped metadata
+        if (guestNames.length === 0) {
+          return isConfirmed
+            ? t('activity.rsvpConfirmedDesc', { name })
+            : t('activity.rsvpDeclinedDesc', { name })
+        }
+
+        const namesStr = formatNames(guestNames)
+        const plural = guestNames.length > 1
+
+        let fromGroup = ''
+        if (groupName) {
+          fromGroup = es ? ` de ${groupName}` : ` from ${groupName}`
+        }
+
+        let passesStr = ''
+        if (isConfirmed && extraPasses > 0) {
+          passesStr = es
+            ? ` (+${extraPasses} ${extraPasses === 1 ? 'pase adicional' : 'pases adicionales'})`
+            : ` (+${extraPasses} extra ${extraPasses === 1 ? 'pass' : 'passes'})`
+        }
+
+        if (es) {
+          return isConfirmed
+            ? `${namesStr}${fromGroup} ${plural ? 'confirmaron' : 'confirmó'} asistencia${passesStr}`
+            : `${namesStr}${fromGroup} ${plural ? 'declinaron' : 'declinó'} asistencia`
+        } else {
+          return isConfirmed
+            ? `${namesStr}${fromGroup} confirmed attendance${passesStr}`
+            : `${namesStr}${fromGroup} declined attendance`
+        }
+      }
+
       case 'rsvp_updated':         return t('activity.rsvpUpdatedDesc', { name })
       case 'guest_added':          return t('activity.guestAddedDesc', { name })
       case 'guest_removed':        return t('activity.guestRemovedDesc', { name })
       case 'group_added':          return t('activity.groupAddedDesc', { name })
       case 'group_removed':        return t('activity.groupRemovedDesc', { name })
       case 'message_sent':         return t('activity.messageSentDesc', { name })
-      case 'registry_contribution':return t('activity.registryContributionDesc', { name })
+
+      case 'registry_contribution': {
+        const meta = activity.metadata || {}
+        const contributor: string = meta.contributorName || (es ? 'Alguien' : 'Someone')
+        const amount: number = meta.amount || 0
+        const itemTitle: string = meta.itemTitle || ''
+        const amountStr = `$${amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        if (es) {
+          return itemTitle
+            ? `${contributor} contribuyó ${amountStr} a ${itemTitle}`
+            : `${contributor} hizo una contribución de ${amountStr}`
+        } else {
+          return itemTitle
+            ? `${contributor} contributed ${amountStr} to ${itemTitle}`
+            : `${contributor} made a registry contribution of ${amountStr}`
+        }
+      }
+
       default:                     return activity.description
     }
   }

@@ -133,6 +133,11 @@ export async function POST(request: Request) {
         }
       }
 
+      // Collect guests that change status so we can log one grouped activity per status
+      const confirmedGuestNames: string[] = []
+      const declinedGuestNames: string[] = []
+      let weddingIdForActivity: string | null = null
+
       // Update each guest's confirmation status
       for (const guest of body.guests) {
         // Validate: if travel arrangement is 'already_booked', ticket_attachment_url must be present
@@ -142,17 +147,17 @@ export async function POST(request: Request) {
             { status: 400 }
           )
         }
-        
-        const confirmationStatus = 
-          guest.attending === true ? 'confirmed' : 
-          guest.attending === false ? 'declined' : 
+
+        const confirmationStatus =
+          guest.attending === true ? 'confirmed' :
+          guest.attending === false ? 'declined' :
           'pending'
-        
+
         // Prepare update object with confirmation status and optional travel fields
-        const updateData: any = { 
-          confirmation_status: confirmationStatus 
+        const updateData: any = {
+          confirmation_status: confirmationStatus
         }
-        
+
         // Add travel information if provided
         if (guest.is_traveling !== undefined) {
           updateData.is_traveling = guest.is_traveling
@@ -166,23 +171,24 @@ export async function POST(request: Request) {
         if (guest.ticket_attachment_url !== undefined) {
           updateData.ticket_attachment_url = guest.ticket_attachment_url
         }
-        
+
         // Verify this guest belongs to the verified group
         const { data: guestData, error: guestError } = await supabaseAdmin
           .from('guests')
           .select('guest_group_id, name, wedding_id, confirmation_status')
           .eq('id', guest.guestId)
           .single()
-        
+
         if (guestError || !guestData || guestData.guest_group_id !== body.groupId) {
           return NextResponse.json(
             { error: 'Guest does not belong to verified group' },
             { status: 403 }
           )
         }
-        
+
         const oldStatus = guestData.confirmation_status
-        
+        weddingIdForActivity = guestData.wedding_id
+
         const { error: updateError } = await supabaseAdmin
           .from('guests')
           .update(updateData)
@@ -195,35 +201,64 @@ export async function POST(request: Request) {
           )
         }
 
-        // Log activity if status changed to confirmed or declined
+        // Collect guests whose status actually changed
         if (confirmationStatus !== 'pending' && oldStatus !== confirmationStatus) {
-          // Only log activity when wedding is marked ready
-          const { data: weddingStatus } = await supabaseAdmin
-            .from('weddings')
-            .select('is_ready')
-            .eq('id', guestData.wedding_id)
+          if (confirmationStatus === 'confirmed') {
+            confirmedGuestNames.push(guestData.name)
+          } else {
+            declinedGuestNames.push(guestData.name)
+          }
+        }
+      }
+
+      // Log one grouped activity record per status after all guests are processed
+      if (weddingIdForActivity && (confirmedGuestNames.length > 0 || declinedGuestNames.length > 0)) {
+        const { data: weddingStatus } = await supabaseAdmin
+          .from('weddings')
+          .select('is_ready')
+          .eq('id', weddingIdForActivity)
+          .single()
+
+        if (weddingStatus?.is_ready) {
+          const { data: groupData } = await supabaseAdmin
+            .from('guest_groups')
+            .select('name')
+            .eq('id', body.groupId)
             .single()
 
-          if (weddingStatus?.is_ready) {
-            const activityType = confirmationStatus === 'confirmed' ? 'rsvp_confirmed' : 'rsvp_declined'
-            const description = confirmationStatus === 'confirmed'
-              ? `${guestData.name} confirmed attendance`
-              : `${guestData.name} declined attendance`
+          const groupName = groupData?.name || ''
+          const extraPasses = typeof body.extraPassesAttending === 'number' ? body.extraPassesAttending : 0
 
-            await supabaseAdmin
-              .from('activity_logs')
-              .insert({
-                wedding_id: guestData.wedding_id,
-                guest_group_id: body.groupId,
-                guest_id: guest.guestId,
-                activity_type: activityType,
-                description: description,
-                metadata: {
-                  source: 'guest_rsvp',
-                  old_status: oldStatus,
-                  new_status: confirmationStatus
-                }
-              })
+          if (confirmedGuestNames.length > 0) {
+            await supabaseAdmin.from('activity_logs').insert({
+              wedding_id: weddingIdForActivity,
+              guest_group_id: body.groupId,
+              guest_id: null,
+              activity_type: 'rsvp_confirmed',
+              description: `${confirmedGuestNames.join(', ')} confirmed attendance`,
+              metadata: {
+                source: 'guest_rsvp',
+                guest_names: confirmedGuestNames,
+                group_name: groupName,
+                extra_passes: extraPasses,
+              },
+            })
+          }
+
+          if (declinedGuestNames.length > 0) {
+            await supabaseAdmin.from('activity_logs').insert({
+              wedding_id: weddingIdForActivity,
+              guest_group_id: body.groupId,
+              guest_id: null,
+              activity_type: 'rsvp_declined',
+              description: `${declinedGuestNames.join(', ')} declined attendance`,
+              metadata: {
+                source: 'guest_rsvp',
+                guest_names: declinedGuestNames,
+                group_name: groupName,
+                extra_passes: 0,
+              },
+            })
           }
         }
       }

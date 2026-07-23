@@ -76,6 +76,7 @@ async function logContributionActivity(
     p_metadata: {
       amount: contributionAmount,
       itemId: contribution.custom_registry_item_id,
+      itemTitle: itemTitle,
       contributorName: contribution.contributor_name,
       paymentStatus: 'completed',
     },

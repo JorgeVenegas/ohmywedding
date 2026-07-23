@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     // Get wedding with owner and collaborator info
     const { data: wedding, error: weddingError } = await supabase
       .from('weddings')
-      .select('id, owner_id, collaborator_emails, is_ready')
+      .select('id, owner_id, collaborator_emails, is_ready, wedding_subscriptions(management_tier)')
       .eq('wedding_name_id', weddingId)
       .single()
 
@@ -100,9 +100,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    // Log activity (only for non-owner views)
-    if (!isActuallyOwnerView) {
-      // Get group name for activity log
+    // Log activity only for non-owner views and when management plan is Pro or Agency
+    const managementTier = (wedding.wedding_subscriptions as any)?.management_tier ?? null
+    const opensTracked = managementTier === 'pro' || managementTier === 'agency'
+
+    if (!isActuallyOwnerView && opensTracked) {
       const { data: group } = await supabase
         .from('guest_groups')
         .select('name')
@@ -120,7 +122,7 @@ export async function POST(request: NextRequest) {
           description: `${groupName} opened their invitation`,
           metadata: {
             device_type: deviceType,
-            ip_address: ipAddress?.substring(0, 3) + '***', // Partial IP for privacy
+            ip_address: ipAddress?.substring(0, 3) + '***',
           }
         })
     }
