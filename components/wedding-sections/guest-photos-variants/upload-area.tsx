@@ -2,6 +2,7 @@
 
 import { Camera, ArrowUpFromLine, X, Check, AlertCircle, CheckCircle2 } from "lucide-react"
 import type { UploadItem } from "./types"
+import { useI18n } from "@/components/contexts/i18n-context"
 
 const UPLOAD_ANIMATIONS = `
   @keyframes marchDash {
@@ -91,6 +92,7 @@ export function UploadArea({
   submitted = false,
   moderationEnabled = true,
 }: UploadAreaProps) {
+  const { t } = useI18n()
   const activeBorder = zoneBorderDragging ?? primary
   const activeBg = zoneBgDragging ?? `${primary}12`
   const btn = buttonBg ?? primary
@@ -113,12 +115,10 @@ export function UploadArea({
             <CheckCircle2 className="w-7 h-7" style={{ color: primary }} />
           </div>
           <p className="text-base font-semibold mb-1" style={{ color: textColor }}>
-            Photos submitted!
+            {t('guestPhotos.submitted')}
           </p>
           <p className="text-sm" style={{ color: mutedColor }}>
-            {moderationEnabled
-              ? 'Thank you! Your photos are now pending review.'
-              : 'Thank you for sharing your moments.'}
+            {moderationEnabled ? t('guestPhotos.pendingReview') : t('guestPhotos.thankYouSharing')}
           </p>
         </div>
       </div>
@@ -193,10 +193,10 @@ export function UploadArea({
             }
           </div>
           <p className="text-sm font-medium transition-colors duration-200" style={{ color: isDragging ? primary : textColor }}>
-            {isDragging ? 'Drop your photos here' : 'Share your photos'}
+            {isDragging ? t('guestPhotos.dropDragging') : t('guestPhotos.submitEmpty')}
           </p>
           <p className="text-xs" style={{ color: mutedColor }}>
-            tap to browse · drag & drop · JPG, PNG, WEBP up to 50 MB
+            {t('guestPhotos.dropHint')}
           </p>
         </div>
       </div>
@@ -261,7 +261,7 @@ export function UploadArea({
                 className="flex-shrink-0 text-[10px] text-center truncate"
                 style={{ width: 72, color: item.progress === 'error' ? '#ef4444' : mutedColor }}
               >
-                {item.progress === 'error' ? 'Failed' : item.progress === 'done' ? '✓ Shared' : item.file.name}
+                {item.progress === 'error' ? t('guestPhotos.failed') : item.progress === 'done' ? `✓ ${t('guestPhotos.shared')}` : item.file.name}
               </p>
             ))}
           </div>
@@ -272,7 +272,7 @@ export function UploadArea({
               className="mt-3 py-3 rounded-xl text-center text-sm font-medium transition-all"
               style={{ background: `${primary}14`, color: primary }}
             >
-              🎉 Your photos have been shared!
+              {t('guestPhotos.allShared')}
             </div>
           )}
 
@@ -281,7 +281,7 @@ export function UploadArea({
             <>
               {nameRequired && (
                 <p className="text-[11px] text-center mt-2" style={{ color: mutedColor }}>
-                  Please enter your name before sharing
+                  {t('guestPhotos.nameRequired')}
                 </p>
               )}
               <button
@@ -290,7 +290,7 @@ export function UploadArea({
                 className="w-full mt-2 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 hover:opacity-90 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ background: btn, color: buttonText, letterSpacing: '0.01em' }}
               >
-                Share {idleUploads.length} {idleUploads.length === 1 ? 'photo' : 'photos'} →
+                {(idleUploads.length === 1 ? t('guestPhotos.submit') : t('guestPhotos.submitPlural')).replace('{count}', String(idleUploads.length))} →
               </button>
             </>
           )}

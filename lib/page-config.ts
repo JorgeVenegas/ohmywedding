@@ -30,6 +30,7 @@ export interface SubPage {
   showInNav: boolean
   enabled: boolean
   components: ComponentEntry[]
+  ogTitle?: string  // custom OG/social title for this subpage
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

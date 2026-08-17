@@ -14,25 +14,17 @@ export async function GET(req: NextRequest) {
   }
 
   const userClient = await createServerSupabaseClient()
-  const admin = createAdminSupabaseClient()
 
   const { data: { user } } = await userClient.auth.getUser()
   if (!user) return NextResponse.json({ enabled: false })
 
-  // Superadmins bypass all gates
-  const { data: superuser } = await admin
-    .from('superusers')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('is_active', true)
-    .maybeSingle()
-
-  if (superuser) return NextResponse.json({ enabled: true })
-
-  // Feature flag check first — cheapest gate
+  // Feature flag check first — cheapest gate.
+  // No superadmin bypass here: env vars control visibility for everyone.
   if (!isAIChatEnabledForSlug(weddingSlug)) {
     return NextResponse.json({ enabled: false })
   }
+
+  const admin = createAdminSupabaseClient()
 
   // Plan check — must have an eligible subscription tier
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(weddingSlug)

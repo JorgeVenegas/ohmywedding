@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import type { ThemeConfig } from "@/lib/wedding-config"
 import { Loader2, Lock } from "lucide-react"
 import { useEditingModeSafe } from "@/components/contexts/editing-mode-context"
+import { useI18n } from "@/components/contexts/i18n-context"
 import {
   MinimalVariant,
   HeroVariant,
@@ -44,9 +45,9 @@ interface UploadResult {
 export function GuestPhotosSection({
   weddingNameId,
   theme,
-  title = "Share Your Photos",
-  subtitle = "Upload your favorite moments from our celebration",
-  uploaderPlaceholder = "Your name",
+  title,
+  subtitle,
+  uploaderPlaceholder,
   variant = 'minimal',
   useColorBackground,
   backgroundColorChoice,
@@ -55,6 +56,11 @@ export function GuestPhotosSection({
   const primary = theme?.colors?.primary || "#d4a574"
   const editingMode = useEditingModeSafe()
   const canEditDesign = editingMode?.canEditDesign ?? false
+  const { t } = useI18n()
+
+  const resolvedTitle = title || t('guestPhotos.title')
+  const resolvedSubtitle = subtitle || t('guestPhotos.description')
+  const resolvedUploaderPlaceholder = uploaderPlaceholder || t('guestPhotos.nameLabel')
 
   const [uploadsEnabled, setUploadsEnabled] = useState<boolean | null>(null)
   const [moderationEnabled, setModerationEnabled] = useState(true)
@@ -207,9 +213,9 @@ export function GuestPhotosSection({
   const variantProps: BaseVariantProps = {
     theme,
     primary,
-    title,
-    subtitle,
-    uploaderPlaceholder,
+    title: resolvedTitle,
+    subtitle: resolvedSubtitle,
+    uploaderPlaceholder: resolvedUploaderPlaceholder,
     galleryLayout,
     useColorBackground,
     backgroundColorChoice,
@@ -246,8 +252,8 @@ export function GuestPhotosSection({
         <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: `${primary}20` }}>
           <Lock className="w-7 h-7" style={{ color: primary }} />
         </div>
-        <h2 className="text-2xl font-semibold mb-2" style={{ color: primary }}>Not available yet</h2>
-        <p className="text-sm max-w-sm" style={{ color: `${primary}80` }}>Photo uploads for this wedding are not active.</p>
+        <h2 className="text-2xl font-semibold mb-2" style={{ color: primary }}>{t('guestPhotos.notAvailable')}</h2>
+        <p className="text-sm max-w-sm" style={{ color: `${primary}80` }}>{t('guestPhotos.notAvailableDesc')}</p>
       </section>
     )
   }

@@ -602,6 +602,15 @@ export interface Translations {
     submitPlural: string
     submitEmpty: string
     uploading: string
+    submitted: string
+    pendingReview: string
+    thankYouSharing: string
+    failed: string
+    shared: string
+    allShared: string
+    nameRequired: string
+    notAvailable: string
+    notAvailableDesc: string
     success: { eyebrow: string; title: string; description: string }
   }
 

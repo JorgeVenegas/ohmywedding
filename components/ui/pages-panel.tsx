@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { Eye, EyeOff, Trash2, Link2, Copy, Navigation, Plus, ExternalLink, X, Check } from 'lucide-react'
+import { Eye, EyeOff, Trash2, Link2, Copy, Navigation, Plus, ExternalLink, X, Check, Tag } from 'lucide-react'
 import { usePageConfig } from '@/components/contexts/page-config-context'
 import { isComponentRef } from '@/lib/resolve-component'
 import { getWeddingPath } from '@/lib/wedding-url'
@@ -128,6 +128,7 @@ function PageCard({
   onUnlink: (refId: string) => void
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [showSeo, setShowSeo] = useState(false)
   const [pageHref, setPageHref] = useState(
     weddingNameId ? `/${weddingNameId}/${page.path}` : `/${page.path}`
   )
@@ -168,6 +169,19 @@ function PageCard({
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           )}
+
+          {/* SEO / OG title toggle */}
+          <button
+            onClick={() => setShowSeo(v => !v)}
+            title="Custom OG title for social sharing"
+            className={`p-1.5 rounded transition-colors ${
+              showSeo || page.ogTitle
+                ? 'text-[#DDA46F] bg-[#DDA46F]/12 hover:bg-[#DDA46F]/20'
+                : 'text-[#420c14]/30 hover:text-[#420c14] hover:bg-[#420c14]/8'
+            }`}
+          >
+            <Tag className="w-3.5 h-3.5" />
+          </button>
 
           {/* Show in nav toggle */}
           <button
@@ -221,6 +235,28 @@ function PageCard({
           )}
         </div>
       </div>
+
+      {/* OG title input */}
+      {showSeo && (
+        <div className="px-3 py-2.5 border-t border-[#DDA46F]/20 bg-[#DDA46F]/4">
+          <label className="text-[9px] uppercase tracking-[0.3em] text-[#DDA46F] block mb-1.5">
+            Custom OG / Social Title
+          </label>
+          <input
+            type="text"
+            value={page.ogTitle ?? ''}
+            onChange={e => onUpdate({ ogTitle: e.target.value || undefined })}
+            placeholder={`${page.label} — Couple Names (auto-generated if empty)`}
+            className="w-full text-[11px] px-2.5 py-1.5 rounded-lg border outline-none transition-colors"
+            style={{ borderColor: 'rgba(221,164,111,0.3)', color: '#420c14', background: '#fff' }}
+            onFocus={e => { e.currentTarget.style.borderColor = '#DDA46F' }}
+            onBlur={e => { e.currentTarget.style.borderColor = 'rgba(221,164,111,0.3)' }}
+          />
+          <p className="text-[9px] text-[#420c14]/35 mt-1">
+            Shown in WhatsApp, iMessage, and other social previews when sharing the link.
+          </p>
+        </div>
+      )}
 
       {/* Sections list */}
       {(inline.length > 0 || refs.length > 0) && (
