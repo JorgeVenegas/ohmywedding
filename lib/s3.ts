@@ -7,6 +7,12 @@ const client = new S3Client({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
   },
+  // Prevent SDK from injecting checksum headers into presigned PUT URLs.
+  // Since v3.395 the default changed to WHEN_SUPPORTED, which adds
+  // x-amz-checksum-crc32 to the signed query string — browsers can't
+  // satisfy that requirement and S3 rejects the PUT with 403.
+  requestChecksumCalculation: 'WHEN_REQUIRED',
+  responseChecksumValidation: 'WHEN_REQUIRED',
 })
 
 const BUCKET = process.env.AWS_S3_BUCKET!

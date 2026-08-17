@@ -30,6 +30,7 @@ locals {
   cors_origins = local.is_prod ? [
     "https://ohmy.wedding",
     "https://www.ohmy.wedding",
+    "https://*.ohmy.wedding",
   ] : [
     "http://localhost:3000",
     "http://ohmy.local",
