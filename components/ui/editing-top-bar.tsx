@@ -271,8 +271,8 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
       )}
     </div>
     
-    {/* Settings Panel */}
-    {weddingNameId && pageConfigContext && (
+    {/* Settings Panel — only mount when open so hooks inside don't fire for unauthenticated guests */}
+    {weddingNameId && pageConfigContext && showSettingsPanel && (
       <SettingsPanel
         isOpen={showSettingsPanel}
         onClose={handleCloseSettings}

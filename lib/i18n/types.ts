@@ -1884,6 +1884,24 @@ export interface Translations {
         }
         share: { title: string; description: string; uploadLinkLabel: string; viewQr: string }
         review: { approved: string; rejected: string }
+        qr: {
+          title: string
+          eyebrow: string
+          color: string
+          pattern: string
+          background: string
+          center: string
+          centerNone: string
+          centerLogo: string
+          centerInitials: string
+          centerLogoInitials: string
+          initialsPlaceholder: string
+          usingWeddingFont: string
+          quality: string
+          qualityMedium: string
+          qualityHigh: string
+          qualityMax: string
+        }
         empty: {
           noPhotos: string
           noPending: string

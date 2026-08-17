@@ -1154,8 +1154,8 @@ function QRModal({ url, onClose, coupleInitials = "", displayFontFamily, themeCo
           {/* Header */}
           <div className="flex items-start justify-between px-6 pt-5 pb-3">
             <div>
-              <p className="text-[9px] uppercase tracking-[0.5em] text-[#DDA46F] font-medium mb-0.5">Gallery</p>
-              <h3 className="text-xl font-serif text-[#420c14]">QR Code</h3>
+              <p className="text-[9px] uppercase tracking-[0.5em] text-[#DDA46F] font-medium mb-0.5">{t("admin.settings.gallery.qr.eyebrow")}</p>
+              <h3 className="text-xl font-serif text-[#420c14]">{t("admin.settings.gallery.qr.title")}</h3>
             </div>
             <button
               onClick={onClose}
@@ -1196,17 +1196,17 @@ function QRModal({ url, onClose, coupleInitials = "", displayFontFamily, themeCo
 
             {/* ── Color ── */}
             <div>
-              <p className="text-[9px] uppercase tracking-[0.45em] text-[#DDA46F] mb-2.5">Color</p>
+              <p className="text-[9px] uppercase tracking-[0.45em] text-[#DDA46F] mb-2.5">{t("admin.settings.gallery.qr.color")}</p>
               <div className="flex gap-2">
                 <QRColorPicker
-                  label="Pattern"
+                  label={t("admin.settings.gallery.qr.pattern")}
                   value={fgColor}
                   onChange={setFgColor}
                   themeColors={themeColors}
                   allowTransparent={false}
                 />
                 <QRColorPicker
-                  label="Background"
+                  label={t("admin.settings.gallery.qr.background")}
                   value={bgColor}
                   onChange={setBgColor}
                   themeColors={themeColors}
@@ -1217,13 +1217,13 @@ function QRModal({ url, onClose, coupleInitials = "", displayFontFamily, themeCo
 
             {/* ── Center element ── */}
             <div>
-              <p className="text-[9px] uppercase tracking-[0.45em] text-[#DDA46F] mb-2.5">Center</p>
+              <p className="text-[9px] uppercase tracking-[0.45em] text-[#DDA46F] mb-2.5">{t("admin.settings.gallery.qr.center")}</p>
               <div className="grid grid-cols-2 gap-1.5 mb-3">
                 {([
-                  ["none",         "None"],
-                  ["rings",        "Logo"],
-                  ["initials",     "Initials"],
-                  ["logo-initials","Logo + Initials"],
+                  ["none",         t("admin.settings.gallery.qr.centerNone")],
+                  ["rings",        t("admin.settings.gallery.qr.centerLogo")],
+                  ["initials",     t("admin.settings.gallery.qr.centerInitials")],
+                  ["logo-initials",t("admin.settings.gallery.qr.centerLogoInitials")],
                 ] as const).map(([type, label]) => {
                   const active = centerType === type
                   return (
@@ -1248,7 +1248,7 @@ function QRModal({ url, onClose, coupleInitials = "", displayFontFamily, themeCo
                     type="text"
                     value={initials}
                     onChange={e => setInitials(e.target.value.slice(0, 4))}
-                    placeholder="e.g. J&M"
+                    placeholder={t("admin.settings.gallery.qr.initialsPlaceholder")}
                     autoFocus
                     className="w-full rounded-xl border bg-white px-4 py-2.5 text-sm outline-none transition-colors"
                     style={{
@@ -1262,7 +1262,7 @@ function QRModal({ url, onClose, coupleInitials = "", displayFontFamily, themeCo
                   />
                   {displayFontFamily && (
                     <p className="mt-1 text-[9px]" style={{ color: "rgba(66,12,20,0.3)" }}>
-                      using your wedding font · {displayFontFamily.replace(/['"]/g, '').split(',')[0].trim()}
+                      {t("admin.settings.gallery.qr.usingWeddingFont").replace("{font}", displayFontFamily.replace(/['"]/g, '').split(',')[0].trim())}
                     </p>
                   )}
                 </div>
@@ -1271,7 +1271,7 @@ function QRModal({ url, onClose, coupleInitials = "", displayFontFamily, themeCo
 
             {/* ── Quality ── */}
             <div>
-              <p className="text-[9px] uppercase tracking-[0.45em] text-[#DDA46F] mb-2.5">Quality</p>
+              <p className="text-[9px] uppercase tracking-[0.45em] text-[#DDA46F] mb-2.5">{t("admin.settings.gallery.qr.quality")}</p>
               <div className="flex gap-1.5">
                 {([540, 720, 1080] as const).map(size => {
                   const active = downloadSize === size
@@ -1287,7 +1287,7 @@ function QRModal({ url, onClose, coupleInitials = "", displayFontFamily, themeCo
                       }}
                     >
                       <span className="block text-[11px] font-semibold">
-                        {size === 1080 ? "Max" : size === 720 ? "High" : "Medium"}
+                        {size === 1080 ? t("admin.settings.gallery.qr.qualityMax") : size === 720 ? t("admin.settings.gallery.qr.qualityHigh") : t("admin.settings.gallery.qr.qualityMedium")}
                       </span>
                       <span className="block text-[9px] opacity-60 mt-0.5">{size}×{size}</span>
                     </button>

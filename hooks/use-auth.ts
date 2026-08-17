@@ -57,7 +57,6 @@ export function useAuth() {
     // with the current session (from cookies), then SIGNED_IN/SIGNED_OUT/etc.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('[useAuth] auth event:', event, session?.user?.email ?? 'no user')
         // Use functional update to avoid replacing the user object on TOKEN_REFRESHED
         // when the user ID hasn't changed — prevents unnecessary downstream re-renders
         // (SubscriptionProvider, dashboard effects) on every tab focus / token refresh.
@@ -103,7 +102,6 @@ export function useWeddingPermissions(weddingNameId: string | null) {
     const supabase = createClient()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[useWeddingPermissions] onAuthStateChange:', event, 'hasSession:', !!session)
       setAuthReady(true)
 
       // Only reset + refetch on actual sign in/out events, not TOKEN_REFRESHED
@@ -115,9 +113,7 @@ export function useWeddingPermissions(weddingNameId: string | null) {
     })
 
     // Mark ready on mount using the cached session (no network call)
-    console.log('[useWeddingPermissions] calling getSession() on mount')
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('[useWeddingPermissions] getSession mount result:', session ? `user=${session.user?.email}` : 'no session')
       setAuthReady(true)
       refetchWithSession(session?.access_token ?? null)
     })
