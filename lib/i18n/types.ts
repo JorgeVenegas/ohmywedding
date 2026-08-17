@@ -1881,9 +1881,34 @@ export interface Translations {
           viewPage: string
           reviewPhotos: string
           downloadQr: string
+          customize: string
+          customizeQrTitle: string
+          delete: string
+          deleteConfirm: string
+          yes: string
+          no: string
+          favorite: string
+          favorited: string
+          unfavorite: string
+          info: string
+          backToGallery: string
+          prev: string
+          next: string
+          swipeHint: string
         }
         share: { title: string; description: string; uploadLinkLabel: string; viewQr: string }
-        review: { approved: string; rejected: string }
+        review: {
+          approved: string
+          rejected: string
+          photoDetails: string
+          contributor: string
+          uploaded: string
+          taken: string
+          location: string
+          camera: string
+          resolution: string
+          file: string
+        }
         qr: {
           title: string
           eyebrow: string
@@ -1901,6 +1926,18 @@ export interface Translations {
           qualityMedium: string
           qualityHigh: string
           qualityMax: string
+          colorSectionWedding: string
+          colorSectionBrand: string
+          colorPrimary: string
+          colorSecondary: string
+          colorAccent: string
+          colorBurgundy: string
+          colorGold: string
+          colorIvory: string
+          colorBlack: string
+          colorWhite: string
+          colorNone: string
+          colorCustom: string
         }
         empty: {
           noPhotos: string

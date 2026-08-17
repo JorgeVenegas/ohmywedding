@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import Image from "next/image"
 import { notFound } from "next/navigation"
 import { PageConfigProvider, usePageConfig } from "@/components/contexts/page-config-context"
 import { EditingModeProvider, useEditingModeSafe } from "@/components/contexts/editing-mode-context"
@@ -179,8 +180,10 @@ function SubPageContent({ weddingNameId, pageSlug }: SubPageClientProps) {
   const { config, updatePages, isLoading } = usePageConfig()
   const customizeCtx = useCustomize()
   const [wedding, setWedding] = useState<Wedding | null>(null)
-  // Resolved client-side to handle subdomain URL routing correctly
   const [subPageLinks, setSubPageLinks] = useState<{ id: string; label: string; href: string; isActive: boolean }[]>([])
+  const [curtainFalling, setCurtainFalling] = useState(false)
+  const [curtainComplete, setCurtainComplete] = useState(false)
+  const curtainTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     getWeddingByNameIdClient(weddingNameId).then(setWedding)
@@ -199,7 +202,40 @@ function SubPageContent({ weddingNameId, pageSlug }: SubPageClientProps) {
     )
   }, [config.pages, weddingNameId, pageSlug])
 
-  if (isLoading) return null
+  // Trigger curtain fall once config finishes loading
+  useEffect(() => {
+    if (!isLoading && !curtainFalling) {
+      setCurtainFalling(true)
+      curtainTimerRef.current = setTimeout(() => setCurtainComplete(true), 850)
+    }
+    return () => { if (curtainTimerRef.current) clearTimeout(curtainTimerRef.current) }
+  }, [isLoading])
+
+  const curtainEl = !curtainComplete ? (
+    <div className="fixed inset-0 z-[80] pointer-events-none">
+      <div
+        className="absolute inset-0 flex items-center justify-center"
+        style={{
+          backgroundColor: '#c9a961',
+          transform: curtainFalling ? 'translateY(100%)' : 'translateY(0)',
+          transition: curtainFalling ? 'transform 800ms cubic-bezier(0.4, 0, 0.2, 1)' : 'none',
+        }}
+      >
+        <Image
+          src="/images/logos/OMW Logo White.png"
+          alt="OhMyWedding"
+          width={120}
+          height={120}
+          className="w-32 h-auto"
+          priority
+          unoptimized
+        />
+      </div>
+    </div>
+  ) : null
+
+  // While config is loading, render only the curtain (skip page derivation)
+  if (isLoading) return <>{curtainEl}</>
 
   const subPage = config.pages?.find((p) => p.path === pageSlug && p.enabled)
   if (!subPage) {
@@ -310,6 +346,8 @@ function SubPageContent({ weddingNameId, pageSlug }: SubPageClientProps) {
 
   return (
     <>
+      {curtainEl}
+
       <EditingTopBar weddingNameId={weddingNameId} />
 
       <WeddingNav

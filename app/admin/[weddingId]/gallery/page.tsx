@@ -501,7 +501,7 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
             onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = "rgba(66,12,20,0.4)"; el.style.background = "transparent" }}
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Gallery</span>
+            <span className="hidden sm:inline">{t("admin.settings.gallery.actions.backToGallery")}</span>
           </button>
 
           <TDivider />
@@ -523,7 +523,7 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
           {/* ── PRIMARY: Approve / Reject ── */}
           <div className="flex items-center gap-1 rounded-xl p-1" style={{ background: "rgba(66,12,20,0.04)", border: "1px solid rgba(66,12,20,0.1)" }}>
             <button
-              onClick={approve} disabled={busy} title="Approve (A)"
+              onClick={approve} disabled={busy} title={t("admin.settings.gallery.actions.approve")}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer transition-all duration-150 disabled:opacity-40"
               style={{
                 background: current.status === "approved" ? "rgba(22,163,74,0.14)" : "rgba(22,163,74,0.05)",
@@ -534,12 +534,12 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
               onMouseLeave={e => { if (current.status !== "approved") { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(22,163,74,0.05)"; el.style.color = "rgba(22,163,74,0.7)" } }}
             >
               {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">Approve</span>
+              <span className="hidden sm:inline">{t("admin.settings.gallery.actions.approve")}</span>
               <kbd className="hidden lg:inline text-[9px] rounded px-1" style={{ background: "rgba(66,12,20,0.07)", color: "rgba(66,12,20,0.3)" }}>A</kbd>
             </button>
 
             <button
-              onClick={reject} disabled={busy} title="Reject (R)"
+              onClick={reject} disabled={busy} title={t("admin.settings.gallery.actions.reject")}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer transition-all duration-150 disabled:opacity-40"
               style={{
                 background: current.status === "rejected" ? "rgba(185,28,28,0.12)" : "rgba(185,28,28,0.04)",
@@ -550,7 +550,7 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
               onMouseLeave={e => { if (current.status !== "rejected") { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(185,28,28,0.04)"; el.style.color = "rgba(185,28,28,0.55)" } }}
             >
               {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">Reject</span>
+              <span className="hidden sm:inline">{t("admin.settings.gallery.actions.reject")}</span>
               <kbd className="hidden lg:inline text-[9px] rounded px-1" style={{ background: "rgba(66,12,20,0.07)", color: "rgba(66,12,20,0.3)" }}>R</kbd>
             </button>
           </div>
@@ -559,7 +559,7 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
 
           {/* ── SECONDARY: Heart / Download ── */}
           <button
-            onClick={toggleFav} title={isFav ? "Unfavorite (F)" : "Favorite (F)"}
+            onClick={toggleFav} title={isFav ? t("admin.settings.gallery.actions.unfavorite") : t("admin.settings.gallery.actions.favorite")}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium cursor-pointer transition-all duration-150"
             style={{
               background: isFav ? "rgba(251,113,133,0.12)" : "transparent",
@@ -576,24 +576,24 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
                 animation: isFav ? "heartBeat 0.4s ease-out" : "none",
               }}
             />
-            <span className="hidden md:inline">{isFav ? "Favorited" : "Favorite"}</span>
+            <span className="hidden md:inline">{isFav ? t("admin.settings.gallery.actions.favorited") : t("admin.settings.gallery.actions.favorite")}</span>
           </button>
 
           <a
             href={current.url} download={current.file_name ?? "photo"} target="_blank" rel="noopener noreferrer"
-            title="Download"
+            title={t("admin.settings.gallery.actions.download")}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium cursor-pointer"
             style={{ color: "rgba(66,12,20,0.4)" }}
             onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = "#420c14"; el.style.background = "rgba(66,12,20,0.06)" }}
             onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = "rgba(66,12,20,0.4)"; el.style.background = "transparent" }}
           >
             <Download className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden md:inline">Download</span>
+            <span className="hidden md:inline">{t("admin.settings.gallery.actions.download")}</span>
           </a>
 
           <button
             onClick={() => setShowInfo(v => !v)}
-            title="Photo info (I)"
+            title={t("admin.settings.gallery.actions.info")}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium cursor-pointer transition-all duration-150"
             style={{
               background: showInfo ? "rgba(66,12,20,0.08)" : "transparent",
@@ -603,7 +603,7 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
             onMouseLeave={e => { if (!showInfo) { const el = e.currentTarget as HTMLElement; el.style.color = "rgba(66,12,20,0.4)"; el.style.background = "transparent" } }}
           >
             <Info className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden md:inline">Info</span>
+            <span className="hidden md:inline">{t("admin.settings.gallery.actions.info")}</span>
           </button>
 
           <TDivider />
@@ -611,14 +611,14 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
           {/* ── Delete ── */}
           {confirmDelete ? (
             <div className="flex items-center gap-1 px-1">
-              <span className="text-[10px] hidden sm:inline" style={{ color: "rgba(185,28,28,0.7)" }}>Delete?</span>
+              <span className="text-[10px] hidden sm:inline" style={{ color: "rgba(185,28,28,0.7)" }}>{t("admin.settings.gallery.actions.deleteConfirm")}</span>
               <button onClick={handleDelete} className="px-2.5 py-1 rounded-md text-[11px] font-medium cursor-pointer" style={{ background: "rgba(185,28,28,0.1)", color: "#b91c1c" }}>
-                {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : "Yes"}
+                {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : t("admin.settings.gallery.actions.yes")}
               </button>
-              <button onClick={() => setConfirmDelete(false)} className="px-2 py-1 rounded-md text-[11px] cursor-pointer" style={{ color: "rgba(66,12,20,0.4)" }}>No</button>
+              <button onClick={() => setConfirmDelete(false)} className="px-2 py-1 rounded-md text-[11px] cursor-pointer" style={{ color: "rgba(66,12,20,0.4)" }}>{t("admin.settings.gallery.actions.no")}</button>
             </div>
           ) : (
-            <TBtn icon={Trash2} label="Delete" onClick={() => setConfirmDelete(true)} danger />
+            <TBtn icon={Trash2} label={t("admin.settings.gallery.actions.delete")} onClick={() => setConfirmDelete(true)} danger />
           )}
 
           <TDivider />
@@ -629,7 +629,7 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
               className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold"
               style={{ background: statusCfg.bg, border: `1px solid ${statusCfg.border}`, color: statusCfg.text }}
             >
-              {current.status.charAt(0).toUpperCase() + current.status.slice(1)}
+              {t(`admin.settings.gallery.filters.${current.status}` as any)}
             </span>
             <span className="text-xs tabular-nums" style={{ color: "rgba(66,12,20,0.45)" }}>
               {index + 1}<span style={{ color: "rgba(66,12,20,0.2)" }}> / {photos.length}</span>
@@ -735,16 +735,16 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
           {/* Mobile nav strip */}
           <div className="sm:hidden absolute bottom-2 inset-x-0 flex justify-between px-5">
             <button onClick={goPrev} disabled={!canPrev} className="disabled:opacity-0 flex items-center gap-1 text-xs cursor-pointer" style={{ color: "rgba(255,255,255,0.3)" }}>
-              <ChevronLeft className="w-4 h-4" /> Prev
+              <ChevronLeft className="w-4 h-4" /> {t("admin.settings.gallery.actions.prev")}
             </button>
             <span className="self-center text-xs tabular-nums" style={{ color: "rgba(255,255,255,0.2)" }}>{index + 1} / {photos.length}</span>
             <button onClick={goNext} disabled={!canNext} className="disabled:opacity-0 flex items-center gap-1 text-xs cursor-pointer" style={{ color: "rgba(255,255,255,0.3)" }}>
-              Next <ChevronRight className="w-4 h-4" />
+              {t("admin.settings.gallery.actions.next")} <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
           <p className="sm:hidden absolute top-2 inset-x-0 text-center text-[10px]" style={{ color: "rgba(255,255,255,0.15)" }}>
-            swipe right to approve · left to reject
+            {t("admin.settings.gallery.actions.swipeHint")}
           </p>
 
           {/* ── INFO PANEL ─────────────────────────────────────────────── */}
@@ -763,15 +763,15 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
 
               <div className="p-5 space-y-5">
                 <div>
-                  <p className="text-[9px] uppercase tracking-[0.45em] mb-3" style={{ color: "#DDA46F" }}>Photo Details</p>
+                  <p className="text-[9px] uppercase tracking-[0.45em] mb-3" style={{ color: "#DDA46F" }}>{t("admin.settings.gallery.review.photoDetails")}</p>
 
                   {/* Contributor */}
-                  <MetaRow icon={User} label="Contributor" value={current.uploader_name ?? "—"} />
+                  <MetaRow icon={User} label={t("admin.settings.gallery.review.contributor")} value={current.uploader_name ?? "—"} />
 
                   {/* Upload time */}
                   <MetaRow
                     icon={Clock}
-                    label="Uploaded"
+                    label={t("admin.settings.gallery.review.uploaded")}
                     value={new Date(current.created_at).toLocaleString("en-US", {
                       month: "short", day: "numeric", year: "numeric",
                       hour: "2-digit", minute: "2-digit",
@@ -782,7 +782,7 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
                   {current.metadata?.taken_at && (
                     <MetaRow
                       icon={Clock}
-                      label="Taken"
+                      label={t("admin.settings.gallery.review.taken")}
                       value={new Date(current.metadata.taken_at).toLocaleString("en-US", {
                         month: "short", day: "numeric", year: "numeric",
                         hour: "2-digit", minute: "2-digit",
@@ -794,7 +794,7 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
                   {current.metadata?.location && (
                     <MetaRow
                       icon={MapPin}
-                      label="Location"
+                      label={t("admin.settings.gallery.review.location")}
                       value={
                         current.metadata.location.city
                           ? current.metadata.location.city
@@ -807,7 +807,7 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
                   {current.metadata?.camera && (current.metadata.camera.make || current.metadata.camera.model) && (
                     <MetaRow
                       icon={Aperture}
-                      label="Camera"
+                      label={t("admin.settings.gallery.review.camera")}
                       value={[current.metadata.camera.make, current.metadata.camera.model].filter(Boolean).join(" ")}
                     />
                   )}
@@ -816,7 +816,7 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
                   {current.metadata?.dimensions && (current.metadata.dimensions.width || current.metadata.dimensions.height) && (
                     <MetaRow
                       icon={FileImage}
-                      label="Resolution"
+                      label={t("admin.settings.gallery.review.resolution")}
                       value={`${current.metadata.dimensions.width ?? "?"}×${current.metadata.dimensions.height ?? "?"} px`}
                     />
                   )}
@@ -825,7 +825,7 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
                   {(current.file_name || current.file_size) && (
                     <MetaRow
                       icon={FileImage}
-                      label="File"
+                      label={t("admin.settings.gallery.review.file")}
                       value={[
                         current.file_name,
                         current.file_size ? `${(current.file_size / 1024 / 1024).toFixed(1)} MB` : null,
@@ -888,14 +888,6 @@ function getLogo(bgColor: string): string {
 
 const CHECKER_BG = "repeating-conic-gradient(#d0d0d0 0% 25%, #ffffff 0% 50%) 0 0 / 8px 8px"
 
-const QR_BRAND_COLORS = [
-  { label: "Burgundy", color: "#420c14" },
-  { label: "Gold",     color: "#DDA46F" },
-  { label: "Ivory",    color: "#f5f2eb" },
-  { label: "Black",    color: "#000000" },
-  { label: "White",    color: "#ffffff" },
-]
-
 const QR_MODAL_STYLES = `
   @keyframes qrModalIn {
     from { opacity: 0; transform: scale(0.94) translateY(20px) }
@@ -911,11 +903,20 @@ function QRColorPicker({ label, value, onChange, themeColors, allowTransparent }
   allowTransparent?: boolean
 }) {
   const [open, setOpen] = useState(false)
+  const { t } = useTranslation()
+
+  const brandColors = [
+    { label: t("admin.settings.gallery.qr.colorBurgundy"), color: "#420c14" },
+    { label: t("admin.settings.gallery.qr.colorGold"),     color: "#DDA46F" },
+    { label: t("admin.settings.gallery.qr.colorIvory"),    color: "#f5f2eb" },
+    { label: t("admin.settings.gallery.qr.colorBlack"),    color: "#000000" },
+    { label: t("admin.settings.gallery.qr.colorWhite"),    color: "#ffffff" },
+  ]
 
   const weddingColors = themeColors ? [
-    themeColors.primary   ? { label: "Primary",   color: themeColors.primary }   : null,
-    themeColors.secondary ? { label: "Secondary",  color: themeColors.secondary } : null,
-    themeColors.accent    ? { label: "Accent",     color: themeColors.accent }    : null,
+    themeColors.primary   ? { label: t("admin.settings.gallery.qr.colorPrimary"),   color: themeColors.primary }   : null,
+    themeColors.secondary ? { label: t("admin.settings.gallery.qr.colorSecondary"), color: themeColors.secondary } : null,
+    themeColors.accent    ? { label: t("admin.settings.gallery.qr.colorAccent"),    color: themeColors.accent }    : null,
   ].filter(Boolean) as { label: string; color: string }[] : []
 
   const swatchStyle = (c: string, active: boolean) => ({
@@ -952,7 +953,7 @@ function QRColorPicker({ label, value, onChange, themeColors, allowTransparent }
 
           {weddingColors.length > 0 && (
             <>
-              <p className="text-[8px] uppercase tracking-[0.3em] mb-2" style={{ color: "rgba(66,12,20,0.35)" }}>Wedding</p>
+              <p className="text-[8px] uppercase tracking-[0.3em] mb-2" style={{ color: "rgba(66,12,20,0.35)" }}>{t("admin.settings.gallery.qr.colorSectionWedding")}</p>
               <div className="flex gap-1.5 flex-wrap mb-3">
                 {weddingColors.map(c => (
                   <button key={c.label} onClick={() => { onChange(c.color); setOpen(false) }}
@@ -966,9 +967,9 @@ function QRColorPicker({ label, value, onChange, themeColors, allowTransparent }
             </>
           )}
 
-          <p className="text-[8px] uppercase tracking-[0.3em] mb-2" style={{ color: "rgba(66,12,20,0.35)" }}>Brand</p>
+          <p className="text-[8px] uppercase tracking-[0.3em] mb-2" style={{ color: "rgba(66,12,20,0.35)" }}>{t("admin.settings.gallery.qr.colorSectionBrand")}</p>
           <div className="flex gap-1.5 flex-wrap mb-3">
-            {QR_BRAND_COLORS.map(c => (
+            {brandColors.map(c => (
               <button key={c.label} onClick={() => { onChange(c.color); setOpen(false) }}
                 className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] border cursor-pointer transition-all"
                 style={swatchStyle(c.color, value === c.color)}>
@@ -983,7 +984,7 @@ function QRColorPicker({ label, value, onChange, themeColors, allowTransparent }
               className="flex items-center gap-2 w-full px-2.5 py-2 rounded-xl text-[10px] border cursor-pointer mb-2 transition-all"
               style={swatchStyle("transparent", value === "transparent")}>
               <span className="w-4 h-4 rounded shrink-0" style={{ background: CHECKER_BG, boxShadow: "0 0 0 1px rgba(0,0,0,0.12)" }} />
-              None (transparent PNG)
+              {t("admin.settings.gallery.qr.colorNone")}
             </button>
           )}
 
@@ -996,7 +997,7 @@ function QRColorPicker({ label, value, onChange, themeColors, allowTransparent }
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
             </div>
-            Custom color
+            {t("admin.settings.gallery.qr.colorCustom")}
           </label>
         </div>
       )}
@@ -1554,12 +1555,12 @@ export default function GalleryPage({ params }: GalleryPageProps) {
                         ? "border-[#DDA46F]/20 cursor-pointer hover:shadow-md hover:scale-[1.03] hover:border-[#DDA46F]/45"
                         : "border-[#420c14]/10 opacity-30 blur-[2px] select-none cursor-default"
                     }`}
-                    title={guestUploadsEnabled ? "Customize & download QR code" : undefined}
+                    title={guestUploadsEnabled ? t("admin.settings.gallery.actions.customizeQrTitle") : undefined}
                   >
                     <QRCodeSVG value={uploadUrl} size={110} fgColor="#420c14" bgColor="transparent" level="M" />
                     {guestUploadsEnabled && (
                       <p className="text-[9px] text-center mt-1.5 tracking-wide uppercase font-medium" style={{ color: "rgba(66,12,20,0.35)" }}>
-                        Customize
+                        {t("admin.settings.gallery.actions.customize")}
                       </p>
                     )}
                   </button>
