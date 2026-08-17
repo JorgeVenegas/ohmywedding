@@ -72,6 +72,9 @@ export async function POST(request: NextRequest) {
       couponCode,
       couponExpiresAt,
       language,
+      weddingDate,
+      estimatedGuests,
+      location,
     }: {
       recipientName: string
       recipientEmail?: string
@@ -83,6 +86,9 @@ export async function POST(request: NextRequest) {
       couponCode: string
       couponExpiresAt?: string
       language?: 'en' | 'es'
+      weddingDate?: string
+      estimatedGuests?: number
+      location?: string
     } = body
 
     // Validate
@@ -193,6 +199,9 @@ export async function POST(request: NextRequest) {
         recipient_email: recipientEmail?.trim() || null,
         recipient_whatsapp: recipientWhatsapp?.trim() || null,
         notes: notes?.trim() || null,
+        wedding_date: weddingDate || null,
+        estimated_guests: estimatedGuests ?? null,
+        location: location?.trim() || null,
         scenarios,
         discount_type: discountType,
         discount_value: discountValue,

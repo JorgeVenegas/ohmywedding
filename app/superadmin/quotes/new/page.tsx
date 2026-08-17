@@ -245,6 +245,11 @@ export default function NewQuotePage() {
   const [notes, setNotes] = useState("")
   const [language, setLanguage] = useState<"es" | "en">("es")
 
+  // Wedding context (optional)
+  const [weddingDate, setWeddingDate] = useState("")
+  const [estimatedGuests, setEstimatedGuests] = useState("")
+  const [location, setLocation] = useState("")
+
   // Scenarios
   const [scenarios, setScenarios] = useState<ScenarioDraft[]>([
     { id: uid(), label: "", invitation_tier: NONE, management_tier: NONE },
@@ -337,6 +342,9 @@ export default function NewQuotePage() {
           couponCode: couponCode.trim(),
           couponExpiresAt: couponExpiresAt || undefined,
           language,
+          weddingDate: weddingDate || undefined,
+          estimatedGuests: estimatedGuests ? parseInt(estimatedGuests, 10) : undefined,
+          location: location.trim() || undefined,
         }),
       })
 
@@ -411,6 +419,37 @@ export default function NewQuotePage() {
               onChange={e => setRecipientWhatsapp(e.target.value)}
               className="border-[#420c14]/15"
             />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-sm text-[#420c14]/70">Wedding Date</Label>
+              <WeddingDatePicker
+                value={weddingDate}
+                onChange={setWeddingDate}
+                placeholder="Approx. date"
+                locale="en"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm text-[#420c14]/70">Est. Guests</Label>
+              <Input
+                type="number"
+                placeholder="150"
+                value={estimatedGuests}
+                onChange={e => setEstimatedGuests(e.target.value)}
+                className="border-[#420c14]/15"
+                min={1}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm text-[#420c14]/70">Location</Label>
+              <Input
+                placeholder="Mexico City"
+                value={location}
+                onChange={e => setLocation(e.target.value)}
+                className="border-[#420c14]/15"
+              />
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label className="text-sm text-[#420c14]/70">Quote Language</Label>

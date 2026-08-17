@@ -21,8 +21,8 @@ type Wedding = {
 }
 
 const planBadge: Record<string, { label: string; color: string; icon: typeof Crown }> = {
-  premium: { label: 'Premium', color: 'bg-[#DDA46F]/20 text-[#DDA46F] border-[#DDA46F]/30', icon: Sparkles },
-  deluxe: { label: 'Deluxe', color: 'bg-[#732c2c]/20 text-[#e8a0a0] border-[#732c2c]/30', icon: Crown },
+  premium: { label: 'Personalized', color: 'bg-[#DDA46F]/20 text-[#DDA46F] border-[#DDA46F]/30', icon: Sparkles },
+  deluxe: { label: 'Bespoke', color: 'bg-[#732c2c]/20 text-[#e8a0a0] border-[#732c2c]/30', icon: Crown },
 }
 
 export default function WeddingSelectorPage() {

@@ -6,6 +6,7 @@ import {
   canTransition,
   availableTransitions,
   type DesignStatus,
+  type WorkflowPlan,
 } from '@/lib/invitation-workflow'
 
 export const dynamic = 'force-dynamic'
@@ -69,7 +70,7 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const [historyResult, reviewersResult, meetingsResult, versionsResult] = await Promise.all([
+    const [historyResult, reviewersResult, meetingsResult, versionsResult, planResult, logsResult] = await Promise.all([
       adminClient
         .from('invitation_status_history')
         .select('id, from_status, to_status, changed_at, notes, changed_by')
@@ -84,7 +85,7 @@ export async function GET(
         .then((r) => r.error ? { data: [] } : r),
       adminClient
         .from('design_meetings')
-        .select('id, meeting_type, title, scheduled_at, meeting_url, notes, status, created_at')
+        .select('id, meeting_type, title, scheduled_at, meeting_url, notes, status, created_at, calcom_uid, calcom_event_type_slug')
         .eq('wedding_id', wedding.id)
         .order('scheduled_at', { ascending: true })
         .then((r) => r.error ? { data: [] } : r),
@@ -94,14 +95,56 @@ export async function GET(
         .eq('wedding_id', wedding.id)
         .order('version_number', { ascending: false })
         .then((r) => r.error ? { data: [] } : r),
+      adminClient
+        .from('wedding_subscriptions')
+        .select('plan')
+        .eq('wedding_id', wedding.id)
+        .maybeSingle()
+        .then((r) => r),
+      adminClient
+        .from('invitation_activity_logs')
+        .select('id, event_type, title, description, metadata, created_at')
+        .eq('wedding_id', wedding.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+        .then((r) => r.error ? { data: [] } : r),
     ])
 
     const currentStatus = ((wedding as Record<string, unknown>).invitation_design_status as DesignStatus) ?? 'not_started'
+    const plan = (planResult.data?.plan ?? 'free') as WorkflowPlan
+
+    // Superadmins get suggested attendees (owner + collaborators) for the meeting scheduler
+    let suggestedAttendees: { owner_email: string | null; collaborator_emails: string[] } | undefined
+    if (isSuperuser && wedding.owner_id) {
+      const { data: ownerData } = await adminClient.auth.admin.getUserById(wedding.owner_id)
+      suggestedAttendees = {
+        owner_email: ownerData.user?.email ?? null,
+        collaborator_emails: ((wedding as Record<string, unknown>).collaborator_emails as string[] | null) ?? [],
+      }
+    }
+
+    // Build Cal.com booking link for the current meeting status (if configured)
+    const MEETING_STATUSES = ['discovery_meeting', 'review_meeting', 'delivery_meeting'] as const
+    const isMeetingStatus = MEETING_STATUSES.includes(currentStatus as typeof MEETING_STATUSES[number])
+    const calcomUsername = process.env.CALCOM_USERNAME
+    let calcomCalLink: string | null = null
+    if (isMeetingStatus && calcomUsername) {
+      const weddingLocale = ((wedding as Record<string, unknown>).settings as Record<string, unknown> | null)?.language as string | undefined
+      const localeSuffix = weddingLocale && weddingLocale !== 'en' ? `-${weddingLocale}` : ''
+      const baseSlug =
+        currentStatus === 'discovery_meeting'
+          ? (process.env.CALCOM_DISCOVERY_EVENT_SLUG ?? 'discovery-meeting')
+          : currentStatus === 'review_meeting'
+          ? (process.env.CALCOM_REVIEW_EVENT_SLUG ?? 'design-review')
+          : (process.env.CALCOM_DELIVERY_EVENT_SLUG ?? 'delivery-meeting')
+      calcomCalLink = `${calcomUsername}/${baseSlug}${localeSuffix}`
+    }
 
     return NextResponse.json({
       status: currentStatus,
+      plan,
       design_self_serve_locked: (wedding as Record<string, unknown>).design_self_serve_locked ?? true,
-      available_transitions: isSuperuser ? availableTransitions(currentStatus, 'superadmin') : [],
+      available_transitions: isSuperuser ? availableTransitions(currentStatus, 'superadmin', plan) : [],
       current_user_is_reviewer: isReviewer,
       current_user_can_approve:
         isReviewer &&
@@ -113,6 +156,14 @@ export async function GET(
       reviewers: reviewersResult.data ?? [],
       meetings: meetingsResult.data ?? [],
       versions: versionsResult.data ?? [],
+      activity_logs: logsResult.data ?? [],
+      suggested_attendees: suggestedAttendees,
+      calcom_cal_link: calcomCalLink,
+      is_superadmin: isSuperuser,
+      couple_name: [
+        (wedding as Record<string, unknown>).partner1_first_name,
+        (wedding as Record<string, unknown>).partner2_first_name,
+      ].filter(Boolean).join(' & ') || null,
     })
   } catch (err) {
     console.error('[design-status GET]', err)

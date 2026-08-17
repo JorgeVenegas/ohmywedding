@@ -20,9 +20,12 @@ const playfair = Playfair_Display({
 })
 
 export const metadata: Metadata = {
-  title: "OhMyWedding - Create Your Perfect Wedding Website",
-  description: "Create a beautiful, elegant wedding website that captures your love story. Share details, manage RSVPs, and celebrate with your guests.",
-  generator: "v0.app",
+  title: {
+    template: '%s | OhMyWedding',
+    default: 'OhMyWedding — Luxury Wedding Websites',
+  },
+  description: 'Create a beautiful, elegant wedding website that captures your love story. Share details, manage RSVPs, and celebrate with your guests.',
+  metadataBase: new URL('https://www.ohmy.wedding'),
 }
 
 export default function RootLayout({

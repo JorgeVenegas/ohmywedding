@@ -36,20 +36,24 @@ export function RotatingVideoBackground({ videos, className = 'absolute inset-0'
 
   return (
     <div className={className}>
-      {videosReady && videos.map((src, i) => (
-        <video
-          key={src}
-          ref={(el) => { videoRefs.current[i] = el }}
-          muted
-          playsInline
-          preload="auto"
-          onEnded={() => handleVideoEnd(i)}
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
-          style={{ opacity: i === currentVideoIndex ? 1 : 0, pointerEvents: 'none' }}
-        >
-          <source src={src} type="video/mp4" />
-        </video>
-      ))}
+      {videosReady && videos.map((src, i) => {
+        const isActive = i === currentVideoIndex
+        const isNext = i === (currentVideoIndex + 1) % videos.length
+        return (
+          <video
+            key={src}
+            ref={(el) => { videoRefs.current[i] = el }}
+            muted
+            playsInline
+            preload={isActive ? "auto" : isNext ? "metadata" : "none"}
+            onEnded={() => handleVideoEnd(i)}
+            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+            style={{ opacity: isActive ? 1 : 0, pointerEvents: 'none' }}
+          >
+            <source src={src} type="video/mp4" />
+          </video>
+        )
+      })}
     </div>
   )
 }

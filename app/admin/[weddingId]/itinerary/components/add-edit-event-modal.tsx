@@ -35,11 +35,25 @@ interface AddEditEventModalProps {
   parentId?: string | null
   saving?: boolean
   weddingDate?: string | null
+  weddingTimezone?: string | null
   previousEvent?: ItineraryEvent | null
 }
 
-function isoToDateTimeParts(isoStr: string) {
+function isoToDateTimeParts(isoStr: string, tz?: string | null) {
   const d = new Date(isoStr)
+  if (tz) {
+    const parts = Object.fromEntries(
+      new Intl.DateTimeFormat('en', {
+        timeZone: tz,
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false,
+      }).formatToParts(d).map(p => [p.type, p.value])
+    )
+    const h = parts.hour === '24' ? '00' : parts.hour
+    const rawMin = parseInt(parts.minute)
+    const minute = String(Math.min(Math.round(rawMin / 5) * 5, 55)).padStart(2, '0')
+    return { date: `${parts.year}-${parts.month}-${parts.day}`, hour: h, minute }
+  }
   const year = d.getFullYear()
   const month = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
@@ -50,15 +64,41 @@ function isoToDateTimeParts(isoStr: string) {
   return { date, hour, minute }
 }
 
+function buildIsoInTimezone(date: string, hour: string, minute: string, tz?: string | null): string {
+  if (!date) return ''
+  if (!tz || tz === 'UTC') {
+    return new Date(`${date}T${hour}:${minute}:00Z`).toISOString()
+  }
+  // Anchor the naive datetime as UTC, then measure how far the target timezone is from UTC
+  // at that moment (handles DST correctly).
+  const naiveAsUTC = new Date(`${date}T${hour}:${minute}:00Z`)
+  const tzParts = Object.fromEntries(
+    new Intl.DateTimeFormat('en', {
+      timeZone: tz,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false,
+    }).formatToParts(naiveAsUTC).map(p => [p.type, p.value])
+  )
+  const tzH = parseInt(tzParts.hour === '24' ? '0' : tzParts.hour)
+  const tzM = parseInt(tzParts.minute)
+  const wantedMinutes = parseInt(hour) * 60 + parseInt(minute)
+  let diffMinutes = (tzH * 60 + tzM) - wantedMinutes
+  if (diffMinutes > 720) diffMinutes -= 1440
+  if (diffMinutes < -720) diffMinutes += 1440
+  return new Date(naiveAsUTC.getTime() - diffMinutes * 60_000).toISOString()
+}
+
 function formatTime(h: string, m: string) {
   return `${h}:${m}`
 }
 
 export function AddEditEventModal({
-  open, onClose, onSave, event, existingChildren, parentEvent, parentId, saving, weddingDate, previousEvent
+  open, onClose, onSave, event, existingChildren, parentEvent, parentId, saving, weddingDate, weddingTimezone, previousEvent
 }: AddEditEventModalProps) {
   const { t } = useTranslation()
   const weddingDateShort = weddingDate?.slice(0, 10) ?? null
+  const tz = weddingTimezone || 'UTC'
 
   // Main event fields
   const [title, setTitle] = useState("")
@@ -90,14 +130,14 @@ export function AddEditEventModal({
       setIcon(event.icon || "other")
       setIconPickerOpen(false)
       if (event.start_time) {
-        const { date, hour, minute } = isoToDateTimeParts(event.start_time)
+        const { date, hour, minute } = isoToDateTimeParts(event.start_time, tz)
         setStartHour(hour)
         setStartMinute(minute)
         setIsWeddingDay(date === weddingDateShort)
         setCustomDate(date)
       }
       if (event.end_time) {
-        const { hour, minute } = isoToDateTimeParts(event.end_time)
+        const { hour, minute } = isoToDateTimeParts(event.end_time, tz)
         setEndHour(hour)
         setEndMinute(minute)
         setHasEndTime(true)
@@ -109,7 +149,7 @@ export function AddEditEventModal({
       // Pre-populate sub-events when editing a main event
       if (!event.parent_id && existingChildren?.length) {
         setSubEventRows(existingChildren.map(child => {
-          const { hour, minute } = isoToDateTimeParts(child.start_time)
+          const { hour, minute } = isoToDateTimeParts(child.start_time, tz)
           return {
             tempId: child.id,
             id: child.id,
@@ -136,7 +176,7 @@ export function AddEditEventModal({
       setSubEventRows([])
 
       if (parentEvent?.start_time) {
-        const { date, hour, minute } = isoToDateTimeParts(parentEvent.start_time)
+        const { date, hour, minute } = isoToDateTimeParts(parentEvent.start_time, tz)
         setCustomDate(date)
         setIsWeddingDay(date === weddingDateShort)
         const totalMin = parseInt(hour) * 60 + parseInt(minute) + 15
@@ -145,7 +185,7 @@ export function AddEditEventModal({
         setStartHour(h)
         setStartMinute(m)
       } else if (previousEvent?.start_time) {
-        const { date, hour, minute } = isoToDateTimeParts(previousEvent.start_time)
+        const { date, hour, minute } = isoToDateTimeParts(previousEvent.start_time, tz)
         setCustomDate(date)
         setIsWeddingDay(date === weddingDateShort)
         const totalMin = parseInt(hour) * 60 + parseInt(minute) + 15
@@ -164,14 +204,12 @@ export function AddEditEventModal({
   }, [event, open, weddingDateShort, parentEvent, previousEvent, existingChildren])
 
   const getActiveDate = () => isWeddingDay ? (weddingDateShort || customDate) : customDate
-  const buildIso = (date: string, hour: string, minute: string) =>
-    date ? new Date(`${date}T${hour}:${minute}:00`).toISOString() : ""
 
   const handleSave = () => {
     const date = getActiveDate()
     if (!title.trim() || !date) return
-    const startIso = buildIso(date, startHour, startMinute)
-    const endIso = hasEndTime ? buildIso(date, endHour, endMinute) : null
+    const startIso = buildIsoInTimezone(date, startHour, startMinute, tz)
+    const endIso = hasEndTime ? buildIsoInTimezone(date, endHour, endMinute, tz) : null
 
     const builtSubEvents: SubEventInput[] = !isChild
       ? subEventRows
@@ -179,7 +217,7 @@ export function AddEditEventModal({
           .map(row => ({
             id: row.id,
             title: row.title.trim(),
-            start_time: buildIso(date, row.startHour, row.startMinute),
+            start_time: buildIsoInTimezone(date, row.startHour, row.startMinute, tz),
             icon: row.icon,
           }))
       : []

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { createClient } from '@supabase/supabase-js'
+import { createServerSupabaseClient, createAdminSupabaseClient } from '@/lib/supabase-server'
+import { isSuperUser } from '@/lib/superadmin'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -19,10 +19,7 @@ export async function DELETE(
     const { weddingId } = await params
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(weddingId)
 
-    const adminClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const adminClient = createAdminSupabaseClient()
 
     const query = adminClient.from('weddings').select('id, owner_id, wedding_name_id')
     const { data: wedding, error: fetchError } = isUUID
@@ -33,7 +30,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
     }
 
-    if (wedding.owner_id !== user.id) {
+    const superuser = await isSuperUser(adminClient, { email: user.email })
+    if (wedding.owner_id !== user.id && !superuser) {
       return NextResponse.json({ error: 'Only the wedding owner can delete it' }, { status: 403 })
     }
 

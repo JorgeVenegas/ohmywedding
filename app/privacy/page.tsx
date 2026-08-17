@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { LegalPageLayout } from "@/components/legal-page-layout"
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | OhMyWedding",
+  title: 'Privacy Policy',
   description:
     "Learn how OhMyWedding collects, uses, and protects your data when you manage your wedding site or view a guest experience page.",
 }

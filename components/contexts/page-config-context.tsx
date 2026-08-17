@@ -1,7 +1,7 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react'
-import { PageConfiguration, createDefaultPageConfig, loadPageConfiguration, savePageConfiguration } from '@/lib/page-config'
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react'
+import { PageConfiguration, SubPage, createDefaultPageConfig, loadPageConfiguration, savePageConfiguration } from '@/lib/page-config'
 
 // Helper to convert kebab-case to camelCase for sectionConfig keys
 // e.g., "event-details" -> "eventDetails", "our-story" -> "ourStory"
@@ -118,6 +118,7 @@ interface PageConfigContextType {
   getSectionConfig: (sectionId: string) => Record<string, any>
   updateSiteSettings: (settings: Partial<PageConfiguration['siteSettings']>) => void
   updateComponents: (components: PageConfiguration['components']) => void
+  updatePages: (pages: SubPage[]) => void
   updateFonts: (fonts: { display: string; heading: string; body: string; displayFamily: string; headingFamily: string; bodyFamily: string; googleFonts: string }) => void
   updateCustomFont: (fontType: 'display' | 'heading' | 'body', font: string, fontFamily: string) => void
   updateColors: (colors: { primary: string; secondary: string; accent: string }) => void
@@ -233,6 +234,10 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
     }))
   }
 
+  const updatePages = (pages: SubPage[]) => {
+    setConfig(prev => ({ ...prev, pages }))
+  }
+
   const updateFonts = (fonts: { display: string; heading: string; body: string; displayFamily: string; headingFamily: string; bodyFamily: string; googleFonts: string }) => {
     setConfig(prev => ({
       ...prev,
@@ -322,14 +327,14 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
     }))
   }
 
-  // Wedding details update functions
-  const updateWeddingDetails = (details: Partial<WeddingDetails>) => {
+  // Wedding details update functions — memoized so consumers' effect deps stay stable
+  const updateWeddingDetails = useCallback((details: Partial<WeddingDetails>) => {
     setWeddingDetailsState(prev => prev ? { ...prev, ...details } : null)
-  }
+  }, [])
 
-  const setWeddingDetails = (details: WeddingDetails) => {
+  const setWeddingDetails = useCallback((details: WeddingDetails) => {
     setWeddingDetailsState(details)
-  }
+  }, [])
 
   const saveConfiguration = async (): Promise<{ success: boolean; message?: string }> => {
     setIsSaving(true)
@@ -371,6 +376,7 @@ export function PageConfigProvider({ children, weddingNameId }: PageConfigProvid
       getSectionConfig,
       updateSiteSettings,
       updateComponents,
+      updatePages,
       updateFonts,
       updateCustomFont,
       updateColors,

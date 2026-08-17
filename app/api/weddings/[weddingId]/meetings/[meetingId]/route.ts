@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient, createAdminSupabaseClient } from '@/lib/supabase-server'
 import { isSuperUser } from '@/lib/superadmin'
+import { logActivity } from '@/lib/invitation-activity-log'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -56,6 +57,12 @@ export async function PATCH(
       .single()
 
     if (error) throw error
+    await logActivity({
+      weddingId: data.wedding_id as string,
+      eventType: 'meeting_updated',
+      title: `${data.title} updated`,
+      metadata: { meeting_id: meetingId, updated_by: user.email, changes: Object.keys(updates) },
+    })
     return NextResponse.json({ success: true, meeting: data })
   } catch (err) {
     console.error('[meetings PATCH]', err)
@@ -79,8 +86,23 @@ export async function DELETE(
     const isSuperuser = await isSuperUser(adminClient, { email: user.email })
     if (!isSuperuser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
+    const { data: meeting } = await adminClient
+      .from('design_meetings')
+      .select('title, wedding_id')
+      .eq('id', meetingId)
+      .single()
+
     const { error } = await adminClient.from('design_meetings').delete().eq('id', meetingId)
     if (error) throw error
+
+    if (meeting) {
+      await logActivity({
+        weddingId: meeting.wedding_id as string,
+        eventType: 'meeting_deleted',
+        title: `${meeting.title} deleted`,
+        metadata: { meeting_id: meetingId, deleted_by: user.email },
+      })
+    }
 
     return NextResponse.json({ success: true })
   } catch (err) {

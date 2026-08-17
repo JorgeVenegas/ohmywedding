@@ -6,6 +6,34 @@ export interface SectionConfig {
   [key: string]: any
 }
 
+// ── Multi-page types ──────────────────────────────────────────────────────────
+
+export interface InlineComponent {
+  id: string
+  type: string
+  enabled: boolean
+  order: number
+  props?: Record<string, any>
+}
+
+/** A pointer into sharedComponents — no data of its own */
+export interface ComponentRef {
+  $ref: string
+}
+
+export type ComponentEntry = InlineComponent | ComponentRef
+
+export interface SubPage {
+  id: string
+  path: string      // slug used in the URL: /{weddingNameId}/{path}
+  label: string     // shown in nav when showInNav is true
+  showInNav: boolean
+  enabled: boolean
+  components: ComponentEntry[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export interface PageConfiguration {
   // Section-specific configurations
   sectionConfigs: Record<string, SectionConfig>
@@ -54,15 +82,15 @@ export interface PageConfiguration {
     }
   }
   
-  // All components - single source of truth for ordering, visibility, and configuration
-  components: Array<{
-    id: string
-    type: string
-    enabled: boolean
-    order: number
-    props?: Record<string, any>
-  }>
-  
+  // Main scroll-page components
+  components: ComponentEntry[]
+
+  // Sub-pages — optional, additive, backward compatible
+  pages?: SubPage[]
+
+  // Shared component registry — keyed by id, referenced via { $ref: id }
+  sharedComponents?: Record<string, InlineComponent>
+
   // Metadata
   version: string
   lastModified: string

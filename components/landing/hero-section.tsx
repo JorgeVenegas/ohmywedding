@@ -43,7 +43,7 @@ export function HeroSection({ ns = 'landing', source }: { ns?: string, source?: 
   return (
     <section ref={containerRef} className="relative min-h-[110vh] flex items-center justify-center overflow-hidden">
       {/* Video Background — all videos kept in DOM once ready for seamless transitions */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0" style={{ transform: 'translateZ(0)' }}>
         <RotatingVideoBackground videos={heroVideos} />
         <div className="absolute inset-0 bg-[#420c14]/40" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#420c14]/30 via-transparent to-[#420c14]" />
@@ -51,9 +51,9 @@ export function HeroSection({ ns = 'landing', source }: { ns?: string, source?: 
       </div>
 
       {/* Content */}
-      <motion.div 
+      <motion.div
         className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
-        style={{ y, opacity }}
+        style={{ y, opacity, willChange: 'transform, opacity' }}
       >
         <motion.div
           initial={{ opacity: 0, y: 50 }}

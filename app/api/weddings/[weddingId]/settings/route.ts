@@ -165,6 +165,55 @@ export async function PUT(
       return NextResponse.json({ error: "Failed to update wedding settings" }, { status: 500 })
     }
 
+    // When guest uploads are enabled, seed a photos sub-page in page_config if absent
+    if (safeBody.gallery_allow_guest_uploads === true) {
+      const photosSubPage = {
+        id: 'photos',
+        path: 'photos',
+        label: 'Photos',
+        showInNav: false,
+        enabled: true,
+        components: [
+          { id: 'photos-1', type: 'guest-photos', enabled: true, order: 0 },
+        ],
+      }
+
+      // Try wedding_websites first, then legacy weddings.page_config
+      const { data: websiteData } = await adminClient
+        .from('wedding_websites')
+        .select('page_config')
+        .eq('wedding_id', wedding.id)
+        .single()
+
+      if (websiteData) {
+        const cfg = (websiteData.page_config as Record<string, any>) || {}
+        const existingPages: any[] = cfg.pages ?? []
+        if (!existingPages.some((p: any) => p.path === 'photos')) {
+          await adminClient
+            .from('wedding_websites')
+            .update({ page_config: { ...cfg, pages: [...existingPages, photosSubPage] } })
+            .eq('wedding_id', wedding.id)
+        }
+      } else {
+        const { data: weddingData } = await adminClient
+          .from('weddings')
+          .select('page_config')
+          .eq('id', wedding.id)
+          .single()
+
+        if (weddingData?.page_config) {
+          const cfg = (weddingData.page_config as Record<string, any>) || {}
+          const existingPages: any[] = cfg.pages ?? []
+          if (!existingPages.some((p: any) => p.path === 'photos')) {
+            await adminClient
+              .from('weddings')
+              .update({ page_config: { ...cfg, pages: [...existingPages, photosSubPage] } })
+              .eq('id', wedding.id)
+          }
+        }
+      }
+    }
+
     // Keep page_config.siteSettings.locale in sync with wedding_settings.language
     // so the website editor and guest site use the same language as the admin UI.
     if (safeBody.language) {

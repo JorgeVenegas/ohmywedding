@@ -21,20 +21,29 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { InvitationStatusTimeline } from "@/components/ui/invitation-status-timeline"
+import { DesignProgressJourney } from "@/components/ui/design-progress-dots"
 import {
   DESIGN_STATUSES,
   STATUS_LABELS,
   availableTransitions,
   type DesignStatus,
+  type WorkflowPlan,
 } from "@/lib/invitation-workflow"
+import { MeetingDateTimePicker } from "@/components/ui/meeting-date-time-picker"
+import dynamic from "next/dynamic"
+import { InvitationActivityLog } from "@/components/ui/invitation-activity-log"
+
+const CalRescheduleEmbed = dynamic(
+  () => import("@/components/ui/cal-reschedule-embed").then((m) => m.CalRescheduleEmbed),
+  { ssr: false },
+)
+import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
   Calendar,
   CheckCircle2,
   Clock,
   Database,
-  ExternalLink,
   Link2,
   Loader2,
   Plus,
@@ -49,7 +58,12 @@ import { toast } from "sonner"
 
 interface DesignStatusData {
   status: DesignStatus
+  plan: WorkflowPlan
   available_transitions: DesignStatus[]
+  suggested_attendees?: {
+    owner_email: string | null
+    collaborator_emails: string[]
+  }
   history: Array<{
     id: string
     from_status: string | null
@@ -73,6 +87,8 @@ interface DesignStatusData {
     meeting_url: string | null
     notes: string | null
     status: 'scheduled' | 'completed' | 'cancelled'
+    calcom_uid: string | null
+    calcom_event_type_slug: string | null
   }>
   versions: Array<{
     id: string
@@ -82,9 +98,17 @@ interface DesignStatusData {
     created_at: string
     notes: string | null
   }>
+  activity_logs: Array<{
+    id: string
+    event_type: string
+    title: string
+    description: string | null
+    metadata: Record<string, unknown> | null
+    created_at: string
+  }>
 }
 
-type Tab = 'status' | 'versions' | 'meetings' | 'storage'
+type Tab = 'status' | 'versions' | 'meetings' | 'storage' | 'ai'
 
 interface StorageBreakdown {
   table: string
@@ -97,11 +121,22 @@ interface StorageData {
   total_rows: number
 }
 
-const MEETING_TYPE_LABELS = {
+const MEETING_TYPE_LABELS_DEFAULT = {
   kickoff: 'Kickoff Call',
   review: 'Design Review',
   final: 'Final Review',
   other: 'Meeting',
+}
+
+const MEETING_TYPE_LABELS_BESPOKE = {
+  kickoff: 'Discovery Meeting',
+  review: 'Presentation Meeting',
+  final: 'Delivery Meeting',
+  other: 'Other Meeting',
+}
+
+function getMeetingTypeLabels(plan?: 'free' | 'premium' | 'deluxe') {
+  return plan === 'deluxe' ? MEETING_TYPE_LABELS_BESPOKE : MEETING_TYPE_LABELS_DEFAULT
 }
 
 const REVIEWER_STATUS_CONFIG = {
@@ -116,6 +151,7 @@ export default function SuperadminWeddingDesignPage({
   params: Promise<{ weddingId: string }>
 }) {
   const { weddingId } = use(params)
+  const router = useRouter()
   const [data, setData] = useState<DesignStatusData | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>('status')
@@ -140,7 +176,8 @@ export default function SuperadminWeddingDesignPage({
   const [confirmRestoreId, setConfirmRestoreId] = useState<string | null>(null)
   const [restoring, setRestoring] = useState(false)
 
-  // Meeting form
+
+  // Manual meeting form (Meetings tab)
   const [meetingForm, setMeetingForm] = useState<{
     id?: string
     meeting_type: string
@@ -152,6 +189,26 @@ export default function SuperadminWeddingDesignPage({
   } | null>(null)
   const [savingMeeting, setSavingMeeting] = useState(false)
   const [deletingMeetingId, setDeletingMeetingId] = useState<string | null>(null)
+  const [rescheduleTarget, setRescheduleTarget] = useState<{ uid: string; calLink: string; locale: string } | null>(null)
+
+  // Delete state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState("")
+  const [deleting, setDeleting] = useState(false)
+
+  const handleDelete = async () => {
+    if (deleteConfirm !== weddingId) return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/superadmin/weddings/${weddingId}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed')
+      toast.success('Wedding deleted')
+      router.push('/superadmin/weddings')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete')
+      setDeleting(false)
+    }
+  }
 
   const fetchData = useCallback(async () => {
     try {
@@ -159,14 +216,18 @@ export default function SuperadminWeddingDesignPage({
       if (res.ok) {
         const d = await res.json()
         setData(d)
-        if (!toStatus && d.available_transitions.length > 0) {
-          setToStatus(d.available_transitions[0])
+        if (d.available_transitions.length > 0) {
+          // Functional update reads actual current state — avoids stale closure
+          // and prevents re-selecting when user has already picked a transition.
+          setToStatus((prev) => prev || d.available_transitions[0])
+        } else {
+          setToStatus('')
         }
       }
     } finally {
       setLoading(false)
     }
-  }, [weddingId, toStatus])
+  }, [weddingId])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -211,6 +272,8 @@ export default function SuperadminWeddingDesignPage({
       setSavingStatus(false)
     }
   }
+
+  const MEETING_STATUSES: DesignStatus[] = ['discovery_meeting', 'review_meeting', 'delivery_meeting']
 
   // ── Add reviewer ──────────────────────────────────────────────
   const handleAddReviewer = async () => {
@@ -364,7 +427,8 @@ export default function SuperadminWeddingDesignPage({
     )
   }
 
-  const availableNext = availableTransitions(data.status, 'superadmin')
+  const availableNext = availableTransitions(data.status, 'superadmin', data.plan)
+  const meetingTypeLabels = getMeetingTypeLabels(data.plan)
 
   return (
     <div className="space-y-8 max-w-3xl">
@@ -383,7 +447,7 @@ export default function SuperadminWeddingDesignPage({
 
       {/* Tabs */}
       <div className="flex gap-1 bg-[#420c14]/5 rounded-xl p-1">
-        {(['status', 'versions', 'meetings', 'storage'] as Tab[]).map((t) => (
+        {(['status', 'versions', 'meetings', 'storage', 'ai'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -393,7 +457,7 @@ export default function SuperadminWeddingDesignPage({
                 : 'text-[#420c14]/50 hover:text-[#420c14]'
             }`}
           >
-            {t === 'versions' ? `Versions (${data.versions.length})` : t.charAt(0).toUpperCase() + t.slice(1)}
+            {t === 'versions' ? `Versions (${data.versions.length})` : t === 'ai' ? 'AI Credits' : t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
       </div>
@@ -401,13 +465,10 @@ export default function SuperadminWeddingDesignPage({
       {/* ── Status tab ─────────────────────────────────────── */}
       {tab === 'status' && (
         <div className="space-y-6">
-          {/* Timeline */}
+          {/* Journey progress */}
           <Card className="p-6 border-[#420c14]/10 shadow-sm">
-            <p className="text-[10px] uppercase tracking-widest text-[#420c14]/40 mb-5">Current Status</p>
-            <InvitationStatusTimeline
-              currentStatus={data.status}
-              history={data.history}
-            />
+            <p className="text-[10px] uppercase tracking-widest text-[#420c14]/40 mb-5">Design Progress</p>
+            <DesignProgressJourney plan={data.plan ?? 'free'} status={data.status} />
           </Card>
 
           {/* Status change form */}
@@ -430,6 +491,16 @@ export default function SuperadminWeddingDesignPage({
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Cal.com info callout for meeting statuses */}
+                {toStatus && MEETING_STATUSES.includes(toStatus as DesignStatus) && (
+                  <div className="flex items-center gap-2 rounded-xl bg-[#DDA46F]/8 border border-[#DDA46F]/20 px-4 py-3">
+                    <Calendar className="w-4 h-4 text-[#DDA46F] shrink-0" />
+                    <p className="text-sm text-[#420c14]/70">
+                      The couple will be prompted to pick a time via Cal.com on their next visit.
+                    </p>
+                  </div>
+                )}
 
                 {toStatus === 'ready_for_review' && (
                   <div>
@@ -541,6 +612,89 @@ export default function SuperadminWeddingDesignPage({
                 ))}
               </ul>
             )}
+          </Card>
+
+          {/* Scheduled meetings — quick cancel without leaving the Status tab */}
+          {data.meetings.filter(m => m.status === 'scheduled').length > 0 && (
+            <Card className="p-6 border-[#420c14]/10 shadow-sm">
+              <p className="text-[10px] uppercase tracking-widest text-[#420c14]/40 mb-4">Scheduled Meetings</p>
+              <ul className="space-y-2">
+                {data.meetings.filter(m => m.status === 'scheduled').map(m => (
+                  <li key={m.id} className="rounded-xl border border-[#420c14]/8 bg-[#f5f2eb]/40 px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[#DDA46F]/10 flex items-center justify-center shrink-0">
+                        <Video className="w-3.5 h-3.5 text-[#DDA46F]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#420c14] truncate">{m.title}</p>
+                        <p className="text-[11px] text-[#420c14]/45 mt-0.5">
+                          {meetingTypeLabels[m.meeting_type]}
+                          {m.scheduled_at && <> · {format(new Date(m.scheduled_at), "MMM d 'at' h:mm a")}</>}
+                        </p>
+                        <div className="flex items-center gap-3 mt-1.5">
+                          {m.meeting_url && (
+                            <a
+                              href={m.meeting_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-[11px] text-[#DDA46F] hover:underline"
+                            >
+                              <Link2 className="w-2.5 h-2.5" />
+                              Join
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteMeeting(m.id)}
+                        disabled={deletingMeetingId === m.id}
+                        title="Cancel meeting"
+                        className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-[#420c14]/25 hover:text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      {deletingMeetingId === m.id
+                        ? <Loader2 className="w-3 h-3 animate-spin" />
+                        : <Trash2 className="w-3.5 h-3.5" />
+                      }
+                    </button>
+                    </div>
+                    {m.calcom_uid && (
+                      <button
+                        onClick={() => {
+          if (!m.calcom_uid) return
+          const slugFallback = m.meeting_type === 'review' ? 'design-review' : m.meeting_type === 'final' ? 'delivery-meeting' : 'discovery-meeting'
+          const slug = m.calcom_event_type_slug ?? slugFallback
+          const locale = slug.endsWith('-es') ? 'es' : 'en'
+          setRescheduleTarget({ uid: m.calcom_uid, calLink: `${process.env.NEXT_PUBLIC_CALCOM_USERNAME ?? 'ohmywedding'}/${slug}`, locale })
+        }}
+                        className="mt-2 flex items-center gap-1 text-[11px] text-[#420c14]/45 hover:text-[#420c14] hover:underline"
+                      >
+                        <Calendar className="w-2.5 h-2.5" />
+                        Reschedule
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          {/* Danger zone */}
+          <Card className="p-6 border-red-100 shadow-sm">
+            <p className="text-[10px] uppercase tracking-widest text-red-400 mb-4">Danger Zone</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-[#420c14]">Delete this wedding</p>
+                <p className="text-xs text-[#420c14]/40 mt-0.5">Permanently removes all guests, design history, meetings, and files.</p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => { setDeleteDialogOpen(true); setDeleteConfirm("") }}
+                className="rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 shrink-0 ml-6"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Wedding
+              </Button>
+            </div>
           </Card>
 
           {/* History */}
@@ -698,21 +852,38 @@ export default function SuperadminWeddingDesignPage({
                       </span>
                     </div>
                     <p className="text-xs text-[#420c14]/50 mt-0.5">
-                      {MEETING_TYPE_LABELS[m.meeting_type]}
+                      {meetingTypeLabels[m.meeting_type]}
                       {m.scheduled_at && <> · {format(new Date(m.scheduled_at), "MMM d, yyyy 'at' h:mm a")}</>}
                     </p>
-                    {m.meeting_url && (
-                      <a
-                        href={m.meeting_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-[#DDA46F] hover:underline mt-1"
-                      >
-                        <Link2 className="w-2.5 h-2.5" />
-                        Meeting link
-                      </a>
-                    )}
+                    <div className="flex items-center gap-3 flex-wrap mt-1">
+                      {m.meeting_url && (
+                        <a
+                          href={m.meeting_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-[#DDA46F] hover:underline"
+                        >
+                          <Link2 className="w-2.5 h-2.5" />
+                          Meeting link
+                        </a>
+                      )}
+                    </div>
                     {m.notes && <p className="text-xs text-[#420c14]/40 mt-1">{m.notes}</p>}
+                    {m.calcom_uid && (
+                      <button
+                        onClick={() => {
+          if (!m.calcom_uid) return
+          const slugFallback = m.meeting_type === 'review' ? 'design-review' : m.meeting_type === 'final' ? 'delivery-meeting' : 'discovery-meeting'
+          const slug = m.calcom_event_type_slug ?? slugFallback
+          const locale = slug.endsWith('-es') ? 'es' : 'en'
+          setRescheduleTarget({ uid: m.calcom_uid, calLink: `${process.env.NEXT_PUBLIC_CALCOM_USERNAME ?? 'ohmywedding'}/${slug}`, locale })
+        }}
+                        className="mt-2 inline-flex items-center gap-1 text-xs text-[#420c14]/45 hover:text-[#420c14] hover:underline"
+                      >
+                        <Calendar className="w-3 h-3" />
+                        Reschedule
+                      </button>
+                    )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <button
@@ -749,7 +920,12 @@ export default function SuperadminWeddingDesignPage({
               ))}
             </div>
           )}
+        <div className="mt-6">
+          <InvitationActivityLog
+            logs={data?.activity_logs ?? []}
+          />
         </div>
+      </div>
       )}
 
       {/* ── Storage tab ────────────────────────────────── */}
@@ -816,6 +992,50 @@ export default function SuperadminWeddingDesignPage({
         </div>
       )}
 
+      {/* ── AI Credits tab ─────────────────────────────── */}
+      {tab === 'ai' && (
+        <AICreditsTab weddingId={weddingId} />
+      )}
+
+      {/* ── Delete wedding dialog ───────────────────────── */}
+      <Dialog open={deleteDialogOpen} onOpenChange={(o) => { if (!o) { setDeleteDialogOpen(false); setDeleteConfirm("") } }}>
+        <DialogContent className="max-w-md rounded-2xl border-red-100">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-2xl text-red-700">Delete Wedding</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-[#420c14]/60">
+            This will permanently delete <strong className="text-[#420c14]">{weddingId}</strong> and all associated data — guests, design history, meetings, and files. This cannot be undone.
+          </p>
+          <div className="space-y-2 py-1">
+            <p className="text-xs text-[#420c14]/50">
+              Type <span className="font-mono font-semibold text-[#420c14]">{weddingId}</span> to confirm:
+            </p>
+            <input
+              value={deleteConfirm}
+              onChange={e => setDeleteConfirm(e.target.value)}
+              placeholder={weddingId}
+              className="w-full h-10 rounded-xl border border-red-200 bg-red-50/40 px-3 text-sm font-mono text-[#420c14] placeholder:text-[#420c14]/20 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-200"
+            />
+          </div>
+          <DialogFooter className="gap-3">
+            <Button
+              variant="outline"
+              onClick={() => { setDeleteDialogOpen(false); setDeleteConfirm("") }}
+              className="rounded-xl border-[#420c14]/10 text-[#420c14]"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDelete}
+              disabled={deleting || deleteConfirm !== weddingId}
+              className="rounded-xl bg-red-600 hover:bg-red-700 text-white disabled:opacity-40"
+            >
+              {deleting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Deleting…</> : 'Delete permanently'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* ── Restore confirmation dialog ──────────────────── */}
       <Dialog open={!!confirmRestoreId} onOpenChange={() => setConfirmRestoreId(null)}>
         <DialogContent className="max-w-sm rounded-2xl border-[#420c14]/10">
@@ -866,7 +1086,7 @@ export default function SuperadminWeddingDesignPage({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-[#420c14]/10">
-                    {Object.entries(MEETING_TYPE_LABELS).map(([k, l]) => (
+                    {Object.entries(meetingTypeLabels).map(([k, l]) => (
                       <SelectItem key={k} value={k} className="rounded-lg">{l}</SelectItem>
                     ))}
                   </SelectContent>
@@ -883,11 +1103,9 @@ export default function SuperadminWeddingDesignPage({
               </div>
               <div>
                 <Label className="text-[#420c14]/70 text-sm mb-2 block">Date & Time</Label>
-                <Input
-                  type="datetime-local"
+                <MeetingDateTimePicker
                   value={meetingForm.scheduled_at}
-                  onChange={(e) => setMeetingForm((f) => f && ({ ...f, scheduled_at: e.target.value }))}
-                  className="h-11 rounded-xl border-[#420c14]/10 focus:border-[#DDA46F]"
+                  onChange={(v) => setMeetingForm((f) => f && ({ ...f, scheduled_at: v }))}
                 />
               </div>
               <div>
@@ -947,6 +1165,198 @@ export default function SuperadminWeddingDesignPage({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── Reschedule dialog ───────────────────────── */}
+      <Dialog open={!!rescheduleTarget} onOpenChange={(o) => { if (!o) setRescheduleTarget(null) }}>
+        <DialogContent className="w-full max-w-4xl p-0 overflow-hidden rounded-2xl border-[#420c14]/10">
+          <DialogHeader className="px-6 pt-5 pb-0">
+            <DialogTitle className="font-serif text-xl text-[#420c14]">Reschedule Meeting</DialogTitle>
+          </DialogHeader>
+          <div className="px-6 pb-6 pt-4">
+            {rescheduleTarget && (
+              <CalRescheduleEmbed uid={rescheduleTarget.uid} calLink={rescheduleTarget.calLink} locale={rescheduleTarget.locale} />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+/* ── AI Credits Tab ──────────────────────────────────────────────────────── */
+
+interface AIUsageRow {
+  model: string
+  prompt_tokens: number
+  completion_tokens: number
+  estimated_cost: number
+  created_at: string
+}
+
+function AICreditsTab({ weddingId }: { weddingId: string }) {
+  const [status, setStatus]           = useState<{ budgetCents: number | null; usedCents: number; remainingCents: number | null; isExhausted: boolean; usagePct: number | null } | null>(null)
+  const [logs, setLogs]               = useState<AIUsageRow[]>([])
+  const [loading, setLoading]         = useState(true)
+  const [grantAmount, setGrantAmount] = useState('')
+  const [granting, setGranting]       = useState(false)
+  const [grantMsg, setGrantMsg]       = useState('')
+
+  const load = async () => {
+    setLoading(true)
+    try {
+      const [statusRes, logsRes] = await Promise.all([
+        fetch(`/api/superadmin/weddings/${weddingId}/ai-credits`),
+        fetch(`/api/superadmin/weddings/${weddingId}/ai-credits?logs=1`),
+      ])
+      if (statusRes.ok) setStatus(await statusRes.json())
+      if (logsRes.ok) {
+        const data = await logsRes.json()
+        setLogs(data.logs ?? [])
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { load() }, [weddingId])
+
+  const handleGrant = async () => {
+    const cents = Math.round(parseFloat(grantAmount) * 100)
+    if (isNaN(cents) || cents <= 0) return
+    setGranting(true)
+    setGrantMsg('')
+    try {
+      const res = await fetch(`/api/superadmin/weddings/${weddingId}/ai-credits`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amountCents: cents }),
+      })
+      if (res.ok) {
+        setGrantMsg(`Granted $${(cents / 100).toFixed(2)} successfully`)
+        setGrantAmount('')
+        await load()
+      } else {
+        const e = await res.json()
+        setGrantMsg(e.error ?? 'Failed to grant')
+      }
+    } finally {
+      setGranting(false)
+    }
+  }
+
+  const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-20">
+      <Loader2 className="w-8 h-8 animate-spin text-[#DDA46F]" />
+    </div>
+  )
+
+  return (
+    <div className="space-y-6">
+      {/* Budget overview */}
+      <Card className="p-6 border-[#420c14]/10 shadow-sm">
+        <p className="text-[10px] uppercase tracking-widest text-[#420c14]/40 mb-4">Budget Overview</p>
+        {status ? (
+          <div className="grid grid-cols-3 gap-6">
+            <div>
+              <p className="text-xs text-[#420c14]/50 mb-1">Budget</p>
+              <p className="text-2xl font-serif text-[#420c14]">
+                {status.budgetCents === null ? '∞' : fmt(status.budgetCents)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-[#420c14]/50 mb-1">Used</p>
+              <p className="text-2xl font-serif text-[#420c14]">{fmt(status.usedCents)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-[#420c14]/50 mb-1">Remaining</p>
+              <p className={`text-2xl font-serif ${status.isExhausted ? 'text-red-600' : 'text-[#420c14]'}`}>
+                {status.remainingCents === null ? '∞' : fmt(status.remainingCents)}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-[#420c14]/40">No budget set — unlimited.</p>
+        )}
+      </Card>
+
+      {/* Manual grant */}
+      <Card className="p-6 border-[#420c14]/10 shadow-sm">
+        <p className="text-[10px] uppercase tracking-widest text-[#420c14]/40 mb-4">Manual Grant</p>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#420c14]/40 text-sm">$</span>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={grantAmount}
+              onChange={e => setGrantAmount(e.target.value)}
+              placeholder="5.00"
+              className="pl-7 pr-3 py-2 border border-[#420c14]/15 rounded-xl text-sm w-32 focus:outline-none focus:border-[#420c14]/40"
+            />
+          </div>
+          <button
+            onClick={handleGrant}
+            disabled={granting || !grantAmount}
+            className="px-4 py-2 bg-[#420c14] text-[#DDA46F] text-sm font-medium rounded-xl disabled:opacity-50 hover:bg-[#5a1a22] transition-colors flex items-center gap-2"
+          >
+            {granting && <Loader2 className="w-3 h-3 animate-spin" />}
+            Grant Credits
+          </button>
+          {grantMsg && (
+            <p className={`text-sm ${grantMsg.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
+              {grantMsg}
+            </p>
+          )}
+        </div>
+      </Card>
+
+      {/* Usage log */}
+      <Card className="p-6 border-[#420c14]/10 shadow-sm">
+        <p className="text-[10px] uppercase tracking-widest text-[#420c14]/40 mb-4">
+          Recent Usage ({logs.length} interactions)
+        </p>
+        {logs.length === 0 ? (
+          <p className="text-sm text-[#420c14]/40 text-center py-8">No AI interactions yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-[#420c14]/8">
+                  <th className="text-left text-[#420c14]/40 font-medium pb-2 pr-4">Date</th>
+                  <th className="text-left text-[#420c14]/40 font-medium pb-2 pr-4">Model</th>
+                  <th className="text-right text-[#420c14]/40 font-medium pb-2 pr-4">In</th>
+                  <th className="text-right text-[#420c14]/40 font-medium pb-2 pr-4">Out</th>
+                  <th className="text-right text-[#420c14]/40 font-medium pb-2">Cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.slice(0, 50).map((row, i) => (
+                  <tr key={i} className="border-b border-[#420c14]/5">
+                    <td className="py-2 pr-4 text-[#420c14]/50 font-mono">
+                      {new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </td>
+                    <td className="py-2 pr-4 font-mono text-[#420c14]/70">
+                      {row.model.replace('claude-', '').replace('-20251001', '')}
+                    </td>
+                    <td className="py-2 pr-4 text-right text-[#420c14]/60">
+                      {row.prompt_tokens.toLocaleString()}
+                    </td>
+                    <td className="py-2 pr-4 text-right text-[#420c14]/60">
+                      {row.completion_tokens.toLocaleString()}
+                    </td>
+                    <td className="py-2 text-right text-[#420c14] font-medium">
+                      ${Number(row.estimated_cost).toFixed(4)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
     </div>
   )
 }

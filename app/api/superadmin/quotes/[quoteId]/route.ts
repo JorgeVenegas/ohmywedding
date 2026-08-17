@@ -69,6 +69,9 @@ export async function PATCH(
         return NextResponse.json({ error: 'Invalid language' }, { status: 400 })
       updates.language = body.language
     }
+    if (body.weddingDate !== undefined) updates.wedding_date = body.weddingDate || null
+    if (body.estimatedGuests !== undefined) updates.estimated_guests = body.estimatedGuests ?? null
+    if (body.location !== undefined) updates.location = body.location?.trim() || null
 
     if (Object.keys(updates).length === 0)
       return NextResponse.json({ error: 'Nothing to update' }, { status: 400 })

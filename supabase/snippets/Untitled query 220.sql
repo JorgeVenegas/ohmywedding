@@ -1,0 +1,1 @@
+SELECT id, wedding_name_id FROM weddings WHERE wedding_name_id = 'juan-juana';

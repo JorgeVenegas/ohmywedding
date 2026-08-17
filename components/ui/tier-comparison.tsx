@@ -90,7 +90,7 @@ export function TierComparison({ highlightSubdomain = false, showDeluxe = true }
               </div>
             )}
 
-            <h3 className="text-xl font-serif text-[#420c14] mb-6">Premium</h3>
+            <h3 className="text-xl font-serif text-[#420c14] mb-6">Personalized</h3>
 
             <div className="space-y-4 mb-8">
               <div className="flex items-start gap-3">
@@ -168,7 +168,7 @@ export function TierComparison({ highlightSubdomain = false, showDeluxe = true }
             </div>
 
             <div className="relative z-10">
-              <h3 className="text-xl font-serif text-[#420c14] mb-6">Deluxe</h3>
+              <h3 className="text-xl font-serif text-[#420c14] mb-6">Bespoke</h3>
 
               <div className="space-y-4 mb-8">
                 <div className="flex items-start gap-3">

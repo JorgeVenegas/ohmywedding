@@ -1,9 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card } from "@/components/ui/card"
 import { createClient } from "@/lib/supabase-client"
-import { DollarSign, User, Calendar, MessageSquare, AlertCircle, X } from "lucide-react"
+import { Gift, User, Calendar, MessageSquare } from "lucide-react"
 
 interface Contribution {
   id: string
@@ -35,6 +34,36 @@ interface RegistryContributionsListProps {
   onStatsChange?: (stats: { count: number; amount: number }) => void
 }
 
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    completed:        "bg-emerald-50 text-emerald-700 border-emerald-200/60",
+    processing:       "bg-blue-50 text-blue-700 border-blue-200/60",
+    requires_action:  "bg-amber-50 text-amber-700 border-amber-200/60",
+    partially_funded: "bg-orange-50 text-orange-700 border-orange-200/60",
+    failed:           "bg-red-50 text-red-700 border-red-200/60",
+    refunded:         "bg-purple-50 text-purple-700 border-purple-200/60",
+    expired:          "bg-gray-50 text-gray-500 border-gray-200/60",
+    incomplete:       "bg-slate-50 text-slate-600 border-slate-200/60",
+  }
+  return (
+    <span className={`inline-flex items-center text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none ${styles[status] ?? "bg-gray-50 text-gray-700 border-gray-200/60"}`}>
+      {status.replace(/_/g, ' ')}
+    </span>
+  )
+}
+
+function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+  })
+}
+
+function formatTime(dateString: string): string {
+  return new Date(dateString).toLocaleTimeString('en-US', {
+    hour: '2-digit', minute: '2-digit',
+  })
+}
+
 export function RegistryContributionsList({
   weddingId,
   items,
@@ -46,7 +75,6 @@ export function RegistryContributionsList({
 }: RegistryContributionsListProps) {
   const [contributions, setContributions] = useState<Contribution[]>([])
   const [isLoading, setIsLoading] = useState(true)
-
   const supabase = createClient()
 
   useEffect(() => {
@@ -61,7 +89,6 @@ export function RegistryContributionsList({
         .eq("wedding_id", weddingId)
         .notIn("payment_status", ["pending", "incomplete", "partially_funded"])
         .order("created_at", { ascending: false })
-
       if (error) throw error
       setContributions(data || [])
     } catch (error) {
@@ -71,68 +98,28 @@ export function RegistryContributionsList({
     }
   }
 
-  const getItemTitle = (itemId: string) => {
-    return items.find(i => i.id === itemId)?.title || "Unknown Item"
-  }
+  const getItemTitle = (itemId: string) =>
+    items.find(i => i.id === itemId)?.title || "Unknown Item"
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-800/60"
-      case "processing":
-        return "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200/60 dark:border-blue-800/60"
-      case "requires_action":
-        return "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200/60 dark:border-amber-800/60"
-      case "partially_funded":
-        return "bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200/60 dark:border-orange-800/60"
-      case "failed":
-        return "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200/60 dark:border-red-800/60"
-      case "refunded":
-        return "bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200/60 dark:border-purple-800/60"
-      case "expired":
-        return "bg-gray-50 dark:bg-gray-900/30 text-gray-500 dark:text-gray-400 border-gray-200/60 dark:border-gray-800/60"
-      case "incomplete":
-        return "bg-slate-50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-slate-800/60"
-      default:
-        return "bg-gray-50 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300 border-gray-200/60 dark:border-gray-800/60"
-    }
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
-
-  // Filter and sort contributions
   const filteredAndSorted = contributions
     .filter(c => {
       if (filterByItem !== "all" && c.custom_registry_item_id !== filterByItem) return false
       if (filterByStatus !== "all" && c.payment_status !== filterByStatus) return false
       if (searchQuery) {
-        const query = searchQuery.toLowerCase()
-        const matchesName = c.contributor_name?.toLowerCase().includes(query)
-        const matchesEmail = c.contributor_email?.toLowerCase().includes(query)
-        const matchesItem = getItemTitle(c.custom_registry_item_id).toLowerCase().includes(query)
+        const q = searchQuery.toLowerCase()
+        const matchesName  = c.contributor_name?.toLowerCase().includes(q)
+        const matchesEmail = c.contributor_email?.toLowerCase().includes(q)
+        const matchesItem  = getItemTitle(c.custom_registry_item_id).toLowerCase().includes(q)
         if (!matchesName && !matchesEmail && !matchesItem) return false
       }
       return true
     })
     .sort((a, b) => {
       switch (sortBy) {
-        case "highest":
-          return Number(b.amount) - Number(a.amount)
-        case "lowest":
-          return Number(a.amount) - Number(b.amount)
-        case "oldest":
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        case "newest":
-        default:
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        case "highest": return Number(b.amount) - Number(a.amount)
+        case "lowest":  return Number(a.amount) - Number(b.amount)
+        case "oldest":  return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        default:        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       }
     })
 
@@ -140,116 +127,159 @@ export function RegistryContributionsList({
   const totalAmount = filteredAndSorted
     .filter(c => c.payment_status === 'completed')
     .reduce((sum, c) => sum + Number(c.amount), 0)
-  
-  const statuses = Array.from(new Set(contributions.map(c => c.payment_status)))
 
   useEffect(() => {
     onStatsChange?.({ count: totalContributions, amount: totalAmount })
   }, [onStatsChange, totalContributions, totalAmount])
 
+  // ── Loading ───────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-secondary"></div>
+      <div className="space-y-3 pt-2">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="rounded-2xl border border-[#420c14]/8 bg-white p-4 animate-pulse">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#420c14]/6 flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3.5 bg-[#420c14]/6 rounded w-1/3" />
+                <div className="h-3 bg-[#420c14]/4 rounded w-1/2" />
+              </div>
+              <div className="h-5 bg-[#420c14]/6 rounded w-16" />
+            </div>
+          </div>
+        ))}
       </div>
     )
   }
 
+  // ── Empty — no contributions at all ──────────────────────────────────────
+  if (contributions.length === 0) {
+    return (
+      <div className="rounded-2xl border border-[#420c14]/10 border-dashed bg-white py-16 text-center mt-2">
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+          style={{ background: 'rgba(221,164,111,0.10)' }}
+        >
+          <Gift className="w-7 h-7" style={{ color: '#DDA46F' }} />
+        </div>
+        <p className="text-xl font-serif text-[#420c14] mb-1">No contributions yet</p>
+        <p className="text-sm text-[#420c14]/40 max-w-xs mx-auto leading-relaxed">
+          When your guests contribute to registry items, they'll appear here.
+        </p>
+      </div>
+    )
+  }
+
+  // ── Empty after filtering ─────────────────────────────────────────────────
+  if (filteredAndSorted.length === 0) {
+    return (
+      <div className="rounded-2xl border border-[#420c14]/10 border-dashed bg-white py-14 text-center mt-2">
+        <p className="font-serif text-[#420c14]/50">No contributions match your filters</p>
+      </div>
+    )
+  }
+
+  // ── Contribution rows ─────────────────────────────────────────────────────
   return (
-    <>
-      {/* Contributions Grid */}
-      {filteredAndSorted.length === 0 ? (
-        <Card className="p-12 text-center border border-border shadow-sm">
-          <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-          <p className="text-muted-foreground">
-            {contributions.length === 0 ? "No contributions yet" : "No contributions match your filters"}
-          </p>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {filteredAndSorted.map((contribution) => {
-            const item = items.find(i => i.id === contribution.custom_registry_item_id)
-            return (
-            <Card
-              key={contribution.id}
-              className="p-3 border border-border shadow-sm hover:shadow-md transition-shadow"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-[1.2fr_1.4fr_0.6fr] gap-3 items-center">
-                {/* Column 1: Item */}
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-lg border border-border/60 bg-muted/40 overflow-hidden flex items-center justify-center">
+    <div className="space-y-2.5 pt-2">
+      {filteredAndSorted.map((contribution) => {
+        const item = items.find(i => i.id === contribution.custom_registry_item_id)
+        const amount = Number(contribution.amount)
+        const originalAmount = contribution.original_requested_amount
+          ? Number(contribution.original_requested_amount)
+          : null
+        const hasFeeNote = originalAmount && originalAmount > amount
+
+        return (
+          <div
+            key={contribution.id}
+            className="rounded-2xl border border-[#420c14]/8 bg-white overflow-hidden hover:border-[#420c14]/15 hover:shadow-sm transition-all duration-150"
+          >
+            <div className="flex items-stretch">
+              {/* Item thumbnail strip */}
+              <div className="w-1 flex-shrink-0" style={{ background: contribution.payment_status === 'completed' ? '#DDA46F' : contribution.payment_status === 'failed' ? '#ef4444' : '#e5e7eb' }} />
+
+              <div className="flex-1 px-4 py-3.5">
+                <div className="flex items-center gap-4">
+                  {/* Item thumbnail */}
+                  <div className="w-10 h-10 rounded-xl overflow-hidden bg-[#f5f2eb] flex-shrink-0 flex items-center justify-center">
                     {item?.image_urls?.[0] ? (
                       <img
                         src={item.image_urls[0]}
                         alt={getItemTitle(contribution.custom_registry_item_id)}
-                        className="h-full w-full object-cover"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
-                      <DollarSign className="w-4 h-4 text-emerald-600" />
+                      <Gift className="w-4 h-4 text-[#DDA46F]" />
                     )}
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-[11px] text-muted-foreground">Item</p>
-                    <p className="text-sm font-semibold text-foreground truncate">
-                      {getItemTitle(contribution.custom_registry_item_id)}
-                    </p>
-                  </div>
-                </div>
 
-                {/* Column 2: Contribution Details */}
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <User className="w-4 h-4 text-secondary" />
-                    <p className="text-sm font-semibold text-foreground truncate">
-                      {contribution.contributor_name || "Anonymous"}
-                    </p>
-                  </div>
-                  {contribution.contributor_email && (
-                    <p className="text-[11px] text-muted-foreground truncate mb-1">
-                      {contribution.contributor_email}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                    <Calendar className="w-3.5 h-3.5 text-blue-600" />
-                    <span>{formatDate(contribution.created_at)}</span>
-                  </div>
-                  {contribution.message && (
-                    <div className="mt-2 p-2 bg-muted/50 rounded-md border-l-2 border-secondary">
-                      <div className="flex items-start gap-2">
-                        <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-600" />
-                        <p className="text-[11px] text-foreground italic line-clamp-2">"{contribution.message}"</p>
+                  {/* Main content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        {/* Contributor */}
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <User className="w-3 h-3 text-[#420c14]/30 flex-shrink-0" />
+                          <span className="text-sm font-medium text-[#420c14] truncate">
+                            {contribution.contributor_name || "Anonymous"}
+                          </span>
+                        </div>
+                        {/* Item title */}
+                        <p className="text-xs text-[#420c14]/45 truncate">
+                          {getItemTitle(contribution.custom_registry_item_id)}
+                        </p>
+                      </div>
+
+                      {/* Amount + status */}
+                      <div className="flex-shrink-0 text-right">
+                        <div className="flex items-baseline gap-1.5 justify-end">
+                          {hasFeeNote && (
+                            <span className="text-xs text-[#420c14]/25 line-through">
+                              ${originalAmount!.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          )}
+                          <span className="text-base font-serif font-medium" style={{ color: '#DDA46F' }}>
+                            ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                        <div className="mt-1 flex justify-end">
+                          <StatusBadge status={contribution.payment_status} />
+                        </div>
                       </div>
                     </div>
-                  )}
-                </div>
 
-                {/* Column 3: Amount + Status */}
-                <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-2">
-                  <div className="text-right">
-                    <p className="text-xl font-semibold text-secondary">
-                      ${Number(contribution.amount).toFixed(2)}
-                    </p>
-                    {contribution.original_requested_amount &&
-                      Number(contribution.original_requested_amount) > Number(contribution.amount) && (
-                        <p className="text-[10px] text-muted-foreground line-through">
-                          ${Number(contribution.original_requested_amount).toFixed(2)}
+                    {/* Footer row — date + optional message */}
+                    <div className="flex items-center gap-3 mt-2 flex-wrap">
+                      <div className="flex items-center gap-1 text-[11px] text-[#420c14]/35">
+                        <Calendar className="w-3 h-3" />
+                        <span>{formatDate(contribution.created_at)}</span>
+                        <span className="opacity-60">·</span>
+                        <span>{formatTime(contribution.created_at)}</span>
+                      </div>
+                      {contribution.contributor_email && (
+                        <span className="text-[11px] text-[#420c14]/30 truncate max-w-[160px]">
+                          {contribution.contributor_email}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Message */}
+                    {contribution.message && (
+                      <div className="mt-2 flex items-start gap-1.5">
+                        <MessageSquare className="w-3 h-3 flex-shrink-0 mt-0.5 text-[#DDA46F]" />
+                        <p className="text-[11px] text-[#420c14]/55 italic line-clamp-2">
+                          "{contribution.message}"
                         </p>
+                      </div>
                     )}
                   </div>
-                  <span
-                    className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border leading-none ${getStatusColor(
-                      contribution.payment_status
-                    )}`}
-                  >
-                    {contribution.payment_status.replace(/_/g, ' ')}
-                  </span>
                 </div>
               </div>
-            </Card>
-            )
-          })}
-        </div>
-      )}
-    </>
+            </div>
+          </div>
+        )
+      })}
+    </div>
   )
 }

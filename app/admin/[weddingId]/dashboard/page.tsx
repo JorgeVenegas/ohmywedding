@@ -3,19 +3,22 @@ import { use, useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { LogOut, ArrowRight, Mail, Gift, Settings, LayoutGrid, Globe, Sparkles, UtensilsCrossed, CalendarDays, FileText, Handshake, CircleX, CalendarClock, MessageCircle } from "lucide-react"
+import { LogOut, ArrowRight, Mail, Gift, Settings, LayoutGrid, Globe, Sparkles, UtensilsCrossed, CalendarDays, FileText, Handshake, CircleX, CalendarClock, MessageCircle, Camera } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { Header } from "@/components/header"
 import { ActivityFeed } from "@/components/ui/activity-feed"
 import { InvitationStatsCard } from "@/components/ui/invitation-stats-card"
 import { RegistryPaymentNotifications } from "@/components/ui/registry-payment-notifications"
 import { UpcomingEventsCard } from "@/components/ui/upcoming-events-card"
+import { AIUsageWidget } from "@/components/ai/ai-usage-widget"
 import { OnboardingTutorial } from "@/components/ui/onboarding-tutorial"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { getWeddingPath } from "@/lib/wedding-url"
 import { useTranslation } from "@/components/contexts/i18n-context"
 import { useAuth, useWeddingPermissions } from "@/hooks/use-auth"
 import { createClient } from "@/lib/supabase-client"
+import { useSubscriptionContext } from "@/components/contexts/subscription-context"
+import { planLabel } from "@/lib/subscription-shared"
 
 interface AdminDashboardProps {
   params: Promise<{ weddingId: string }>
@@ -27,6 +30,7 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
   const { t } = useTranslation()
   const { user, signOut } = useAuth()
   const { permissions: weddingPerms } = useWeddingPermissions(decodedWeddingId)
+  const { invitationTier, managementTier, hasPaidPlan, loading: planLoading } = useSubscriptionContext()
   const [showTutorial, setShowTutorial] = useState(false)
   const [hasWebsite, setHasWebsite] = useState<boolean | null>(null)
   const [isLegacy, setIsLegacy] = useState(false)
@@ -40,6 +44,15 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
   const [messagingEnabled, setMessagingEnabled] = useState(false)
   const [designSelfServeLocked, setDesignSelfServeLocked] = useState<boolean | null>(null)
   const [invitationDesignStatus, setInvitationDesignStatus] = useState<string | null>(null)
+  const [aiChatEnabled, setAiChatEnabled] = useState(false)
+
+  // AI feature flag — same gate used by the layout for the chat panel
+  useEffect(() => {
+    fetch(`/api/ai/chat/enabled?weddingSlug=${encodeURIComponent(decodedWeddingId)}`)
+      .then((res) => (res.ok ? res.json() : { enabled: false }))
+      .then((data) => setAiChatEnabled(Boolean(data.enabled)))
+      .catch(() => setAiChatEnabled(false))
+  }, [decodedWeddingId])
 
   // Restricted-rollout gate for the Inbox card — see lib/messaging/feature-flag.ts
   useEffect(() => {
@@ -234,11 +247,27 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
       color: "accent" as const,
     },
     {
+      sectionKey: 'gallery',
+      title: t('admin.dashboard.cards.gallery.title'),
+      description: t('admin.dashboard.cards.gallery.description'),
+      icon: Camera,
+      href: getCleanAdminUrl(weddingId, 'gallery'),
+      color: "accent" as const,
+    },
+    {
       sectionKey: 'timeline',
       title: t('admin.dashboard.cards.timeline.title'),
       description: t('admin.dashboard.cards.timeline.description'),
       icon: CalendarClock,
       href: getCleanAdminUrl(weddingId, 'timeline'),
+      color: "accent" as const,
+    },
+    {
+      sectionKey: 'guestMessages',
+      title: t('admin.dashboard.cards.guestMessages.title'),
+      description: t('admin.dashboard.cards.guestMessages.description'),
+      icon: MessageCircle,
+      href: getCleanAdminUrl(weddingId, 'guest-messages'),
       color: "accent" as const,
     },
     {
@@ -305,8 +334,21 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
           <p className="text-[10px] uppercase tracking-[0.3em] text-[#DDA46F] mb-3">
             {t('admin.dashboard.welcomeBack')}
           </p>
-          <h1 className="text-4xl font-serif text-[#420c14] mb-2">
+          <h1 className="text-4xl font-serif text-[#420c14] mb-2 flex items-center gap-3 flex-wrap">
             {coupleNames ?? t('admin.dashboard.welcomeBack')}
+            {!planLoading && (
+              hasPaidPlan ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium tracking-wide bg-[#420c14] text-[#DDA46F] self-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#DDA46F]" />
+                  {planLabel(invitationTier, managementTier)}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium tracking-wide border border-[#420c14]/20 text-[#420c14]/50 self-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#420c14]/30" />
+                  Trial
+                </span>
+              )
+            )}
           </h1>
           <p className="text-base text-[#420c14]/60">{t('admin.dashboard.manageDescription')}</p>
         </div>
@@ -453,6 +495,13 @@ export default function AdminDashboard({ params }: AdminDashboardProps) {
               weddingId={decodedWeddingId}
               viewAllHref={getCleanAdminUrl(weddingId, 'timeline')}
             />
+          </div>
+        )}
+
+        {/* AI Usage Widget — only shown when AI is enabled for this wedding */}
+        {aiChatEnabled && (
+          <div className="mt-6">
+            <AIUsageWidget weddingId={decodedWeddingId} />
           </div>
         )}
       </div>

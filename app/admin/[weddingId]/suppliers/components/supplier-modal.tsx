@@ -89,11 +89,14 @@ export function SupplierModal({ open, onClose, onSave, supplier, saving }: Suppl
     })
   }
 
+  const fieldClass = "w-full h-10 rounded-xl border border-[#420c14]/15 bg-[#fefdfb] px-3 text-sm text-[#420c14] placeholder:text-[#420c14]/30 outline-none focus:ring-2 focus:ring-[#420c14]/15 focus:border-[#420c14]/40 transition-all"
+  const labelClass = "text-xs font-medium text-[#420c14]/60 uppercase tracking-wide mb-1.5 block"
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-[0.97] data-[state=open]:zoom-in-[0.97] duration-300">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto border-[#420c14]/15 bg-[#fefdfb] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-[0.97] data-[state=open]:zoom-in-[0.97] duration-300">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="font-serif text-[#420c14] text-lg">
             {supplier ? t('admin.suppliers.editSupplier') : t('admin.suppliers.addSupplier')}
           </DialogTitle>
         </DialogHeader>
@@ -101,22 +104,23 @@ export function SupplierModal({ open, onClose, onSave, supplier, saving }: Suppl
         <div className="space-y-5 pt-2">
           {/* Name */}
           <div>
-            <label className="text-sm font-medium mb-1 block">{t('admin.suppliers.supplierName')} *</label>
+            <label className={labelClass}>{t('admin.suppliers.supplierName')} *</label>
             <Input
               value={form.name}
               onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
               placeholder={t('admin.suppliers.namePlaceholder')}
               autoFocus
+              className={fieldClass}
             />
           </div>
 
           {/* Category */}
           <div>
-            <label className="text-sm font-medium mb-1 block">{t('admin.suppliers.category')}</label>
+            <label className={labelClass}>{t('admin.suppliers.category')}</label>
             <select
               value={form.category}
               onChange={e => setForm(p => ({ ...p, category: e.target.value as SupplierCategory }))}
-              className="w-full h-11 rounded-xl border border-border/50 bg-background/50 backdrop-blur-sm px-4 text-sm shadow-sm transition-all duration-300 outline-none focus:ring-[3px] focus:ring-ring/50 focus:border-ring hover:border-primary/30"
+              className={fieldClass}
             >
               {SUPPLIER_CATEGORIES_LIST.map(cat => (
                 <option key={cat.value} value={cat.value}>{t(cat.labelKey)}</option>
@@ -127,11 +131,11 @@ export function SupplierModal({ open, onClose, onSave, supplier, saving }: Suppl
           {/* Contact */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium mb-1 block">{t('admin.suppliers.contactType')}</label>
+              <label className={labelClass}>{t('admin.suppliers.contactType')}</label>
               <select
                 value={form.contact_type}
                 onChange={e => setForm(p => ({ ...p, contact_type: e.target.value as 'phone' | 'email' | 'website' | 'other' }))}
-                className="w-full h-11 rounded-xl border border-border/50 bg-background/50 backdrop-blur-sm px-4 text-sm shadow-sm transition-all duration-300 outline-none focus:ring-[3px] focus:ring-ring/50 focus:border-ring hover:border-primary/30"
+                className={fieldClass}
               >
                 <option value="email">{t('admin.suppliers.contactTypes.email')}</option>
                 <option value="phone">{t('admin.suppliers.contactTypes.phone')}</option>
@@ -140,23 +144,24 @@ export function SupplierModal({ open, onClose, onSave, supplier, saving }: Suppl
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">{t('admin.suppliers.contactInfo')}</label>
+              <label className={labelClass}>{t('admin.suppliers.contactInfo')}</label>
               <Input
                 value={form.contact_info}
                 onChange={e => setForm(p => ({ ...p, contact_info: e.target.value }))}
                 placeholder={
-                  form.contact_type === 'email' ? 'contact@example.com'
+                  form.contact_type === 'email' ? 'contact@vendor.com'
                     : form.contact_type === 'phone' ? '+1 555 000 0000'
                     : form.contact_type === 'website' ? 'https://...'
                     : t('admin.suppliers.contactInfoPlaceholder')
                 }
+                className={fieldClass}
               />
             </div>
           </div>
 
           {/* Total Amount */}
           <div>
-            <label className="text-sm font-medium mb-1 block">{t('admin.suppliers.totalAmount')}</label>
+            <label className={labelClass}>{t('admin.suppliers.totalAmount')}</label>
             <Input
               type="number"
               min="0"
@@ -164,21 +169,22 @@ export function SupplierModal({ open, onClose, onSave, supplier, saving }: Suppl
               value={form.total_amount}
               onChange={e => setForm(p => ({ ...p, total_amount: e.target.value }))}
               placeholder="0.00"
+              className={fieldClass}
             />
           </div>
 
           {/* Contract */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5" />
+              <label className={`${labelClass} mb-0 flex items-center gap-1.5`}>
+                <FileText className="w-3 h-3" />
                 {t('admin.suppliers.contract')}
               </label>
-              <div className="flex rounded-lg border border-border/50 overflow-hidden text-xs">
+              <div className="flex rounded-lg border border-[#420c14]/15 overflow-hidden text-[11px]">
                 <button
                   type="button"
                   onClick={() => { setContractMode('url'); setForm(p => ({ ...p, contract_url: '', contract_file_name: '' })) }}
-                  className={`px-2.5 py-1 flex items-center gap-1 transition-colors ${contractMode === 'url' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+                  className={`px-2.5 py-1 flex items-center gap-1 transition-colors ${contractMode === 'url' ? 'bg-[#420c14] text-[#f5f2eb]' : 'text-[#420c14]/50 hover:bg-[#420c14]/5'}`}
                 >
                   <Link className="w-3 h-3" />
                   URL
@@ -186,7 +192,7 @@ export function SupplierModal({ open, onClose, onSave, supplier, saving }: Suppl
                 <button
                   type="button"
                   onClick={() => { setContractMode('file'); setForm(p => ({ ...p, contract_url: '', contract_file_name: '' })) }}
-                  className={`px-2.5 py-1 flex items-center gap-1 transition-colors ${contractMode === 'file' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+                  className={`px-2.5 py-1 flex items-center gap-1 transition-colors ${contractMode === 'file' ? 'bg-[#420c14] text-[#f5f2eb]' : 'text-[#420c14]/50 hover:bg-[#420c14]/5'}`}
                 >
                   <Upload className="w-3 h-3" />
                   {t('admin.suppliers.uploadFile')}
@@ -201,35 +207,30 @@ export function SupplierModal({ open, onClose, onSave, supplier, saving }: Suppl
                     value={form.contract_url}
                     onChange={e => setForm(p => ({ ...p, contract_url: e.target.value }))}
                     placeholder="https://drive.google.com/..."
-                    className="flex-1"
+                    className={`${fieldClass} flex-1`}
                   />
                   {form.contract_url && (
                     <a href={form.contract_url} target="_blank" rel="noopener noreferrer">
-                      <Button type="button" variant="outline" size="icon">
+                      <button type="button" className="h-10 w-10 rounded-xl border border-[#420c14]/15 flex items-center justify-center text-[#420c14]/40 hover:text-[#420c14] hover:bg-[#420c14]/5 transition-colors">
                         <ExternalLink className="w-4 h-4" />
-                      </Button>
+                      </button>
                     </a>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">{t('admin.suppliers.contractUrlHint')}</p>
+                <p className="text-[11px] text-[#420c14]/35 mt-1">{t('admin.suppliers.contractUrlHint')}</p>
               </>
             ) : (
               <div>
                 {form.contract_url && form.contract_file_name ? (
-                  <div className="flex items-center gap-2 rounded-xl border border-border/50 bg-background/50 px-3 py-2.5 text-sm">
-                    <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <a
-                      href={form.contract_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 truncate text-primary hover:underline"
-                    >
+                  <div className="flex items-center gap-2 rounded-xl border border-[#420c14]/15 bg-[#f5f2eb] px-3 py-2.5 text-sm">
+                    <FileText className="w-4 h-4 text-[#420c14]/30 shrink-0" />
+                    <a href={form.contract_url} target="_blank" rel="noopener noreferrer" className="flex-1 truncate text-[#DDA46F] hover:underline text-xs">
                       {form.contract_file_name}
                     </a>
                     <button
                       type="button"
                       onClick={() => setForm(p => ({ ...p, contract_url: '', contract_file_name: '' }))}
-                      className="text-muted-foreground hover:text-destructive transition-colors"
+                      className="text-[#420c14]/30 hover:text-red-400 transition-colors"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -239,7 +240,7 @@ export function SupplierModal({ open, onClose, onSave, supplier, saving }: Suppl
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploadingContract}
-                    className="w-full flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border/50 bg-background/30 hover:bg-muted/40 hover:border-primary/40 transition-colors py-6 text-sm text-muted-foreground disabled:opacity-50"
+                    className="w-full flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#420c14]/15 bg-[#f5f2eb]/50 hover:bg-[#f5f2eb] hover:border-[#DDA46F]/40 transition-colors py-6 text-sm text-[#420c14]/40 disabled:opacity-50"
                   >
                     {uploadingContract ? (
                       <><Loader2 className="w-5 h-5 animate-spin" />{t('admin.suppliers.uploading')}</>
@@ -261,23 +262,34 @@ export function SupplierModal({ open, onClose, onSave, supplier, saving }: Suppl
 
           {/* Notes */}
           <div>
-            <label className="text-sm font-medium mb-1 block">{t('admin.suppliers.notes')}</label>
+            <label className={labelClass}>{t('admin.suppliers.notes')}</label>
             <Textarea
               value={form.notes}
               onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
               placeholder={t('admin.suppliers.notesPlaceholder')}
               rows={3}
-              className="resize-none"
+              className="w-full rounded-xl border border-[#420c14]/15 bg-[#fefdfb] px-3 py-2.5 text-sm text-[#420c14] placeholder:text-[#420c14]/30 outline-none focus:ring-2 focus:ring-[#420c14]/15 focus:border-[#420c14]/40 transition-all resize-none"
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-1">
-            <Button variant="outline" onClick={onClose} disabled={saving}>
+          <div className="flex justify-end gap-2 pt-1 border-t border-[#420c14]/8">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="px-4 py-2 rounded-xl border border-[#420c14]/15 text-sm text-[#420c14]/60 hover:bg-[#420c14]/5 hover:text-[#420c14] transition-colors disabled:opacity-50"
+            >
               {t('common.cancel')}
-            </Button>
-            <Button onClick={handleSubmit} disabled={!form.name.trim() || saving}>
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!form.name.trim() || saving}
+              className="px-5 py-2 rounded-xl bg-[#420c14] text-[#f5f2eb] text-sm font-medium hover:bg-[#5a1a22] transition-colors disabled:opacity-40 flex items-center gap-2"
+            >
+              {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               {saving ? t('admin.settings.saving') : supplier ? t('common.save') : t('common.add')}
-            </Button>
+            </button>
           </div>
         </div>
       </DialogContent>

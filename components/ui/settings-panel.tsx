@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { X, Settings, FileText, Palette, Type, ChevronDown, Users, UserPlus, Trash2, Globe, Upload, Search } from 'lucide-react'
+import { X, Settings, FileText, Palette, Type, ChevronDown, Users, UserPlus, Trash2, Globe, Upload, Search, Navigation } from 'lucide-react'
 import { Button } from './button'
 import { Input } from './input'
 import { WeddingDetailsForm } from './config-forms/wedding-details-form'
@@ -9,10 +9,12 @@ import { UpdateWeddingNameId } from './update-wedding-name-id'
 import { MetadataSettingsPanel } from './metadata-settings-panel'
 import { CollaboratorManager } from './collaborator-manager'
 import { ColorPicker } from './color-picker'
+import { PagesPanel } from './pages-panel'
 import { FONT_PAIRINGS, FONT_PAIRING_CATEGORIES, COLOR_THEMES, COLOR_THEME_CATEGORIES, AVAILABLE_FONTS } from '@/lib/theme-config'
 import { useCollaborators } from '@/hooks/use-auth'
 import { useImageUpload } from '@/hooks/use-image-upload'
 import { useEditingModeSafe } from '@/components/contexts/editing-mode-context'
+import { usePageConfigSafe } from '@/components/contexts/page-config-context'
 
 type NavBackgroundColorChoice = 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
 type EnvelopeColorChoice = 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
@@ -203,7 +205,7 @@ interface WeddingDetails {
   reception_venue_address: string | null
 }
 
-type TabType = 'details' | 'theme' | 'sharing'
+type TabType = 'details' | 'theme' | 'pages' | 'sharing'
 
 export function SettingsPanel({
   isOpen,
@@ -235,6 +237,9 @@ export function SettingsPanel({
   currentLocale = 'en',
   onLocaleChange,
 }: SettingsPanelProps) {
+  const pageConfigCtx = usePageConfigSafe()
+  const hasSubPages = (pageConfigCtx?.config?.pages?.length ?? 0) > 0
+
   const [activeTab, setActiveTab] = useState<TabType>('details')
   const [details, setDetails] = useState<WeddingDetails | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -472,6 +477,17 @@ export function SettingsPanel({
           >
             <Palette className="w-4 h-4" />
             Theme
+          </button>
+          <button
+            onClick={() => setActiveTab('pages')}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'pages'
+                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+            }`}
+          >
+            <Navigation className="w-4 h-4" />
+            Pages
           </button>
           {canManageCollaborators && (
             <button
@@ -1586,6 +1602,9 @@ export function SettingsPanel({
                 </div>
               </div>
             </div>
+          ) : activeTab === 'pages' ? (
+            // Pages Tab
+            <PagesPanel weddingNameId={weddingNameId} />
           ) : activeTab === 'sharing' ? (
             // Sharing Tab
             <div className="space-y-6">

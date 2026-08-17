@@ -39,10 +39,7 @@ export function MetadataSettingsPanel({
       const result = await uploadImage(file, { maxPx: 1200, quality: 0.82, maxBytes: 500 * 1024 })
       if (result?.url) {
         // Ensure we're using the full public URL
-        const fullUrl = result.url.startsWith('http') 
-          ? result.url 
-          : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/wedding-images/${result.path}`
-        setOgImageUrl(fullUrl)
+        setOgImageUrl(result.url)
       }
     } catch (error) {
       setSaveMessage('Failed to upload image')

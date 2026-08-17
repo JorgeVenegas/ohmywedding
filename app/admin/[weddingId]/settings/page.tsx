@@ -38,7 +38,11 @@ import {
   Percent,
   Trash2,
   AlertTriangle,
+  BarChart2,
+  Camera,
+  Send,
 } from "lucide-react"
+import { toast } from "sonner"
 import { INVITATION_PRICING, MANAGEMENT_PRICING, getTierLocaleCopy, planLabel, type PricingAxis, type InvitationTier, type ManagementTier, formatMXNFromCents } from "@/lib/subscription-shared"
 
 // Maps a selected plan to its same-tier companion on the other axis
@@ -70,6 +74,15 @@ interface WeddingSettings {
   timezone: string
   language: string
   dashboard_sections: Record<string, boolean>
+  activity_reports: {
+    enabled: boolean
+    frequency: 'daily' | 'weekly'
+    include_rsvp: boolean
+    include_meetings: boolean
+    include_budget: boolean
+    include_messages: boolean
+    additional_emails: string[]
+  }
 }
 
 interface Subscription {
@@ -85,7 +98,7 @@ interface SettingsPageProps {
   params: Promise<{ weddingId: string }>
 }
 
-type Section = "general" | "subscription" | "collaborators" | "dashboardSections" | "messaging" | "danger"
+type Section = "general" | "subscription" | "collaborators" | "dashboardSections" | "messaging" | "activityReports" | "gallery" | "danger"
 
 export default function SettingsPage({ params }: SettingsPageProps) {
   return (
@@ -105,8 +118,9 @@ function SettingsPageInner({ params }: SettingsPageProps) {
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [sendingTestEmail, setSendingTestEmail] = useState(false)
 
-  const validSections: Section[] = ["general", "subscription", "collaborators", "dashboardSections", "messaging", "danger"]
+  const validSections: Section[] = ["general", "subscription", "collaborators", "dashboardSections", "messaging", "activityReports", "gallery", "danger"]
   const sectionFromUrl = searchParams.get('section') as Section | null
   const [activeSection, setActiveSection] = useState<Section>(
     sectionFromUrl && validSections.includes(sectionFromUrl) ? sectionFromUrl : "general"
@@ -261,6 +275,8 @@ function SettingsPageInner({ params }: SettingsPageProps) {
     { id: "collaborators", label: t('admin.settings.nav.collaborators'), icon: UserCog },
     { id: "dashboardSections", label: t('admin.settings.nav.dashboardSections'), icon: LayoutGrid },
     { id: "messaging", label: t('admin.settings.nav.messaging'), icon: MessageCircle },
+    { id: "activityReports", label: t('admin.settings.nav.activityReports'), icon: BarChart2 },
+    { id: "gallery", label: t('admin.settings.nav.gallery'), icon: Camera },
     { id: "danger", label: t('admin.settings.nav.danger'), icon: AlertTriangle, danger: true },
   ]
 
@@ -639,6 +655,189 @@ function SettingsPageInner({ params }: SettingsPageProps) {
                 </div>
               )}
 
+              {/* Activity Reports */}
+              {activeSection === "activityReports" && (() => {
+                const isEligible = ['personalized', 'bespoke'].includes(currentInvTier ?? '') ||
+                  ['pro', 'agency'].includes(currentMgmtTier ?? '')
+                const ar = settings?.activity_reports ?? {
+                  enabled: false, frequency: 'weekly' as const,
+                  include_rsvp: true, include_meetings: true, include_budget: true, include_messages: true,
+                  additional_emails: [],
+                }
+                const updateAr = (patch: Partial<typeof ar>) => {
+                  updateSetting('activity_reports', { ...ar, ...patch })
+                }
+                return (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-base font-serif text-[#420c14] mb-1">{t('admin.settings.activityReports.title')}</h2>
+                      <p className="text-sm text-muted-foreground">{t('admin.settings.activityReports.description')}</p>
+                    </div>
+
+                    {!isEligible ? (
+                      <div className="rounded-xl border border-[#DDA46F]/30 bg-[#DDA46F]/5 p-5 flex gap-3 items-start">
+                        <BarChart2 className="w-4 h-4 text-[#DDA46F] mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-xs font-semibold text-[#420c14] mb-1">{t('admin.settings.activityReports.upgradeBadge')}</p>
+                          <p className="text-sm text-[#420c14]/60">{t('admin.settings.activityReports.upgradeNotice')}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-5">
+                        {/* Enable toggle */}
+                        <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-card">
+                          <Label className="text-sm font-medium">{t('admin.settings.activityReports.enableLabel')}</Label>
+                          <Switch
+                            checked={ar.enabled}
+                            onCheckedChange={(v) => updateAr({ enabled: v })}
+                          />
+                        </div>
+
+                        {ar.enabled && (
+                          <>
+                            {/* Frequency */}
+                            <div className="p-4 rounded-xl border border-border bg-card space-y-3">
+                              <Label className="text-sm font-medium">{t('admin.settings.activityReports.frequencyLabel')}</Label>
+                              <div className="flex gap-2">
+                                {(['daily', 'weekly'] as const).map((freq) => (
+                                  <button
+                                    key={freq}
+                                    onClick={() => updateAr({ frequency: freq })}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                                      ar.frequency === freq
+                                        ? 'bg-[#420c14] text-[#f5f2eb] border-[#420c14]'
+                                        : 'bg-background text-muted-foreground border-border hover:border-[#420c14]/30'
+                                    }`}
+                                  >
+                                    {t(`admin.settings.activityReports.${freq}`)}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* What to include */}
+                            <div className="p-4 rounded-xl border border-border bg-card space-y-3">
+                              <Label className="text-sm font-medium">{t('admin.settings.activityReports.includeLabel')}</Label>
+                              <div className="space-y-2">
+                                {([
+                                  ['include_rsvp', 'includeRsvp'],
+                                  ['include_meetings', 'includeMeetings'],
+                                  ['include_budget', 'includeBudget'],
+                                  ['include_messages', 'includeMessages'],
+                                ] as const).map(([key, labelKey]) => (
+                                  <div key={key} className="flex items-center justify-between py-1">
+                                    <span className="text-sm text-muted-foreground">{t(`admin.settings.activityReports.${labelKey}`)}</span>
+                                    <Switch
+                                      checked={ar[key]}
+                                      onCheckedChange={(v) => updateAr({ [key]: v })}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Additional recipients */}
+                            <div className="p-4 rounded-xl border border-border bg-card space-y-2">
+                              <Label className="text-sm font-medium">{t('admin.settings.activityReports.additionalEmailsLabel')}</Label>
+                              <Input
+                                placeholder={t('admin.settings.activityReports.additionalEmailsPlaceholder')}
+                                value={ar.additional_emails.join(', ')}
+                                onChange={(e) =>
+                                  updateAr({
+                                    additional_emails: e.target.value
+                                      .split(',')
+                                      .map(s => s.trim())
+                                      .filter(Boolean),
+                                  })
+                                }
+                              />
+                              <p className="text-xs text-muted-foreground">{t('admin.settings.activityReports.additionalEmailsHint')}</p>
+                            </div>
+
+                            {/* Test email */}
+                            <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-card">
+                              <div>
+                                <p className="text-sm font-medium">Enviar prueba</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">Recibe el reporte ahora para verificar que se ve bien.</p>
+                              </div>
+                              <button
+                                disabled={sendingTestEmail}
+                                onClick={async () => {
+                                  setSendingTestEmail(true)
+                                  try {
+                                    const res = await fetch(
+                                      `/api/cron/activity-reports?test=true&weddingId=${encodeURIComponent(weddingId)}`,
+                                      { method: 'POST' }
+                                    )
+                                    if (res.ok) {
+                                      toast.success('Correo de prueba enviado')
+                                    } else {
+                                      toast.error('No se pudo enviar el correo')
+                                    }
+                                  } catch {
+                                    toast.error('Error al enviar el correo')
+                                  } finally {
+                                    setSendingTestEmail(false)
+                                  }
+                                }}
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-[#420c14]/15 bg-white text-[#420c14] px-3 py-2 text-sm font-medium hover:bg-[#420c14]/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {sendingTestEmail ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Send className="w-3.5 h-3.5" />
+                                )}
+                                Enviar prueba
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+
+              {/* Gallery */}
+              {activeSection === "gallery" && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-base font-serif text-[#420c14] mb-1">{t('admin.settings.nav.gallery')}</h2>
+                    <p className="text-sm text-muted-foreground">{t('admin.settings.gallerySettings.description')}</p>
+                  </div>
+
+                  <div className="rounded-lg border border-border/60 bg-background/60 p-4 space-y-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-medium">{t('admin.settings.gallerySettings.allowGuestUploads')}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {t('admin.settings.gallerySettings.allowGuestUploadsDescription')}
+                        </p>
+                      </div>
+                      <Switch
+                        checked={!!settings?.gallery_allow_guest_uploads}
+                        onCheckedChange={(v) => updateSetting("gallery_allow_guest_uploads", v)}
+                      />
+                    </div>
+
+                    {settings?.gallery_allow_guest_uploads && (
+                      <div className="flex items-center justify-between gap-4 border-t border-border/40 pt-4">
+                        <div>
+                          <p className="text-sm font-medium">{t('admin.settings.gallerySettings.moderation')}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {t('admin.settings.gallerySettings.moderationDescription')}
+                          </p>
+                        </div>
+                        <Switch
+                          checked={!!settings?.gallery_moderation_enabled}
+                          onCheckedChange={(v) => updateSetting("gallery_moderation_enabled", v)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Danger Zone */}
               {activeSection === "danger" && (
                 <div className="space-y-6">
@@ -913,7 +1112,9 @@ const DASHBOARD_CARD_KEYS = [
   "dishes",
   "itinerary",
   "suppliers",
+  "gallery",
   "timeline",
+  "guestMessages",
   "summary",
 ] as const
 
@@ -932,7 +1133,9 @@ const SECTION_ICONS: Record<DashboardSectionKey, React.ComponentType<{ className
   dishes: Calendar,
   itinerary: Calendar,
   suppliers: Users,
+  gallery: Camera,
   timeline: CalendarClock,
+  guestMessages: MessageCircle,
   summary: Settings,
   invitationOpens: Mail,
   recentActivity: Calendar,

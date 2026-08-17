@@ -30,7 +30,7 @@ export function ExperienceSection({ ns = 'landing' }: { ns?: string }) {
   return (
     <section id="experience" ref={ref} className="py-20 sm:py-32 bg-[#172815] relative overflow-hidden min-h-[700px] sm:min-h-[800px]">
       {/* Background Video */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0" style={{ transform: 'translateZ(0)' }}>
         <AnimatePresence mode="sync">
           <motion.div
             key={activeIndex}
@@ -39,6 +39,7 @@ export function ExperienceSection({ ns = 'landing' }: { ns?: string }) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.8, ease: "easeInOut" }}
             className="absolute inset-0"
+            style={{ willChange: 'opacity' }}
           >
             <video
               autoPlay
@@ -135,10 +136,10 @@ export function ExperienceSection({ ns = 'landing' }: { ns?: string }) {
                     onClick={() => setActiveIndex(index)}
                   >
                     <motion.div
-                      className="h-full bg-[#DDA46F]"
-                      initial={{ width: 0 }}
-                      animate={{ width: activeIndex === index ? '100%' : '0%' }}
-                      transition={{ duration: activeIndex === index ? 5 : 0.3 }}
+                      className="h-full bg-[#DDA46F] origin-left"
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: activeIndex === index ? 1 : 0 }}
+                      transition={{ duration: activeIndex === index ? 5 : 0.3, ease: 'linear' }}
                     />
                   </div>
                 ))}

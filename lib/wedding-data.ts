@@ -32,6 +32,7 @@ export interface Wedding {
   design_self_serve_locked?: boolean
   invitation_design_status?: DesignStatus
   wedding_features?: {
+    plan?: string
     invitation_tier?: string
     management_tier?: string
   }

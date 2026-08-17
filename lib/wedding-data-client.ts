@@ -17,25 +17,27 @@ export async function getWeddingByNameIdClient(weddingNameId: string): Promise<W
     return null
   }
 
-  // Fetch the wedding subscription (plan info)
+  // Fetch the wedding subscription (plan info + tier fields needed for subdomain redirect logic)
   const { data: features } = await supabase
     .from('wedding_subscriptions')
-    .select('plan')
+    .select('plan, invitation_tier, management_tier')
     .eq('wedding_id', data.id)
     .single()
 
   return {
     ...data,
-    wedding_features: features ? { plan: features.plan } : { plan: 'free' }
+    wedding_features: features
+      ? { plan: features.plan, invitation_tier: features.invitation_tier, management_tier: features.management_tier }
+      : { plan: 'free' }
   } as Wedding
 }
 
 export async function getWeddingByDateAndNameIdClient(dateId: string, weddingNameId: string): Promise<Wedding | null> {
   const supabase = createClient()
-  
+
   // Decode the wedding name ID in case it's URL encoded
   const decodedWeddingNameId = decodeURIComponent(weddingNameId)
-  
+
   const { data, error } = await supabase
     .from('weddings')
     .select('*')
@@ -47,16 +49,18 @@ export async function getWeddingByDateAndNameIdClient(dateId: string, weddingNam
     return null
   }
 
-  // Fetch the wedding subscription (plan info)
+  // Fetch the wedding subscription (plan info + tier fields needed for subdomain redirect logic)
   const { data: features } = await supabase
     .from('wedding_subscriptions')
-    .select('plan')
+    .select('plan, invitation_tier, management_tier')
     .eq('wedding_id', data.id)
     .single()
 
   return {
     ...data,
-    wedding_features: features ? { plan: features.plan } : { plan: 'free' }
+    wedding_features: features
+      ? { plan: features.plan, invitation_tier: features.invitation_tier, management_tier: features.management_tier }
+      : { plan: 'free' }
   } as Wedding
 }
 

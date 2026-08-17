@@ -47,7 +47,7 @@ export function PlanIndicator() {
           <TooltipTrigger asChild>
             <button
               onClick={() => { if (!hasPaidPlan) setShowUpgradeModal(true) }}
-              className="fixed bottom-6 right-6 z-50 group"
+              className="fixed bottom-6 left-6 z-30 group"
               aria-label={`${label} plan${!hasPaidPlan ? ' - click to upgrade' : ''}`}
             >
               <div className={`

@@ -33,6 +33,9 @@ export interface Quote {
   language: 'en' | 'es'
   status: QuoteStatus
   wedding_id: string | null
+  wedding_date: string | null
+  estimated_guests: number | null
+  location: string | null
   created_by: string
   created_at: string
   updated_at: string

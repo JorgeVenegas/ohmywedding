@@ -287,13 +287,13 @@ export default function PromotionsPage() {
                   {/* Discount percentages */}
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-sm">
                     <div className="flex items-center gap-1.5 text-[#420c14]/70">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-[#420c14]/40">Premium</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-[#420c14]/40">Personalized</span>
                       <span>Card: <strong className="text-[#420c14]">{d.premium_card_discount_percent}%</strong></span>
                       <span className="text-[#420c14]/30">/</span>
                       <span>MSI: <strong className="text-[#420c14]">{d.premium_msi_discount_percent}%</strong></span>
                     </div>
                     <div className="flex items-center gap-1.5 text-[#420c14]/70">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-[#DDA46F]/70">Deluxe</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-[#DDA46F]/70">Bespoke</span>
                       <span>Card: <strong className="text-[#420c14]">{d.deluxe_card_discount_percent}%</strong></span>
                       <span className="text-[#420c14]/30">/</span>
                       <span>MSI: <strong className="text-[#420c14]">{d.deluxe_msi_discount_percent}%</strong></span>
@@ -413,7 +413,7 @@ export default function PromotionsPage() {
               <div className="grid grid-cols-2 gap-3">
                 {/* Premium */}
                 <div className="bg-[#f5f2eb] rounded-xl p-3">
-                  <p className="text-[10px] font-semibold text-[#420c14]/60 uppercase tracking-wider mb-2 text-center">Premium</p>
+                  <p className="text-[10px] font-semibold text-[#420c14]/60 uppercase tracking-wider mb-2 text-center">Personalized</p>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-[#420c14]/60 w-10 flex-shrink-0">Card</span>
@@ -443,7 +443,7 @@ export default function PromotionsPage() {
                 </div>
                 {/* Deluxe */}
                 <div className="bg-[#f5f2eb] rounded-xl p-3">
-                  <p className="text-[10px] font-semibold text-[#DDA46F] uppercase tracking-wider mb-2 text-center">Deluxe</p>
+                  <p className="text-[10px] font-semibold text-[#DDA46F] uppercase tracking-wider mb-2 text-center">Bespoke</p>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-[#420c14]/60 w-10 flex-shrink-0">Card</span>

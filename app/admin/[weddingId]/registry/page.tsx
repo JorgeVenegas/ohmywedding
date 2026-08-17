@@ -615,21 +615,21 @@ export default function RegistryPage({ params }: RegistryPageProps) {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8">
         {/* Rest of content */}
         {!featuresLoading && (
           <>
-        
+
         {/* Error Display */}
         {errorDialog.show && (
-          <Card className="p-4 mb-8 border-destructive bg-destructive/10">
+          <Card className="p-4 mb-6 border-destructive bg-destructive/10">
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <h3 className="font-semibold text-foreground mb-1">Error</h3>
                 <p className="text-sm text-destructive">{errorDialog.message}</p>
               </div>
-              <button 
+              <button
                 onClick={() => setErrorDialog({ show: false, message: "" })}
                 className="text-destructive hover:text-destructive/80"
               >
@@ -640,16 +640,49 @@ export default function RegistryPage({ params }: RegistryPageProps) {
         )}
 
         {/* Contributions View */}
-        {viewMode === 'contributions' && weddingData && items.length > 0 && (
-          <RegistryContributionsList 
-            weddingId={weddingData.id} 
-            items={items}
-            searchQuery={contributionSearchQuery}
-            filterByItem={contributionFilterByItem}
-            filterByStatus={contributionFilterByStatus}
-            sortBy={contributionSortBy}
-            onStatsChange={setContributionStats}
-          />
+        {viewMode === 'contributions' && (
+          isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="rounded-2xl border border-[#420c14]/8 bg-white p-4 animate-pulse">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-[#420c14]/6 flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3.5 bg-[#420c14]/6 rounded w-1/3" />
+                      <div className="h-3 bg-[#420c14]/4 rounded w-1/2" />
+                    </div>
+                    <div className="h-5 bg-[#420c14]/6 rounded w-16" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : !weddingData || items.length === 0 ? (
+            <div className="rounded-2xl border border-[#420c14]/10 border-dashed bg-white py-20 text-center">
+              <div className="w-16 h-16 rounded-full bg-[#DDA46F]/10 flex items-center justify-center mx-auto mb-4">
+                <DollarSign className="w-7 h-7 text-[#DDA46F]" />
+              </div>
+              <p className="text-xl font-serif text-[#420c14] mb-1">{t('admin.registry.empty.noItems')}</p>
+              <p className="text-sm text-[#420c14]/40 mb-6 max-w-xs mx-auto leading-relaxed">
+                {t('admin.registry.description')}
+              </p>
+              <Button
+                onClick={() => setViewMode('items')}
+                className="bg-[#420c14] hover:bg-[#5a1220] text-white"
+              >
+                {t('admin.registry.empty.createFirst')}
+              </Button>
+            </div>
+          ) : (
+            <RegistryContributionsList
+              weddingId={weddingData.id}
+              items={items}
+              searchQuery={contributionSearchQuery}
+              filterByItem={contributionFilterByItem}
+              filterByStatus={contributionFilterByStatus}
+              sortBy={contributionSortBy}
+              onStatsChange={setContributionStats}
+            />
+          )
         )}
 
         {/* Items View */}
@@ -666,234 +699,308 @@ export default function RegistryPage({ params }: RegistryPageProps) {
               />
             )}
 
+
+
         {/* Form */}
         {showForm && (
-          <Card className="p-6 mb-8 border border-border shadow-sm">
-            <h2 className="text-xl font-serif text-brand mb-4">
-              {editingItem ? "Edit Registry Item" : "Add New Registry Item"}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="mb-8 rounded-2xl border border-[#420c14]/12 bg-white shadow-sm overflow-hidden">
+            {/* Form header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#420c14]/8 bg-[#420c14]/[0.02]">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Title *
-                </label>
-                <Input
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g., Honeymoon Fund, Dream Home Down Payment"
-                  required
-                />
+                <p className="text-[10px] uppercase tracking-[0.25em] text-[#DDA46F] mb-0.5">{t('admin.registry.title')}</p>
+                <h2 className="text-lg font-serif text-[#420c14]">
+                  {editingItem ? t('admin.registry.buttons.updateItem') : t('admin.registry.buttons.addItem')}
+                </h2>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Description
-                </label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Tell guests about this registry item..."
-                  rows={4}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Goal Amount *
-                </label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.goal_amount}
-                    onChange={(e) => setFormData({ ...formData, goal_amount: e.target.value })}
-                    placeholder="0.00"
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Images
-                </label>
-                <div className="space-y-3">
-                  {/* Image Preview Grid */}
-                  {formData.image_urls.length > 0 && (
-                    <div className="grid grid-cols-4 gap-2">
-                      {formData.image_urls.map((url, index) => (
-                        <div key={index} className="relative group aspect-square">
-                          <img
-                            src={url}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-full object-cover rounded-lg border border-border"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute top-1 right-1 p-1 bg-destructive text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
+              <button
+                type="button"
+                onClick={() => { setShowForm(false); setEditingItem(null); setFormData({ title: "", description: "", goal_amount: "", image_urls: [] }) }}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[#420c14]/30 hover:text-[#420c14] hover:bg-[#420c14]/5 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left column */}
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-[#420c14]/60 uppercase tracking-wider">
+                      {t('admin.registry.form.titleLabel')}
+                    </label>
+                    <Input
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      placeholder="e.g., Honeymoon Fund, Dream Home Down Payment"
+                      className="border-[#420c14]/15 focus-visible:ring-[#DDA46F]/30"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-[#420c14]/60 uppercase tracking-wider">
+                      {t('admin.registry.form.descriptionLabel')}
+                    </label>
+                    <Textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Tell guests about this registry item..."
+                      rows={4}
+                      className="border-[#420c14]/15 focus-visible:ring-[#DDA46F]/30 resize-none"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-[#420c14]/60 uppercase tracking-wider">
+                      {t('admin.registry.form.goalAmount')}
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-[#420c14]/40">$</span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.goal_amount}
+                        onChange={(e) => setFormData({ ...formData, goal_amount: e.target.value })}
+                        placeholder="0.00"
+                        className="pl-7 border-[#420c14]/15 focus-visible:ring-[#DDA46F]/30"
+                        required
+                      />
                     </div>
-                  )}
-                  {/* Upload Component */}
-                  <ImageUpload
-                    onUpload={(url) => {
-                      if (!url) return
-                      setFormData(prev => ({
-                        ...prev,
-                        image_urls: [
-                          url,
-                          ...prev.image_urls.filter(Boolean).filter(existing => existing !== url)
-                        ]
-                      }))
-                    }}
-                    placeholder="Add registry item image"
-                  />
+                  </div>
+                </div>
+
+                {/* Right column — image */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-[#420c14]/60 uppercase tracking-wider">
+                    {t('admin.registry.form.images')}
+                  </label>
+                  <div className="space-y-3">
+                    {formData.image_urls.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2">
+                        {formData.image_urls.map((url, index) => (
+                          <div key={index} className="relative group aspect-square">
+                            <img
+                              src={url}
+                              alt={`Preview ${index + 1}`}
+                              className="w-full h-full object-cover rounded-xl border border-[#420c14]/10"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute top-1 right-1 p-1 bg-[#420c14] text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <ImageUpload
+                      onUpload={(url) => {
+                        if (!url) return
+                        setFormData(prev => ({
+                          ...prev,
+                          image_urls: [url, ...prev.image_urls.filter(Boolean).filter(existing => existing !== url)]
+                        }))
+                      }}
+                      placeholder="Add registry item image"
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button type="submit">
-                  {editingItem ? "Update Item" : "Create Item"}
+
+              <div className="flex gap-3 mt-6 pt-5 border-t border-[#420c14]/8">
+                <Button
+                  type="submit"
+                  className="bg-[#420c14] hover:bg-[#5a1220] text-white"
+                >
+                  {editingItem ? t('admin.registry.buttons.updateItem') : t('admin.registry.buttons.createItem')}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => {
-                    setShowForm(false)
-                    setEditingItem(null)
-                    setFormData({ title: "", description: "", goal_amount: "", image_urls: [] })
-                  }}
+                  onClick={() => { setShowForm(false); setEditingItem(null); setFormData({ title: "", description: "", goal_amount: "", image_urls: [] }) }}
+                  className="border-[#420c14]/15 text-[#420c14]/60"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </div>
             </form>
-          </Card>
+          </div>
         )}
 
-        {/* Items List */}
-        <div className="space-y-4">
-          {isLoading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading registry items...</p>
+        {/* Items Grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="rounded-2xl border border-[#420c14]/8 overflow-hidden animate-pulse">
+                <div className="aspect-[4/3] bg-[#420c14]/6" />
+                <div className="p-5 space-y-3">
+                  <div className="h-4 bg-[#420c14]/6 rounded w-2/3" />
+                  <div className="h-3 bg-[#420c14]/4 rounded w-full" />
+                  <div className="h-2 bg-[#420c14]/6 rounded-full w-full mt-4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : items.length === 0 ? (
+          <div className="rounded-2xl border border-[#420c14]/10 border-dashed bg-white py-20 text-center">
+            <div className="w-16 h-16 rounded-full bg-[#DDA46F]/10 flex items-center justify-center mx-auto mb-4">
+              <DollarSign className="w-7 h-7 text-[#DDA46F]" />
             </div>
-          ) : items.length === 0 ? (
-            <Card className="p-12 text-center border border-border">
-              <p className="text-lg font-serif text-brand mb-1">No registry items yet</p>
-              <p className="text-sm text-brand/50 mb-4">Add your first item to get started</p>
-              <Button onClick={() => setShowForm(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Your First Item
-              </Button>
-            </Card>
-          ) : filteredAndSortedItems.length === 0 ? (
-            <Card className="p-12 text-center border border-border shadow-sm">
-              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-brand/30" />
-              <p className="font-serif text-brand/60">No items match your filters</p>
-            </Card>
-          ) : (
-            filteredAndSortedItems.map((item) => (
-              <Card key={item.id} className="p-6 border border-border shadow-sm">
-                <div className="flex items-start gap-4">
-                  {/* Image Thumbnail */}
-                  {item.image_urls && item.image_urls.length > 0 && (
-                    <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-muted relative">
-                      <img
-                        src={item.image_urls[0]}
-                        alt={item.title}
-                        className="w-full h-full object-cover"
-                      />
-                      {item.image_urls.length > 1 && (
-                        <div className="absolute bottom-0.5 right-0.5 bg-black/70 text-white text-xs px-1 py-0.5 rounded">
-                          +{item.image_urls.length - 1}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-serif text-brand">{item.title}</h3>
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full ${
-                          item.is_active
-                            ? "bg-secondary/10 text-secondary"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {item.is_active ? "Active" : "Inactive"}
+            <p className="text-xl font-serif text-[#420c14] mb-1">{t('admin.registry.empty.noItems')}</p>
+            <p className="text-sm text-[#420c14]/40 mb-6 max-w-xs mx-auto">{t('admin.registry.description')}</p>
+            <Button
+              onClick={() => setShowForm(true)}
+              className="bg-[#420c14] hover:bg-[#5a1220] text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              {t('admin.registry.empty.createFirst')}
+            </Button>
+          </div>
+        ) : filteredAndSortedItems.length === 0 ? (
+          <div className="rounded-2xl border border-[#420c14]/10 border-dashed bg-white py-16 text-center">
+            <Search className="w-10 h-10 mx-auto mb-3 text-[#420c14]/20" />
+            <p className="font-serif text-[#420c14]/50">{t('admin.registry.empty.noMatch')}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredAndSortedItems.map((item) => {
+              const raised = Number(item.current_amount)
+              const goal = Number(item.goal_amount)
+              const pct = goal > 0 ? Math.min((raised / goal) * 100, 100) : 0
+              const isFunded = pct >= 100
+
+              return (
+                <div
+                  key={item.id}
+                  className="group rounded-2xl border border-[#420c14]/10 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+                >
+                  {/* Image area */}
+                  <div className="relative aspect-[4/3] bg-[#f5f2eb] overflow-hidden">
+                    {item.image_urls && item.image_urls.length > 0 ? (
+                      <>
+                        <img
+                          src={item.image_urls[0]}
+                          alt={item.title}
+                          className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                        />
+                        {item.image_urls.length > 1 && (
+                          <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                            +{item.image_urls.length - 1}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <DollarSign className="w-12 h-12 text-[#420c14]/15" />
+                      </div>
+                    )}
+
+                    {/* Status badge */}
+                    <div className="absolute top-3 left-3">
+                      <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full backdrop-blur-sm ${
+                        isFunded
+                          ? "bg-[#DDA46F] text-white"
+                          : item.is_active
+                          ? "bg-white/90 text-[#420c14]"
+                          : "bg-[#420c14]/70 text-white/70"
+                      }`}>
+                        {isFunded ? "Funded" : item.is_active ? "Active" : "Inactive"}
                       </span>
                     </div>
+
+                    {/* Hover action buttons */}
+                    <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <button
+                        onClick={() => handleEdit(item)}
+                        className="w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-[#420c14] hover:bg-white shadow-sm transition-colors"
+                        title="Edit"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </button>
+                      <div className="relative group/del">
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          disabled={itemsWithPendingContributions.has(item.id)}
+                          className={`w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm transition-colors ${
+                            itemsWithPendingContributions.has(item.id)
+                              ? "text-[#420c14]/20 cursor-not-allowed"
+                              : "text-[#420c14] hover:bg-red-50 hover:text-red-600"
+                          }`}
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                        {itemsWithPendingContributions.has(item.id) && (
+                          <div className="absolute right-0 top-full mt-1.5 hidden group-hover/del:block bg-[#420c14] text-white text-[10px] rounded-lg px-2.5 py-1.5 whitespace-nowrap z-10 shadow-lg">
+                            Resolve pending contributions first
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-5">
+                    <h3 className="text-base font-serif text-[#420c14] leading-snug mb-1 line-clamp-1">
+                      {item.title}
+                    </h3>
                     {item.description && (
-                      <p className="text-muted-foreground mb-4">{item.description}</p>
+                      <p className="text-xs text-[#420c14]/50 mb-4 line-clamp-2 leading-relaxed">
+                        {item.description}
+                      </p>
                     )}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Progress</span>
-                        <span className="font-medium text-foreground">
-                          ${Number(item.current_amount).toFixed(2)} / ${Number(item.goal_amount).toFixed(2)}
+
+                    {/* Progress section */}
+                    <div className="mt-3 space-y-2">
+                      {/* Amount display */}
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-lg font-serif font-medium text-[#DDA46F]">
+                          ${raised.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                        </span>
+                        <span className="text-xs text-[#420c14]/40">
+                          of ${goal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                         </span>
                       </div>
-                      <div className="w-full bg-muted rounded-full h-2">
+
+                      {/* Progress bar */}
+                      <div className="w-full h-1.5 rounded-full bg-[#420c14]/8 overflow-hidden">
                         <div
-                          className="bg-secondary h-2 rounded-full transition-all"
+                          className="h-full rounded-full transition-all duration-700"
                           style={{
-                            width: `${Math.min(
-                              (Number(item.current_amount) / Number(item.goal_amount)) * 100,
-                              100
-                            )}%`,
+                            width: `${pct}%`,
+                            background: isFunded
+                              ? '#DDA46F'
+                              : 'linear-gradient(to right, #DDA46F, #c99560)',
                           }}
                         />
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {Number(item.goal_amount) > 0
-                          ? ((Number(item.current_amount) / Number(item.goal_amount)) * 100).toFixed(1)
-                          : 0}
-                        % funded
+
+                      <p className="text-[10px] text-[#420c14]/40 font-medium">
+                        {pct.toFixed(0)}% {isFunded ? "fully funded" : "funded"}
                       </p>
                     </div>
-                  </div>
-                  <div className="flex gap-2 mt-4">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => toggleActive(item)}
-                    >
-                      {item.is_active ? "Deactivate" : "Activate"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEdit(item)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <div className="relative group">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDelete(item.id)}
-                        disabled={itemsWithPendingContributions.has(item.id)}
-                        className={itemsWithPendingContributions.has(item.id) ? "opacity-50 cursor-not-allowed" : ""}
+
+                    {/* Bottom action */}
+                    <div className="mt-4 pt-4 border-t border-[#420c14]/6">
+                      <button
+                        onClick={() => toggleActive(item)}
+                        className={`text-xs font-medium transition-colors ${
+                          item.is_active
+                            ? "text-[#420c14]/40 hover:text-[#420c14]"
+                            : "text-[#DDA46F] hover:text-[#c99560]"
+                        }`}
                       >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                      {itemsWithPendingContributions.has(item.id) && (
-                        <div className="absolute right-0 bottom-full mb-2 hidden group-hover:block bg-[#420c14] text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
-                          Resolve pending contributions first
-                        </div>
-                      )}
+                        {item.is_active ? "Deactivate item" : "Activate item"}
+                      </button>
                     </div>
                   </div>
                 </div>
-              </Card>
-            ))
-          )}
-        </div>
+              )
+            })}
+          </div>
+        )}
         </>
         )}
         {/* End Items View */}

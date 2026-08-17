@@ -7,6 +7,8 @@ import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
 import { Wedding } from '@/lib/wedding-data'
+import { resolveComponents, isComponentRef, type InlineComponent } from '@/lib/resolve-component'
+import type { SubPage } from '@/lib/page-config'
 import { getCleanAdminUrl } from '@/lib/admin-url'
 import {
   HeroSection,
@@ -51,7 +53,7 @@ function ConfigBasedWeddingRendererContent({
   wedding,
   weddingNameId
 }: ConfigBasedWeddingRendererProps) {
-  const { config, isLoading, updateComponents, updateSiteSettings, weddingDetails, setWeddingDetails } = usePageConfig()
+  const { config, isLoading, updateComponents, updatePages, updateSiteSettings, weddingDetails, setWeddingDetails } = usePageConfig()
   const siteConfigContext = useSiteConfigSafe()
   const editingContext = useEditingModeSafe()
   const customizeContext = useCustomize()
@@ -72,36 +74,42 @@ function ConfigBasedWeddingRendererContent({
     }
   }, [])
   
+  // Stable primitive key for collaborator_emails — avoids re-running on new array
+  // references that contain the same values (happens when the wedding prop identity
+  // changes due to parent re-renders).
+  const collaboratorEmailsKey = wedding.collaborator_emails?.join(',') ?? ''
+
   React.useEffect(() => {
     async function checkAuthorization() {
       try {
         const supabase = createClient()
-        
+
         console.log('[config-based-wedding-renderer] checkAuthorization: calling getSession()')
         // Use getSession() instead of getUser() — getSession() is cached and
         // doesn't make a network request, avoiding token refresh that causes 429 loops.
         const { data: { session } } = await supabase.auth.getSession()
         const user = session?.user ?? null
         console.log('[config-based-wedding-renderer] getSession result:', user ? `user=${user.email}` : 'no session')
-        
+
         if (!user) {
           setIsAuthorized(false)
           return
         }
-        
+
         // Check if user is owner or collaborator
         const isOwner = wedding.owner_id === user.id
         const isCollaborator = wedding.collaborator_emails?.includes(user.email || '') || false
         const isUnowned = wedding.owner_id === null || wedding.owner_id === undefined
-        
+
         setIsAuthorized(isOwner || isCollaborator || isUnowned)
       } catch (error) {
         setIsAuthorized(false)
       }
     }
-    
+
     checkAuthorization()
-  }, [wedding.owner_id, wedding.collaborator_emails])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wedding.owner_id, collaboratorEmailsKey])
   
   // Initialize wedding details from the wedding prop
   React.useEffect(() => {
@@ -199,10 +207,17 @@ function ConfigBasedWeddingRendererContent({
     return merged
   }
   
-  // Only render enabled components from the page configuration
-  const allComponents = config.components
+  // Resolve $ref entries, then filter and sort for rendering
+  const resolvedComponents = resolveComponents(config.components, config.sharedComponents)
+  const allComponents = resolvedComponents
     .filter(component => component.enabled)
     .sort((a, b) => a.order - b.order)
+
+  // Inline-only view of config.components — used by mutation handlers
+  // ($ref entries are managed separately through the shared component system)
+  const inlineComponents = config.components.filter(
+    (c): c is InlineComponent => !isComponentRef(c)
+  )
   
   // Debug: Log loaded config
   React.useEffect(() => {
@@ -222,7 +237,7 @@ function ConfigBasedWeddingRendererContent({
     const isMultiInstance = MULTI_INSTANCE_TYPES.includes(sectionType)
 
     // Check if the component already exists in the array
-    const existingComponent = config.components.find(comp => comp.type === sectionType)
+    const existingComponent = inlineComponents.find(comp => comp.type === sectionType)
 
     // Build the new list of enabled components in the correct order
     const newEnabledComponents = [...allComponents]
@@ -258,7 +273,7 @@ function ConfigBasedWeddingRendererContent({
     }))
     
     // Merge with disabled components (keep them but don't change their order)
-    const disabledComponents = config.components.filter(comp => 
+    const disabledComponents = inlineComponents.filter(comp =>
       !comp.enabled && comp.type !== sectionType
     )
     
@@ -380,13 +395,20 @@ function ConfigBasedWeddingRendererContent({
     }
   }
 
+  // Which subpage section types already have a dedicated page
+  const enabledSubPageTypes = (config.pages ?? []).flatMap(p =>
+    resolveComponents(p.components, config.sharedComponents).map(c => c.type)
+  )
+
+  // Handler for adding a new sub-page (subpageOnly section types)
+  const handleAddSubPage = (subPage: SubPage) => {
+    updatePages([...(config.pages ?? []), subPage])
+  }
+
   // Handler for deleting sections
   const handleDeleteSection = (componentId: string) => {
-    // Disable from main components
-    const updatedComponents = config.components.map(comp => 
-      comp.id === componentId 
-        ? { ...comp, enabled: false }
-        : comp
+    const updatedComponents = inlineComponents.map(comp =>
+      comp.id === componentId ? { ...comp, enabled: false } : comp
     )
     updateComponents(updatedComponents)
   }
@@ -416,9 +438,9 @@ function ConfigBasedWeddingRendererContent({
     }))
     
     // Merge with disabled components
-    const disabledComponents = config.components.filter(comp => !comp.enabled)
+    const disabledComponents = inlineComponents.filter(comp => !comp.enabled)
     const updatedComponents = [...reorderedEnabled, ...disabledComponents]
-    
+
     preserveScrollAndUpdate(() => updateComponents(updatedComponents))
   }
 
@@ -444,9 +466,9 @@ function ConfigBasedWeddingRendererContent({
     }))
     
     // Merge with disabled components
-    const disabledComponents = config.components.filter(comp => !comp.enabled)
+    const disabledComponents = inlineComponents.filter(comp => !comp.enabled)
     const updatedComponents = [...reorderedEnabled, ...disabledComponents]
-    
+
     preserveScrollAndUpdate(() => updateComponents(updatedComponents))
   }
 
@@ -654,10 +676,12 @@ function ConfigBasedWeddingRendererContent({
             onEdit={handleEditSection}
           />
           {renderedComponent}
-          <AddSectionButton 
-            position={index + 1} 
+          <AddSectionButton
+            position={index + 1}
             onAddSection={handleAddSection}
+            onAddSubPage={handleAddSubPage}
             enabledComponents={allComponents.map(c => c.type)}
+            enabledSubPageTypes={enabledSubPageTypes}
             hasWeddingDate={!!effectiveWedding.wedding_date}
           />
         </div>
@@ -671,12 +695,20 @@ function ConfigBasedWeddingRendererContent({
 
       <ViewportWrapper>
         {/* Wedding Navigation - appears after scrolling past hero */}
-        <WeddingNav 
+        <WeddingNav
           person1Name={effectiveWedding.partner1_first_name}
           person2Name={effectiveWedding.partner2_first_name}
           accentColor={config.siteSettings.theme?.colors?.primary || '#DDA46F'}
           showNavLinks={config.siteSettings.navigation?.showNavLinks !== false}
           enabledSections={allComponents.map(c => c.type)}
+          subPageLinks={(config.pages ?? [])
+            .filter(p => p.enabled && p.showInNav)
+            .map(p => ({
+              id: p.id,
+              label: p.label,
+              href: `/${weddingNameId}/${p.path}`,
+              isActive: false, // main page is never "inside" a sub-page
+            }))}
           useColorBackground={config.siteSettings.navigation?.useColorBackground || false}
           backgroundColorChoice={config.siteSettings.navigation?.backgroundColorChoice || 'none'}
           themeColors={config.siteSettings.theme?.colors}
@@ -687,10 +719,12 @@ function ConfigBasedWeddingRendererContent({
             <div className="text-center">
               <h2 className="text-2xl font-bold mb-4">No Components Configured</h2>
               <p className="text-gray-600 mb-4">This wedding page has no components enabled.</p>
-              <AddSectionButton 
-                position={0} 
+              <AddSectionButton
+                position={0}
                 onAddSection={handleAddSection}
+                onAddSubPage={handleAddSubPage}
                 enabledComponents={[]}
+                enabledSubPageTypes={enabledSubPageTypes}
                 hasWeddingDate={!!effectiveWedding.wedding_date}
               />
             </div>

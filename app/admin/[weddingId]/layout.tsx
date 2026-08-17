@@ -1,12 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { use, useEffect, useState } from "react"
+import { useRouter, usePathname } from "next/navigation"
 import { createClient } from "@/lib/supabase-client"
 import { SubscriptionProvider } from "@/components/contexts/subscription-context"
-import { PlanIndicator } from "@/components/plan-indicator"
 import { FreeTrialBanner } from "@/components/ui/free-trial-banner"
 import { useI18n } from "@/components/contexts/i18n-context"
+import { AIChatPanel } from "@/components/ai/chat-panel"
 import type { Locale } from "@/lib/i18n"
 
 interface AdminLayoutProps {
@@ -15,20 +15,47 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ children, params }: AdminLayoutProps) {
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [weddingId, setWeddingId] = useState<string>('')
+  // Resolve params once via React.use() so we get a stable string, not
+  // a new Promise object on every render (which would re-run the effect below).
+  const resolvedParams = use(params)
+  const weddingId = decodeURIComponent(resolvedParams.weddingId)
+
+  const [isAuthorized, setIsAuthorized]     = useState<boolean | null>(null)
+  const [isLoading, setIsLoading]           = useState(true)
+  const [aiChatEnabled, setAiChatEnabled]   = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
   const { t, setLocale } = useI18n()
+
+  useEffect(() => {
+    const segment = pathname.split('/').pop() || 'dashboard'
+    const titles: Record<string, string> = {
+      dashboard: 'Dashboard',
+      invitations: 'Invitations',
+      'invitation-progress': 'Invitation Progress',
+      guests: 'Guests',
+      gallery: 'Gallery',
+      itinerary: 'Itinerary',
+      registry: 'Registry',
+      suppliers: 'Suppliers',
+      seating: 'Seating',
+      timeline: 'Timeline',
+      summary: 'Summary',
+      settings: 'Settings',
+      activity: 'Activity',
+      inbox: 'Inbox',
+      'guest-messages': 'Guest Messages',
+      dishes: 'Menu',
+    }
+    const label = titles[segment] ?? 'Admin'
+    document.title = segment === 'dashboard'
+      ? 'OhMyWedding Dashboard'
+      : `${label} | OhMyWedding`
+  }, [pathname])
 
   useEffect(() => {
     async function checkAuthorization() {
       try {
-        const resolvedParams = await params
-        // Decode the weddingId in case it's URL encoded
-        const decodedWeddingId = decodeURIComponent(resolvedParams.weddingId)
-        setWeddingId(decodedWeddingId)
-
         const supabase = createClient()
 
         // Use getSession() to check auth. This reads from cookies/cache
@@ -47,10 +74,11 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
           return
         }
 
-        // Fetch permissions and wedding settings in parallel
-        const [permissionsResponse, settingsResponse] = await Promise.all([
-          fetch(`/api/weddings/${decodedWeddingId}/permissions`),
-          fetch(`/api/weddings/${decodedWeddingId}/settings`),
+        // Fetch permissions, settings, and AI chat eligibility in parallel
+        const [permissionsResponse, settingsResponse, aiEnabledResponse] = await Promise.all([
+          fetch(`/api/weddings/${weddingId}/permissions`),
+          fetch(`/api/weddings/${weddingId}/settings`),
+          fetch(`/api/ai/chat/enabled?weddingSlug=${encodeURIComponent(weddingId)}`),
         ])
 
         if (!permissionsResponse.ok) {
@@ -60,6 +88,12 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
         }
 
         const { permissions } = await permissionsResponse.json()
+
+        // AI chat eligibility
+        if (aiEnabledResponse.ok) {
+          const { enabled } = await aiEnabledResponse.json()
+          setAiChatEnabled(!!enabled)
+        }
 
         // Apply the wedding's configured language to the admin UI
         if (settingsResponse.ok) {
@@ -84,7 +118,8 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
     }
 
     checkAuthorization()
-  }, [params, router])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weddingId])
 
   if (isLoading) {
     return (
@@ -120,7 +155,7 @@ export default function AdminLayout({ children, params }: AdminLayoutProps) {
     <SubscriptionProvider weddingId={weddingId}>
       <FreeTrialBanner />
       {children}
-      <PlanIndicator />
+      {aiChatEnabled && <AIChatPanel weddingId={weddingId} />}
     </SubscriptionProvider>
   )
 }

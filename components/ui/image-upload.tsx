@@ -4,9 +4,6 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Upload, X, Image as ImageIcon } from 'lucide-react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-
-const BUCKET = 'wedding-images'
 
 async function compressImage(file: File): Promise<File> {
   if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) return file
@@ -65,19 +62,32 @@ export function ImageUpload({ onUpload, currentImageUrl, placeholder = "Upload a
 
     try {
       const compressed = await compressImage(file)
-      const fileExt = compressed.name.split('.').pop() || 'jpg'
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
 
-      const supabase = createClientComponentClient()
-      const { data, error } = await supabase.storage
-        .from(BUCKET)
-        .upload(fileName, compressed, { cacheControl: '3600', upsert: false })
+      const presignRes = await fetch('/api/upload/presign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contentType: compressed.type,
+          folder: 'wedding-images',
+          fileSize: compressed.size,
+          fileName: compressed.name,
+        }),
+      })
 
       URL.revokeObjectURL(objectUrl)
 
-      if (error) throw error
+      if (!presignRes.ok) throw new Error('Failed to get upload URL')
 
-      const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(data.path)
+      const { presignedUrl, publicUrl } = await presignRes.json()
+
+      const uploadRes = await fetch(presignedUrl, {
+        method: 'PUT',
+        body: compressed,
+        headers: { 'Content-Type': compressed.type },
+      })
+
+      if (!uploadRes.ok) throw new Error('Upload failed')
+
       setPreviewUrl(publicUrl)
       onUpload(publicUrl)
     } catch {

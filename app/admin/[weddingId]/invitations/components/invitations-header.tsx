@@ -67,8 +67,9 @@ export function InvitationsHeaderContent({
 }: InvitationsHeaderProps) {
   const { t } = useTranslation()
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
       <div>
+        <p className="text-[10px] uppercase tracking-[0.3em] text-[#DDA46F] mb-1">{t('admin.invitations.title')}</p>
         <h1 className="text-2xl font-serif text-[#420c14]">{t('admin.invitations.title')}</h1>
         <p className="text-sm text-[#420c14]/60 mt-0.5">{t('admin.invitations.subtitle')}</p>
       </div>

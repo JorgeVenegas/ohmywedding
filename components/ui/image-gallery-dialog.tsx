@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Upload, Loader2, Check } from 'lucide-react'
 import { Button } from './button'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@/lib/supabase-client'
 import { useI18n } from '@/components/contexts/i18n-context'
 
 interface Image {
@@ -37,7 +37,7 @@ export function ImageGalleryDialog({
   const [mounted, setMounted] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
   const { t } = useI18n()
 
   useEffect(() => {
@@ -107,40 +107,53 @@ export function ImageGalleryDialog({
       }
       
       for (const file of Array.from(files)) {
-        // Upload to storage
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${decodedWeddingNameId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-        const filePath = `${fileName}`
-        
-        const { error: uploadError, data } = await supabase.storage
-          .from('wedding-images')
-          .upload(filePath, file)
+        // Get a presigned S3 URL from the server
+        const presignRes = await fetch('/api/upload/presign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contentType: file.type,
+            folder: 'wedding-images',
+            fileSize: file.size,
+            fileName: file.name,
+            weddingId: wedding.id,
+          }),
+        })
 
-        if (uploadError) {
-          throw new Error(`Failed to upload file: ${uploadError.message}`)
+        if (!presignRes.ok) {
+          const err = await presignRes.json().catch(() => ({}))
+          throw new Error(err.error || 'Failed to get upload URL')
         }
 
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('wedding-images')
-          .getPublicUrl(filePath)
+        const { presignedUrl, publicUrl, key } = await presignRes.json()
 
-        // Save to images table with wedding_id
+        // Upload directly to S3
+        const s3Res = await fetch(presignedUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': file.type },
+          body: file,
+        })
+
+        if (!s3Res.ok) {
+          throw new Error('Failed to upload file to storage')
+        }
+
+        // Save to images table with the S3 public URL
         const { error: dbError } = await supabase
           .from('images')
           .insert({
             wedding_id: wedding.id,
             url: publicUrl,
-            storage_path: filePath,
+            storage_path: key,
             filename: file.name,
             size: file.size,
-            mime_type: file.type
+            mime_type: file.type,
           })
 
         if (dbError) {
           throw new Error(`Failed to save image data: ${dbError.message}`)
         }
-        
+
         uploadedUrls.push(publicUrl)
       }
 

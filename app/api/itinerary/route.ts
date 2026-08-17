@@ -8,11 +8,16 @@ export const runtime = 'nodejs'
 async function resolveWeddingId(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>, weddingNameId: string) {
   const { data, error } = await supabase
     .from('weddings')
-    .select('id, wedding_date')
+    .select('id, wedding_date, wedding_settings(timezone)')
     .eq('wedding_name_id', weddingNameId)
     .single()
   if (error || !data) return null
-  return { id: data.id as string, wedding_date: data.wedding_date as string | null }
+  const settings = Array.isArray(data.wedding_settings) ? data.wedding_settings[0] : data.wedding_settings
+  return {
+    id: data.id as string,
+    wedding_date: data.wedding_date as string | null,
+    timezone: (settings?.timezone as string | null) ?? 'UTC',
+  }
 }
 
 // GET: Fetch all itinerary events for a wedding
@@ -39,7 +44,7 @@ export async function GET(request: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
-    return NextResponse.json({ events: data || [], wedding_date: wedding_date || null })
+    return NextResponse.json({ events: data || [], wedding_date: wedding_date || null, timezone: resolved.timezone })
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }

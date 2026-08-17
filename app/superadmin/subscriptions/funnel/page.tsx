@@ -52,8 +52,8 @@ const DATE_RANGES: { value: DateRange; label: string }[] = [
 
 const PLAN_FILTERS: { value: PlanFilter; label: string }[] = [
   { value: "all", label: "All plans" },
-  { value: "premium", label: "Premium" },
-  { value: "deluxe", label: "Deluxe" },
+  { value: "premium", label: "Personalized" },
+  { value: "deluxe", label: "Bespoke" },
 ]
 
 // --- Funnel SVG Visualization ---

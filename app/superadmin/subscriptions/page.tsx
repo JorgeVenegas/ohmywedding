@@ -127,12 +127,12 @@ export default async function SubscriptionsPage() {
         </div>
         
         <div className="bg-white rounded-2xl p-6 border border-[#DDA46F]/30 shadow-sm">
-          <p className="text-sm font-medium text-[#420c14]/60 mb-3">Premium</p>
+          <p className="text-sm font-medium text-[#420c14]/60 mb-3">Personalized</p>
           <p className="text-3xl font-serif text-[#DDA46F]">{stats.premium}</p>
         </div>
         
         <div className="bg-gradient-to-br from-[#420c14] to-[#5a1a22] rounded-2xl p-6 shadow-lg">
-          <p className="text-sm font-medium text-[#f5f2eb]/70 mb-3">Deluxe</p>
+          <p className="text-sm font-medium text-[#f5f2eb]/70 mb-3">Bespoke</p>
           <p className="text-3xl font-serif text-[#f5f2eb]">{stats.deluxe}</p>
         </div>
 

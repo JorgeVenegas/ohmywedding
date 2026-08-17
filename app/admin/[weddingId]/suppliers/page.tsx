@@ -1,14 +1,12 @@
 "use client"
 
 import { use, useState, useEffect, useCallback } from "react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { Header } from "@/components/header"
 import { getCleanAdminUrl } from "@/lib/admin-url"
 import { useTranslation } from "@/components/contexts/i18n-context"
 import { toast } from "sonner"
-import { Plus, Handshake } from "lucide-react"
-import { SupplierCard, SupplierModal, PaymentModal } from "./components"
+import { Plus, Handshake, TrendingUp, LayoutGrid, List } from "lucide-react"
+import { SupplierCard, SupplierTable, SupplierModal, PaymentModal } from "./components"
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog"
 import type { Supplier, SupplierPayment } from "./types"
 
@@ -37,6 +35,7 @@ export default function SuppliersPage({ params }: SuppliersPageProps) {
   // Delete confirm state
   const [deleteSupplier, setDeleteSupplier] = useState<Supplier | null>(null)
   const [deletePayment, setDeletePayment] = useState<SupplierPayment | null>(null)
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
 
   const fetchData = useCallback(async () => {
     try {
@@ -167,53 +166,108 @@ export default function SuppliersPage({ params }: SuppliersPageProps) {
         backHref={getCleanAdminUrl(weddingId, 'dashboard')}
         title={t('admin.suppliers.title')}
         rightContent={
-          <Button size="sm" onClick={openAddModal}>
-            <Plus className="w-4 h-4 mr-2" />
+          <button
+            onClick={openAddModal}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#420c14] text-[#f5f2eb] px-4 py-2 text-sm font-medium hover:bg-[#5a1a22] transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">{t('admin.suppliers.addSupplier')}</span>
-          </Button>
+          </button>
         }
       />
 
       <div className="page-container space-y-8">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-[#DDA46F] mb-2">{t('admin.dashboard.management')}</p>
-          <h1 className="text-2xl font-serif text-[#420c14] mb-1">{t('admin.suppliers.title')}</h1>
-          <p className="text-sm text-[#420c14]/60">{t('admin.suppliers.description')}</p>
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-[#DDA46F] mb-2">{t('admin.dashboard.management')}</p>
+            <h1 className="text-2xl font-serif text-[#420c14] mb-1">{t('admin.suppliers.title')}</h1>
+            <p className="text-sm text-[#420c14]/60">{t('admin.suppliers.description')}</p>
+          </div>
+          {suppliers.length > 0 && (
+            <div className="flex items-center rounded-xl border border-[#420c14]/12 overflow-hidden shrink-0 mb-0.5">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`w-9 h-9 flex items-center justify-center transition-colors ${viewMode === 'grid' ? 'bg-[#420c14] text-[#f5f2eb]' : 'text-[#420c14]/35 hover:bg-[#420c14]/5'}`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`w-9 h-9 flex items-center justify-center transition-colors ${viewMode === 'table' ? 'bg-[#420c14] text-[#f5f2eb]' : 'text-[#420c14]/35 hover:bg-[#420c14]/5'}`}
+              >
+                <List className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Stats */}
         {suppliers.length > 0 && (
-          <div className="flex flex-wrap gap-4">
-            <Card className="p-4 flex-1 min-w-[120px] border-[#420c14]/10">
-              <div className="text-2xl font-serif text-[#420c14]">{suppliers.length}</div>
-              <div className="text-sm text-[#420c14]/50">{t('admin.suppliers.stats.total')}</div>
-            </Card>
-            <Card className="p-4 flex-1 min-w-[120px] border-[#420c14]/10">
-              <div className="text-2xl font-serif text-[#420c14]">{formatCurrency(totalBudget)}</div>
-              <div className="text-sm text-[#420c14]/50">{t('admin.suppliers.stats.budget')}</div>
-            </Card>
-            <Card className="p-4 flex-1 min-w-[120px] border-[#420c14]/10">
-              <div className="text-2xl font-serif text-[#420c14]">{formatCurrency(totalCovered)}</div>
-              <div className="text-sm text-[#420c14]/50">{t('admin.suppliers.stats.covered')}</div>
-            </Card>
-            <Card className="p-4 flex-1 min-w-[120px] border-[#420c14]/10">
-              <div className={`text-2xl font-serif ${totalRemaining > 0 ? 'text-[#DDA46F]' : 'text-[#420c14]/40'}`}>{formatCurrency(totalRemaining)}</div>
-              <div className="text-sm text-[#420c14]/50">{t('admin.suppliers.stats.remaining')}</div>
-            </Card>
+          <div className="rounded-2xl border border-[#420c14]/10 bg-white overflow-hidden">
+            {/* Budget progress bar */}
+            <div className="h-1 bg-[#420c14]/5">
+              <div
+                className="h-full bg-gradient-to-r from-[#DDA46F] to-[#c9956a] transition-all duration-700"
+                style={{ width: totalBudget > 0 ? `${Math.min(100, Math.round((totalCovered / totalBudget) * 100))}%` : '0%' }}
+              />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-[#420c14]/8">
+              <div className="px-5 py-4">
+                <div className="text-[10px] uppercase tracking-widest text-[#420c14]/35 mb-1">{t('admin.suppliers.stats.total')}</div>
+                <div className="text-xl font-serif text-[#420c14]">{suppliers.length}</div>
+                <div className="text-[11px] text-[#420c14]/35 mt-0.5">{fullyPaid} {t('admin.suppliers.stats.fullyPaid')}</div>
+              </div>
+              <div className="px-5 py-4">
+                <div className="text-[10px] uppercase tracking-widest text-[#420c14]/35 mb-1">{t('admin.suppliers.stats.budget')}</div>
+                <div className="text-xl font-serif text-[#420c14] tabular-nums">{formatCurrency(totalBudget)}</div>
+                <div className="text-[11px] text-[#420c14]/35 mt-0.5">{t('admin.suppliers.stats.total')} {t('admin.suppliers.stats.committed')}</div>
+              </div>
+              <div className="px-5 py-4">
+                <div className="text-[10px] uppercase tracking-widest text-[#420c14]/35 mb-1">{t('admin.suppliers.stats.covered')}</div>
+                <div className="text-xl font-serif text-[#DDA46F] tabular-nums">{formatCurrency(totalCovered)}</div>
+                <div className="text-[11px] text-[#420c14]/35 mt-0.5">
+                  {totalBudget > 0 ? `${Math.min(100, Math.round((totalCovered / totalBudget) * 100))}%` : '—'} {t('admin.suppliers.paid')}
+                </div>
+              </div>
+              <div className="px-5 py-4">
+                <div className="text-[10px] uppercase tracking-widest text-[#420c14]/35 mb-1">{t('admin.suppliers.stats.remaining')}</div>
+                <div className={`text-xl font-serif tabular-nums ${totalRemaining > 0 ? 'text-[#420c14]' : 'text-[#420c14]/30'}`}>
+                  {formatCurrency(totalRemaining)}
+                </div>
+                <div className="text-[11px] text-[#420c14]/35 mt-0.5 flex items-center gap-1">
+                  {totalRemaining > 0 ? <TrendingUp className="w-2.5 h-2.5" /> : null}
+                  {totalRemaining > 0 ? t('admin.suppliers.stats.pending') : t('admin.suppliers.fullyPaid')}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Empty state */}
         {suppliers.length === 0 ? (
-          <Card className="p-12 text-center">
-            <Handshake className="w-12 h-12 mx-auto text-brand/30 mb-4" />
-            <h3 className="text-lg font-serif text-brand mb-2">{t('admin.suppliers.empty.title')}</h3>
-            <p className="text-sm text-brand/50 mb-6 max-w-sm mx-auto">{t('admin.suppliers.empty.description')}</p>
-            <Button onClick={openAddModal}>
-              <Plus className="w-4 h-4 mr-2" />
+          <div className="rounded-2xl border border-[#420c14]/10 bg-white p-12 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-[#420c14]/5 flex items-center justify-center mx-auto mb-5">
+              <Handshake className="w-6 h-6 text-[#420c14]/30" />
+            </div>
+            <h3 className="text-lg font-serif text-[#420c14] mb-2">{t('admin.suppliers.empty.title')}</h3>
+            <p className="text-sm text-[#420c14]/50 mb-6 max-w-sm mx-auto leading-relaxed">{t('admin.suppliers.empty.description')}</p>
+            <button
+              onClick={openAddModal}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#420c14] text-[#f5f2eb] px-5 py-2.5 text-sm font-medium hover:bg-[#5a1a22] transition-colors"
+            >
+              <Plus className="w-4 h-4" />
               {t('admin.suppliers.addSupplier')}
-            </Button>
-          </Card>
+            </button>
+          </div>
+        ) : viewMode === 'table' ? (
+          <SupplierTable
+            suppliers={suppliers}
+            onEdit={s => { setEditingSupplier(s); setShowSupplierModal(true) }}
+            onDelete={s => setDeleteSupplier(s)}
+            onAddPayment={s => { setPaymentSupplier(s); setEditingPayment(null); setShowPaymentModal(true) }}
+            onEditPayment={(s, p) => { setPaymentSupplier(s); setEditingPayment(p); setShowPaymentModal(true) }}
+            onDeletePayment={p => setDeletePayment(p)}
+          />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {suppliers.map(supplier => (

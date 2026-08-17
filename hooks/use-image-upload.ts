@@ -1,7 +1,4 @@
 import { useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-
-const BUCKET = 'wedding-images'
 
 interface UploadState {
   uploading: boolean
@@ -21,13 +18,10 @@ interface CompressOptions {
   maxBytes?: number
 }
 
-/** Compress + resize an image. Optionally enforce a max byte size by reducing quality iteratively. */
 async function compressImage(file: File, options: CompressOptions = {}): Promise<File> {
   const { maxPx = 1920, quality = 0.85, maxBytes } = options
-  // Only compress raster images (not GIF)
-  if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
-    return file
-  }
+  if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) return file
+
   return new Promise((resolve) => {
     const img = new Image()
     const url = URL.createObjectURL(file)
@@ -41,10 +35,8 @@ async function compressImage(file: File, options: CompressOptions = {}): Promise
       const canvas = document.createElement('canvas')
       canvas.width = width
       canvas.height = height
-      const ctx = canvas.getContext('2d')!
-      ctx.drawImage(img, 0, 0, width, height)
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height)
 
-      // Preserve original format for PNG/WebP, convert others to JPEG
       const isPng = file.type === 'image/png'
       const isWebp = file.type === 'image/webp'
       const outputType = isPng ? 'image/png' : isWebp ? 'image/webp' : 'image/jpeg'
@@ -59,7 +51,6 @@ async function compressImage(file: File, options: CompressOptions = {}): Promise
         return
       }
 
-      // Iteratively reduce quality until under maxBytes
       const tryQuality = (q: number) => {
         canvas.toBlob((blob) => {
           if (!blob) { resolve(file); return }
@@ -81,42 +72,47 @@ export function useImageUpload() {
   const [state, setState] = useState<UploadState>({
     uploading: false,
     error: null,
-    success: false
+    success: false,
   })
 
   const uploadImage = async (file: File, compressOptions?: CompressOptions): Promise<UploadResult | null> => {
     setState({ uploading: true, error: null, success: false })
 
     try {
-      // Validate file type
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
-      if (!allowedTypes.includes(file.type)) {
-        throw new Error('Invalid file type. Please upload an image file.')
-      }
+      if (!allowedTypes.includes(file.type)) throw new Error('Invalid file type. Please upload an image file.')
+      if (file.size > 52428800) throw new Error('File too large. Maximum size is 50MB.')
 
-      // Validate file size (50MB max before compression)
-      if (file.size > 52428800) {
-        throw new Error('File too large. Maximum size is 50MB.')
-      }
-
-      // Compress the image client-side before uploading
       const compressed = await compressImage(file, compressOptions)
 
-      const fileExt = compressed.name.split('.').pop() || 'jpg'
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+      const presignRes = await fetch('/api/upload/presign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contentType: compressed.type,
+          folder: 'wedding-images',
+          fileSize: compressed.size,
+          fileName: compressed.name,
+        }),
+      })
 
-      const supabase = createClientComponentClient()
-      const { data, error } = await supabase.storage
-        .from(BUCKET)
-        .upload(fileName, compressed, { cacheControl: '3600', upsert: false })
+      if (!presignRes.ok) {
+        const { error } = await presignRes.json()
+        throw new Error(error ?? 'Failed to get upload URL')
+      }
 
-      if (error) throw new Error(error.message)
+      const { presignedUrl, publicUrl, key } = await presignRes.json()
 
-      const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(data.path)
+      const uploadRes = await fetch(presignedUrl, {
+        method: 'PUT',
+        body: compressed,
+        headers: { 'Content-Type': compressed.type },
+      })
+
+      if (!uploadRes.ok) throw new Error('Upload to storage failed')
 
       setState({ uploading: false, error: null, success: true })
-      return { url: publicUrl, path: data.path, fileName }
-
+      return { url: publicUrl, path: key, fileName: compressed.name }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Upload failed'
       setState({ uploading: false, error: errorMessage, success: false })
@@ -124,13 +120,7 @@ export function useImageUpload() {
     }
   }
 
-  const reset = () => {
-    setState({ uploading: false, error: null, success: false })
-  }
+  const reset = () => setState({ uploading: false, error: null, success: false })
 
-  return {
-    uploadImage,
-    reset,
-    ...state
-  }
+  return { uploadImage, reset, ...state }
 }

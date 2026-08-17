@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { putObject } from '@/lib/s3'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -18,17 +18,10 @@ const MAX_SIZE = 52428800 // 50MB
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
     const formData = await request.formData()
     const file = formData.get('file') as File
 
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
-    }
+    if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
 
     if (!ALLOWED_TYPES[file.type]) {
       return NextResponse.json(
@@ -38,37 +31,16 @@ export async function POST(request: NextRequest) {
     }
 
     if (file.size > MAX_SIZE) {
-      return NextResponse.json(
-        { error: 'File too large. Maximum size is 50MB.' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'File too large. Maximum size is 50MB.' }, { status: 400 })
     }
 
     const ext = ALLOWED_TYPES[file.type]
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`
-    const filePath = `contracts/${fileName}`
+    const key = `contracts/${crypto.randomUUID()}.${ext}`
 
-    const { data, error } = await supabase.storage
-      .from('wedding-images')
-      .upload(filePath, file, { cacheControl: '3600', upsert: false })
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const url = await putObject(key, buffer, file.type)
 
-    if (error) {
-      return NextResponse.json(
-        { error: `Upload failed: ${error.message}` },
-        { status: 500 }
-      )
-    }
-
-    const { data: publicUrlData } = supabase.storage
-      .from('wedding-images')
-      .getPublicUrl(data.path)
-
-    return NextResponse.json({
-      success: true,
-      url: publicUrlData.publicUrl,
-      path: data.path,
-      fileName: file.name,
-    })
+    return NextResponse.json({ success: true, url, path: key, fileName: file.name })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

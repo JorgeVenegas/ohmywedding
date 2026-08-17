@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { LegalPageLayout } from "@/components/legal-page-layout"
 
 export const metadata: Metadata = {
-  title: "Terms of Service | OhMyWedding",
+  title: 'Terms of Service',
   description:
     "Review the rules that govern your use of OhMyWedding, covering account responsibilities, content, and how we evolve the experience.",
 }

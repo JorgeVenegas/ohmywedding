@@ -34,7 +34,7 @@ function formattedDateEs(): string {
 const PLANS = {
   premium: {
     id: "premium",
-    name: "Premium",
+    name: "Personalized",
     experience: "Premium Experience",
     value: "$7,000 MXN",
     valueRaw: "SIETE MIL PESOS 00/100 M.N.",
@@ -50,7 +50,7 @@ const PLANS = {
   },
   deluxe: {
     id: "deluxe",
-    name: "Deluxe",
+    name: "Bespoke",
     experience: "Deluxe Experience",
     value: "$15,000 MXN",
     valueRaw: "QUINCE MIL PESOS 00/100 M.N.",

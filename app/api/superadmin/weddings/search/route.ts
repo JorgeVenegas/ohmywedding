@@ -6,7 +6,6 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient()
 
-    // Verify superuser
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -15,19 +14,13 @@ export async function GET(request: NextRequest) {
     if (!(await isSuperUser(supabase, { userId: user.id }))) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
-    
+
     const searchParams = request.nextUrl.searchParams
     const search = searchParams.get('q') || ''
-    
-    if (!search.trim()) {
-      return NextResponse.json({ weddings: [] })
-    }
-    
-    // Use admin client to bypass RLS
+
     const adminClient = createAdminSupabaseClient()
-    
-    // Search weddings by name or ID
-    const { data: weddings, error } = await adminClient
+
+    let query = adminClient
       .from('weddings')
       .select(`
         id,
@@ -38,33 +31,61 @@ export async function GET(request: NextRequest) {
         partner2_last_name,
         wedding_date,
         owner_id,
-        created_at
+        created_at,
+        ceremony_venue_name,
+        invitation_design_status
       `)
-      .or(`wedding_name_id.ilike.%${search}%,partner1_first_name.ilike.%${search}%,partner1_last_name.ilike.%${search}%,partner2_first_name.ilike.%${search}%,partner2_last_name.ilike.%${search}%`)
       .order('created_at', { ascending: false })
-      .limit(20)
-    
+
+    if (search.trim()) {
+      query = query.or(`wedding_name_id.ilike.%${search}%,partner1_first_name.ilike.%${search}%,partner1_last_name.ilike.%${search}%,partner2_first_name.ilike.%${search}%,partner2_last_name.ilike.%${search}%`)
+      query = query.limit(20)
+    } else {
+      query = query.limit(100)
+    }
+
+    const { data: weddings, error } = await query
+
     if (error) throw error
-    
-    // Get plans for each wedding
-    const weddingsWithPlans = await Promise.all(
-      (weddings || []).map(async (wedding) => {
-        const { data: features } = await adminClient
-          .from('wedding_subscriptions')
-          .select('plan')
-          .eq('wedding_id', wedding.id)
-          .single()
-        
-        return {
-          ...wedding,
-          partner1_name: `${wedding.partner1_first_name} ${wedding.partner1_last_name || ''}`.trim(),
-          partner2_name: `${wedding.partner2_first_name} ${wedding.partner2_last_name || ''}`.trim(),
-          plan: features?.plan || 'free'
-        }
-      })
+    if (!weddings?.length) return NextResponse.json({ weddings: [] })
+
+    const weddingIds = weddings.map(w => w.id)
+
+    // Batch fetch plans and guest counts in parallel
+    const [{ data: subscriptions }, { data: guestRows }] = await Promise.all([
+      adminClient
+        .from('wedding_subscriptions')
+        .select('wedding_id, plan')
+        .in('wedding_id', weddingIds),
+      adminClient
+        .from('guests')
+        .select('wedding_id')
+        .in('wedding_id', weddingIds),
+    ])
+
+    const planMap = Object.fromEntries(
+      (subscriptions || []).map(s => [s.wedding_id, s.plan])
     )
-    
-    return NextResponse.json({ weddings: weddingsWithPlans })
+    const guestCountMap = (guestRows || []).reduce<Record<string, number>>((acc, g) => {
+      acc[g.wedding_id] = (acc[g.wedding_id] || 0) + 1
+      return acc
+    }, {})
+
+    const result = weddings.map(wedding => ({
+      id: wedding.id,
+      wedding_name_id: wedding.wedding_name_id,
+      partner1_name: `${wedding.partner1_first_name} ${wedding.partner1_last_name || ''}`.trim(),
+      partner2_name: `${wedding.partner2_first_name} ${wedding.partner2_last_name || ''}`.trim(),
+      wedding_date: wedding.wedding_date,
+      owner_id: wedding.owner_id,
+      created_at: wedding.created_at,
+      location: wedding.ceremony_venue_name || null,
+      design_status: wedding.invitation_design_status || 'not_started',
+      guest_count: guestCountMap[wedding.id] ?? 0,
+      plan: planMap[wedding.id] || 'free',
+    }))
+
+    return NextResponse.json({ weddings: result })
   } catch (error) {
     console.error('Error searching weddings:', error)
     return NextResponse.json(

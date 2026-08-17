@@ -1,7 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { isSuperUser } from "@/lib/superadmin"
 import { redirect } from "next/navigation"
-import { SuperadminSidebar } from "@/components/superadmin/sidebar"
+import { SuperadminShell } from "@/components/superadmin/shell"
 
 export const dynamic = 'force-dynamic'
 
@@ -36,13 +36,8 @@ export default async function SuperadminLayout({
   }
   
   return (
-    <div className="min-h-screen bg-[#f5f2eb]">
-      <div className="flex">
-        <SuperadminSidebar userEmail={user.email || ''} />
-        <main className="flex-1 ml-72 p-10">
-          {children}
-        </main>
-      </div>
-    </div>
+    <SuperadminShell userEmail={user.email || ''}>
+      {children}
+    </SuperadminShell>
   )
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase-server"
+import { createAdminSupabaseClient } from "@/lib/supabase-server"
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +16,8 @@ export async function GET(request: NextRequest) {
     }
 
     const decodedWeddingNameId = decodeURIComponent(weddingNameId)
-    const supabase = await createServerSupabaseClient()
+    // Admin client bypasses RLS — required for unauthenticated guests to read public settings
+    const supabase = createAdminSupabaseClient()
 
     // First, get the wedding UUID from the wedding_name_id
     const { data: wedding, error: weddingError } = await supabase

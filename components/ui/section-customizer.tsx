@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react'
-import { Crown, Heart, Clock, MapPin, Image, Mail, HelpCircle, Gift, Shirt, Hotel, Music, FileText, Users } from 'lucide-react'
+import { Crown, Heart, Clock, MapPin, Image, Mail, HelpCircle, Gift, Shirt, Hotel, Music, FileText, Users, Camera } from 'lucide-react'
 import { CustomizePanel } from './customize-panel'
 import { useCustomizeSafe } from '@/components/contexts/customize-context'
 import { usePageConfigSafe } from '@/components/contexts/page-config-context'
@@ -22,6 +22,7 @@ import {
   SpecialGuestsConfigForm
 } from './config-forms'
 import { BannerConfigForm } from './config-forms/banner-config-form'
+import { GuestPhotosConfigForm } from './config-forms/guest-photos-config-form'
 import { Button } from './button'
 
 // Gold color for elegant icons
@@ -41,7 +42,8 @@ const SECTION_ICONS: Record<string, React.ReactNode> = {
   'hotel-suggestions': <Hotel className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
   music: <Music className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
   notes: <FileText className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
-  'special-guests': <Users className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
+  'special-guests': <Users className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
+  'guest-photos': <Camera className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
 }
 
 export function SectionCustomizer() {
@@ -69,6 +71,7 @@ export function SectionCustomizer() {
       registry: t('registry.title'),
       'dress-code': t('dressCode.title'),
       'hotel-suggestions': t('hotelSuggestions.title'),
+      'guest-photos': 'Guest Photos',
       music: 'Música',
       notes: 'Notes',
       'special-guests': 'Special Guests'
@@ -178,6 +181,13 @@ export function SectionCustomizer() {
       case 'special-guests':
         return (
           <SpecialGuestsConfigForm
+            config={sectionConfig}
+            onChange={updateConfig}
+          />
+        )
+      case 'guest-photos':
+        return (
+          <GuestPhotosConfigForm
             config={sectionConfig}
             onChange={updateConfig}
           />

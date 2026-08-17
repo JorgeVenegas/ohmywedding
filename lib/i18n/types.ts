@@ -112,8 +112,34 @@ export interface PlannerPricingQuizCopy {
   }
 }
 
+export interface ConsultationSectionCopy {
+  eyebrow: string
+  title: string
+  subtitle: string
+  description: string
+  topics: {
+    title: string
+    items: [
+      { title: string; description: string },
+      { title: string; description: string },
+      { title: string; description: string },
+      { title: string; description: string },
+    ]
+  }
+  cta: string
+  note: string
+  dialogTitle: string
+  dialogMeta: string
+}
+
 // Translation keys structure
 export interface Translations {
+  subPage: {
+    nothingHere: string
+    nothingHereDesc: string
+    goToInvitation: string
+  }
+
   // Common UI elements
   common: {
     loading: string
@@ -558,6 +584,25 @@ export interface Translations {
     time: string
     description: string
     location: string
+  }
+  guestPhotos: {
+    eyebrow: string
+    title: string
+    description: string
+    nameLabel: string
+    nameOptional: string
+    namePlaceholder: string
+    photosLabel: string
+    dropMain: string
+    dropDragging: string
+    dropHint: string
+    selected: string
+    selectedPlural: string
+    submit: string
+    submitPlural: string
+    submitEmpty: string
+    uploading: string
+    success: { eyebrow: string; title: string; description: string }
   }
 
   // Location Section
@@ -1254,16 +1299,19 @@ export interface Translations {
   landingCouples: Omit<Translations['landing'], 'nav' | 'pricing' | 'footer'> & {
     plannerTeaser: AudienceTeaserCopy
     pricingQuiz: CouplePricingQuizCopy
+    consultation: ConsultationSectionCopy
   }
   landingPlanners: Omit<Translations['landing'], 'nav' | 'pricing' | 'footer'> & {
     coupleTeaser: AudienceTeaserCopy
     pricingQuiz: PlannerPricingQuizCopy
+    consultation: ConsultationSectionCopy
   }
 
   // Root "/" audience chooser page
   audienceChooser: {
     kicker: string
     title: string
+    hint: string
     cta: string
     couple: {
       label: string
@@ -1677,11 +1725,13 @@ export interface Translations {
         dishes: { title: string; description: string }
         itinerary: { title: string; description: string }
         suppliers: { title: string; description: string }
+        gallery: { title: string; description: string }
         summary: { title: string; description: string }
         invitationOpens: { title: string; description: string }
         recentActivity: { title: string; description: string }
         payments: { title: string; description: string }
         timeline: { title: string; description: string }
+        guestMessages: { title: string; description: string }
       }
       onboarding: {
         skipTour: string
@@ -1743,6 +1793,7 @@ export interface Translations {
         collaborators: string
         dashboardSections: string
         messaging: string
+        activityReports: string
         danger: string
       }
       dangerZone: {
@@ -1800,8 +1851,58 @@ export interface Translations {
         rsvpDeadline: string
       }
       gallerySettings: {
+        description: string
         allowGuestUploads: string
+        allowGuestUploadsDescription: string
         moderation: string
+        moderationDescription: string
+      }
+      gallery: {
+        eyebrow: string
+        filters: { pending: string; approved: string; rejected: string; all: string; favorites: string }
+        status: { approved: string; rejected: string }
+        actions: {
+          approve: string
+          reject: string
+          download: string
+          copyLink: string
+          copied: string
+          enableUploads: string
+          goToSettings: string
+          viewPage: string
+          reviewPhotos: string
+          downloadQr: string
+        }
+        share: { title: string; description: string; uploadLinkLabel: string; viewQr: string }
+        review: { approved: string; rejected: string }
+        empty: {
+          noPhotos: string
+          noPending: string
+          noApproved: string
+          noRejected: string
+          pendingHint: string
+          noUploadsHint: string
+          settingsLink: string
+        }
+      }
+      activityReports: {
+        title: string
+        description: string
+        enableLabel: string
+        frequencyLabel: string
+        daily: string
+        weekly: string
+        includeLabel: string
+        includeRsvp: string
+        includeMeetings: string
+        includeBudget: string
+        includeMessages: string
+        additionalEmailsLabel: string
+        additionalEmailsPlaceholder: string
+        additionalEmailsHint: string
+        upgradeBadge: string
+        upgradeNotice: string
+        savedNotice: string
       }
       generalSettings: {
         timezone: string
@@ -2763,6 +2864,7 @@ export interface Translations {
       paid: string
       remaining: string
       fullyPaid: string
+      noAmount: string
       payments: string
       addPayment: string
       editPayment: string
@@ -2798,6 +2900,8 @@ export interface Translations {
         covered: string
         remaining: string
         fullyPaid: string
+        committed: string
+        pending: string
       }
       empty: {
         title: string
@@ -2988,6 +3092,20 @@ export interface Translations {
         join: string
         completed: string
         cancelled: string
+        confirmed: string
+        joinGoogle: string
+        rescheduleButton: string
+        closeReschedule: string
+        cancelButton: string
+        cancelSuccess: string
+        scheduleEyebrow: {
+          discovery_meeting: string
+          review_meeting: string
+          delivery_meeting: string
+        }
+        schedulePrompt: string
+        pendingTitle: string
+        pendingDescription: string
       }
       versions: {
         title: string
@@ -2996,16 +3114,24 @@ export interface Translations {
       current: string
       statusLabels: {
         not_started: string
+        discovery_meeting: string
         design_started: string
         ready_for_review: string
+        review_meeting: string
+        changes_in_progress: string
         approved: string
+        delivery_meeting: string
         live: string
       }
       statusDescriptions: {
         not_started: string
+        discovery_meeting: string
         design_started: string
         ready_for_review: string
+        review_meeting: string
+        changes_in_progress: string
         approved: string
+        delivery_meeting: string
         live: string
       }
       meetingTypes: {

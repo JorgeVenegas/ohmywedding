@@ -15,8 +15,16 @@ interface ItineraryPageProps {
   params: Promise<{ weddingId: string }>
 }
 
-function formatTime(dateStr: string) {
+function formatTime(dateStr: string, tz?: string | null) {
   const d = new Date(dateStr)
+  if (tz) {
+    const parts = new Intl.DateTimeFormat('en', {
+      timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false,
+    }).formatToParts(d)
+    const h = parts.find(p => p.type === 'hour')?.value ?? '00'
+    const m = parts.find(p => p.type === 'minute')?.value ?? '00'
+    return `${h === '24' ? '00' : h}:${m}`
+  }
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
@@ -31,6 +39,7 @@ export default function ItineraryPage({ params }: ItineraryPageProps) {
 
   const [events, setEvents] = useState<ItineraryEvent[]>([])
   const [weddingDate, setWeddingDate] = useState<string | null>(null)
+  const [weddingTimezone, setWeddingTimezone] = useState<string>('UTC')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showEventModal, setShowEventModal] = useState(false)
@@ -43,6 +52,7 @@ export default function ItineraryPage({ params }: ItineraryPageProps) {
       const allEvents: ItineraryEvent[] = data.events || []
       setEvents(allEvents)
       setWeddingDate(data.wedding_date || null)
+      setWeddingTimezone(data.timezone || 'UTC')
     } catch {
       toast.error(t('admin.seating.notifications.error'))
     } finally {
@@ -200,7 +210,7 @@ export default function ItineraryPage({ params }: ItineraryPageProps) {
                             {/* Time */}
                             <div className="w-14 flex-shrink-0 text-right pt-0.5">
                               <span className="text-sm tabular-nums text-muted-foreground font-medium">
-                                {formatTime(event.start_time)}
+                                {formatTime(event.start_time, weddingTimezone)}
                               </span>
                             </div>
 
@@ -219,7 +229,7 @@ export default function ItineraryPage({ params }: ItineraryPageProps) {
                                   <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
                                     {event.end_time && (
                                       <span className="text-xs text-muted-foreground tabular-nums">
-                                        → {formatTime(event.end_time)}
+                                        → {formatTime(event.end_time, weddingTimezone)}
                                       </span>
                                     )}
                                     {event.location && (
@@ -268,7 +278,7 @@ export default function ItineraryPage({ params }: ItineraryPageProps) {
                                         <div className="flex-1 min-w-0">
                                           <div className="flex items-center gap-2">
                                             <span className="text-xs tabular-nums text-muted-foreground font-medium w-9 flex-shrink-0">
-                                              {formatTime(child.start_time)}
+                                              {formatTime(child.start_time, weddingTimezone)}
                                             </span>
                                             <span className="text-xs font-medium truncate">{child.title}</span>
                                           </div>
@@ -338,6 +348,7 @@ export default function ItineraryPage({ params }: ItineraryPageProps) {
           existingChildren={editingEvent && !editingEvent.parent_id ? editingEvent.children ?? [] : []}
           saving={saving}
           weddingDate={weddingDate}
+          weddingTimezone={weddingTimezone}
           previousEvent={editingEvent ? null : lastMainEvent}
         />
       )}

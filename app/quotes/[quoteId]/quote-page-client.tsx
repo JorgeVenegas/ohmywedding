@@ -84,6 +84,10 @@ const T = {
     discountCode: "Discount Code",
     useAtCheckout: "Applies automatically at checkout",
     footerContact: "",
+    weddingDate: "Wedding Date",
+    estimatedGuests: "Estimated Guests",
+    location: "Location",
+    guests: (n: number) => `${n.toLocaleString()} guests`,
   },
   es: {
     tagline: "Tu Cotización Personalizada",
@@ -135,6 +139,10 @@ const T = {
     discountCode: "Código de Descuento",
     useAtCheckout: "Se aplica automáticamente al pagar",
     footerContact: "",
+    weddingDate: "Fecha de Boda",
+    estimatedGuests: "Invitados Estimados",
+    location: "Lugar",
+    guests: (n: number) => `${n.toLocaleString()} invitados`,
   },
 }
 
@@ -997,6 +1005,40 @@ export function QuotePageClient({
               <strong className="text-[#420c14] font-bold">{discountLabel} {t.off}</strong>
             </span>
           </div>
+
+          {/* Wedding context chips — shown only if provided */}
+          {(quote.wedding_date || quote.estimated_guests != null || quote.location) && (
+            <div className="flex flex-wrap gap-2">
+              {quote.wedding_date && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-[#420c14]/5 text-[#420c14]/70 border border-[#420c14]/10">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  {t.weddingDate}:{" "}
+                  <strong className="text-[#420c14]">
+                    {(() => {
+                      try {
+                        const d = new Date(quote.wedding_date + 'T12:00:00')
+                        return lang === "es"
+                          ? format(d, "MMMM yyyy", { locale: esLocale })
+                          : format(d, "MMMM yyyy")
+                      } catch { return quote.wedding_date }
+                    })()}
+                  </strong>
+                </span>
+              )}
+              {quote.estimated_guests != null && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-[#420c14]/5 text-[#420c14]/70 border border-[#420c14]/10">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  <strong className="text-[#420c14]">{t.guests(quote.estimated_guests)}</strong>
+                </span>
+              )}
+              {quote.location && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-[#420c14]/5 text-[#420c14]/70 border border-[#420c14]/10">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <strong className="text-[#420c14]">{quote.location}</strong>
+                </span>
+              )}
+            </div>
+          )}
 
           {!isPaid && !isExpired && (
             <>

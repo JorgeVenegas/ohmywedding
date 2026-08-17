@@ -1,8 +1,9 @@
 "use client"
 
 import React from 'react'
-import { X, Crown, Heart, Clock, MapPin, Image, Mail, HelpCircle, Gift, Shirt, Hotel, Music, FileText, Users } from 'lucide-react'
+import { X, Crown, Heart, Clock, MapPin, Image, Mail, HelpCircle, Gift, Shirt, Hotel, Music, FileText, Users, Camera } from 'lucide-react'
 import { Button } from './button'
+import type { SubPage } from '@/lib/page-config'
 
 // Gold color for elegant icons
 const GOLD_COLOR = '#B8860B'
@@ -12,6 +13,8 @@ interface SectionType {
   name: string
   description: string
   icon: React.ReactNode
+  /** If true, selecting this creates a new sub-page instead of adding to components[] */
+  subpageOnly?: boolean
 }
 
 const AVAILABLE_SECTIONS: SectionType[] = [
@@ -98,6 +101,13 @@ const AVAILABLE_SECTIONS: SectionType[] = [
     name: 'Special Guests',
     description: 'Celebrate parents, bridesmaids, groomsmen, and more',
     icon: <Users className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />
+  },
+  {
+    id: 'guest-photos',
+    name: 'Guest Photos',
+    description: 'A dedicated page where guests can upload and view photos',
+    icon: <Camera className="w-5 h-5" style={{ color: GOLD_COLOR }} strokeWidth={1.5} />,
+    subpageOnly: true,
   }
 ]
 
@@ -105,18 +115,47 @@ interface SectionSelectorModalProps {
   isOpen: boolean
   onClose: () => void
   onSelectSection: (sectionType: string) => void
+  onAddSubPage?: (subPage: SubPage) => void
   position: number
   enabledComponents?: string[]
+  enabledSubPageTypes?: string[]
   hasWeddingDate?: boolean
+  /** When true, all section types (including subpageOnly) are shown as regular sections */
+  isSubPageEditor?: boolean
 }
 
-export function SectionSelectorModal({ 
-  isOpen, 
-  onClose, 
-  onSelectSection, 
+function SectionButton({ section, index, onClick }: { section: SectionType; index: number; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full p-3 border border-gray-200 rounded-lg hover:border-amber-300 hover:bg-amber-50/50 transition-all duration-200 text-left group animate-in fade-in slide-in-from-left-4"
+      style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'backwards' }}
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex-shrink-0 p-2 rounded-lg bg-amber-50/80 group-hover:bg-amber-100/80 transition-colors duration-200">
+          {section.icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-medium text-gray-900 group-hover:text-amber-900 text-sm transition-colors duration-200">
+            {section.name}
+          </h3>
+          <p className="text-xs text-gray-500 mt-0.5">{section.description}</p>
+        </div>
+      </div>
+    </button>
+  )
+}
+
+export function SectionSelectorModal({
+  isOpen,
+  onClose,
+  onSelectSection,
+  onAddSubPage,
   position,
   enabledComponents = [],
-  hasWeddingDate = false
+  enabledSubPageTypes = [],
+  hasWeddingDate = false,
+  isSubPageEditor = false,
 }: SectionSelectorModalProps) {
   const [isClosing, setIsClosing] = React.useState(false)
 
@@ -148,22 +187,47 @@ export function SectionSelectorModal({
   // Section types that can have more than one instance on the page
   const multiInstanceTypes = ['banner']
 
-  // Filter out already enabled sections and date-dependent sections if no date
+  // In sub-page editor mode, all sections (including subpageOnly) are regular
   const availableSections = AVAILABLE_SECTIONS.filter(section => {
-    // Multi-instance sections are always available regardless of whether one already exists
+    if (section.subpageOnly && !isSubPageEditor) return false
     if (multiInstanceTypes.includes(section.id)) return true
-
-    // Skip if already enabled
     if (enabledComponents.includes(section.id)) return false
-
-    // Skip date-dependent sections if no wedding date is set
     if (!hasWeddingDate && dateDependentSections.includes(section.id)) return false
-
     return true
   })
 
-  const handleSelectSection = (sectionId: string) => {
-    onSelectSection(sectionId)
+  // Subpage-only sections for the main-page "Pages" divider — not shown in sub-page editor mode
+  const availableSubPageSections = isSubPageEditor ? [] : AVAILABLE_SECTIONS.filter(section => {
+    if (!section.subpageOnly) return false
+    return !enabledSubPageTypes.includes(section.id)
+  })
+
+  const handleSelectSection = (section: SectionType) => {
+    if (section.subpageOnly && onAddSubPage && !isSubPageEditor) {
+      const now = Date.now()
+      const path = section.id === 'guest-photos' ? 'photos' : section.id
+      const subPage: SubPage = {
+        id: `page-${path}-${now}`,
+        path,
+        label: section.name,
+        showInNav: false,
+        enabled: true,
+        components: [{
+          id: `${section.id}-${now}`,
+          type: section.id,
+          enabled: true,
+          order: 0,
+          props: {
+            title: 'Share Your Photos',
+            subtitle: 'Upload your favorite moments from our celebration',
+            uploaderPlaceholder: 'Your name',
+          },
+        }],
+      }
+      onAddSubPage(subPage)
+    } else {
+      onSelectSection(section.id)
+    }
     onClose()
   }
 
@@ -194,34 +258,40 @@ export function SectionSelectorModal({
           
           {/* Section List */}
           <div className="p-3 overflow-y-auto max-h-[50vh]">
-            {availableSections.length === 0 ? (
+            {availableSections.length === 0 && availableSubPageSections.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <p className="text-sm">All sections have been added.</p>
               </div>
             ) : (
               <div className="space-y-2">
                 {availableSections.map((section, index) => (
-                <button
-                  key={section.id}
-                  onClick={() => handleSelectSection(section.id)}
-                  className="w-full p-3 border border-gray-200 rounded-lg hover:border-amber-300 hover:bg-amber-50/50 transition-all duration-200 text-left group animate-in fade-in slide-in-from-left-4"
-                  style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'backwards' }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex-shrink-0 p-2 rounded-lg bg-amber-50/80 group-hover:bg-amber-100/80 transition-colors duration-200">
-                      {section.icon}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 group-hover:text-amber-900 text-sm transition-colors duration-200">
-                        {section.name}
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {section.description}
-                      </p>
-                    </div>
-                  </div>
-                </button>
+                  <SectionButton
+                    key={section.id}
+                    section={section}
+                    index={index}
+                    onClick={() => handleSelectSection(section)}
+                  />
                 ))}
+
+                {availableSubPageSections.length > 0 && (
+                  <>
+                    {availableSections.length > 0 && (
+                      <div className="flex items-center gap-2 pt-2 pb-1">
+                        <div className="flex-1 h-px bg-gray-100" />
+                        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-1">Pages</span>
+                        <div className="flex-1 h-px bg-gray-100" />
+                      </div>
+                    )}
+                    {availableSubPageSections.map((section, index) => (
+                      <SectionButton
+                        key={section.id}
+                        section={section}
+                        index={availableSections.length + index}
+                        onClick={() => handleSelectSection(section)}
+                      />
+                    ))}
+                  </>
+                )}
               </div>
             )}
           </div>

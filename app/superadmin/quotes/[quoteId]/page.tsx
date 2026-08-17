@@ -26,7 +26,11 @@ import {
   Loader2,
   Check,
   CreditCard,
+  Pencil,
 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { WeddingDatePicker } from "@/components/ui/wedding-date-picker"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/superadmin/confirm-dialog"
 import type { Quote, QuoteStatus } from "@/lib/quote-types"
@@ -52,6 +56,11 @@ export default function QuoteDetailPage({
   const [updatingLanguage, setUpdatingLanguage] = useState(false)
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [cancelling, setCancelling] = useState(false)
+  const [editingContext, setEditingContext] = useState(false)
+  const [contextWeddingDate, setContextWeddingDate] = useState("")
+  const [contextGuests, setContextGuests] = useState("")
+  const [contextLocation, setContextLocation] = useState("")
+  const [savingContext, setSavingContext] = useState(false)
 
   const fetchQuote = useCallback(async () => {
     try {
@@ -67,6 +76,37 @@ export default function QuoteDetailPage({
   }, [quoteId])
 
   useEffect(() => { fetchQuote() }, [fetchQuote])
+
+  useEffect(() => {
+    if (!quote) return
+    setContextWeddingDate(quote.wedding_date ?? "")
+    setContextGuests(quote.estimated_guests != null ? String(quote.estimated_guests) : "")
+    setContextLocation(quote.location ?? "")
+  }, [quote])
+
+  const saveContext = async () => {
+    setSavingContext(true)
+    try {
+      const res = await fetch(`/api/superadmin/quotes/${quoteId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          weddingDate: contextWeddingDate || null,
+          estimatedGuests: contextGuests ? parseInt(contextGuests, 10) : null,
+          location: contextLocation.trim() || null,
+        }),
+      })
+      if (res.ok) {
+        toast.success("Wedding context saved")
+        setEditingContext(false)
+        fetchQuote()
+      } else {
+        toast.error("Failed to save")
+      }
+    } finally {
+      setSavingContext(false)
+    }
+  }
 
   const copyLink = async () => {
     if (!quote) return
@@ -281,6 +321,100 @@ export default function QuoteDetailPage({
           <p className="text-sm text-[#420c14]/80">{quote.notes}</p>
         </div>
       )}
+
+      {/* Wedding Context */}
+      <div className="bg-white rounded-2xl border border-[#420c14]/10 shadow-sm p-5">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs text-[#420c14]/50 uppercase tracking-wider">Wedding Context</p>
+          {!editingContext ? (
+            <button
+              onClick={() => setEditingContext(true)}
+              className="flex items-center gap-1 text-xs text-[#420c14]/40 hover:text-[#420c14] transition-colors"
+            >
+              <Pencil className="w-3 h-3" />
+              Edit
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setEditingContext(false); setContextWeddingDate(quote.wedding_date ?? ""); setContextGuests(quote.estimated_guests != null ? String(quote.estimated_guests) : ""); setContextLocation(quote.location ?? "") }}
+                className="text-xs text-[#420c14]/40 hover:text-[#420c14]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveContext}
+                disabled={savingContext}
+                className="text-xs text-[#DDA46F] hover:text-[#c99560] font-medium disabled:opacity-50"
+              >
+                {savingContext ? "Saving…" : "Save"}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {editingContext ? (
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-[#420c14]/60">Wedding Date</Label>
+              <WeddingDatePicker
+                value={contextWeddingDate}
+                onChange={setContextWeddingDate}
+                placeholder="Approx. date"
+                locale="en"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-[#420c14]/60">Est. Guests</Label>
+              <Input
+                type="number"
+                placeholder="150"
+                value={contextGuests}
+                onChange={e => setContextGuests(e.target.value)}
+                className="border-[#420c14]/15 h-9 text-sm"
+                min={1}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-[#420c14]/60">Location</Label>
+              <Input
+                placeholder="Mexico City"
+                value={contextLocation}
+                onChange={e => setContextLocation(e.target.value)}
+                className="border-[#420c14]/15 h-9 text-sm"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-6">
+            {quote.wedding_date ? (
+              <div>
+                <p className="text-[10px] text-[#420c14]/40 uppercase tracking-wider mb-0.5">Date</p>
+                <p className="text-sm font-medium text-[#420c14]">
+                  {(() => {
+                    try { return format(new Date(quote.wedding_date + 'T12:00:00'), "MMMM d, yyyy") } catch { return quote.wedding_date }
+                  })()}
+                </p>
+              </div>
+            ) : null}
+            {quote.estimated_guests != null ? (
+              <div>
+                <p className="text-[10px] text-[#420c14]/40 uppercase tracking-wider mb-0.5">Est. Guests</p>
+                <p className="text-sm font-medium text-[#420c14]">{quote.estimated_guests.toLocaleString()}</p>
+              </div>
+            ) : null}
+            {quote.location ? (
+              <div>
+                <p className="text-[10px] text-[#420c14]/40 uppercase tracking-wider mb-0.5">Location</p>
+                <p className="text-sm font-medium text-[#420c14]">{quote.location}</p>
+              </div>
+            ) : null}
+            {!quote.wedding_date && quote.estimated_guests == null && !quote.location && (
+              <p className="text-sm text-[#420c14]/30 italic">No wedding context added yet</p>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Scenarios */}
       <div className="space-y-4">

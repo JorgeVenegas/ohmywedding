@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
 import { useI18n } from '@/components/contexts/i18n-context'
 
@@ -18,16 +19,27 @@ interface ThemeColors {
   muted?: string
 }
 
+export interface SubPageLink {
+  id: string
+  label: string
+  href: string
+  isActive: boolean
+}
+
 interface WeddingNavProps {
   person1Name: string
   person2Name: string
   accentColor?: string
   showNavLinks?: boolean
   enabledSections?: string[]
+  /** Page-level navigation links (rendered alongside scroll anchors) */
+  subPageLinks?: SubPageLink[]
   // Color background options
   useColorBackground?: boolean
   backgroundColorChoice?: 'none' | 'primary' | 'secondary' | 'accent' | 'primary-light' | 'secondary-light' | 'accent-light' | 'primary-lighter' | 'secondary-lighter' | 'accent-lighter'
   themeColors?: ThemeColors
+  /** When true, nav is always visible without waiting to scroll past the hero */
+  alwaysVisible?: boolean
 }
 
 // Export visibility state for other components to use
@@ -146,17 +158,19 @@ function getNavColorScheme(
   }
 }
 
-export function WeddingNav({ 
-  person1Name, 
-  person2Name, 
+export function WeddingNav({
+  person1Name,
+  person2Name,
   accentColor = '#B8860B',
   showNavLinks = true,
   enabledSections = [],
+  subPageLinks = [],
   useColorBackground = false,
   backgroundColorChoice = 'none',
-  themeColors
+  themeColors,
+  alwaysVisible = false,
 }: WeddingNavProps) {
-  const [isVisible, setIsVisible] = useState(false)
+  const [isVisible, setIsVisible] = useState(alwaysVisible)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const rafRef = useRef<number | null>(null)
   const navRef = useRef<HTMLElement | null>(null)
@@ -211,12 +225,12 @@ export function WeddingNav({
         
         // Try to find the actual hero section by id
         const heroSection = docTarget.getElementById('hero')
-        const heroHeight = heroSection?.offsetHeight || scrollTarget.innerHeight
         const scrollY = scrollTarget.scrollY ?? docTarget.documentElement?.scrollTop ?? 0
-        
-        // Show nav only after hero is completely scrolled out of view
-        const shouldShow = scrollY >= heroHeight
-        
+
+        // If no hero element exists, show immediately; otherwise wait until it scrolls out
+        const heroHeight = heroSection?.offsetHeight ?? 0
+        const shouldShow = alwaysVisible || scrollY >= heroHeight
+
         setIsVisible(shouldShow)
       })
     }
@@ -316,7 +330,7 @@ export function WeddingNav({
   // Also include nav height info for control buttons positioning
   useEffect(() => {
     // Calculate current nav height based on screen size
-    const hasDesktopLinks = showNavLinks && sectionLinks.length > 0
+    const hasDesktopLinks = showNavLinks && (sectionLinks.length > 0 || subPageLinks.length > 0)
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
     const navHeight = isMobile ? 56 : (hasDesktopLinks ? 76 : 56) // Mobile is shorter
     
@@ -393,7 +407,7 @@ export function WeddingNav({
             </div>
             
             {/* Mobile hamburger button - far right */}
-            {showNavLinks && sectionLinks.length > 0 ? (
+            {showNavLinks && (sectionLinks.length > 0 || subPageLinks.length > 0) ? (
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="p-2 transition-colors rounded-md"
@@ -427,21 +441,37 @@ export function WeddingNav({
               <span className="font-light" dangerouslySetInnerHTML={{ __html: initials }} />
             </div>
             
-            {/* Desktop Section Links - centered below initials */}
-            {showNavLinks && sectionLinks.length > 0 && (
+            {/* Desktop links - scroll anchors + page links */}
+            {showNavLinks && (sectionLinks.length > 0 || subPageLinks.length > 0) && (
               <div className="flex items-center justify-center gap-6 mt-2">
                 {sectionLinks.map((link) => (
                   <button
                     key={link.id}
                     onClick={() => scrollToSection(link.id)}
                     className="text-sm transition-colors whitespace-nowrap"
-                    style={{ 
+                    style={{
                       fontFamily: 'var(--font-body, sans-serif)',
                       color: isColored ? textColorMuted : '#6b7280'
                     }}
                   >
                     {link.label}
                   </button>
+                ))}
+                {sectionLinks.length > 0 && subPageLinks.length > 0 && (
+                  <span className="w-px h-3 opacity-30" style={{ background: isColored ? textColor : accentColor }} />
+                )}
+                {subPageLinks.map((link) => (
+                  <Link
+                    key={link.id}
+                    href={link.href}
+                    className="text-sm transition-colors whitespace-nowrap"
+                    style={{
+                      fontFamily: 'var(--font-body, sans-serif)',
+                      color: isColored ? textColorMuted : '#6b7280',
+                    }}
+                  >
+                    {link.label}
+                  </Link>
                 ))}
               </div>
             )}
@@ -450,7 +480,7 @@ export function WeddingNav({
       </nav>
       
       {/* Full-screen Mobile Menu Overlay */}
-      {showNavLinks && sectionLinks.length > 0 && (
+      {showNavLinks && (sectionLinks.length > 0 || subPageLinks.length > 0) && (
         <div
           className={`
             fixed inset-0 z-50
@@ -501,13 +531,30 @@ export function WeddingNav({
                   key={link.id}
                   onClick={() => scrollToSection(link.id)}
                   className="text-xl transition-all duration-200 hover:scale-105"
-                  style={{ 
+                  style={{
                     fontFamily: 'var(--font-body, sans-serif)',
                     color: isColored ? textColor : accentColor
                   }}
                 >
                   {link.label}
                 </button>
+              ))}
+              {sectionLinks.length > 0 && subPageLinks.length > 0 && (
+                <span className="w-8 h-px opacity-20" style={{ background: isColored ? textColor : accentColor }} />
+              )}
+              {subPageLinks.map((link) => (
+                <Link
+                  key={link.id}
+                  href={link.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-xl transition-all duration-200 hover:scale-105"
+                  style={{
+                    fontFamily: 'var(--font-body, sans-serif)',
+                    color: isColored ? textColor : accentColor,
+                  }}
+                >
+                  {link.label}
+                </Link>
               ))}
             </div>
           </div>

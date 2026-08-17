@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient, createAdminSupabaseClient } from '@/lib/supabase-server'
 import { isSuperUser } from '@/lib/superadmin'
+import { logActivity } from '@/lib/invitation-activity-log'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -117,6 +118,13 @@ export async function POST(
       .single()
 
     if (error) throw error
+    await logActivity({
+      weddingId: wedding.id,
+      eventType: 'meeting_created',
+      title: `${data.title} added`,
+      description: data.scheduled_at ? new Date(data.scheduled_at).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' }) : undefined,
+      metadata: { meeting_id: data.id, created_by: user.email },
+    })
     return NextResponse.json({ success: true, meeting: data })
   } catch (err) {
     console.error('[meetings POST]', err)

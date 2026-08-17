@@ -2,70 +2,102 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Phone, Mail, Globe, Link as LinkIcon, ExternalLink, Edit2, Trash2, Plus, ChevronDown, ChevronRight, Calendar, Trash } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import {
+  Phone, Mail, Globe, Link as LinkIcon, ExternalLink, Edit2, Trash2,
+  Plus, ChevronDown, Calendar, Trash,
+  UtensilsCrossed, Image, Video, Music, Heart, Hotel, Navigation,
+  Sparkles, Star, User, BookOpen, Tag,
+} from 'lucide-react'
 import { useTranslation } from '@/components/contexts/i18n-context'
 import type { Supplier, SupplierPayment } from '../types'
 import { SUPPLIER_CATEGORIES_LIST } from '../types'
 
-interface SupplierCardProps {
-  supplier: Supplier
-  onEdit: (supplier: Supplier) => void
-  onDelete: (supplier: Supplier) => void
-  onAddPayment: (supplier: Supplier) => void
-  onEditPayment: (supplier: Supplier, payment: SupplierPayment) => void
-  onDeletePayment: (payment: SupplierPayment) => void
+export const CATEGORY_ICON: Record<string, React.ElementType> = {
+  catering:    UtensilsCrossed,
+  photography: Image,
+  videography: Video,
+  music:       Music,
+  flowers:     Heart,
+  venue:       Hotel,
+  transport:   Navigation,
+  decoration:  Sparkles,
+  cake:        Star,
+  beauty:      User,
+  officiant:   BookOpen,
+  lighting:    Sparkles,
+  other:       Tag,
+}
+
+const CONTACT_ICON: Record<string, React.ElementType> = {
+  phone: Phone, email: Mail, website: Globe, other: LinkIcon,
 }
 
 function formatCurrency(amount: number) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(amount)
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount)
 }
 
 function formatDate(dateStr: string) {
   return new Date(dateStr + 'T12:00:00').toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-const CONTACT_ICON = {
-  phone: Phone,
-  email: Mail,
-  website: Globe,
-  other: LinkIcon,
+interface SupplierCardProps {
+  supplier: Supplier
+  onEdit: (s: Supplier) => void
+  onDelete: (s: Supplier) => void
+  onAddPayment: (s: Supplier) => void
+  onEditPayment: (s: Supplier, p: SupplierPayment) => void
+  onDeletePayment: (p: SupplierPayment) => void
 }
 
 export function SupplierCard({ supplier, onEdit, onDelete, onAddPayment, onEditPayment, onDeletePayment }: SupplierCardProps) {
   const { t } = useTranslation()
   const [paymentsOpen, setPaymentsOpen] = useState(false)
 
-  const covered = supplier.covered_amount
-  const total = Number(supplier.total_amount)
-  const percent = total > 0 ? Math.min(100, Math.round((covered / total) * 100)) : 0
+  const covered  = supplier.covered_amount
+  const total    = Number(supplier.total_amount)
+  const percent  = total > 0 ? Math.min(100, Math.round((covered / total) * 100)) : 0
   const remaining = Math.max(0, total - covered)
   const isComplete = total > 0 && covered >= total
-  const ContactIcon = CONTACT_ICON[supplier.contact_type] ?? LinkIcon
+  const hasAmount  = total > 0
+
+  const ContactIcon  = CONTACT_ICON[supplier.contact_type] ?? LinkIcon
+  const CategoryIcon = CATEGORY_ICON[supplier.category] ?? Tag
   const categoryItem = SUPPLIER_CATEGORIES_LIST.find(c => c.value === supplier.category)
   const categoryLabel = categoryItem ? t(categoryItem.labelKey) : supplier.category
 
   return (
-    <Card className="overflow-hidden flex flex-col">
-      {/* Top section */}
-      <div className="p-4 flex flex-col flex-1 gap-3">
-        {/* Header row */}
-        <div className="flex items-start gap-2">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-serif text-base text-brand leading-tight">{supplier.name}</h3>
-            <span className="inline-block text-xs text-brand/50 bg-brand/5 px-2 py-0.5 rounded-full mt-1">
-              {categoryLabel}
-            </span>
+    <div className="group flex flex-col rounded-2xl border border-[#420c14]/10 bg-white overflow-hidden hover:border-[#420c14]/20 hover:shadow-sm transition-all">
+
+      {/* Header */}
+      <div className="p-5 flex flex-col gap-1">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <CategoryIcon className="w-3.5 h-3.5 text-[#420c14]/35 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-[#420c14]/35 mb-0.5">
+                {categoryLabel}
+              </p>
+              <h3 className="text-[17px] font-bold text-[#420c14] leading-tight truncate">
+                {supplier.name}
+              </h3>
+            </div>
+          </div>
+          <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity -mr-1">
+            <button onClick={() => onEdit(supplier)} className="w-7 h-7 rounded-lg flex items-center justify-center text-[#420c14]/30 hover:text-[#420c14] hover:bg-[#420c14]/5 transition-colors">
+              <Edit2 className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={() => onDelete(supplier)} className="w-7 h-7 rounded-lg flex items-center justify-center text-[#420c14]/25 hover:text-red-500 hover:bg-red-50 transition-colors">
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
 
-        {/* Contact info */}
+        {/* Contact */}
         {supplier.contact_info && (
-          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <ContactIcon className="w-3.5 h-3.5 flex-shrink-0" />
+          <div className="flex items-center gap-1.5 text-xs text-[#420c14]/40 pl-6 mt-0.5">
+            <ContactIcon className="w-3 h-3 shrink-0 text-[#420c14]/25" />
             {supplier.contact_type === 'website' || supplier.contact_type === 'other' ? (
-              <a href={supplier.contact_info} target="_blank" rel="noopener noreferrer" className="hover:underline truncate">
+              <a href={supplier.contact_info} target="_blank" rel="noopener noreferrer" className="truncate hover:text-[#DDA46F] transition-colors">
                 {supplier.contact_info}
               </a>
             ) : (
@@ -74,89 +106,93 @@ export function SupplierCard({ supplier, onEdit, onDelete, onAddPayment, onEditP
           </div>
         )}
 
-        {/* Contract URL */}
+        {/* Contract */}
         {supplier.contract_url && (
-          <a
-            href={supplier.contract_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-xs text-primary hover:underline"
+          <a href={supplier.contract_url} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1 text-[11px] text-[#DDA46F] hover:text-[#c9956a] transition-colors pl-6 mt-0.5"
           >
             <ExternalLink className="w-3 h-3" />
             {t('admin.suppliers.viewContract')}
           </a>
         )}
-
-        {/* Budget progress */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">{t('admin.suppliers.covered')}</span>
-            <span className={`font-medium ${isComplete ? 'text-green-600' : ''}`}>
-              {formatCurrency(covered)} / {formatCurrency(total)}
-            </span>
-          </div>
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <motion.div
-              className={`h-full rounded-full transition-colors ${isComplete ? 'bg-green-500' : 'bg-primary'}`}
-              initial={{ width: 0 }}
-              animate={{ width: `${percent}%` }}
-              transition={{ duration: 0.6, ease: 'easeOut' }}
-            />
-          </div>
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{percent}% {t('admin.suppliers.paid')}</span>
-            {!isComplete && total > 0 && (
-              <span>{formatCurrency(remaining)} {t('admin.suppliers.remaining')}</span>
-            )}
-            {isComplete && <span className="text-green-600">✓ {t('admin.suppliers.fullyPaid')}</span>}
-          </div>
-        </div>
-
-        {/* Notes */}
-        {supplier.notes && (
-          <p className="text-xs text-muted-foreground italic border-l-2 border-muted pl-2">
-            {supplier.notes}
-          </p>
-        )}
-
-        {/* Actions */}
-        <div className="flex gap-1 mt-auto pt-2 border-t border-border">
-          <Button variant="ghost" size="icon" className="h-8 w-8 ml-auto" onClick={() => onEdit(supplier)}>
-            <Edit2 className="w-3.5 h-3.5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(supplier)}>
-            <Trash2 className="w-3.5 h-3.5" />
-          </Button>
-        </div>
       </div>
 
-      {/* Payments section */}
-      <div className="border-t">
+      {/* Budget */}
+      {hasAmount ? (
+        <div className="px-5 pb-5 pt-0 border-t border-[#420c14]/6 mt-0 flex flex-col gap-3 pt-4">
+          <div>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-[#420c14]/35 mb-2">
+              {t('admin.suppliers.covered')}
+            </p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold tabular-nums leading-none text-[#DDA46F]">
+                {formatCurrency(covered)}
+              </span>
+              <span className="text-xs text-[#420c14]/35 tabular-nums">
+                / {formatCurrency(total)}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="h-1.5 bg-[#420c14]/8 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full rounded-full bg-[#DDA46F]"
+                initial={{ width: 0 }}
+                animate={{ width: `${percent}%` }}
+                transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-[#420c14]/40">
+              <span>{percent}% {t('admin.suppliers.paid')}</span>
+              {isComplete ? (
+                <span className="font-semibold text-[#420c14]/50">✓ {t('admin.suppliers.fullyPaid')}</span>
+              ) : (
+                <span>{formatCurrency(remaining)} {t('admin.suppliers.remaining')}</span>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="px-5 pb-4 border-t border-[#420c14]/6 pt-4">
+          <p className="text-xs text-[#420c14]/25 italic">{t('admin.suppliers.noAmount')}</p>
+        </div>
+      )}
+
+      {/* Notes */}
+      {supplier.notes && (
+        <div className="px-5 pb-4 -mt-1">
+          <p className="text-xs text-[#420c14]/40 italic border-l border-[#420c14]/15 pl-3 leading-relaxed">
+            {supplier.notes}
+          </p>
+        </div>
+      )}
+
+      {/* Payments */}
+      <div className="border-t border-[#420c14]/8 mt-auto">
         <div
           role="button"
           tabIndex={0}
-          className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium hover:bg-muted/50 transition-colors cursor-pointer"
+          className="w-full flex items-center justify-between px-5 py-3 cursor-pointer hover:bg-[#420c14]/[0.02] transition-colors"
           onClick={() => setPaymentsOpen(o => !o)}
           onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setPaymentsOpen(o => !o)}
         >
-          <span className="flex items-center gap-1.5">
-            {paymentsOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-            {t('admin.suppliers.payments')}
+          <span className="flex items-center gap-2 text-[#420c14]/50">
+            <ChevronDown className={`w-3 h-3 text-[#420c14]/25 transition-transform duration-200 ${paymentsOpen ? 'rotate-180' : ''}`} />
+            <span className="text-[9px] font-semibold uppercase tracking-[0.25em]">{t('admin.suppliers.payments')}</span>
             {supplier.payments.length > 0 && (
-              <span className="bg-primary/10 text-primary text-xs px-1.5 py-0.5 rounded-full">
-                {supplier.payments.length}
+              <span className="text-[10px] tabular-nums text-[#420c14]/40 font-medium">
+                ({supplier.payments.length})
               </span>
             )}
           </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 text-xs gap-1"
+          <button
+            className="text-[11px] font-semibold text-[#DDA46F] hover:text-[#c9956a] transition-colors flex items-center gap-1"
             onClick={e => { e.stopPropagation(); onAddPayment(supplier) }}
           >
             <Plus className="w-3 h-3" />
             {t('admin.suppliers.addPayment')}
-          </Button>
+          </button>
         </div>
 
         <AnimatePresence>
@@ -165,41 +201,37 @@ export function SupplierCard({ supplier, onEdit, onDelete, onAddPayment, onEditP
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
               className="overflow-hidden"
             >
-              <div className="px-4 pb-3 space-y-2">
+              <div className="px-5 pb-4 space-y-1.5">
                 {supplier.payments.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-3">
-                    {t('admin.suppliers.noPayments')}
-                  </p>
-                ) : (
-                  supplier.payments.map(p => (
-                    <div key={p.id} className="flex items-center justify-between gap-2 bg-muted/40 rounded-lg px-3 py-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Calendar className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                        <div className="min-w-0">
-                          <span className="text-sm font-medium">{formatCurrency(Number(p.amount))}</span>
-                          <span className="text-xs text-muted-foreground ml-2">{formatDate(p.payment_date)}</span>
-                          {p.notes && <p className="text-xs text-muted-foreground truncate">{p.notes}</p>}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditPayment(supplier, p)}>
-                          <Edit2 className="w-3 h-3" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => onDeletePayment(p)}>
-                          <Trash className="w-3 h-3" />
-                        </Button>
+                  <p className="text-xs text-[#420c14]/30 text-center py-2">{t('admin.suppliers.noPayments')}</p>
+                ) : supplier.payments.map(p => (
+                  <div key={p.id} className="flex items-center justify-between gap-2 bg-[#f5f2eb] rounded-xl px-3 py-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Calendar className="w-3 h-3 text-[#420c14]/25 shrink-0" />
+                      <div className="min-w-0">
+                        <span className="text-sm font-bold text-[#420c14] tabular-nums">{formatCurrency(Number(p.amount))}</span>
+                        <span className="text-xs text-[#420c14]/40 ml-2">{formatDate(p.payment_date)}</span>
+                        {p.notes && <p className="text-xs text-[#420c14]/35 truncate mt-0.5">{p.notes}</p>}
                       </div>
                     </div>
-                  ))
-                )}
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <button onClick={() => onEditPayment(supplier, p)} className="w-6 h-6 rounded-lg flex items-center justify-center text-[#420c14]/25 hover:text-[#420c14] hover:bg-white transition-colors">
+                        <Edit2 className="w-3 h-3" />
+                      </button>
+                      <button onClick={() => onDeletePayment(p)} className="w-6 h-6 rounded-lg flex items-center justify-center text-[#420c14]/25 hover:text-red-500 hover:bg-red-50 transition-colors">
+                        <Trash className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
-    </Card>
+    </div>
   )
 }

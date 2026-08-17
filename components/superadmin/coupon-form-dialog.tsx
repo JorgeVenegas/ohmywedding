@@ -180,11 +180,11 @@ export function CouponFormDialog({ open, onOpenChange, onSuccess }: CouponFormDi
             <div className="flex gap-6">
               <label className="flex items-center gap-2 cursor-pointer">
                 <Switch checked={premiumApplies} onCheckedChange={setPremiumApplies} />
-                <span className="text-sm text-[#420c14]/80">Premium</span>
+                <span className="text-sm text-[#420c14]/80">Personalized</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <Switch checked={deluxeApplies} onCheckedChange={setDeluxeApplies} />
-                <span className="text-sm text-[#420c14]/80">Deluxe</span>
+                <span className="text-sm text-[#420c14]/80">Bespoke</span>
               </label>
             </div>
           </div>
