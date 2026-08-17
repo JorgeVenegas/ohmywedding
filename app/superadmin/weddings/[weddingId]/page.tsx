@@ -108,7 +108,7 @@ interface DesignStatusData {
   }>
 }
 
-type Tab = 'status' | 'versions' | 'meetings' | 'storage' | 'ai'
+type Tab = 'status' | 'versions' | 'meetings' | 'storage' | 'ai' | 'pages'
 
 interface StorageBreakdown {
   table: string
@@ -447,7 +447,7 @@ export default function SuperadminWeddingDesignPage({
 
       {/* Tabs */}
       <div className="flex gap-1 bg-[#420c14]/5 rounded-xl p-1">
-        {(['status', 'versions', 'meetings', 'storage', 'ai'] as Tab[]).map((t) => (
+        {(['status', 'versions', 'meetings', 'pages', 'storage', 'ai'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -992,6 +992,11 @@ export default function SuperadminWeddingDesignPage({
         </div>
       )}
 
+      {/* ── Pages tab ──────────────────────────────────── */}
+      {tab === 'pages' && (
+        <SubpagesTab weddingId={weddingId} />
+      )}
+
       {/* ── AI Credits tab ─────────────────────────────── */}
       {tab === 'ai' && (
         <AICreditsTab weddingId={weddingId} />
@@ -1179,6 +1184,178 @@ export default function SuperadminWeddingDesignPage({
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  )
+}
+
+/* ── Subpages Tab ────────────────────────────────────────────────────────── */
+
+interface SubPage {
+  id: string
+  path: string
+  label: string
+  showInNav: boolean
+  enabled: boolean
+}
+
+function SubpagesTab({ weddingId }: { weddingId: string }) {
+  const [pages, setPages] = useState<SubPage[]>([])
+  const [fullConfig, setFullConfig] = useState<Record<string, unknown> | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState({ label: '', path: '' })
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/weddings/${weddingId}/config`)
+        if (res.ok) {
+          const data = await res.json()
+          setFullConfig(data.config)
+          setPages((data.config?.pages as SubPage[]) || [])
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [weddingId])
+
+  const startEdit = (page: SubPage) => {
+    setEditingId(page.id)
+    setEditForm({ label: page.label, path: page.path })
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditForm({ label: '', path: '' })
+  }
+
+  const saveEdit = async (pageId: string) => {
+    if (!fullConfig) return
+    const label = editForm.label.trim()
+    const path = editForm.path.trim().replace(/^\/+/, '').replace(/\s+/g, '-').toLowerCase()
+    if (!label || !path) return
+
+    const updatedPages = pages.map(p =>
+      p.id === pageId ? { ...p, label, path } : p
+    )
+    const updatedConfig = { ...fullConfig, pages: updatedPages }
+
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/weddings/${weddingId}/config`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: updatedConfig }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        toast.error(err.error || 'Failed to save')
+        return
+      }
+      setPages(updatedPages)
+      setFullConfig(updatedConfig)
+      setEditingId(null)
+      toast.success('Subpage updated')
+    } catch {
+      toast.error('Failed to save')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-20">
+      <Loader2 className="w-8 h-8 animate-spin text-[#DDA46F]" />
+    </div>
+  )
+
+  if (pages.length === 0) return (
+    <div className="bg-white rounded-2xl border border-[#420c14]/10 shadow-sm py-14 text-center">
+      <p className="text-[#420c14]/40 text-sm">No subpages configured for this wedding.</p>
+    </div>
+  )
+
+  return (
+    <div className="space-y-3">
+      {pages.map((page) => (
+        <div key={page.id} className="rounded-2xl border border-[#420c14]/10 bg-white p-5">
+          {editingId === page.id ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-[#420c14]/55 text-xs uppercase tracking-wider">Nav Label</Label>
+                  <Input
+                    value={editForm.label}
+                    onChange={e => setEditForm(f => ({ ...f, label: e.target.value }))}
+                    className="h-9 rounded-xl border-[#420c14]/10 focus:border-[#DDA46F] focus:ring-[#DDA46F]/15 text-sm"
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[#420c14]/55 text-xs uppercase tracking-wider">URL Path</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#420c14]/30 text-sm select-none">/</span>
+                    <Input
+                      value={editForm.path}
+                      onChange={e => setEditForm(f => ({ ...f, path: e.target.value }))}
+                      className="pl-5 h-9 rounded-xl border-[#420c14]/10 focus:border-[#DDA46F] focus:ring-[#DDA46F]/15 text-sm font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => saveEdit(page.id)}
+                  disabled={saving || !editForm.label.trim() || !editForm.path.trim()}
+                  className="rounded-lg bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb] text-xs h-8"
+                >
+                  {saving && <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />}
+                  Save
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={cancelEdit}
+                  disabled={saving}
+                  className="rounded-lg border-[#420c14]/10 text-[#420c14] text-xs h-8"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-medium text-[#420c14] text-sm">{page.label}</span>
+                  {!page.enabled && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#420c14]/5 text-[#420c14]/40 border border-[#420c14]/8">
+                      Hidden
+                    </span>
+                  )}
+                  {!page.showInNav && page.enabled && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#DDA46F]/10 text-[#b8843a] border border-[#DDA46F]/20">
+                      Not in nav
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-[#420c14]/40 font-mono mt-0.5">/{page.path}</p>
+              </div>
+              <button
+                onClick={() => startEdit(page)}
+                className="shrink-0 h-8 px-3 rounded-lg text-xs font-medium text-[#420c14]/50 hover:text-[#420c14] hover:bg-[#420c14]/6 border border-[#420c14]/10 transition-colors"
+              >
+                Edit
+              </button>
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   )
 }

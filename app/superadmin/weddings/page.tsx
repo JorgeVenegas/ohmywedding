@@ -32,6 +32,7 @@ import {
   MapPin,
   Trash2,
   X,
+  Copy,
 } from "lucide-react"
 import { DesignProgressDots } from "@/components/ui/design-progress-dots"
 import { format } from "date-fns"
@@ -101,6 +102,11 @@ export default function WeddingsManagementPage() {
   const [deleteTarget, setDeleteTarget] = useState<Wedding | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState("")
   const [deleting, setDeleting] = useState(false)
+
+  // Clone as demo state
+  const [cloneSource, setCloneSource] = useState<Wedding | null>(null)
+  const [cloneForm, setCloneForm] = useState({ p1First: '', p1Last: '', p2First: '', p2Last: '', date: '', location: '' })
+  const [cloning, setCloning] = useState(false)
 
   const fetchWeddings = useCallback(async (q: string) => {
     setLoading(true)
@@ -176,6 +182,35 @@ export default function WeddingsManagementPage() {
       toast.error(err instanceof Error ? err.message : 'Failed to change plan')
     } finally {
       setUpdating(false)
+    }
+  }
+
+  const handleCloneDemo = async () => {
+    if (!cloneSource || !cloneForm.p1First.trim() || !cloneForm.p2First.trim()) return
+    setCloning(true)
+    try {
+      const res = await fetch('/api/superadmin/weddings/clone-demo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourceWeddingId: cloneSource.id,
+          partner1FirstName: cloneForm.p1First.trim(),
+          partner1LastName: cloneForm.p1Last.trim() || null,
+          partner2FirstName: cloneForm.p2First.trim(),
+          partner2LastName: cloneForm.p2Last.trim() || null,
+          weddingDate: cloneForm.date || null,
+          location: cloneForm.location.trim() || null,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed')
+      toast.success(`Demo wedding "${data.weddingNameId}" created from ${cloneSource.wedding_name_id}`)
+      setCloneSource(null)
+      fetchWeddings(search)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to clone wedding')
+    } finally {
+      setCloning(false)
     }
   }
 
@@ -388,6 +423,16 @@ export default function WeddingsManagementPage() {
                           <Palette className="w-3.5 h-3.5" />
                         </Link>
                         <button
+                          onClick={() => {
+                            setCloneSource(wedding)
+                            setCloneForm({ p1First: '', p1Last: '', p2First: '', p2Last: '', date: '', location: '' })
+                          }}
+                          title="Clone as demo"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-[#420c14]/30 hover:text-[#DDA46F] hover:bg-[#DDA46F]/10 transition-colors"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                        <button
                           onClick={() => openChangePlan(wedding)}
                           title="Change plan"
                           className="h-7 px-2.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider text-[#420c14]/40 hover:text-[#420c14] hover:bg-[#420c14]/8 transition-colors whitespace-nowrap"
@@ -456,6 +501,106 @@ export default function WeddingsManagementPage() {
               className="rounded-xl bg-red-600 hover:bg-red-700 text-white disabled:opacity-40"
             >
               {deleting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Deleting…</> : 'Delete permanently'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Clone as demo dialog ────────────────────────────────────── */}
+      <Dialog open={!!cloneSource} onOpenChange={(o) => { if (!o) setCloneSource(null) }}>
+        <DialogContent className="max-w-md rounded-2xl border-[#420c14]/10">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-2xl text-[#420c14]">Clone as Demo</DialogTitle>
+            <DialogDescription asChild>
+              <div className="mt-1">
+                <p className="text-[#420c14]/55 text-sm">
+                  Copies the page design, FAQs, pages, and schedule from{' '}
+                  <span className="font-mono text-xs bg-[#420c14]/5 px-1.5 py-0.5 rounded text-[#420c14]">
+                    {cloneSource?.wedding_name_id}
+                  </span>{' '}
+                  into a new demo wedding with the details below.
+                </p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-[#420c14]/55 text-xs uppercase tracking-wider">Partner 1 First Name *</Label>
+                <Input
+                  value={cloneForm.p1First}
+                  onChange={e => setCloneForm(f => ({ ...f, p1First: e.target.value }))}
+                  placeholder="Sofia"
+                  className="h-10 rounded-xl border-[#420c14]/10 focus:border-[#DDA46F] focus:ring-[#DDA46F]/15"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[#420c14]/55 text-xs uppercase tracking-wider">Last Name</Label>
+                <Input
+                  value={cloneForm.p1Last}
+                  onChange={e => setCloneForm(f => ({ ...f, p1Last: e.target.value }))}
+                  placeholder="García"
+                  className="h-10 rounded-xl border-[#420c14]/10 focus:border-[#DDA46F] focus:ring-[#DDA46F]/15"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-[#420c14]/55 text-xs uppercase tracking-wider">Partner 2 First Name *</Label>
+                <Input
+                  value={cloneForm.p2First}
+                  onChange={e => setCloneForm(f => ({ ...f, p2First: e.target.value }))}
+                  placeholder="Andrés"
+                  className="h-10 rounded-xl border-[#420c14]/10 focus:border-[#DDA46F] focus:ring-[#DDA46F]/15"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[#420c14]/55 text-xs uppercase tracking-wider">Last Name</Label>
+                <Input
+                  value={cloneForm.p2Last}
+                  onChange={e => setCloneForm(f => ({ ...f, p2Last: e.target.value }))}
+                  placeholder="López"
+                  className="h-10 rounded-xl border-[#420c14]/10 focus:border-[#DDA46F] focus:ring-[#DDA46F]/15"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-[#420c14]/55 text-xs uppercase tracking-wider">Wedding Date</Label>
+                <Input
+                  type="date"
+                  value={cloneForm.date}
+                  onChange={e => setCloneForm(f => ({ ...f, date: e.target.value }))}
+                  className="h-10 rounded-xl border-[#420c14]/10 focus:border-[#DDA46F] focus:ring-[#DDA46F]/15"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[#420c14]/55 text-xs uppercase tracking-wider">Location</Label>
+                <Input
+                  value={cloneForm.location}
+                  onChange={e => setCloneForm(f => ({ ...f, location: e.target.value }))}
+                  placeholder="Hacienda San Miguel"
+                  className="h-10 rounded-xl border-[#420c14]/10 focus:border-[#DDA46F] focus:ring-[#DDA46F]/15"
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setCloneSource(null)}
+              className="rounded-xl border-[#420c14]/10 text-[#420c14] hover:bg-[#420c14]/5"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCloneDemo}
+              disabled={cloning || !cloneForm.p1First.trim() || !cloneForm.p2First.trim()}
+              className="rounded-xl bg-[#DDA46F] hover:bg-[#c8904f] text-white disabled:opacity-40"
+            >
+              {cloning ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Cloning…</> : 'Create Demo Wedding'}
             </Button>
           </DialogFooter>
         </DialogContent>

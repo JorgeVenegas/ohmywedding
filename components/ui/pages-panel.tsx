@@ -1,7 +1,7 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
-import { Eye, EyeOff, Trash2, Link2, Copy, Navigation, Plus, ExternalLink, X, Check, Tag } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { Eye, EyeOff, Trash2, Link2, Copy, Navigation, Plus, ExternalLink, X, Check, Tag, Pencil } from 'lucide-react'
 import { usePageConfig } from '@/components/contexts/page-config-context'
 import { isComponentRef } from '@/lib/resolve-component'
 import { getWeddingPath } from '@/lib/wedding-url'
@@ -129,6 +129,11 @@ function PageCard({
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [showSeo, setShowSeo] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editLabel, setEditLabel] = useState(page.label)
+  const [editPath, setEditPath] = useState(page.path)
+  const [pathManuallyEdited, setPathManuallyEdited] = useState(false)
+  const labelRef = useRef<HTMLInputElement>(null)
   const [pageHref, setPageHref] = useState(
     weddingNameId ? `/${weddingNameId}/${page.path}` : `/${page.path}`
   )
@@ -136,104 +141,182 @@ function PageCard({
     if (weddingNameId) setPageHref(getWeddingPath(weddingNameId, page.path))
   }, [weddingNameId, page.path])
 
+  const startEdit = () => {
+    setEditLabel(page.label)
+    setEditPath(page.path)
+    setPathManuallyEdited(false)
+    setEditing(true)
+    setTimeout(() => labelRef.current?.focus(), 0)
+  }
+
+  const cancelEdit = () => {
+    setEditing(false)
+  }
+
+  const commitEdit = () => {
+    const newLabel = editLabel.trim()
+    const newPath = slugify(editPath) || slugify(newLabel)
+    if (!newLabel || !newPath) return
+    onUpdate({ label: newLabel, path: newPath })
+    setEditing(false)
+  }
+
+  const handleEditLabelChange = (val: string) => {
+    setEditLabel(val)
+    if (!pathManuallyEdited) setEditPath(slugify(val))
+  }
+
   const refs = page.components.filter(isComponentRef)
   const inline = page.components.filter((c): c is InlineComponent => !isComponentRef(c))
 
   return (
     <div className="border border-[#420c14]/10 rounded-lg overflow-hidden bg-white">
       {/* Page header */}
-      <div className="flex items-center gap-2 px-3 py-2.5 bg-[#420c14]/3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-[#420c14] truncate">{page.label}</span>
-            <span className="text-[11px] bg-[#420c14]/8 text-[#420c14]/60 px-1.5 py-0.5 rounded font-mono">
-              /{page.path}
-            </span>
-          </div>
-          {inline.length === 0 && refs.length === 0 && (
-            <p className="text-[10px] text-[#420c14]/35 mt-0.5">No sections yet — visit to add some</p>
-          )}
-        </div>
-
-        {/* Controls */}
-        <div className="flex items-center gap-1">
-          {/* Visit / Edit link */}
-          {weddingNameId && (
-            <a
-              href={pageHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Open page to add and edit sections"
-              className="p-1.5 text-[#420c14]/35 hover:text-[#420c14] hover:bg-[#420c14]/8 rounded transition-colors"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          )}
-
-          {/* SEO / OG title toggle */}
-          <button
-            onClick={() => setShowSeo(v => !v)}
-            title="Custom OG title for social sharing"
-            className={`p-1.5 rounded transition-colors ${
-              showSeo || page.ogTitle
-                ? 'text-[#DDA46F] bg-[#DDA46F]/12 hover:bg-[#DDA46F]/20'
-                : 'text-[#420c14]/30 hover:text-[#420c14] hover:bg-[#420c14]/8'
-            }`}
-          >
-            <Tag className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Show in nav toggle */}
-          <button
-            onClick={() => onUpdate({ showInNav: !page.showInNav })}
-            title={page.showInNav ? 'Showing in nav' : 'Hidden from nav'}
-            className={`p-1.5 rounded transition-colors ${
-              page.showInNav
-                ? 'text-[#420c14] bg-[#420c14]/10 hover:bg-[#420c14]/15'
-                : 'text-[#420c14]/30 hover:text-[#420c14] hover:bg-[#420c14]/8'
-            }`}
-          >
-            <Navigation className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Enable/disable */}
-          <button
-            onClick={() => onUpdate({ enabled: !page.enabled })}
-            title={page.enabled ? 'Page is visible to guests' : 'Page is hidden from guests'}
-            className={`p-1.5 rounded transition-colors ${
-              page.enabled
-                ? 'text-green-600 bg-green-50 hover:bg-green-100'
-                : 'text-[#420c14]/30 hover:text-[#420c14] hover:bg-[#420c14]/8'
-            }`}
-          >
-            {page.enabled ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-          </button>
-
-          {/* Delete */}
-          {confirmDelete ? (
-            <div className="flex items-center gap-1">
+      <div className="px-3 py-2.5 bg-[#420c14]/3">
+        {editing ? (
+          <div className="space-y-2">
+            <div>
+              <label className="text-[9px] uppercase tracking-[0.2em] text-[#420c14]/45 mb-1 block">Page Name</label>
+              <input
+                ref={labelRef}
+                value={editLabel}
+                onChange={e => handleEditLabelChange(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') commitEdit(); if (e.key === 'Escape') cancelEdit() }}
+                className="w-full text-sm px-2.5 py-1.5 border border-[#420c14]/15 rounded-md bg-white text-[#420c14] focus:outline-none focus:ring-1 focus:ring-[#420c14]/30"
+              />
+            </div>
+            <div>
+              <label className="text-[9px] uppercase tracking-[0.2em] text-[#420c14]/45 mb-1 block">URL Path</label>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-[#420c14]/30 flex-shrink-0">/</span>
+                <input
+                  value={editPath}
+                  onChange={e => { setPathManuallyEdited(true); setEditPath(slugify(e.target.value) || e.target.value) }}
+                  onKeyDown={e => { if (e.key === 'Enter') commitEdit(); if (e.key === 'Escape') cancelEdit() }}
+                  className="flex-1 text-sm px-2.5 py-1.5 border border-[#420c14]/15 rounded-md bg-white text-[#420c14] font-mono focus:outline-none focus:ring-1 focus:ring-[#420c14]/30"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => { onDelete(); setConfirmDelete(false) }}
-                className="text-[11px] font-medium text-red-600 bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition-colors"
+                onClick={commitEdit}
+                disabled={!editLabel.trim() || !editPath.trim()}
+                className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-md bg-[#420c14] text-[#f5f2eb] hover:bg-[#5a1a22] disabled:opacity-40 transition-colors"
               >
-                Delete
+                <Check className="w-3 h-3" /> Save
               </button>
               <button
-                onClick={() => setConfirmDelete(false)}
-                className="text-[11px] font-medium text-[#420c14]/50 hover:text-[#420c14] px-2 py-1 rounded hover:bg-[#420c14]/5 transition-colors"
+                onClick={cancelEdit}
+                className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-md text-[#420c14]/50 hover:text-[#420c14] hover:bg-[#420c14]/6 transition-colors"
               >
-                Cancel
+                <X className="w-3 h-3" /> Cancel
               </button>
             </div>
-          ) : (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="p-1.5 text-[#420c14]/30 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-[#420c14] truncate">{page.label}</span>
+                <span className="text-[11px] bg-[#420c14]/8 text-[#420c14]/60 px-1.5 py-0.5 rounded font-mono">
+                  /{page.path}
+                </span>
+              </div>
+              {inline.length === 0 && refs.length === 0 && (
+                <p className="text-[10px] text-[#420c14]/35 mt-0.5">No sections yet — visit to add some</p>
+              )}
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center gap-1">
+              {/* Edit label/path */}
+              <button
+                onClick={startEdit}
+                title="Edit page name and path"
+                className="p-1.5 text-[#420c14]/30 hover:text-[#420c14] hover:bg-[#420c14]/8 rounded transition-colors"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Visit / Edit link */}
+              {weddingNameId && (
+                <a
+                  href={pageHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Open page to add and edit sections"
+                  className="p-1.5 text-[#420c14]/35 hover:text-[#420c14] hover:bg-[#420c14]/8 rounded transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
+
+              {/* SEO / OG title toggle */}
+              <button
+                onClick={() => setShowSeo(v => !v)}
+                title="Custom OG title for social sharing"
+                className={`p-1.5 rounded transition-colors ${
+                  showSeo || page.ogTitle
+                    ? 'text-[#DDA46F] bg-[#DDA46F]/12 hover:bg-[#DDA46F]/20'
+                    : 'text-[#420c14]/30 hover:text-[#420c14] hover:bg-[#420c14]/8'
+                }`}
+              >
+                <Tag className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Show in nav toggle */}
+              <button
+                onClick={() => onUpdate({ showInNav: !page.showInNav })}
+                title={page.showInNav ? 'Showing in nav' : 'Hidden from nav'}
+                className={`p-1.5 rounded transition-colors ${
+                  page.showInNav
+                    ? 'text-[#420c14] bg-[#420c14]/10 hover:bg-[#420c14]/15'
+                    : 'text-[#420c14]/30 hover:text-[#420c14] hover:bg-[#420c14]/8'
+                }`}
+              >
+                <Navigation className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Enable/disable */}
+              <button
+                onClick={() => onUpdate({ enabled: !page.enabled })}
+                title={page.enabled ? 'Page is visible to guests' : 'Page is hidden from guests'}
+                className={`p-1.5 rounded transition-colors ${
+                  page.enabled
+                    ? 'text-green-600 bg-green-50 hover:bg-green-100'
+                    : 'text-[#420c14]/30 hover:text-[#420c14] hover:bg-[#420c14]/8'
+                }`}
+              >
+                {page.enabled ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+              </button>
+
+              {/* Delete */}
+              {confirmDelete ? (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => { onDelete(); setConfirmDelete(false) }}
+                    className="text-[11px] font-medium text-red-600 bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition-colors"
+                  >
+                    Delete
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="text-[11px] font-medium text-[#420c14]/50 hover:text-[#420c14] px-2 py-1 rounded hover:bg-[#420c14]/5 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmDelete(true)}
+                  className="p-1.5 text-[#420c14]/30 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* OG title input */}
