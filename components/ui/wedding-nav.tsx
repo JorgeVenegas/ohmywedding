@@ -40,6 +40,8 @@ interface WeddingNavProps {
   themeColors?: ThemeColors
   /** When true, nav is always visible without waiting to scroll past the hero */
   alwaysVisible?: boolean
+  /** When set, section links navigate to this URL with a #sectionId hash instead of scrolling in-page */
+  mainPageHref?: string
 }
 
 // Export visibility state for other components to use
@@ -169,6 +171,7 @@ export function WeddingNav({
   backgroundColorChoice = 'none',
   themeColors,
   alwaysVisible = false,
+  mainPageHref,
 }: WeddingNavProps) {
   const [isVisible, setIsVisible] = useState(alwaysVisible)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -445,17 +448,31 @@ export function WeddingNav({
             {showNavLinks && (sectionLinks.length > 0 || subPageLinks.length > 0) && (
               <div className="flex items-center justify-center gap-6 mt-2">
                 {sectionLinks.map((link) => (
-                  <button
-                    key={link.id}
-                    onClick={() => scrollToSection(link.id)}
-                    className="text-sm transition-colors whitespace-nowrap"
-                    style={{
-                      fontFamily: 'var(--font-body, sans-serif)',
-                      color: isColored ? textColorMuted : '#6b7280'
-                    }}
-                  >
-                    {link.label}
-                  </button>
+                  mainPageHref ? (
+                    <Link
+                      key={link.id}
+                      href={`${mainPageHref}#${link.id}`}
+                      className="text-sm transition-colors whitespace-nowrap"
+                      style={{
+                        fontFamily: 'var(--font-body, sans-serif)',
+                        color: isColored ? textColorMuted : '#6b7280'
+                      }}
+                    >
+                      {link.label}
+                    </Link>
+                  ) : (
+                    <button
+                      key={link.id}
+                      onClick={() => scrollToSection(link.id)}
+                      className="text-sm transition-colors whitespace-nowrap"
+                      style={{
+                        fontFamily: 'var(--font-body, sans-serif)',
+                        color: isColored ? textColorMuted : '#6b7280'
+                      }}
+                    >
+                      {link.label}
+                    </button>
+                  )
                 ))}
                 {sectionLinks.length > 0 && subPageLinks.length > 0 && (
                   <span className="w-px h-3 opacity-30" style={{ background: isColored ? textColor : accentColor }} />
@@ -527,17 +544,32 @@ export function WeddingNav({
             {/* Menu items */}
             <div className="flex flex-col items-center gap-6">
               {sectionLinks.map((link) => (
-                <button
-                  key={link.id}
-                  onClick={() => scrollToSection(link.id)}
-                  className="text-xl transition-all duration-200 hover:scale-105"
-                  style={{
-                    fontFamily: 'var(--font-body, sans-serif)',
-                    color: isColored ? textColor : accentColor
-                  }}
-                >
-                  {link.label}
-                </button>
+                mainPageHref ? (
+                  <Link
+                    key={link.id}
+                    href={`${mainPageHref}#${link.id}`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-xl transition-all duration-200 hover:scale-105"
+                    style={{
+                      fontFamily: 'var(--font-body, sans-serif)',
+                      color: isColored ? textColor : accentColor
+                    }}
+                  >
+                    {link.label}
+                  </Link>
+                ) : (
+                  <button
+                    key={link.id}
+                    onClick={() => scrollToSection(link.id)}
+                    className="text-xl transition-all duration-200 hover:scale-105"
+                    style={{
+                      fontFamily: 'var(--font-body, sans-serif)',
+                      color: isColored ? textColor : accentColor
+                    }}
+                  >
+                    {link.label}
+                  </button>
+                )
               ))}
               {sectionLinks.length > 0 && subPageLinks.length > 0 && (
                 <span className="w-8 h-px opacity-20" style={{ background: isColored ? textColor : accentColor }} />

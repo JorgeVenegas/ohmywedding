@@ -323,6 +323,7 @@ function SubPageContent({ weddingNameId, pageSlug }: SubPageClientProps) {
         backgroundColorChoice={config.siteSettings?.navigation?.backgroundColorChoice || "none"}
         themeColors={theme?.colors}
         alwaysVisible
+        mainPageHref={getWeddingPath(weddingNameId)}
       />
 
       <main className="pt-14 sm:pt-20">
