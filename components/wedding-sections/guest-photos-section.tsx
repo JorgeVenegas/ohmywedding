@@ -183,7 +183,11 @@ export function GuestPhotosSection({
             setUploads(prev => prev.map(u => u.id === item.id ? { ...u, uploadProgress: e.loaded / e.total } : u))
           }
         }
-        xhr.onload = () => xhr.status < 400 ? resolve() : reject(new Error(`HTTP ${xhr.status}`))
+        xhr.onload = () => {
+          if (xhr.status < 400) { resolve(); return }
+          console.error('[S3 PUT error]', xhr.status, xhr.responseText)
+          reject(new Error(`HTTP ${xhr.status}: ${xhr.responseText}`))
+        }
         xhr.onerror = () => reject(new Error("Network error"))
         xhr.open("PUT", presignedUrl)
         xhr.setRequestHeader("Content-Type", item.file.type)
