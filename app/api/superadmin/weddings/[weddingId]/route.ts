@@ -39,7 +39,10 @@ export async function DELETE(
       .delete()
       .eq('id', wedding.id)
 
-    if (deleteErr) throw deleteErr
+    if (deleteErr) {
+      console.error('[wedding DELETE] delete error:', deleteErr)
+      return NextResponse.json({ error: deleteErr.message, code: deleteErr.code }, { status: 500 })
+    }
 
     return NextResponse.json({
       success: true,

@@ -41,6 +41,8 @@ export function CountdownOldMoneyVariant({
   weddingDate,
   theme,
   alignment,
+  showYears = true,
+  showMonths = true,
   showDays = true,
   showHours = true,
   showMinutes = true,
@@ -71,9 +73,9 @@ export function CountdownOldMoneyVariant({
     ? (theme?.colors?.secondary || `${sectionTextColor}CC` || EDITORIAL_HAIRLINE)
     : (theme?.colors?.primary ? `${theme.colors.primary}20` : EDITORIAL_HAIRLINE)
 
-  const showMonthsUnit = timeLeft.months > 0 || timeLeft.years > 0
   const units = [
-    showMonthsUnit && { value: timeLeft.months, label: t('countdown.months') },
+    showYears && timeLeft.years > 0 && { value: timeLeft.years, label: t('countdown.years') },
+    showMonths && (timeLeft.years > 0 || timeLeft.months > 0) && { value: timeLeft.months, label: t('countdown.months') },
     showDays && { value: timeLeft.days, label: t('countdown.days') },
     showHours && { value: timeLeft.hours, label: t('countdown.hours') },
     showMinutes && { value: timeLeft.minutes, label: t('countdown.minutes') },

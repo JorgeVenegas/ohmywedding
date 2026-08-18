@@ -23,6 +23,7 @@ function calculateTimeLeft(targetDate: string): TimeLeft {
 
 export function CountdownHaciendaVariant({
   weddingDate, theme, alignment,
+  showYears = true, showMonths = true,
   showDays = true, showHours = true, showMinutes = true, showSeconds = true,
   sectionTitle, sectionSubtitle,
   useColorBackground = true, backgroundColorChoice = 'primary',
@@ -44,9 +45,9 @@ export function CountdownHaciendaVariant({
   const numberColor = isAccentBg ? primary : accent
   const labelColor = isColored ? (isAccentBg ? primary : `${secondary}CC`) : sectionTextColor || primary
 
-  const showMonthsUnit = timeLeft.months > 0 || timeLeft.years > 0
   const units = [
-    showMonthsUnit && { value: timeLeft.months, label: t('countdown.months') },
+    showYears && timeLeft.years > 0 && { value: timeLeft.years, label: t('countdown.years') },
+    showMonths && (timeLeft.years > 0 || timeLeft.months > 0) && { value: timeLeft.months, label: t('countdown.months') },
     showDays && { value: timeLeft.days, label: t('countdown.days') },
     showHours && { value: timeLeft.hours, label: t('countdown.hours') },
     showMinutes && { value: timeLeft.minutes, label: t('countdown.minutes') },
