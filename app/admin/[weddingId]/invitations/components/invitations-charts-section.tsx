@@ -182,7 +182,7 @@ export function InvitationsChartsSection({
                           : 'text-[#420c14]/50 hover:text-[#420c14] hover:bg-[#420c14]/5'
                         }`}
                     >
-                      {range === 'all' ? 'All' : range}
+                      {range === 'all' ? t('admin.invitations.charts.all') : range}
                     </button>
                   ))}
                 </div>

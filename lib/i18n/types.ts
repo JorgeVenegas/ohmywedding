@@ -2502,8 +2502,12 @@ export interface Translations {
       templateVariables: {
         groupName: string
         groupNameDesc: string
+        groupFirstName: string
+        groupFirstNameDesc: string
         guestName: string
         guestNameDesc: string
+        guestFirstName: string
+        guestFirstNameDesc: string
         invitationUrl: string
         invitationUrlDesc: string
         weddingUrl: string
@@ -2551,6 +2555,8 @@ export interface Translations {
         guestsDeclined: string
         opens: string
         invitationViews: string
+        all: string
+        hasMessage: string
       }
       toasts: {
         groupFinalized: string

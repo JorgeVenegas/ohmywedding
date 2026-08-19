@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useEffect, useCallback } from "react"
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -89,44 +89,6 @@ const TEMPLATE_EXAMPLES: Record<Locale, Array<{ id: string; template: string }>>
   ]
 }
 
-// Variable definitions
-const GUEST_VARIABLES = [
-  { var: '{{groupname}}', label: 'Group Name', desc: 'Name of the guest group' },
-  { var: '{{groupfirstname}}', label: 'Group First Name', desc: 'First word of the group name' },
-  { var: '{{guestname}}', label: 'Guest Name', desc: 'Individual guest name' },
-  { var: '{{guestfirstname}}', label: 'Guest First Name', desc: 'First word of the guest name' },
-  { var: '{{groupinvitationurl}}', label: 'Invitation URL', desc: 'Direct link to invitation' },
-  { var: '{{weddingurl}}', label: 'Wedding URL', desc: 'Generic wedding link (no group)' },
-]
-
-const WEDDING_VARIABLES = [
-  { var: '{{partner1}}', label: 'Partner 1', descFn: (p: PartnerNames) => p.partner1 || 'First partner name' },
-  { var: '{{partner2}}', label: 'Partner 2', descFn: (p: PartnerNames) => p.partner2 || 'Second partner name' },
-  { var: '{{weddingdate}}', label: 'Wedding Date', descFn: (_p: PartnerNames, w: WeddingDetails | null) => w?.wedding_date ? new Date(w.wedding_date).toLocaleDateString() : 'Wedding date' },
-]
-
-const VENUE_VARIABLES = [
-  { var: '{{ceremonyplace}}', label: 'Ceremony Venue', descFn: (w: WeddingDetails | null) => w?.ceremony_venue_name || 'Ceremony venue name' },
-  { var: '{{ceremonyaddress}}', label: 'Ceremony Address', desc: 'Full ceremony address' },
-  { var: '{{receptionplace}}', label: 'Reception Venue', descFn: (w: WeddingDetails | null) => w?.reception_venue_name || 'Reception venue name' },
-  { var: '{{receptionaddress}}', label: 'Reception Address', desc: 'Full reception address' },
-]
-
-const ALL_VARIABLES = [
-  { var: '{{groupname}}', label: 'Group Name' },
-  { var: '{{groupfirstname}}', label: 'Group First Name' },
-  { var: '{{guestname}}', label: 'Guest Name' },
-  { var: '{{guestfirstname}}', label: 'Guest First Name' },
-  { var: '{{groupinvitationurl}}', label: 'Invitation URL' },
-  { var: '{{weddingurl}}', label: 'Wedding URL' },
-  { var: '{{partner1}}', label: 'Partner 1' },
-  { var: '{{partner2}}', label: 'Partner 2' },
-  { var: '{{weddingdate}}', label: 'Wedding Date' },
-  { var: '{{ceremonyplace}}', label: 'Ceremony Venue' },
-  { var: '{{ceremonyaddress}}', label: 'Ceremony Address' },
-  { var: '{{receptionplace}}', label: 'Reception Venue' },
-  { var: '{{receptionaddress}}', label: 'Reception Address' },
-]
 
 export function InvitationTemplateModal({
   isOpen,
@@ -148,6 +110,46 @@ export function InvitationTemplateModal({
   const [showReplaceMenu, setShowReplaceMenu] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const { t, locale } = useTranslation()
+
+  const TV = 'admin.invitations.templateVariables'
+
+  const GUEST_VARIABLES = useMemo(() => [
+    { var: '{{groupname}}',         label: t(`${TV}.groupName`),      desc: t(`${TV}.groupNameDesc`)      },
+    { var: '{{groupfirstname}}',    label: t(`${TV}.groupFirstName`), desc: t(`${TV}.groupFirstNameDesc`) },
+    { var: '{{guestname}}',         label: t(`${TV}.guestName`),      desc: t(`${TV}.guestNameDesc`)      },
+    { var: '{{guestfirstname}}',    label: t(`${TV}.guestFirstName`), desc: t(`${TV}.guestFirstNameDesc`) },
+    { var: '{{groupinvitationurl}}',label: t(`${TV}.invitationUrl`),  desc: t(`${TV}.invitationUrlDesc`)  },
+    { var: '{{weddingurl}}',        label: t(`${TV}.weddingUrl`),     desc: t(`${TV}.weddingUrlDesc`)     },
+  ], [t])
+
+  const WEDDING_VARIABLES = useMemo(() => [
+    { var: '{{partner1}}',   label: t(`${TV}.partner1`),   descFn: (p: PartnerNames) => p.partner1 || t(`${TV}.partner1`)  },
+    { var: '{{partner2}}',   label: t(`${TV}.partner2`),   descFn: (p: PartnerNames) => p.partner2 || t(`${TV}.partner2`)  },
+    { var: '{{weddingdate}}',label: t(`${TV}.weddingDate`),descFn: (_p: PartnerNames, w: WeddingDetails | null) => w?.wedding_date ? new Date(w.wedding_date).toLocaleDateString() : t(`${TV}.weddingDate`) },
+  ], [t])
+
+  const VENUE_VARIABLES = useMemo(() => [
+    { var: '{{ceremonyplace}}',   label: t(`${TV}.ceremonyVenue`),   descFn: (w: WeddingDetails | null) => w?.ceremony_venue_name || t(`${TV}.ceremonyVenue`)   },
+    { var: '{{ceremonyaddress}}', label: t(`${TV}.ceremonyAddress`), desc: t(`${TV}.ceremonyAddressDesc`)                                                          },
+    { var: '{{receptionplace}}',  label: t(`${TV}.receptionVenue`),  descFn: (w: WeddingDetails | null) => w?.reception_venue_name || t(`${TV}.receptionVenue`)  },
+    { var: '{{receptionaddress}}',label: t(`${TV}.receptionAddress`),desc: t(`${TV}.receptionAddressDesc`)                                                         },
+  ], [t])
+
+  const ALL_VARIABLES = useMemo(() => [
+    { var: '{{groupname}}',         label: t(`${TV}.groupName`)       },
+    { var: '{{groupfirstname}}',    label: t(`${TV}.groupFirstName`)  },
+    { var: '{{guestname}}',         label: t(`${TV}.guestName`)       },
+    { var: '{{guestfirstname}}',    label: t(`${TV}.guestFirstName`)  },
+    { var: '{{groupinvitationurl}}',label: t(`${TV}.invitationUrl`)   },
+    { var: '{{weddingurl}}',        label: t(`${TV}.weddingUrl`)      },
+    { var: '{{partner1}}',          label: t(`${TV}.partner1`)        },
+    { var: '{{partner2}}',          label: t(`${TV}.partner2`)        },
+    { var: '{{weddingdate}}',       label: t(`${TV}.weddingDate`)     },
+    { var: '{{ceremonyplace}}',     label: t(`${TV}.ceremonyVenue`)   },
+    { var: '{{ceremonyaddress}}',   label: t(`${TV}.ceremonyAddress`) },
+    { var: '{{receptionplace}}',    label: t(`${TV}.receptionVenue`)  },
+    { var: '{{receptionaddress}}',  label: t(`${TV}.receptionAddress`)},
+  ], [t])
 
   const editorRef = useRef<HTMLDivElement>(null)
   const isUpdatingRef = useRef(false)

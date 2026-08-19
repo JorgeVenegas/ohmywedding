@@ -3048,8 +3048,12 @@ export const en: Translations = {
       templateVariables: {
         groupName: 'Group Name',
         groupNameDesc: 'Name of the guest group',
+        groupFirstName: 'Group First Name',
+        groupFirstNameDesc: 'First word of the group name',
         guestName: 'Guest Name',
         guestNameDesc: 'Individual guest name',
+        guestFirstName: 'Guest First Name',
+        guestFirstNameDesc: 'First word of the guest name',
         invitationUrl: 'Invitation URL',
         invitationUrlDesc: 'Direct link to invitation',
         weddingUrl: 'Wedding URL',
@@ -3097,6 +3101,8 @@ export const en: Translations = {
         guestsDeclined: 'guests declined',
         opens: 'Opens',
         invitationViews: 'invitation views',
+        all: 'All',
+        hasMessage: 'Has message - click to view',
       },
       toasts: {
         groupFinalized: 'Group finalized with {{count}} guest(s)!',

@@ -383,7 +383,7 @@ export function GuestsTableGroups({
                                     </button>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p>Has message - click to view</p>
+                                    <p>{t('admin.invitations.charts.hasMessage')}</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>

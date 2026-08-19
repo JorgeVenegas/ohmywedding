@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { AlertCircle, Check, Link2 } from "lucide-react"
@@ -12,7 +11,6 @@ interface UpdateWeddingNameIdProps {
 }
 
 export function UpdateWeddingNameId({ currentWeddingNameId }: UpdateWeddingNameIdProps) {
-  const router = useRouter()
   const { t } = useI18n()
   const [newNameId, setNewNameId] = useState("")
   const [isUpdating, setIsUpdating] = useState(false)
@@ -53,11 +51,14 @@ export function UpdateWeddingNameId({ currentWeddingNameId }: UpdateWeddingNameI
 
       setSuccess(true)
 
-      const newUrl = `/${encodeURIComponent(newNameId)}`
-
       setTimeout(() => {
-        router.push(newUrl)
-        router.refresh()
+        // After a name ID change the subdomain also changes, so we always navigate
+        // via the main domain so the middleware can redirect to the correct new subdomain.
+        const host = window.location.host
+        const parts = host.split('.')
+        const isSubdomain = parts.length > 2 && host.includes('ohmy.')
+        const baseDomain = isSubdomain ? parts.slice(1).join('.') : host
+        window.location.href = `${window.location.protocol}//${baseDomain}/admin/${encodeURIComponent(newNameId)}/settings`
       }, 1500)
 
     } catch (err) {

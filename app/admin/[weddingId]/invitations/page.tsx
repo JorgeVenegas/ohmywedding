@@ -2201,14 +2201,14 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           const unique = [...new Set(invalidInvitedByValues)]
           const partnerNamesList = partnerOptions.map(p => p.name).join(', ')
           setCsvImportError(
-            `Invalid "Invited By" values: ${unique.join(', ')}. Only partner names are allowed: ${partnerNamesList}.`
+            t('admin.invitations.csvErrors.invalidInvitedBy', { values: unique.join(', '), partners: partnerNamesList })
           )
           setCsvImporting(false)
           return
         }
 
         if (groupsData.length === 0) {
-          setCsvImportError("No valid groups found in CSV. Make sure the Group Name column has values.")
+          setCsvImportError(t('admin.invitations.csvErrors.noValidGroups'))
           setCsvImporting(false)
           return
         }
@@ -2239,7 +2239,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             setCsvImporting(false)
             return
           }
-          setCsvImportError(result.error || "Failed to import groups")
+          setCsvImportError(result.error || t('admin.invitations.csvErrors.failedToImport'))
           setCsvImporting(false)
           return
         }
@@ -2252,7 +2252,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         setCsvData([])
         setCsvHeaders([])
         setColumnMapping({})
-        setNotification({ isOpen: true, type: 'success', title: 'Import Complete', message: `Successfully imported ${result.groupCount} groups with ${result.guestCount} guests!` })
+        setNotification({ isOpen: true, type: 'success', title: t('admin.invitations.notifications.importComplete'), message: t('admin.invitations.csvSuccess.groupsImported', { groups: result.groupCount, guests: result.guestCount }) })
       } else {
         // Guests mode: Create guests and auto-create groups as needed
         const invalidInvitedByValues: string[] = []
@@ -2300,14 +2300,14 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
           const unique = [...new Set(invalidInvitedByValues)]
           const partnerNamesList = partnerOptions.map(p => p.name).join(', ')
           setCsvImportError(
-            `Invalid "Invited By" values: ${unique.join(', ')}. Only partner names are allowed: ${partnerNamesList}.`
+            t('admin.invitations.csvErrors.invalidInvitedBy', { values: unique.join(', '), partners: partnerNamesList })
           )
           setCsvImporting(false)
           return
         }
 
         if (guestsData.length === 0) {
-          setCsvImportError("No valid guests found in CSV. Make sure both Name and Group Name columns have values.")
+          setCsvImportError(t('admin.invitations.csvErrors.noValidGuests'))
           setCsvImporting(false)
           return
         }
@@ -2338,7 +2338,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             setCsvImporting(false)
             return
           }
-          setCsvImportError(result.error || "Failed to import guests")
+          setCsvImportError(result.error || t('admin.invitations.csvErrors.failedToImport'))
           setCsvImporting(false)
           return
         }
@@ -2351,10 +2351,10 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         setCsvData([])
         setCsvHeaders([])
         setColumnMapping({})
-        setNotification({ isOpen: true, type: 'success', title: 'Import Complete', message: `Successfully imported ${result.guestCount} guests into ${result.groupCount} groups!` })
+        setNotification({ isOpen: true, type: 'success', title: t('admin.invitations.notifications.importComplete'), message: t('admin.invitations.csvSuccess.guestsImported', { guests: result.guestCount, groups: result.groupCount }) })
       }
     } catch {
-      setCsvImportError("Failed to import. Please try again.")
+      setCsvImportError(t('admin.invitations.csvErrors.failedToImport'))
     } finally {
       setCsvImporting(false)
     }
@@ -2405,7 +2405,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     // Add ungrouped guests (legacy)
     normalizedUngroupedGuests.forEach(guest => {
       allGuestsForExport.push({
-        groupName: '(No Group)',
+        groupName: t('admin.invitations.defaults.noGroup'),
         name: guest.name,
         phone: guest.phone_number || '',
         status: guest.confirmation_status,
@@ -2419,7 +2419,18 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     })
 
     // Create CSV content
-    const headers = ['Group Name', 'Guest Name', 'Phone', 'Status', 'Tags', 'Invited By', 'Dietary Restrictions', 'Notes', 'Extra Passes', 'Extra Passes Confirmed']
+    const headers = [
+      t('admin.invitations.csvExport.groupName'),
+      t('admin.invitations.csvExport.guestName'),
+      t('admin.invitations.csvExport.phone'),
+      t('admin.invitations.csvExport.status'),
+      t('admin.invitations.csvExport.tags'),
+      t('admin.invitations.csvExport.invitedBy'),
+      t('admin.invitations.csvExport.dietaryRestrictions'),
+      t('admin.invitations.csvExport.notes'),
+      t('admin.invitations.csvExport.extraPasses'),
+      t('admin.invitations.csvExport.extraPassesConfirmed'),
+    ]
     const escapeForCsv = (value: string) => {
       if (value.includes(',') || value.includes('"') || value.includes('\n')) {
         return `"${value.replace(/"/g, '""')}"`
@@ -2547,12 +2558,13 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       const invitedByList = guest.invited_by || []
 
       if (invitedByList.length === 0) {
-        if (!dataMap['Not specified']) {
-          dataMap['Not specified'] = { name: 'Not specified', confirmed: 0, pending: 0, declined: 0 }
+        const notSpecifiedLabel = t('admin.invitations.status.notSpecified')
+        if (!dataMap[notSpecifiedLabel]) {
+          dataMap[notSpecifiedLabel] = { name: notSpecifiedLabel, confirmed: 0, pending: 0, declined: 0 }
         }
-        if (guest.confirmation_status === 'confirmed') dataMap['Not specified'].confirmed++
-        else if (guest.confirmation_status === 'declined') dataMap['Not specified'].declined++
-        else dataMap['Not specified'].pending++
+        if (guest.confirmation_status === 'confirmed') dataMap[notSpecifiedLabel].confirmed++
+        else if (guest.confirmation_status === 'declined') dataMap[notSpecifiedLabel].declined++
+        else dataMap[notSpecifiedLabel].pending++
       } else {
         invitedByList.forEach(ref => {
           const displayName = resolveInvitedBy(ref, partnerNames)
@@ -2806,7 +2818,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         <Header
           showBackButton
           backHref={getCleanAdminUrl(weddingId, 'dashboard')}
-          title="Invitations"
+          title={t('admin.invitations.title')}
         />
         <div className="flex items-center justify-center py-20">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -2822,7 +2834,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       <Header
         showBackButton
         backHref={getCleanAdminUrl(weddingId, 'dashboard')}
-        title="Invitations"
+        title={t('admin.invitations.title')}
       />
 
       <InvitationsHeaderToolbar
@@ -3175,8 +3187,8 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
             setNotification({
               isOpen: true,
               type: 'success',
-              title: 'Settings Saved',
-              message: 'Invitation template has been saved successfully.'
+              title: t('admin.invitations.toasts.templateSaved'),
+              message: t('admin.invitations.toasts.templateSavedMessage')
             })
           } else {
             throw new Error('Failed to save')
