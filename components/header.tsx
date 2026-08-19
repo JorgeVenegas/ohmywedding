@@ -44,7 +44,7 @@ export function Header({
               className="h-6 w-auto flex-shrink-0"
               priority
             />
-            {!hideLogoText && <span className="font-serif text-xl font-light text-foreground">OhMyWedding</span>}
+            {!hideLogoText && <span className="hidden sm:inline font-serif text-xl font-light text-foreground">OhMyWedding</span>}
           </Link>
         </div>
 
