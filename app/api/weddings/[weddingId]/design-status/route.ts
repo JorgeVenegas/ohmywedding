@@ -97,7 +97,7 @@ export async function GET(
         .then((r) => r.error ? { data: [] } : r),
       adminClient
         .from('wedding_subscriptions')
-        .select('plan')
+        .select('plan, invitation_tier, management_tier')
         .eq('wedding_id', wedding.id)
         .maybeSingle()
         .then((r) => r),
@@ -111,7 +111,19 @@ export async function GET(
     ])
 
     const currentStatus = ((wedding as Record<string, unknown>).invitation_design_status as DesignStatus) ?? 'not_started'
-    const plan = (planResult.data?.plan ?? 'free') as WorkflowPlan
+
+    // Resolve workflow plan from subscription. New-axis tiers take priority over
+    // the legacy plan column so that weddings upgraded with invitation_tier/management_tier
+    // get the correct transition options.
+    const sub = planResult.data as { plan: string | null; invitation_tier: string | null; management_tier: string | null } | null
+    const invTier = sub?.invitation_tier
+    const legacyPlan = sub?.plan
+    const plan: WorkflowPlan =
+      invTier === 'bespoke'      ? 'deluxe'
+      : invTier === 'personalized' ? 'premium'
+      : legacyPlan === 'deluxe'    ? 'deluxe'
+      : legacyPlan === 'premium'   ? 'premium'
+      : 'free'
 
     // Superadmins get suggested attendees (owner + collaborators) for the meeting scheduler
     let suggestedAttendees: { owner_email: string | null; collaborator_emails: string[] } | undefined
