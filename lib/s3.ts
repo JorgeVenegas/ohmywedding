@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, DeleteObjectCommand, CopyObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 const client = new S3Client({
@@ -23,6 +23,19 @@ export function getPublicUrl(key: string): string {
   return `${base}/${key}`
 }
 
+export async function presignGet(
+  key: string,
+  filename: string,
+  expiresIn = 300
+): Promise<string> {
+  const command = new GetObjectCommand({
+    Bucket: BUCKET,
+    Key: key,
+    ResponseContentDisposition: `attachment; filename="${encodeURIComponent(filename)}"`,
+  })
+  return getSignedUrl(client, command, { expiresIn })
+}
+
 export async function presignPut(
   key: string,
   contentType: string,
@@ -45,6 +58,13 @@ export async function putObject(
     new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: body, ContentType: contentType })
   )
   return getPublicUrl(key)
+}
+
+export async function copyObject(sourceKey: string, destKey: string): Promise<string> {
+  await client.send(
+    new CopyObjectCommand({ Bucket: BUCKET, CopySource: `${BUCKET}/${sourceKey}`, Key: destKey })
+  )
+  return getPublicUrl(destKey)
 }
 
 export async function deleteObject(key: string): Promise<void> {

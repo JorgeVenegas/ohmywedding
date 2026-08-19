@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Upload, Loader2, Check } from 'lucide-react'
+import { X, Upload, Loader2, Check, Download } from 'lucide-react'
 import { Button } from './button'
 import { createClient } from '@/lib/supabase-client'
 import { useI18n } from '@/components/contexts/i18n-context'
@@ -55,20 +55,18 @@ export function ImageGalleryDialog({
     setLoading(true)
     setErrorMessage(null)
     try {
-      // Decode the wedding name ID in case it's URL encoded
       const decodedWeddingNameId = decodeURIComponent(weddingNameId)
-      
-      // First get the wedding_id from wedding_name_id
+
       const { data: wedding, error: weddingError } = await supabase
         .from('weddings')
         .select('id')
         .eq('wedding_name_id', decodedWeddingNameId)
         .single()
-      
+
       if (weddingError || !wedding) {
         throw new Error('Wedding not found')
       }
-      
+
       const { data, error } = await supabase
         .from('images')
         .select('*')
@@ -77,7 +75,7 @@ export function ImageGalleryDialog({
 
       if (error) throw error
       setImages(data || [])
-    } catch (error) {
+    } catch {
     } finally {
       setLoading(false)
     }
@@ -89,25 +87,21 @@ export function ImageGalleryDialog({
 
     setUploading(true)
     setErrorMessage(null)
-    const uploadedUrls: string[] = []
 
     try {
-      // Decode the wedding name ID in case it's URL encoded
       const decodedWeddingNameId = decodeURIComponent(weddingNameId)
-      
-      // Verify wedding exists and get wedding_id
+
       const { data: wedding, error: weddingError } = await supabase
         .from('weddings')
         .select('id, wedding_name_id')
         .eq('wedding_name_id', decodedWeddingNameId)
         .single()
-      
+
       if (weddingError || !wedding) {
         throw new Error('Wedding not found. Please make sure you are on a valid wedding page.')
       }
-      
+
       for (const file of Array.from(files)) {
-        // Get a presigned S3 URL from the server
         const presignRes = await fetch('/api/upload/presign', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -127,7 +121,6 @@ export function ImageGalleryDialog({
 
         const { presignedUrl, publicUrl, key } = await presignRes.json()
 
-        // Upload directly to S3
         const s3Res = await fetch(presignedUrl, {
           method: 'PUT',
           headers: { 'Content-Type': file.type },
@@ -138,7 +131,6 @@ export function ImageGalleryDialog({
           throw new Error('Failed to upload file to storage')
         }
 
-        // Save to images table with the S3 public URL
         const { error: dbError } = await supabase
           .from('images')
           .insert({
@@ -153,31 +145,21 @@ export function ImageGalleryDialog({
         if (dbError) {
           throw new Error(`Failed to save image data: ${dbError.message}`)
         }
-
-        uploadedUrls.push(publicUrl)
       }
 
-      // Refresh images list
       await fetchImages()
     } catch (error: any) {
       setErrorMessage(error?.message || 'Failed to upload images. Please try again.')
     } finally {
       setUploading(false)
-      // Reset file input
       e.target.value = ''
     }
   }
 
   const handleSelectImage = (url: string) => {
-    setSelectedImageUrls(prev => {
-      if (prev.includes(url)) {
-        // Deselect if already selected
-        return prev.filter(u => u !== url)
-      } else {
-        // Add to selection
-        return [...prev, url]
-      }
-    })
+    setSelectedImageUrls(prev =>
+      prev.includes(url) ? prev.filter(u => u !== url) : [...prev, url]
+    )
   }
 
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
@@ -187,12 +169,8 @@ export function ImageGalleryDialog({
     const files = e.dataTransfer.files
     if (!files || files.length === 0) return
 
-    // Create a synthetic event to reuse handleFileUpload logic
     const syntheticEvent = {
-      target: {
-        files,
-        value: ''
-      }
+      target: { files, value: '' }
     } as React.ChangeEvent<HTMLInputElement>
 
     await handleFileUpload(syntheticEvent)
@@ -206,6 +184,11 @@ export function ImageGalleryDialog({
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     setDragOver(false)
+  }
+
+  const handleDownload = (e: React.MouseEvent, image: Image) => {
+    e.stopPropagation()
+    window.open(`/api/weddings/${encodeURIComponent(weddingNameId)}/photos/${image.id}/download`, '_blank')
   }
 
   const handleConfirmSelection = () => {
@@ -268,15 +251,15 @@ export function ImageGalleryDialog({
               </div>
             </div>
           )}
-          
+
           {/* Upload Section */}
           {showUpload && (
             <div className="mb-6">
               <label className="block">
-                <div 
+                <div
                   className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 cursor-pointer ${
-                    dragOver 
-                      ? 'border-primary bg-primary/5 border-primary' 
+                    dragOver
+                      ? 'border-primary bg-primary/5 border-primary'
                       : 'border-gray-300 hover:border-gray-400'
                   } ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
                   onDrop={handleDrop}
@@ -310,72 +293,75 @@ export function ImageGalleryDialog({
           )}
 
           {/* Images Grid */}
-          <div>
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-              </div>
-            ) : images.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <p>{t('imageGallery.noImagesYet')}</p>
-              </div>
-            ) : (
-              <>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                  {t('imageGallery.yourImages')} ({images.length})
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {images.map((image) => (
-                    <div
-                      key={image.id}
-                      onClick={() => showSelect && handleSelectImage(image.url)}
-                      className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
-                        selectedImageUrls.includes(image.url)
-                          ? 'border-gray-800 ring-2 ring-gray-300'
-                          : 'border-transparent hover:border-gray-300'
-                      }`}
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            </div>
+          ) : images.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              <p>{t('imageGallery.noImagesYet')}</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {images.map((image) => (
+                <div
+                  key={image.id}
+                  onClick={() => showSelect && handleSelectImage(image.url)}
+                  className={`relative group rounded-lg overflow-hidden border-2 transition-all ${
+                    showSelect ? 'cursor-pointer' : 'cursor-default'
+                  } ${
+                    selectedImageUrls.includes(image.url)
+                      ? 'border-gray-800 ring-2 ring-gray-300'
+                      : 'border-transparent hover:border-gray-300'
+                  }`}
+                >
+                  <div className="aspect-square relative bg-gray-100">
+                    <img
+                      src={image.url}
+                      alt={image.filename}
+                      className="w-full h-full object-cover"
+                    />
+                    {selectedImageUrls.includes(image.url) && (
+                      <div className="absolute inset-0 bg-gray-500/20 flex items-center justify-center">
+                        <div className="bg-gray-800 rounded-full p-2">
+                          <Check className="w-5 h-5 text-white" />
+                        </div>
+                      </div>
+                    )}
+                    {/* Download button — always visible on hover */}
+                    <button
+                      onClick={(e) => handleDownload(e, image)}
+                      className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white rounded-full shadow transition-opacity opacity-0 group-hover:opacity-100"
+                      title="Download"
                     >
-                      <div className="aspect-square relative bg-gray-100">
-                        <img
-                          src={image.url}
-                          alt={image.filename}
-                          className="w-full h-full object-cover"
-                        />
-                        {selectedImageUrls.includes(image.url) && (
-                          <div className="absolute inset-0 bg-gray-500/20 flex items-center justify-center">
-                            <div className="bg-gray-800 rounded-full p-2">
-                              <Check className="w-5 h-5 text-white" />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2">
-                        <p className="text-xs text-white truncate">{image.filename}</p>
-                      </div>
-                    </div>
-                  ))}
+                      <Download className="w-3.5 h-3.5 text-gray-700" />
+                    </button>
+                  </div>
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                    <p className="text-xs text-white truncate">{image.filename}</p>
+                  </div>
                 </div>
-              </>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
-        {showSelect && (
-          <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
-            <Button variant="outline" onClick={onClose}>
-              {t('imageGallery.cancel')}
-            </Button>
+        <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
+          <Button variant="outline" onClick={onClose}>
+            {t('imageGallery.cancel')}
+          </Button>
+          {showSelect && (
             <Button
               onClick={handleConfirmSelection}
               disabled={selectedImageUrls.length === 0}
             >
-              {selectedImageUrls.length > 0 
-                ? `${t('imageGallery.select')} (${selectedImageUrls.length})` 
+              {selectedImageUrls.length > 0
+                ? `${t('imageGallery.select')} (${selectedImageUrls.length})`
                 : t('imageGallery.select')}
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )
