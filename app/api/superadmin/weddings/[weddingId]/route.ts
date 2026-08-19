@@ -34,6 +34,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Wedding not found' }, { status: 404 })
     }
 
+    // coupon_redemptions has no ON DELETE CASCADE yet — remove manually first
+    await adminClient.from('coupon_redemptions').delete().eq('wedding_id', wedding.id)
+
     const { error: deleteErr } = await adminClient
       .from('weddings')
       .delete()

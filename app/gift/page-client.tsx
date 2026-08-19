@@ -3,37 +3,28 @@
 import React, { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
-import { INVITATION_PRICING } from "@/lib/subscription-shared"
-// Legacy gift page stubs
-const PRICING: any = { premium: INVITATION_PRICING.personalized, deluxe: INVITATION_PRICING.bespoke }
-const PLAN_CARDS: any = {
-  premium: { name: 'Personalized', price: '$200 USD', period: 'one-time' },
-  deluxe: { name: 'Bespoke', price: '$350 USD', period: 'one-time' },
-}
+import { INVITATION_PRICING, MANAGEMENT_PRICING } from "@/lib/subscription-shared"
 import { motion } from "framer-motion"
-import {
-  Crown,
-  Check,
-  Sparkles,
-  Gift,
-  Loader2,
-  Copy,
-  Heart,
-  Tag,
-} from "lucide-react"
+import { Gift, Loader2, Copy, Heart } from "lucide-react"
 import { Header } from "@/components/header"
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
-import { useGlobalDiscount } from "@/hooks/use-global-discount"
-import { PromoCountdown } from "@/components/ui/promo-countdown"
-import { PromoPriceDisplay } from "@/components/ui/promo-price-display"
+import { PricingTierCard } from "@/components/ui/pricing-tier-card"
 import { useI18n } from "@/components/contexts/i18n-context"
 import { resolveBackHref, withLandingSource } from "@/lib/landing-source"
 
-const planIds = [
-  { id: "premium" as const, featured: true },
-  { id: "deluxe" as const, isDeluxe: true },
+type GiftPlanType = 'invitation_basic' | 'premium' | 'deluxe' | 'management_basic' | 'management_pro' | 'management_agency'
+
+const INVITATION_GIFT_TIERS = [
+  { tierKey: 'basic'        as const, planType: 'invitation_basic' as GiftPlanType                    },
+  { tierKey: 'personalized' as const, planType: 'premium'          as GiftPlanType, isFeatured: true  },
+  { tierKey: 'bespoke'      as const, planType: 'deluxe'           as GiftPlanType, isTop: true       },
+]
+
+const MANAGEMENT_GIFT_TIERS = [
+  { tierKey: 'basic'  as const, planType: 'management_basic'  as GiftPlanType                    },
+  { tierKey: 'pro'    as const, planType: 'management_pro'    as GiftPlanType, isFeatured: true  },
+  { tierKey: 'agency' as const, planType: 'management_agency' as GiftPlanType, isTop: true       },
 ]
 
 function GiftPageContent() {
@@ -41,85 +32,57 @@ function GiftPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { t, translations } = useI18n()
-  const [selectedPlan, setSelectedPlan] = useState<"premium" | "deluxe">(
-    searchParams.get("plan") === "deluxe" ? "deluxe" : "premium"
-  )
-  const landingSource = searchParams.get("from")
-  const weddingIdParam = searchParams.get("weddingId")
-  const backHref = resolveBackHref({ weddingId: weddingIdParam, from: landingSource }, 'pricing')
-  const [isProcessing, setIsProcessing] = useState(false)
+
+  const [processingPlan, setProcessingPlan] = useState<GiftPlanType | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const { discount, getDiscountedPrice, getDiscountPercent, appliesToPlan } = useGlobalDiscount()
+
+  const landingSource = searchParams.get('from')
+  const weddingIdParam = searchParams.get('weddingId')
+  const backHref = resolveBackHref({ weddingId: weddingIdParam, from: landingSource }, 'pricing')
 
   const G = translations.gift
-  const P = translations.landing.pricing
+  const invTiers = translations.landing.pricing.tiers.invitation
+  const mgmtTiers = translations.landing.pricing.tiers.management
 
-  const plans = planIds.map(({ id, featured, isDeluxe }) => ({
-    id,
-    featured,
-    isDeluxe,
-    name: PLAN_CARDS[id].name,
-    price: PLAN_CARDS[id].price,
-    priceCents: PRICING[id].price_mxn,
-    period: PLAN_CARDS[id].period,
-    description: P.plans[id].description,
-    features: P.plans[id].features.map((text: string) => ({ text })),
-  }))
-
-  // Auto-fire checkout after login redirect
-  useEffect(() => {
-    if (authLoading) return
-    const autoCheckout = searchParams.get("autoCheckout")
-    if (autoCheckout === "1" && user) {
-      handleGiftCheckout(selectedPlan)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, user])
-
-  const handleGiftCheckout = async (planId: "premium" | "deluxe") => {
+  const handleGiftCheckout = async (planType: GiftPlanType) => {
     setError(null)
 
     if (!user) {
       const redirectParams = new URLSearchParams(searchParams.toString())
-      redirectParams.set('plan', planId)
+      redirectParams.set('plan', planType)
       router.push(`/login?redirect=${encodeURIComponent(`/gift?${redirectParams.toString()}`)}`)
       return
     }
 
-    setIsProcessing(true)
-    setSelectedPlan(planId)
+    setProcessingPlan(planType)
 
     try {
-      const res = await fetch("/api/gift/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planType: planId }),
+      const res = await fetch('/api/gift/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planType }),
       })
-
       const data = await res.json()
-
       if (!res.ok) {
         setError(data.error || G.errorGeneric)
-        setIsProcessing(false)
+        setProcessingPlan(null)
         return
       }
-
-      if (data.url) {
-        window.location.href = data.url
-      }
+      if (data.url) window.location.href = data.url
     } catch {
       setError(G.errorGeneric)
-      setIsProcessing(false)
+      setProcessingPlan(null)
     }
   }
 
-  const loading = authLoading
-
   return (
     <div className="min-h-screen bg-[#f5f2eb]">
-      <Header showBackButton backHref={backHref} rightContent={<LanguageSwitcher variant="buttons" className="text-[#420c14]" textColor="#420c14" />} />
+      <Header
+        showBackButton
+        backHref={backHref}
+        rightContent={<LanguageSwitcher variant="buttons" className="text-[#420c14]" textColor="#420c14" />}
+      />
 
-      {/* Background decorations */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div
           className="absolute top-1/4 left-[10%] w-64 sm:w-96 h-64 sm:h-96 rounded-full bg-[#DDA46F]/10 blur-3xl"
@@ -157,142 +120,91 @@ function GiftPageContent() {
           </p>
         </motion.div>
 
-        {/* Promo countdown */}
-        {discount?.ends_at && (
-          <div className="flex justify-center mb-8">
-            <PromoCountdown discount={discount} variant="dark" />
-          </div>
-        )}
-
         {/* Error */}
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="max-w-xl mx-auto mb-8 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm text-center"
+            className="max-w-3xl mx-auto mb-8 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm text-center"
           >
             {error}
           </motion.div>
         )}
 
-        {/* Plan Cards */}
-        <div className="grid md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-3xl mx-auto mb-16">
-          {plans.map((plan, index) => (
-            <motion.div
-              key={plan.id}
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: index * 0.15 }}
-              onClick={() => setSelectedPlan(plan.id)}
-              className={`relative rounded-[1.5rem] sm:rounded-[2rem] p-5 sm:p-8 cursor-pointer transition-all duration-300 ${
-                plan.featured
-                  ? "bg-[#420c14] border-2 border-[#420c14]"
-                  : "bg-gradient-to-br from-[#DDA46F] to-[#c99560] border-2 border-[#DDA46F]"
-              } ${
-                selectedPlan === plan.id
-                  ? "ring-4 ring-[#DDA46F]/40 scale-[1.02]"
-                  : "hover:scale-[1.01]"
-              }`}
-            >
-              {plan.featured && (
-                <motion.div
-                  className="absolute -top-4 sm:-top-5 left-1/2 -translate-x-1/2"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.4 }}
-                >
-                  <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-[#f5f2eb] text-[#420c14] text-xs sm:text-sm font-medium tracking-wider">
-                    <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
-                    {t('upgrade.mostPopular')}
-                  </span>
-                </motion.div>
-              )}
-              {plan.isDeluxe && (
-                <motion.div
-                  className="absolute -top-4 sm:-top-5 left-1/2 -translate-x-1/2"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.4 }}
-                >
-                  <span className="inline-flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-[#420c14] text-[#f5f2eb] text-xs sm:text-sm font-medium tracking-wider">
-                    <Crown className="w-3 h-3 sm:w-4 sm:h-4" />
-                    {t('upgrade.luxury')}
-                  </span>
-                </motion.div>
-              )}
+        {/* Invitation Design */}
+        <div className="mb-12 sm:mb-16">
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-center text-[10px] sm:text-xs tracking-[0.25em] uppercase text-[#420c14]/40 mb-6"
+          >
+            {t('upgradeModal.invitationAxis')}
+          </motion.p>
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
+            {INVITATION_GIFT_TIERS.map(({ tierKey, planType, isFeatured, isTop }, index) => {
+              const tier = invTiers[tierKey]
+              const pricing = INVITATION_PRICING[tierKey]
+              return (
+                <PricingTierCard
+                  key={tierKey}
+                  name={tier.name}
+                  tagline={tier.tagline}
+                  description={tier.description}
+                  priceDisplay={pricing.priceDisplayMXN}
+                  period={tier.period}
+                  features={tier.features}
+                  isFeatured={isFeatured}
+                  isTop={isTop}
+                  mostPopularLabel={t('upgrade.mostPopular')}
+                  luxuryLabel={t('upgrade.luxury')}
+                  ctaLabel={t('gift.giftPlan', { plan: tier.name })}
+                  loading={processingPlan === planType}
+                  disabled={authLoading || (processingPlan !== null && processingPlan !== planType)}
+                  onClick={() => handleGiftCheckout(planType)}
+                  delay={index * 0.15}
+                />
+              )
+            })}
+          </div>
+        </div>
 
-              <div className={plan.featured || plan.isDeluxe ? "pt-2 sm:pt-4" : ""}>
-                <h3 className={`text-2xl sm:text-3xl font-serif mb-2 ${plan.featured ? "text-[#f5f2eb]" : "text-[#420c14]"}`}>
-                  {plan.name}
-                </h3>
-                <p className={`mb-6 sm:mb-8 text-sm sm:text-base ${plan.featured ? "text-[#f5f2eb]/60" : "text-[#420c14]/80"}`}>
-                  {plan.description}
-                </p>
-
-                <div className="mb-8 sm:mb-10">
-                  {discount && appliesToPlan(plan.id) && getDiscountPercent(plan.id, 'card') > 0 ? (
-                    <PromoPriceDisplay
-                      originalPriceCents={plan.priceCents}
-                      discountedPriceCents={getDiscountedPrice(plan.priceCents, plan.id, 'card')}
-                      discountPercent={getDiscountPercent(plan.id, 'card')}
-                      discountLabel={discount.label}
-                      variant={plan.featured ? 'light' : 'gold'}
-                      size="lg"
-                    />
-                  ) : (
-                    <div>
-                      <span className={`text-4xl sm:text-6xl font-serif ${plan.featured ? "text-[#f5f2eb]" : "text-[#420c14]"}`}>
-                        {plan.price}
-                      </span>
-                      <span className={`ml-2 sm:ml-3 text-sm sm:text-base ${plan.featured ? "text-[#f5f2eb]/60" : "text-[#420c14]/70"}`}>
-                        {plan.period}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleGiftCheckout(plan.id)
-                  }}
-                  disabled={loading || isProcessing}
-                  className={`w-full h-12 sm:h-14 text-sm sm:text-base tracking-wider transition-all duration-700 ${
-                    plan.featured
-                      ? "bg-[#DDA46F] hover:bg-[#c99560] text-[#420c14]"
-                      : "bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb]"
-                  }`}
-                >
-                  {isProcessing && selectedPlan === plan.id ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      {G.processing}
-                    </>
-                  ) : (
-                    <>
-                      <Gift className="w-4 h-4 mr-2" />
-                      {t('gift.giftPlan', { plan: plan.name })}
-                    </>
-                  )}
-                </Button>
-
-                <ul className="mt-6 sm:mt-8 space-y-3">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        plan.featured ? "bg-[#DDA46F]/30 text-[#DDA46F]" : "bg-[#420c14]/20 text-[#420c14]"
-                      }`}>
-                        <Check className="w-3 h-3" />
-                      </div>
-                      <span className={`text-sm ${plan.featured ? "text-[#f5f2eb]/80" : "text-[#420c14]/90"}`}>
-                        {feature.text}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </motion.div>
-          ))}
+        {/* Wedding Management */}
+        <div className="mb-16">
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-center text-[10px] sm:text-xs tracking-[0.25em] uppercase text-[#420c14]/40 mb-6"
+          >
+            {t('upgradeModal.managementAxis')}
+          </motion.p>
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
+            {MANAGEMENT_GIFT_TIERS.map(({ tierKey, planType, isFeatured, isTop }, index) => {
+              const tier = mgmtTiers[tierKey]
+              const pricing = MANAGEMENT_PRICING[tierKey]
+              return (
+                <PricingTierCard
+                  key={tierKey}
+                  name={tier.name}
+                  tagline={tier.tagline}
+                  description={tier.description}
+                  priceDisplay={pricing.priceDisplayMXN}
+                  period={tier.period}
+                  features={tier.features}
+                  isFeatured={isFeatured}
+                  isTop={isTop}
+                  mostPopularLabel={t('upgrade.mostPopular')}
+                  luxuryLabel={t('upgrade.luxury')}
+                  ctaLabel={t('gift.giftPlan', { plan: tier.name })}
+                  loading={processingPlan === planType}
+                  disabled={authLoading || (processingPlan !== null && processingPlan !== planType)}
+                  onClick={() => handleGiftCheckout(planType)}
+                  delay={0.3 + index * 0.15}
+                />
+              )
+            })}
+          </div>
         </div>
 
         {/* How it works */}
@@ -305,8 +217,8 @@ function GiftPageContent() {
           <h2 className="text-xl sm:text-2xl font-serif text-[#420c14] mb-8 text-center">{G.howItWorks}</h2>
           <div className="grid sm:grid-cols-3 gap-6 sm:gap-8">
             {[
-              { icon: <Gift className="w-6 h-6" />, title: G.steps.purchase.title, desc: G.steps.purchase.desc },
-              { icon: <Copy className="w-6 h-6" />, title: G.steps.share.title, desc: G.steps.share.desc },
+              { icon: <Gift className="w-6 h-6" />,  title: G.steps.purchase.title,  desc: G.steps.purchase.desc  },
+              { icon: <Copy className="w-6 h-6" />,   title: G.steps.share.title,     desc: G.steps.share.desc     },
               { icon: <Heart className="w-6 h-6" />, title: G.steps.celebrate.title, desc: G.steps.celebrate.desc },
             ].map((step, i) => (
               <div key={i} className="flex flex-col items-center text-center gap-3">
@@ -320,15 +232,17 @@ function GiftPageContent() {
           </div>
         </motion.div>
 
-        {/* Upgrade redirect note */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.6 }}
           className="text-center text-[#420c14]/40 text-xs mt-8"
         >
-          {G.upgradingOwn}{" "}
-          <Link href={weddingIdParam ? `/upgrade?weddingId=${encodeURIComponent(weddingIdParam)}` : withLandingSource('/upgrade', landingSource)} className="underline hover:text-[#420c14]/70 transition-colors">
+          {G.upgradingOwn}{' '}
+          <Link
+            href={weddingIdParam ? `/upgrade?weddingId=${encodeURIComponent(weddingIdParam)}` : withLandingSource('/upgrade', landingSource)}
+            className="underline hover:text-[#420c14]/70 transition-colors"
+          >
             {G.goToUpgrade}
           </Link>
         </motion.p>

@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
+import { useTranslation } from "@/components/contexts/i18n-context"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Gift,
@@ -12,7 +13,6 @@ import {
   AlertCircle,
   ArrowLeft,
   CheckCircle2,
-  Crown,
   Sparkles,
   ChevronDown,
 } from "lucide-react"
@@ -34,6 +34,7 @@ function GiftRedeemContent() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { t } = useTranslation()
 
   const [code, setCode] = useState(() => {
     const param = searchParams.get('code') || ''
@@ -52,9 +53,9 @@ function GiftRedeemContent() {
     fetch('/api/weddings')
       .then(r => r.json())
       .then(data => {
-        const eligible = (data.weddings || []).filter((w: Wedding) => w.plan === 'free')
-        setWeddings(eligible)
-        if (eligible.length === 1) setSelectedWeddingId(eligible[0].id)
+        const all = data.weddings || []
+        setWeddings(all)
+        if (all.length === 1) setSelectedWeddingId(all[0].id)
       })
       .catch(() => {})
       .finally(() => setLoadingWeddings(false))
@@ -71,12 +72,12 @@ function GiftRedeemContent() {
       return
     }
     if (!selectedWeddingId) {
-      setError('Please select the wedding to apply this gift to.')
+      setError(t('gift.redeem.errorSelectWedding'))
       return
     }
     const rawCode = code.replace(/-/g, '').trim()
     if (rawCode.length < 8) {
-      setError('Please enter a valid gift code.')
+      setError(t('gift.redeem.errorInvalidCode'))
       return
     }
 
@@ -91,7 +92,7 @@ function GiftRedeemContent() {
       })
       const data = await res.json()
       if (!res.ok) {
-        setError(data.error || 'Failed to redeem gift code.')
+        setError(data.error || t('gift.redeem.errorGeneric'))
       } else {
         const wedding = weddings.find(w => w.id === selectedWeddingId)
         const weddingName = wedding
@@ -100,7 +101,7 @@ function GiftRedeemContent() {
         setSuccess({ plan: data.plan, weddingName })
       }
     } catch {
-      setError('Something went wrong. Please try again.')
+      setError(t('gift.redeem.errorGeneric'))
     } finally {
       setIsSubmitting(false)
     }
@@ -116,7 +117,6 @@ function GiftRedeemContent() {
 
   return (
     <div className="min-h-screen bg-[#f5f2eb] relative overflow-hidden flex items-center justify-center p-4">
-      {/* Decorative blobs */}
       <motion.div
         className="absolute top-1/4 left-[5%] w-72 h-72 rounded-full bg-[#DDA46F]/10 blur-3xl pointer-events-none"
         animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
@@ -129,7 +129,6 @@ function GiftRedeemContent() {
       />
 
       <div className="relative w-full max-w-md">
-        {/* Back link */}
         <motion.div
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
@@ -141,7 +140,7 @@ function GiftRedeemContent() {
             className="inline-flex items-center gap-2 text-[#420c14]/50 hover:text-[#420c14] text-sm transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to home
+            {t('gift.redeem.backToHome')}
           </Link>
         </motion.div>
 
@@ -162,18 +161,15 @@ function GiftRedeemContent() {
               >
                 <CheckCircle2 className="w-10 h-10 text-green-600" />
               </motion.div>
-              <h1 className="text-2xl sm:text-3xl font-serif text-[#420c14] mb-3">Gift Redeemed! 🎉</h1>
+              <h1 className="text-2xl sm:text-3xl font-serif text-[#420c14] mb-3">{t('gift.redeem.successTitle')}</h1>
               <p className="text-[#420c14]/60 text-sm mb-6">
-                Your{' '}
-                <span className="font-semibold capitalize text-[#420c14]">{success.plan}</span>{' '}
-                plan has been activated for{' '}
-                <span className="font-semibold text-[#420c14]">{success.weddingName}</span>.
+                {t('gift.redeem.successDescription', { plan: success.plan, weddingName: success.weddingName })}
               </p>
               <Button
                 onClick={() => router.push(`/admin/${selectedWeddingId}/dashboard`)}
                 className="w-full h-12 bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb]"
               >
-                Go to my wedding dashboard
+                {t('gift.redeem.goToDashboard')}
               </Button>
             </motion.div>
           ) : (
@@ -184,7 +180,6 @@ function GiftRedeemContent() {
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="bg-white rounded-3xl shadow-2xl shadow-[#420c14]/10 overflow-hidden"
             >
-              {/* Header */}
               <div className="bg-gradient-to-br from-[#1f0508] via-[#420c14] to-[#2a1205] p-8 text-center">
                 <motion.div
                   initial={{ scale: 0 }}
@@ -194,15 +189,14 @@ function GiftRedeemContent() {
                 >
                   <Gift className="w-7 h-7 text-[#DDA46F]" />
                 </motion.div>
-                <h1 className="text-2xl font-serif text-white mb-1">Redeem a Gift</h1>
-                <p className="text-white/50 text-sm">Enter your gift code to activate your wedding plan</p>
+                <h1 className="text-2xl font-serif text-white mb-1">{t('gift.redeem.pageTitle')}</h1>
+                <p className="text-white/50 text-sm">{t('gift.redeem.pageSubtitle')}</p>
               </div>
 
               <div className="p-8 sm:p-10 space-y-6">
-                {/* Code input */}
                 <div>
                   <label className="block text-xs font-medium text-[#420c14]/60 uppercase tracking-wider mb-2">
-                    Gift Code
+                    {t('gift.redeem.codeLabel')}
                   </label>
                   <input
                     type="text"
@@ -216,15 +210,14 @@ function GiftRedeemContent() {
                   />
                 </div>
 
-                {/* Wedding selector */}
                 {!user ? (
                   <div className="rounded-2xl bg-[#f5f2eb] border border-[#420c14]/10 p-5 text-center">
-                    <p className="text-[#420c14]/60 text-sm mb-4">Sign in to apply this gift to your wedding</p>
+                    <p className="text-[#420c14]/60 text-sm mb-4">{t('gift.redeem.signInPrompt')}</p>
                     <Button
                       onClick={() => router.push(`/login?redirect=/gift/redeem${code ? `?code=${code.replace(/-/g, '')}` : ''}`)}
                       className="bg-[#420c14] hover:bg-[#5a1a22] text-[#f5f2eb] w-full"
                     >
-                      Sign in
+                      {t('gift.redeem.signIn')}
                     </Button>
                   </div>
                 ) : loadingWeddings ? (
@@ -234,15 +227,15 @@ function GiftRedeemContent() {
                 ) : weddings.length === 0 ? (
                   <div className="rounded-2xl bg-amber-50 border border-amber-200 p-5 text-center">
                     <p className="text-amber-800 text-sm mb-3">
-                      No eligible weddings found. Gifts can only be applied to weddings on the Lovers plan.
+                      {t('gift.redeem.noWeddings')}
                     </p>
                     <Link href="/create-wedding" className="text-[#DDA46F] text-sm font-medium hover:underline">
-                      Create a wedding first →
+                      {t('gift.redeem.createWeddingLink')}
                     </Link>
                   </div>
                 ) : weddings.length === 1 ? (
                   <div className="rounded-2xl bg-[#f5f2eb]/70 border border-[#420c14]/10 p-4">
-                    <p className="text-xs text-[#420c14]/50 uppercase tracking-wider mb-1">Apply to</p>
+                    <p className="text-xs text-[#420c14]/50 uppercase tracking-wider mb-1">{t('gift.redeem.applyTo')}</p>
                     <p className="text-[#420c14] font-medium">
                       {[weddings[0].partner1_first_name, weddings[0].partner2_first_name].filter(Boolean).join(' & ') || weddings[0].wedding_name_id}
                     </p>
@@ -250,7 +243,7 @@ function GiftRedeemContent() {
                 ) : (
                   <div>
                     <label className="block text-xs font-medium text-[#420c14]/60 uppercase tracking-wider mb-2">
-                      Apply to
+                      {t('gift.redeem.applyTo')}
                     </label>
                     <div className="relative">
                       <select
@@ -258,7 +251,7 @@ function GiftRedeemContent() {
                         onChange={e => setSelectedWeddingId(e.target.value)}
                         className="w-full h-12 px-4 pr-10 rounded-xl border border-[#420c14]/15 bg-[#f5f2eb]/50 text-[#420c14] text-sm focus:outline-none focus:ring-2 focus:ring-[#DDA46F]/40 transition-all appearance-none"
                       >
-                        <option value="">Select a wedding…</option>
+                        <option value="">{t('gift.redeem.selectPlaceholder')}</option>
                         {weddings.map(w => (
                           <option key={w.id} value={w.id}>
                             {[w.partner1_first_name, w.partner2_first_name].filter(Boolean).join(' & ') || w.wedding_name_id}
@@ -270,7 +263,6 @@ function GiftRedeemContent() {
                   </div>
                 )}
 
-                {/* Error */}
                 <AnimatePresence>
                   {error && (
                     <motion.div
@@ -285,7 +277,6 @@ function GiftRedeemContent() {
                   )}
                 </AnimatePresence>
 
-                {/* Submit */}
                 {user && (
                   <Button
                     onClick={handleRedeem}
@@ -295,21 +286,21 @@ function GiftRedeemContent() {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Activating…
+                        {t('gift.redeem.activating')}
                       </>
                     ) : (
                       <>
                         <Sparkles className="w-4 h-4 mr-2" />
-                        Activate Gift
+                        {t('gift.redeem.activateGift')}
                       </>
                     )}
                   </Button>
                 )}
 
                 <p className="text-center text-[#420c14]/30 text-xs">
-                  Want to gift a subscription instead?{' '}
+                  {t('gift.redeem.wantToGift')}{' '}
                   <Link href="/gift" className="text-[#DDA46F] hover:underline">
-                    Buy a gift →
+                    {t('gift.redeem.buyGift')}
                   </Link>
                 </p>
               </div>

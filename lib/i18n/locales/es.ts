@@ -1224,6 +1224,42 @@ export const es: Translations = {
           collaboratorsAccess: 'Comparte con colaboradores y organizadores de boda',
         },
       },
+      tiers: {
+        invitation: {
+          basic: {
+            name: 'Básico', tagline: 'Una bella invitación, lista para enviar', description: 'Una plantilla lista para usar — sin decisiones de diseño.', period: 'pago único',
+            ctaPricing: 'Comenzar', ctaUpgrade: 'Comenzar',
+            features: ['Secciones Hero, Nuestra Historia y Detalles', 'Sección de cuenta regresiva', 'RSVP* (requiere plan de Gestión)', 'Diseño de sobre básico', 'Variantes de color y tipografía limitadas'],
+          },
+          personalized: {
+            name: 'Personalizado', tagline: 'Tu historia, tus secciones, tu estilo', description: 'Elige tu plantilla, colores y las secciones que cuentan tu historia.', period: 'pago único',
+            ctaPricing: 'Elegir Personalizado', ctaUpgrade: 'Actualizar a Personalizado',
+            features: ['Secciones Hero, Nuestra Historia y Detalles', 'Sección de cuenta regresiva', 'Sección de preguntas frecuentes', 'RSVP* (requiere plan de Gestión)', 'Secciones de dresscode y sugerencias de hotel', 'Sección de mesa de regalos', 'Diseño de sobre personalizado', 'Variantes ilimitadas de color y tipografía', 'Saludos personalizados por invitado', 'Subdominio limpio sin marca', 'Fotos ilimitadas'],
+          },
+          bespoke: {
+            name: 'A Medida', tagline: 'Diseñado a medida por nuestro equipo', description: 'Diseñamos tu invitación desde cero en tu propio dominio personalizado.', period: 'pago único',
+            ctaPricing: 'Elegir A Medida', ctaUpgrade: 'Ir A Medida',
+            features: ['Todas las secciones de Personalizado', 'RSVP* (requiere plan de Gestión)', 'Sección Nuestra Gente', 'Sección de música y playlist', 'Diseño de sobre único', 'Diseño de página completamente personalizado', 'Tipografías especiales y únicas', 'Diseñado a medida por nuestro equipo', 'Tu propio dominio bespoke'],
+          },
+        },
+        management: {
+          basic: {
+            name: 'Básico', tagline: 'Invitados y confirmaciones, organizados', description: 'Lista de invitados y seguimiento de confirmaciones — lo esencial.', period: 'pago único',
+            ctaPricing: 'Comenzar', ctaUpgrade: 'Comenzar',
+            features: ['Lista de invitados y seguimiento de RSVP', 'Hasta 100 invitados', 'Últimas 3 actividades'],
+          },
+          pro: {
+            name: 'Pro', tagline: 'El kit completo de planificación', description: 'Plantillas de mensajes, reportes de actividad, mapa de mesas y mesa de regalos.', period: 'pago único',
+            ctaPricing: 'Elegir Pro', ctaUpgrade: 'Actualizar a Pro',
+            features: ['Todo lo de Básico', 'Plantillas de mensajes', 'Reportes de actividad', 'Diseñador de mapa de mesas', 'Mesa de regalos con pagos seguros', 'Invitados y grupos ilimitados', 'Acceso para colaboradores'],
+          },
+          agency: {
+            name: 'Agencia', tagline: 'Diseñado para wedding planners', description: 'Gestiona cada boda desde un solo panel, con transparencia hacia el cliente.', period: 'pago único',
+            ctaPricing: 'Elegir Agencia', ctaUpgrade: 'Elegir Agencia',
+            features: ['Todo lo de Pro', 'Panel multi-boda', 'Envía invitaciones con un clic', 'Chatbot de IA responde preguntas de invitados automáticamente', 'Asistente de IA para planificación de bodas', 'Marca blanca', 'Soporte prioritario'],
+          },
+        },
+      },
       errors: {
         alreadyOnPlan: 'Tus bodas ya están en este plan o uno superior.',
         tryAgain: 'Algo salió mal. Por favor intenta de nuevo.',
@@ -1783,6 +1819,28 @@ export const es: Translations = {
     upgradingOwn: '¿Quieres actualizar tu propia boda?',
     goToUpgrade: 'Ve a la página de actualización \u2192',
     errorGeneric: 'Algo salió mal. Inténtalo de nuevo.',
+    redeem: {
+      backToHome: 'Volver al inicio',
+      pageTitle: 'Canjea tu regalo',
+      pageSubtitle: 'Ingresa tu código de regalo para activar tu plan de boda',
+      codeLabel: 'Código de regalo',
+      successTitle: '¡Regalo canjeado! 🎉',
+      successDescription: 'Tu plan {{plan}} ha sido activado para {{weddingName}}.',
+      goToDashboard: 'Ir a mi panel de boda',
+      signInPrompt: 'Inicia sesión para aplicar este regalo a tu boda',
+      signIn: 'Iniciar sesión',
+      noWeddings: 'No se encontraron bodas. Crea una boda primero para canjear un regalo.',
+      createWeddingLink: 'Crea una boda primero →',
+      applyTo: 'Aplicar a',
+      selectPlaceholder: 'Selecciona una boda…',
+      activating: 'Activando…',
+      activateGift: 'Activar regalo',
+      wantToGift: '¿Quieres regalar una suscripción?',
+      buyGift: 'Compra un regalo →',
+      errorSelectWedding: 'Por favor selecciona la boda a la que quieres aplicar este regalo.',
+      errorInvalidCode: 'Por favor ingresa un código de regalo válido.',
+      errorGeneric: 'Algo salió mal. Inténtalo de nuevo.',
+    },
   },
 
   upgradeModal: {
@@ -1806,13 +1864,20 @@ export const es: Translations = {
     },
   },
 
+  pricing: {
+    pageLabel: 'Planes y Precios',
+    title: 'Nuestros',
+    subtitle: 'Planes',
+    description: 'Un solo pago, acceso de por vida. Sin suscripciones, sin costos ocultos. Todo lo que necesitas para tu sitio de boda perfecto.',
+  },
+
   upgrade: {
     pageLabel: 'Actualiza',
     giftCallout: {
       buyingAsGift: '¿Comprando como regalo?',
       giftSubscription: 'Regala una suscripción',
       haveGiftCode: '¿Tienes un código de regalo?',
-      redeemHere: 'Canjéalo aquí \u2192',
+      redeemHere: 'Canjea tu código aquí',
     },
     paymentMethod: 'Método de Pago',
     card: 'Tarjeta',

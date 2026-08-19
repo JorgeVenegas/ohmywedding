@@ -3,9 +3,7 @@ import Stripe from 'stripe'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { createClient } from '@supabase/supabase-js'
 import { STRIPE_API_VERSION } from '@/lib/stripe-config'
-import { INVITATION_PRICING } from '@/lib/subscription-shared'
-// Legacy gift checkout stubs
-const PRICING: any = { premium: INVITATION_PRICING.personalized, deluxe: INVITATION_PRICING.bespoke }
+import { INVITATION_PRICING, MANAGEMENT_PRICING } from '@/lib/subscription-shared'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -16,15 +14,25 @@ const getStripe = () => {
   })
 }
 
-const VALID_PLANS = ['premium', 'deluxe'] as const
+const VALID_PLANS = ['invitation_basic', 'premium', 'deluxe', 'management_basic', 'management_pro', 'management_agency'] as const
 type ValidPlan = typeof VALID_PLANS[number]
+
+type PlanMeta = { name: string; price_mxn: number }
+
+const PLAN_META: Record<ValidPlan, PlanMeta> = {
+  invitation_basic: { name: INVITATION_PRICING.basic.name,        price_mxn: INVITATION_PRICING.basic.price_mxn        },
+  premium:          { name: INVITATION_PRICING.personalized.name, price_mxn: INVITATION_PRICING.personalized.price_mxn },
+  deluxe:           { name: INVITATION_PRICING.bespoke.name,      price_mxn: INVITATION_PRICING.bespoke.price_mxn      },
+  management_basic: { name: MANAGEMENT_PRICING.basic.name,        price_mxn: MANAGEMENT_PRICING.basic.price_mxn        },
+  management_pro:   { name: MANAGEMENT_PRICING.pro.name,          price_mxn: MANAGEMENT_PRICING.pro.price_mxn          },
+  management_agency:{ name: MANAGEMENT_PRICING.agency.name,       price_mxn: MANAGEMENT_PRICING.agency.price_mxn       },
+}
 
 // POST /api/gift/checkout - Create Stripe checkout for a gift purchase
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient()
 
-    // Require authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
@@ -32,24 +40,21 @@ export async function POST(request: NextRequest) {
 
     const { planType } = await request.json()
 
-    // Validate plan
     if (!VALID_PLANS.includes(planType)) {
       return NextResponse.json({ error: 'Invalid plan type' }, { status: 400 })
     }
 
     const validatedPlan = planType as ValidPlan
     const stripe = getStripe()
-    const pricing = PRICING[validatedPlan]
+    const planMeta = PLAN_META[validatedPlan]
 
-    // Fetch active global discount to get its linked Stripe coupon (for gift, always card payment)
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
+    // Fetch active global discount coupon
     let globalStripeCouponId: string | null = null
-    let globalDiscountId: string | null = null
-    let globalDiscountPercent = 0
     const { data: activeDiscount } = await supabaseAdmin
       .from('global_discounts')
       .select('*')
@@ -60,46 +65,34 @@ export async function POST(request: NextRequest) {
       .maybeSingle()
 
     if (activeDiscount) {
-      const planApplies = !activeDiscount.applies_to_plans?.length || 
+      const planApplies = !activeDiscount.applies_to_plans?.length ||
         activeDiscount.applies_to_plans.includes(validatedPlan)
       if (planApplies) {
-        globalDiscountId = activeDiscount.id
-        // Gift is always card payment — use per-plan card discount
-        globalDiscountPercent = validatedPlan === 'premium'
-          ? (activeDiscount.premium_card_discount_percent || 0)
-          : (activeDiscount.deluxe_card_discount_percent || 0)
-        globalStripeCouponId = validatedPlan === 'premium'
-          ? (activeDiscount.premium_card_stripe_coupon_id || null)
-          : (activeDiscount.deluxe_card_stripe_coupon_id || null)
+        // Gift is always card payment — use premium card coupon as fallback for management plans
+        if (validatedPlan === 'premium') {
+          globalStripeCouponId = activeDiscount.premium_card_stripe_coupon_id || null
+        } else if (validatedPlan === 'deluxe') {
+          globalStripeCouponId = activeDiscount.deluxe_card_stripe_coupon_id || null
+        }
+        // Management plans: no dedicated coupon fields yet — allow promotion codes instead
       }
     }
 
-    // ALWAYS use full price as unit_amount — discount applied via Stripe coupon
-    const unitAmount = pricing.price_mxn
-
     // Find or create Stripe customer
-    const existingCustomers = await stripe.customers.list({
-      email: user.email,
-      limit: 1,
-    })
-
+    const existingCustomers = await stripe.customers.list({ email: user.email, limit: 1 })
     let customerId: string
     if (existingCustomers.data.length > 0) {
       customerId = existingCustomers.data[0].id
     } else {
       const customer = await stripe.customers.create({
         email: user.email || undefined,
-        metadata: {
-          supabase_user_id: user.id,
-        },
+        metadata: { supabase_user_id: user.id },
       })
       customerId = customer.id
     }
 
-    // Get the base URL
     const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'https://ohmy.wedding'
 
-    // Create Stripe checkout session
     const sessionParams: any = {
       customer: customerId,
       payment_method_types: ['card'],
@@ -108,10 +101,10 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: 'mxn',
             product_data: {
-              name: `Gift - ${pricing.name} Plan`,
-              description: `Gift a ${pricing.name} wedding plan to a loved one`,
+              name: `Gift - ${planMeta.name} Plan`,
+              description: `Gift a ${planMeta.name} wedding plan to a loved one`,
             },
-            unit_amount: unitAmount,
+            unit_amount: planMeta.price_mxn,
           },
           quantity: 1,
         },
@@ -134,8 +127,6 @@ export async function POST(request: NextRequest) {
       },
     }
 
-    // Apply global promo as Stripe coupon if available
-    // (Stripe coupons are created by superadmin when setting up the promotion)
     if (globalStripeCouponId) {
       sessionParams.discounts = [{ coupon: globalStripeCouponId }]
     } else {
@@ -144,10 +135,7 @@ export async function POST(request: NextRequest) {
 
     const session = await stripe.checkout.sessions.create(sessionParams)
 
-    return NextResponse.json({
-      url: session.url,
-      sessionId: session.id,
-    })
+    return NextResponse.json({ url: session.url, sessionId: session.id })
 
   } catch (error) {
     console.error('Gift checkout error:', error)

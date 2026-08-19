@@ -1249,6 +1249,18 @@ export interface Translations {
           collaboratorsAccess: string
         }
       }
+      tiers: {
+        invitation: {
+          basic:        { name: string; tagline: string; description: string; period: string; ctaPricing: string; ctaUpgrade: string; features: string[] }
+          personalized: { name: string; tagline: string; description: string; period: string; ctaPricing: string; ctaUpgrade: string; features: string[] }
+          bespoke:      { name: string; tagline: string; description: string; period: string; ctaPricing: string; ctaUpgrade: string; features: string[] }
+        }
+        management: {
+          basic:  { name: string; tagline: string; description: string; period: string; ctaPricing: string; ctaUpgrade: string; features: string[] }
+          pro:    { name: string; tagline: string; description: string; period: string; ctaPricing: string; ctaUpgrade: string; features: string[] }
+          agency: { name: string; tagline: string; description: string; period: string; ctaPricing: string; ctaUpgrade: string; features: string[] }
+        }
+      }
       errors: { alreadyOnPlan: string; tryAgain: string }
       promoCountdown: {
         endsIn: string
@@ -1350,6 +1362,28 @@ export interface Translations {
     upgradingOwn: string
     goToUpgrade: string
     errorGeneric: string
+    redeem: {
+      backToHome: string
+      pageTitle: string
+      pageSubtitle: string
+      codeLabel: string
+      successTitle: string
+      successDescription: string
+      goToDashboard: string
+      signInPrompt: string
+      signIn: string
+      noWeddings: string
+      createWeddingLink: string
+      applyTo: string
+      selectPlaceholder: string
+      activating: string
+      activateGift: string
+      wantToGift: string
+      buyGift: string
+      errorSelectWedding: string
+      errorInvalidCode: string
+      errorGeneric: string
+    }
   }
 
   upgradeModal: {
@@ -1371,6 +1405,14 @@ export interface Translations {
       invitation_tracking: { title: string; description: string }
       rsvp_system: { title: string; description: string }
     }
+  }
+
+  // Pricing page (shared with upgrade page via ?upgrade=1)
+  pricing: {
+    pageLabel: string
+    title: string
+    subtitle: string
+    description: string
   }
 
   // Upgrade page

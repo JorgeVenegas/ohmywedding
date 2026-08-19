@@ -26,7 +26,7 @@ import {
   getScenarioFeaturesLocalized,
   formatMXN,
 } from "@/lib/quote-types"
-import { INVITATION_PRICING, MANAGEMENT_PRICING } from "@/lib/subscription-shared"
+import { INVITATION_PRICING, MANAGEMENT_PRICING, getTierLocaleCopy } from "@/lib/subscription-shared"
 import { captureAndAssemblePDF, downloadBlob } from "@/components/summary-pdf/pdf-capture"
 import { createClient } from "@/lib/supabase-client"
 import { AuthCheckoutDialog } from "./auth-checkout-dialog"
@@ -274,8 +274,8 @@ function QuotePDFPage({
             const maxPerSection = cols === 1 ? 6 : cols === 2 ? 5 : 4
             const invFeatures = invitation.slice(0, maxPerSection)
             const mgmtFeatures = management.slice(0, maxPerSection)
-            const invName = scenario.invitation_tier ? INVITATION_PRICING[scenario.invitation_tier].name : null
-            const mgmtName = scenario.management_tier ? MANAGEMENT_PRICING[scenario.management_tier].name : null
+            const invName = scenario.invitation_tier ? getTierLocaleCopy('invitation', scenario.invitation_tier, lang).name : null
+            const mgmtName = scenario.management_tier ? getTierLocaleCopy('management', scenario.management_tier, lang).name : null
 
             const isDark = i === 0
             const bg = isDark ? "#420c14" : "#ffffff"
@@ -420,9 +420,9 @@ function QuotePDFPage({
                 <div key={i} style={{ fontSize: 9, color: "rgba(66,12,20,0.6)" }}>
                   <span style={{ color: "#DDA46F", fontWeight: 600 }}>{localizeLabel(s.label, lang)}</span>
                   {" — "}
-                  {t.invitation} {INVITATION_PRICING[s.invitation_tier].name} {formatMXN(s.invitation_price_cents)}
+                  {t.invitation} {getTierLocaleCopy('invitation', s.invitation_tier, lang).name} {formatMXN(s.invitation_price_cents)}
                   {" + "}
-                  {t.management} {MANAGEMENT_PRICING[s.management_tier].name} {formatMXN(s.management_price_cents)}
+                  {t.management} {getTierLocaleCopy('management', s.management_tier, lang).name} {formatMXN(s.management_price_cents)}
                   {" = "}
                   <span style={{ color: "#420c14", fontWeight: 600 }}>{formatMXN(discounted)}</span>
                 </div>
@@ -494,10 +494,10 @@ function ScenarioCard({
   const { invitation, management, isExpanded } = getScenarioFeaturesLocalized(scenario, lang)
 
   const invName = scenario.invitation_tier
-    ? INVITATION_PRICING[scenario.invitation_tier].name
+    ? getTierLocaleCopy('invitation', scenario.invitation_tier, lang).name
     : null
   const mgmtName = scenario.management_tier
-    ? MANAGEMENT_PRICING[scenario.management_tier].name
+    ? getTierLocaleCopy('management', scenario.management_tier, lang).name
     : null
 
   const allFeatures = [...invitation, ...management]

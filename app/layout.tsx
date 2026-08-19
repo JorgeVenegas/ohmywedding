@@ -26,6 +26,22 @@ export const metadata: Metadata = {
   },
   description: 'Create a beautiful, elegant wedding website that captures your love story. Share details, manage RSVPs, and celebrate with your guests.',
   metadataBase: new URL('https://www.ohmy.wedding'),
+  openGraph: {
+    siteName: 'OhMyWedding',
+    type: 'website',
+    images: [
+      {
+        url: '/images/demo_images/demo-img-2.jpg',
+        width: 1200,
+        height: 800,
+        alt: 'OhMyWedding — Luxury Wedding Websites',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/images/demo_images/demo-img-2.jpg'],
+  },
 }
 
 export default function RootLayout({

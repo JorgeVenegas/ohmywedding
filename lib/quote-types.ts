@@ -74,7 +74,7 @@ export function formatMXN(cents: number): string {
 // Each tier describes only what it includes, no cross-references.
 const INVITATION_EXPANDED: Record<string, string[]> = {
   basic: [
-    'Your invitation hosted at yourname.ohmy.wedding',
+    'Your invitation hosted at ohmy.wedding/yournames',
     'Core sections: Hero, Our Story & Event Details',
     'Classic envelope with curated color & font pairings',
     'Mobile-optimized for every device',
@@ -139,7 +139,7 @@ const MANAGEMENT_EXPANDED: Record<string, string[]> = {
 
 const INVITATION_EXPANDED_ES: Record<string, string[]> = {
   basic: [
-    'Invitación en tu propio enlace: tunombre.ohmy.wedding',
+    'Invitación accesible en: ohmy.wedding/tunombre',
     'Secciones esenciales: Hero, Nuestra Historia y Detalles del Evento',
     'Sobre clásico con paletas de color y tipografía curadas',
     'Optimizada para todos los dispositivos',

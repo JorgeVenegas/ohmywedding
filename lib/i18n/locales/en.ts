@@ -1228,6 +1228,42 @@ export const en: Translations = {
           collaboratorsAccess: 'Share with collaborators & wedding planners',
         },
       },
+      tiers: {
+        invitation: {
+          basic: {
+            name: 'Basic', tagline: 'A beautiful invitation, ready to send', description: 'One template, ready to go — no design decisions required.', period: 'one-time',
+            ctaPricing: 'Get Started', ctaUpgrade: 'Get Started',
+            features: ['Hero, Our Story & Details sections', 'Countdown section', 'RSVP* (requires Management plan)', 'Basic envelope design', 'Limited color & font variants'],
+          },
+          personalized: {
+            name: 'Personalized', tagline: 'Your story, your sections, your look', description: 'Choose your template, colors, and which sections tell your story.', period: 'one-time',
+            ctaPricing: 'Choose Personalized', ctaUpgrade: 'Upgrade to Personalized',
+            features: ['Hero, Our Story & Details sections', 'Countdown section', 'FAQs section', 'RSVP* (requires Management plan)', 'Dresscode & Hotel suggestions sections', 'Registry section', 'Personalized envelope design', 'Unlimited color & font variants', 'Guest-personalized greetings', 'Clean subdomain, no branding', 'Unlimited photos'],
+          },
+          bespoke: {
+            name: 'Bespoke', tagline: 'Custom-built by our design team', description: 'We design your invitation from scratch, on your own custom domain.', period: 'one-time',
+            ctaPricing: 'Go Bespoke', ctaUpgrade: 'Go Bespoke',
+            features: ['All Personalized sections', 'RSVP* (requires Management plan)', 'Our People section', 'Music & playlist section', 'Unique envelope design', 'Unique custom page design', 'Special & custom fonts', 'Custom-built by our design team', 'Your own bespoke domain'],
+          },
+        },
+        management: {
+          basic: {
+            name: 'Basic', tagline: 'Guests and RSVPs, organized', description: 'Guest list and RSVP tracking — the essentials.', period: 'one-time',
+            ctaPricing: 'Get Started', ctaUpgrade: 'Get Started',
+            features: ['Guest list & RSVP tracking', 'Up to 100 guests', 'Last 3 activities'],
+          },
+          pro: {
+            name: 'Pro', tagline: 'The full planning toolkit', description: 'Message templates, activity reports, seating chart, and registry.', period: 'one-time',
+            ctaPricing: 'Choose Pro', ctaUpgrade: 'Upgrade to Pro',
+            features: ['Everything in Basic', 'Message templates', 'Activity reports', 'Seating chart designer', 'Registry with secure payouts', 'Unlimited guests & groups', 'Collaborator access'],
+          },
+          agency: {
+            name: 'Agency', tagline: 'Built for wedding planners', description: 'Manage every wedding you run from one dashboard, with client transparency built in.', period: 'one-time',
+            ctaPricing: 'Go Agency', ctaUpgrade: 'Go Agency',
+            features: ['Everything in Pro', 'Multi-wedding dashboard', 'Send invitations with one click', 'AI chatbot answers guest FAQs automatically', 'AI wedding planning assistant', 'White-label branding', 'Priority support'],
+          },
+        },
+      },
       errors: {
         alreadyOnPlan: 'Your weddings are already on this plan or higher.',
         tryAgain: 'Something went wrong. Please try again.',
@@ -1787,6 +1823,28 @@ export const en: Translations = {
     upgradingOwn: 'Upgrading your own wedding?',
     goToUpgrade: 'Go to the upgrade page instead \u2192',
     errorGeneric: 'Something went wrong. Please try again.',
+    redeem: {
+      backToHome: 'Back to home',
+      pageTitle: 'Redeem a Gift',
+      pageSubtitle: 'Enter your gift code to activate your wedding plan',
+      codeLabel: 'Gift Code',
+      successTitle: 'Gift Redeemed! \ud83c\udf89',
+      successDescription: 'Your {{plan}} plan has been activated for {{weddingName}}.',
+      goToDashboard: 'Go to my wedding dashboard',
+      signInPrompt: 'Sign in to apply this gift to your wedding',
+      signIn: 'Sign in',
+      noWeddings: 'No weddings found. Create a wedding first to redeem a gift.',
+      createWeddingLink: 'Create a wedding first \u2192',
+      applyTo: 'Apply to',
+      selectPlaceholder: 'Select a wedding\u2026',
+      activating: 'Activating\u2026',
+      activateGift: 'Activate Gift',
+      wantToGift: 'Want to gift a subscription instead?',
+      buyGift: 'Buy a gift \u2192',
+      errorSelectWedding: 'Please select the wedding to apply this gift to.',
+      errorInvalidCode: 'Please enter a valid gift code.',
+      errorGeneric: 'Something went wrong. Please try again.',
+    },
   },
 
   upgradeModal: {
@@ -1810,13 +1868,20 @@ export const en: Translations = {
     },
   },
 
+  pricing: {
+    pageLabel: 'Plans & Pricing',
+    title: 'Our',
+    subtitle: 'Plans',
+    description: 'One-time payment, lifetime access. No subscriptions, no hidden fees. Everything you need for a perfect wedding website.',
+  },
+
   upgrade: {
     pageLabel: 'Upgrade',
     giftCallout: {
       buyingAsGift: 'Buying as a gift?',
       giftSubscription: 'Gift a subscription',
       haveGiftCode: 'Have a gift code?',
-      redeemHere: 'Redeem it here \u2192',
+      redeemHere: 'Redeem your code here',
     },
     paymentMethod: 'Payment Method',
     card: 'Card',

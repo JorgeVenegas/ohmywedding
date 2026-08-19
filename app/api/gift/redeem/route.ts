@@ -6,15 +6,27 @@ import crypto from 'crypto'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// DB-level lockout threshold — code is auto-expired after this many failed attempts
 const MAX_REDEEM_ATTEMPTS = 10
+
+type PlanInfo = { axis: 'invitation' | 'management'; tier: string }
+
+function getPlanInfo(plan: string): PlanInfo | null {
+  switch (plan) {
+    case 'invitation_basic':  return { axis: 'invitation', tier: 'basic'        }
+    case 'premium':           return { axis: 'invitation', tier: 'personalized' }
+    case 'deluxe':            return { axis: 'invitation', tier: 'bespoke'      }
+    case 'management_basic':  return { axis: 'management', tier: 'basic'        }
+    case 'management_pro':    return { axis: 'management', tier: 'pro'          }
+    case 'management_agency': return { axis: 'management', tier: 'agency'       }
+    default:                  return null
+  }
+}
 
 // POST /api/gift/redeem - Redeem a gift code for a wedding
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient()
 
-    // Require authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
@@ -28,13 +40,11 @@ export async function POST(request: NextRequest) {
 
     const normalizedCode = code.trim().toUpperCase().replace(/[-\s]/g, '')
 
-    // Use admin client for transactional operations
     const adminClient = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    // Validate the gift code
     const { data: gift, error: giftError } = await adminClient
       .from('gift_subscriptions')
       .select('*')
@@ -42,11 +52,9 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (giftError || !gift) {
-      // Code doesn't exist — return generic error (don't reveal whether code exists or not)
       return NextResponse.json({ error: 'Invalid gift code' }, { status: 404 })
     }
 
-    // DB-level brute-force protection: if too many failed attempts, auto-expire
     if (gift.redeem_attempts >= MAX_REDEEM_ATTEMPTS && gift.status === 'active') {
       await adminClient
         .from('gift_subscriptions')
@@ -55,14 +63,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'This gift code has been locked due to too many failed attempts. Please contact support.' }, { status: 429 })
     }
 
-    // Check if already redeemed
     if (gift.status === 'redeemed' || gift.wedding_id) {
       return NextResponse.json({ error: 'This gift code has already been redeemed' }, { status: 400 })
     }
 
-    // Check if expired
     if (gift.status === 'expired') {
       return NextResponse.json({ error: 'This gift code has expired' }, { status: 400 })
+    }
+
+    const planInfo = getPlanInfo(gift.plan)
+    if (!planInfo) {
+      return NextResponse.json({ error: 'Invalid gift plan type' }, { status: 500 })
     }
 
     // Verify user owns the wedding
@@ -73,7 +84,6 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (weddingError || !wedding) {
-      // Increment failed attempts for bad wedding ID (possible probing)
       await adminClient
         .from('gift_subscriptions')
         .update({ redeem_attempts: gift.redeem_attempts + 1, last_attempt_at: new Date().toISOString() })
@@ -89,29 +99,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'You do not own this wedding' }, { status: 403 })
     }
 
-    // Check if the wedding already has a paid plan
+    // Check whether this axis is already upgraded
     const { data: existingSub } = await adminClient
       .from('wedding_subscriptions')
-      .select('plan')
+      .select('invitation_tier, management_tier')
       .eq('wedding_id', weddingId)
       .single()
 
-    if (existingSub && existingSub.plan !== 'free') {
-      return NextResponse.json(
-        { error: 'This wedding already has a paid plan' },
-        { status: 400 }
-      )
+    if (planInfo.axis === 'invitation') {
+      const currentInv = existingSub?.invitation_tier
+      if (currentInv && currentInv !== 'basic') {
+        return NextResponse.json({ error: 'This wedding already has a paid invitation plan' }, { status: 400 })
+      }
+    } else {
+      const currentMgmt = existingSub?.management_tier
+      if (currentMgmt && currentMgmt !== 'basic') {
+        return NextResponse.json({ error: 'This wedding already has a paid management plan' }, { status: 400 })
+      }
     }
 
-    // Redeem: upsert wedding_subscription + update gift_subscription
+    // Activate: upsert the appropriate axis tier
+    const tierUpdate =
+      planInfo.axis === 'invitation'
+        ? { invitation_tier: planInfo.tier }
+        : { management_tier: planInfo.tier }
+
     const { error: subError } = await adminClient
       .from('wedding_subscriptions')
-      .upsert({
-        wedding_id: weddingId,
-        plan: gift.plan,
-      }, {
-        onConflict: 'wedding_id',
-      })
+      .upsert({ wedding_id: weddingId, ...tierUpdate }, { onConflict: 'wedding_id' })
 
     if (subError) {
       return NextResponse.json({ error: 'Failed to activate plan' }, { status: 500 })
@@ -126,7 +141,7 @@ export async function POST(request: NextRequest) {
         wedding_id: weddingId,
       })
       .eq('id', gift.id)
-      .eq('status', 'active') // Extra safety: only update if still active
+      .eq('status', 'active')
 
     if (redeemError) {
       return NextResponse.json({ error: 'Failed to redeem gift code' }, { status: 500 })
@@ -144,7 +159,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Helper to generate a secure gift code
 export function generateGiftCode(): string {
   return crypto.randomBytes(12).toString('base64url').slice(0, 16).toUpperCase()
 }
