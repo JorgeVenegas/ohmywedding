@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient, createAdminSupabaseClient } from '@/lib/supabase-server'
 import { isSuperUser } from '@/lib/superadmin'
-import { presignGet, keyFromUrl } from '@/lib/s3'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
+export const maxDuration = 30
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const SUPABASE_BUCKET = 'wedding-images'
 
 export async function GET(
   _req: NextRequest,
@@ -22,7 +23,6 @@ export async function GET(
 
     const adminClient = createAdminSupabaseClient()
 
-    // Resolve wedding by UUID or name_id
     const isUUID = UUID_REGEX.test(decoded)
     const { data: wedding, error: weddingErr } = await adminClient
       .from('weddings')
@@ -42,10 +42,9 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Fetch image, verifying it belongs to this wedding
     const { data: image, error: imgErr } = await adminClient
       .from('images')
-      .select('id, url, storage_path, filename')
+      .select('id, url, storage_path, filename, mime_type')
       .eq('id', imageId)
       .eq('wedding_id', wedding.id)
       .single()
@@ -54,15 +53,40 @@ export async function GET(
       return NextResponse.json({ error: 'Image not found' }, { status: 404 })
     }
 
-    const key = image.storage_path || keyFromUrl(image.url)
-    if (!key) {
-      return NextResponse.json({ error: 'Image storage path not available' }, { status: 422 })
+    const filename = image.filename || image.url.split('/').pop() || 'photo.jpg'
+    const contentType = image.mime_type || 'application/octet-stream'
+
+    // Primary: proxy via the stored public URL (works for S3 and public Supabase buckets)
+    const upstream = await fetch(image.url).catch(() => null)
+    if (upstream?.ok) {
+      return new NextResponse(upstream.body, {
+        headers: {
+          'Content-Type': upstream.headers.get('content-type') || contentType,
+          'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"`,
+          'Cache-Control': 'private, no-store',
+        },
+      })
     }
 
-    const filename = image.filename || key.split('/').pop() || 'photo.jpg'
-    const presignedUrl = await presignGet(key, filename)
+    // Fallback: generate a Supabase storage signed URL using storage_path
+    if (image.storage_path) {
+      // storage_path may or may not include the bucket prefix — strip it if present
+      const storagePath = image.storage_path.startsWith(`${SUPABASE_BUCKET}/`)
+        ? image.storage_path.slice(SUPABASE_BUCKET.length + 1)
+        : image.storage_path
 
-    return NextResponse.redirect(presignedUrl, { status: 302 })
+      const { data: signed, error: signErr } = await adminClient.storage
+        .from(SUPABASE_BUCKET)
+        .createSignedUrl(storagePath, 300, {
+          download: filename,
+        })
+
+      if (!signErr && signed?.signedUrl) {
+        return NextResponse.redirect(signed.signedUrl, { status: 302 })
+      }
+    }
+
+    return NextResponse.json({ error: 'Image could not be retrieved' }, { status: 502 })
   } catch (err) {
     console.error('[photos/download]', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
