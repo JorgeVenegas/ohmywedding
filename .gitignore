@@ -2,6 +2,10 @@
 
 # dependencies
 /node_modules
+cdk/node_modules
+cdk/dist
+lambda/generate-preview/node_modules
+lambda/generate-preview/function.zip
 /.pnp
 .pnp.*
 .yarn/*

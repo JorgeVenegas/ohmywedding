@@ -23,7 +23,14 @@ export function getPublicUrl(key: string): string {
   return `${base}/${key}`
 }
 
-export async function presignGet(
+// presignGet: view mode (no Content-Disposition — browser renders the image inline)
+export async function presignGet(key: string, expiresIn = 900): Promise<string> {
+  const command = new GetObjectCommand({ Bucket: BUCKET, Key: key })
+  return getSignedUrl(client, command, { expiresIn })
+}
+
+// presignDownload: forces browser file-save dialog
+export async function presignDownload(
   key: string,
   filename: string,
   expiresIn = 300

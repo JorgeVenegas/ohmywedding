@@ -1,0 +1,10 @@
+{
+  "name": "generate-preview",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Lambda: generate Sharp WebP preview for guest photo originals",
+  "main": "index.mjs",
+  "dependencies": {
+    "sharp": "^0.33.0"
+  }
+}

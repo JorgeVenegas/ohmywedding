@@ -1,0 +1,150 @@
+name: CDK Deploy
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'cdk/**'
+      - 'lambda/**'
+      - 'cdk.json'
+  workflow_dispatch:
+    inputs:
+      diff_only:
+        description: 'Run cdk diff only (no deploy)'
+        type: boolean
+        default: false
+
+# OIDC — no long-lived AWS keys stored in GitHub Secrets.
+# The id-token permission lets GitHub mint a short-lived token that AWS trusts.
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  NODE_VERSION: '20'
+  CDK_DIR: cdk
+  AWS_REGION: ${{ vars.AWS_REGION }}
+
+jobs:
+  deploy:
+    name: CDK Diff & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Node.js ─────────────────────────────────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: cdk/package-lock.json
+
+      # ── 3. Install CDK dependencies ────────────────────────────────────────────
+      - name: Install CDK deps
+        working-directory: ${{ env.CDK_DIR }}
+        run: npm ci
+
+      # ── 4. Authenticate to AWS via OIDC ───────────────────────────────────────
+      # No AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY needed.
+      # See setup instructions at the bottom of this file.
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ── 5. CDK diff (always runs — shows what will change) ────────────────────
+      - name: CDK diff
+        working-directory: ${{ env.CDK_DIR }}
+        env:
+          AWS_S3_BUCKET: ${{ vars.AWS_S3_BUCKET }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+        run: npx cdk diff --app "npx ts-node --prefer-ts-exts bin/app.ts" 2>&1 || true
+        # || true — diff exits non-zero when there are changes; we don't want to fail here
+
+      # ── 6. CDK deploy (skipped on diff_only runs) ─────────────────────────────
+      - name: CDK deploy
+        if: ${{ github.event.inputs.diff_only != 'true' }}
+        working-directory: ${{ env.CDK_DIR }}
+        env:
+          AWS_S3_BUCKET: ${{ vars.AWS_S3_BUCKET }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+        run: |
+          npx cdk deploy --all \
+            --app "npx ts-node --prefer-ts-exts bin/app.ts" \
+            --require-approval never \
+            --outputs-file cdk-outputs.json
+
+      # ── 7. Print outputs ───────────────────────────────────────────────────────
+      - name: Print stack outputs
+        if: ${{ github.event.inputs.diff_only != 'true' }}
+        working-directory: ${{ env.CDK_DIR }}
+        run: |
+          if [ -f cdk-outputs.json ]; then
+            echo "### CDK Outputs" >> $GITHUB_STEP_SUMMARY
+            cat cdk-outputs.json | jq -r 'to_entries[] | "**\(.key)**\n" + (.value | to_entries[] | "- \(.key): \(.value)")' >> $GITHUB_STEP_SUMMARY
+          fi
+
+# ─── One-time OIDC setup ──────────────────────────────────────────────────────
+#
+# Run these commands once in your AWS account, then add the values as GitHub
+# repository variables (Settings → Secrets and variables → Variables).
+#
+# 1. Create the OIDC Identity Provider (once per AWS account):
+#
+#    aws iam create-open-id-connect-provider \
+#      --url https://token.actions.githubusercontent.com \
+#      --client-id-list sts.amazonaws.com \
+#      --thumbprint-list 6938fd4d98bab03faadb97b34396831e3780aea1
+#
+# 2. Create the IAM role (replace YOUR_GITHUB_ORG/YOUR_REPO and ACCOUNT_ID):
+#
+#    aws iam create-role \
+#      --role-name OhMyWeddingCDKDeploy \
+#      --assume-role-policy-document '{
+#        "Version": "2012-10-17",
+#        "Statement": [{
+#          "Effect": "Allow",
+#          "Principal": {
+#            "Federated": "arn:aws:iam::ACCOUNT_ID:oidc-provider/token.actions.githubusercontent.com"
+#          },
+#          "Action": "sts:AssumeRoleWithWebIdentity",
+#          "Condition": {
+#            "StringEquals": {
+#              "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+#              "token.actions.githubusercontent.com:sub": "repo:YOUR_GITHUB_ORG/YOUR_REPO:ref:refs/heads/master"
+#            }
+#          }
+#        }]
+#      }'
+#
+#    aws iam attach-role-policy \
+#      --role-name OhMyWeddingCDKDeploy \
+#      --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+#
+#    # (Narrow the policy once stable — AdministratorAccess is fine for early stage)
+#
+# 3. Bootstrap CDK in your account (once):
+#    AWS_S3_BUCKET=<bucket> NEXT_PUBLIC_SUPABASE_URL=<url> \
+#      cd cdk && npx cdk bootstrap aws://ACCOUNT_ID/REGION
+#
+# 4. Add these GitHub repository Variables
+#    (Settings → Secrets and variables → Variables → New repository variable):
+#
+#    AWS_REGION              e.g. us-east-1
+#    AWS_S3_BUCKET           your S3 bucket name
+#    AWS_DEPLOY_ROLE_ARN     arn:aws:iam::ACCOUNT_ID:role/OhMyWeddingCDKDeploy
+#    NEXT_PUBLIC_SUPABASE_URL  https://xxxx.supabase.co
+#
+# 5. Add the Supabase key to SSM (so CDK can reference it securely):
+#    aws ssm put-parameter \
+#      --name /ohmywedding/supabase-service-role-key \
+#      --type SecureString \
+#      --value "<YOUR_SUPABASE_SERVICE_ROLE_KEY>"
+#
+# After that, every push to master that touches cdk/ or lambda/ triggers a deploy.
+# You can also trigger manually from Actions → CDK Deploy → Run workflow.
