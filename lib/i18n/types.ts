@@ -612,6 +612,18 @@ export interface Translations {
     notAvailable: string
     notAvailableDesc: string
     success: { eyebrow: string; title: string; description: string }
+    // old-money variant
+    contributeEyebrow: string
+    contributionReceived: string
+    thankYou: string
+    photographsPendingReview: string
+    photographsAddedAlbum: string
+    dragPhotographsHere: string
+    releaseToAdd: string
+    tapToBrowseHint: string
+    photographsAddedConfirm: string
+    contributePhoto: string
+    contributePhotos: string
   }
 
   // Location Section

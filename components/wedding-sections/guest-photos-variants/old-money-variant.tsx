@@ -1,10 +1,10 @@
 "use client"
 
 import { useRef } from "react"
-import { Camera, ArrowUpFromLine, X, Check, AlertCircle, Loader2, ImageIcon } from "lucide-react"
-import type { BaseVariantProps, GuestPhoto, UploadItem, GalleryLayout } from "./types"
+import { Camera, ArrowUpFromLine, X, Check, AlertCircle, Loader2 } from "lucide-react"
+import type { BaseVariantProps, UploadItem } from "./types"
 import { resolveBackground } from "./types"
-import { GalleryArea } from "./gallery-area"
+import { useI18n } from "@/components/contexts/i18n-context"
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 // Deliberately NOT using the ornaments library — that's what makes it look AI-generated.
@@ -82,162 +82,6 @@ function PhotoCorners({ accent }: { accent: string }) {
   )
 }
 
-// ─── Gallery ─────────────────────────────────────────────────────────────────
-
-function AlbumSkeleton() {
-  return (
-    <div className="columns-2 sm:columns-3 gap-4 space-y-4">
-      {[140, 100, 170, 120, 155, 110].map((h, i) => (
-        <div key={i} className="break-inside-avoid album-shimmer" style={{ height: h }} />
-      ))}
-    </div>
-  )
-}
-
-function AlbumEmpty({ accent, submitted, moderationEnabled }: { accent: string; submitted?: boolean; moderationEnabled?: boolean }) {
-  const pendingReview = submitted && (moderationEnabled !== false)
-  return (
-    <div className="py-20 flex flex-col items-center gap-4">
-      <div className="relative w-16 h-20" style={{ border: `1px solid ${INK}18` }}>
-        <PhotoCorners accent={accent} />
-        <div className="w-full h-full flex items-center justify-center">
-          <ImageIcon className="w-6 h-6" style={{ color: `${INK}25` }} />
-        </div>
-      </div>
-      <p className="text-[11px] tracking-[0.35em] uppercase" style={{ color: MUTED }}>
-        {pendingReview ? 'Awaiting review' : 'No photographs yet'}
-      </p>
-      {pendingReview && (
-        <p className="text-[10px] tracking-[0.2em]" style={{ color: `${MUTED}80` }}>
-          Your photos will appear once approved
-        </p>
-      )}
-    </div>
-  )
-}
-
-function AlbumGallery({ photos, accent, galleryLayout }: { photos: GuestPhoto[]; accent: string; galleryLayout: GalleryLayout }) {
-  if (galleryLayout === 'film-strip') {
-    return (
-      <div className="overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-        <div className="flex gap-4 pb-2">
-          {photos.map((photo, i) => (
-            <div
-              key={photo.id}
-              className="relative flex-shrink-0 group album-photo"
-              style={{ width: 200, animationDelay: `${i * 0.06}s` }}
-            >
-              <img src={photo.url} alt={photo.file_name ?? 'Guest photo'} className="w-full object-cover" style={{ height: 180 }} />
-              <PhotoCorners accent={accent} />
-              {photo.uploader_name && (
-                <p className="mt-1.5 text-[9px] tracking-[0.25em] uppercase truncate" style={{ color: MUTED }}>
-                  {photo.uploader_name}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  if (galleryLayout === 'grid') {
-    return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        {photos.map((photo, i) => (
-          <div
-            key={photo.id}
-            className="relative group album-photo"
-            style={{ animationDelay: `${i * 0.055}s` }}
-          >
-            <div className="relative overflow-hidden aspect-square">
-              <img src={photo.url} alt={photo.file_name ?? 'Guest photo'} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
-              <PhotoCorners accent={accent} />
-            </div>
-            {photo.uploader_name && (
-              <p className="mt-1.5 text-[9px] tracking-[0.25em] uppercase truncate" style={{ color: MUTED }}>
-                {photo.uploader_name}
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
-    )
-  }
-
-  if (galleryLayout === 'scattered') {
-    const rotations = [-3, 2, -1.5, 3.5, -2.5, 1]
-    const chunks: GuestPhoto[][] = []
-    for (let i = 0; i < photos.length; i += 3) chunks.push(photos.slice(i, i + 3))
-
-    return (
-      <div className="space-y-12">
-        {chunks.map((chunk, ci) => (
-          <div key={ci} className="flex flex-wrap justify-center gap-6 py-4">
-            {chunk.map((photo, pi) => {
-              const rot = rotations[(ci * 3 + pi) % rotations.length]
-              const large = pi === 1
-              return (
-                <div
-                  key={photo.id}
-                  className="relative flex-shrink-0 group album-photo"
-                  style={{
-                    transform: `rotate(${rot}deg)`,
-                    width: large ? 180 : 148,
-                    marginTop: pi % 2 === 0 ? '1.5rem' : '0',
-                    animationDelay: `${(ci * 3 + pi) * 0.07}s`,
-                  }}
-                >
-                  <div
-                    className="transition-all duration-400 group-hover:shadow-xl group-hover:-translate-y-2"
-                    style={{ background: '#fff', padding: '8px 8px 28px 8px' }}
-                  >
-                    <img
-                      src={photo.url}
-                      alt={photo.file_name ?? 'Guest photo'}
-                      className="w-full object-cover block"
-                      style={{ height: large ? 160 : 130 }}
-                    />
-                    <PhotoCorners accent={accent} />
-                    {photo.uploader_name && (
-                      <p className="text-[9px] text-center mt-2 tracking-[0.2em] uppercase truncate" style={{ color: MUTED }}>
-                        {photo.uploader_name}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        ))}
-      </div>
-    )
-  }
-
-  // Default: masonry
-  return (
-    <div className="columns-2 sm:columns-3 gap-4 space-y-4">
-      {photos.map((photo, i) => (
-        <div
-          key={photo.id}
-          className="break-inside-avoid relative group album-photo"
-          style={{ animationDelay: `${i * 0.055}s` }}
-        >
-          <div className="relative overflow-hidden">
-            <img src={photo.url} alt={photo.file_name ?? 'Guest photo'} className="w-full object-cover block transition-transform duration-500 group-hover:scale-[1.03]" />
-            <PhotoCorners accent={accent} />
-          </div>
-          {photo.uploader_name && (
-            <p className="mt-1.5 text-[9px] tracking-[0.25em] uppercase truncate" style={{ color: MUTED }}>
-              {photo.uploader_name}
-            </p>
-          )}
-        </div>
-      ))}
-    </div>
-  )
-}
-
 // ─── Upload queue thumbnail ───────────────────────────────────────────────────
 
 function QueueThumb({ item, onRemove, accent }: { item: UploadItem; onRemove: () => void; accent: string }) {
@@ -303,6 +147,7 @@ function OldMoneyUpload({
     onFileChange, onRemoveUpload, onSubmitAll, submitted, moderationEnabled,
   } = props
 
+  const { t } = useI18n()
   const idleUploads = uploads.filter(u => u.progress === 'idle')
   const allDone = uploads.length > 0 && uploads.every(u => u.progress === 'done')
 
@@ -310,14 +155,14 @@ function OldMoneyUpload({
     return (
       <div className="mb-12">
         <p className="text-[9px] tracking-[0.5em] uppercase mb-5" style={{ color: MUTED }}>
-          Contribution received
+          {t('guestPhotos.contributionReceived')}
         </p>
         <div className="py-8 px-4 text-center" style={{ border: `1px solid ${INK}12` }}>
           <p className="text-sm italic mb-1" style={{ color: ink, fontFamily: 'var(--font-display, Georgia, serif)' }}>
-            Thank you.
+            {t('guestPhotos.thankYou')}
           </p>
           <p className="text-[11px] tracking-[0.2em]" style={{ color: MUTED }}>
-            {moderationEnabled !== false ? 'Your photographs are pending review.' : 'Your photographs have been added to the album.'}
+            {moderationEnabled !== false ? t('guestPhotos.photographsPendingReview') : t('guestPhotos.photographsAddedAlbum')}
           </p>
         </div>
       </div>
@@ -328,7 +173,7 @@ function OldMoneyUpload({
     <div className="mb-12">
       {/* Eyebrow */}
       <p className="text-[9px] tracking-[0.5em] uppercase mb-5" style={{ color: MUTED }}>
-        Contribute to the album
+        {t('guestPhotos.contributeEyebrow')}
       </p>
 
       {/* Name — bottom-border only, no box */}
@@ -371,10 +216,10 @@ function OldMoneyUpload({
           }
         </div>
         <p className="text-[11px] tracking-[0.3em] uppercase" style={{ color: isDragging ? accent : MUTED }}>
-          {isDragging ? 'Release to add' : 'Drag photographs here'}
+          {isDragging ? t('guestPhotos.releaseToAdd') : t('guestPhotos.dragPhotographsHere')}
         </p>
         <p className="text-[10px]" style={{ color: `${INK}35` }}>
-          or tap to browse · JPG, PNG, WEBP · up to 50 MB
+          {t('guestPhotos.tapToBrowseHint')}
         </p>
       </div>
 
@@ -394,7 +239,7 @@ function OldMoneyUpload({
 
           {allDone && (
             <p className="mt-3 text-[10px] tracking-[0.3em] uppercase" style={{ color: accent }}>
-              Photographs added to the album.
+              {t('guestPhotos.photographsAddedConfirm')}
             </p>
           )}
 
@@ -404,7 +249,9 @@ function OldMoneyUpload({
               className="mt-5 px-8 py-2.5 text-[11px] tracking-[0.35em] uppercase transition-all duration-200 hover:opacity-80 active:scale-[0.98]"
               style={{ background: ink, color: bg }}
             >
-              Contribute {idleUploads.length === 1 ? 'photograph' : `${idleUploads.length} photographs`}
+              {idleUploads.length === 1
+                ? t('guestPhotos.contributePhoto')
+                : t('guestPhotos.contributePhotos', { count: idleUploads.length })}
             </button>
           )}
         </div>
@@ -416,7 +263,7 @@ function OldMoneyUpload({
 // ─── Main variant ─────────────────────────────────────────────────────────────
 
 export function OldMoneyVariant(props: BaseVariantProps) {
-  const { theme, primary, title, subtitle, galleryLayout, useColorBackground, backgroundColorChoice, photos, photosLoading, uploadsEnabled, submitted, moderationEnabled } = props
+  const { theme, primary, title, subtitle, useColorBackground, backgroundColorChoice, uploadsEnabled, submitted } = props
   const { bgColor, needsLightText } = resolveBackground(theme, useColorBackground, backgroundColorChoice)
 
   const bg     = bgColor ?? PAPER
@@ -479,29 +326,6 @@ export function OldMoneyVariant(props: BaseVariantProps) {
         {/* Upload */}
         {(uploadsEnabled || submitted) && (
           <OldMoneyUpload props={props} ink={ink} bg={bg} accent={accent} />
-        )}
-
-        {/* Gallery — native album treatment for film-strip / grid / scattered;
-            delegate everything else to GalleryArea so all layouts work */}
-        {['film-strip', 'grid', 'scattered'].includes(galleryLayout) ? (
-          photosLoading ? (
-            <AlbumSkeleton />
-          ) : photos.length === 0 ? (
-            <AlbumEmpty accent={accent} submitted={submitted} moderationEnabled={moderationEnabled} />
-          ) : (
-            <AlbumGallery photos={photos} accent={accent} galleryLayout={galleryLayout} />
-          )
-        ) : (
-          <GalleryArea
-            photos={photos}
-            photosLoading={photosLoading}
-            galleryLayout={galleryLayout}
-            primary={accent}
-            emptyColor={muted}
-            emptyBg={`${ink}08`}
-            submitted={submitted}
-            moderationEnabled={moderationEnabled}
-          />
         )}
 
         {/* Footer rule */}

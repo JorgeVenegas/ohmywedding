@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createAdminSupabaseClient, createServerSupabaseClient } from '@/lib/supabase-server'
 import { presignPut, presignGet, presignDownload, deleteObject } from '@/lib/s3'
-import { invokeGeneratePreview } from '@/lib/lambda'
+import { generatePreview } from '@/lib/preview'
 import { isSuperUser } from '@/lib/superadmin'
 
 export const runtime = 'nodejs'
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
 
 // GET /api/guest-photos?weddingNameId=<slug> — admin only
 // Returns all photos for the wedding with short-lived presigned URLs for display + download.
-// If a photo has no preview yet and hasn't exceeded retry limit, Lambda is invoked async.
+// If a photo has no preview yet and hasn't exceeded retry limit, preview is generated after the response.
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient()
@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
 
     let query = admin
       .from('guest_photos')
-      .select('id, s3_key, preview_key, preview_attempts, uploader_name, status, file_name, file_size, mime_type, created_at, metadata')
+      .select('id, s3_key, preview_key, preview_size, preview_attempts, uploader_name, status, file_name, file_size, mime_type, created_at, metadata')
       .eq('wedding_id', wedding.id)
       .order('created_at', { ascending: false })
 
@@ -164,29 +164,24 @@ export async function GET(request: NextRequest) {
 
     const photos = data ?? []
 
-    // Generate presigned URLs and trigger Lambda for missing previews
+    // Collect photos that need preview generation (images only, within retry budget)
+    const needsPreview = photos.filter(
+      p => !p.preview_key && p.s3_key && !p.mime_type?.startsWith('video/') && p.preview_attempts < MAX_PREVIEW_ATTEMPTS
+    )
+
+    // Enrich photos with presigned URLs
     const enriched = await Promise.all(
       photos.map(async (photo) => {
         let displayUrl: string | null = null
         let previewStatus: 'ready' | 'generating' | 'unavailable' = 'unavailable'
 
         if (photo.preview_key) {
-          // Preview is ready — short-lived view URL
           displayUrl = await presignGet(photo.preview_key, 900).catch(() => null)
           previewStatus = 'ready'
         } else if (photo.s3_key && photo.preview_attempts < MAX_PREVIEW_ATTEMPTS) {
-          // Preview missing but within retry budget — invoke Lambda async, return original as fallback
-          invokeGeneratePreview(photo.s3_key).catch(() => {})
-          // Also increment preview_attempts immediately so we don't spam Lambda on repeated loads
-          void admin.from('guest_photos')
-            .update({ preview_attempts: photo.preview_attempts + 1 })
-            .eq('id', photo.id)
-          displayUrl = photo.s3_key ? await presignGet(photo.s3_key, 900).catch(() => null) : null
           previewStatus = 'generating'
         }
-        // else: preview_attempts >= MAX — leave displayUrl null, previewStatus 'unavailable'
 
-        // Original download URL (always generated when s3_key exists)
         const downloadUrl = photo.s3_key
           ? await presignDownload(photo.s3_key, photo.file_name ?? 'photo', 3600).catch(() => null)
           : null
@@ -197,6 +192,7 @@ export async function GET(request: NextRequest) {
           status: photo.status,
           file_name: photo.file_name,
           file_size: photo.file_size,
+          preview_size: photo.preview_size ?? null,
           mime_type: photo.mime_type,
           created_at: photo.created_at,
           metadata: photo.metadata,
@@ -207,8 +203,18 @@ export async function GET(request: NextRequest) {
       })
     )
 
+    // Schedule preview generation after the response is sent (one after() call per photo)
+    if (needsPreview.length > 0) {
+      after(async () => {
+        await Promise.allSettled(
+          needsPreview.map(p => generatePreview(p.id, p.s3_key!, p.preview_attempts))
+        )
+      })
+    }
+
     return NextResponse.json({ photos: enriched })
-  } catch {
+  } catch (err) {
+    console.error('[GET /api/guest-photos]', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

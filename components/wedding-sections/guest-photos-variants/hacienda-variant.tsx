@@ -1,7 +1,6 @@
 "use client"
 
 import { UploadArea } from "./upload-area"
-import { GalleryArea } from "./gallery-area"
 import type { BaseVariantProps } from "./types"
 import { resolveBackground } from "./types"
 import {
@@ -18,7 +17,7 @@ const CREAM = '#faf4ea'
 const GOLD = '#c0956a'
 
 export function HaciendaVariant(props: BaseVariantProps) {
-  const { theme, primary, title, subtitle, galleryLayout, useColorBackground, backgroundColorChoice, photos, photosLoading, uploadsEnabled, submitted, moderationEnabled } = props
+  const { theme, primary, title, subtitle, useColorBackground, backgroundColorChoice, uploadsEnabled } = props
   const { bgColor, needsLightText } = resolveBackground(theme, useColorBackground, backgroundColorChoice)
 
   const bg = bgColor ?? CREAM
@@ -74,30 +73,6 @@ export function HaciendaVariant(props: BaseVariantProps) {
             mutedColor={needsLightText ? 'rgba(245,242,235,0.55)' : `${terra}70`}
           />
         )}
-
-        {/* Arch-framed gallery */}
-        <div>
-          {/* Arch decoration above gallery */}
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex-1 h-px" style={{ background: `linear-gradient(to right, transparent, ${gold}60)` }} />
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2C7 2 3 6 3 11v11h18V11C21 6 17 2 12 2z" stroke={gold} strokeWidth="1.2" fill={`${gold}20`} />
-            </svg>
-            <div className="flex-1 h-px" style={{ background: `linear-gradient(to left, transparent, ${gold}60)` }} />
-          </div>
-
-          <GalleryArea
-            photos={photos}
-            photosLoading={photosLoading}
-            galleryLayout={galleryLayout}
-            frameStyle={galleryLayout === 'scattered' ? 'white' : 'hairline'}
-            primary={terra}
-            emptyColor={textCol}
-            emptyBg={`${gold}18`}
-            submitted={submitted}
-            moderationEnabled={moderationEnabled}
-          />
-        </div>
 
         <FloralDivider color={`${gold}60`} className="mt-10" />
       </div>

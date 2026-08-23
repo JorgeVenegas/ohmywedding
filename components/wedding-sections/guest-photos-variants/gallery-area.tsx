@@ -78,7 +78,7 @@ function Lightbox({ photo, onClose }: { photo: GuestPhoto; onClose: () => void }
         onClick={e => e.stopPropagation()}
       >
         <img
-          src={photo.url}
+          src={photo.display_url ?? ''}
           alt={photo.file_name ?? 'Guest photo'}
           className="block select-none"
           style={{ maxWidth: '92vw', maxHeight: '92vh', objectFit: 'contain', boxShadow: '0 32px 96px rgba(0,0,0,0.8)' }}
@@ -237,7 +237,7 @@ function MasonryGallery({ photos, onPhotoClick }: { photos: GuestPhoto[]; onPhot
         <div key={photo.id} className="break-inside-avoid relative group cursor-pointer photo-enter overflow-hidden"
           style={{ display: 'block', animationDelay: `${i * 0.04}s` }}
           onClick={() => onPhotoClick(photo)}>
-          <img src={photo.url} alt={photo.file_name ?? 'Guest photo'}
+          <img src={photo.display_url ?? ''} alt={photo.file_name ?? 'Guest photo'}
             className="w-full block transition-transform duration-500 group-hover:scale-[1.03]"
             style={{ display: 'block' }} loading="lazy" />
           <HoverOverlay name={photo.uploader_name} />
@@ -279,7 +279,7 @@ function RowsGallery({ photos, onPhotoClick }: { photos: GuestPhoto[]; onPhotoCl
                 style={{ flex: 1, height: 'clamp(180px, 28vw, 300px)', animationDelay: `${(ri * rowSize + pi) * 0.04}s` }}
                 onClick={() => onPhotoClick(photo)}
               >
-                <img src={photo.url} alt={photo.file_name ?? 'Guest photo'}
+                <img src={photo.display_url ?? ''} alt={photo.file_name ?? 'Guest photo'}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                   loading="lazy" />
                 <HoverOverlay name={photo.uploader_name} />
@@ -303,7 +303,7 @@ function MosaicGrid({ photos, onPhotoClick }: { photos: GuestPhoto[]; onPhotoCli
           <div key={photo.id} className="relative group overflow-hidden cursor-pointer photo-enter"
             style={{ gridColumn: `span ${i % 5 === 2 ? 2 : 1}`, animationDelay: `${i * 0.04}s` }}
             onClick={() => onPhotoClick(photo)}>
-            <img src={photo.url} alt={photo.file_name ?? 'Guest photo'}
+            <img src={photo.display_url ?? ''} alt={photo.file_name ?? 'Guest photo'}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
               loading="lazy" />
             <HoverOverlay name={photo.uploader_name} />
@@ -314,7 +314,7 @@ function MosaicGrid({ photos, onPhotoClick }: { photos: GuestPhoto[]; onPhotoCli
         {photos.map((photo, i) => (
           <div key={photo.id} className="relative aspect-square group overflow-hidden cursor-pointer photo-enter"
             style={{ animationDelay: `${i * 0.04}s` }} onClick={() => onPhotoClick(photo)}>
-            <img src={photo.url} alt={photo.file_name ?? 'Guest photo'}
+            <img src={photo.display_url ?? ''} alt={photo.file_name ?? 'Guest photo'}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
               loading="lazy" />
             <HoverOverlay name={photo.uploader_name} />
@@ -339,7 +339,7 @@ function FilmStripGallery({ photos, onPhotoClick }: { photos: GuestPhoto[]; onPh
         {photos.map((photo, i) => (
           <div key={photo.id} className="relative group flex-shrink-0 cursor-pointer photo-enter"
             style={{ height: '100%', animationDelay: `${i * 0.06}s` }} onClick={() => onPhotoClick(photo)}>
-            <img src={photo.url} alt={photo.file_name ?? 'Guest photo'}
+            <img src={photo.display_url ?? ''} alt={photo.file_name ?? 'Guest photo'}
               className="h-full w-auto block transition-opacity duration-200 group-hover:opacity-85" loading="lazy" />
             <HoverOverlay name={photo.uploader_name} />
           </div>
@@ -383,7 +383,7 @@ function CollageGallery({ photos, onPhotoClick }: { photos: GuestPhoto[]; onPhot
               style={{ flex: '58 0 0%', animationDelay: `${bi * 0.12}s` }}
               onClick={() => onPhotoClick(block.hero)}
             >
-              <img src={block.hero.url} alt={block.hero.file_name ?? 'Guest photo'}
+              <img src={block.hero.display_url ?? ''} alt={block.hero.file_name ?? 'Guest photo'}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                 loading="lazy" />
               {/* Feature label */}
@@ -406,7 +406,7 @@ function CollageGallery({ photos, onPhotoClick }: { photos: GuestPhoto[]; onPhot
                     style={{ animationDelay: `${bi * 0.12 + (si + 1) * 0.04}s` }}
                     onClick={() => onPhotoClick(photo)}
                   >
-                    <img src={photo.url} alt={photo.file_name ?? 'Guest photo'}
+                    <img src={photo.display_url ?? ''} alt={photo.file_name ?? 'Guest photo'}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
                       loading="lazy" />
                     <HoverOverlay name={photo.uploader_name} />
@@ -498,7 +498,7 @@ function ScatteredGallery({
                   boxShadow: '0 6px 24px rgba(0,0,0,0.16), 0 2px 6px rgba(0,0,0,0.10)',
                 }}>
                   <img
-                    src={photo.url} alt={photo.file_name ?? 'Guest photo'}
+                    src={photo.display_url ?? ''} alt={photo.file_name ?? 'Guest photo'}
                     style={{ width: '100%', height: imgH, objectFit: 'cover', display: 'block' }}
                     loading="lazy"
                   />
@@ -564,7 +564,7 @@ function CarouselGallery({ photos, onPhotoClick }: { photos: GuestPhoto[]; onPho
         onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <img
           key={current.id}
-          src={current.url}
+          src={current.display_url ?? ''}
           alt={current.file_name ?? 'Guest photo'}
           className="w-full h-full object-contain photo-enter cursor-zoom-in"
           style={{ background: '#111' }}
@@ -623,7 +623,7 @@ function CarouselGallery({ photos, onPhotoClick }: { photos: GuestPhoto[]; onPho
             opacity: i === index ? 1 : 0.38,
             transition: 'opacity 0.15s, outline-color 0.15s',
           }} aria-label={`Photo ${i + 1}`}>
-            <img src={photo.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
+            <img src={photo.display_url ?? ''} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} loading="lazy" />
           </button>
         ))}
       </div>

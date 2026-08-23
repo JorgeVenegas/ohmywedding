@@ -4,11 +4,11 @@ export type { CreditPackage } from '@/lib/ai/credit-packages'
 export { AI_CREDIT_PACKAGES } from '@/lib/ai/credit-packages'
 
 export interface AIBudgetStatus {
-  budgetCents:    number | null  // null = unlimited
+  budgetCents:    number
   usedCents:      number
-  remainingCents: number | null  // null = unlimited
+  remainingCents: number
   isExhausted:    boolean
-  usagePct:       number | null  // 0-100, null = unlimited
+  usagePct:       number | null  // null when budget is 0 (avoid division by zero display)
 }
 
 export async function getAIBudgetStatus(weddingId: string): Promise<AIBudgetStatus> {
@@ -19,21 +19,17 @@ export async function getAIBudgetStatus(weddingId: string): Promise<AIBudgetStat
     admin.from('ai_interaction_logs').select('estimated_cost').eq('wedding_id', weddingId),
   ])
 
-  const budgetCents = wedding?.ai_budget_cents ?? null
+  const budgetCents = wedding?.ai_budget_cents ?? 0
   const totalCostUsd = (logs ?? []).reduce((sum, row) => sum + Number(row.estimated_cost ?? 0), 0)
   const usedCents = Math.round(totalCostUsd * 100)
-
-  if (budgetCents === null) {
-    return { budgetCents: null, usedCents, remainingCents: null, isExhausted: false, usagePct: null }
-  }
 
   const remainingCents = Math.max(0, budgetCents - usedCents)
   return {
     budgetCents,
     usedCents,
     remainingCents,
-    isExhausted: usedCents >= budgetCents,
-    usagePct: Math.min(100, Math.round((usedCents / budgetCents) * 100)),
+    isExhausted: budgetCents > 0 && usedCents >= budgetCents,
+    usagePct: budgetCents > 0 ? Math.min(100, Math.round((usedCents / budgetCents) * 100)) : null,
   }
 }
 

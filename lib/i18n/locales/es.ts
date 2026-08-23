@@ -481,6 +481,17 @@ export const es: Translations = {
       title: '¡Fotos Compartidas!',
       description: 'Tus fotos han sido enviadas. La pareja atesorará cada momento que capturaste.',
     },
+    contributeEyebrow: 'Contribuye al álbum',
+    contributionReceived: 'Contribución recibida',
+    thankYou: 'Gracias.',
+    photographsPendingReview: 'Tus fotografías están pendientes de revisión.',
+    photographsAddedAlbum: 'Tus fotografías han sido añadidas al álbum.',
+    dragPhotographsHere: 'Arrastra fotografías aquí',
+    releaseToAdd: 'Suelta para añadir',
+    tapToBrowseHint: 'o toca para explorar · JPG, PNG, WEBP · hasta 50 MB',
+    photographsAddedConfirm: 'Fotografías añadidas al álbum.',
+    contributePhoto: 'Contribuir fotografía',
+    contributePhotos: 'Contribuir {{count}} fotografías',
   },
 
   // Location Section

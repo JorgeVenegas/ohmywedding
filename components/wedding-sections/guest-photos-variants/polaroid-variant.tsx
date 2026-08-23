@@ -2,12 +2,11 @@
 
 import { Camera } from "lucide-react"
 import { UploadArea } from "./upload-area"
-import { GalleryArea } from "./gallery-area"
 import type { BaseVariantProps } from "./types"
 import { getContrastSet } from "./types"
 
 export function PolaroidVariant(props: BaseVariantProps) {
-  const { theme, primary, title, subtitle, galleryLayout, useColorBackground, backgroundColorChoice, photos, photosLoading, uploadsEnabled, submitted, moderationEnabled } = props
+  const { theme, primary, title, subtitle, useColorBackground, backgroundColorChoice, uploadsEnabled } = props
   const c = getContrastSet(theme, useColorBackground, backgroundColorChoice, primary)
   const bg = c.bgColor ?? '#f5f2eb'
 
@@ -43,16 +42,6 @@ export function PolaroidVariant(props: BaseVariantProps) {
         )}
       </div>
 
-      {/* Gallery — full-width; scattered layout uses polaroid white frames */}
-      <GalleryArea
-        photos={photos}
-        photosLoading={photosLoading}
-        galleryLayout={galleryLayout}
-        frameStyle={galleryLayout === 'scattered' ? 'white' : 'none'}
-        primary={primary}
-        submitted={submitted}
-        moderationEnabled={moderationEnabled}
-      />
       <div style={{ height: 48 }} />
     </section>
   )

@@ -17,7 +17,10 @@ resource "aws_s3_bucket_public_access_block" "assets" {
   restrict_public_buckets = false
 }
 
-# Bucket policy: allow public GET on all objects (read-only, no listing)
+# Bucket policy:
+#   - Public GET on all objects (wedding website assets, hero images, gallery)
+#   - Anonymous access explicitly DENIED for guest-photos/ prefix
+#     Presigned URLs still work — they carry IAM credentials and are not "Anonymous"
 resource "aws_s3_bucket_policy" "assets_public_read" {
   bucket = aws_s3_bucket.assets.id
 
@@ -32,6 +35,18 @@ resource "aws_s3_bucket_policy" "assets_public_read" {
         Principal = "*"
         Action    = "s3:GetObject"
         Resource  = "${aws_s3_bucket.assets.arn}/*"
+      },
+      {
+        Sid       = "DenyAnonymousReadGuestPhotos"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.assets.arn}/guest-photos/*"
+        Condition = {
+          StringEquals = {
+            "aws:PrincipalType" = "Anonymous"
+          }
+        }
       }
     ]
   })
@@ -51,12 +66,14 @@ resource "aws_s3_bucket_cors_configuration" "assets" {
   }
 }
 
-# Lifecycle: move guest photos to cheaper storage after 1 year
+# Lifecycle for guest-photos/:
+#   - Move to STANDARD_IA after 1 year (cost saving while accessible)
+#   - Permanently delete after 60 months (couples have 5 years to download)
 resource "aws_s3_bucket_lifecycle_configuration" "assets" {
   bucket = aws_s3_bucket.assets.id
 
   rule {
-    id     = "guest-photos-infrequent-access"
+    id     = "guest-photos-lifecycle"
     status = "Enabled"
 
     filter {
@@ -66,6 +83,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "assets" {
     transition {
       days          = 365
       storage_class = "STANDARD_IA"
+    }
+
+    expiration {
+      days = 1825 # 60 months ≈ 5 years
     }
   }
 }

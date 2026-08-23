@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useRef } from "react"
 import type { ThemeConfig } from "@/lib/wedding-config"
 import { Loader2, Lock } from "lucide-react"
 import { useEditingModeSafe } from "@/components/contexts/editing-mode-context"
@@ -16,7 +16,6 @@ import type {
   GuestPhotosVariant,
   GalleryLayout,
   BackgroundColorChoice,
-  GuestPhoto,
   GuestPhotoMetadata,
   UploadItem,
   BaseVariantProps,
@@ -66,8 +65,6 @@ export function GuestPhotosSection({
   const [moderationEnabled, setModerationEnabled] = useState(true)
   const [submitted, setSubmitted] = useState(false)
   const [settingsLoading, setSettingsLoading] = useState(true)
-  const [photos, setPhotos] = useState<GuestPhoto[]>([])
-  const [photosLoading, setPhotosLoading] = useState(true)
   const [uploaderName, setUploaderName] = useState("")
   const [uploads, setUploads] = useState<UploadItem[]>([])
   const [isDragging, setIsDragging] = useState(false)
@@ -84,18 +81,6 @@ export function GuestPhotosSection({
       .catch(() => setUploadsEnabled(false))
       .finally(() => setSettingsLoading(false))
   }, [weddingNameId])
-
-  const fetchPhotos = useCallback(async () => {
-    setPhotosLoading(true)
-    try {
-      const res = await fetch(`/api/guest-photos?weddingNameId=${encodeURIComponent(weddingNameId)}&status=approved`)
-      if (res.ok) setPhotos((await res.json()).photos ?? [])
-    } finally {
-      setPhotosLoading(false)
-    }
-  }, [weddingNameId])
-
-  useEffect(() => { fetchPhotos() }, [fetchPhotos])
 
   const addFiles = (files: File[]) => {
     const items: UploadItem[] = files
@@ -172,7 +157,7 @@ export function GuestPhotosSection({
           metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
         }),
       })
-      const { presignedUrl, publicUrl, error } = await res.json()
+      const { presignedUrl, key, photoId, error } = await res.json()
       if (error || !presignedUrl) throw new Error(error || "Failed to get upload URL")
 
       // XHR PUT with progress tracking
@@ -190,8 +175,17 @@ export function GuestPhotosSection({
         xhr.send(item.file)
       })
 
+      // Fire-and-forget: trigger preview generation now that the file is in S3
+      if (photoId && key && item.file.type.startsWith("image/")) {
+        void fetch("/api/guest-photos/trigger-preview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ photoId, s3Key: key }),
+        })
+      }
+
       setUploads(prev => prev.map(u => u.id === item.id ? { ...u, progress: "done", uploadProgress: 1 } : u))
-      return { url: publicUrl, name: uploaderName.trim() || null, uid: `opt-${item.id}` }
+      return { url: key, name: uploaderName.trim() || null, uid: `opt-${item.id}` }
     } catch {
       setUploads(prev => prev.map(u => u.id === item.id ? { ...u, progress: "error", error: "Upload failed. Please try again." } : u))
       return null
@@ -205,8 +199,6 @@ export function GuestPhotosSection({
     if (succeeded.length > 0) {
       setSubmitted(true)
       setUploads([])
-      // If moderation is off, photos are auto-approved — re-fetch to show them
-      if (!moderationEnabled) fetchPhotos()
     }
   }
 
@@ -219,8 +211,6 @@ export function GuestPhotosSection({
     galleryLayout,
     useColorBackground,
     backgroundColorChoice,
-    photos,
-    photosLoading,
     uploads,
     uploaderName,
     isDragging,

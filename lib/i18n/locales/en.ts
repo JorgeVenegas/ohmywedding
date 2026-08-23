@@ -483,6 +483,17 @@ export const en: Translations = {
       title: 'Photos Shared!',
       description: 'Your photos have been sent. The couple will cherish every moment you captured.',
     },
+    contributeEyebrow: 'Contribute to the album',
+    contributionReceived: 'Contribution received',
+    thankYou: 'Thank you.',
+    photographsPendingReview: 'Your photographs are pending review.',
+    photographsAddedAlbum: 'Your photographs have been added to the album.',
+    dragPhotographsHere: 'Drag photographs here',
+    releaseToAdd: 'Release to add',
+    tapToBrowseHint: 'or tap to browse · JPG, PNG, WEBP · up to 50 MB',
+    photographsAddedConfirm: 'Photographs added to the album.',
+    contributePhoto: 'Contribute photograph',
+    contributePhotos: 'Contribute {{count}} photographs',
   },
 
   // Location Section

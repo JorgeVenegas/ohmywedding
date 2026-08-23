@@ -2,12 +2,11 @@
 
 import { Camera } from "lucide-react"
 import { UploadArea } from "./upload-area"
-import { GalleryArea } from "./gallery-area"
 import type { BaseVariantProps } from "./types"
 import { getContrastSet } from "./types"
 
 export function MinimalVariant(props: BaseVariantProps) {
-  const { theme, primary, title, subtitle, galleryLayout, useColorBackground, backgroundColorChoice, photos, photosLoading, uploadsEnabled, submitted, moderationEnabled } = props
+  const { theme, primary, title, subtitle, useColorBackground, backgroundColorChoice, uploadsEnabled } = props
   const c = getContrastSet(theme, useColorBackground, backgroundColorChoice, primary)
 
   return (
@@ -36,15 +35,6 @@ export function MinimalVariant(props: BaseVariantProps) {
         )}
       </div>
 
-      {/* Gallery — full-width, no side constraint */}
-      <GalleryArea
-        photos={photos}
-        photosLoading={photosLoading}
-        galleryLayout={galleryLayout}
-        primary={primary}
-        submitted={submitted}
-        moderationEnabled={moderationEnabled}
-      />
       <div style={{ height: 48 }} />
     </section>
   )

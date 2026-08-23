@@ -10,7 +10,7 @@ import { useTranslation } from "@/components/contexts/i18n-context"
 import {
   Check, X, Download, Loader2, Camera, Copy, CheckCircle2,
   ExternalLink, Trash2, ChevronLeft, ChevronRight, ArrowLeft, Heart, Maximize2,
-  Info, MapPin, Clock, Aperture, FileImage, User, ChevronDown,
+  Info, MapPin, Clock, Aperture, FileImage, User, ChevronDown, AlertTriangle,
 } from "lucide-react"
 
 interface GalleryPageProps {
@@ -26,13 +26,16 @@ interface GuestPhotoMetadata {
 
 interface GuestPhoto {
   id: string
-  wedding_id: string
-  s3_key: string
-  url: string
+  wedding_id?: string
+  s3_key?: string
+  display_url: string | null
+  download_url: string | null
+  preview_status: 'ready' | 'generating' | 'unavailable'
   uploader_name: string | null
   status: "pending" | "approved" | "rejected"
   file_name: string | null
   file_size: number | null
+  preview_size: number | null
   mime_type: string | null
   created_at: string
   metadata?: GuestPhotoMetadata | null
@@ -41,6 +44,14 @@ interface GuestPhoto {
 type FilterStatus = "pending" | "approved" | "rejected" | "favorites" | "all"
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 B"
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+  return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`
+}
 
 function formatDate(iso: string) {
   try {
@@ -194,12 +205,16 @@ function Filmstrip({ photos, currentIndex, onSelect, favorites }: {
               <div className="w-full h-full flex items-center justify-center" style={{ background: "#1e1e1e" }}>
                 <span className="text-white/25">▶</span>
               </div>
-            ) : (
+            ) : photo.display_url ? (
               <img
-                src={photo.url} draggable={false}
+                src={photo.display_url} draggable={false}
                 className="w-full h-full object-cover transition-all duration-150 group-hover:brightness-125"
                 style={{ opacity: active ? 1 : 0.48 }}
               />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-[#420c14]/5">
+                <Camera className="w-4 h-4 text-[#420c14]/20" />
+              </div>
             )}
             <span
               className="absolute bottom-1 right-1 w-2 h-2 rounded-full"
@@ -275,7 +290,7 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
   // Prefetch adjacent photos so navigation after approve/reject is instant
   useEffect(() => {
     const targets = [photos[index + 1], photos[index + 2], photos[index - 1]].filter(Boolean)
-    targets.forEach(p => { if (!isVideo(p)) { new Image().src = p.url } })
+    targets.forEach(p => { if (!isVideo(p) && p.display_url) { new Image().src = p.display_url } })
   }, [index, photos])
 
   const current = photos[index]
@@ -580,7 +595,7 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
           </button>
 
           <a
-            href={current.url} download={current.file_name ?? "photo"} target="_blank" rel="noopener noreferrer"
+            href={current.download_url ?? current.display_url ?? '#'} download={current.file_name ?? "photo"} target="_blank" rel="noopener noreferrer"
             title={t("admin.settings.gallery.actions.download")}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium cursor-pointer"
             style={{ color: "rgba(66,12,20,0.4)" }}
@@ -670,13 +685,13 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
               <div key={`${index}`} style={{ animation: photoAnim }}>
                 {isVid ? (
                   <video
-                    src={current.url} controls
+                    src={current.display_url ?? undefined} controls
                     className="block max-w-full"
                     style={{ maxHeight: "calc(100vh - 52px - 108px - 8px)", boxShadow: "0 24px 80px rgba(0,0,0,0.92)" }}
                   />
-                ) : (
+                ) : current.display_url ? (
                   <img
-                    src={current.url} alt={current.file_name ?? "Photo"} draggable={false}
+                    src={current.display_url} alt={current.file_name ?? "Photo"} draggable={false}
                     className="block max-w-full"
                     style={{
                       maxHeight: "calc(100vh - 52px - 108px - 8px)",
@@ -684,6 +699,14 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
                       boxShadow: "0 24px 80px rgba(0,0,0,0.92)",
                     }}
                   />
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-3 text-white/40"
+                    style={{ minHeight: 260 }}>
+                    <Camera className="w-10 h-10" />
+                    <p className="text-sm">
+                      {current.preview_status === 'generating' ? 'Preview generating…' : 'Preview not available'}
+                    </p>
+                  </div>
                 )}
               </div>
 
@@ -1343,12 +1366,16 @@ export default function GalleryPage({ params }: GalleryPageProps) {
   const [photos, setPhotos]                           = useState<GuestPhoto[]>([])
   const [loading, setLoading]                         = useState(true)
   const [filter, setFilter]                           = useState<FilterStatus>("all")
+  const setFilterAndReset = (f: FilterStatus) => { setFilter(f); setConfirmBulkDelete(false) }
   const [guestUploadsEnabled, setGuestUploadsEnabled] = useState(false)
   const [copiedLink, setCopiedLink]                   = useState(false)
   const [updatingId, setUpdatingId]                   = useState<string | null>(null)
   const [togglingUploads, setTogglingUploads]         = useState(false)
   const [reviewIndex, setReviewIndex]                 = useState<number | null>(null)
   const [favorites, setFavorites]                     = useState<Set<string>>(new Set())
+  const [downloading, setDownloading]                 = useState(false)
+  const [bulkDeleting, setBulkDeleting]               = useState(false)
+  const [confirmBulkDelete, setConfirmBulkDelete]     = useState(false)
   const [qrModalOpen, setQrModalOpen]                 = useState(false)
   const [shareExpanded, setShareExpanded]             = useState(false)
   const [coupleInitials, setCoupleInitials]           = useState("")
@@ -1424,6 +1451,48 @@ export default function GalleryPage({ params }: GalleryPageProps) {
     } catch { /* handled via UI */ }
   }, [])
 
+  const downloadAll = async (filterType: 'approved' | 'all') => {
+    setDownloading(true)
+    try {
+      const res = await fetch('/api/guest-photos/download-zip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ weddingNameId: decodedWeddingId, filter: filterType }),
+      })
+      if (!res.ok) throw new Error('Download failed')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${decodedWeddingId}-photos-${filterType}.zip`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch {
+      // silently fail — user can retry
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  const bulkDeleteRejected = async () => {
+    setBulkDeleting(true)
+    try {
+      const res = await fetch('/api/guest-photos/bulk-delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ weddingNameId: decodedWeddingId }),
+      })
+      if (res.ok) {
+        setPhotos(prev => prev.filter(p => p.status !== 'rejected'))
+      }
+    } finally {
+      setBulkDeleting(false)
+      setConfirmBulkDelete(false)
+    }
+  }
+
   const copyUploadLink = async () => {
     if (!uploadUrl) return
     try {
@@ -1453,6 +1522,8 @@ export default function GalleryPage({ params }: GalleryPageProps) {
     approved: photos.filter(p => p.status === "approved").length,
     rejected: photos.filter(p => p.status === "rejected").length,
   }
+
+  const storageBytes = photos.reduce((sum, p) => sum + (p.file_size ?? 0) + (p.preview_size ?? 0), 0)
 
   const filtered =
     filter === "all"       ? photos :
@@ -1518,6 +1589,50 @@ export default function GalleryPage({ params }: GalleryPageProps) {
               {t("admin.dashboard.cards.gallery.description")}
             </p>
           </div>
+
+          {/* Storage stats */}
+          {!loading && photos.length > 0 && (() => {
+            const QUOTA = 10 * 1024 * 1024 * 1024 // 10 GB
+            const usedPct = Math.min(storageBytes / QUOTA, 1)
+            const available = Math.max(QUOTA - storageBytes, 0)
+            return (
+              <div className="mb-6 flex flex-wrap gap-3">
+                {[
+                  { label: "Total photos", value: String(photos.length) },
+                  { label: "Pending review", value: String(counts.pending), accent: counts.pending > 0 },
+                  { label: "Approved", value: String(counts.approved) },
+                ].map(stat => (
+                  <div
+                    key={stat.label}
+                    className="flex-1 min-w-[120px] rounded-xl px-4 py-3"
+                    style={{ background: "rgba(66,12,20,0.03)", border: "1px solid rgba(66,12,20,0.07)" }}
+                  >
+                    <p className="text-[9px] uppercase tracking-[0.25em] mb-1" style={{ color: stat.accent ? "#b45309" : "rgba(66,12,20,0.4)" }}>
+                      {stat.label}
+                    </p>
+                    <p className="text-lg font-semibold tabular-nums leading-none" style={{ color: stat.accent ? "#b45309" : "#420c14" }}>
+                      {stat.value}
+                    </p>
+                  </div>
+                ))}
+                {/* Storage card with progress bar */}
+                <div
+                  className="flex-1 min-w-[180px] rounded-xl px-4 py-3"
+                  style={{ background: "rgba(66,12,20,0.03)", border: "1px solid rgba(66,12,20,0.07)" }}
+                >
+                  <p className="text-[9px] uppercase tracking-[0.25em] mb-1" style={{ color: "rgba(66,12,20,0.4)" }}>Storage</p>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-lg font-semibold tabular-nums leading-none" style={{ color: "#420c14" }}>{formatBytes(storageBytes)}</span>
+                    <span className="text-[10px]" style={{ color: "rgba(66,12,20,0.35)" }}>used</span>
+                  </div>
+                  <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ background: "rgba(66,12,20,0.08)" }}>
+                    <div className="h-full rounded-full" style={{ width: `${usedPct * 100}%`, background: usedPct > 0.9 ? "#b91c1c" : "#DDA46F" }} />
+                  </div>
+                  <p className="text-[10px] mt-1" style={{ color: "rgba(66,12,20,0.35)" }}>{formatBytes(available)} available</p>
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Share / QR card — collapsible */}
           {uploadUrl && (
@@ -1600,7 +1715,7 @@ export default function GalleryPage({ params }: GalleryPageProps) {
           <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
             <div className="flex items-center gap-1.5 flex-wrap">
               {filters.map(({ key, label, count, icon }) => (
-                <button key={key} onClick={() => setFilter(key)}
+                <button key={key} onClick={() => setFilterAndReset(key)}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer ${
                     key === "favorites"
                       ? filter === key
@@ -1621,11 +1736,58 @@ export default function GalleryPage({ params }: GalleryPageProps) {
             </div>
 
             {filtered.length > 0 && (
-              <button onClick={() => setReviewIndex(0)}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#420c14] text-[#f5f2eb] px-4 py-2 text-sm font-medium hover:bg-[#5a1a22] transition-colors cursor-pointer">
-                <Check className="w-3.5 h-3.5" />
-                {filter === "pending" ? `Review ${filtered.length} pending` : t("admin.settings.gallery.actions.reviewPhotos")}
-              </button>
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Download all — approved or all */}
+                {(filter === 'approved' || filter === 'all') && (
+                  <button
+                    onClick={() => downloadAll(filter === 'approved' ? 'approved' : 'all')}
+                    disabled={downloading}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-[#420c14]/20 bg-white text-[#420c14] px-4 py-2 text-sm font-medium hover:bg-[#420c14]/5 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {downloading
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <Download className="w-3.5 h-3.5" />}
+                    {downloading ? 'Preparing…' : `Download ${filter === 'approved' ? 'approved' : 'all'} (${filtered.length})`}
+                  </button>
+                )}
+
+                {/* Delete all rejected */}
+                {filter === 'rejected' && (
+                  confirmBulkDelete ? (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-200 bg-red-50">
+                      <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                      <span className="text-xs text-red-700">Delete {filtered.length} photos?</span>
+                      <button
+                        onClick={bulkDeleteRejected}
+                        disabled={bulkDeleting}
+                        className="ml-1 px-2.5 py-1 rounded-lg bg-red-600 text-white text-xs font-medium cursor-pointer hover:bg-red-700 transition-colors disabled:opacity-60"
+                      >
+                        {bulkDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Confirm'}
+                      </button>
+                      <button
+                        onClick={() => setConfirmBulkDelete(false)}
+                        className="px-2 py-1 rounded-lg text-xs text-red-500 cursor-pointer hover:bg-red-100 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmBulkDelete(true)}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 text-red-700 px-4 py-2 text-sm font-medium hover:bg-red-100 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Delete all rejected ({filtered.length})
+                    </button>
+                  )
+                )}
+
+                <button onClick={() => setReviewIndex(0)}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#420c14] text-[#f5f2eb] px-4 py-2 text-sm font-medium hover:bg-[#5a1a22] transition-colors cursor-pointer">
+                  <Check className="w-3.5 h-3.5" />
+                  {filter === "pending" ? `Review ${filtered.length} pending` : t("admin.settings.gallery.actions.reviewPhotos")}
+                </button>
+              </div>
             )}
           </div>
 
@@ -1667,12 +1829,19 @@ export default function GalleryPage({ params }: GalleryPageProps) {
                     <div className="w-full h-full flex items-center justify-center bg-[#420c14]/8">
                       <ChevronRight className="w-6 h-6 text-[#420c14]/25" />
                     </div>
-                  ) : (
+                  ) : photo.display_url ? (
                     <img
-                      src={photo.url} alt={photo.file_name ?? "Guest photo"}
+                      src={photo.display_url} alt={photo.file_name ?? "Guest photo"}
                       className="w-full h-full object-cover transition-all duration-300 group-hover:scale-[1.05] group-hover:brightness-90"
                       style={photo.status === "rejected" ? { filter: "grayscale(1)", opacity: 0.5 } : undefined}
                     />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 bg-[#420c14]/5">
+                      <Camera className="w-5 h-5 text-[#420c14]/20" />
+                      <span className="text-[9px] text-[#420c14]/30 leading-none">
+                        {photo.preview_status === 'generating' ? 'Generating…' : 'No preview'}
+                      </span>
+                    </div>
                   )}
 
                   {/* Hover overlay — subtle dark tint + expand icon */}

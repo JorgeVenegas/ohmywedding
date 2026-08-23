@@ -2,12 +2,11 @@
 
 import { Camera } from "lucide-react"
 import { UploadArea } from "./upload-area"
-import { GalleryArea } from "./gallery-area"
 import type { BaseVariantProps } from "./types"
 import { getContrastSet } from "./types"
 
 export function HeroVariant(props: BaseVariantProps) {
-  const { theme, primary, title, subtitle, galleryLayout, useColorBackground, backgroundColorChoice, photos, photosLoading, uploadsEnabled, submitted, moderationEnabled } = props
+  const { theme, primary, title, subtitle, useColorBackground, backgroundColorChoice, uploadsEnabled, submitted } = props
   const c = getContrastSet(theme, useColorBackground, backgroundColorChoice, primary)
   const headerBg = c.bgColor ?? `${primary}18`
 
@@ -39,15 +38,6 @@ export function HeroVariant(props: BaseVariantProps) {
       )}
       {!uploadsEnabled && !submitted && <div style={{ height: 32 }} />}
 
-      {/* Gallery — full-width */}
-      <GalleryArea
-        photos={photos}
-        photosLoading={photosLoading}
-        galleryLayout={galleryLayout}
-        primary={primary}
-        submitted={submitted}
-        moderationEnabled={moderationEnabled}
-      />
       <div style={{ height: 48 }} />
     </section>
   )

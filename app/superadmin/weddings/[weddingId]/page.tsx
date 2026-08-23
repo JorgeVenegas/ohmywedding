@@ -43,11 +43,15 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  Crown,
   Database,
+  Heart,
   Link2,
   Loader2,
+  MapPin,
   Plus,
   RotateCcw,
+  TrendingUp,
   Trash2,
   UserPlus,
   Video,
@@ -110,14 +114,25 @@ interface DesignStatusData {
 
 type Tab = 'status' | 'versions' | 'meetings' | 'storage' | 'ai' | 'pages'
 
-interface StorageBreakdown {
-  table: string
-  count: number | null
+interface WeddingInfo {
+  partner1_name: string
+  partner2_name: string
+  wedding_date: string | null
+  location: string | null
+  guest_count: number
+  photo_count: number
+  photo_storage_bytes: number
+  created_at: string
 }
 
 interface StorageData {
   couple: string
-  breakdown: StorageBreakdown[]
+  // S3 file storage
+  file_storage: Array<{ label: string; bytes: number; count: number }>
+  total_file_bytes: number
+  // DB row storage
+  db_breakdown: Array<{ table_name: string; row_count: number; size_bytes: number }>
+  total_db_bytes: number
   total_rows: number
 }
 
@@ -139,6 +154,13 @@ function getMeetingTypeLabels(plan?: 'free' | 'premium' | 'deluxe') {
   return plan === 'deluxe' ? MEETING_TYPE_LABELS_BESPOKE : MEETING_TYPE_LABELS_DEFAULT
 }
 
+function fmtBytes(bytes: number): string {
+  if (bytes === 0) return '—'
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+  return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`
+}
+
 const REVIEWER_STATUS_CONFIG = {
   pending: 'bg-amber-50 text-amber-700 border-amber-200',
   approved: 'bg-green-50 text-green-700 border-green-200',
@@ -153,6 +175,7 @@ export default function SuperadminWeddingDesignPage({
   const { weddingId } = use(params)
   const router = useRouter()
   const [data, setData] = useState<DesignStatusData | null>(null)
+  const [weddingInfo, setWeddingInfo] = useState<WeddingInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>('status')
   const [storageData, setStorageData] = useState<StorageData | null>(null)
@@ -212,9 +235,12 @@ export default function SuperadminWeddingDesignPage({
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await fetch(`/api/weddings/${weddingId}/design-status`)
-      if (res.ok) {
-        const d = await res.json()
+      const [designRes, infoRes] = await Promise.all([
+        fetch(`/api/weddings/${weddingId}/design-status`),
+        fetch(`/api/superadmin/weddings/${weddingId}`),
+      ])
+      if (designRes.ok) {
+        const d = await designRes.json()
         setData(d)
         if (d.available_transitions.length > 0) {
           // Functional update reads actual current state — avoids stale closure
@@ -224,6 +250,7 @@ export default function SuperadminWeddingDesignPage({
           setToStatus('')
         }
       }
+      if (infoRes.ok) setWeddingInfo(await infoRes.json())
     } finally {
       setLoading(false)
     }
@@ -231,15 +258,21 @@ export default function SuperadminWeddingDesignPage({
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  const fetchStorage = async () => {
-    if (storageData || loadingStorage) return
+  const doFetchStorage = async () => {
+    if (loadingStorage) return
     setLoadingStorage(true)
     try {
       const res = await fetch(`/api/superadmin/weddings/${weddingId}/storage`)
       if (res.ok) setStorageData(await res.json())
+      else setStorageData(null)
     } finally {
       setLoadingStorage(false)
     }
+  }
+
+  const fetchStorage = async () => {
+    if (storageData || loadingStorage) return
+    await doFetchStorage()
   }
 
   useEffect(() => { if (tab === 'storage') fetchStorage() }, [tab])
@@ -431,18 +464,116 @@ export default function SuperadminWeddingDesignPage({
   const meetingTypeLabels = getMeetingTypeLabels(data.plan)
 
   return (
-    <div className="space-y-8 max-w-3xl">
+    <div className="space-y-8">
       {/* Header */}
       <div>
         <Link
           href="/superadmin/weddings"
-          className="inline-flex items-center gap-1.5 text-sm text-[#420c14]/50 hover:text-[#420c14] transition-colors mb-4"
+          className="inline-flex items-center gap-1.5 text-xs text-[#420c14]/35 hover:text-[#420c14]/70 transition-colors mb-5 uppercase tracking-[0.2em]"
         >
-          <ArrowLeft className="w-3.5 h-3.5" /> Back to weddings
+          <ArrowLeft className="w-3 h-3" /> All weddings
         </Link>
-        <p className="text-[10px] uppercase tracking-[0.3em] text-[#DDA46F] mb-2">Design Management</p>
-        <h1 className="text-4xl font-serif text-[#420c14]">Invitation Design</h1>
-        <p className="text-[#420c14]/60 mt-2 text-sm font-mono">{weddingId}</p>
+
+        {weddingInfo ? (
+          <div className="rounded-2xl overflow-hidden border border-[#420c14]/12 shadow-md flex min-h-[200px]">
+
+            {/* ── Left: dark hero (names, date, location) ─── */}
+            <div className="relative bg-[#420c14] flex-1 px-10 py-9 flex flex-col justify-between">
+              {/* Ambient glow */}
+              <div className="pointer-events-none absolute -top-16 -right-16 w-72 h-72 rounded-full bg-[#DDA46F]/7 blur-3xl" />
+              <div className="pointer-events-none absolute bottom-0 left-1/2 w-56 h-40 rounded-full bg-[#DDA46F]/4 blur-2xl" />
+
+              {/* Plan badge */}
+              <div className="relative">
+                {data?.plan === 'deluxe' ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#DDA46F]/15 text-[#DDA46F] text-[10px] font-semibold uppercase tracking-[0.25em] border border-[#DDA46F]/20">
+                    <Crown className="w-2.5 h-2.5" /> Bespoke
+                  </span>
+                ) : data?.plan === 'premium' ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#DDA46F]/10 text-[#DDA46F]/70 text-[10px] font-semibold uppercase tracking-[0.25em] border border-[#DDA46F]/15">
+                    <TrendingUp className="w-2.5 h-2.5" /> Personalized
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-white/6 text-white/25 text-[10px] font-semibold uppercase tracking-[0.25em]">
+                    Basic
+                  </span>
+                )}
+              </div>
+
+              {/* Couple names */}
+              <div className="relative mt-5">
+                <p className="font-serif text-[#f5f2eb] leading-[1.1] tracking-[-0.01em]" style={{ fontSize: 'clamp(2rem, 3.5vw, 3rem)' }}>
+                  {weddingInfo.partner1_name}
+                </p>
+                <div className="flex items-center gap-3 my-3">
+                  <div className="h-px w-6 bg-[#DDA46F]/30" />
+                  <span className="text-[#DDA46F]/50 text-[10px] uppercase tracking-[0.5em]">and</span>
+                  <div className="h-px w-16 bg-[#DDA46F]/15" />
+                </div>
+                <p className="font-serif text-[#f5f2eb] leading-[1.1] tracking-[-0.01em]" style={{ fontSize: 'clamp(2rem, 3.5vw, 3rem)' }}>
+                  {weddingInfo.partner2_name}
+                </p>
+              </div>
+
+              {/* Date + location */}
+              <div className="relative flex flex-wrap items-center gap-x-4 gap-y-1 mt-6">
+                {weddingInfo.wedding_date && (
+                  <span className="inline-flex items-center gap-2 text-[#DDA46F]/70 text-[13px]">
+                    <Heart className="w-3 h-3 shrink-0" />
+                    {format(new Date(weddingInfo.wedding_date), 'MMMM d, yyyy')}
+                  </span>
+                )}
+                {weddingInfo.wedding_date && weddingInfo.location && (
+                  <span className="text-[#DDA46F]/20 select-none">·</span>
+                )}
+                {weddingInfo.location && (
+                  <span className="inline-flex items-center gap-2 text-[#f5f2eb]/30 text-[13px]">
+                    <MapPin className="w-3 h-3 shrink-0" />
+                    {weddingInfo.location}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* ── Right: cream stats panel ──────────────────── */}
+            <div className="bg-[#f5f2eb] border-l border-[#420c14]/10 w-64 shrink-0 flex flex-col divide-y divide-[#420c14]/7">
+              <div className="flex-1 px-8 py-7">
+                <p className="text-[9px] uppercase tracking-[0.3em] text-[#420c14]/28 mb-2">Guests</p>
+                <p className="font-serif text-[#420c14] leading-none" style={{ fontSize: 'clamp(2rem, 3vw, 2.75rem)' }}>
+                  {weddingInfo.guest_count.toLocaleString()}
+                </p>
+              </div>
+
+              {weddingInfo.photo_count > 0 && (
+                <div className="flex-1 px-8 py-7">
+                  <p className="text-[9px] uppercase tracking-[0.3em] text-[#420c14]/28 mb-2">Photos</p>
+                  <p className="font-serif text-[#420c14] leading-none" style={{ fontSize: 'clamp(2rem, 3vw, 2.75rem)' }}>
+                    {weddingInfo.photo_count.toLocaleString()}
+                  </p>
+                  <p className="text-[11px] text-[#420c14]/35 mt-1">{fmtBytes(weddingInfo.photo_storage_bytes)}</p>
+                </div>
+              )}
+
+              <div className="px-8 py-5 mt-auto">
+                {data?.status && (
+                  <>
+                    <p className="text-[9px] uppercase tracking-[0.3em] text-[#420c14]/28 mb-1">Design</p>
+                    <p className="text-[11px] text-[#420c14]/55">{STATUS_LABELS[data.status] ?? data.status}</p>
+                  </>
+                )}
+                <p className="font-mono text-[9px] text-[#420c14]/20 mt-3 truncate">{weddingId}</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl bg-[#420c14] px-10 py-10 flex items-center gap-6">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-[#DDA46F]/40 mb-3">Wedding Details</p>
+              <p className="font-serif text-[#f5f2eb]/50 text-3xl">Loading…</p>
+            </div>
+            <span className="font-mono text-[10px] text-white/15 ml-auto">{weddingId}</span>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -937,35 +1068,103 @@ export default function SuperadminWeddingDesignPage({
             </div>
           ) : storageData ? (
             <>
+              {/* S3 file storage */}
+              {(() => {
+                const QUOTA = 10 * 1024 * 1024 * 1024
+                const used = storageData.total_file_bytes
+                const usedPct = Math.min(used / QUOTA, 1)
+                const available = Math.max(QUOTA - used, 0)
+                const critical = usedPct > 0.9
+                return (
+                  <Card className="p-6 border-[#420c14]/10 shadow-sm">
+                    <p className="text-[10px] uppercase tracking-widest text-[#420c14]/40 mb-5">File Storage (S3)</p>
+
+                    {/* Quota bar */}
+                    <div className="mb-6">
+                      <div className="flex items-end justify-between mb-2">
+                        <div>
+                          <span className="text-2xl font-serif text-[#420c14]">{fmtBytes(used)}</span>
+                          <span className="text-sm text-[#420c14]/35 ml-2">used</span>
+                        </div>
+                        <span className="text-sm text-[#420c14]/45">{fmtBytes(available)} available</span>
+                      </div>
+                      <div className="h-2 bg-[#420c14]/8 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            width: `${Math.max(usedPct * 100, used > 0 ? 0.5 : 0)}%`,
+                            background: critical ? '#b91c1c' : '#DDA46F',
+                          }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between mt-1.5">
+                        <span className="text-[10px] text-[#420c14]/30">{(usedPct * 100).toFixed(1)}% of 10 GB quota</span>
+                        {critical && (
+                          <span className="text-[10px] font-semibold text-red-600">Near limit</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Breakdown by type */}
+                    {storageData.file_storage.length > 0 && (
+                      <div className="space-y-3 pt-4 border-t border-[#420c14]/6">
+                        {storageData.file_storage.map((row) => {
+                          const pct = used > 0 ? (row.bytes / used) * 100 : 0
+                          return (
+                            <div key={row.label}>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <span className="text-sm text-[#420c14]/65">{row.label}</span>
+                                <div className="text-right">
+                                  <span className="text-sm font-semibold text-[#420c14]">{fmtBytes(row.bytes)}</span>
+                                  <span className="text-[11px] text-[#420c14]/30 ml-2">{row.count.toLocaleString()} files</span>
+                                </div>
+                              </div>
+                              <div className="h-1 bg-[#420c14]/6 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-[#DDA46F]/50 rounded-full transition-all"
+                                  style={{ width: `${Math.max(pct, 0.5)}%` }}
+                                />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </Card>
+                )
+              })()}
+
+              {/* DB row storage */}
               <Card className="p-6 border-[#420c14]/10 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-5">
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest text-[#420c14]/40 mb-1">Data Usage</p>
-                    <h3 className="font-serif text-lg text-[#420c14]">{storageData.couple}</h3>
+                    <p className="text-[10px] uppercase tracking-widest text-[#420c14]/40">Database Storage</p>
+                    <p className="text-[10px] text-[#420c14]/30 mt-0.5">pg_column_size per row · excludes indexes</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] uppercase tracking-widest text-[#420c14]/40 mb-1">Total Rows</p>
-                    <p className="text-2xl font-serif font-semibold text-[#420c14]">
-                      {storageData.total_rows.toLocaleString()}
-                    </p>
+                    <p className="text-xl font-serif text-[#420c14]">{fmtBytes(storageData.total_db_bytes)}</p>
+                    <p className="text-[10px] text-[#420c14]/35">{storageData.total_rows.toLocaleString()} rows</p>
                   </div>
                 </div>
 
-                {storageData.breakdown.length === 0 ? (
+                {storageData.db_breakdown.length === 0 ? (
                   <p className="text-sm text-[#420c14]/40 text-center py-8">No data found for this wedding.</p>
                 ) : (
-                  <div className="space-y-2">
-                    {storageData.breakdown.map((row) => {
-                      const pct = storageData.total_rows > 0 ? ((row.count ?? 0) / storageData.total_rows) * 100 : 0
+                  <div className="space-y-2.5">
+                    {storageData.db_breakdown.map((row) => {
+                      const pct = storageData.total_db_bytes > 0 ? (row.size_bytes / storageData.total_db_bytes) * 100 : 0
                       return (
-                        <div key={row.table}>
+                        <div key={row.table_name}>
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-mono text-[#420c14]/70">{row.table}</span>
-                            <span className="text-sm font-semibold text-[#420c14]">{(row.count ?? 0).toLocaleString()}</span>
+                            <span className="text-xs font-mono text-[#420c14]/60">{row.table_name}</span>
+                            <div className="text-right">
+                              <span className="text-xs font-semibold text-[#420c14]">{fmtBytes(row.size_bytes)}</span>
+                              <span className="text-[10px] text-[#420c14]/35 ml-2">{row.row_count.toLocaleString()} rows</span>
+                            </div>
                           </div>
-                          <div className="h-1.5 bg-[#420c14]/8 rounded-full overflow-hidden">
+                          <div className="h-1 bg-[#420c14]/6 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-[#DDA46F] rounded-full transition-all"
+                              className="h-full bg-[#420c14]/25 rounded-full transition-all"
                               style={{ width: `${Math.max(pct, 0.5)}%` }}
                             />
                           </div>
@@ -977,7 +1176,7 @@ export default function SuperadminWeddingDesignPage({
               </Card>
 
               <button
-                onClick={() => { setStorageData(null); fetchStorage() }}
+                onClick={() => doFetchStorage()}
                 className="text-xs text-[#420c14]/40 hover:text-[#420c14] transition-colors"
               >
                 Refresh
@@ -994,7 +1193,9 @@ export default function SuperadminWeddingDesignPage({
 
       {/* ── Pages tab ──────────────────────────────────── */}
       {tab === 'pages' && (
-        <SubpagesTab weddingId={weddingId} />
+        <div className="">
+          <SubpagesTab weddingId={weddingId} />
+        </div>
       )}
 
       {/* ── AI Credits tab ─────────────────────────────── */}
@@ -1371,7 +1572,7 @@ interface AIUsageRow {
 }
 
 function AICreditsTab({ weddingId }: { weddingId: string }) {
-  const [status, setStatus]           = useState<{ budgetCents: number | null; usedCents: number; remainingCents: number | null; isExhausted: boolean; usagePct: number | null } | null>(null)
+  const [status, setStatus]           = useState<{ budgetCents: number; usedCents: number; remainingCents: number; isExhausted: boolean; usagePct: number | null } | null>(null)
   const [logs, setLogs]               = useState<AIUsageRow[]>([])
   const [loading, setLoading]         = useState(true)
   const [grantAmount, setGrantAmount] = useState('')
@@ -1438,9 +1639,7 @@ function AICreditsTab({ weddingId }: { weddingId: string }) {
           <div className="grid grid-cols-3 gap-6">
             <div>
               <p className="text-xs text-[#420c14]/50 mb-1">Budget</p>
-              <p className="text-2xl font-serif text-[#420c14]">
-                {status.budgetCents === null ? '∞' : fmt(status.budgetCents)}
-              </p>
+              <p className="text-2xl font-serif text-[#420c14]">{fmt(status.budgetCents)}</p>
             </div>
             <div>
               <p className="text-xs text-[#420c14]/50 mb-1">Used</p>
@@ -1449,12 +1648,12 @@ function AICreditsTab({ weddingId }: { weddingId: string }) {
             <div>
               <p className="text-xs text-[#420c14]/50 mb-1">Remaining</p>
               <p className={`text-2xl font-serif ${status.isExhausted ? 'text-red-600' : 'text-[#420c14]'}`}>
-                {status.remainingCents === null ? '∞' : fmt(status.remainingCents)}
+                {fmt(status.remainingCents)}
               </p>
             </div>
           </div>
         ) : (
-          <p className="text-sm text-[#420c14]/40">No budget set — unlimited.</p>
+          <p className="text-sm text-[#420c14]/40">No data available.</p>
         )}
       </Card>
 

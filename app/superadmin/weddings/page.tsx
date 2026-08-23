@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -28,16 +28,18 @@ import {
   ExternalLink,
   Crown,
   TrendingUp,
-  Palette,
   MapPin,
   Trash2,
   X,
   Copy,
+  SlidersHorizontal,
+  Check,
 } from "lucide-react"
 import { DesignProgressDots } from "@/components/ui/design-progress-dots"
 import { format } from "date-fns"
 import { toast } from "sonner"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { getWeddingUrl } from "@/lib/wedding-url"
 import { cn } from "@/lib/utils"
 
@@ -56,6 +58,15 @@ interface Wedding {
   design_status: DesignStatus
   guest_count: number
   plan: PlanType
+  photo_storage_bytes: number
+  photo_count: number
+}
+
+function fmtBytes(bytes: number): string {
+  if (bytes === 0) return '—'
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+  return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`
 }
 
 const PLAN_STRIP: Record<PlanType, string> = {
@@ -89,6 +100,7 @@ function PlanBadge({ plan }: { plan: PlanType }) {
 const COL_LABEL = "text-[9px] font-semibold uppercase tracking-[0.2em] text-[#420c14]/35 whitespace-nowrap"
 
 export default function WeddingsManagementPage() {
+  const router = useRouter()
   const [search, setSearch] = useState("")
   const [weddings, setWeddings] = useState<Wedding[]>([])
   const [loading, setLoading] = useState(true)
@@ -107,6 +119,36 @@ export default function WeddingsManagementPage() {
   const [cloneSource, setCloneSource] = useState<Wedding | null>(null)
   const [cloneForm, setCloneForm] = useState({ p1First: '', p1Last: '', p2First: '', p2Last: '', date: '', location: '' })
   const [cloning, setCloning] = useState(false)
+
+  // Column visibility — couple + actions always shown
+  type ColKey = 'created' | 'weddingDate' | 'location' | 'plan' | 'design' | 'guests' | 'photos'
+  const [visibleCols, setVisibleCols] = useState<Set<ColKey>>(
+    new Set(['weddingDate', 'plan', 'guests', 'photos'] as ColKey[])
+  )
+  const [colsOpen, setColsOpen] = useState(false)
+  const colsRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!colsOpen) return
+    const handler = (e: MouseEvent) => {
+      if (colsRef.current && !colsRef.current.contains(e.target as Node)) setColsOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [colsOpen])
+
+  const toggleCol = (key: ColKey) =>
+    setVisibleCols(prev => { const s = new Set(prev); s.has(key) ? s.delete(key) : s.add(key); return s })
+
+  const ALL_COLS: { key: ColKey; label: string }[] = [
+    { key: 'created',     label: 'Created' },
+    { key: 'weddingDate', label: 'Wedding Date' },
+    { key: 'location',    label: 'Location' },
+    { key: 'plan',        label: 'Plan' },
+    { key: 'design',      label: 'Design Progress' },
+    { key: 'guests',      label: 'Guests' },
+    { key: 'photos',      label: 'Photos' },
+  ]
 
   const fetchWeddings = useCallback(async (q: string) => {
     setLoading(true)
@@ -133,10 +175,12 @@ export default function WeddingsManagementPage() {
   }, [search, fetchWeddings])
 
   const stats = useMemo(() => ({
-    total:   weddings.length,
-    deluxe:  weddings.filter(w => w.plan === 'deluxe').length,
-    premium: weddings.filter(w => w.plan === 'premium').length,
-    free:    weddings.filter(w => w.plan === 'free').length,
+    total:        weddings.length,
+    deluxe:       weddings.filter(w => w.plan === 'deluxe').length,
+    premium:      weddings.filter(w => w.plan === 'premium').length,
+    free:         weddings.filter(w => w.plan === 'free').length,
+    totalStorage: weddings.reduce((s, w) => s + (w.photo_storage_bytes ?? 0), 0),
+    totalPhotos:  weddings.reduce((s, w) => s + (w.photo_count ?? 0), 0),
   }), [weddings])
 
   const openChangePlan = (wedding: Wedding) => {
@@ -254,6 +298,12 @@ export default function WeddingsManagementPage() {
                 </div>
               )}
             </div>
+            {stats.totalPhotos > 0 && (
+              <div className="text-right border-l border-[#420c14]/8 pl-6">
+                <p className="text-sm font-semibold tabular-nums text-[#420c14]/70 leading-none">{fmtBytes(stats.totalStorage)}</p>
+                <p className="text-[9px] uppercase tracking-[0.25em] text-[#420c14]/35 mt-1">{stats.totalPhotos.toLocaleString()} photos</p>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -280,8 +330,50 @@ export default function WeddingsManagementPage() {
               </button>
             )}
           </div>
+
+          {/* Columns toggle */}
+          <div className="relative ml-auto" ref={colsRef}>
+            <button
+              onClick={() => setColsOpen(v => !v)}
+              className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[#420c14]/10 bg-[#f5f2eb]/40 text-[11px] text-[#420c14]/50 hover:text-[#420c14] hover:border-[#420c14]/20 transition-colors cursor-pointer"
+            >
+              <SlidersHorizontal className="w-3 h-3" />
+              Columns
+              <span className="text-[10px] tabular-nums text-[#420c14]/30">({visibleCols.size + 2})</span>
+            </button>
+            {colsOpen && (
+              <div className="absolute right-0 top-full mt-1.5 z-30 bg-white rounded-xl border border-[#420c14]/10 shadow-lg py-1.5 min-w-[160px]">
+                <p className="px-3 pt-1 pb-2 text-[9px] uppercase tracking-[0.25em] text-[#420c14]/30">Toggle columns</p>
+                {/* Fixed columns */}
+                {[{ label: 'Couple' }, { label: 'Actions' }].map(c => (
+                  <div key={c.label} className="flex items-center gap-2.5 px-3 py-1.5 text-[11px] text-[#420c14]/30 select-none">
+                    <Check className="w-3 h-3 text-[#420c14]/20" />
+                    {c.label}
+                    <span className="ml-auto text-[9px] text-[#420c14]/20">fixed</span>
+                  </div>
+                ))}
+                <div className="my-1 border-t border-[#420c14]/6" />
+                {ALL_COLS.map(c => (
+                  <button
+                    key={c.key}
+                    onClick={() => toggleCol(c.key)}
+                    className="w-full flex items-center gap-2.5 px-3 py-1.5 text-[11px] text-[#420c14]/60 hover:bg-[#420c14]/4 transition-colors cursor-pointer"
+                  >
+                    <div className="w-3 h-3 rounded flex items-center justify-center shrink-0" style={{
+                      background: visibleCols.has(c.key) ? '#420c14' : 'transparent',
+                      border: visibleCols.has(c.key) ? '1px solid #420c14' : '1px solid rgba(66,12,20,0.2)',
+                    }}>
+                      {visibleCols.has(c.key) && <Check className="w-2 h-2 text-white" />}
+                    </div>
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {!loading && (
-            <p className="text-[11px] text-[#420c14]/35 tabular-nums ml-auto">
+            <p className="text-[11px] text-[#420c14]/35 tabular-nums">
               {weddings.length} {weddings.length === 1 ? 'wedding' : 'weddings'}
             </p>
           )}
@@ -308,18 +400,18 @@ export default function WeddingsManagementPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="min-w-max w-full">
               <thead>
                 <tr className="bg-[#faf8f4] border-b border-[#420c14]/6">
-                  {/* strip col */}
                   <th className="w-1 p-0" />
                   <th className="pl-4 pr-6 py-3 text-left"><span className={COL_LABEL}>Couple</span></th>
-                  <th className="px-4 py-3 text-left"><span className={COL_LABEL}>Created</span></th>
-                  <th className="px-4 py-3 text-left"><span className={COL_LABEL}>Wedding Date</span></th>
-                  <th className="px-4 py-3 text-left"><span className={COL_LABEL}>Location</span></th>
-                  <th className="px-4 py-3 text-left"><span className={COL_LABEL}>Plan</span></th>
-                  <th className="px-4 py-3 text-left"><span className={COL_LABEL}>Design Progress</span></th>
-                  <th className="px-4 py-3 text-right"><span className={COL_LABEL}>Guests</span></th>
+                  {visibleCols.has('created')     && <th className="px-4 py-3 text-left whitespace-nowrap"><span className={COL_LABEL}>Created</span></th>}
+                  {visibleCols.has('weddingDate') && <th className="px-4 py-3 text-left whitespace-nowrap"><span className={COL_LABEL}>Wedding Date</span></th>}
+                  {visibleCols.has('location')    && <th className="px-4 py-3 text-left whitespace-nowrap"><span className={COL_LABEL}>Location</span></th>}
+                  {visibleCols.has('plan')        && <th className="px-4 py-3 text-left whitespace-nowrap"><span className={COL_LABEL}>Plan</span></th>}
+                  {visibleCols.has('design')      && <th className="px-4 py-3 text-left whitespace-nowrap"><span className={COL_LABEL}>Design Progress</span></th>}
+                  {visibleCols.has('guests')      && <th className="px-4 py-3 text-right whitespace-nowrap"><span className={COL_LABEL}>Guests</span></th>}
+                  {visibleCols.has('photos')      && <th className="px-4 py-3 text-right whitespace-nowrap"><span className={COL_LABEL}>Photos</span></th>}
                   <th className="pl-4 pr-5 py-3 text-right"><span className={COL_LABEL}>Actions</span></th>
                 </tr>
               </thead>
@@ -327,13 +419,13 @@ export default function WeddingsManagementPage() {
                 {weddings.map((wedding, i) => (
                   <tr
                     key={wedding.id}
+                    onClick={() => router.push(`/superadmin/weddings/${wedding.wedding_name_id}`)}
                     className={cn(
-                      "group relative transition-colors duration-100",
+                      "group relative transition-colors duration-100 cursor-pointer",
                       "hover:bg-[#faf7f2]",
                       i > 0 && "border-t border-[#420c14]/5"
                     )}
                   >
-                    {/* Plan-coded left accent strip */}
                     <td className="w-1 p-0">
                       <div className={cn(
                         "w-[3px] h-full min-h-[52px]",
@@ -343,7 +435,6 @@ export default function WeddingsManagementPage() {
                       )} />
                     </td>
 
-                    {/* Couple */}
                     <td className="pl-4 pr-6 py-3.5">
                       <p className="font-serif text-[#420c14] text-[15px] leading-snug whitespace-nowrap">
                         {wedding.partner1_name}
@@ -355,75 +446,88 @@ export default function WeddingsManagementPage() {
                       </span>
                     </td>
 
-                    {/* Created */}
-                    <td className="px-4 py-3.5 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5 text-xs text-[#420c14]/40 tabular-nums">
-                        <Calendar className="w-3 h-3 text-[#420c14]/20 flex-shrink-0" />
-                        {format(new Date(wedding.created_at), 'MMM d, yyyy')}
-                      </div>
-                    </td>
-
-                    {/* Wedding date */}
-                    <td className="px-4 py-3.5 whitespace-nowrap">
-                      {wedding.wedding_date ? (
-                        <div className="flex items-center gap-1.5 text-xs text-[#420c14]/60 tabular-nums">
-                          <Heart className="w-3 h-3 text-[#DDA46F] flex-shrink-0" />
-                          {format(new Date(wedding.wedding_date), 'MMM d, yyyy')}
+                    {visibleCols.has('created') && (
+                      <td className="px-4 py-3.5 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 text-xs text-[#420c14]/40 tabular-nums">
+                          <Calendar className="w-3 h-3 text-[#420c14]/20 flex-shrink-0" />
+                          {format(new Date(wedding.created_at), 'MMM d, yyyy')}
                         </div>
-                      ) : (
-                        <span className="text-[#420c14]/18 text-sm">·</span>
-                      )}
-                    </td>
+                      </td>
+                    )}
 
-                    {/* Location */}
-                    <td className="px-4 py-3.5 max-w-[180px]">
-                      {wedding.location ? (
-                        <div className="flex items-start gap-1.5 text-xs text-[#420c14]/50">
-                          <MapPin className="w-3 h-3 text-[#420c14]/20 flex-shrink-0 mt-px" />
-                          <span className="truncate">{wedding.location}</span>
-                        </div>
-                      ) : (
-                        <span className="text-[#420c14]/18 text-sm">·</span>
-                      )}
-                    </td>
+                    {visibleCols.has('weddingDate') && (
+                      <td className="px-4 py-3.5 whitespace-nowrap">
+                        {wedding.wedding_date ? (
+                          <div className="flex items-center gap-1.5 text-xs text-[#420c14]/60 tabular-nums">
+                            <Heart className="w-3 h-3 text-[#DDA46F] flex-shrink-0" />
+                            {format(new Date(wedding.wedding_date), 'MMM d, yyyy')}
+                          </div>
+                        ) : (
+                          <span className="text-[#420c14]/18 text-sm">·</span>
+                        )}
+                      </td>
+                    )}
 
-                    {/* Plan */}
-                    <td className="px-4 py-3.5">
-                      <PlanBadge plan={wedding.plan} />
-                    </td>
+                    {visibleCols.has('location') && (
+                      <td className="px-4 py-3.5 max-w-[160px]">
+                        {wedding.location ? (
+                          <div className="flex items-start gap-1.5 text-xs text-[#420c14]/50">
+                            <MapPin className="w-3 h-3 text-[#420c14]/20 flex-shrink-0 mt-px" />
+                            <span className="truncate">{wedding.location}</span>
+                          </div>
+                        ) : (
+                          <span className="text-[#420c14]/18 text-sm">·</span>
+                        )}
+                      </td>
+                    )}
 
-                    {/* Design status */}
-                    <td className="px-4 py-3.5">
-                      <DesignProgressDots plan={wedding.plan} status={wedding.design_status} />
-                    </td>
+                    {visibleCols.has('plan') && (
+                      <td className="px-4 py-3.5">
+                        <PlanBadge plan={wedding.plan} />
+                      </td>
+                    )}
 
-                    {/* Guest count */}
-                    <td className="px-4 py-3.5 text-right">
-                      <span className="font-serif text-base font-medium text-[#420c14]/70 tabular-nums">
-                        {wedding.guest_count.toLocaleString()}
-                      </span>
-                    </td>
+                    {visibleCols.has('design') && (
+                      <td className="px-4 py-3.5">
+                        <DesignProgressDots plan={wedding.plan} status={wedding.design_status} />
+                      </td>
+                    )}
 
-                    {/* Actions — fade in on row hover */}
-                    <td className="pl-4 pr-5 py-3.5">
+                    {visibleCols.has('guests') && (
+                      <td className="px-4 py-3.5 text-right">
+                        <span className="font-serif text-base font-medium text-[#420c14]/70 tabular-nums">
+                          {wedding.guest_count.toLocaleString()}
+                        </span>
+                      </td>
+                    )}
+
+                    {visibleCols.has('photos') && (
+                      <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                        {wedding.photo_count > 0 ? (
+                          <div>
+                            <p className="text-xs font-medium tabular-nums text-[#420c14]/70">{fmtBytes(wedding.photo_storage_bytes)}</p>
+                            <p className="text-[10px] tabular-nums text-[#420c14]/35">{wedding.photo_count} files</p>
+                          </div>
+                        ) : (
+                          <span className="text-[#420c14]/20 text-xs">—</span>
+                        )}
+                      </td>
+                    )}
+
+                    <td className="pl-4 pr-5 py-3.5" onClick={e => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                         <Link
                           href={getWeddingUrl(wedding.wedding_name_id, '', wedding.plan)}
                           target="_blank"
                           title="View site"
+                          onClick={e => e.stopPropagation()}
                           className="w-7 h-7 rounded-lg flex items-center justify-center text-[#420c14]/30 hover:text-[#420c14] hover:bg-[#420c14]/8 transition-colors"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                         </Link>
-                        <Link
-                          href={`/superadmin/weddings/${wedding.wedding_name_id}`}
-                          title="Design"
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-[#420c14]/30 hover:text-[#420c14] hover:bg-[#420c14]/8 transition-colors"
-                        >
-                          <Palette className="w-3.5 h-3.5" />
-                        </Link>
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation()
                             setCloneSource(wedding)
                             setCloneForm({ p1First: '', p1Last: '', p2First: '', p2Last: '', date: '', location: '' })
                           }}
@@ -433,14 +537,14 @@ export default function WeddingsManagementPage() {
                           <Copy className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => openChangePlan(wedding)}
+                          onClick={(e) => { e.stopPropagation(); openChangePlan(wedding) }}
                           title="Change plan"
                           className="h-7 px-2.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider text-[#420c14]/40 hover:text-[#420c14] hover:bg-[#420c14]/8 transition-colors whitespace-nowrap"
                         >
                           Plan
                         </button>
                         <button
-                          onClick={() => { setDeleteTarget(wedding); setDeleteConfirm("") }}
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(wedding); setDeleteConfirm("") }}
                           title="Delete wedding"
                           className="w-7 h-7 rounded-lg flex items-center justify-center text-[#420c14]/25 hover:text-red-600 hover:bg-red-50 transition-colors"
                         >

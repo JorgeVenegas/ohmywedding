@@ -51,8 +51,8 @@ export async function GET(request: NextRequest) {
 
     const weddingIds = weddings.map(w => w.id)
 
-    // Batch fetch plans and guest counts in parallel
-    const [{ data: subscriptions }, { data: guestRows }] = await Promise.all([
+    // Batch fetch plans, guest counts, and photo storage in parallel
+    const [{ data: subscriptions }, { data: guestRows }, { data: photoRows }] = await Promise.all([
       adminClient
         .from('wedding_subscriptions')
         .select('wedding_id, plan')
@@ -61,6 +61,10 @@ export async function GET(request: NextRequest) {
         .from('guests')
         .select('wedding_id')
         .in('wedding_id', weddingIds),
+      adminClient
+        .from('guest_photos')
+        .select('wedding_id, file_size, preview_size')
+        .in('wedding_id', weddingIds),
     ])
 
     const planMap = Object.fromEntries(
@@ -68,6 +72,12 @@ export async function GET(request: NextRequest) {
     )
     const guestCountMap = (guestRows || []).reduce<Record<string, number>>((acc, g) => {
       acc[g.wedding_id] = (acc[g.wedding_id] || 0) + 1
+      return acc
+    }, {})
+    const storageMap = (photoRows || []).reduce<Record<string, { bytes: number; count: number }>>((acc, p) => {
+      if (!acc[p.wedding_id]) acc[p.wedding_id] = { bytes: 0, count: 0 }
+      acc[p.wedding_id].bytes += (p.file_size ?? 0) + (p.preview_size ?? 0)
+      acc[p.wedding_id].count += 1
       return acc
     }, {})
 
@@ -83,6 +93,8 @@ export async function GET(request: NextRequest) {
       design_status: wedding.invitation_design_status || 'not_started',
       guest_count: guestCountMap[wedding.id] ?? 0,
       plan: planMap[wedding.id] || 'free',
+      photo_storage_bytes: storageMap[wedding.id]?.bytes ?? 0,
+      photo_count: storageMap[wedding.id]?.count ?? 0,
     }))
 
     return NextResponse.json({ weddings: result })

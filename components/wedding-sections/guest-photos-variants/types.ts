@@ -16,7 +16,7 @@ export interface GuestPhotoMetadata {
 
 export interface GuestPhoto {
   id: string
-  url: string
+  display_url: string | null
   uploader_name: string | null
   status: "pending" | "approved" | "rejected"
   file_name: string | null
@@ -42,8 +42,6 @@ export interface BaseVariantProps {
   useColorBackground?: boolean
   backgroundColorChoice?: BackgroundColorChoice
   // Data
-  photos: GuestPhoto[]
-  photosLoading: boolean
   uploads: UploadItem[]
   uploaderName: string
   isDragging: boolean
