@@ -492,6 +492,13 @@ export const es: Translations = {
     photographsAddedConfirm: 'Fotografías añadidas al álbum.',
     contributePhoto: 'Contribuir fotografía',
     contributePhotos: 'Contribuir {{count}} fotografías',
+    uploadStep1: 'Preparando tus fotos…',
+    uploadStep2: 'Subiendo…',
+    uploadStep3: 'Casi listo…',
+    uploadLimitReached: 'Límite de 1 GB alcanzado — algunas fotos no se agregaron.',
+    limitReached: 'Límite de 1 GB alcanzado',
+    limitReachedHint: 'Elimina fotos para liberar espacio.',
+    quotaLabel: '{{used}} de 1 GB',
   },
 
   // Location Section

@@ -7,7 +7,8 @@ import { isSuperUser } from '@/lib/superadmin'
 export const runtime = 'nodejs'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'video/mp4', 'video/quicktime', 'video/mov']
-const MAX_SIZE = 524288000 // 500 MB (videos)
+const MAX_SIZE = 524288000       // 500 MB per file (videos)
+const MAX_CONTRIBUTION = 1_073_741_824 // 1 GB per contribution
 // After this many failed attempts, show "preview not available" instead of retrying
 const MAX_PREVIEW_ATTEMPTS = 2
 
@@ -39,6 +40,10 @@ export async function POST(request: NextRequest) {
 
     if (fileSize > MAX_SIZE) {
       return NextResponse.json({ error: 'File exceeds 500 MB limit' }, { status: 400 })
+    }
+
+    if (fileSize > MAX_CONTRIBUTION) {
+      return NextResponse.json({ error: 'File exceeds 1 GB contribution limit' }, { status: 400 })
     }
 
     const admin = createAdminSupabaseClient()

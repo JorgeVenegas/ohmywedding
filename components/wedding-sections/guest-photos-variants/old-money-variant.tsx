@@ -3,7 +3,13 @@
 import { useRef } from "react"
 import { Camera, ArrowUpFromLine, X, Check, AlertCircle, Loader2 } from "lucide-react"
 import type { BaseVariantProps, UploadItem } from "./types"
-import { resolveBackground, getLuminance } from "./types"
+import { resolveBackground, getLuminance, MAX_CONTRIBUTION_BYTES } from "./types"
+
+function fmtBytes(bytes: number): string {
+  if (bytes >= 1_073_741_824) return `${(bytes / 1_073_741_824).toFixed(1)} GB`
+  if (bytes >= 1_048_576) return `${(bytes / 1_048_576).toFixed(0)} MB`
+  return `${(bytes / 1024).toFixed(0)} KB`
+}
 import { useI18n } from "@/components/contexts/i18n-context"
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -153,6 +159,81 @@ function OldMoneyUpload({
   const idleUploads = uploads.filter(u => u.progress === 'idle')
   const allDone = uploads.length > 0 && uploads.every(u => u.progress === 'done')
 
+  const usedBytes = uploads.reduce((sum, u) => sum + u.file.size, 0)
+  const isAtLimit = usedBytes >= MAX_CONTRIBUTION_BYTES
+  const usedPct = Math.min(100, (usedBytes / MAX_CONTRIBUTION_BYTES) * 100)
+
+  const isUploading = uploads.some(u => u.progress === 'uploading')
+  const overallPct = uploads.length > 0
+    ? Math.min(99, Math.round(uploads.reduce((sum, u) => {
+        if (u.progress === 'done' || u.progress === 'error') return sum + 100
+        if (u.progress === 'uploading') return sum + Math.round((u.uploadProgress ?? 0) * 100)
+        return sum
+      }, 0) / uploads.length))
+    : 0
+  const stepIndex = overallPct < 25 ? 0 : overallPct < 80 ? 1 : 2
+  const stepKey = (['uploadStep1', 'uploadStep2', 'uploadStep3'] as const)[stepIndex]
+
+  if (isUploading) {
+    return (
+      <div className="mb-12">
+        <p className="text-[9px] tracking-[0.5em] uppercase mb-6" style={{ color: MUTED }}>
+          {t('guestPhotos.contributeEyebrow')}
+        </p>
+        <div className="py-14 px-8 text-center" style={{ border: `1px solid ${accent}25`, background: `${accent}05` }}>
+          {/* Large typographic percentage */}
+          <p
+            className="leading-none mb-5"
+            style={{
+              fontFamily: 'var(--font-display, Georgia, serif)',
+              fontSize: 'clamp(3.5rem, 12vw, 6rem)',
+              fontWeight: 300,
+              fontStyle: 'italic',
+              color: ink,
+              letterSpacing: '-0.02em',
+            }}
+          >
+            {overallPct}%
+          </p>
+
+          {/* Progress bar */}
+          <div className="relative h-px mx-auto mb-5" style={{ maxWidth: 160, background: `${INK}12` }}>
+            <div
+              className="absolute left-0 top-0 h-full"
+              style={{
+                width: `${overallPct}%`,
+                background: accent,
+                opacity: 0.7,
+                transition: 'width 0.5s ease',
+              }}
+            />
+          </div>
+
+          {/* Step label */}
+          <p key={stepKey} className="text-[10px] tracking-[0.35em] uppercase" style={{ color: MUTED }}>
+            {t(`guestPhotos.${stepKey}`)}
+          </p>
+
+          {/* Step dots */}
+          <div className="flex items-center justify-center gap-2 mt-4">
+            {[0, 1, 2].map(i => (
+              <div
+                key={i}
+                className="rounded-full"
+                style={{
+                  width: i === stepIndex ? 16 : 4,
+                  height: 4,
+                  background: i <= stepIndex ? accent : `${INK}15`,
+                  transition: 'width 0.3s ease, background 0.3s ease',
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (submitted) {
     return (
       <div className="mb-12 album-pop">
@@ -211,33 +292,80 @@ function OldMoneyUpload({
         />
       </div>
 
-      {/* Drop zone — minimal single-border rectangle */}
-      <div
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
-        onClick={onDropZoneClick}
-        className="cursor-pointer transition-all duration-200 py-10 px-6 flex flex-col items-center gap-2.5 select-none"
-        style={{
-          border: `1px solid ${isDragging ? accent : `${INK}18`}`,
-          background: isDragging ? `${accent}06` : 'transparent',
-        }}
-      >
-        <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
-          onChange={e => onFileChange(e.target.files)} />
-        <div style={{ color: isDragging ? accent : `${INK}35` }}>
-          {isDragging
-            ? <ArrowUpFromLine className="w-5 h-5 transition-all" />
-            : <Camera className="w-5 h-5" />
-          }
+      {/* Quota bar — shown as soon as any files are queued */}
+      {uploads.length > 0 && (
+        <div className="mb-5">
+          <div className="flex justify-between items-center mb-1.5">
+            <span className="text-[9px] tracking-[0.3em] uppercase" style={{ color: MUTED }}>
+              {t('guestPhotos.quotaLabel').replace('{{used}}', fmtBytes(usedBytes))}
+            </span>
+            {isAtLimit && (
+              <span className="text-[9px] tracking-[0.2em] uppercase" style={{ color: '#c0392b' }}>
+                {t('guestPhotos.limitReached')}
+              </span>
+            )}
+          </div>
+          <div className="h-px w-full relative" style={{ background: `${INK}12` }}>
+            <div
+              className="absolute left-0 top-0 h-full transition-all duration-500"
+              style={{
+                width: `${usedPct}%`,
+                background: usedPct >= 95 ? '#c0392b' : usedPct >= 75 ? '#b8860b' : accent,
+                opacity: 0.7,
+              }}
+            />
+          </div>
         </div>
-        <p className="text-[11px] tracking-[0.3em] uppercase" style={{ color: isDragging ? accent : MUTED }}>
-          {isDragging ? t('guestPhotos.releaseToAdd') : t('guestPhotos.dragPhotographsHere')}
+      )}
+
+      {/* Drop zone — blocked when at limit */}
+      {isAtLimit ? (
+        <div
+          className="py-10 px-6 flex flex-col items-center gap-2.5 select-none"
+          style={{ border: `1px solid rgba(192,57,43,0.2)`, background: 'rgba(192,57,43,0.03)' }}
+        >
+          <p className="text-[11px] tracking-[0.3em] uppercase" style={{ color: '#c0392b' }}>
+            {t('guestPhotos.limitReached')}
+          </p>
+          <p className="text-[10px]" style={{ color: MUTED }}>
+            {t('guestPhotos.limitReachedHint')}
+          </p>
+        </div>
+      ) : (
+        <div
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+          onClick={onDropZoneClick}
+          className="cursor-pointer transition-all duration-200 py-10 px-6 flex flex-col items-center gap-2.5 select-none"
+          style={{
+            border: `1px solid ${isDragging ? accent : `${INK}18`}`,
+            background: isDragging ? `${accent}06` : 'transparent',
+          }}
+        >
+          <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
+            onChange={e => onFileChange(e.target.files)} />
+          <div style={{ color: isDragging ? accent : `${INK}35` }}>
+            {isDragging
+              ? <ArrowUpFromLine className="w-5 h-5 transition-all" />
+              : <Camera className="w-5 h-5" />
+            }
+          </div>
+          <p className="text-[11px] tracking-[0.3em] uppercase" style={{ color: isDragging ? accent : MUTED }}>
+            {isDragging ? t('guestPhotos.releaseToAdd') : t('guestPhotos.dragPhotographsHere')}
+          </p>
+          <p className="text-[10px]" style={{ color: `${INK}35` }}>
+            {t('guestPhotos.tapToBrowseHint')}
+          </p>
+        </div>
+      )}
+
+      {/* Rejected-files notice */}
+      {props.uploadError && !isAtLimit && (
+        <p className="mt-3 text-[10px] tracking-[0.2em]" style={{ color: '#c0392b' }}>
+          {props.uploadError}
         </p>
-        <p className="text-[10px]" style={{ color: `${INK}35` }}>
-          {t('guestPhotos.tapToBrowseHint')}
-        </p>
-      </div>
+      )}
 
       {/* Queue */}
       {uploads.length > 0 && (

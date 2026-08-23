@@ -49,6 +49,7 @@ export interface BaseVariantProps {
   fileInputRef: React.RefObject<HTMLInputElement | null>
   submitted?: boolean
   moderationEnabled?: boolean
+  uploadError?: string
   // Handlers
   onUploaderNameChange: (v: string) => void
   onDragOver: (e: React.DragEvent) => void
@@ -65,6 +66,8 @@ export interface BaseVariantProps {
 //   dark bg (needsLightText) → cream/white text everywhere
 //   light colored bg (bgColor set but lum > 0.4) → deep warm ink, NOT primary
 //   (same-hue text on same-hue bg fails WCAG AA regardless of shade)
+export const MAX_CONTRIBUTION_BYTES = 1_073_741_824 // 1 GB per contribution
+
 export interface ContrastSet {
   bgColor: string | null
   needsLightText: boolean

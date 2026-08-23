@@ -1,8 +1,15 @@
 "use client"
 
-import { Camera, ArrowUpFromLine, X, Check, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Camera, ArrowUpFromLine, X, Check, AlertCircle, CheckCircle2, Ban } from "lucide-react"
 import type { UploadItem } from "./types"
+import { MAX_CONTRIBUTION_BYTES } from "./types"
 import { useI18n } from "@/components/contexts/i18n-context"
+
+function fmtBytes(bytes: number): string {
+  if (bytes >= 1_073_741_824) return `${(bytes / 1_073_741_824).toFixed(1)} GB`
+  if (bytes >= 1_048_576) return `${(bytes / 1_048_576).toFixed(0)} MB`
+  return `${(bytes / 1024).toFixed(0)} KB`
+}
 
 const UPLOAD_ANIMATIONS = `
   @keyframes marchDash {
@@ -35,12 +42,21 @@ const UPLOAD_ANIMATIONS = `
     from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-  .queue-item    { animation: queueIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both; }
-  .pop-check     { animation: popCheck 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
-  .success-icon  { animation: successBounce 0.55s cubic-bezier(0.34,1.56,0.64,1) both; }
-  .success-ring  { animation: ringExpand 1s ease-out 0.25s both; }
-  .success-title { animation: successFadeUp 0.4s ease-out 0.35s both; opacity: 0; }
-  .success-sub   { animation: successFadeUp 0.4s ease-out 0.5s both; opacity: 0; }
+  @keyframes uploadSpin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes uploadLabelIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .queue-item      { animation: queueIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both; }
+  .pop-check       { animation: popCheck 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+  .success-icon    { animation: successBounce 0.55s cubic-bezier(0.34,1.56,0.64,1) both; }
+  .success-ring    { animation: ringExpand 1s ease-out 0.25s both; }
+  .success-title   { animation: successFadeUp 0.4s ease-out 0.35s both; opacity: 0; }
+  .success-sub     { animation: successFadeUp 0.4s ease-out 0.5s both; opacity: 0; }
+  .upload-spin     { animation: uploadSpin 6s linear infinite; transform-origin: 68px 68px; }
+  .upload-label-in { animation: uploadLabelIn 0.25s ease-out both; }
 `
 
 function ProgressRing({ progress }: { progress: number }) {
@@ -89,6 +105,7 @@ interface UploadAreaProps {
   mutedColor?: string
   submitted?: boolean
   moderationEnabled?: boolean
+  uploadError?: string
 }
 
 export function UploadArea({
@@ -109,6 +126,7 @@ export function UploadArea({
   mutedColor = '#9ca3af',
   submitted = false,
   moderationEnabled = true,
+  uploadError,
 }: UploadAreaProps) {
   const { t } = useI18n()
   const activeBorder = zoneBorderDragging ?? primary
@@ -118,6 +136,91 @@ export function UploadArea({
   const hasUploads = uploads.length > 0
   const allDone = uploads.length > 0 && uploads.every(u => u.progress === 'done')
   const nameRequired = uploaderName.trim() === ""
+
+  const usedBytes = uploads.reduce((sum, u) => sum + u.file.size, 0)
+  const isAtLimit = usedBytes >= MAX_CONTRIBUTION_BYTES
+  const usedPct = Math.min(100, (usedBytes / MAX_CONTRIBUTION_BYTES) * 100)
+
+  const isUploading = uploads.some(u => u.progress === 'uploading')
+  const overallPct = uploads.length > 0
+    ? Math.min(99, Math.round(uploads.reduce((sum, u) => {
+        if (u.progress === 'done' || u.progress === 'error') return sum + 100
+        if (u.progress === 'uploading') return sum + Math.round((u.uploadProgress ?? 0) * 100)
+        return sum
+      }, 0) / uploads.length))
+    : 0
+  const stepIndex = overallPct < 25 ? 0 : overallPct < 80 ? 1 : 2
+  const stepKey = (['uploadStep1', 'uploadStep2', 'uploadStep3'] as const)[stepIndex]
+
+  const R = 46
+  const CIRC = 2 * Math.PI * R
+
+  if (isUploading) {
+    return (
+      <div className="mb-10">
+        <style>{UPLOAD_ANIMATIONS}</style>
+        <div
+          className="py-14 px-6 text-center rounded-2xl relative overflow-hidden"
+          style={{ background: `${primary}0d` }}
+        >
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: `radial-gradient(ellipse 70% 60% at 50% 40%, ${primary}14 0%, transparent 70%)` }}
+          />
+
+          {/* Progress ring */}
+          <div className="relative inline-flex items-center justify-center mb-6" style={{ width: 120, height: 120 }}>
+            {/* Spinning dashed outer ring */}
+            <svg width="136" height="136" viewBox="0 0 136 136" className="upload-spin absolute" style={{ top: -8, left: -8 }}>
+              <circle cx="68" cy="68" r="64" fill="none" strokeWidth="1.5"
+                strokeDasharray="5 22" strokeLinecap="round"
+                style={{ stroke: `${primary}40` }}
+              />
+            </svg>
+            {/* Progress arc */}
+            <svg width="120" height="120" viewBox="0 0 120 120" style={{ transform: 'rotate(-90deg)' }}>
+              <circle cx="60" cy="60" r={R} fill="none" stroke={`${primary}1a`} strokeWidth="5" />
+              <circle
+                cx="60" cy="60" r={R} fill="none" stroke={primary} strokeWidth="5"
+                strokeLinecap="round"
+                strokeDasharray={CIRC}
+                strokeDashoffset={CIRC * (1 - overallPct / 100)}
+                style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+              />
+            </svg>
+            {/* Percentage */}
+            <span
+              className="absolute text-2xl font-semibold tabular-nums"
+              style={{ color: primary, letterSpacing: '-0.03em' }}
+            >
+              {overallPct}%
+            </span>
+          </div>
+
+          {/* Step label — keyed so it fades on change */}
+          <p key={stepKey} className="upload-label-in text-sm font-medium mb-5" style={{ color: textColor }}>
+            {t(`guestPhotos.${stepKey}`)}
+          </p>
+
+          {/* Step dots */}
+          <div className="flex items-center justify-center gap-2">
+            {[0, 1, 2].map(i => (
+              <div
+                key={i}
+                className="rounded-full"
+                style={{
+                  width: i === stepIndex ? 20 : 6,
+                  height: 6,
+                  background: i <= stepIndex ? primary : `${primary}25`,
+                  transition: 'width 0.3s ease, background 0.3s ease',
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (submitted) {
     return (
@@ -183,58 +286,114 @@ export function UploadArea({
         />
       </div>
 
-      {/* Drop zone */}
-      <div
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
-        onClick={onDropZoneClick}
-        className="relative cursor-pointer select-none transition-all duration-200"
-        style={{
-          background: isDragging ? activeBg : zoneBg,
-          borderRadius: zoneRadius,
-          padding: '2.5rem 1.5rem',
-          border: isDragging ? 'none' : `2px dashed ${zoneBorder}`,
-        }}
-      >
-        <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
-          onChange={e => onFileChange(e.target.files)} />
-
-        {/* Marching-ants SVG border when dragging */}
-        {isDragging && (
-          <svg
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{ borderRadius: zoneRadius, overflow: 'visible' }}
-            preserveAspectRatio="none"
-          >
-            <rect
-              x="1" y="1" width="calc(100% - 2px)" height="calc(100% - 2px)"
-              fill="none" stroke={activeBorder} strokeWidth="2"
-              strokeDasharray="8 6"
-              rx={zoneRadius}
-              style={{ animation: 'marchDash 0.3s linear infinite', strokeDashoffset: 0 }}
-            />
-          </svg>
-        )}
-
-        <div className="flex flex-col items-center gap-2 pointer-events-none">
-          <div
-            className="w-14 h-14 rounded-full flex items-center justify-center mb-1 transition-all duration-200"
-            style={{ background: isDragging ? `${primary}22` : 'rgba(0,0,0,0.05)' }}
-          >
-            {isDragging
-              ? <ArrowUpFromLine className="w-6 h-6 transition-all" style={{ color: primary }} />
-              : <Camera className="w-6 h-6" style={{ color: mutedColor }} />
-            }
+      {/* Quota bar — shown as soon as any files are queued */}
+      {hasUploads && (
+        <div className="mb-3">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-xs" style={{ color: mutedColor }}>
+              {t('guestPhotos.quotaLabel').replace('{{used}}', fmtBytes(usedBytes))}
+            </span>
+            {isAtLimit && (
+              <span className="text-xs font-medium" style={{ color: '#dc2626' }}>
+                {t('guestPhotos.limitReached')}
+              </span>
+            )}
           </div>
-          <p className="text-sm font-medium transition-colors duration-200" style={{ color: isDragging ? primary : textColor }}>
-            {isDragging ? t('guestPhotos.dropDragging') : t('guestPhotos.submitEmpty')}
-          </p>
-          <p className="text-xs" style={{ color: mutedColor }}>
-            {t('guestPhotos.dropHint')}
-          </p>
+          <div className="h-1 rounded-full overflow-hidden" style={{ background: `${primary}18` }}>
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${usedPct}%`,
+                background: usedPct >= 95 ? '#dc2626' : usedPct >= 75 ? '#f59e0b' : primary,
+              }}
+            />
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Drop zone — disabled entirely when at limit */}
+      {isAtLimit ? (
+        <div
+          className="relative select-none"
+          style={{
+            background: 'rgba(220,38,38,0.04)',
+            borderRadius: zoneRadius,
+            padding: '2.5rem 1.5rem',
+            border: `2px dashed rgba(220,38,38,0.25)`,
+          }}
+        >
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mb-1" style={{ background: 'rgba(220,38,38,0.08)' }}>
+              <Ban className="w-6 h-6" style={{ color: '#dc2626' }} />
+            </div>
+            <p className="text-sm font-medium" style={{ color: '#dc2626' }}>
+              {t('guestPhotos.limitReached')}
+            </p>
+            <p className="text-xs text-center" style={{ color: mutedColor }}>
+              {t('guestPhotos.limitReachedHint')}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+          onClick={onDropZoneClick}
+          className="relative cursor-pointer select-none transition-all duration-200"
+          style={{
+            background: isDragging ? activeBg : zoneBg,
+            borderRadius: zoneRadius,
+            padding: '2.5rem 1.5rem',
+            border: isDragging ? 'none' : `2px dashed ${zoneBorder}`,
+          }}
+        >
+          <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
+            onChange={e => onFileChange(e.target.files)} />
+
+          {/* Marching-ants SVG border when dragging */}
+          {isDragging && (
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              style={{ borderRadius: zoneRadius, overflow: 'visible' }}
+              preserveAspectRatio="none"
+            >
+              <rect
+                x="1" y="1" width="calc(100% - 2px)" height="calc(100% - 2px)"
+                fill="none" stroke={activeBorder} strokeWidth="2"
+                strokeDasharray="8 6"
+                rx={zoneRadius}
+                style={{ animation: 'marchDash 0.3s linear infinite', strokeDashoffset: 0 }}
+              />
+            </svg>
+          )}
+
+          <div className="flex flex-col items-center gap-2 pointer-events-none">
+            <div
+              className="w-14 h-14 rounded-full flex items-center justify-center mb-1 transition-all duration-200"
+              style={{ background: isDragging ? `${primary}22` : 'rgba(0,0,0,0.05)' }}
+            >
+              {isDragging
+                ? <ArrowUpFromLine className="w-6 h-6 transition-all" style={{ color: primary }} />
+                : <Camera className="w-6 h-6" style={{ color: mutedColor }} />
+              }
+            </div>
+            <p className="text-sm font-medium transition-colors duration-200" style={{ color: isDragging ? primary : textColor }}>
+              {isDragging ? t('guestPhotos.dropDragging') : t('guestPhotos.submitEmpty')}
+            </p>
+            <p className="text-xs" style={{ color: mutedColor }}>
+              {t('guestPhotos.dropHint')}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Rejected-files notice */}
+      {uploadError && !isAtLimit && (
+        <p className="mt-2.5 text-xs text-center px-2" style={{ color: '#dc2626' }}>
+          {uploadError}
+        </p>
+      )}
 
       {/* Photo queue */}
       {hasUploads && (

@@ -624,6 +624,13 @@ export interface Translations {
     photographsAddedConfirm: string
     contributePhoto: string
     contributePhotos: string
+    uploadStep1: string
+    uploadStep2: string
+    uploadStep3: string
+    uploadLimitReached: string
+    limitReached: string
+    limitReachedHint: string
+    quotaLabel: string
   }
 
   // Location Section

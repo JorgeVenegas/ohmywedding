@@ -20,6 +20,7 @@ import type {
   UploadItem,
   BaseVariantProps,
 } from "./guest-photos-variants"
+import { MAX_CONTRIBUTION_BYTES } from "./guest-photos-variants/types"
 
 export type { GuestPhotosVariant, GalleryLayout, BackgroundColorChoice }
 
@@ -68,7 +69,9 @@ export function GuestPhotosSection({
   const [uploaderName, setUploaderName] = useState("")
   const [uploads, setUploads] = useState<UploadItem[]>([])
   const [isDragging, setIsDragging] = useState(false)
+  const [uploadError, setUploadError] = useState<string | undefined>(undefined)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
 
   useEffect(() => {
     // Use the public (no-auth) settings endpoint — the admin route requires login
@@ -83,9 +86,37 @@ export function GuestPhotosSection({
   }, [weddingNameId])
 
   const addFiles = (files: File[]) => {
-    const items: UploadItem[] = files
-      .filter(f => f.type.startsWith("image/"))
-      .map(file => ({ id: `${Date.now()}-${Math.random()}`, file, preview: URL.createObjectURL(file), progress: "idle" }))
+    const imageFiles = files.filter(f => f.type.startsWith("image/"))
+    const currentBytes = uploads.reduce((sum, u) => sum + u.file.size, 0)
+    const remaining = MAX_CONTRIBUTION_BYTES - currentBytes
+
+    const accepted: File[] = []
+    let cumulative = 0
+    let rejected = 0
+
+    for (const file of imageFiles) {
+      if (cumulative + file.size <= remaining) {
+        accepted.push(file)
+        cumulative += file.size
+      } else {
+        rejected++
+      }
+    }
+
+    if (rejected > 0) {
+      setUploadError(t('guestPhotos.uploadLimitReached'))
+    } else {
+      setUploadError(undefined)
+    }
+
+    if (accepted.length === 0) return
+
+    const items: UploadItem[] = accepted.map(file => ({
+      id: `${Date.now()}-${Math.random()}`,
+      file,
+      preview: URL.createObjectURL(file),
+      progress: "idle",
+    }))
     setUploads(prev => [...prev, ...items])
   }
 
@@ -226,6 +257,7 @@ export function GuestPhotosSection({
     onFileChange: (files: FileList | null) => { if (files) addFiles(Array.from(files)) },
     onRemoveUpload: removeUpload,
     onSubmitAll: submitAll,
+    uploadError,
   }
 
   if (settingsLoading) {
