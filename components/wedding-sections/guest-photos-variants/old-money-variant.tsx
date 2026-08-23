@@ -149,6 +149,7 @@ function OldMoneyUpload({
 
   const { t } = useI18n()
   const btnTextColor = getLuminance(accent) > 0.35 ? INK : PAPER
+  const nameEmpty = uploaderName.trim() === ''
   const idleUploads = uploads.filter(u => u.progress === 'idle')
   const allDone = uploads.length > 0 && uploads.every(u => u.progress === 'done')
 
@@ -259,15 +260,29 @@ function OldMoneyUpload({
           )}
 
           {idleUploads.length > 0 && (
-            <button
-              onClick={onSubmitAll}
-              className="mt-5 px-8 py-2.5 text-[11px] tracking-[0.35em] uppercase transition-all duration-200 hover:opacity-80 active:scale-[0.98]"
-              style={{ background: accent, color: btnTextColor, boxShadow: `0 4px 14px ${accent}45` }}
-            >
-              {idleUploads.length === 1
-                ? t('guestPhotos.contributePhoto')
-                : t('guestPhotos.contributePhotos', { count: idleUploads.length })}
-            </button>
+            <div className="mt-5">
+              {nameEmpty && (
+                <p className="text-[10px] tracking-[0.2em] mb-3" style={{ color: MUTED }}>
+                  {uploaderPlaceholder} ↑
+                </p>
+              )}
+              <button
+                onClick={onSubmitAll}
+                disabled={nameEmpty}
+                className="px-8 py-2.5 text-[11px] tracking-[0.35em] uppercase transition-all duration-200"
+                style={{
+                  background: accent,
+                  color: btnTextColor,
+                  boxShadow: nameEmpty ? 'none' : `0 4px 14px ${accent}45`,
+                  opacity: nameEmpty ? 0.35 : 1,
+                  cursor: nameEmpty ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {idleUploads.length === 1
+                  ? t('guestPhotos.contributePhoto')
+                  : t('guestPhotos.contributePhotos', { count: idleUploads.length })}
+              </button>
+            </div>
           )}
         </div>
       )}

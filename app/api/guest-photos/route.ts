@@ -29,6 +29,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    if (!uploaderName?.trim()) {
+      return NextResponse.json({ error: 'Name is required' }, { status: 400 })
+    }
+
     if (!ALLOWED_TYPES.includes(contentType)) {
       return NextResponse.json({ error: 'Invalid file type' }, { status: 400 })
     }
