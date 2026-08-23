@@ -33,6 +33,8 @@ export function HeroVariant(props: BaseVariantProps) {
             inputBorder="rgba(0,0,0,0.1)"
             textColor="#374151"
             mutedColor="#9ca3af"
+            buttonBg={primary}
+            buttonText="#fff"
           />
         </div>
       )}

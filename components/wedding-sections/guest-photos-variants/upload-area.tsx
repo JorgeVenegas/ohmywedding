@@ -288,7 +288,7 @@ export function UploadArea({
                 onClick={onSubmitAll}
                 disabled={nameRequired}
                 className="w-full mt-2 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 hover:opacity-90 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ background: btn, color: buttonText, letterSpacing: '0.01em' }}
+                style={{ background: btn, color: buttonText, letterSpacing: '0.01em', boxShadow: `0 4px 16px ${btn}50` }}
               >
                 {(idleUploads.length === 1 ? t('guestPhotos.submit') : t('guestPhotos.submitPlural')).replace('{count}', String(idleUploads.length))} →
               </button>

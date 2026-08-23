@@ -3,7 +3,7 @@
 import { useRef } from "react"
 import { Camera, ArrowUpFromLine, X, Check, AlertCircle, Loader2 } from "lucide-react"
 import type { BaseVariantProps, UploadItem } from "./types"
-import { resolveBackground } from "./types"
+import { resolveBackground, getLuminance } from "./types"
 import { useI18n } from "@/components/contexts/i18n-context"
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -148,6 +148,7 @@ function OldMoneyUpload({
   } = props
 
   const { t } = useI18n()
+  const btnTextColor = getLuminance(accent) > 0.35 ? INK : PAPER
   const idleUploads = uploads.filter(u => u.progress === 'idle')
   const allDone = uploads.length > 0 && uploads.every(u => u.progress === 'done')
 
@@ -247,7 +248,7 @@ function OldMoneyUpload({
             <button
               onClick={onSubmitAll}
               className="mt-5 px-8 py-2.5 text-[11px] tracking-[0.35em] uppercase transition-all duration-200 hover:opacity-80 active:scale-[0.98]"
-              style={{ background: ink, color: bg }}
+              style={{ background: accent, color: btnTextColor, boxShadow: `0 4px 14px ${accent}45` }}
             >
               {idleUploads.length === 1
                 ? t('guestPhotos.contributePhoto')

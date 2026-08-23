@@ -31,6 +31,8 @@ export function MinimalVariant(props: BaseVariantProps) {
             inputBorder={c.inputBorder}
             textColor={c.textColor}
             mutedColor={c.mutedColor}
+            buttonBg={c.buttonBg}
+            buttonText={c.buttonText}
           />
         )}
       </div>

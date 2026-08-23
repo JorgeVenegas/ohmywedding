@@ -38,6 +38,8 @@ export function PolaroidVariant(props: BaseVariantProps) {
             inputBorder={c.bgColor ? c.inputBorder : 'rgba(0,0,0,0.1)'}
             textColor={c.bgColor ? c.textColor : '#374151'}
             mutedColor={c.bgColor ? c.mutedColor : '#9ca3af'}
+            buttonBg={c.buttonBg}
+            buttonText={c.buttonText}
           />
         )}
       </div>
