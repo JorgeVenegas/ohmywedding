@@ -360,12 +360,6 @@ function OldMoneyUpload({
         </div>
       )}
 
-      {/* Rejected-files notice */}
-      {props.uploadError && !isAtLimit && (
-        <p className="mt-3 text-[10px] tracking-[0.2em]" style={{ color: '#c0392b' }}>
-          {props.uploadError}
-        </p>
-      )}
 
       {/* Queue */}
       {uploads.length > 0 && (
@@ -389,10 +383,19 @@ function OldMoneyUpload({
 
           {idleUploads.length > 0 && (
             <div className="mt-5">
-              {nameEmpty && (
-                <p className="text-[10px] tracking-[0.2em] mb-3" style={{ color: MUTED }}>
-                  {uploaderPlaceholder} ↑
-                </p>
+              {/* Reason callout — name required or size limit */}
+              {(nameEmpty || props.uploadError) && (
+                <div
+                  className="flex items-start gap-2 mb-4 py-2.5 px-3"
+                  style={{
+                    borderLeft: `2px solid ${nameEmpty ? accent : '#c0392b'}`,
+                    background: nameEmpty ? `${accent}08` : 'rgba(192,57,43,0.05)',
+                  }}
+                >
+                  <p className="text-[10px] tracking-[0.15em] leading-relaxed" style={{ color: nameEmpty ? ink : '#c0392b' }}>
+                    {nameEmpty ? t('guestPhotos.nameRequired') : props.uploadError}
+                  </p>
+                </div>
               )}
               <button
                 onClick={onSubmitAll}

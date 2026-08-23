@@ -388,12 +388,6 @@ export function UploadArea({
         </div>
       )}
 
-      {/* Rejected-files notice */}
-      {uploadError && !isAtLimit && (
-        <p className="mt-2.5 text-xs text-center px-2" style={{ color: '#dc2626' }}>
-          {uploadError}
-        </p>
-      )}
 
       {/* Photo queue */}
       {hasUploads && (
@@ -473,16 +467,34 @@ export function UploadArea({
           {/* Submit CTA */}
           {idleUploads.length > 0 && (
             <>
-              {nameRequired && (
-                <p className="text-[11px] text-center mt-2" style={{ color: mutedColor }}>
-                  {t('guestPhotos.nameRequired')}
-                </p>
+              {/* Reason callout — shown whenever button is blocked */}
+              {(nameRequired || uploadError) && (
+                <div
+                  className="mt-3 flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
+                  style={{
+                    background: nameRequired ? `${primary}0f` : 'rgba(220,38,38,0.06)',
+                    border: `1px solid ${nameRequired ? `${primary}30` : 'rgba(220,38,38,0.2)'}`,
+                  }}
+                >
+                  <AlertCircle
+                    className="w-4 h-4 flex-shrink-0 mt-0.5"
+                    style={{ color: nameRequired ? primary : '#dc2626' }}
+                  />
+                  <p className="text-xs font-medium leading-snug" style={{ color: nameRequired ? primary : '#dc2626' }}>
+                    {nameRequired ? t('guestPhotos.nameRequired') : uploadError}
+                  </p>
+                </div>
               )}
               <button
                 onClick={onSubmitAll}
                 disabled={nameRequired}
-                className="w-full mt-2 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 hover:opacity-90 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ background: btn, color: buttonText, letterSpacing: '0.01em', boxShadow: `0 4px 16px ${btn}50` }}
+                className="w-full mt-3 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 hover:opacity-90 active:scale-[0.98] disabled:opacity-35 disabled:cursor-not-allowed"
+                style={{
+                  background: btn,
+                  color: buttonText,
+                  letterSpacing: '0.01em',
+                  boxShadow: nameRequired ? 'none' : `0 4px 16px ${btn}50`,
+                }}
               >
                 {(idleUploads.length === 1 ? t('guestPhotos.submit') : t('guestPhotos.submitPlural')).replace('{count}', String(idleUploads.length))} →
               </button>
