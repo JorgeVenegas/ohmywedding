@@ -21,8 +21,26 @@ const UPLOAD_ANIMATIONS = `
     0%,100% { opacity: 1; }
     50%      { opacity: 0.5; }
   }
-  .queue-item { animation: queueIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both; }
-  .pop-check  { animation: popCheck 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+  @keyframes successBounce {
+    0%   { opacity: 0; transform: scale(0.4); }
+    60%  { opacity: 1; transform: scale(1.15); }
+    80%  { transform: scale(0.94); }
+    100% { transform: scale(1); }
+  }
+  @keyframes ringExpand {
+    0%   { transform: scale(1); opacity: 0.55; }
+    100% { transform: scale(2.6); opacity: 0; }
+  }
+  @keyframes successFadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .queue-item    { animation: queueIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both; }
+  .pop-check     { animation: popCheck 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+  .success-icon  { animation: successBounce 0.55s cubic-bezier(0.34,1.56,0.64,1) both; }
+  .success-ring  { animation: ringExpand 1s ease-out 0.25s both; }
+  .success-title { animation: successFadeUp 0.4s ease-out 0.35s both; opacity: 0; }
+  .success-sub   { animation: successFadeUp 0.4s ease-out 0.5s both; opacity: 0; }
 `
 
 function ProgressRing({ progress }: { progress: number }) {
@@ -104,20 +122,37 @@ export function UploadArea({
   if (submitted) {
     return (
       <div className="mb-10">
+        <style>{UPLOAD_ANIMATIONS}</style>
         <div
-          className="text-center py-10 px-4 rounded-2xl"
-          style={{ background: `${primary}0a`, border: `1.5px dashed ${primary}30` }}
+          className="text-center py-16 px-6 rounded-2xl relative overflow-hidden"
+          style={{ background: `${primary}0d` }}
         >
+          {/* Soft radial glow behind the icon */}
           <div
-            className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ background: `${primary}18` }}
-          >
-            <CheckCircle2 className="w-7 h-7" style={{ color: primary }} />
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: `radial-gradient(ellipse 60% 50% at 50% 40%, ${primary}18 0%, transparent 70%)`,
+            }}
+          />
+
+          {/* Icon + expanding ring */}
+          <div className="relative inline-flex items-center justify-center mb-6">
+            <div
+              className="success-ring absolute rounded-full"
+              style={{ width: 80, height: 80, background: `${primary}35` }}
+            />
+            <div
+              className="success-icon relative w-20 h-20 rounded-full flex items-center justify-center"
+              style={{ background: `${primary}22` }}
+            >
+              <CheckCircle2 className="w-10 h-10" style={{ color: primary }} />
+            </div>
           </div>
-          <p className="text-base font-semibold mb-1" style={{ color: textColor }}>
+
+          <p className="success-title text-xl font-semibold mb-2" style={{ color: primary }}>
             {t('guestPhotos.submitted')}
           </p>
-          <p className="text-sm" style={{ color: mutedColor }}>
+          <p className="success-sub text-sm leading-relaxed max-w-xs mx-auto" style={{ color: mutedColor }}>
             {moderationEnabled ? t('guestPhotos.pendingReview') : t('guestPhotos.thankYouSharing')}
           </p>
         </div>

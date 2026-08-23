@@ -154,15 +154,29 @@ function OldMoneyUpload({
 
   if (submitted) {
     return (
-      <div className="mb-12">
-        <p className="text-[9px] tracking-[0.5em] uppercase mb-5" style={{ color: MUTED }}>
+      <div className="mb-12 album-pop">
+        <p className="text-[9px] tracking-[0.5em] uppercase mb-6" style={{ color: MUTED }}>
           {t('guestPhotos.contributionReceived')}
         </p>
-        <div className="py-8 px-4 text-center" style={{ border: `1px solid ${INK}12` }}>
-          <p className="text-sm italic mb-1" style={{ color: ink, fontFamily: 'var(--font-display, Georgia, serif)' }}>
+        <div
+          className="py-16 px-8 text-center"
+          style={{ border: `1px solid ${accent}30`, background: `${accent}07` }}
+        >
+          <p
+            className="leading-none mb-6"
+            style={{
+              fontFamily: 'var(--font-display, Georgia, serif)',
+              fontSize: 'clamp(3rem, 10vw, 5.5rem)',
+              fontWeight: 300,
+              fontStyle: 'italic',
+              color: ink,
+              letterSpacing: '-0.01em',
+            }}
+          >
             {t('guestPhotos.thankYou')}
           </p>
-          <p className="text-[11px] tracking-[0.2em]" style={{ color: MUTED }}>
+          <div className="w-10 h-px mx-auto mb-6" style={{ background: accent, opacity: 0.6 }} />
+          <p className="text-[11px] tracking-[0.3em] uppercase" style={{ color: MUTED }}>
             {moderationEnabled !== false ? t('guestPhotos.photographsPendingReview') : t('guestPhotos.photographsAddedAlbum')}
           </p>
         </div>
