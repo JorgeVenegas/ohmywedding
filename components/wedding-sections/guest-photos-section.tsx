@@ -91,8 +91,13 @@ export function GuestPhotosSection({
       .finally(() => setSettingsLoading(false))
   }, [weddingNameId])
 
+  const MAX_BATCH = 50
+
   const addFiles = (files: File[]) => {
-    const imageFiles = files.filter(f => f.type.startsWith("image/"))
+    const allImageFiles = files.filter(f => f.type.startsWith("image/") || f.type.startsWith("video/"))
+    const batchLimitExceeded = allImageFiles.length > MAX_BATCH
+    const imageFiles = batchLimitExceeded ? allImageFiles.slice(0, MAX_BATCH) : allImageFiles
+
     const currentBytes = uploads.reduce((sum, u) => sum + u.file.size, 0)
     const remaining = MAX_CONTRIBUTION_BYTES - currentBytes
 
@@ -109,7 +114,9 @@ export function GuestPhotosSection({
       }
     }
 
-    if (rejected > 0) {
+    if (batchLimitExceeded) {
+      setUploadError(t('guestPhotos.batchLimitReached'))
+    } else if (rejected > 0) {
       setUploadError(t('guestPhotos.uploadLimitReached'))
     } else {
       setUploadError(undefined)

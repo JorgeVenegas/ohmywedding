@@ -48,6 +48,7 @@ const PANEL_ANIMATIONS = `
 `
 
 function FileRow({ item, primary }: { item: UploadItem; primary: string }) {
+  const { t } = useI18n()
   const pct = Math.round((item.uploadProgress ?? 0) * 100)
   const R = 14
   const CIRC = 2 * Math.PI * R
@@ -111,11 +112,11 @@ function FileRow({ item, primary }: { item: UploadItem; primary: string }) {
         )}
         {item.progress === 'error' && (
           <p className="text-[10px] mt-0.5 truncate" style={{ color: '#dc2626' }}>
-            {item.error ?? 'Upload failed'}
+            {item.error ?? t('guestPhotos.uploadFailed')}
           </p>
         )}
         {item.progress === 'done' && (
-          <p className="text-[10px] mt-0.5" style={{ color: '#16a34a' }}>Uploaded</p>
+          <p className="text-[10px] mt-0.5" style={{ color: '#16a34a' }}>{t('guestPhotos.fileUploaded')}</p>
         )}
       </div>
 
@@ -187,10 +188,12 @@ function Panel({ uploads, primary, onRetryFailed }: UploadProgressPanelProps) {
   if (dismissed || active.length === 0) return null
 
   const headerText = isUploading
-    ? `Uploading ${pendingCount > 0 ? `${doneCount + 1} of ${active.length}` : active.length}…`
+    ? t('guestPhotos.uploadingProgress').replace('{{current}}', String(doneCount + 1)).replace('{{total}}', String(active.length))
     : errorCount > 0
     ? t('guestPhotos.uploadSummary').replace('{{succeeded}}', String(doneCount)).replace('{{failed}}', String(errorCount))
-    : `${doneCount} photo${doneCount !== 1 ? 's' : ''} uploaded`
+    : doneCount === 1
+    ? t('guestPhotos.photoUploaded')
+    : t('guestPhotos.photosUploadedPlural').replace('{{count}}', String(doneCount))
 
   const headerAccent = isUploading ? primary : errorCount > 0 ? '#ef4444' : '#22c55e'
 
@@ -198,7 +201,7 @@ function Panel({ uploads, primary, onRetryFailed }: UploadProgressPanelProps) {
     <>
       <style>{PANEL_ANIMATIONS}</style>
       <div
-        className={dismissing ? 'panel-exit' : 'panel-enter'}
+        className={`hidden sm:block ${dismissing ? 'panel-exit' : 'panel-enter'}`}
         style={{
           position: 'fixed',
           bottom: 24,

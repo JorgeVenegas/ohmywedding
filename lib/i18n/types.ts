@@ -634,6 +634,16 @@ export interface Translations {
     uploadSummary: string
     uploadAllFailed: string
     retryFailed: string
+    batchLimitReached: string
+    uploadFailed: string
+    fileUploaded: string
+    uploadingProgress: string
+    photoUploaded: string
+    photosUploadedPlural: string
+    photoShared: string
+    photosSharedPlural: string
+    photograph: string
+    photographsCount: string
   }
 
   // Location Section

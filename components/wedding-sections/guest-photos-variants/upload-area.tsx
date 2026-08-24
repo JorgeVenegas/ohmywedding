@@ -1,6 +1,6 @@
 "use client"
 
-import { Camera, ArrowUpFromLine, X, Check, AlertCircle, Ban, Heart } from "lucide-react"
+import { Camera, ArrowUpFromLine, X, Check, AlertCircle, Ban, Heart, Film } from "lucide-react"
 import type { UploadItem } from "./types"
 import { MAX_CONTRIBUTION_BYTES } from "./types"
 import { useI18n } from "@/components/contexts/i18n-context"
@@ -167,14 +167,14 @@ export function UploadArea({
   const isUploading = uploads.some(u => u.progress === 'uploading')
   const doneCount = uploads.filter(u => u.progress === 'done').length
   const errorCount = uploads.filter(u => u.progress === 'error').length
-  const showSummary = !isUploading && !submitted && idleUploads.length === 0 && errorCount > 0
-  const overallPct = uploads.length > 0
-    ? Math.min(99, Math.round(uploads.reduce((sum, u) => {
+  const activeUploads = uploads.filter(u => u.progress !== 'idle')
+  const overallPct = activeUploads.length > 0
+    ? Math.round(activeUploads.reduce((sum, u) => {
         if (u.progress === 'done' || u.progress === 'error') return sum + 100
-        if (u.progress === 'uploading') return sum + Math.round((u.uploadProgress ?? 0) * 100)
-        return sum
-      }, 0) / uploads.length))
+        return sum + Math.round((u.uploadProgress ?? 0) * 100)
+      }, 0) / activeUploads.length)
     : 0
+  const showSummary = !isUploading && !submitted && idleUploads.length === 0 && errorCount > 0
   const stepIndex = overallPct < 25 ? 0 : overallPct < 80 ? 1 : 2
   const stepKey = (['uploadStep1', 'uploadStep2', 'uploadStep3'] as const)[stepIndex]
 
@@ -268,7 +268,7 @@ export function UploadArea({
               >
                 <Heart className="w-3.5 h-3.5 text-white" fill="white" />
                 <span className="text-sm font-medium text-white" style={{ letterSpacing: '0.01em' }}>
-                  {count === 1 ? '1 photo shared' : `${count} photos shared`}
+                  {count === 1 ? t('guestPhotos.photoShared') : t('guestPhotos.photosSharedPlural').replace('{{count}}', String(count))}
                 </span>
               </div>
             </div>
@@ -375,7 +375,7 @@ export function UploadArea({
             border: isDragging ? 'none' : `2px dashed ${zoneBorder}`,
           }}
         >
-          <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
+          <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple className="hidden"
             onChange={e => onFileChange(e.target.files)} />
 
           {/* Marching-ants SVG border when dragging */}
@@ -429,7 +429,17 @@ export function UploadArea({
               >
                 {/* Image + overlays — overflow-hidden lives here, not the outer wrapper */}
                 <div className="absolute inset-0 rounded-xl overflow-hidden">
-                  <img src={item.preview} alt={item.file.name} className="w-full h-full object-cover" />
+                  {item.file.type.startsWith('video/')
+                    ? <video src={item.preview} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+                    : <img src={item.preview} alt={item.file.name} className="w-full h-full object-cover" />
+                  }
+
+                  {/* Video badge */}
+                  {item.file.type.startsWith('video/') && item.progress === 'idle' && (
+                    <div className="absolute top-1 left-1 rounded-sm px-0.5 py-0.5" style={{ background: 'rgba(0,0,0,0.55)' }}>
+                      <Film className="w-2.5 h-2.5 text-white" />
+                    </div>
+                  )}
 
                   {/* Uploading */}
                   {item.progress === 'uploading' && (
@@ -441,9 +451,9 @@ export function UploadArea({
                     </div>
                   )}
 
-                  {/* Done */}
+                  {/* Done — green tint */}
                   {item.progress === 'done' && (
-                    <div className="overlay-in absolute inset-0 bg-black/30 flex items-center justify-center">
+                    <div className="overlay-in absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(34,197,94,0.52)' }}>
                       <div className="pop-check">
                         <Check className="w-5 h-5 text-white" strokeWidth={3} />
                       </div>
@@ -492,6 +502,38 @@ export function UploadArea({
               </p>
             ))}
           </div>
+
+          {/* Mobile upload progress — compact ring + text, hidden on sm+ where the panel takes over */}
+          {isUploading && (
+            <div className="sm:hidden mt-3 flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: '#1c1917' }}>
+              <div className="relative flex-shrink-0" style={{ width: 40, height: 40 }}>
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 40 40">
+                  <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="3" />
+                  <circle
+                    cx="20" cy="20" r="16"
+                    fill="none" stroke={primary} strokeWidth="3"
+                    strokeDasharray={2 * Math.PI * 16}
+                    strokeDashoffset={2 * Math.PI * 16 * (1 - overallPct / 100)}
+                    strokeLinecap="round"
+                    style={{ transition: 'stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1)' }}
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold tabular-nums" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                  {overallPct}%
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-medium leading-snug" style={{ color: '#fff' }}>
+                  {t('guestPhotos.uploadingProgress')
+                    .replace('{{current}}', String(doneCount + 1))
+                    .replace('{{total}}', String(activeUploads.length))}
+                </p>
+                <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  {t('guestPhotos.uploading')}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Post-upload summary — shown when some failed and nothing is idle */}
           {showSummary && (

@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef } from "react"
-import { Camera, ArrowUpFromLine, X, Check, AlertCircle, Loader2 } from "lucide-react"
+import { Camera, ArrowUpFromLine, X, Check, AlertCircle, Loader2, Film } from "lucide-react"
 import type { BaseVariantProps, UploadItem } from "./types"
 import { resolveBackground, getLuminance, MAX_CONTRIBUTION_BYTES } from "./types"
 
@@ -114,8 +114,17 @@ function QueueThumb({ item, onRemove, accent }: { item: UploadItem; onRemove: ()
     <div className="relative flex-shrink-0" style={{ width: 64, height: 64 }}>
       {/* Image + overlays + corners — clipped separately */}
       <div className="absolute inset-0 overflow-hidden">
-        <img src={item.preview} alt={item.file.name} className="w-full h-full object-cover" />
+        {item.file.type.startsWith('video/')
+          ? <video src={item.preview} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+          : <img src={item.preview} alt={item.file.name} className="w-full h-full object-cover" />
+        }
         <PhotoCorners accent={accent} />
+
+        {item.file.type.startsWith('video/') && item.progress === 'idle' && (
+          <div className="absolute top-1 left-1 rounded-sm px-0.5 py-0.5" style={{ background: 'rgba(0,0,0,0.55)' }}>
+            <Film className="w-2.5 h-2.5 text-white" />
+          </div>
+        )}
 
         {item.progress === 'uploading' && (
           <div className="overlay-in absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -134,7 +143,7 @@ function QueueThumb({ item, onRemove, accent }: { item: UploadItem; onRemove: ()
           </div>
         )}
         {item.progress === 'done' && (
-          <div className="overlay-in absolute inset-0 bg-black/30 flex items-center justify-center">
+          <div className="overlay-in absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(34,197,94,0.52)' }}>
             <div className="check-bounce">
               <Check className="w-4 h-4 text-white" strokeWidth={2.5} />
             </div>
@@ -280,7 +289,7 @@ function OldMoneyUpload({
 
           {totalCount > 0 && (
             <p className="text-[9px] tracking-[0.4em] uppercase mb-5" style={{ color: MUTED }}>
-              {totalCount === 1 ? '1 photograph' : `${totalCount} photographs`}
+              {totalCount === 1 ? t('guestPhotos.photograph') : t('guestPhotos.photographsCount').replace('{{count}}', String(totalCount))}
             </p>
           )}
 
@@ -374,7 +383,7 @@ function OldMoneyUpload({
             background: isDragging ? `${accent}06` : 'transparent',
           }}
         >
-          <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
+          <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple className="hidden"
             onChange={e => onFileChange(e.target.files)} />
           <div style={{ color: isDragging ? accent : `${INK}35` }}>
             {isDragging
@@ -418,6 +427,38 @@ function OldMoneyUpload({
                   {item.progress === 'error' ? (item.error ?? '×') : ''}
                 </p>
               ))}
+            </div>
+          )}
+
+          {/* Mobile upload progress — hidden on sm+ where the floating panel takes over */}
+          {isUploading && (
+            <div className="sm:hidden mt-4 flex items-center gap-3 px-4 py-3" style={{ background: INK, borderRadius: 4 }}>
+              <div className="relative flex-shrink-0" style={{ width: 40, height: 40 }}>
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 40 40">
+                  <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="2.5" />
+                  <circle
+                    cx="20" cy="20" r="16"
+                    fill="none" stroke={accent} strokeWidth="2.5"
+                    strokeDasharray={2 * Math.PI * 16}
+                    strokeDashoffset={2 * Math.PI * 16 * (1 - overallPct / 100)}
+                    strokeLinecap="round"
+                    style={{ transition: 'stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1)' }}
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-[10px] font-medium tabular-nums" style={{ color: 'rgba(255,255,255,0.85)', fontFamily: 'var(--font-body, sans-serif)' }}>
+                  {overallPct}%
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] tracking-[0.08em] leading-snug" style={{ color: PAPER, fontFamily: 'var(--font-body, sans-serif)' }}>
+                  {t('guestPhotos.uploadingProgress')
+                    .replace('{{current}}', String(doneCount + 1))
+                    .replace('{{total}}', String(uploads.filter(u => u.progress !== 'idle').length))}
+                </p>
+                <p className="text-[10px] tracking-[0.2em] uppercase mt-0.5" style={{ color: `${PAPER}55` }}>
+                  {t('guestPhotos.uploading')}
+                </p>
+              </div>
             </div>
           )}
 
