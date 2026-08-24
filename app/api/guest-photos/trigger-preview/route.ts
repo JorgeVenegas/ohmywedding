@@ -40,9 +40,9 @@ export async function POST(request: NextRequest) {
 
     // Await directly — after() is unreliable in some environments (dev server, self-hosted).
     // The client calls this fire-and-forget so response latency doesn't matter.
-    await generatePreview(photo.id, photo.s3_key, photo.preview_attempts)
+    const result = await generatePreview(photo.id, photo.s3_key, photo.preview_attempts)
 
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true, generated: result.ok, error: result.error })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

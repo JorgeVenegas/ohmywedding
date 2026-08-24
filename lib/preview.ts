@@ -24,7 +24,7 @@ function previewKey(originalKey: string): string {
  * Updates the DB on success and increments preview_attempts on both success and failure.
  * Returns true on success, false on failure.
  */
-export async function generatePreview(photoId: string, s3Key: string, currentAttempts: number): Promise<boolean> {
+export async function generatePreview(photoId: string, s3Key: string, currentAttempts: number): Promise<{ ok: boolean; error?: string }> {
   const admin = createAdminSupabaseClient()
 
   try {
@@ -60,13 +60,13 @@ export async function generatePreview(photoId: string, s3Key: string, currentAtt
     }).eq('id', photoId)
 
     console.log(`[preview] generated ${preview} (${previewBuffer.length} bytes)`)
-    return true
+    return { ok: true }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     console.error(`[preview] failed for ${s3Key}: ${message}`)
     void admin.from('guest_photos')
       .update({ preview_attempts: currentAttempts + 1 })
       .eq('id', photoId)
-    return false
+    return { ok: false, error: message }
   }
 }

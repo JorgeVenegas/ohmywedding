@@ -32,9 +32,9 @@ export async function POST(request: NextRequest) {
       .update({ preview_attempts: 0, preview_key: null, preview_size: null })
       .eq('id', photoId)
 
-    const generated = await generatePreview(photo.id, photo.s3_key, 0)
+    const result = await generatePreview(photo.id, photo.s3_key, 0)
 
-    return NextResponse.json({ ok: true, generated })
+    return NextResponse.json({ ok: true, generated: result.ok, error: result.error })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     console.error('[retry-preview]', message)
