@@ -10,7 +10,7 @@ import { useTranslation } from "@/components/contexts/i18n-context"
 import {
   Check, X, Download, Loader2, Camera, Copy, CheckCircle2,
   ExternalLink, Trash2, ChevronLeft, ChevronRight, ArrowLeft, Heart, Maximize2,
-  Info, MapPin, Clock, Aperture, FileImage, User, ChevronDown, AlertTriangle,
+  Info, MapPin, Clock, Aperture, FileImage, User, ChevronDown, AlertTriangle, RotateCw,
 } from "lucide-react"
 
 interface GalleryPageProps {
@@ -243,7 +243,7 @@ function MetaRow({ icon: Icon, label, value }: { icon: LucideIcon; label: string
 
 // ─── Review mode ─────────────────────────────────────────────────────────────
 
-function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, favorites, onToggleFavorite }: {
+function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, favorites, onToggleFavorite, onRetryPreview, retryingPreview }: {
   photos: GuestPhoto[]
   startIndex: number
   onClose: () => void
@@ -251,6 +251,8 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
   onDelete: (id: string) => Promise<void>
   favorites: Set<string>
   onToggleFavorite: (id: string) => void
+  onRetryPreview: (id: string) => void
+  retryingPreview: string | null
 }) {
   const [index, setIndex]                 = useState(startIndex)
   const [direction, setDirection]         = useState<"next" | "prev" | null>(null)
@@ -706,6 +708,18 @@ function ReviewMode({ photos, startIndex, onClose, onStatusChange, onDelete, fav
                     <p className="text-sm">
                       {current.preview_status === 'generating' ? 'Preview generating…' : 'Preview not available'}
                     </p>
+                    <button
+                      onClick={() => onRetryPreview(current.id)}
+                      disabled={retryingPreview === current.id}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                      style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}
+                    >
+                      {retryingPreview === current.id
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <RotateCw className="w-3.5 h-3.5" />
+                      }
+                      Retry preview
+                    </button>
                   </div>
                 )}
               </div>
@@ -1379,11 +1393,26 @@ export default function GalleryPage({ params }: GalleryPageProps) {
   const [qrModalOpen, setQrModalOpen]                 = useState(false)
   const [shareExpanded, setShareExpanded]             = useState(false)
   const [coupleInitials, setCoupleInitials]           = useState("")
+  const [retryingPreview, setRetryingPreview]         = useState<string | null>(null)
   const [displayFontFamily, setDisplayFontFamily]     = useState<string | undefined>()
   const [themeColors, setThemeColors]                 = useState<{ primary?: string; secondary?: string; accent?: string } | undefined>()
 
   const toggleFavorite = useCallback((id: string) => {
     setFavorites(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s })
+  }, [])
+
+  const retryPreview = useCallback(async (photoId: string) => {
+    setRetryingPreview(photoId)
+    try {
+      await fetch('/api/guest-photos/retry-preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photoId }),
+      })
+      setPhotos(prev => prev.map(p => p.id === photoId ? { ...p, preview_status: 'generating' } : p))
+    } finally {
+      setRetryingPreview(null)
+    }
   }, [])
 
   const uploadUrl =
@@ -1566,6 +1595,8 @@ export default function GalleryPage({ params }: GalleryPageProps) {
           onDelete={deletePhoto}
           favorites={favorites}
           onToggleFavorite={toggleFavorite}
+          onRetryPreview={retryPreview}
+          retryingPreview={retryingPreview}
         />
       )}
 
@@ -1841,6 +1872,18 @@ export default function GalleryPage({ params }: GalleryPageProps) {
                       <span className="text-[9px] text-[#420c14]/30 leading-none">
                         {photo.preview_status === 'generating' ? 'Generating…' : 'No preview'}
                       </span>
+                      <button
+                        onClick={e => { e.stopPropagation(); retryPreview(photo.id) }}
+                        disabled={retryingPreview === photo.id}
+                        className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-medium pointer-events-auto"
+                        style={{ background: 'rgba(66,12,20,0.08)', color: 'rgba(66,12,20,0.45)' }}
+                      >
+                        {retryingPreview === photo.id
+                          ? <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                          : <RotateCw className="w-2.5 h-2.5" />
+                        }
+                        Retry
+                      </button>
                     </div>
                   )}
 

@@ -432,7 +432,7 @@ export function UploadArea({
                 {(item.progress === 'idle' || item.progress === 'error') && (
                   <button
                     onClick={e => { e.stopPropagation(); onRemoveUpload(item.id) }}
-                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center"
                   >
                     <X className="w-3 h-3 text-white" />
                   </button>
@@ -449,7 +449,7 @@ export function UploadArea({
                 className="flex-shrink-0 text-[10px] text-center truncate"
                 style={{ width: 72, color: item.progress === 'error' ? '#ef4444' : mutedColor }}
               >
-                {item.progress === 'error' ? t('guestPhotos.failed') : item.progress === 'done' ? `✓ ${t('guestPhotos.shared')}` : item.file.name}
+                {item.progress === 'error' ? (item.error ?? t('guestPhotos.failed')) : item.progress === 'done' ? `✓ ${t('guestPhotos.shared')}` : item.file.name}
               </p>
             ))}
           </div>

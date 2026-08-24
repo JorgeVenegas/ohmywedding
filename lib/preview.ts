@@ -38,7 +38,8 @@ export async function generatePreview(photoId: string, s3Key: string, currentAtt
 
     // Lazy-import Sharp — native module, avoid loading at module init time
     const sharp = (await import('sharp')).default
-    const previewBuffer = await sharp(buffer)
+    const previewBuffer = await sharp(buffer, { limitInputPixels: false, failOnError: false })
+      .rotate()
       .resize(PREVIEW_WIDTH, undefined, { withoutEnlargement: true })
       .webp({ quality: 80 })
       .toBuffer()

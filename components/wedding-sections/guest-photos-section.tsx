@@ -217,8 +217,9 @@ export function GuestPhotosSection({
 
       setUploads(prev => prev.map(u => u.id === item.id ? { ...u, progress: "done", uploadProgress: 1 } : u))
       return { url: key, name: uploaderName.trim() || null, uid: `opt-${item.id}` }
-    } catch {
-      setUploads(prev => prev.map(u => u.id === item.id ? { ...u, progress: "error", error: "Upload failed. Please try again." } : u))
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Upload failed. Please try again."
+      setUploads(prev => prev.map(u => u.id === item.id ? { ...u, progress: "error", error: message } : u))
       return null
     }
   }

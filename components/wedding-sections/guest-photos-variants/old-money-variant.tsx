@@ -125,7 +125,7 @@ function QueueThumb({ item, onRemove, accent }: { item: UploadItem; onRemove: ()
       {(item.progress === 'idle' || item.progress === 'error') && (
         <button
           onClick={onRemove}
-          className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 flex items-center justify-center"
         >
           <X className="w-2.5 h-2.5 text-white" />
         </button>
@@ -374,6 +374,21 @@ function OldMoneyUpload({
               />
             ))}
           </div>
+
+          {/* Error captions */}
+          {uploads.some(u => u.progress === 'error') && (
+            <div className="flex gap-3 mt-1 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              {uploads.map(item => (
+                <p
+                  key={item.id}
+                  className="flex-shrink-0 text-[9px] text-center truncate"
+                  style={{ width: 64, color: item.progress === 'error' ? '#c0392b' : 'transparent' }}
+                >
+                  {item.progress === 'error' ? (item.error ?? '×') : ''}
+                </p>
+              ))}
+            </div>
+          )}
 
           {allDone && (
             <p className="mt-3 text-[10px] tracking-[0.3em] uppercase" style={{ color: accent }}>
