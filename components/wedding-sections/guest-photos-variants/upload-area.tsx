@@ -1,9 +1,10 @@
 "use client"
 
-import { Camera, ArrowUpFromLine, X, Check, AlertCircle, CheckCircle2, Ban } from "lucide-react"
+import { Camera, ArrowUpFromLine, X, Check, AlertCircle, Ban, Heart } from "lucide-react"
 import type { UploadItem } from "./types"
 import { MAX_CONTRIBUTION_BYTES } from "./types"
 import { useI18n } from "@/components/contexts/i18n-context"
+import { UploadProgressPanel } from "./upload-progress-panel"
 
 function fmtBytes(bytes: number): string {
   if (bytes >= 1_073_741_824) return `${(bytes / 1_073_741_824).toFixed(1)} GB`
@@ -24,10 +25,6 @@ const UPLOAD_ANIMATIONS = `
     60%  { transform: scale(1.25) rotate(4deg); opacity: 1; }
     100% { transform: scale(1) rotate(0deg); opacity: 1; }
   }
-  @keyframes pulseRing {
-    0%,100% { opacity: 1; }
-    50%      { opacity: 0.5; }
-  }
   @keyframes successBounce {
     0%   { opacity: 0; transform: scale(0.4); }
     60%  { opacity: 1; transform: scale(1.15); }
@@ -42,12 +39,14 @@ const UPLOAD_ANIMATIONS = `
     from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-  @keyframes uploadSpin {
-    to { transform: rotate(360deg); }
+  @keyframes overlayFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
   }
-  @keyframes uploadLabelIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
+  @keyframes errorShake {
+    0%,100% { transform: translateX(0); }
+    25%      { transform: translateX(-3px); }
+    75%      { transform: translateX(3px); }
   }
   .queue-item      { animation: queueIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both; }
   .pop-check       { animation: popCheck 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
@@ -55,8 +54,29 @@ const UPLOAD_ANIMATIONS = `
   .success-ring    { animation: ringExpand 1s ease-out 0.25s both; }
   .success-title   { animation: successFadeUp 0.4s ease-out 0.35s both; opacity: 0; }
   .success-sub     { animation: successFadeUp 0.4s ease-out 0.5s both; opacity: 0; }
-  .upload-spin     { animation: uploadSpin 6s linear infinite; transform-origin: 68px 68px; }
-  .upload-label-in { animation: uploadLabelIn 0.25s ease-out both; }
+  .overlay-in      { animation: overlayFadeIn 0.18s ease both; }
+  .error-shake     { animation: errorShake 0.32s ease both 0.05s; }
+
+  @keyframes mosaicReveal {
+    from { opacity: 0; transform: scale(1.06); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes badgeFloat {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes captionDrift {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes cardReveal {
+    from { opacity: 0; transform: translateY(20px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .mosaic-img    { animation: mosaicReveal 0.55s cubic-bezier(0.4,0,0.2,1) both; }
+  .mosaic-badge  { animation: badgeFloat   0.45s cubic-bezier(0.34,1.56,0.64,1) 0.4s both; opacity: 0; }
+  .mosaic-caption{ animation: captionDrift 0.4s  ease 0.55s both; opacity: 0; }
+  .card-reveal   { animation: cardReveal   0.5s  cubic-bezier(0.34,1.36,0.64,1) both; }
 `
 
 function ProgressRing({ progress }: { progress: number }) {
@@ -70,7 +90,7 @@ function ProgressRing({ progress }: { progress: number }) {
         strokeDasharray={circ}
         strokeDashoffset={circ * (1 - progress)}
         strokeLinecap="round"
-        style={{ transition: 'stroke-dashoffset 0.15s linear' }}
+        style={{ transition: 'stroke-dashoffset 0.45s cubic-bezier(0.4,0,0.2,1)' }}
       />
     </svg>
   )
@@ -91,6 +111,7 @@ interface UploadAreaProps {
   onFileChange: (files: FileList | null) => void
   onRemoveUpload: (id: string) => void
   onSubmitAll: () => void
+  onRetryFailed?: () => void
   zoneBg?: string
   zoneBorder?: string
   zoneBorderDragging?: string
@@ -104,6 +125,7 @@ interface UploadAreaProps {
   textColor?: string
   mutedColor?: string
   submitted?: boolean
+  submittedUploads?: UploadItem[]
   moderationEnabled?: boolean
   uploadError?: string
 }
@@ -111,7 +133,7 @@ interface UploadAreaProps {
 export function UploadArea({
   primary, uploaderPlaceholder, uploads, uploaderName, isDragging, fileInputRef,
   onUploaderNameChange, onDragOver, onDragLeave, onDrop, onDropZoneClick, onFileChange,
-  onRemoveUpload, onSubmitAll,
+  onRemoveUpload, onSubmitAll, onRetryFailed,
   zoneBg = '#fafaf9',
   zoneBorder = 'rgba(0,0,0,0.12)',
   zoneBorderDragging,
@@ -125,6 +147,7 @@ export function UploadArea({
   textColor = '#374151',
   mutedColor = '#9ca3af',
   submitted = false,
+  submittedUploads = [],
   moderationEnabled = true,
   uploadError,
 }: UploadAreaProps) {
@@ -142,6 +165,9 @@ export function UploadArea({
   const usedPct = Math.min(100, (usedBytes / MAX_CONTRIBUTION_BYTES) * 100)
 
   const isUploading = uploads.some(u => u.progress === 'uploading')
+  const doneCount = uploads.filter(u => u.progress === 'done').length
+  const errorCount = uploads.filter(u => u.progress === 'error').length
+  const showSummary = !isUploading && !submitted && idleUploads.length === 0 && errorCount > 0
   const overallPct = uploads.length > 0
     ? Math.min(99, Math.round(uploads.reduce((sum, u) => {
         if (u.progress === 'done' || u.progress === 'error') return sum + 100
@@ -155,109 +181,108 @@ export function UploadArea({
   const R = 46
   const CIRC = 2 * Math.PI * R
 
-  if (isUploading) {
-    return (
-      <div className="mb-10">
-        <style>{UPLOAD_ANIMATIONS}</style>
-        <div
-          className="py-14 px-6 text-center rounded-2xl relative overflow-hidden"
-          style={{ background: `${primary}0d` }}
-        >
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: `radial-gradient(ellipse 70% 60% at 50% 40%, ${primary}14 0%, transparent 70%)` }}
-          />
-
-          {/* Progress ring */}
-          <div className="relative inline-flex items-center justify-center mb-6" style={{ width: 120, height: 120 }}>
-            {/* Spinning dashed outer ring */}
-            <svg width="136" height="136" viewBox="0 0 136 136" className="upload-spin absolute" style={{ top: -8, left: -8 }}>
-              <circle cx="68" cy="68" r="64" fill="none" strokeWidth="1.5"
-                strokeDasharray="5 22" strokeLinecap="round"
-                style={{ stroke: `${primary}40` }}
-              />
-            </svg>
-            {/* Progress arc */}
-            <svg width="120" height="120" viewBox="0 0 120 120" style={{ transform: 'rotate(-90deg)' }}>
-              <circle cx="60" cy="60" r={R} fill="none" stroke={`${primary}1a`} strokeWidth="5" />
-              <circle
-                cx="60" cy="60" r={R} fill="none" stroke={primary} strokeWidth="5"
-                strokeLinecap="round"
-                strokeDasharray={CIRC}
-                strokeDashoffset={CIRC * (1 - overallPct / 100)}
-                style={{ transition: 'stroke-dashoffset 0.5s ease' }}
-              />
-            </svg>
-            {/* Percentage */}
-            <span
-              className="absolute text-2xl font-semibold tabular-nums"
-              style={{ color: primary, letterSpacing: '-0.03em' }}
-            >
-              {overallPct}%
-            </span>
-          </div>
-
-          {/* Step label — keyed so it fades on change */}
-          <p key={stepKey} className="upload-label-in text-sm font-medium mb-5" style={{ color: textColor }}>
-            {t(`guestPhotos.${stepKey}`)}
-          </p>
-
-          {/* Step dots */}
-          <div className="flex items-center justify-center gap-2">
-            {[0, 1, 2].map(i => (
-              <div
-                key={i}
-                className="rounded-full"
-                style={{
-                  width: i === stepIndex ? 20 : 6,
-                  height: 6,
-                  background: i <= stepIndex ? primary : `${primary}25`,
-                  transition: 'width 0.3s ease, background 0.3s ease',
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // Google Drive-style panel handles uploading state — no full-screen overlay needed
 
   if (submitted) {
-    return (
-      <div className="mb-10">
-        <style>{UPLOAD_ANIMATIONS}</style>
-        <div
-          className="text-center py-16 px-6 rounded-2xl relative overflow-hidden"
-          style={{ background: `${primary}0d` }}
-        >
-          {/* Soft radial glow behind the icon */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: `radial-gradient(ellipse 60% 50% at 50% 40%, ${primary}18 0%, transparent 70%)`,
-            }}
-          />
+    const photos = submittedUploads.filter(p => p.preview)
+    const shown = photos.slice(0, 4)
+    const extra = photos.length > 4 ? photos.length - 4 : 0
+    const count = photos.length
 
-          {/* Icon + expanding ring */}
-          <div className="relative inline-flex items-center justify-center mb-6">
+    // Build the mosaic grid based on photo count
+    const renderMosaic = () => {
+      if (shown.length === 0) return null
+      if (shown.length === 1) {
+        return (
+          <img
+            src={shown[0].preview} alt=""
+            className="mosaic-img absolute inset-0 w-full h-full object-cover"
+          />
+        )
+      }
+      if (shown.length === 2) {
+        return (
+          <div className="absolute inset-0 grid grid-cols-2" style={{ gap: 2 }}>
+            {shown.map((p, i) => (
+              <img key={p.id} src={p.preview} alt="" className="mosaic-img w-full h-full object-cover"
+                style={{ animationDelay: `${i * 0.08}s` }} />
+            ))}
+          </div>
+        )
+      }
+      if (shown.length === 3) {
+        return (
+          <div className="absolute inset-0 grid" style={{ gridTemplateColumns: '2fr 1fr', gap: 2 }}>
+            <img src={shown[0].preview} alt="" className="mosaic-img w-full h-full object-cover" style={{ animationDelay: '0s' }} />
+            <div className="grid grid-rows-2" style={{ gap: 2 }}>
+              <img src={shown[1].preview} alt="" className="mosaic-img w-full h-full object-cover" style={{ animationDelay: '0.08s' }} />
+              <img src={shown[2].preview} alt="" className="mosaic-img w-full h-full object-cover" style={{ animationDelay: '0.16s' }} />
+            </div>
+          </div>
+        )
+      }
+      // 4+
+      return (
+        <div className="absolute inset-0 grid grid-cols-2 grid-rows-2" style={{ gap: 2 }}>
+          {shown.map((p, i) => (
+            <div key={p.id} className="relative overflow-hidden">
+              <img src={p.preview} alt="" className="mosaic-img w-full h-full object-cover"
+                style={{ animationDelay: `${i * 0.07}s` }} />
+              {i === 3 && extra > 0 && (
+                <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+                  <span className="text-white text-xl font-semibold">+{extra}</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )
+    }
+
+    return (
+      <div className="mb-10 card-reveal">
+        <style>{UPLOAD_ANIMATIONS}</style>
+
+        <div className="rounded-2xl overflow-hidden" style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.12)' }}>
+          {/* Photo mosaic */}
+          <div className="relative" style={{ aspectRatio: shown.length <= 1 ? '16/9' : shown.length <= 3 ? '4/3' : '1/1' }}>
+            {shown.length > 0 ? renderMosaic() : (
+              <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${primary}33 0%, ${primary}11 100%)` }} />
+            )}
+
+            {/* Bottom gradient for legibility */}
             <div
-              className="success-ring absolute rounded-full"
-              style={{ width: 80, height: 80, background: `${primary}35` }}
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.18) 55%, transparent 100%)' }}
             />
-            <div
-              className="success-icon relative w-20 h-20 rounded-full flex items-center justify-center"
-              style={{ background: `${primary}22` }}
-            >
-              <CheckCircle2 className="w-10 h-10" style={{ color: primary }} />
+
+            {/* Frosted glass badge */}
+            <div className="mosaic-badge absolute bottom-0 left-0 right-0 pb-5 flex justify-center">
+              <div
+                className="flex items-center gap-2.5 px-5 py-2.5 rounded-full"
+                style={{
+                  background: 'rgba(255,255,255,0.13)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255,255,255,0.22)',
+                }}
+              >
+                <Heart className="w-3.5 h-3.5 text-white" fill="white" />
+                <span className="text-sm font-medium text-white" style={{ letterSpacing: '0.01em' }}>
+                  {count === 1 ? '1 photo shared' : `${count} photos shared`}
+                </span>
+              </div>
             </div>
           </div>
 
-          <p className="success-title text-xl font-semibold mb-2" style={{ color: primary }}>
-            {t('guestPhotos.submitted')}
-          </p>
-          <p className="success-sub text-sm leading-relaxed max-w-xs mx-auto" style={{ color: mutedColor }}>
-            {moderationEnabled ? t('guestPhotos.pendingReview') : t('guestPhotos.thankYouSharing')}
-          </p>
+          {/* Caption strip */}
+          <div
+            className="mosaic-caption px-6 py-4 text-center"
+            style={{ background: `${primary}0d`, borderTop: `1px solid ${primary}14` }}
+          >
+            <p className="text-xs tracking-wide" style={{ color: mutedColor }}>
+              {moderationEnabled ? t('guestPhotos.pendingReview') : t('guestPhotos.thankYouSharing')}
+            </p>
+          </div>
         </div>
       </div>
     )
@@ -266,6 +291,7 @@ export function UploadArea({
   return (
     <div className="mb-10">
       <style>{UPLOAD_ANIMATIONS}</style>
+      <UploadProgressPanel uploads={uploads} primary={primary} onRetryFailed={onRetryFailed} />
 
       {/* Name input */}
       <div className="relative mb-3">
@@ -301,10 +327,11 @@ export function UploadArea({
           </div>
           <div className="h-1 rounded-full overflow-hidden" style={{ background: `${primary}18` }}>
             <div
-              className="h-full rounded-full transition-all duration-500"
+              className="h-full rounded-full"
               style={{
                 width: `${usedPct}%`,
                 background: usedPct >= 95 ? '#dc2626' : usedPct >= 75 ? '#f59e0b' : primary,
+                transition: 'width 0.6s cubic-bezier(0.4,0,0.2,1), background 0.4s ease',
               }}
             />
           </div>
@@ -392,47 +419,59 @@ export function UploadArea({
       {/* Photo queue */}
       {hasUploads && (
         <div className="mt-4">
-          {/* Thumbnail strip */}
-          <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          {/* Thumbnail strip — pt-3 gives vertical room for the remove bubble */}
+          <div className="flex gap-2.5 overflow-x-auto" style={{ scrollbarWidth: 'none', paddingTop: 10, paddingBottom: 4, paddingRight: 10 }}>
             {uploads.map((item, i) => (
               <div
                 key={item.id}
-                className="relative flex-shrink-0 rounded-xl overflow-hidden group queue-item"
+                className="relative flex-shrink-0 queue-item"
                 style={{ width: 72, height: 72, animationDelay: `${i * 0.04}s` }}
               >
-                <img src={item.preview} alt={item.file.name} className="w-full h-full object-cover" />
+                {/* Image + overlays — overflow-hidden lives here, not the outer wrapper */}
+                <div className="absolute inset-0 rounded-xl overflow-hidden">
+                  <img src={item.preview} alt={item.file.name} className="w-full h-full object-cover" />
 
-                {/* Uploading */}
-                {item.progress === 'uploading' && (
-                  <div className="absolute inset-0 bg-black/45 flex items-center justify-center">
-                    <ProgressRing progress={item.uploadProgress ?? 0} />
-                    <span className="absolute text-[9px] text-white font-medium">
-                      {Math.round((item.uploadProgress ?? 0) * 100)}%
-                    </span>
-                  </div>
-                )}
-
-                {/* Done */}
-                {item.progress === 'done' && (
-                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                    <div className="pop-check">
-                      <Check className="w-5 h-5 text-white" strokeWidth={3} />
+                  {/* Uploading */}
+                  {item.progress === 'uploading' && (
+                    <div className="overlay-in absolute inset-0 bg-black/45 flex items-center justify-center">
+                      <ProgressRing progress={item.uploadProgress ?? 0} />
+                      <span className="absolute text-[9px] text-white font-medium tabular-nums">
+                        {Math.round((item.uploadProgress ?? 0) * 100)}%
+                      </span>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Error */}
-                {item.progress === 'error' && (
-                  <div className="absolute inset-0 bg-red-500/55 flex items-center justify-center">
-                    <AlertCircle className="w-5 h-5 text-white" />
-                  </div>
-                )}
+                  {/* Done */}
+                  {item.progress === 'done' && (
+                    <div className="overlay-in absolute inset-0 bg-black/30 flex items-center justify-center">
+                      <div className="pop-check">
+                        <Check className="w-5 h-5 text-white" strokeWidth={3} />
+                      </div>
+                    </div>
+                  )}
 
-                {/* Remove */}
+                  {/* Error */}
+                  {item.progress === 'error' && (
+                    <div className="overlay-in absolute inset-0 bg-red-500/55 flex items-center justify-center">
+                      <div className="error-shake">
+                        <AlertCircle className="w-5 h-5 text-white" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Remove bubble — sits outside overflow-hidden, pops off the corner */}
                 {(item.progress === 'idle' || item.progress === 'error') && (
                   <button
                     onClick={e => { e.stopPropagation(); onRemoveUpload(item.id) }}
-                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center"
+                    className="absolute flex items-center justify-center rounded-full"
+                    style={{
+                      top: -8, right: -8,
+                      width: 20, height: 20,
+                      background: '#111',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+                      zIndex: 10,
+                    }}
                   >
                     <X className="w-3 h-3 text-white" />
                   </button>
@@ -442,7 +481,7 @@ export function UploadArea({
           </div>
 
           {/* File name captions */}
-          <div className="flex gap-2.5 mt-1 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex gap-2.5 mt-1 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', paddingRight: 10 }}>
             {uploads.map(item => (
               <p
                 key={item.id}
@@ -454,8 +493,40 @@ export function UploadArea({
             ))}
           </div>
 
-          {/* Success banner */}
-          {allDone && (
+          {/* Post-upload summary — shown when some failed and nothing is idle */}
+          {showSummary && (
+            <div className="mt-3 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(220,38,38,0.18)' }}>
+              <div className="px-3 py-2.5" style={{ background: 'rgba(220,38,38,0.05)' }}>
+                <div className="flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#dc2626' }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold leading-snug" style={{ color: '#dc2626' }}>
+                      {doneCount > 0
+                        ? t('guestPhotos.uploadSummary')
+                            .replace('{{succeeded}}', String(doneCount))
+                            .replace('{{failed}}', String(errorCount))
+                        : t('guestPhotos.uploadAllFailed')}
+                    </p>
+                    {uploads.filter(u => u.progress === 'error').map(item => (
+                      <p key={item.id} className="text-[10px] mt-0.5 truncate" style={{ color: 'rgba(220,38,38,0.75)' }}>
+                        {item.file.name}{item.error ? ` — ${item.error}` : ''}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={onRetryFailed}
+                className="w-full py-2.5 text-xs font-medium transition-all duration-150 hover:opacity-80 active:scale-[0.99]"
+                style={{ background: '#dc2626', color: '#fff' }}
+              >
+                {t('guestPhotos.retryFailed')} →
+              </button>
+            </div>
+          )}
+
+          {/* All-done banner */}
+          {allDone && !showSummary && (
             <div
               className="mt-3 py-3 rounded-xl text-center text-sm font-medium transition-all"
               style={{ background: `${primary}14`, color: primary }}
@@ -487,7 +558,7 @@ export function UploadArea({
               )}
               <button
                 onClick={onSubmitAll}
-                disabled={nameRequired}
+                disabled={nameRequired || isUploading}
                 className="w-full mt-3 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 hover:opacity-90 active:scale-[0.98] disabled:opacity-35 disabled:cursor-not-allowed"
                 style={{
                   background: btn,

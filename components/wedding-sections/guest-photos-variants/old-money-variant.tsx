@@ -11,6 +11,7 @@ function fmtBytes(bytes: number): string {
   return `${(bytes / 1024).toFixed(0)} KB`
 }
 import { useI18n } from "@/components/contexts/i18n-context"
+import { UploadProgressPanel } from "./upload-progress-panel"
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 // Deliberately NOT using the ornaments library — that's what makes it look AI-generated.
@@ -34,13 +35,31 @@ const ANIMATIONS = `
     70%  { opacity: 1; transform: scale(1.05) rotate(1deg); }
     100% { opacity: 1; transform: scale(1)    rotate(0deg); }
   }
-  .album-photo { animation: albumFadeIn 0.5s cubic-bezier(0.22,1,0.36,1) forwards; opacity: 0; }
-  .album-pop   { animation: albumPop   0.3s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  @keyframes overlayFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes checkBounce {
+    0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+    55%  { transform: scale(1.25) rotate(6deg); opacity: 1; }
+    78%  { transform: scale(0.93) rotate(-2deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  @keyframes errorShake {
+    0%,100% { transform: translateX(0); }
+    25%      { transform: translateX(-3px); }
+    75%      { transform: translateX(3px); }
+  }
+  .album-photo  { animation: albumFadeIn 0.5s cubic-bezier(0.22,1,0.36,1) forwards; opacity: 0; }
+  .album-pop    { animation: albumPop   0.3s cubic-bezier(0.34,1.56,0.64,1) forwards; }
   .album-shimmer {
     background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.07) 50%, rgba(0,0,0,0.04) 75%);
     background-size: 200% 100%;
     animation: albumShimmer 1.6s ease-in-out infinite;
   }
+  .overlay-in   { animation: overlayFadeIn 0.18s ease both; }
+  .check-bounce { animation: checkBounce 0.38s cubic-bezier(0.34,1.56,0.64,1) both; }
+  .error-shake  { animation: errorShake 0.32s ease both 0.05s; }
 `
 
 // ─── Paper grain overlay ───────────────────────────────────────────────────────
@@ -92,40 +111,56 @@ function PhotoCorners({ accent }: { accent: string }) {
 
 function QueueThumb({ item, onRemove, accent }: { item: UploadItem; onRemove: () => void; accent: string }) {
   return (
-    <div className="relative flex-shrink-0 group" style={{ width: 64, height: 64 }}>
-      <img src={item.preview} alt={item.file.name} className="w-full h-full object-cover" />
-      <PhotoCorners accent={accent} />
+    <div className="relative flex-shrink-0" style={{ width: 64, height: 64 }}>
+      {/* Image + overlays + corners — clipped separately */}
+      <div className="absolute inset-0 overflow-hidden">
+        <img src={item.preview} alt={item.file.name} className="w-full h-full object-cover" />
+        <PhotoCorners accent={accent} />
 
-      {item.progress === 'uploading' && (
-        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-          <div className="relative w-7 h-7">
-            <svg className="w-full h-full -rotate-90" viewBox="0 0 28 28">
-              <circle cx="14" cy="14" r="11" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" />
-              <circle
-                cx="14" cy="14" r="11" fill="none" stroke="white" strokeWidth="2"
-                strokeDasharray={2 * Math.PI * 11}
-                strokeDashoffset={2 * Math.PI * 11 * (1 - (item.uploadProgress ?? 0))}
-                strokeLinecap="round"
-                style={{ transition: 'stroke-dashoffset 0.15s linear' }}
-              />
-            </svg>
+        {item.progress === 'uploading' && (
+          <div className="overlay-in absolute inset-0 bg-black/40 flex items-center justify-center">
+            <div className="relative w-7 h-7">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 28 28">
+                <circle cx="14" cy="14" r="11" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" />
+                <circle
+                  cx="14" cy="14" r="11" fill="none" stroke="white" strokeWidth="2"
+                  strokeDasharray={2 * Math.PI * 11}
+                  strokeDashoffset={2 * Math.PI * 11 * (1 - (item.uploadProgress ?? 0))}
+                  strokeLinecap="round"
+                  style={{ transition: 'stroke-dashoffset 0.45s cubic-bezier(0.4,0,0.2,1)' }}
+                />
+              </svg>
+            </div>
           </div>
-        </div>
-      )}
-      {item.progress === 'done' && (
-        <div className="absolute inset-0 bg-black/30 flex items-center justify-center album-pop">
-          <Check className="w-4 h-4 text-white" strokeWidth={2.5} />
-        </div>
-      )}
-      {item.progress === 'error' && (
-        <div className="absolute inset-0 bg-red-600/50 flex items-center justify-center">
-          <AlertCircle className="w-4 h-4 text-white" />
-        </div>
-      )}
+        )}
+        {item.progress === 'done' && (
+          <div className="overlay-in absolute inset-0 bg-black/30 flex items-center justify-center">
+            <div className="check-bounce">
+              <Check className="w-4 h-4 text-white" strokeWidth={2.5} />
+            </div>
+          </div>
+        )}
+        {item.progress === 'error' && (
+          <div className="overlay-in absolute inset-0 bg-red-600/50 flex items-center justify-center">
+            <div className="error-shake">
+              <AlertCircle className="w-4 h-4 text-white" />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Remove bubble — outside overflow-hidden, pops off the corner */}
       {(item.progress === 'idle' || item.progress === 'error') && (
         <button
           onClick={onRemove}
-          className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 flex items-center justify-center"
+          className="absolute flex items-center justify-center rounded-full"
+          style={{
+            top: -8, right: -8,
+            width: 18, height: 18,
+            background: INK,
+            boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+            zIndex: 10,
+          }}
         >
           <X className="w-2.5 h-2.5 text-white" />
         </button>
@@ -150,7 +185,7 @@ function OldMoneyUpload({
   const {
     uploaderName, uploaderPlaceholder, uploads, isDragging, fileInputRef,
     onUploaderNameChange, onDragOver, onDragLeave, onDrop, onDropZoneClick,
-    onFileChange, onRemoveUpload, onSubmitAll, submitted, moderationEnabled,
+    onFileChange, onRemoveUpload, onSubmitAll, submitted, submittedUploads, moderationEnabled,
   } = props
 
   const { t } = useI18n()
@@ -164,6 +199,9 @@ function OldMoneyUpload({
   const usedPct = Math.min(100, (usedBytes / MAX_CONTRIBUTION_BYTES) * 100)
 
   const isUploading = uploads.some(u => u.progress === 'uploading')
+  const doneCount = uploads.filter(u => u.progress === 'done').length
+  const errorCount = uploads.filter(u => u.progress === 'error').length
+  const showSummary = !isUploading && idleUploads.length === 0 && errorCount > 0
   const overallPct = uploads.length > 0
     ? Math.min(99, Math.round(uploads.reduce((sum, u) => {
         if (u.progress === 'done' || u.progress === 'error') return sum + 100
@@ -174,81 +212,63 @@ function OldMoneyUpload({
   const stepIndex = overallPct < 25 ? 0 : overallPct < 80 ? 1 : 2
   const stepKey = (['uploadStep1', 'uploadStep2', 'uploadStep3'] as const)[stepIndex]
 
-  if (isUploading) {
+  // Google Drive-style panel handles uploading state
+
+  if (submitted) {
+    const photos = (submittedUploads ?? []).filter(p => p.preview).slice(0, 5)
+    const totalCount = (submittedUploads ?? []).length
+
     return (
-      <div className="mb-12">
-        <p className="text-[9px] tracking-[0.5em] uppercase mb-6" style={{ color: MUTED }}>
-          {t('guestPhotos.contributeEyebrow')}
+      <div className="mb-12 album-pop">
+        <style>{ANIMATIONS}</style>
+        {/* Eyebrow */}
+        <p className="text-[9px] tracking-[0.5em] uppercase mb-8" style={{ color: MUTED }}>
+          {t('guestPhotos.contributionReceived')}
         </p>
-        <div className="py-14 px-8 text-center" style={{ border: `1px solid ${accent}25`, background: `${accent}05` }}>
-          {/* Large typographic percentage */}
+
+        {/* Mounted photo strip */}
+        {photos.length > 0 && (
+          <div className="flex gap-3 justify-center mb-8 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+            {photos.map((photo, i) => (
+              <div
+                key={photo.id}
+                className="album-photo relative flex-shrink-0"
+                style={{
+                  width: photos.length === 1 ? 200 : photos.length === 2 ? 160 : 120,
+                  animationDelay: `${i * 0.1}s`,
+                  transform: `rotate(${[-1.8, 1.2, -0.8, 1.5, -1.1][i % 5]}deg)`,
+                }}
+              >
+                {/* Paper mat */}
+                <div
+                  className="p-2 pb-8"
+                  style={{
+                    background: PAPER,
+                    boxShadow: '0 4px 20px rgba(26,20,18,0.18), 0 1px 4px rgba(26,20,18,0.1)',
+                  }}
+                >
+                  <img
+                    src={photo.preview} alt=""
+                    className="w-full object-cover"
+                    style={{ aspectRatio: '3/4', display: 'block' }}
+                  />
+                  <PhotoCorners accent={accent} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Divider */}
+        <HairlineRule accent={accent} className="mb-8" />
+
+        {/* Serif thank-you */}
+        <div className="text-center">
           <p
             className="leading-none mb-5"
             style={{
               fontFamily: 'var(--font-display, Georgia, serif)',
-              fontSize: 'clamp(3.5rem, 12vw, 6rem)',
-              fontWeight: 300,
-              fontStyle: 'italic',
-              color: ink,
-              letterSpacing: '-0.02em',
-            }}
-          >
-            {overallPct}%
-          </p>
-
-          {/* Progress bar */}
-          <div className="relative h-px mx-auto mb-5" style={{ maxWidth: 160, background: `${INK}12` }}>
-            <div
-              className="absolute left-0 top-0 h-full"
-              style={{
-                width: `${overallPct}%`,
-                background: accent,
-                opacity: 0.7,
-                transition: 'width 0.5s ease',
-              }}
-            />
-          </div>
-
-          {/* Step label */}
-          <p key={stepKey} className="text-[10px] tracking-[0.35em] uppercase" style={{ color: MUTED }}>
-            {t(`guestPhotos.${stepKey}`)}
-          </p>
-
-          {/* Step dots */}
-          <div className="flex items-center justify-center gap-2 mt-4">
-            {[0, 1, 2].map(i => (
-              <div
-                key={i}
-                className="rounded-full"
-                style={{
-                  width: i === stepIndex ? 16 : 4,
-                  height: 4,
-                  background: i <= stepIndex ? accent : `${INK}15`,
-                  transition: 'width 0.3s ease, background 0.3s ease',
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (submitted) {
-    return (
-      <div className="mb-12 album-pop">
-        <p className="text-[9px] tracking-[0.5em] uppercase mb-6" style={{ color: MUTED }}>
-          {t('guestPhotos.contributionReceived')}
-        </p>
-        <div
-          className="py-16 px-8 text-center"
-          style={{ border: `1px solid ${accent}30`, background: `${accent}07` }}
-        >
-          <p
-            className="leading-none mb-6"
-            style={{
-              fontFamily: 'var(--font-display, Georgia, serif)',
-              fontSize: 'clamp(3rem, 10vw, 5.5rem)',
+              fontSize: 'clamp(2.6rem, 9vw, 4.5rem)',
               fontWeight: 300,
               fontStyle: 'italic',
               color: ink,
@@ -257,9 +277,19 @@ function OldMoneyUpload({
           >
             {t('guestPhotos.thankYou')}
           </p>
-          <div className="w-10 h-px mx-auto mb-6" style={{ background: accent, opacity: 0.6 }} />
-          <p className="text-[11px] tracking-[0.3em] uppercase" style={{ color: MUTED }}>
-            {moderationEnabled !== false ? t('guestPhotos.photographsPendingReview') : t('guestPhotos.photographsAddedAlbum')}
+
+          {totalCount > 0 && (
+            <p className="text-[9px] tracking-[0.4em] uppercase mb-5" style={{ color: MUTED }}>
+              {totalCount === 1 ? '1 photograph' : `${totalCount} photographs`}
+            </p>
+          )}
+
+          <div className="w-8 h-px mx-auto mb-5" style={{ background: accent, opacity: 0.55 }} />
+
+          <p className="text-[10px] tracking-[0.3em] uppercase" style={{ color: MUTED }}>
+            {moderationEnabled !== false
+              ? t('guestPhotos.photographsPendingReview')
+              : t('guestPhotos.photographsAddedAlbum')}
           </p>
         </div>
       </div>
@@ -268,6 +298,7 @@ function OldMoneyUpload({
 
   return (
     <div className="mb-12">
+      <UploadProgressPanel uploads={uploads} primary={accent} onRetryFailed={props.onRetryFailed} />
       {/* Eyebrow */}
       <p className="text-[9px] tracking-[0.5em] uppercase mb-5" style={{ color: MUTED }}>
         {t('guestPhotos.contributeEyebrow')}
@@ -364,7 +395,7 @@ function OldMoneyUpload({
       {/* Queue */}
       {uploads.length > 0 && (
         <div className="mt-5">
-          <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex gap-3 overflow-x-auto" style={{ scrollbarWidth: 'none', paddingTop: 10, paddingBottom: 4, paddingRight: 10 }}>
             {uploads.map(item => (
               <QueueThumb
                 key={item.id}
@@ -390,7 +421,34 @@ function OldMoneyUpload({
             </div>
           )}
 
-          {allDone && (
+          {/* Post-upload summary */}
+          {showSummary && (
+            <div className="mt-4">
+              <div className="py-2.5 px-3 mb-0" style={{ borderLeft: `2px solid #c0392b`, background: 'rgba(192,57,43,0.04)' }}>
+                <p className="text-[10px] tracking-[0.15em] leading-relaxed font-medium" style={{ color: '#c0392b' }}>
+                  {doneCount > 0
+                    ? t('guestPhotos.uploadSummary')
+                        .replace('{{succeeded}}', String(doneCount))
+                        .replace('{{failed}}', String(errorCount))
+                    : t('guestPhotos.uploadAllFailed')}
+                </p>
+                {uploads.filter(u => u.progress === 'error').map(item => (
+                  <p key={item.id} className="text-[9px] mt-0.5 tracking-[0.05em] truncate" style={{ color: 'rgba(192,57,43,0.7)' }}>
+                    {item.file.name}{item.error ? ` — ${item.error}` : ''}
+                  </p>
+                ))}
+              </div>
+              <button
+                onClick={props.onRetryFailed}
+                className="mt-3 px-8 py-2.5 text-[11px] tracking-[0.35em] uppercase transition-all duration-200"
+                style={{ background: '#c0392b', color: '#fff', cursor: 'pointer' }}
+              >
+                {t('guestPhotos.retryFailed')}
+              </button>
+            </div>
+          )}
+
+          {allDone && !showSummary && (
             <p className="mt-3 text-[10px] tracking-[0.3em] uppercase" style={{ color: accent }}>
               {t('guestPhotos.photographsAddedConfirm')}
             </p>

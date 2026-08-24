@@ -499,6 +499,9 @@ export const es: Translations = {
     limitReached: 'Límite de 1 GB alcanzado',
     limitReachedHint: 'Elimina fotos para liberar espacio.',
     quotaLabel: '{{used}} de 1 GB',
+    uploadSummary: '{{succeeded}} subidas · {{failed}} fallaron',
+    uploadAllFailed: 'Todas las fotos fallaron al subir',
+    retryFailed: 'Reintentar fallidas',
   },
 
   // Location Section

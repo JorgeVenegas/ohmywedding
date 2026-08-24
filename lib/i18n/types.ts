@@ -631,6 +631,9 @@ export interface Translations {
     limitReached: string
     limitReachedHint: string
     quotaLabel: string
+    uploadSummary: string
+    uploadAllFailed: string
+    retryFailed: string
   }
 
   // Location Section

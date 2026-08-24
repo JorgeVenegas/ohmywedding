@@ -65,6 +65,7 @@ export function GuestPhotosSection({
   const [uploadsEnabled, setUploadsEnabled] = useState<boolean | null>(null)
   const [moderationEnabled, setModerationEnabled] = useState(true)
   const [submitted, setSubmitted] = useState(false)
+  const [submittedUploads, setSubmittedUploads] = useState<UploadItem[]>([])
   const [settingsLoading, setSettingsLoading] = useState(true)
   const [uploaderName, setUploaderName] = useState("")
   const [uploads, setUploads] = useState<UploadItem[]>([])
@@ -174,6 +175,8 @@ export function GuestPhotosSection({
   // Uses XHR so we can track real upload progress
   const uploadFile = async (item: UploadItem): Promise<UploadResult | null> => {
     setUploads(prev => prev.map(u => u.id === item.id ? { ...u, progress: "uploading", uploadProgress: 0 } : u))
+    let photoId: string | undefined
+    let createdS3Key: string | undefined
     try {
       const metadata = await extractMetadata(item.file)
       const res = await fetch("/api/guest-photos", {
@@ -188,7 +191,10 @@ export function GuestPhotosSection({
           metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
         }),
       })
-      const { presignedUrl, key, photoId, error } = await res.json()
+      const data = await res.json()
+      const { presignedUrl, key, error } = data
+      photoId = data.photoId
+      createdS3Key = key
       if (error || !presignedUrl) throw new Error(error || "Failed to get upload URL")
 
       // XHR PUT with progress tracking
@@ -199,14 +205,14 @@ export function GuestPhotosSection({
             setUploads(prev => prev.map(u => u.id === item.id ? { ...u, uploadProgress: e.loaded / e.total } : u))
           }
         }
-        xhr.onload = () => xhr.status < 400 ? resolve() : reject(new Error(`HTTP ${xhr.status}`))
-        xhr.onerror = () => reject(new Error("Network error"))
+        xhr.onload = () => xhr.status < 400 ? resolve() : reject(new Error(`S3 upload failed (HTTP ${xhr.status})`))
+        xhr.onerror = () => reject(new Error("Network error — photo was not uploaded"))
         xhr.open("PUT", presignedUrl)
         xhr.setRequestHeader("Content-Type", item.file.type)
         xhr.send(item.file)
       })
 
-      // Fire-and-forget: trigger preview generation now that the file is in S3
+      // File is confirmed in S3 — trigger preview generation
       if (photoId && key && item.file.type.startsWith("image/")) {
         void fetch("/api/guest-photos/trigger-preview", {
           method: "POST",
@@ -220,18 +226,45 @@ export function GuestPhotosSection({
     } catch (err) {
       const message = err instanceof Error ? err.message : "Upload failed. Please try again."
       setUploads(prev => prev.map(u => u.id === item.id ? { ...u, progress: "error", error: message } : u))
+      // Delete the orphaned DB record — file never reached S3
+      if (photoId && createdS3Key) {
+        void fetch("/api/guest-photos/cancel", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ photoId, s3Key: createdS3Key }),
+        }).catch(() => {})
+      }
       return null
     }
   }
 
-  const submitAll = async () => {
-    const results = await Promise.all(uploads.filter(u => u.progress === "idle").map(uploadFile))
+  const runUpload = async (itemsToUpload: UploadItem[]) => {
+    const toUpload = itemsToUpload.filter(u => u.progress === "idle")
+    if (toUpload.length === 0) return
+    const results = await Promise.all(toUpload.map(uploadFile))
     const succeeded = results.filter(Boolean) as UploadResult[]
-
-    if (succeeded.length > 0) {
-      setSubmitted(true)
-      setUploads([])
+    if (succeeded.length === toUpload.length) {
+      // All items in this batch succeeded — check if anything is still error overall
+      setUploads(prev => {
+        const anyError = prev.some(u => u.progress === 'error')
+        if (!anyError) {
+          setSubmittedUploads(prev.filter(u => u.progress === 'done'))
+          setSubmitted(true)
+          return []
+        }
+        return prev
+      })
     }
+  }
+
+  const submitAll = () => runUpload(uploads)
+
+  const retryFailed = async () => {
+    const reset = uploads.map(u =>
+      u.progress === 'error' ? { ...u, progress: 'idle' as const, error: undefined, uploadProgress: 0 } : u
+    )
+    setUploads(reset)
+    await runUpload(reset)
   }
 
   const variantProps: BaseVariantProps = {
@@ -248,6 +281,7 @@ export function GuestPhotosSection({
     isDragging,
     uploadsEnabled: !!uploadsEnabled,
     submitted,
+    submittedUploads,
     moderationEnabled,
     fileInputRef,
     onUploaderNameChange: setUploaderName,
@@ -258,6 +292,7 @@ export function GuestPhotosSection({
     onFileChange: (files: FileList | null) => { if (files) addFiles(Array.from(files)) },
     onRemoveUpload: removeUpload,
     onSubmitAll: submitAll,
+    onRetryFailed: retryFailed,
     uploadError,
   }
 

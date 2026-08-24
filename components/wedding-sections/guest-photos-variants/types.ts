@@ -48,6 +48,7 @@ export interface BaseVariantProps {
   uploadsEnabled: boolean
   fileInputRef: React.RefObject<HTMLInputElement | null>
   submitted?: boolean
+  submittedUploads?: UploadItem[]
   moderationEnabled?: boolean
   uploadError?: string
   // Handlers
@@ -59,6 +60,7 @@ export interface BaseVariantProps {
   onFileChange: (files: FileList | null) => void
   onRemoveUpload: (id: string) => void
   onSubmitAll: () => void
+  onRetryFailed?: () => void
 }
 
 // Centralised contrast helper — three states:
