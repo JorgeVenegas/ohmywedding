@@ -32,10 +32,12 @@ export async function POST(request: NextRequest) {
       .update({ preview_attempts: 0, preview_key: null, preview_size: null })
       .eq('id', photoId)
 
-    await generatePreview(photo.id, photo.s3_key, 0)
+    const generated = await generatePreview(photo.id, photo.s3_key, 0)
 
-    return NextResponse.json({ ok: true })
-  } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ ok: true, generated })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('[retry-preview]', message)
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

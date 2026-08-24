@@ -22,9 +22,9 @@ function previewKey(originalKey: string): string {
 /**
  * Generates a 1200px WebP preview for a guest photo original.
  * Updates the DB on success and increments preview_attempts on both success and failure.
- * Safe to call fire-and-forget — errors are swallowed after logging.
+ * Returns true on success, false on failure.
  */
-export async function generatePreview(photoId: string, s3Key: string, currentAttempts: number): Promise<void> {
+export async function generatePreview(photoId: string, s3Key: string, currentAttempts: number): Promise<boolean> {
   const admin = createAdminSupabaseClient()
 
   try {
@@ -60,11 +60,13 @@ export async function generatePreview(photoId: string, s3Key: string, currentAtt
     }).eq('id', photoId)
 
     console.log(`[preview] generated ${preview} (${previewBuffer.length} bytes)`)
+    return true
   } catch (err) {
-    console.error(`[preview] failed for ${s3Key}:`, err)
-    // Increment attempts so we don't retry forever
+    const message = err instanceof Error ? err.message : String(err)
+    console.error(`[preview] failed for ${s3Key}: ${message}`)
     void admin.from('guest_photos')
       .update({ preview_attempts: currentAttempts + 1 })
       .eq('id', photoId)
+    return false
   }
 }

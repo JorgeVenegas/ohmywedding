@@ -1404,12 +1404,16 @@ export default function GalleryPage({ params }: GalleryPageProps) {
   const retryPreview = useCallback(async (photoId: string) => {
     setRetryingPreview(photoId)
     try {
-      await fetch('/api/guest-photos/retry-preview', {
+      const retryRes = await fetch('/api/guest-photos/retry-preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ photoId }),
       })
-      // Reload so the new preview URL actually appears
+      const retryData = await retryRes.json().catch(() => ({}))
+      if (!retryRes.ok || retryData.generated === false) {
+        console.error('[retry-preview] generation failed for', photoId, retryData)
+      }
+      // Reload so the new preview URL appears (or we see updated status)
       const res = await fetch(`/api/guest-photos?weddingNameId=${encodeURIComponent(decodedWeddingId)}`)
       if (res.ok) setPhotos((await res.json()).photos ?? [])
     } finally {
@@ -1898,18 +1902,20 @@ export default function GalleryPage({ params }: GalleryPageProps) {
                       <span className="text-[9px] text-[#420c14]/30 leading-none">
                         {photo.preview_status === 'generating' ? 'Generating…' : 'No preview'}
                       </span>
-                      <button
-                        onClick={e => { e.stopPropagation(); retryPreview(photo.id) }}
-                        disabled={retryingPreview === photo.id}
-                        className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-medium pointer-events-auto"
-                        style={{ background: 'rgba(66,12,20,0.08)', color: 'rgba(66,12,20,0.45)' }}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={e => { e.stopPropagation(); if (retryingPreview !== photo.id) retryPreview(photo.id) }}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); if (retryingPreview !== photo.id) retryPreview(photo.id) } }}
+                        className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-medium cursor-pointer"
+                        style={{ background: 'rgba(66,12,20,0.08)', color: retryingPreview === photo.id ? 'rgba(66,12,20,0.25)' : 'rgba(66,12,20,0.45)' }}
                       >
                         {retryingPreview === photo.id
                           ? <Loader2 className="w-2.5 h-2.5 animate-spin" />
                           : <RotateCw className="w-2.5 h-2.5" />
                         }
                         Retry
-                      </button>
+                      </div>
                     </div>
                   )}
 
