@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse, after } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/supabase-server'
 import { generatePreview } from '@/lib/preview'
 
@@ -9,7 +9,7 @@ const MAX_PREVIEW_ATTEMPTS = 2
 // POST /api/guest-photos/trigger-preview
 // Called by the guest's browser right after a successful S3 upload.
 // No user auth — photoId + s3Key together validate the request against the DB.
-// Responds immediately; preview generation runs after the response via after().
+// Generates the preview synchronously — the caller fires this request without awaiting the response.
 export async function POST(request: NextRequest) {
   try {
     const { photoId, s3Key } = await request.json() as { photoId?: string; s3Key?: string }
@@ -38,7 +38,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
-    after(() => generatePreview(photo.id, photo.s3_key, photo.preview_attempts))
+    // Await directly — after() is unreliable in some environments (dev server, self-hosted).
+    // The client calls this fire-and-forget so response latency doesn't matter.
+    await generatePreview(photo.id, photo.s3_key, photo.preview_attempts)
 
     return NextResponse.json({ ok: true })
   } catch {

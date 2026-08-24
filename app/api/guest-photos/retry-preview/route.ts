@@ -1,12 +1,11 @@
-import { NextRequest, NextResponse, after } from 'next/server'
-import { createAdminSupabaseClient } from '@/lib/supabase-server'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { NextRequest, NextResponse } from 'next/server'
+import { createAdminSupabaseClient, createServerSupabaseClient } from '@/lib/supabase-server'
 import { generatePreview } from '@/lib/preview'
 
 export const runtime = 'nodejs'
 
 // POST /api/guest-photos/retry-preview
-// Admin-only: resets preview_attempts to 0 and queues a new preview generation.
+// Admin-only: resets preview_attempts and runs preview generation synchronously.
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient()
@@ -33,7 +32,7 @@ export async function POST(request: NextRequest) {
       .update({ preview_attempts: 0, preview_key: null, preview_size: null })
       .eq('id', photoId)
 
-    after(() => generatePreview(photo.id, photo.s3_key, 0))
+    await generatePreview(photo.id, photo.s3_key, 0)
 
     return NextResponse.json({ ok: true })
   } catch {

@@ -1409,11 +1409,37 @@ export default function GalleryPage({ params }: GalleryPageProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ photoId }),
       })
-      setPhotos(prev => prev.map(p => p.id === photoId ? { ...p, preview_status: 'generating' } : p))
+      // Reload so the new preview URL actually appears
+      const res = await fetch(`/api/guest-photos?weddingNameId=${encodeURIComponent(decodedWeddingId)}`)
+      if (res.ok) setPhotos((await res.json()).photos ?? [])
     } finally {
       setRetryingPreview(null)
     }
-  }, [])
+  }, [decodedWeddingId])
+
+  // Auto-generate previews for any stuck photos on gallery load
+  const autoGeneratingRef = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    const stuck = photos.filter(p => p.preview_status === 'generating' && !autoGeneratingRef.current.has(p.id))
+    if (stuck.length === 0) return
+    stuck.forEach(p => autoGeneratingRef.current.add(p.id))
+
+    let cancelled = false
+    void (async () => {
+      for (const photo of stuck) {
+        if (cancelled) return
+        await fetch('/api/guest-photos/retry-preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photoId: photo.id }),
+        }).catch(() => {})
+      }
+      if (cancelled) return
+      const res = await fetch(`/api/guest-photos?weddingNameId=${encodeURIComponent(decodedWeddingId)}`)
+      if (!cancelled && res.ok) setPhotos((await res.json()).photos ?? [])
+    })()
+    return () => { cancelled = true }
+  }, [photos, decodedWeddingId])
 
   const uploadUrl =
     typeof window !== "undefined"

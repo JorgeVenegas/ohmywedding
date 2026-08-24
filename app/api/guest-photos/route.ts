@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse, after } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabaseClient, createServerSupabaseClient } from '@/lib/supabase-server'
 import { presignPut, presignGet, presignDownload, deleteObject } from '@/lib/s3'
-import { generatePreview } from '@/lib/preview'
 import { isSuperUser } from '@/lib/superadmin'
 
 export const runtime = 'nodejs'
@@ -173,11 +172,6 @@ export async function GET(request: NextRequest) {
 
     const photos = data ?? []
 
-    // Collect photos that need preview generation (images only, within retry budget)
-    const needsPreview = photos.filter(
-      p => !p.preview_key && p.s3_key && !p.mime_type?.startsWith('video/') && p.preview_attempts < MAX_PREVIEW_ATTEMPTS
-    )
-
     // Enrich photos with presigned URLs
     const enriched = await Promise.all(
       photos.map(async (photo) => {
@@ -211,15 +205,6 @@ export async function GET(request: NextRequest) {
         }
       })
     )
-
-    // Schedule preview generation after the response is sent (one after() call per photo)
-    if (needsPreview.length > 0) {
-      after(async () => {
-        await Promise.allSettled(
-          needsPreview.map(p => generatePreview(p.id, p.s3_key!, p.preview_attempts))
-        )
-      })
-    }
 
     return NextResponse.json({ photos: enriched })
   } catch (err) {
