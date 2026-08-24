@@ -38,9 +38,15 @@ import {
 } from "@/components/wedding-sections"
 import { BannerSection } from "@/components/wedding-sections/banner-section"
 
+interface GuestPhotoSettings {
+  uploadsEnabled: boolean
+  moderationEnabled: boolean
+}
+
 interface SubPageClientProps {
   weddingNameId: string
   pageSlug: string
+  guestPhotoSettings?: GuestPhotoSettings
 }
 
 type CommonProps = {
@@ -56,7 +62,8 @@ const MULTI_INSTANCE_TYPES = ['banner']
 function renderSection(
   component: InlineComponent,
   common: CommonProps,
-  mergedProps: Record<string, any>
+  mergedProps: Record<string, any>,
+  guestPhotoSettings?: GuestPhotoSettings,
 ) {
   const baseType = component.type.replace(/-\d+$/, "")
   const props = { ...common, ...mergedProps }
@@ -86,6 +93,8 @@ function renderSection(
           useColorBackground={mergedProps?.useColorBackground}
           backgroundColorChoice={mergedProps?.backgroundColorChoice}
           galleryLayout={mergedProps?.galleryLayout}
+          initialUploadsEnabled={guestPhotoSettings?.uploadsEnabled}
+          initialModerationEnabled={guestPhotoSettings?.moderationEnabled}
         />
       )
     case "gallery":
@@ -176,7 +185,7 @@ function EmptySubPage({
 }
 
 // Inner content — runs inside all providers
-function SubPageContent({ weddingNameId, pageSlug }: SubPageClientProps) {
+function SubPageContent({ weddingNameId, pageSlug, guestPhotoSettings }: SubPageClientProps) {
   const { config, updatePages, isLoading } = usePageConfig()
   const customizeCtx = useCustomize()
   const [wedding, setWedding] = useState<Wedding | null>(null)
@@ -383,7 +392,7 @@ function SubPageContent({ weddingNameId, pageSlug }: SubPageClientProps) {
               </div>
 
               {activeComponents.map((component, index) => {
-                const sectionEl = renderSection(component, commonProps, getMergedComponentProps(component))
+                const sectionEl = renderSection(component, commonProps, getMergedComponentProps(component), guestPhotoSettings)
                 if (!sectionEl) return null
 
                 return (
@@ -422,7 +431,7 @@ function SubPageContent({ weddingNameId, pageSlug }: SubPageClientProps) {
 }
 
 // Reads page config to set up color-dependent providers
-function SubPageWithSiteConfig({ weddingNameId, pageSlug }: SubPageClientProps) {
+function SubPageWithSiteConfig({ weddingNameId, pageSlug, guestPhotoSettings }: SubPageClientProps) {
   const { config } = usePageConfig()
   const initialColors = {
     primary: config.siteSettings?.theme?.colors?.primary || "#d4a574",
@@ -433,21 +442,21 @@ function SubPageWithSiteConfig({ weddingNameId, pageSlug }: SubPageClientProps) 
   return (
     <SiteConfigProvider initialColors={initialColors}>
       <CustomizeProvider weddingNameId={weddingNameId}>
-        <SubPageContent weddingNameId={weddingNameId} pageSlug={pageSlug} />
+        <SubPageContent weddingNameId={weddingNameId} pageSlug={pageSlug} guestPhotoSettings={guestPhotoSettings} />
       </CustomizeProvider>
     </SiteConfigProvider>
   )
 }
 
 // Outer shell — sets up all providers
-export function SubPageClient({ weddingNameId, pageSlug }: SubPageClientProps) {
+export function SubPageClient({ weddingNameId, pageSlug, guestPhotoSettings }: SubPageClientProps) {
   return (
     <I18nProvider>
       <EditingModeProvider weddingNameId={weddingNameId}>
         <PageConfigProvider weddingNameId={weddingNameId}>
           <VariantProvider>
             <ViewportProvider>
-              <SubPageWithSiteConfig weddingNameId={weddingNameId} pageSlug={pageSlug} />
+              <SubPageWithSiteConfig weddingNameId={weddingNameId} pageSlug={pageSlug} guestPhotoSettings={guestPhotoSettings} />
             </ViewportProvider>
           </VariantProvider>
         </PageConfigProvider>

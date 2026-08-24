@@ -17,6 +17,11 @@ interface WeddingLookup {
   wedding: Record<string, any> | null
 }
 
+interface GuestPhotoSettings {
+  uploadsEnabled: boolean
+  moderationEnabled: boolean
+}
+
 async function lookupWedding(weddingNameId: string): Promise<WeddingLookup> {
   try {
     const admin = createAdminSupabaseClient()
@@ -38,6 +43,23 @@ async function lookupWedding(weddingNameId: string): Promise<WeddingLookup> {
     return { weddingExists: true, config: (config as Record<string, any>) ?? null, wedding }
   } catch {
     return { weddingExists: false, config: null, wedding: null }
+  }
+}
+
+async function lookupGuestPhotoSettings(weddingId: string): Promise<GuestPhotoSettings> {
+  try {
+    const admin = createAdminSupabaseClient()
+    const { data } = await admin
+      .from("wedding_settings")
+      .select("gallery_allow_guest_uploads, gallery_moderation_enabled")
+      .eq("wedding_id", weddingId)
+      .single()
+    return {
+      uploadsEnabled: !!data?.gallery_allow_guest_uploads,
+      moderationEnabled: data?.gallery_moderation_enabled !== false,
+    }
+  } catch {
+    return { uploadsEnabled: false, moderationEnabled: true }
   }
 }
 
@@ -125,7 +147,7 @@ export default async function WeddingSubPage({ params }: PageSlugProps) {
   const weddingNameId = decodeURIComponent(rawId)
   const slug = pageSlug[0]
 
-  const { weddingExists, config } = await lookupWedding(weddingNameId)
+  const { weddingExists, config, wedding } = await lookupWedding(weddingNameId)
   // Note: Next.js deduplicates fetch/DB calls between generateMetadata and the page function
 
   if (!weddingExists) notFound()
@@ -137,7 +159,10 @@ export default async function WeddingSubPage({ params }: PageSlugProps) {
     (p: any) => p.path === slug && p.enabled
   )
   if (matchedPage) {
-    return <SubPageClient weddingNameId={weddingNameId} pageSlug={slug} />
+    const guestPhotoSettings = wedding?.id
+      ? await lookupGuestPhotoSettings(wedding.id)
+      : undefined
+    return <SubPageClient weddingNameId={weddingNameId} pageSlug={slug} guestPhotoSettings={guestPhotoSettings} />
   }
 
   // Hardcoded: registry (Stripe-backed; not yet a config component)

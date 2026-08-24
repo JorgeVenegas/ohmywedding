@@ -34,6 +34,8 @@ export interface GuestPhotosSectionProps {
   useColorBackground?: boolean
   backgroundColorChoice?: BackgroundColorChoice
   galleryLayout?: GalleryLayout
+  initialUploadsEnabled?: boolean
+  initialModerationEnabled?: boolean
 }
 
 interface UploadResult {
@@ -52,6 +54,8 @@ export function GuestPhotosSection({
   useColorBackground,
   backgroundColorChoice,
   galleryLayout = 'masonry',
+  initialUploadsEnabled,
+  initialModerationEnabled,
 }: GuestPhotosSectionProps) {
   const primary = theme?.colors?.primary || "#d4a574"
   const editingMode = useEditingModeSafe()
@@ -62,11 +66,12 @@ export function GuestPhotosSection({
   const resolvedSubtitle = subtitle || t('guestPhotos.description')
   const resolvedUploaderPlaceholder = uploaderPlaceholder || t('guestPhotos.nameLabel')
 
-  const [uploadsEnabled, setUploadsEnabled] = useState<boolean | null>(null)
-  const [moderationEnabled, setModerationEnabled] = useState(true)
+  const hasInitial = initialUploadsEnabled !== undefined
+  const [uploadsEnabled, setUploadsEnabled] = useState<boolean | null>(hasInitial ? initialUploadsEnabled! : null)
+  const [moderationEnabled, setModerationEnabled] = useState(hasInitial ? (initialModerationEnabled ?? true) : true)
   const [submitted, setSubmitted] = useState(false)
   const [submittedUploads, setSubmittedUploads] = useState<UploadItem[]>([])
-  const [settingsLoading, setSettingsLoading] = useState(true)
+  const [settingsLoading, setSettingsLoading] = useState(!hasInitial)
   const [uploaderName, setUploaderName] = useState("")
   const [uploads, setUploads] = useState<UploadItem[]>([])
   const [isDragging, setIsDragging] = useState(false)
@@ -75,7 +80,7 @@ export function GuestPhotosSection({
 
 
   useEffect(() => {
-    // Use the public (no-auth) settings endpoint — the admin route requires login
+    if (hasInitial) return
     fetch(`/api/weddings/settings/public?weddingNameId=${encodeURIComponent(weddingNameId)}`)
       .then(r => r.ok ? r.json() : null)
       .then(data => {
