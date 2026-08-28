@@ -104,16 +104,48 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to save photo record' }, { status: 500 })
     }
 
-    Promise.resolve(
-      admin.from('activity_logs').insert({
-        wedding_id: wedding.id,
-        activity_type: 'guest_photo_uploaded',
-        description: uploaderName?.trim()
-          ? `${uploaderName.trim()} uploaded a ${isVideo ? 'video' : 'photo'}`
-          : `A guest uploaded a ${isVideo ? 'video' : 'photo'}`,
-        metadata: { photo_id: photo.id, file_name: fileName ?? null, auto_approved: autoApprove },
-      })
-    ).catch(() => {})
+    // Aggregate: update existing recent log for same uploader rather than creating one per photo
+    ;(async () => {
+      const uploaderKey = uploaderName?.trim() || null
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+      const uploaderDisplay = uploaderKey ?? "A guest"
+
+      let baseQuery = admin
+        .from('activity_logs')
+        .select('id, metadata')
+        .eq('wedding_id', wedding.id)
+        .eq('activity_type', 'guest_photo_uploaded')
+        .gte('created_at', twoHoursAgo)
+        .order('created_at', { ascending: false })
+        .limit(1)
+
+      if (uploaderKey) {
+        baseQuery = baseQuery.eq('metadata->>uploader_name', uploaderKey)
+      } else {
+        baseQuery = baseQuery.is('metadata->>uploader_name', null)
+      }
+
+      const { data: existing } = await baseQuery.maybeSingle()
+      const prevCount = (existing?.metadata as Record<string, unknown>)?.photo_count as number | undefined ?? 0
+      const newCount = prevCount + 1
+      const mediaWord = isVideo ? 'video' : 'photo'
+      const description = newCount === 1
+        ? `${uploaderDisplay} contributed a ${mediaWord}`
+        : `${uploaderDisplay} contributed ${newCount} items`
+
+      const meta = {
+        uploader_name: uploaderKey,
+        photo_count: newCount,
+        auto_approved: autoApprove,
+        last_photo_id: photo.id,
+      }
+
+      if (existing) {
+        await admin.from('activity_logs').update({ description, metadata: meta }).eq('id', existing.id)
+      } else {
+        await admin.from('activity_logs').insert({ wedding_id: wedding.id, activity_type: 'guest_photo_uploaded', description, metadata: meta })
+      }
+    })().catch(() => {})
 
     return NextResponse.json({ presignedUrl, key, photoId: photo.id })
   } catch {

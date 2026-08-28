@@ -1,33 +1,28 @@
 "use client"
 
-import { useState } from "react"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { useState, useEffect, useRef } from "react"
 import { Switch } from "@/components/ui/switch"
-import { X, Tag, Plus, FileText } from "lucide-react"
+import { X, Plus, Check, ChevronDown, ChevronUp } from "lucide-react"
 import { GuestGroup, PREDEFINED_TAGS, getTagColorClass } from "../types"
 import type { PartnerOption } from "../types"
-import { useTranslation } from '@/components/contexts/i18n-context'
+import { useTranslation } from "@/components/contexts/i18n-context"
 
 interface GuestForm {
   name: string
   phoneNumber: string
   tags: string[]
-  confirmationStatus: 'pending' | 'confirmed' | 'declined'
+  confirmationStatus: "pending" | "confirmed" | "declined"
   dietaryRestrictions: string
   notes: string
   invitedBy: string[]
   isTraveling: boolean
   travelingFrom: string
-  travelArrangement: 'will_buy_ticket' | 'no_ticket_needed' | null
+  travelArrangement: "will_buy_ticket" | "no_ticket_needed" | null
   noTicketReason: string
   ticketAttachmentUrl: string | null
 }
 
-interface EditingGuest {
-  id: string
-}
+interface EditingGuest { id: string }
 
 interface AddEditGuestModalProps {
   isOpen: boolean
@@ -50,7 +45,38 @@ interface AddEditGuestModalProps {
   isSubmitting?: boolean
 }
 
-const getTagColor = (tag: string) => getTagColorClass(tag)
+const STATUS_CFG = {
+  pending:   { label: "Pending",   pill: "bg-amber-50 text-amber-600 border-amber-200",      dot: "bg-amber-400" },
+  confirmed: { label: "Confirmed", pill: "bg-emerald-50 text-emerald-600 border-emerald-200", dot: "bg-emerald-500" },
+  declined:  { label: "Declined",  pill: "bg-red-50 text-red-500 border-red-200",            dot: "bg-red-400" },
+}
+
+// ─── Field wrapper ────────────────────────────────────────────────────────────
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: "#a8a29e" }}>
+        {label}
+      </p>
+      {children}
+    </div>
+  )
+}
+
+// ─── BareInput ────────────────────────────────────────────────────────────────
+
+function BareInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      {...props}
+      className="w-full bg-transparent outline-none placeholder:text-stone-300 border-b pb-1.5"
+      style={{ fontSize: 16, color: "#1c1917", borderColor: "rgba(0,0,0,0.1)", ...props.style }}
+    />
+  )
+}
+
+// ─── AddEditGuestModal ────────────────────────────────────────────────────────
 
 export function AddEditGuestModal({
   isOpen,
@@ -73,361 +99,349 @@ export function AddEditGuestModal({
   isSubmitting = false,
 }: AddEditGuestModalProps) {
   const { t } = useTranslation()
-  const [customTagInput, setCustomTagInput] = useState('')
+  const [customTagInput, setCustomTagInput] = useState("")
+  const [travelExpanded, setTravelExpanded] = useState(guestForm.isTraveling)
 
-  if (!isOpen) return null
+  // Snapshot of form state at the moment the drawer opens — used to detect changes
+  const initialSnapshot = useRef<string>("")
+  useEffect(() => {
+    if (isOpen) {
+      initialSnapshot.current = JSON.stringify({ guestForm, selectedGroupId, newGroupNameForGuest })
+    }
+  }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Merge predefined + existing custom tags from the system
+  const currentSnapshot = JSON.stringify({ guestForm, selectedGroupId, newGroupNameForGuest })
+  const hasChanges = currentSnapshot !== initialSnapshot.current
+
+  // In create mode always allow save (as long as name filled); in edit mode only when something changed
+  const saveEnabled = !!guestForm.name && !isSubmitting && (!editingGuest || hasChanges)
+
   const customTags = allTags.filter(t => !PREDEFINED_TAGS.includes(t))
   const displayTags = [...PREDEFINED_TAGS, ...customTags]
 
   const handleAddCustomTag = () => {
     const tag = customTagInput.trim().toLowerCase()
-    if (!tag) return
-    if (!guestForm.tags.includes(tag)) {
-      toggleGuestTag(tag)
-    }
-    setCustomTagInput('')
+    if (!tag || guestForm.tags.includes(tag)) { setCustomTagInput(""); return }
+    toggleGuestTag(tag)
+    setCustomTagInput("")
   }
 
+  const status = guestForm.confirmationStatus
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between p-6 pb-4 border-b">
-          <h2 className="text-xl font-semibold text-foreground">
-            {editingGuest ? t('admin.invitations.guestModal.editTitle') : t('admin.invitations.guestModal.addTitle')}
-          </h2>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            <X className="w-4 h-4" />
-          </Button>
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-40 transition-opacity duration-300"
+        style={{
+          background: "rgba(0,0,0,0.4)",
+          backdropFilter: "blur(1px)",
+          opacity: isOpen ? 1 : 0,
+          pointerEvents: isOpen ? "auto" : "none",
+        }}
+        onClick={onClose}
+      />
+
+      {/* Panel */}
+      <div
+        className="fixed top-0 right-0 bottom-0 z-50 flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
+        style={{
+          width: "min(560px, 100vw)",
+          background: "#faf9f7",
+          boxShadow: "-8px 0 60px rgba(0,0,0,0.14)",
+          transform: isOpen ? "translateX(0)" : "translateX(100%)",
+        }}
+      >
+        {/* Top bar (mobile) */}
+        <div className="md:hidden flex items-center justify-between px-4 pt-4 pb-0 flex-shrink-0">
+          <button type="button" onClick={onClose}
+            className="w-9 h-9 flex items-center justify-center rounded-full active:bg-black/[0.05]">
+            <X className="w-5 h-5" style={{ color: "#78716c" }} />
+          </button>
+          <span className="text-[15px] font-semibold" style={{ color: "#1c1917" }}>
+            {editingGuest ? t("admin.invitations.guestModal.editTitle") : t("admin.invitations.guestModal.addTitle")}
+          </span>
+          <div className="w-9" />
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 pt-4 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              {t('admin.invitations.guestModal.guestName')} *
-            </label>
-            <Input
-              value={guestForm.name}
-              onChange={(e) => setGuestForm({ ...guestForm, name: e.target.value })}
-              placeholder={t('admin.invitations.guestModal.fullNamePlaceholder')}
-            />
+        {/* Header */}
+        <div className="flex-shrink-0 px-5 md:px-7 pb-4 pt-3 md:pt-7 border-b" style={{ borderColor: "rgba(0,0,0,0.07)" }}>
+          {/* Desktop title + close */}
+          <div className="hidden md:flex items-center justify-between mb-3">
+            <h2 className="text-[18px] font-semibold" style={{ color: "#1c1917" }}>
+              {editingGuest ? t("admin.invitations.guestModal.editTitle") : t("admin.invitations.guestModal.addTitle")}
+            </h2>
+            <button type="button" onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/[0.06]">
+              <X className="w-4 h-4" style={{ color: "#78716c" }} />
+            </button>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              {t('admin.invitations.guestModal.phoneNumber')}
-            </label>
-            <Input
-              type="tel"
-              value={guestForm.phoneNumber}
-              onChange={(e) => setGuestForm({ ...guestForm, phoneNumber: e.target.value })}
-              placeholder={t('admin.invitations.guestModal.phonePlaceholder')}
-            />
-          </div>
+          {/* Name — big inline input */}
+          <input
+            type="text"
+            value={guestForm.name}
+            onChange={e => setGuestForm({ ...guestForm, name: e.target.value })}
+            placeholder={t("admin.invitations.guestModal.fullNamePlaceholder")}
+            className="w-full bg-transparent outline-none font-semibold placeholder:text-stone-300"
+            style={{ fontSize: 22, color: "#1c1917" }}
+            autoFocus={!editingGuest}
+          />
+          <input
+            type="tel"
+            value={guestForm.phoneNumber}
+            onChange={e => setGuestForm({ ...guestForm, phoneNumber: e.target.value })}
+            placeholder={t("admin.invitations.guestModal.phonePlaceholder")}
+            className="w-full bg-transparent outline-none mt-1 placeholder:text-stone-300"
+            style={{ fontSize: 15, color: "#78716c" }}
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              {t('admin.invitations.guestModal.group')} *
-            </label>
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-5 md:px-7 py-5 space-y-6">
+
+          {/* Group */}
+          <Field label={t("admin.invitations.guestModal.group")}>
             {!isCreatingNewGroup ? (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <select
                   value={selectedGroupId || ""}
-                  onChange={(e) => setSelectedGroupId(e.target.value || null)}
-                  className="w-full h-9 rounded-lg border border-border bg-background px-3 py-1.5 text-sm"
+                  onChange={e => setSelectedGroupId(e.target.value || null)}
+                  className="w-full rounded-xl border px-3 py-2.5 text-[15px]"
+                  style={{ borderColor: "rgba(0,0,0,0.12)", background: "#fff", color: "#1c1917" }}
                 >
-                  <option value="">{t('admin.invitations.guestModal.selectGroup')}</option>
-                  {guestGroups.map((group) => (
-                    <option key={group.id} value={group.id}>
-                      {group.name}
-                    </option>
+                  <option value="">{t("admin.invitations.guestModal.selectGroup")}</option>
+                  {guestGroups.map(g => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
                   ))}
                 </select>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsCreatingNewGroup(true)
-                    setSelectedGroupId(null)
-                  }}
-                  className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
-                >
-                  <Plus className="w-3 h-3" />
-                  {t('admin.invitations.guestModal.createNewGroup')}
+                <button type="button"
+                  className="text-[13px] flex items-center gap-1 font-medium"
+                  style={{ color: "#a8a29e" }}
+                  onClick={() => { setIsCreatingNewGroup(true); setSelectedGroupId(null) }}>
+                  <Plus className="w-3.5 h-3.5" />
+                  {t("admin.invitations.guestModal.createNewGroup")}
                 </button>
               </div>
             ) : (
-              <div className="space-y-2">
-                <Input
+              <div className="space-y-1.5">
+                <BareInput
                   value={newGroupNameForGuest}
-                  onChange={(e) => setNewGroupNameForGuest(e.target.value)}
-                  placeholder={t('admin.invitations.guestModal.newGroupPlaceholder')}
+                  onChange={e => setNewGroupNameForGuest(e.target.value)}
+                  placeholder={t("admin.invitations.guestModal.newGroupPlaceholder")}
                   autoFocus
                 />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsCreatingNewGroup(false)
-                    setNewGroupNameForGuest("")
-                  }}
-                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
-                >
+                <button type="button"
+                  className="text-[13px] flex items-center gap-1"
+                  style={{ color: "#a8a29e" }}
+                  onClick={() => { setIsCreatingNewGroup(false); setNewGroupNameForGuest("") }}>
                   <X className="w-3 h-3" />
-                  {t('admin.invitations.guestModal.selectExisting')}
+                  {t("admin.invitations.guestModal.selectExisting")}
                 </button>
               </div>
             )}
-            <p className="text-xs text-muted-foreground mt-2">
-              {t('admin.invitations.guestModal.groupHelpText')}
-            </p>
-          </div>
+          </Field>
 
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              {t('admin.invitations.guestModal.tags')}
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {displayTags.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => toggleGuestTag(tag)}
-                  className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${
-                    guestForm.tags.includes(tag)
-                      ? getTagColor(tag)
-                      : "bg-muted text-muted-foreground border-border hover:border-primary/50"
-                  }`}
-                >
-                  <Tag className="w-3 h-3 inline mr-1" />
-                  {tag}
-                </button>
-              ))}
+          {/* Status */}
+          <Field label={t("admin.invitations.guestModal.confirmationStatus")}>
+            <div className="flex gap-2 flex-wrap">
+              {(["pending", "confirmed", "declined"] as const).map(s => {
+                const cfg = STATUS_CFG[s]
+                const active = status === s
+                return (
+                  <button key={s} type="button"
+                    onClick={() => setGuestForm({ ...guestForm, confirmationStatus: s })}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium transition-all ${
+                      active ? cfg.pill : "border-stone-200 text-stone-400 bg-white"
+                    }`}>
+                    <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
+                    {cfg.label}
+                    {active && <Check className="w-3.5 h-3.5 ml-0.5" strokeWidth={3} />}
+                  </button>
+                )
+              })}
             </div>
-            <div className="flex gap-2 mt-2">
-              <Input
+          </Field>
+
+          {/* Tags */}
+          <Field label={t("admin.invitations.guestModal.tags")}>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {displayTags.map(tag => {
+                const active = guestForm.tags.includes(tag)
+                return (
+                  <button key={tag} type="button" onClick={() => toggleGuestTag(tag)}
+                    className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full border text-[13px] font-medium transition-all ${
+                      active ? getTagColorClass(tag) : "border-stone-200 text-stone-400 bg-white"
+                    }`}>
+                    {active && <Check className="w-3 h-3" strokeWidth={3} />}
+                    {tag}
+                  </button>
+                )
+              })}
+            </div>
+            {/* Custom tag */}
+            <div className="flex gap-2">
+              <input
                 value={customTagInput}
-                onChange={(e) => setCustomTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    handleAddCustomTag()
-                  }
-                }}
-                placeholder={t('admin.invitations.guestModal.addCustomTag')}
-                className="h-8 text-xs"
+                onChange={e => setCustomTagInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleAddCustomTag() } }}
+                placeholder={t("admin.invitations.guestModal.addCustomTag")}
+                className="flex-1 min-w-0 rounded-xl border px-3 py-2 text-[14px] outline-none"
+                style={{ borderColor: "rgba(0,0,0,0.12)", color: "#1c1917" }}
               />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 px-2"
-                onClick={handleAddCustomTag}
-                disabled={!customTagInput.trim()}
-              >
-                <Plus className="w-3 h-3" />
-              </Button>
+              <button type="button" onClick={handleAddCustomTag} disabled={!customTagInput.trim()}
+                className="px-3 py-2 rounded-xl border text-[13px] font-medium disabled:opacity-30 transition-colors"
+                style={{ borderColor: "rgba(0,0,0,0.12)", color: "#78716c" }}>
+                <Plus className="w-4 h-4" />
+              </button>
             </div>
-          </div>
+          </Field>
 
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              {t('admin.invitations.guestModal.confirmationStatus')}
-            </label>
-            <select
-              value={guestForm.confirmationStatus}
-              onChange={(e) =>
-                setGuestForm({
-                  ...guestForm,
-                  confirmationStatus: e.target.value as 'pending' | 'confirmed' | 'declined',
-                })
-              }
-              className="w-full h-9 rounded-lg border border-border bg-background px-3 py-1.5 text-sm"
-            >
-              <option value="pending">{t('common.pending')}</option>
-              <option value="confirmed">{t('common.confirmed')}</option>
-              <option value="declined">{t('common.declined')}</option>
-            </select>
-          </div>
+          {/* Invited by */}
+          {partnerOptions.length > 0 && (
+            <Field label={t("admin.invitations.guestModal.invitedBy")}>
+              <div className="flex flex-wrap gap-2">
+                {partnerOptions.map(p => {
+                  const active = guestForm.invitedBy.includes(p.key)
+                  return (
+                    <button key={p.key} type="button"
+                      onClick={() => setGuestForm(prev => ({
+                        ...prev,
+                        invitedBy: active ? prev.invitedBy.filter(k => k !== p.key) : [...prev.invitedBy, p.key],
+                      }))}
+                      className={`px-4 py-2 rounded-xl border text-[14px] font-medium transition-all ${
+                        active ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "border-stone-200 text-stone-400 bg-white"
+                      }`}>
+                      {active && <Check className="w-3.5 h-3.5 inline mr-1.5" strokeWidth={3} />}
+                      {p.name}
+                    </button>
+                  )
+                })}
+              </div>
+            </Field>
+          )}
 
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              {t('admin.invitations.guestModal.dietaryRestrictions')}
-            </label>
-            <Input
+          {/* Dietary */}
+          <Field label={t("admin.invitations.guestModal.dietaryRestrictions")}>
+            <BareInput
               value={guestForm.dietaryRestrictions}
-              onChange={(e) =>
-                setGuestForm({ ...guestForm, dietaryRestrictions: e.target.value })
-              }
-              placeholder={t('admin.invitations.guestModal.dietaryPlaceholder')}
+              onChange={e => setGuestForm({ ...guestForm, dietaryRestrictions: e.target.value })}
+              placeholder={t("admin.invitations.guestModal.dietaryPlaceholder")}
             />
-          </div>
+          </Field>
 
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              {t('admin.invitations.guestModal.notes')}
-            </label>
-            <Input
+          {/* Notes */}
+          <Field label={t("admin.invitations.guestModal.notes")}>
+            <BareInput
               value={guestForm.notes}
-              onChange={(e) => setGuestForm({ ...guestForm, notes: e.target.value })}
-              placeholder={t('admin.invitations.guestModal.notesPlaceholder')}
+              onChange={e => setGuestForm({ ...guestForm, notes: e.target.value })}
+              placeholder={t("admin.invitations.guestModal.notesPlaceholder")}
             />
-          </div>
+          </Field>
 
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              {t('admin.invitations.guestModal.invitedBy')}
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {partnerOptions.map((partner) => (
-                <button
-                  key={partner.key}
-                  type="button"
-                  onClick={() =>
-                    setGuestForm((prev) => ({
-                      ...prev,
-                      invitedBy: prev.invitedBy.includes(partner.key)
-                        ? prev.invitedBy.filter((k) => k !== partner.key)
-                        : [...prev.invitedBy, partner.key],
-                    }))
-                  }
-                  className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-                    guestForm.invitedBy.includes(partner.key)
-                      ? "bg-indigo-100 text-indigo-700 border-indigo-200"
-                      : "bg-muted text-muted-foreground border-border hover:border-primary/50"
-                  }`}
-                >
-                  {partner.name}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Travel — collapsible */}
+          <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }} className="pt-4">
+            <button type="button"
+              className="w-full flex items-center justify-between"
+              onClick={() => setTravelExpanded(v => !v)}>
+              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#a8a29e" }}>
+                {t("admin.invitations.guestModal.travelInformation")}
+              </p>
+              {travelExpanded ? <ChevronUp className="w-4 h-4" style={{ color: "#a8a29e" }} /> : <ChevronDown className="w-4 h-4" style={{ color: "#a8a29e" }} />}
+            </button>
 
-          {/* Travel Information Section - Always visible for admin to pre-configure */}
-          <div className="border-t pt-4 space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">{t('admin.invitations.guestModal.travelInformation')}</h3>
-
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={guestForm.isTraveling}
-                onCheckedChange={(checked) =>
-                  setGuestForm({ ...guestForm, isTraveling: checked })
-                }
-              />
-              <label className="text-sm font-medium text-foreground">
-                {t('admin.invitations.guestModal.guestIsTraveling')}
-              </label>
-            </div>
-
-            {guestForm.isTraveling && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    {t('admin.invitations.travel.travelingFrom')}
-                  </label>
-                  <Input
-                    value={guestForm.travelingFrom}
-                    onChange={(e) =>
-                      setGuestForm({ ...guestForm, travelingFrom: e.target.value })
-                    }
-                    placeholder={t('admin.invitations.travel.cityOrLocation')}
+            {travelExpanded && (
+              <div className="mt-4 space-y-5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[15px] font-medium" style={{ color: "#1c1917" }}>
+                    {t("admin.invitations.guestModal.guestIsTraveling")}
+                  </span>
+                  <Switch
+                    checked={guestForm.isTraveling}
+                    onCheckedChange={checked => setGuestForm({ ...guestForm, isTraveling: checked })}
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    {t('admin.invitations.travel.travelArrangement')}
-                  </label>
-                  <div className="space-y-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setGuestForm({ ...guestForm, travelArrangement: 'will_buy_ticket' })
-                      }
-                      className={`w-full px-3 py-2 rounded-lg border-2 transition-colors text-sm text-left ${
-                        guestForm.travelArrangement === 'will_buy_ticket'
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-border bg-background text-foreground hover:border-primary/50'
-                      }`}
-                    >
-                      {t('admin.invitations.travel.willPurchaseTicket')} ({t('admin.invitations.travel.purchaseDescription')})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setGuestForm({ ...guestForm, travelArrangement: 'no_ticket_needed' })
-                      }
-                      className={`w-full px-3 py-2 rounded-lg border-2 transition-colors text-sm text-left ${
-                        guestForm.travelArrangement === 'no_ticket_needed'
-                          ? 'border-purple-500 bg-purple-50 text-purple-700'
-                          : 'border-border bg-background text-foreground hover:border-primary/50'
-                      }`}
-                    >
-                      {t('admin.invitations.travel.noTicketNeeded')} ({t('admin.invitations.travel.noTicketDescription')})
-                    </button>
-                  </div>
-                </div>
+                {guestForm.isTraveling && (
+                  <>
+                    <Field label={t("admin.invitations.travel.travelingFrom")}>
+                      <BareInput
+                        value={guestForm.travelingFrom}
+                        onChange={e => setGuestForm({ ...guestForm, travelingFrom: e.target.value })}
+                        placeholder={t("admin.invitations.travel.cityOrLocation")}
+                      />
+                    </Field>
 
-                {guestForm.travelArrangement === 'no_ticket_needed' && (
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      {t('admin.invitations.travel.noTicketReason')}
-                    </label>
-                    <Input
-                      value={guestForm.noTicketReason}
-                      onChange={(e) =>
-                        setGuestForm({ ...guestForm, noTicketReason: e.target.value })
-                      }
-                      placeholder={t('admin.invitations.travel.reasonPlaceholder')}
-                    />
-                  </div>
-                )}
-
-                {guestForm.ticketAttachmentUrl && (
-                  <div className="p-3 bg-muted rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm text-foreground">{t('admin.invitations.travel.ticketUploaded')}</span>
+                    <Field label={t("admin.invitations.travel.travelArrangement")}>
+                      <div className="space-y-2">
+                        {(["will_buy_ticket", "no_ticket_needed"] as const).map(opt => {
+                          const active = guestForm.travelArrangement === opt
+                          return (
+                            <button key={opt} type="button"
+                              onClick={() => setGuestForm({ ...guestForm, travelArrangement: opt })}
+                              className={`w-full px-4 py-3 rounded-xl border-2 text-[14px] text-left transition-all ${
+                                active
+                                  ? opt === "will_buy_ticket"
+                                    ? "border-blue-400 bg-blue-50 text-blue-700"
+                                    : "border-purple-400 bg-purple-50 text-purple-700"
+                                  : "border-stone-200 text-stone-500"
+                              }`}>
+                              {opt === "will_buy_ticket"
+                                ? t("admin.invitations.travel.willPurchaseTicket")
+                                : t("admin.invitations.travel.noTicketNeeded")}
+                            </button>
+                          )
+                        })}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-[10px]"
-                        onClick={() => window.open(guestForm.ticketAttachmentUrl!, '_blank')}
-                      >
-                        {t('common.view')}
-                      </Button>
-                    </div>
-                  </div>
+                    </Field>
+
+                    {guestForm.travelArrangement === "no_ticket_needed" && (
+                      <Field label={t("admin.invitations.travel.noTicketReason")}>
+                        <BareInput
+                          value={guestForm.noTicketReason}
+                          onChange={e => setGuestForm({ ...guestForm, noTicketReason: e.target.value })}
+                          placeholder={t("admin.invitations.travel.reasonPlaceholder")}
+                        />
+                      </Field>
+                    )}
+                  </>
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>
 
-        <div className="flex gap-2 p-6 pt-4 border-t">
-          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-            {t('common.cancel')}
-          </Button>
+        {/* Footer */}
+        <div className="flex-shrink-0 flex items-center gap-3 px-5 md:px-7"
+          style={{
+            borderTop: "1px solid rgba(0,0,0,0.07)",
+            background: "#faf9f7",
+            paddingTop: 16,
+            paddingBottom: "max(16px, env(safe-area-inset-bottom, 16px))",
+          }}>
+          <button type="button" onClick={onClose} disabled={isSubmitting}
+            className="px-5 py-3.5 rounded-2xl font-medium border transition-colors active:bg-black/[0.04]"
+            style={{ fontSize: 15, borderColor: "rgba(0,0,0,0.12)", color: "#78716c" }}>
+            {t("common.cancel")}
+          </button>
           {!editingGuest && onSaveAndAddAnother && (
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={onSaveAndAddAnother}
-              disabled={!guestForm.name || isSubmitting}
-            >
-              {isSubmitting ? t('common.saving') : t('admin.invitations.guestModal.saveAndAddAnother')}
-            </Button>
+            <button type="button" onClick={onSaveAndAddAnother}
+              disabled={!saveEnabled}
+              className="py-3.5 px-4 rounded-2xl font-medium border transition-opacity disabled:opacity-40"
+              style={{ fontSize: 15, borderColor: "rgba(0,0,0,0.12)", color: "#78716c" }}>
+              {isSubmitting ? t("common.saving") : "+ otro"}
+            </button>
           )}
-          <Button
-            className="flex-1"
-            onClick={onSubmit}
-            disabled={!guestForm.name || isSubmitting}
-          >
-            {isSubmitting ? t('common.saving') : (editingGuest ? t('admin.invitations.guestModal.updateGuest') : t('admin.invitations.guestModal.addGuest'))}
-          </Button>
+          <button type="button" onClick={onSubmit}
+            disabled={!saveEnabled}
+            className="flex-1 py-3.5 rounded-2xl font-semibold text-white transition-opacity disabled:opacity-40"
+            style={{ fontSize: 15, background: "#420c14" }}>
+            {isSubmitting ? t("common.saving")
+              : editingGuest ? t("admin.invitations.guestModal.updateGuest")
+              : t("admin.invitations.guestModal.addGuest")}
+          </button>
         </div>
-      </Card>
-    </div>
+      </div>
+    </>
   )
 }

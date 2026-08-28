@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from "@/lib/supabase-server"
+import { createServerSupabaseClient, createAdminSupabaseClient } from "@/lib/supabase-server"
 import { NextResponse } from "next/server"
 import { requireFeature } from "@/lib/subscription-api"
 import { getWeddingFeatureLimit } from "@/lib/subscription"
@@ -121,7 +121,9 @@ export async function POST(request: Request) {
 
     const extraPasses = typeof body.extraPasses === 'number' && body.extraPasses >= 0 ? body.extraPasses : 0
 
-    const { data, error } = await supabase.from("guest_groups").insert([
+    // Use admin client for the insert — ownership already verified above; user-session client is blocked by RLS
+    const admin = createAdminSupabaseClient()
+    const { data, error } = await admin.from("guest_groups").insert([
       {
         wedding_id: wedding.id,
         name: rawName,
@@ -182,7 +184,8 @@ export async function PUT(request: Request) {
       }
     }
 
-    const { data, error } = await supabase
+    const admin = createAdminSupabaseClient()
+    const { data, error } = await admin
       .from("guest_groups")
       .update(updateData)
       .eq("id", body.id)
@@ -218,9 +221,13 @@ export async function DELETE(request: Request) {
       }
     }
 
+    // Auth check before destructive operation
     const supabase = await createServerSupabaseClient()
-    
-    const { error } = await supabase
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: "Authentication required" }, { status: 401 })
+
+    const admin = createAdminSupabaseClient()
+    const { error } = await admin
       .from("guest_groups")
       .delete()
       .eq("id", id)

@@ -10,6 +10,7 @@ import { Wedding } from '@/lib/wedding-data'
 import { resolveComponents, isComponentRef, type InlineComponent } from '@/lib/resolve-component'
 import type { SubPage } from '@/lib/page-config'
 import { getCleanAdminUrl } from '@/lib/admin-url'
+import { getWeddingPath } from '@/lib/wedding-url'
 import {
   HeroSection,
   OurStorySection,
@@ -706,7 +707,7 @@ function ConfigBasedWeddingRendererContent({
             .map(p => ({
               id: p.id,
               label: p.label,
-              href: `/${weddingNameId}/${p.path}`,
+              href: getWeddingPath(weddingNameId, p.path),
               isActive: false, // main page is never "inside" a sub-page
             }))}
           useColorBackground={config.siteSettings.navigation?.useColorBackground || false}

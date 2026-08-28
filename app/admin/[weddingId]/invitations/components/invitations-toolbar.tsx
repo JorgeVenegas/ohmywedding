@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useTranslation } from '@/components/contexts/i18n-context'
@@ -18,6 +19,8 @@ import {
   Plane,
   UserCheck,
   Trash2,
+  SlidersHorizontal,
+  ChevronDown,
 } from "lucide-react"
 import type { GuestGroup, Guest, ColumnVisibility, PartnerOption } from "../types"
 export interface InvitationsToolbarProps {
@@ -115,7 +118,16 @@ export function InvitationsToolbarContent({
   hasPaidPlan,
 }: InvitationsToolbarProps) {
   const { t } = useTranslation()
+  const [showMobileFilters, setShowMobileFilters] = useState(false)
   const hasActiveFilters = searchQuery || statusFilter !== 'all' || tagFilter !== 'all' || groupFilter !== 'all' || invitedByFilter !== 'all' || openedFilter !== 'all'
+  const activeFilterCount = [
+    searchQuery ? 1 : 0,
+    statusFilter !== 'all' ? 1 : 0,
+    tagFilter !== 'all' ? 1 : 0,
+    groupFilter !== 'all' ? 1 : 0,
+    invitedByFilter !== 'all' ? 1 : 0,
+    openedFilter !== 'all' ? 1 : 0,
+  ].reduce((a, b) => a + b, 0)
 
   const handleClearFilters = () => {
     setSearchQuery('')
@@ -157,7 +169,162 @@ export function InvitationsToolbarContent({
   }
 
   return (
-    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+    <div className="flex flex-col gap-0">
+
+      {/* ── Mobile toolbar (< md) ── */}
+      <div className="md:hidden flex flex-col gap-0">
+        {/* Row 1: view toggle + search + filters button */}
+        <div className="flex items-center gap-2 pb-2">
+          <ViewSwitcher
+            options={[
+              { value: 'groups', label: t('admin.invitations.toolbar.groupsView'), icon: Users2 },
+              { value: 'flat', label: t('admin.invitations.toolbar.guestsView'), icon: LayoutList },
+            ]}
+            value={viewMode}
+            onChange={(mode) => setViewMode(mode as 'flat' | 'groups')}
+          />
+
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder={t('admin.invitations.toolbar.searchPlaceholder')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 h-9 text-[14px] w-full"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowMobileFilters((v) => !v)}
+            className="relative flex items-center gap-1.5 h-9 px-3 rounded-md border text-[13px] font-medium transition-colors flex-shrink-0"
+            style={{
+              borderColor: hasActiveFilters ? "#1c1917" : "rgba(0,0,0,0.15)",
+              background: hasActiveFilters ? "#1c1917" : "transparent",
+              color: hasActiveFilters ? "#fff" : "#78716c",
+            }}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            Filters
+            {activeFilterCount > 0 && (
+              <span
+                className="flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold"
+                style={{ background: hasActiveFilters ? "rgba(255,255,255,0.25)" : "#1c1917", color: "#fff" }}
+              >
+                {activeFilterCount}
+              </span>
+            )}
+            <ChevronDown className={`w-3 h-3 opacity-60 transition-transform ${showMobileFilters ? "rotate-180" : ""}`} />
+          </button>
+        </div>
+
+        {/* Row 2: count + clear */}
+        <div className="flex items-center justify-between pb-1">
+          <span className="text-[13px] text-muted-foreground">
+            {viewMode === 'groups'
+              ? `${filteredGroupsCount}/${totalGroupsCount} ${t('admin.invitations.toolbar.groupsView').toLowerCase()}`
+              : `${filteredGuestsCount}/${totalGuestsCount} ${t('admin.invitations.toolbar.guestsView').toLowerCase()}`}
+          </span>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              className="text-[12px] font-medium flex items-center gap-1"
+              style={{ color: "#78716c" }}
+              onClick={handleClearFilters}
+            >
+              <X className="w-3 h-3" />
+              Clear filters
+            </button>
+          )}
+        </div>
+
+        {/* Expandable filter panel */}
+        {showMobileFilters && (
+          <div
+            className="rounded-xl px-4 py-3 mb-2 space-y-3"
+            style={{ background: "#f4f2ef", border: "1px solid rgba(0,0,0,0.07)" }}
+          >
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "#a8a29e" }}>
+                  Status
+                </p>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                  className="w-full h-9 rounded-lg border border-border bg-white px-2 text-[13px]"
+                >
+                  <option value="all">{t('admin.invitations.toolbar.allStatus')}</option>
+                  <option value="pending">{t('common.pending')}</option>
+                  <option value="confirmed">{t('common.confirmed')}</option>
+                  <option value="declined">{t('common.declined')}</option>
+                </select>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "#a8a29e" }}>
+                  Tag
+                </p>
+                <select
+                  value={tagFilter}
+                  onChange={(e) => setTagFilter(e.target.value)}
+                  className="w-full h-9 rounded-lg border border-border bg-white px-2 text-[13px]"
+                >
+                  <option value="all">{t('admin.invitations.toolbar.allTags')}</option>
+                  {allTags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
+                </select>
+              </div>
+              {viewMode === 'flat' && (
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "#a8a29e" }}>
+                    Group
+                  </p>
+                  <select
+                    value={groupFilter}
+                    onChange={(e) => setGroupFilter(e.target.value)}
+                    className="w-full h-9 rounded-lg border border-border bg-white px-2 text-[13px]"
+                  >
+                    <option value="all">{t('admin.invitations.toolbar.allGroups')}</option>
+                    <option value="ungrouped">{t('admin.invitations.toolbar.ungrouped')}</option>
+                    {guestGroups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                  </select>
+                </div>
+              )}
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "#a8a29e" }}>
+                  Invited by
+                </p>
+                <select
+                  value={invitedByFilter}
+                  onChange={(e) => setInvitedByFilter(e.target.value)}
+                  className="w-full h-9 rounded-lg border border-border bg-white px-2 text-[13px]"
+                >
+                  <option value="all">{t('admin.invitations.toolbar.allInvitedBy')}</option>
+                  {partnerOptions.map((p) => <option key={p.key} value={p.key}>{p.name}</option>)}
+                </select>
+              </div>
+              {hasPaidPlan && (
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "#a8a29e" }}>
+                    Opened
+                  </p>
+                  <select
+                    value={openedFilter}
+                    onChange={(e) => setOpenedFilter(e.target.value as typeof openedFilter)}
+                    className="w-full h-9 rounded-lg border border-border bg-white px-2 text-[13px]"
+                  >
+                    <option value="all">{t('admin.invitations.toolbar.allOpens')}</option>
+                    <option value="opened">{t('admin.invitations.toolbar.opened')}</option>
+                    <option value="not-opened">{t('admin.invitations.toolbar.notOpened')}</option>
+                  </select>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Desktop toolbar (md+) ── */}
+      <div className="hidden md:flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
       {/* Left: View Toggle and Filters */}
       <div className="flex items-center gap-3 flex-wrap">
         {/* View Mode Toggle */}
@@ -372,7 +539,7 @@ export function InvitationsToolbarContent({
           )}
         </div>
       </div>
-
+    </div>
   )
 }
 

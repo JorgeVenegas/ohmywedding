@@ -175,6 +175,7 @@ export function WeddingNav({
 }: WeddingNavProps) {
   const [isVisible, setIsVisible] = useState(alwaysVisible)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
   const rafRef = useRef<number | null>(null)
   const navRef = useRef<HTMLElement | null>(null)
   const { t, locale } = useI18n()
@@ -328,6 +329,60 @@ export function WeddingNav({
     setIsMobileMenuOpen(false)
   }
 
+  // Track which section is currently in view to highlight it in the nav.
+  // Only applies when scrolling within this page (no mainPageHref, i.e. sections live here).
+  const sectionIdsKey = sectionLinks.map(link => link.id).join(',')
+  useEffect(() => {
+    if (mainPageHref || !sectionIdsKey) {
+      setActiveSectionId(null)
+      return
+    }
+
+    let observer: IntersectionObserver | null = null
+    let attempts = 0
+    const maxAttempts = 10
+
+    const trySetup = () => {
+      attempts++
+      const nav = navRef.current
+      const ownerDoc = nav?.ownerDocument || document
+      const ids = sectionIdsKey.split(',')
+      const elements = ids
+        .map(id => ({ id, el: ownerDoc.getElementById(id) }))
+        .filter((e): e is { id: string; el: HTMLElement } => !!e.el)
+
+      if (elements.length === 0) {
+        if (attempts < maxAttempts) setTimeout(trySetup, 150)
+        return
+      }
+
+      observer = new IntersectionObserver(
+        (entries) => {
+          const visible = entries
+            .filter(e => e.isIntersecting)
+            .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+          if (visible.length > 0) {
+            const match = elements.find(e => e.el === visible[0].target)
+            if (match) setActiveSectionId(match.id)
+          }
+        },
+        {
+          rootMargin: `-${NAV_HEIGHT + 20}px 0px -60% 0px`,
+          threshold: 0,
+        }
+      )
+
+      elements.forEach(({ el }) => observer!.observe(el))
+    }
+
+    const timer = setTimeout(trySetup, 100)
+
+    return () => {
+      clearTimeout(timer)
+      observer?.disconnect()
+    }
+  }, [mainPageHref, sectionIdsKey])
+
   // Dispatch custom event when visibility changes so other components can react
   // Dispatch to both parent window and current context to ensure EditingTopBar receives it
   // Also include nav height info for control buttons positioning
@@ -464,10 +519,16 @@ export function WeddingNav({
                     <button
                       key={link.id}
                       onClick={() => scrollToSection(link.id)}
-                      className="text-sm transition-colors whitespace-nowrap"
+                      className="text-sm transition-colors whitespace-nowrap pb-0.5"
                       style={{
                         fontFamily: 'var(--font-body, sans-serif)',
-                        color: isColored ? textColorMuted : '#6b7280'
+                        color: link.id === activeSectionId
+                          ? (isColored ? textColor : accentColor)
+                          : (isColored ? textColorMuted : '#6b7280'),
+                        fontWeight: link.id === activeSectionId ? 700 : 400,
+                        borderBottom: link.id === activeSectionId
+                          ? `2px solid ${isColored ? textColor : accentColor}`
+                          : '2px solid transparent',
                       }}
                     >
                       {link.label}
@@ -481,10 +542,16 @@ export function WeddingNav({
                   <Link
                     key={link.id}
                     href={link.href}
-                    className="text-sm transition-colors whitespace-nowrap"
+                    className="text-sm transition-colors whitespace-nowrap pb-0.5"
                     style={{
                       fontFamily: 'var(--font-body, sans-serif)',
-                      color: isColored ? textColorMuted : '#6b7280',
+                      color: link.isActive
+                        ? (isColored ? textColor : accentColor)
+                        : (isColored ? textColorMuted : '#6b7280'),
+                      fontWeight: link.isActive ? 700 : 400,
+                      borderBottom: link.isActive
+                        ? `2px solid ${isColored ? textColor : accentColor}`
+                        : '2px solid transparent',
                     }}
                   >
                     {link.label}
@@ -564,10 +631,14 @@ export function WeddingNav({
                     className="text-xl transition-all duration-200 hover:scale-105"
                     style={{
                       fontFamily: 'var(--font-body, sans-serif)',
-                      color: isColored ? textColor : accentColor
+                      color: isColored ? textColor : accentColor,
+                      fontWeight: link.id === activeSectionId ? 700 : 400,
                     }}
                   >
                     {link.label}
+                    {link.id === activeSectionId && (
+                      <span className="block mx-auto mt-1 w-6 h-0.5 rounded-full" style={{ background: isColored ? textColor : accentColor }} />
+                    )}
                   </button>
                 )
               ))}
@@ -583,9 +654,13 @@ export function WeddingNav({
                   style={{
                     fontFamily: 'var(--font-body, sans-serif)',
                     color: isColored ? textColor : accentColor,
+                    fontWeight: link.isActive ? 700 : 400,
                   }}
                 >
                   {link.label}
+                  {link.isActive && (
+                    <span className="block mx-auto mt-1 w-6 h-0.5 rounded-full" style={{ background: isColored ? textColor : accentColor }} />
+                  )}
                 </Link>
               ))}
             </div>

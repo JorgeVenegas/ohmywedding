@@ -191,7 +191,125 @@ export function GuestsTableGroups({
               </div>
             </div>
           )}
-        <div className="overflow-x-auto">
+
+          {/* ── Mobile list (< md) ── */}
+          <div className="md:hidden divide-y divide-border">
+            {filteredGroups.map((group) => {
+              const confirmedCount = group.guests.filter(g => g.confirmation_status === 'confirmed').length + (group.extra_passes_confirmed || 0)
+              const pendingCount = group.guests.filter(g => g.confirmation_status === 'pending').length + Math.max(0, (group.extra_passes || 0) - (group.extra_passes_confirmed || 0))
+              const declinedCount = group.guests.filter(g => g.confirmation_status === 'declined').length
+              const isExpanded = expandedGroups.has(group.id)
+              return (
+                <div key={group.id}>
+                  <div
+                    className="flex items-center gap-3 px-4 py-3 active:bg-muted/40 cursor-pointer"
+                    onClick={() => toggleGroupExpansion(group.id)}
+                  >
+                    {/* Expand chevron */}
+                    <div className="flex-shrink-0 text-muted-foreground">
+                      {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    </div>
+                    {/* Name + tag-like guest count */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[15px] font-medium text-foreground truncate">{group.name}</p>
+                      <p className="text-[12px] text-muted-foreground mt-0.5">{group.guests.length} {t('admin.invitations.header.guests').toLowerCase()}</p>
+                    </div>
+                    {/* Confirmation mini-summary */}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {confirmedCount > 0 && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[11px] font-semibold border border-green-100">
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-500" />{confirmedCount}
+                        </span>
+                      )}
+                      {pendingCount > 0 && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 text-[11px] font-semibold border border-amber-100">
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />{pendingCount}
+                        </span>
+                      )}
+                      {declinedCount > 0 && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 text-red-500 text-[11px] font-semibold border border-red-100">
+                          <div className="w-1.5 h-1.5 rounded-full bg-red-400" />{declinedCount}
+                        </span>
+                      )}
+                    </div>
+                    {/* Actions menu */}
+                    <div onClick={e => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="w-8 h-8 flex items-center justify-center rounded-full active:bg-muted">
+                            <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEditGroup(group)}>
+                            <Edit2 className="w-4 h-4 mr-2" />{t('common.edit')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openAddGuestToGroup(group.id)}>
+                            <UserPlus className="w-4 h-4 mr-2" />{t('admin.invitations.table.addGuest')}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteGroup(group.id)}>
+                            <Trash2 className="w-4 h-4 mr-2" />{t('common.delete')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                  {/* Expanded guests */}
+                  {isExpanded && group.guests.length > 0 && (
+                    <div className="bg-muted/20 divide-y divide-border/50">
+                      {group.guests.map(guest => (
+                        <div key={guest.id} className="flex items-center gap-3 px-5 py-2.5"
+                          onClick={() => openEditGuest(guest)}>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[14px] font-medium text-foreground truncate">{guest.name}</p>
+                            {guest.phone_number && (
+                              <p className="text-[12px] text-muted-foreground">{guest.phone_number}</p>
+                            )}
+                          </div>
+                          <span className={`text-[11px] px-2 py-0.5 rounded-full border font-medium ${getStatusBadgeClass(guest.confirmation_status)}`}>
+                            {guest.confirmation_status === 'confirmed' ? t('common.confirmed') : guest.confirmation_status === 'declined' ? t('common.declined') : t('common.pending')}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+            {ungroupedGuests.length > 0 && (
+              <div>
+                <div className="flex items-center gap-3 px-4 py-3 cursor-pointer active:bg-muted/40"
+                  onClick={() => setShowUngroupedExpanded(!showUngroupedExpanded)}>
+                  <div className="flex-shrink-0 text-muted-foreground">
+                    {showUngroupedExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[15px] font-medium text-foreground">{t('admin.invitations.toolbar.ungrouped')}</p>
+                    <p className="text-[12px] text-muted-foreground">{ungroupedGuests.length} {t('admin.invitations.header.guests').toLowerCase()}</p>
+                  </div>
+                </div>
+                {showUngroupedExpanded && (
+                  <div className="bg-muted/20 divide-y divide-border/50">
+                    {ungroupedGuests.map(guest => (
+                      <div key={guest.id} className="flex items-center gap-3 px-5 py-2.5" onClick={() => openEditGuest(guest)}>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[14px] font-medium text-foreground truncate">{guest.name}</p>
+                          {guest.phone_number && <p className="text-[12px] text-muted-foreground">{guest.phone_number}</p>}
+                        </div>
+                        <span className={`text-[11px] px-2 py-0.5 rounded-full border font-medium ${getStatusBadgeClass(guest.confirmation_status)}`}>
+                          {guest.confirmation_status === 'confirmed' ? t('common.confirmed') : guest.confirmation_status === 'declined' ? t('common.declined') : t('common.pending')}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ── Desktop table (md+) ── */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/20 border-b border-border">
               <tr>

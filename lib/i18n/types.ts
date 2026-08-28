@@ -2022,6 +2022,20 @@ export interface Translations {
           noUploadsHint: string
           settingsLink: string
         }
+        contributions: {
+          title: string
+          contributor: string
+          contributors: string
+          item: string
+          items: string
+          photo: string
+          photos: string
+          video: string
+          videos: string
+          yesterday: string
+          noContributions: string
+          noContributionsHint: string
+        }
       }
       activityReports: {
         title: string

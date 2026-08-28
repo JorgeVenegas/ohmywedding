@@ -67,45 +67,46 @@ export function InvitationsHeaderContent({
 }: InvitationsHeaderProps) {
   const { t } = useTranslation()
   return (
-    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-      <div>
+    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-4">
+      {/* Title */}
+      <div className="min-w-0">
         <p className="text-[10px] uppercase tracking-[0.3em] text-[#DDA46F] mb-1">{t('admin.invitations.title')}</p>
         <h1 className="text-2xl font-serif text-[#420c14]">{t('admin.invitations.title')}</h1>
         <p className="text-sm text-[#420c14]/60 mt-0.5">{t('admin.invitations.subtitle')}</p>
       </div>
-      {/* Stats and Action Buttons */}
-      <div className="flex items-center gap-4">
-        {/* Stats Pills */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#420c14]/5 text-xs font-medium">
+
+      {/* Stats + buttons — single DOM instance, wraps to two lines on mobile */}
+      <div className="flex flex-wrap items-center gap-2 md:flex-nowrap md:gap-4 md:flex-shrink-0">
+        {/* Stats pills */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#420c14]/5 text-xs font-medium">
             <Users className="w-3 h-3 text-[#420c14]/40" />
             <span className="text-[#420c14]/60">
               {hasActiveFilters ? `${filteredGroupsCount}/` : ''}{guestGroupsCount} {t('admin.invitations.header.groups')}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#420c14]/5 text-xs font-medium">
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#420c14]/5 text-xs font-medium">
             <span className="text-[#420c14] font-semibold">{displayedGuestCount}</span>
-            <span className="text-[#420c14]/50">{t('admin.invitations.header.guests')}{hasActiveFilters && totalGuests !== displayedGuestCount ? ` ${t('admin.invitations.header.of')} ${totalGuests}` : ''}</span>
+            <span className="text-[#420c14]/50">{t('admin.invitations.header.guests')}{hasActiveFilters && totalGuests !== displayedGuestCount ? ` / ${totalGuests}` : ''}</span>
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 text-xs font-medium">
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-500/10 text-xs font-medium">
             <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-            <span className="text-green-600">{confirmedGuests}</span>
+            <span className="text-green-600 font-semibold">{confirmedGuests}</span>
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-xs font-medium">
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-xs font-medium">
             <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-            <span className="text-amber-600">{pendingGuests}</span>
+            <span className="text-amber-600 font-semibold">{pendingGuests}</span>
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 text-xs font-medium">
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-500/10 text-xs font-medium">
             <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-            <span className="text-red-600">{declinedGuests}</span>
+            <span className="text-red-600 font-semibold">{declinedGuests}</span>
           </div>
         </div>
-        {/* Action Buttons */}
+        {/* Action buttons — same instance for mobile + desktop */}
         <div className="flex items-center gap-2">
-          {/* Add Actions Dropdown */}
           <DropdownMenu open={addDropdownOpen} onOpenChange={setAddDropdownOpen}>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8">
+              <Button variant="outline" size="sm" className="h-9 md:h-8">
                 <Plus className="w-3.5 h-3.5 mr-1.5" />
                 {t('admin.invitations.header.add')}
                 <ChevronDown className="w-3.5 h-3.5 ml-1.5" />
@@ -121,12 +122,7 @@ export function InvitationsHeaderContent({
                 {t('admin.invitations.header.addGroup')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={(e) => {
-                  e.preventDefault()
-                  onImportCsv()
-                }}
-              >
+              <DropdownMenuItem onSelect={e => { e.preventDefault(); onImportCsv() }}>
                 <Upload className="w-4 h-4 mr-2" />
                 {t('admin.invitations.header.importCsv')}
               </DropdownMenuItem>
@@ -136,23 +132,12 @@ export function InvitationsHeaderContent({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          {/* Hidden file input for CSV import */}
-          <input
-            id="csv-import-input"
-            type="file"
-            accept=".csv"
-            className="hidden"
-            onChange={onCsvFileSelect}
-          />
+          <input id="csv-import-input" type="file" accept=".csv" className="hidden" onChange={onCsvFileSelect} />
           {showInviteSettings && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8"
-              onClick={onOpenInviteSettings}
-            >
+            <Button variant="outline" size="sm" className="h-9 md:h-8" onClick={onOpenInviteSettings}>
               <Settings className="w-3.5 h-3.5 mr-1.5" />
-              {t('admin.invitations.header.inviteSettings')}
+              <span className="hidden sm:inline">{t('admin.invitations.header.inviteSettings')}</span>
+              <span className="sm:hidden">Config.</span>
             </Button>
           )}
         </div>

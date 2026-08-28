@@ -11,7 +11,9 @@ import {
   Check, X, Download, Loader2, Camera, Copy, CheckCircle2,
   ExternalLink, Trash2, ChevronLeft, ChevronRight, ArrowLeft, Heart, Maximize2,
   Info, MapPin, Clock, Aperture, FileImage, User, ChevronDown, AlertTriangle, RotateCw,
+  Users,
 } from "lucide-react"
+import { ContributionTimeline } from "./components/contribution-timeline"
 
 interface GalleryPageProps {
   params: Promise<{ weddingId: string }>
@@ -1396,6 +1398,10 @@ export default function GalleryPage({ params }: GalleryPageProps) {
   const [retryingPreview, setRetryingPreview]         = useState<string | null>(null)
   const [displayFontFamily, setDisplayFontFamily]     = useState<string | undefined>()
   const [themeColors, setThemeColors]                 = useState<{ primary?: string; secondary?: string; accent?: string } | undefined>()
+  const [hiddenPhotoIds, setHiddenPhotoIds]           = useState<Set<string>>(new Set())
+  const [showTimeline, setShowTimeline]               = useState(false)
+  const [gallerySort, setGallerySort]                 = useState<"taken" | "uploaded">("taken")
+  const checkedExistenceRef                           = useRef<Set<string>>(new Set())
 
   const toggleFavorite = useCallback((id: string) => {
     setFavorites(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s })
@@ -1489,6 +1495,33 @@ export default function GalleryPage({ params }: GalleryPageProps) {
 
   useEffect(() => { fetchPhotos() }, [fetchPhotos])
 
+  // Check S3 existence for photos that have no preview and aren't generating.
+  // On failure we assume existing — never hide a photo due to a transient S3/network error.
+  useEffect(() => {
+    const unchecked = photos.filter(p =>
+      !p.display_url &&
+      p.preview_status === 'unavailable' &&
+      !checkedExistenceRef.current.has(p.id)
+    )
+    if (unchecked.length === 0) return
+    unchecked.forEach(p => checkedExistenceRef.current.add(p.id))
+
+    void fetch('/api/guest-photos/check-exists', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photoIds: unchecked.map(p => p.id) }),
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data?.results) return
+        const missing = Object.entries(data.results as Record<string, boolean>)
+          .filter(([, exists]) => !exists)
+          .map(([id]) => id)
+        if (missing.length > 0) setHiddenPhotoIds(prev => new Set([...prev, ...missing]))
+      })
+      .catch(() => {})
+  }, [photos])
+
   const updateStatus = useCallback(async (photoId: string, status: "approved" | "rejected") => {
     setUpdatingId(photoId)
     try {
@@ -1576,18 +1609,30 @@ export default function GalleryPage({ params }: GalleryPageProps) {
     } finally { setTogglingUploads(false) }
   }
 
+  const visiblePhotos = photos.filter(p => !hiddenPhotoIds.has(p.id))
+
   const counts = {
-    pending:  photos.filter(p => p.status === "pending").length,
-    approved: photos.filter(p => p.status === "approved").length,
-    rejected: photos.filter(p => p.status === "rejected").length,
+    pending:  visiblePhotos.filter(p => p.status === "pending").length,
+    approved: visiblePhotos.filter(p => p.status === "approved").length,
+    rejected: visiblePhotos.filter(p => p.status === "rejected").length,
   }
 
-  const storageBytes = photos.reduce((sum, p) => sum + (p.file_size ?? 0) + (p.preview_size ?? 0), 0)
+  const storageBytes = visiblePhotos.reduce((sum, p) => sum + (p.file_size ?? 0) + (p.preview_size ?? 0), 0)
 
-  const filtered =
-    filter === "all"       ? photos :
-    filter === "favorites" ? photos.filter(p => favorites.has(p.id)) :
-    photos.filter(p => p.status === filter)
+  const filteredBase =
+    filter === "all"       ? visiblePhotos :
+    filter === "favorites" ? visiblePhotos.filter(p => favorites.has(p.id)) :
+    visiblePhotos.filter(p => p.status === filter)
+
+  const filtered = [...filteredBase].sort((a, b) => {
+    const keyA = gallerySort === "taken"
+      ? (a.metadata?.taken_at ? new Date(a.metadata.taken_at).getTime() : new Date(a.created_at).getTime())
+      : new Date(a.created_at).getTime()
+    const keyB = gallerySort === "taken"
+      ? (b.metadata?.taken_at ? new Date(b.metadata.taken_at).getTime() : new Date(b.created_at).getTime())
+      : new Date(b.created_at).getTime()
+    return keyA - keyB
+  })
 
   const filters: { key: FilterStatus; label: string; count?: number; icon?: React.ReactNode }[] = [
     { key: "all",       label: t("admin.settings.gallery.filters.all") },
@@ -1629,6 +1674,24 @@ export default function GalleryPage({ params }: GalleryPageProps) {
           retryingPreview={retryingPreview}
         />
       )}
+
+      <ContributionTimeline
+        photos={photos}
+        isOpen={showTimeline}
+        onClose={() => setShowTimeline(false)}
+        onPhotoClick={(photoId) => {
+          const idx = filtered.findIndex(p => p.id === photoId)
+          if (idx !== -1) {
+            setReviewIndex(idx)
+          } else {
+            // Photo might be filtered out — switch to "all" and open it
+            setFilterAndReset("all")
+            const allIdx = photos.findIndex(p => p.id === photoId)
+            if (allIdx !== -1) setReviewIndex(allIdx)
+          }
+          // Timeline stays open — ReviewMode (z-[9999]) covers it, and closing ReviewMode reveals the panel again
+        }}
+      />
 
       <main className="min-h-screen bg-background">
         <Header
@@ -1775,6 +1838,20 @@ export default function GalleryPage({ params }: GalleryPageProps) {
           {/* Filter tabs + Review entry */}
           <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
             <div className="flex items-center gap-1.5 flex-wrap">
+              {/* Timeline toggle */}
+              {photos.length > 0 && (
+                <button
+                  onClick={() => setShowTimeline(v => !v)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer"
+                  style={showTimeline
+                    ? { background: "#420c14", color: "#f5f2eb" }
+                    : { background: "rgba(66,12,20,0.05)", color: "rgba(66,12,20,0.55)" }
+                  }
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Contributions</span>
+                </button>
+              )}
               {filters.map(({ key, label, count, icon }) => (
                 <button key={key} onClick={() => setFilterAndReset(key)}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer ${
@@ -1796,8 +1873,27 @@ export default function GalleryPage({ params }: GalleryPageProps) {
               ))}
             </div>
 
-            {filtered.length > 0 && (
+            {visiblePhotos.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
+                {/* Sort toggle */}
+                <div
+                  className="flex items-center gap-0.5 p-0.5 rounded-lg"
+                  style={{ background: "rgba(66,12,20,0.06)" }}
+                >
+                  {(["taken", "uploaded"] as const).map(mode => (
+                    <button
+                      key={mode}
+                      onClick={() => setGallerySort(mode)}
+                      className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer"
+                      style={gallerySort === mode
+                        ? { background: "#fff", color: "#420c14", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }
+                        : { color: "rgba(66,12,20,0.45)" }
+                      }
+                    >
+                      {mode === "taken" ? "Taken" : "Uploaded"}
+                    </button>
+                  ))}
+                </div>
                 {/* Download all — approved or all */}
                 {(filter === 'approved' || filter === 'all') && (
                   <button

@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, CopyObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, DeleteObjectCommand, CopyObjectCommand, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 const client = new S3Client({
@@ -76,6 +76,16 @@ export async function copyObject(sourceKey: string, destKey: string): Promise<st
 
 export async function deleteObject(key: string): Promise<void> {
   await client.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }))
+}
+
+export async function objectExists(key: string): Promise<boolean> {
+  try {
+    await client.send(new HeadObjectCommand({ Bucket: BUCKET, Key: key }))
+    return true
+  } catch (err: any) {
+    if (err?.name === 'NotFound' || err?.name === 'NoSuchKey' || err?.$metadata?.httpStatusCode === 404) return false
+    throw err
+  }
 }
 
 export function keyFromUrl(url: string): string | null {

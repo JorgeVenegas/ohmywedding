@@ -44,6 +44,7 @@ import {
   normalizeInvitedBy,
 } from "./types"
 import type { PartnerOption } from "./types"
+import { GroupDrawer, type GuestRowData, type GroupDrawerData } from "./components/group-drawer"
 import {
   Tooltip,
   TooltipContent,
@@ -265,6 +266,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
 
   // Modal states
   const [showAddGroupModal, setShowAddGroupModal] = useState(false)
+  const [showGroupDrawer, setShowGroupDrawer] = useState(false)
   const [showAddGuestModal, setShowAddGuestModal] = useState(false)
   const [editingGroup, setEditingGroup] = useState<GuestGroup | null>(null)
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null)
@@ -842,6 +844,140 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
     })
   }
 
+  const handleGroupDrawerSave = async (
+    groupData: GroupDrawerData,
+    guests: GuestRowData[],
+    deletedGuestIds: string[],
+  ) => {
+    if (isSubmittingGroup) return
+    setIsSubmittingGroup(true)
+    try {
+      let groupId: string
+
+      if (editingGroup) {
+        const res = await fetch("/api/guest-groups", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: editingGroup.id,
+            name: groupData.name,
+            notes: groupData.notes || null,
+            extraPasses: groupData.extraPasses,
+            weddingId,
+          }),
+        })
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}))
+          setNotification({ isOpen: true, type: "error", title: t("common.error"), message: d.error || t("admin.invitations.toasts.groupUpdateError") })
+          return
+        }
+        groupId = editingGroup.id
+
+        for (const gid of deletedGuestIds) {
+          await fetch(`/api/guests?id=${encodeURIComponent(gid)}&weddingId=${encodeURIComponent(weddingId)}`, { method: "DELETE" }).catch(() => {})
+        }
+
+        const existingRows = guests.filter((r) => r.existingId)
+        await Promise.all(
+          existingRows.map((r) =>
+            fetch("/api/guests", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                id: r.existingId,
+                name: r.name,
+                phone_number: r.phone || null,
+                email: r.email || null,
+                tags: r.tags,
+                confirmation_status: r.status,
+                dietary_restrictions: r.dietary || null,
+                notes: r.notes || null,
+                weddingId,
+              }),
+            }).catch(() => {})
+          )
+        )
+
+        const newRows = guests.filter((r) => !r.existingId && r.name.trim())
+        if (newRows.length > 0) {
+          await fetch("/api/guests", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              bulk: true,
+              weddingId,
+              guests: newRows.map((r) => ({
+                name: r.name,
+                phoneNumber: r.phone || undefined,
+                tags: r.tags,
+                confirmationStatus: r.status,
+                dietaryRestrictions: r.dietary || undefined,
+                notes: r.notes || undefined,
+                guestGroupId: groupId,
+              })),
+            }),
+          }).catch(() => {})
+        }
+      } else {
+        const res = await fetch("/api/guest-groups", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ weddingId, name: groupData.name, notes: groupData.notes || null, extraPasses: groupData.extraPasses }),
+        })
+        const result = await res.json()
+        if (!res.ok) {
+          if (result.code === "GROUP_LIMIT_EXCEEDED") {
+            setShowGroupDrawer(false)
+            showUpgrade("group_limit")
+            return
+          }
+          setNotification({ isOpen: true, type: "error", title: t("common.error"), message: result.error || t("admin.invitations.toasts.groupAddError") })
+          return
+        }
+        groupId = result.data.id
+
+        const validGuests = guests.filter((r) => r.name.trim())
+        if (validGuests.length > 0) {
+          const gRes = await fetch("/api/guests", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              bulk: true,
+              weddingId,
+              guests: validGuests.map((r) => ({
+                name: r.name,
+                phoneNumber: r.phone || undefined,
+                tags: r.tags,
+                confirmationStatus: r.status,
+                dietaryRestrictions: r.dietary || undefined,
+                notes: r.notes || undefined,
+                guestGroupId: groupId,
+              })),
+            }),
+          })
+          if (!gRes.ok) {
+            const gd = await gRes.json().catch(() => ({}))
+            if (gd.code === "GUEST_LIMIT_EXCEEDED") showUpgrade("guest_limit")
+          }
+        }
+      }
+
+      await Promise.all([fetchGuestGroups(), fetchUngroupedGuests()])
+      setShowGroupDrawer(false)
+      setEditingGroup(null)
+      setNotification({
+        isOpen: true,
+        type: "success",
+        title: t("common.success"),
+        message: editingGroup ? t("admin.invitations.toasts.groupUpdated") : t("admin.invitations.toasts.groupCreated"),
+      })
+    } catch {
+      setNotification({ isOpen: true, type: "error", title: t("common.error"), message: t("admin.invitations.toasts.groupAddError") })
+    } finally {
+      setIsSubmittingGroup(false)
+    }
+  }
+
   const handleAddGuest = async (keepOpen = false) => {
     if (isSubmittingGuest) return
     setIsSubmittingGuest(true)
@@ -1131,6 +1267,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       extraPasses: group.extra_passes || 0,
     })
     setEditingGroup(group)
+    setShowGroupDrawer(true)
   }
 
   const openEditGuest = (guest: Guest) => {
@@ -2868,7 +3005,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
                 setAddDropdownOpen(false)
                 return
               }
-              setShowAddGroupModal(true)
+              setShowGroupDrawer(true)
               setAddDropdownOpen(false)
             },
             onImportCsv: () => {
@@ -3024,7 +3161,7 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
       </div>
       {/* Add/Edit Group Modal */}
       <AddEditGroupModal
-        isOpen={showAddGroupModal || editingGroup !== null}
+        isOpen={showAddGroupModal}
         editingGroup={editingGroup}
         groupForm={groupForm}
         setGroupForm={setGroupForm}
@@ -3046,6 +3183,19 @@ export default function InvitationsPage({ params }: InvitationsPageProps) {
         toggleTempGuestTag={toggleTempGuestTag}
         isSubmitting={isSubmittingGroup}
         isAddingGuest={isAddingGuestToModal}
+      />
+
+      {/* Group Drawer */}
+      <GroupDrawer
+        isOpen={showGroupDrawer}
+        editingGroup={editingGroup}
+        onClose={() => {
+          setShowGroupDrawer(false)
+          setEditingGroup(null)
+          Promise.all([fetchGuestGroups(), fetchUngroupedGuests()])
+        }}
+        onSave={handleGroupDrawerSave}
+        isSaving={isSubmittingGroup}
       />
 
       {/* Add/Edit Guest Modal */}
