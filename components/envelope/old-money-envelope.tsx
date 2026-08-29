@@ -149,7 +149,6 @@ export function OldMoneyEnvelope({
             width={sealPx}
             height={sealPx}
             style={{ width: sealPx, height: sealPx, objectFit: 'contain', display: 'block' }}
-            unoptimized
           />
         ) : (
           <GoldSeal px={sealPx} />

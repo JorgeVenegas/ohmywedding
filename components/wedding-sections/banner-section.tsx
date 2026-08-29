@@ -134,7 +134,6 @@ export function BannerSection({
           className="object-cover"
           priority
           sizes="100vw"
-          unoptimized
           style={{
             filter: `brightness(${effectiveImageBrightness}%)`,
             objectPosition: `${effectiveImagePosition.x}% ${effectiveImagePosition.y}%`

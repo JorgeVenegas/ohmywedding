@@ -326,22 +326,29 @@ function EnvelopeWithI18n(props: Omit<EnvelopeContentProps, 'primaryColor' | 'fl
 }
 
 function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
-  const [wedding, setWedding] = useState<Wedding | null>(null)
-  const [weddingDataLoading, setWeddingDataLoading] = useState(true)
-  const [curtainFalling, setCurtainFalling] = useState(false)
-  const [showEnvelope, setShowEnvelope] = useState(false)
-  const [envelopeFalling, setEnvelopeFalling] = useState(false)
-  const [envelopeOpening, setEnvelopeOpening] = useState(false)
-  const [envelopeComplete, setEnvelopeComplete] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-  const [guestGroup, setGuestGroup] = useState<GuestGroup | null>(null)
-  const [hasTrackedOpen, setHasTrackedOpen] = useState(false)
-  
-  // Check for demo mode and groupId in search params
+  // Check for demo mode, groupId, and screenshot-capture mode in search params
   const urlSearchParams = useSearchParams()
   const isDemoMode = urlSearchParams.get('demo') === 'true'
   const groupId = urlSearchParams.get('groupId')
   const isOwnerPreview = urlSearchParams.get('preview') === 'true'
+  // Skips the envelope-open interaction so a headless screenshot capture gets the
+  // page in its final "opened" state immediately, with no click or animation to wait on.
+  // The window flag is the screenshot capture's redirect-proof signal (see
+  // lib/animation-preference.ts); the query param is kept as a manual fallback.
+  const isCaptureMode =
+    urlSearchParams.get('capture') === '1' ||
+    (typeof window !== 'undefined' && (window as unknown as { __omwForceNoAnimations?: boolean }).__omwForceNoAnimations === true)
+
+  const [wedding, setWedding] = useState<Wedding | null>(null)
+  const [weddingDataLoading, setWeddingDataLoading] = useState(true)
+  const [curtainFalling, setCurtainFalling] = useState(false)
+  const [showEnvelope, setShowEnvelope] = useState(false)
+  const [envelopeFalling, setEnvelopeFalling] = useState(isCaptureMode)
+  const [envelopeOpening, setEnvelopeOpening] = useState(isCaptureMode)
+  const [envelopeComplete, setEnvelopeComplete] = useState(isCaptureMode)
+  const [isMobile, setIsMobile] = useState(false)
+  const [guestGroup, setGuestGroup] = useState<GuestGroup | null>(null)
+  const [hasTrackedOpen, setHasTrackedOpen] = useState(false)
 
   // Redirect free weddings accessed via subdomain to main domain path-based URL
   useEffect(() => {
@@ -555,8 +562,8 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
     }).format(date)
   })() : ''
 
-  // Always show envelope
-  const hasEnvelope = true
+  // Always show envelope (unless we're in screenshot-capture mode)
+  const hasEnvelope = !isCaptureMode
 
   return (
     <I18nProvider initialLocale={locale}>
@@ -576,6 +583,7 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
             coupleInitials={coupleInitials}
             weddingDate={weddingDate}
             guestGroup={guestGroup}
+            isCaptureMode={isCaptureMode}
           />
           </MusicPlayerProvider>
         </PageConfigProvider>
@@ -597,7 +605,8 @@ function WeddingContentWithCurtain({
   coupleNames,
   coupleInitials,
   weddingDate,
-  guestGroup
+  guestGroup,
+  isCaptureMode,
 }: {
   wedding: Wedding
   weddingNameId: string
@@ -611,11 +620,12 @@ function WeddingContentWithCurtain({
   coupleInitials: string
   weddingDate: string
   guestGroup: GuestGroup | null
+  isCaptureMode: boolean
 }) {
   const { isLoading: configLoading, config } = usePageConfig()
   const { markOpened } = useEnvelope()
-  const [curtainFalling, setCurtainFalling] = useState(false)
-  const [curtainComplete, setCurtainComplete] = useState(false)
+  const [curtainFalling, setCurtainFalling] = useState(isCaptureMode)
+  const [curtainComplete, setCurtainComplete] = useState(isCaptureMode)
   const [curtainColor, setCurtainColor] = useState('#c9a961') // Start with golden
 
   // Re-format date using the LIVE config locale (weddingDate prop was formatted with the stale DB locale)
@@ -684,8 +694,8 @@ function WeddingContentWithCurtain({
     <>
       {/* Curtain overlay - starts covering screen, then falls */}
       {!curtainComplete && (
-        <div className="fixed inset-0 z-[80] pointer-events-none">
-          <div 
+        <div data-capture-hide="true" className="fixed inset-0 z-[80] pointer-events-none">
+          <div
             className="absolute inset-0 transition-all duration-800 ease-in-out flex items-center justify-center"
             style={{
               transform: curtainFalling ? 'translateY(100%)' : 'translateY(0)',
@@ -708,6 +718,7 @@ function WeddingContentWithCurtain({
 
       {/* Envelope screen with parallel animations */}
       {showEnvelope && !envelopeComplete && (
+        <div data-capture-hide="true">
         <EnvelopeWithI18n
           isMobile={isMobile}
           envelopeFalling={envelopeFalling}
@@ -718,8 +729,9 @@ function WeddingContentWithCurtain({
           weddingDate={liveWeddingDate}
           guestGroup={guestGroup}
         />
+        </div>
       )}
-      
+
       <ConfigBasedWeddingRenderer
         wedding={wedding}
         weddingNameId={weddingNameId}

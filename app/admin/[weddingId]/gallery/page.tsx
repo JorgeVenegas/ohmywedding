@@ -11,7 +11,7 @@ import {
   Check, X, Download, Loader2, Camera, Copy, CheckCircle2,
   ExternalLink, Trash2, ChevronLeft, ChevronRight, ArrowLeft, Heart, Maximize2,
   Info, MapPin, Clock, Aperture, FileImage, User, ChevronDown, AlertTriangle, RotateCw,
-  Users,
+  Users, Play,
 } from "lucide-react"
 import { ContributionTimeline } from "./components/contribution-timeline"
 
@@ -204,8 +204,17 @@ function Filmstrip({ photos, currentIndex, onSelect, favorites }: {
             }}
           >
             {isVideo(photo) ? (
-              <div className="w-full h-full flex items-center justify-center" style={{ background: "#1e1e1e" }}>
-                <span className="text-white/25">▶</span>
+              <div className="relative w-full h-full" style={{ background: "#1e1e1e" }}>
+                {photo.display_url && (
+                  <video
+                    src={`${photo.display_url}#t=0.1`} muted playsInline preload="metadata"
+                    className="w-full h-full object-cover"
+                    style={{ opacity: active ? 1 : 0.48 }}
+                  />
+                )}
+                <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <Play className="w-3.5 h-3.5 text-white/70" fill="currentColor" />
+                </span>
               </div>
             ) : photo.display_url ? (
               <img
@@ -1983,8 +1992,19 @@ export default function GalleryPage({ params }: GalleryPageProps) {
                   style={{ borderRadius: 0 }}
                 >
                   {isVideo(photo) ? (
-                    <div className="w-full h-full flex items-center justify-center bg-[#420c14]/8">
-                      <ChevronRight className="w-6 h-6 text-[#420c14]/25" />
+                    <div className="relative w-full h-full bg-[#420c14]/8">
+                      {photo.display_url && (
+                        <video
+                          src={`${photo.display_url}#t=0.1`} muted playsInline preload="metadata"
+                          className="w-full h-full object-cover transition-all duration-300 group-hover:scale-[1.05] group-hover:brightness-90"
+                          style={photo.status === "rejected" ? { filter: "grayscale(1)", opacity: 0.5 } : undefined}
+                        />
+                      )}
+                      <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(0,0,0,0.45)" }}>
+                          <Play className="w-3.5 h-3.5 text-white" fill="currentColor" />
+                        </span>
+                      </span>
                     </div>
                   ) : photo.display_url ? (
                     <img

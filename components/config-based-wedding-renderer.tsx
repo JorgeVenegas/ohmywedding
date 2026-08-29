@@ -41,6 +41,7 @@ import { EditableSectionWrapper } from './ui/editable-section-wrapper'
 import { ViewportWrapper } from './ui/viewport-wrapper'
 import { WeddingNav } from './ui/wedding-nav'
 import { usePageConfig } from './contexts/page-config-context'
+import { setConfigAnimationsDisabled } from '@/lib/animation-preference'
 import { useSiteConfigSafe } from './contexts/site-config-context'
 import { useEditingModeSafe } from './contexts/editing-mode-context'
 import { useCustomize } from './contexts/customize-context'
@@ -139,6 +140,12 @@ function ConfigBasedWeddingRendererContent({
     }
   }, [wedding, weddingDetails])
   
+  // Push the persisted "animations enabled" setting into the global animation-preference
+  // store that useScrollAnimation reads (see lib/animation-preference.ts).
+  React.useEffect(() => {
+    setConfigAnimationsDisabled(config.siteSettings.animationsEnabled === false)
+  }, [config.siteSettings.animationsEnabled])
+
   // Apply theme colors to CSS variables
   React.useEffect(() => {
     const colors = config.siteSettings.theme?.colors

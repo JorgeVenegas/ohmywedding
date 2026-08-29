@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { X, Settings, FileText, Palette, Type, ChevronDown, Users, UserPlus, Trash2, Globe, Upload, Search, Navigation } from 'lucide-react'
+import { X, Settings, FileText, Palette, Type, ChevronDown, Users, UserPlus, Trash2, Globe, Upload, Search, Navigation, Sparkles, Camera, Monitor, Smartphone, Loader2 } from 'lucide-react'
 import { Button } from './button'
 import { Input } from './input'
 import { WeddingDetailsForm } from './config-forms/wedding-details-form'
@@ -189,6 +189,9 @@ interface SettingsPanelProps {
   // Language settings
   currentLocale?: 'en' | 'es'
   onLocaleChange?: (locale: 'en' | 'es') => void
+  // Animations (persisted siteSettings.animationsEnabled)
+  animationsEnabled?: boolean
+  onAnimationsChange?: (enabled: boolean) => void
 }
 
 interface WeddingDetails {
@@ -236,9 +239,35 @@ export function SettingsPanel({
   onEnvelopeDecorationVerticalPosChange,
   currentLocale = 'en',
   onLocaleChange,
+  animationsEnabled = true,
+  onAnimationsChange,
 }: SettingsPanelProps) {
   const pageConfigCtx = usePageConfigSafe()
   const hasSubPages = (pageConfigCtx?.config?.pages?.length ?? 0) > 0
+
+  const [capturingDevice, setCapturingDevice] = useState<'desktop' | 'mobile' | null>(null)
+  const handleDownloadScreenshot = async (device: 'desktop' | 'mobile') => {
+    if (!weddingNameId || capturingDevice) return
+    setCapturingDevice(device)
+    try {
+      const res = await fetch(`/api/weddings/${encodeURIComponent(weddingNameId)}/screenshot?device=${device}`)
+      if (!res.ok) throw new Error(`Screenshot request failed (${res.status})`)
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${weddingNameId}-invitation-${device}.png`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('[screenshot] download failed', err)
+      window.alert('Failed to capture the screenshot. Please try again.')
+    } finally {
+      setCapturingDevice(null)
+    }
+  }
 
   const [activeTab, setActiveTab] = useState<TabType>('details')
   const [details, setDetails] = useState<WeddingDetails | null>(null)
@@ -1599,6 +1628,65 @@ export function SettingsPanel({
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Animations */}
+              <div className="border-t border-gray-200 pt-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="w-4 h-4 text-gray-600" />
+                  <label className="text-sm font-medium text-gray-700">Animations</label>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Scroll animations</p>
+                    <p className="text-xs text-gray-500">Fade &amp; slide sections in as guests scroll. Turn off to show everything at once.</p>
+                  </div>
+                  <button
+                    onClick={() => onAnimationsChange?.(!animationsEnabled)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      animationsEnabled ? 'bg-blue-500' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                        animationsEnabled ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              {/* Screenshot export */}
+              <div className="border-t border-gray-200 pt-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Camera className="w-4 h-4 text-gray-600" />
+                  <label className="text-sm font-medium text-gray-700">Screenshot</label>
+                </div>
+                <p className="text-xs text-gray-500 mb-3">
+                  Download a full-page PNG of the live invitation. Animations are always disabled for the capture.
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => handleDownloadScreenshot('desktop')}
+                    disabled={!!capturingDevice}
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {capturingDevice === 'desktop'
+                      ? <Loader2 className="w-4 h-4 animate-spin" />
+                      : <Monitor className="w-4 h-4" />}
+                    {capturingDevice === 'desktop' ? 'Capturing…' : 'Desktop'}
+                  </button>
+                  <button
+                    onClick={() => handleDownloadScreenshot('mobile')}
+                    disabled={!!capturingDevice}
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {capturingDevice === 'mobile'
+                      ? <Loader2 className="w-4 h-4 animate-spin" />
+                      : <Smartphone className="w-4 h-4" />}
+                    {capturingDevice === 'mobile' ? 'Capturing…' : 'Mobile'}
+                  </button>
                 </div>
               </div>
             </div>

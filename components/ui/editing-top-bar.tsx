@@ -31,7 +31,7 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [navIsVisible, setNavIsVisible] = useState(false)
   const [currentNavHeight, setCurrentNavHeight] = useState(56)
-  
+
   const currentViewportMode = viewportContext?.viewportMode || 'desktop'
   
   // Listen for wedding nav visibility changes - only affects desktop view, not mobile preview
@@ -103,7 +103,9 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
             <span className="text-xs sm:text-sm font-medium">{t('editing.settings')}</span>
           </button>
         )}
-        
+
+        {/* Animations toggle and Screenshot export moved into the Settings panel (Theme tab). */}
+
         {/* Edit/Preview Toggle - only if user can edit the design */}
         {canEditDesign && (
           <div className="relative">
@@ -325,6 +327,8 @@ export function EditingTopBar({ className = '', weddingNameId }: EditingTopBarPr
         })}
         currentLocale={pageConfigContext.config.siteSettings.locale || 'en'}
         onLocaleChange={pageConfigContext.updateLocale}
+        animationsEnabled={pageConfigContext.config.siteSettings.animationsEnabled !== false}
+        onAnimationsChange={(animationsEnabled) => pageConfigContext.updateSiteSettings({ animationsEnabled })}
       />
     )}
     </>

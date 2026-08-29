@@ -44,7 +44,12 @@ export interface PageConfiguration {
     // Internationalization settings
     locale?: SupportedLocale
     showLanguageSwitcher?: boolean
-    
+
+    // Scroll-reveal / entrance animations across the invitation. Defaults to on when
+    // unset; set to false to render every section already-revealed (also what the
+    // screenshot capture forces). See lib/animation-preference.ts.
+    animationsEnabled?: boolean
+
     theme?: {
       colors?: {
         primary?: string
@@ -103,6 +108,7 @@ export const createDefaultPageConfig = (): PageConfiguration => ({
   siteSettings: {
     locale: 'en',
     showLanguageSwitcher: true,
+    animationsEnabled: true,
     theme: {
       colors: {
         primary: '#d4a574',

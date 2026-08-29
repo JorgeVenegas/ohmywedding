@@ -1,5 +1,6 @@
 "use client"
 
+import type { CSSProperties } from "react"
 import { Camera, ArrowUpFromLine, X, Check, AlertCircle, Ban, Heart, Film } from "lucide-react"
 import type { UploadItem } from "./types"
 import { MAX_CONTRIBUTION_BYTES } from "./types"
@@ -10,6 +11,15 @@ function fmtBytes(bytes: number): string {
   if (bytes >= 1_073_741_824) return `${(bytes / 1_073_741_824).toFixed(1)} GB`
   if (bytes >= 1_048_576) return `${(bytes / 1_048_576).toFixed(0)} MB`
   return `${(bytes / 1024).toFixed(0)} KB`
+}
+
+// Renders an item's local preview as <video> for video files (an <img> can't decode video data),
+// seeking to a fraction of a second in so the browser paints a frame instead of a blank box.
+function MosaicMedia({ item, className, style }: { item: UploadItem; className?: string; style?: CSSProperties }) {
+  if (item.file.type.startsWith('video/')) {
+    return <video src={`${item.preview}#t=0.1`} className={className} style={style} muted playsInline preload="metadata" />
+  }
+  return <img src={item.preview} alt="" className={className} style={style} />
 }
 
 const UPLOAD_ANIMATIONS = `
@@ -194,8 +204,8 @@ export function UploadArea({
       if (shown.length === 0) return null
       if (shown.length === 1) {
         return (
-          <img
-            src={shown[0].preview} alt=""
+          <MosaicMedia
+            item={shown[0]}
             className="mosaic-img absolute inset-0 w-full h-full object-cover"
           />
         )
@@ -204,7 +214,7 @@ export function UploadArea({
         return (
           <div className="absolute inset-0 grid grid-cols-2" style={{ gap: 2 }}>
             {shown.map((p, i) => (
-              <img key={p.id} src={p.preview} alt="" className="mosaic-img w-full h-full object-cover"
+              <MosaicMedia key={p.id} item={p} className="mosaic-img w-full h-full object-cover"
                 style={{ animationDelay: `${i * 0.08}s` }} />
             ))}
           </div>
@@ -213,10 +223,10 @@ export function UploadArea({
       if (shown.length === 3) {
         return (
           <div className="absolute inset-0 grid" style={{ gridTemplateColumns: '2fr 1fr', gap: 2 }}>
-            <img src={shown[0].preview} alt="" className="mosaic-img w-full h-full object-cover" style={{ animationDelay: '0s' }} />
+            <MosaicMedia item={shown[0]} className="mosaic-img w-full h-full object-cover" style={{ animationDelay: '0s' }} />
             <div className="grid grid-rows-2" style={{ gap: 2 }}>
-              <img src={shown[1].preview} alt="" className="mosaic-img w-full h-full object-cover" style={{ animationDelay: '0.08s' }} />
-              <img src={shown[2].preview} alt="" className="mosaic-img w-full h-full object-cover" style={{ animationDelay: '0.16s' }} />
+              <MosaicMedia item={shown[1]} className="mosaic-img w-full h-full object-cover" style={{ animationDelay: '0.08s' }} />
+              <MosaicMedia item={shown[2]} className="mosaic-img w-full h-full object-cover" style={{ animationDelay: '0.16s' }} />
             </div>
           </div>
         )
@@ -226,7 +236,7 @@ export function UploadArea({
         <div className="absolute inset-0 grid grid-cols-2 grid-rows-2" style={{ gap: 2 }}>
           {shown.map((p, i) => (
             <div key={p.id} className="relative overflow-hidden">
-              <img src={p.preview} alt="" className="mosaic-img w-full h-full object-cover"
+              <MosaicMedia item={p} className="mosaic-img w-full h-full object-cover"
                 style={{ animationDelay: `${i * 0.07}s` }} />
               {i === 3 && extra > 0 && (
                 <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
@@ -430,7 +440,7 @@ export function UploadArea({
                 {/* Image + overlays — overflow-hidden lives here, not the outer wrapper */}
                 <div className="absolute inset-0 rounded-xl overflow-hidden">
                   {item.file.type.startsWith('video/')
-                    ? <video src={item.preview} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+                    ? <video src={`${item.preview}#t=0.1`} className="w-full h-full object-cover" muted playsInline preload="metadata" />
                     : <img src={item.preview} alt={item.file.name} className="w-full h-full object-cover" />
                   }
 

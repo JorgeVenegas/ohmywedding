@@ -115,7 +115,7 @@ function QueueThumb({ item, onRemove, accent }: { item: UploadItem; onRemove: ()
       {/* Image + overlays + corners — clipped separately */}
       <div className="absolute inset-0 overflow-hidden">
         {item.file.type.startsWith('video/')
-          ? <video src={item.preview} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+          ? <video src={`${item.preview}#t=0.1`} className="w-full h-full object-cover" muted playsInline preload="metadata" />
           : <img src={item.preview} alt={item.file.name} className="w-full h-full object-cover" />
         }
         <PhotoCorners accent={accent} />
@@ -256,11 +256,19 @@ function OldMoneyUpload({
                     boxShadow: '0 4px 20px rgba(26,20,18,0.18), 0 1px 4px rgba(26,20,18,0.1)',
                   }}
                 >
-                  <img
-                    src={photo.preview} alt=""
-                    className="w-full object-cover"
-                    style={{ aspectRatio: '3/4', display: 'block' }}
-                  />
+                  {photo.file.type.startsWith('video/')
+                    ? <video
+                        src={`${photo.preview}#t=0.1`}
+                        className="w-full object-cover"
+                        style={{ aspectRatio: '3/4', display: 'block' }}
+                        muted playsInline preload="metadata"
+                      />
+                    : <img
+                        src={photo.preview} alt=""
+                        className="w-full object-cover"
+                        style={{ aspectRatio: '3/4', display: 'block' }}
+                      />
+                  }
                   <PhotoCorners accent={accent} />
                 </div>
               </div>

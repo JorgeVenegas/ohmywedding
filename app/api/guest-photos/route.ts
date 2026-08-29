@@ -209,10 +209,16 @@ export async function GET(request: NextRequest) {
       photos.map(async (photo) => {
         let displayUrl: string | null = null
         let previewStatus: 'ready' | 'generating' | 'unavailable' = 'unavailable'
+        const isVideoFile = photo.mime_type?.startsWith('video/')
 
         if (photo.preview_key) {
           displayUrl = await presignGet(photo.preview_key, 900).catch(() => null)
           previewStatus = 'ready'
+        } else if (isVideoFile && photo.s3_key) {
+          // Videos never get a generated thumbnail (Sharp can't process them) —
+          // play the original file directly instead.
+          displayUrl = await presignGet(photo.s3_key, 900).catch(() => null)
+          previewStatus = displayUrl ? 'ready' : 'unavailable'
         } else if (photo.s3_key && photo.preview_attempts < MAX_PREVIEW_ATTEMPTS) {
           previewStatus = 'generating'
         }

@@ -180,7 +180,7 @@ export function GalleryHaciendaVariant({
             <X className="w-6 h-6" />
           </button>
           <div className={`relative max-w-6xl max-h-[90vh] w-full h-full transition-all duration-300 ${isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
-            <Image src={selectedPhoto} alt="Full size photo" fill className="object-contain" sizes="100vw" unoptimized />
+            <Image src={selectedPhoto} alt="Full size photo" fill className="object-contain" sizes="100vw" />
           </div>
         </div>
       )}

@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
+import { useAnimationsDisabled } from '@/lib/animation-preference'
 
 interface UseScrollAnimationOptions {
   threshold?: number
@@ -15,8 +16,20 @@ export function useScrollAnimation(options: UseScrollAnimationOptions = {}) {
   const ref = useRef<HTMLDivElement>(null)
   const [isVisible, setIsVisible] = useState(false)
   const hasTriggeredRef = useRef(false)
+  const animationsOff = useAnimationsDisabled()
 
   useEffect(() => {
+    // Animations disabled (persisted setting, or forced off by the screenshot capture):
+    // render every reveal-gated section straight to its final visible state and skip the
+    // observer, so there's no scroll/intersection timing left to depend on. This has to be
+    // a real post-mount state update — the section is server-rendered with isVisible=false,
+    // so its `opacity-0 translate-y-*` className is already in the HTML; only an actual
+    // state change triggers the re-render that reconciles it to `opacity-100 translate-y-0`.
+    if (animationsOff) {
+      setIsVisible(true)
+      return
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
@@ -36,7 +49,8 @@ export function useScrollAnimation(options: UseScrollAnimationOptions = {}) {
     }
 
     return () => observer.disconnect()
-  }, [threshold, triggerOnce])
+  }, [threshold, triggerOnce, animationsOff])
 
-  return { ref, isVisible }
+  // `|| animationsOff` covers the first render before the effect above commits.
+  return { ref, isVisible: isVisible || animationsOff }
 }

@@ -200,7 +200,8 @@ export async function middleware(request: NextRequest) {
             return NextResponse.next()
           }
 
-          const redirectTarget = `${protocol}//${targetHost}${targetPath}`
+          const query = request.nextUrl.search
+          const redirectTarget = `${protocol}//${targetHost}${targetPath}${query}`
           return NextResponse.redirect(redirectTarget)
         }
         // Free plan: DON'T redirect to subdomain, continue with normal path-based routing

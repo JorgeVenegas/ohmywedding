@@ -275,7 +275,6 @@ export function FAQElegantVariant({
               fill
               className="object-contain"
               sizes="100vw"
-              unoptimized
             />
           </div>
         </div>

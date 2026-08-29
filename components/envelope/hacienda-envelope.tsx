@@ -186,7 +186,6 @@ export function HaciendaEnvelope({
               width={SEAL_SIZES[decorationSize].px}
               height={SEAL_SIZES[decorationSize].px}
               className="w-full h-full object-contain"
-              unoptimized
             />
           </div>
         ) : (
