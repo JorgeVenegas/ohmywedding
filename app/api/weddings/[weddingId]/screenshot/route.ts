@@ -5,7 +5,8 @@ import { getWeddingUrl, type WeddingPlan } from '@/lib/wedding-url'
 import { captureWeddingScreenshot } from '@/lib/screenshot'
 
 export const runtime = 'nodejs'
-export const maxDuration = 90
+// Two headless passes now (envelope shot + full-page shot) plus the stitch.
+export const maxDuration = 120
 
 // GET /api/weddings/[weddingId]/screenshot?device=desktop|mobile — admin only
 // Renders the live invitation in a headless browser and returns a full-page PNG.

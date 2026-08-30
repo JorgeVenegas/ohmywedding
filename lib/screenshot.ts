@@ -5,11 +5,23 @@
  * animations and avoids the fixed-nav duplication/cropping issues that
  * browser devtools screenshots run into.
  *
+ * The output is two shots stitched vertically: the closed envelope screen on
+ * top, then the full invitation below it (with the envelope/curtain skipped).
+ * That mirrors what a guest actually sees — the envelope first, then everything
+ * inside once it's opened.
+ *
  * Production (Vercel) uses @sparticuz/chromium, a serverless-compatible
  * Chromium binary. Local development uses a locally installed Chrome.
  */
 
+import sharp from 'sharp'
+import type { Browser, Page } from 'puppeteer-core'
+
 export type ScreenshotDevice = 'desktop' | 'mobile'
+
+// 'page' = full invitation, envelope/curtain skipped; 'envelope' = just the closed
+// envelope screen. page-client.tsx reads window.__omwCapture to switch behaviour.
+type CaptureMode = 'page' | 'envelope'
 
 const VIEWPORTS: Record<ScreenshotDevice, { width: number; height: number; isMobile: boolean; hasTouch: boolean }> = {
   desktop: { width: 1920, height: 1080, isMobile: false, hasTouch: false },
@@ -51,6 +63,19 @@ async function launchBrowser() {
   const puppeteer = await import('puppeteer-core')
 
   if (isServerlessEnv()) {
+    // @sparticuz/chromium only unpacks its bundled shared libraries (libnss3.so, …) and
+    // sets LD_LIBRARY_PATH when it recognizes the Lambda runtime, which it detects from a
+    // "<major>.x" marker in AWS_EXECUTION_ENV / AWS_LAMBDA_JS_RUNTIME. Vercel's Node
+    // runtime doesn't reliably expose that marker, so without this nudge Chromium launches
+    // with no libs and dies with "libnss3.so: cannot open shared object file". Must run
+    // before the package is first imported — it wires LD_LIBRARY_PATH at module load.
+    if (!/\b\d+\.x\b/.test(process.env.AWS_EXECUTION_ENV ?? '') && !/\b\d+\.x\b/.test(process.env.AWS_LAMBDA_JS_RUNTIME ?? '')) {
+      // AWS_LAMBDA_JS_RUNTIME only (leave AWS_EXECUTION_ENV alone — other libs read it):
+      // @sparticuz/chromium's detection accepts either, and this alone selects the right
+      // (AL2 vs AL2023) lib bundle from the running Node major version.
+      process.env.AWS_LAMBDA_JS_RUNTIME = `nodejs${process.versions.node.split('.')[0]}.x`
+    }
+
     const chromium = (await import('@sparticuz/chromium')).default
     return puppeteer.launch({
       args: [...chromium.args, ...WEBGL_ARGS],
@@ -122,11 +147,117 @@ const CAPTURE_MODE_CSS = `
   }
 `
 
+// Runs before any of the page's own scripts, on every navigation. Flags the capture
+// mode for page-client.tsx / lib/animation-preference.ts (window globals rather than a
+// query param, since the subdomain-enforcement redirect in middleware.ts strips query
+// strings), injects the reveal CSS, and neutralizes IntersectionObserver so
+// useScrollAnimation's isVisible can't be flipped back mid-capture.
+function installCapturePrelude(page: Page, mode: CaptureMode) {
+  return page.evaluateOnNewDocument((css: string, captureMode: string) => {
+    ;(window as unknown as { __omwCapture?: string }).__omwCapture = captureMode
+    ;(window as unknown as { __omwForceNoAnimations?: boolean }).__omwForceNoAnimations = true
+
+    const inject = () => {
+      // documentElement is usually present by the time this fires, but not guaranteed on
+      // fast local loads — retry next frame rather than silently skipping the override.
+      if (!document.documentElement) {
+        requestAnimationFrame(inject)
+        return
+      }
+      const style = document.createElement('style')
+      style.textContent = css
+      document.documentElement.appendChild(style)
+    }
+    inject()
+
+    class NoOpIntersectionObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+      takeRecords() { return [] }
+    }
+    // @ts-expect-error — deliberately replacing the browser global for the capture session only
+    window.IntersectionObserver = NoOpIntersectionObserver
+  }, CAPTURE_MODE_CSS, mode)
+}
+
+// Vertically concatenate two PNGs (envelope on top, invitation below), normalizing the
+// top image to the bottom one's width so a scale-factor mismatch between the two shots
+// doesn't misalign them.
+async function stitchVertical(top: Buffer, bottom: Buffer): Promise<Buffer> {
+  const bottomMeta = await sharp(bottom).metadata()
+  const width = bottomMeta.width ?? 0
+  const bottomHeight = bottomMeta.height ?? 0
+
+  const topResized = await sharp(top).resize({ width }).png().toBuffer()
+  const topHeight = (await sharp(topResized).metadata()).height ?? 0
+
+  return sharp({
+    create: {
+      width,
+      height: topHeight + bottomHeight,
+      channels: 4,
+      background: { r: 255, g: 255, b: 255, alpha: 1 },
+    },
+  })
+    .composite([
+      { input: topResized, top: 0, left: 0 },
+      { input: bottom, top: topHeight, left: 0 },
+    ])
+    .png()
+    .toBuffer()
+}
+
 export async function captureWeddingScreenshot(url: string, device: ScreenshotDevice): Promise<Buffer> {
   const browser = await launchBrowser()
-
   try {
-    const page = await browser.newPage()
+    const envelopeShot = await captureEnvelopeShot(browser, url, device)
+    const pageShot = await capturePageShot(browser, url, device)
+    return await stitchVertical(envelopeShot, pageShot)
+  } finally {
+    await browser.close()
+  }
+}
+
+// The closed envelope screen only — a single fixed-position viewport, no scroll walk.
+async function captureEnvelopeShot(browser: Browser, url: string, device: ScreenshotDevice): Promise<Buffer> {
+  const page = await browser.newPage()
+  try {
+    const { width, height, isMobile, hasTouch } = VIEWPORTS[device]
+    page.on('pageerror', err => console.error('[screenshot:envelope] page error:', err))
+
+    await page.setViewport({ width, height, deviceScaleFactor: 2, isMobile, hasTouch })
+    if (device === 'mobile') await page.setUserAgent(MOBILE_USER_AGENT)
+    await installCapturePrelude(page, 'envelope')
+
+    await page.goto(url, { waitUntil: 'networkidle0', timeout: 45000 })
+
+    // Wait for the envelope screen to be in the DOM, then for the page-config fetch it
+    // depends on for colors/fonts/decoration (kicked off after mount, so possibly after
+    // the initial network-idle) to settle, then let the webfont + decoration image load.
+    await page.waitForSelector('[data-envelope-screen]', { timeout: 15000 }).catch(() => {})
+    await page.waitForNetworkIdle({ idleTime: 500, timeout: 10000 }).catch(() => {})
+    await page.evaluate(() => (document as unknown as { fonts?: { ready: Promise<unknown> } }).fonts?.ready).catch(() => {})
+    await page.evaluate(async () => {
+      // Bounded — a single stuck image's decode() promise never settles, and would
+      // otherwise hang this evaluate past the CDP protocol timeout.
+      const deadline = Date.now() + 8000
+      const withDeadline = (p: Promise<unknown>) =>
+        Promise.race([p.catch(() => {}), new Promise(r => setTimeout(r, Math.max(0, deadline - Date.now())))])
+      await Promise.all(Array.from(document.images).map(img => withDeadline(img.decode())))
+    })
+    await new Promise(resolve => setTimeout(resolve, 800))
+
+    const png = await page.screenshot({ type: 'png' })
+    return Buffer.from(png)
+  } finally {
+    await page.close()
+  }
+}
+
+async function capturePageShot(browser: Browser, url: string, device: ScreenshotDevice): Promise<Buffer> {
+  const page = await browser.newPage()
+  try {
     const { width, height, isMobile, hasTouch } = VIEWPORTS[device]
 
     // Diagnostics — logs to the server console (the `npm run dev` terminal locally, or the
@@ -154,50 +285,7 @@ export async function captureWeddingScreenshot(url: string, device: ScreenshotDe
     await page.setViewport({ width, height, deviceScaleFactor: 1, isMobile, hasTouch })
     if (device === 'mobile') await page.setUserAgent(MOBILE_USER_AGENT)
 
-    // Injected before any of the page's own scripts run, so elements never even paint in a
-    // hidden "pending reveal" state to begin with. document.documentElement (<html>) is
-    // usually already there by the time this fires, but isn't guaranteed on every
-    // navigation (observed null on fast local loads) — retry on the next frame if so,
-    // rather than throwing and silently skipping the whole capture-mode override.
-    await page.evaluateOnNewDocument((css: string) => {
-      // Hard-disable every scroll-reveal / entrance animation for the capture, independent
-      // of the wedding's persisted setting. Read by lib/animation-preference.ts →
-      // useScrollAnimation. Set here (not via ?capture=1) because the subdomain-enforcement
-      // redirect in middleware.ts drops query strings, while this global is re-injected on
-      // every navigation by evaluateOnNewDocument.
-      ;(window as unknown as { __omwForceNoAnimations?: boolean }).__omwForceNoAnimations = true
-
-      const inject = () => {
-        if (!document.documentElement) {
-          requestAnimationFrame(inject)
-          return
-        }
-        const style = document.createElement('style')
-        style.textContent = css
-        document.documentElement.appendChild(style)
-      }
-      inject()
-
-      // Neutralize IntersectionObserver entirely rather than trying to keep the CSS
-      // override alive through every possible re-trigger. page.screenshot({fullPage:true})
-      // resizes the viewport to the full page height as an internal step of the CDP
-      // capture itself, which is completely outside this script's control or timing —
-      // that resize changes every observed element's intersection ratio against a
-      // dramatically different viewport and can flip React's `isVisible` state at the
-      // exact moment of capture, after every check this file can run has already passed.
-      // With no real observer to fire at all, useScrollAnimation's isVisible simply never
-      // becomes true, the opacity-0/translate-y classes never change, and the CSS rule
-      // below is the only thing left that can determine these elements' visual state —
-      // nothing is left to race it.
-      class NoOpIntersectionObserver {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-        takeRecords() { return [] }
-      }
-      // @ts-expect-error — deliberately replacing the browser global for the capture session only
-      window.IntersectionObserver = NoOpIntersectionObserver
-    }, CAPTURE_MODE_CSS)
+    await installCapturePrelude(page, 'page')
 
     // Waits for every currently-in-DOM <img> to finish decoding, and for every element's
     // CSS background-image to finish loading — both bounded by a shared deadline so a
@@ -372,6 +460,6 @@ export async function captureWeddingScreenshot(url: string, device: ScreenshotDe
     const png = await page.screenshot({ type: 'png', fullPage: true })
     return Buffer.from(png)
   } finally {
-    await browser.close()
+    await page.close()
   }
 }

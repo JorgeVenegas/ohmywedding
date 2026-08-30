@@ -331,18 +331,21 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
   const isDemoMode = urlSearchParams.get('demo') === 'true'
   const groupId = urlSearchParams.get('groupId')
   const isOwnerPreview = urlSearchParams.get('preview') === 'true'
-  // Skips the envelope-open interaction so a headless screenshot capture gets the
-  // page in its final "opened" state immediately, with no click or animation to wait on.
-  // The window flag is the screenshot capture's redirect-proof signal (see
-  // lib/animation-preference.ts); the query param is kept as a manual fallback.
-  const isCaptureMode =
-    urlSearchParams.get('capture') === '1' ||
-    (typeof window !== 'undefined' && (window as unknown as { __omwForceNoAnimations?: boolean }).__omwForceNoAnimations === true)
+  // Screenshot-capture modes, driven by lib/screenshot.ts, which takes two shots and
+  // stitches them: 'envelope' renders just the closed envelope screen; 'page' (a.k.a.
+  // the legacy ?capture=1) renders the full invitation with the envelope + intro curtain
+  // skipped. The window global is the redirect-proof signal — middleware.ts strips query
+  // strings on the subdomain redirect — with the query param kept as a manual fallback.
+  const captureFlag =
+    urlSearchParams.get('capture') ||
+    (typeof window !== 'undefined' ? (window as unknown as { __omwCapture?: string }).__omwCapture : undefined)
+  const isCaptureMode = captureFlag === '1' || captureFlag === 'page'
+  const isEnvelopeCaptureMode = captureFlag === 'envelope'
 
   const [wedding, setWedding] = useState<Wedding | null>(null)
   const [weddingDataLoading, setWeddingDataLoading] = useState(true)
   const [curtainFalling, setCurtainFalling] = useState(false)
-  const [showEnvelope, setShowEnvelope] = useState(false)
+  const [showEnvelope, setShowEnvelope] = useState(isEnvelopeCaptureMode)
   const [envelopeFalling, setEnvelopeFalling] = useState(isCaptureMode)
   const [envelopeOpening, setEnvelopeOpening] = useState(isCaptureMode)
   const [envelopeComplete, setEnvelopeComplete] = useState(isCaptureMode)
@@ -562,7 +565,8 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
     }).format(date)
   })() : ''
 
-  // Always show envelope (unless we're in screenshot-capture mode)
+  // Always show envelope, except in the full-page screenshot shot (the envelope shot
+  // and normal visitors both keep it).
   const hasEnvelope = !isCaptureMode
 
   return (
@@ -584,6 +588,7 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
             weddingDate={weddingDate}
             guestGroup={guestGroup}
             isCaptureMode={isCaptureMode}
+            isEnvelopeCaptureMode={isEnvelopeCaptureMode}
           />
           </MusicPlayerProvider>
         </PageConfigProvider>
@@ -607,6 +612,7 @@ function WeddingContentWithCurtain({
   weddingDate,
   guestGroup,
   isCaptureMode,
+  isEnvelopeCaptureMode,
 }: {
   wedding: Wedding
   weddingNameId: string
@@ -621,11 +627,15 @@ function WeddingContentWithCurtain({
   weddingDate: string
   guestGroup: GuestGroup | null
   isCaptureMode: boolean
+  isEnvelopeCaptureMode: boolean
 }) {
   const { isLoading: configLoading, config } = usePageConfig()
   const { markOpened } = useEnvelope()
-  const [curtainFalling, setCurtainFalling] = useState(isCaptureMode)
-  const [curtainComplete, setCurtainComplete] = useState(isCaptureMode)
+  // Both capture shots skip the intro curtain — the full-page shot has no envelope at
+  // all, and the envelope shot wants the closed envelope shown straight away.
+  const skipCurtain = isCaptureMode || isEnvelopeCaptureMode
+  const [curtainFalling, setCurtainFalling] = useState(skipCurtain)
+  const [curtainComplete, setCurtainComplete] = useState(skipCurtain)
   const [curtainColor, setCurtainColor] = useState('#c9a961') // Start with golden
 
   // Re-format date using the LIVE config locale (weddingDate prop was formatted with the stale DB locale)
@@ -718,7 +728,7 @@ function WeddingContentWithCurtain({
 
       {/* Envelope screen with parallel animations */}
       {showEnvelope && !envelopeComplete && (
-        <div data-capture-hide="true">
+        <div data-capture-hide="true" data-envelope-screen="true">
         <EnvelopeWithI18n
           isMobile={isMobile}
           envelopeFalling={envelopeFalling}
