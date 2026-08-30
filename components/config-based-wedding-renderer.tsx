@@ -61,6 +61,12 @@ function ConfigBasedWeddingRendererContent({
   const customizeContext = useCustomize()
   const searchParams = useSearchParams()
   const groupId = searchParams.get('groupId') ?? undefined
+  // Screenshot capture only: force the RSVP section to a specific state regardless of
+  // whether the selected guest group has actually responded. 'form' = the editable form,
+  // 'confirmed' = the post-submission summary.
+  const rsvpViewParam = searchParams.get('rsvpView')
+  const captureRsvpView: 'form' | 'confirmed' | undefined =
+    rsvpViewParam === 'form' || rsvpViewParam === 'confirmed' ? rsvpViewParam : undefined
   
   // Check if user is authorized to access admin (owner or collaborator)
   const [isAuthorized, setIsAuthorized] = React.useState(false)
@@ -506,7 +512,8 @@ function ConfigBasedWeddingRendererContent({
       weddingNameId,
       theme: config.siteSettings.theme as any,
       alignment: { text: 'center' as const },
-      groupId: baseType === 'rsvp' ? groupId : undefined
+      groupId: baseType === 'rsvp' ? groupId : undefined,
+      captureRsvpView: baseType === 'rsvp' ? captureRsvpView : undefined,
     }
 
     let renderedComponent

@@ -39,6 +39,7 @@ export function RSVPSection({
   variant = 'elegant',
   showVariantSwitcher = true,
   groupId,
+  captureRsvpView,
   useColorBackground,
   backgroundColorChoice,
   requirePhoneVerification = true
@@ -115,6 +116,7 @@ export function RSVPSection({
     customQuestions: config.customQuestions || customQuestions,
     embedForm: config.embedForm ?? embedForm,
     groupId,
+    captureRsvpView,
     useColorBackground: config.useColorBackground ?? useColorBackground,
     backgroundColorChoice: config.backgroundColorChoice ?? backgroundColorChoice,
     requirePhoneVerification: config.requirePhoneVerification ?? requirePhoneVerification

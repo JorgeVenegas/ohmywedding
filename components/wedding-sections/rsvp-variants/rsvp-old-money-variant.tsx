@@ -60,6 +60,7 @@ export function RSVPOldMoneyVariant({
   sectionSubtitle,
   showTravelInfo: showTravelInfoProp = true,
   groupId,
+  captureRsvpView,
   useColorBackground,
   backgroundColorChoice,
   requirePhoneVerification = true,
@@ -241,7 +242,14 @@ export function RSVPOldMoneyVariant({
   }
 
   // ── Confirmed (read-only) state ───────────────────────────────────────
-  if (submitted && !isEditing) {
+  // Screenshot capture can pin which view renders regardless of real response state.
+  const showConfirmedView = captureRsvpView === 'form'
+    ? false
+    : captureRsvpView === 'confirmed'
+      ? !isEditing
+      : submitted && !isEditing
+
+  if (showConfirmedView) {
     return (
       <section id="rsvp" className="relative overflow-hidden" style={{ backgroundColor: bg }}>
         <div className="max-w-xl mx-auto px-8 sm:px-14 md:px-10" style={sectionInner}>

@@ -66,7 +66,7 @@ const OrnateCard = ({ children, className = '', cardBackground, cardBorderColor,
 export function RSVPHaciendaVariant({
   weddingNameId, theme, alignment, sectionTitle, sectionSubtitle,
   showTravelInfo = true, showCustomQuestions = false, customQuestions = [],
-  useColorBackground, backgroundColorChoice, groupId,
+  useColorBackground, backgroundColorChoice, groupId, captureRsvpView,
   requirePhoneVerification = true,
 }: BaseRSVPProps) {
   const effectiveUseColorBackground = useColorBackground ?? false
@@ -127,7 +127,7 @@ export function RSVPHaciendaVariant({
           adminSetTravel: g.admin_set_travel || false,
         })))
         if (data.hasSubmitted) { setIsSubmitted(true); setIsEditing(false); setExtraPassesAttending(data.extra_passes_confirmed || 0) }
-        else setIsEditing(true)
+        else setIsEditing(captureRsvpView !== 'confirmed')
       }
     } catch { /* Failed to fetch */ }
     finally { setIsLoading(false) }
@@ -254,7 +254,14 @@ export function RSVPHaciendaVariant({
   }
 
   /* Submitted */
-  if (isSubmitted && !isEditing) {
+  // Screenshot capture can pin which view renders regardless of real response state.
+  const showConfirmedView = captureRsvpView === 'form'
+    ? false
+    : captureRsvpView === 'confirmed'
+      ? !isEditing
+      : isSubmitted && !isEditing
+
+  if (showConfirmedView) {
     return (
       <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : { backgroundColor: secondary }}>
         <BotanicalCorner position="top-left" color={`${accent}55`} size="sm" />

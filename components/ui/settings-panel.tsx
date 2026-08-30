@@ -250,6 +250,8 @@ export function SettingsPanel({
   // Empty string = generic invitation.
   const [screenshotGroups, setScreenshotGroups] = useState<{ id: string; name: string }[]>([])
   const [screenshotGroupId, setScreenshotGroupId] = useState('')
+  // 'auto' = real state | 'form' = editable RSVP form | 'confirmed' = post-submission summary
+  const [screenshotRsvpView, setScreenshotRsvpView] = useState<'auto' | 'form' | 'confirmed'>('auto')
   useEffect(() => {
     if (!weddingNameId) return
     let cancelled = false
@@ -272,7 +274,10 @@ export function SettingsPanel({
     setCapturingDevice(device)
     try {
       const params = new URLSearchParams({ device })
-      if (screenshotGroupId) params.set('groupId', screenshotGroupId)
+      if (screenshotGroupId) {
+        params.set('groupId', screenshotGroupId)
+        if (screenshotRsvpView !== 'auto') params.set('rsvpView', screenshotRsvpView)
+      }
       const res = await fetch(`/api/weddings/${encodeURIComponent(weddingNameId)}/screenshot?${params}`)
       if (!res.ok) throw new Error(`Screenshot request failed (${res.status})`)
       // The route uploads the PNG to storage and returns a presigned download link — the
@@ -1705,6 +1710,22 @@ export function SettingsPanel({
                       ))}
                     </select>
                     <span className="text-xs text-gray-400 mt-1 block">Shows that group&apos;s name on the envelope and their info in the RSVP section.</span>
+                  </label>
+                )}
+                {screenshotGroups.length > 0 && screenshotGroupId && (
+                  <label className="block mb-3">
+                    <span className="text-xs font-medium text-gray-600 mb-1.5 block">RSVP section shows</span>
+                    <select
+                      value={screenshotRsvpView}
+                      onChange={e => setScreenshotRsvpView(e.target.value as 'auto' | 'form' | 'confirmed')}
+                      disabled={!!capturingDevice}
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white disabled:opacity-60"
+                    >
+                      <option value="auto">Their real status</option>
+                      <option value="form">Editable form (before responding)</option>
+                      <option value="confirmed">Confirmation summary (after responding)</option>
+                    </select>
+                    <span className="text-xs text-gray-400 mt-1 block">Force the RSVP view even if this group has already responded.</span>
                   </label>
                 )}
                 <div className="grid grid-cols-2 gap-2">

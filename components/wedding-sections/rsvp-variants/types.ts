@@ -26,6 +26,9 @@ export interface BaseRSVPProps {
   backgroundColorChoice?: BackgroundColorChoice
   groupId?: string | null
   requirePhoneVerification?: boolean
+  // Screenshot capture: pin the RSVP state ('form' = editable form, 'confirmed' = summary)
+  // instead of deriving it from whether the guest group has responded.
+  captureRsvpView?: 'form' | 'confirmed'
 }
 
 // Helper to add opacity to hex color

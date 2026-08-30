@@ -51,6 +51,7 @@ export function RSVPCardsVariant({
   sectionSubtitle,
   showTravelInfo = true,
   groupId,
+  captureRsvpView,
   useColorBackground,
   backgroundColorChoice,
   requirePhoneVerification = true,
@@ -283,7 +284,14 @@ export function RSVPCardsVariant({
     )
   }
 
-  if (submitted && !isEditing) {
+  // Screenshot capture can pin which view renders regardless of real response state.
+  const showConfirmedView = captureRsvpView === 'form'
+    ? false
+    : captureRsvpView === 'confirmed'
+      ? !isEditing
+      : submitted && !isEditing
+
+  if (showConfirmedView) {
     return (
       <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">

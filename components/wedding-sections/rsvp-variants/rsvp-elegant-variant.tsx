@@ -61,6 +61,7 @@ export function RSVPElegantVariant({
   useColorBackground,
   backgroundColorChoice,
   groupId,
+  captureRsvpView,
   requirePhoneVerification = true
 }: BaseRSVPProps) {
   // Ensure defaults are set
@@ -130,7 +131,8 @@ export function RSVPElegantVariant({
           setIsEditing(false)
           setExtraPassesAttending(data.extra_passes_confirmed || 0)
         } else {
-          setIsEditing(true)
+          // Don't auto-open the editor when a capture wants the confirmed view.
+          setIsEditing(captureRsvpView !== 'confirmed')
         }
       }
     } catch (error) {
@@ -340,7 +342,14 @@ export function RSVPElegantVariant({
     )
   }
 
-  if (isSubmitted && !isEditing) {
+  // Screenshot capture can pin which view renders regardless of real response state.
+  const showConfirmedView = captureRsvpView === 'form'
+    ? false
+    : captureRsvpView === 'confirmed'
+      ? !isEditing
+      : isSubmitted && !isEditing
+
+  if (showConfirmedView) {
     return (
       <SectionWrapper theme={theme} alignment={alignment} id="rsvp" style={isColored ? { backgroundColor: bgColor } : undefined}>
         <div className="container mx-auto px-4 py-20">

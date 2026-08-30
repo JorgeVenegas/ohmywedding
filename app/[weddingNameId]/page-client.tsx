@@ -394,6 +394,9 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
 
   // Track invitation open when page loads with groupId
   useEffect(() => {
+    // Screenshot capture loads the personalized invitation too — don't let it register
+    // as a real guest opening the invitation on the dashboard.
+    if (isCaptureMode || isEnvelopeCaptureMode) return
     if (groupId && weddingNameId && !hasTrackedOpen && !isDemoMode) {
       setHasTrackedOpen(true)
       // Track the invitation open

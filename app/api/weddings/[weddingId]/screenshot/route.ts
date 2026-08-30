@@ -30,6 +30,8 @@ export async function GET(
     const { searchParams } = new URL(request.url)
     const device = searchParams.get('device') === 'mobile' ? 'mobile' : 'desktop'
     const groupId = searchParams.get('groupId')?.trim() || null
+    const rsvpViewParam = searchParams.get('rsvpView')
+    const rsvpView = rsvpViewParam === 'form' || rsvpViewParam === 'confirmed' ? rsvpViewParam : null
 
     const admin = createAdminSupabaseClient()
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedWeddingId)
@@ -71,6 +73,8 @@ export async function GET(
     // groupId personalizes the envelope ("Para: …") and the RSVP section, which both
     // already read it from the URL.
     if (groupId) targetUrl.searchParams.set('groupId', groupId)
+    // Only meaningful alongside a groupId — pins the RSVP section to the form / confirmed view.
+    if (groupId && rsvpView) targetUrl.searchParams.set('rsvpView', rsvpView)
 
     const image = await captureWeddingScreenshot(targetUrl.toString(), device)
 
