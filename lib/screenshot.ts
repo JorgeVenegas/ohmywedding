@@ -269,7 +269,8 @@ async function capturePageShot(browser: Browser, url: string, device: Screenshot
       }
     })
     page.on('response', response => {
-      if (response.request().resourceType() === 'image' && !response.ok()) {
+      // 3xx (incl. 304 Not Modified) is fine — only real error statuses matter here.
+      if (response.request().resourceType() === 'image' && response.status() >= 400) {
         console.error('[screenshot] image response not ok:', response.status(), response.url())
       }
     })
@@ -457,9 +458,72 @@ async function capturePageShot(browser: Browser, url: string, device: Screenshot
       requestAnimationFrame(() => requestAnimationFrame(() => resolve(undefined)))
     }))
 
-    const png = await page.screenshot({ type: 'png', fullPage: true })
-    return Buffer.from(png)
+    return await screenshotByScrolling(page, width, height)
   } finally {
     await page.close()
   }
+}
+
+// A single Page.captureScreenshot({ fullPage: true }) of a ~12000px invitation overflows
+// what the serverless Chromium can rasterize + PNG-encode in one shot — it fails outright
+// with "Unable to capture screenshot". Instead: scroll a viewport at a time, screenshot
+// each viewport, and stitch the strips with sharp so no single raster is ever larger than
+// one screen.
+async function screenshotByScrolling(page: Page, cssWidth: number, cssHeight: number): Promise<Buffer> {
+  // Fixed-position chrome (wedding nav, floating music button, any leftover overlay) would
+  // be burned into every strip. It isn't in the current full-page output either — that's
+  // taken scrolled to the top, where the nav auto-hides.
+  await page.evaluate(() => {
+    document.querySelectorAll<HTMLElement>('*').forEach(el => {
+      if (getComputedStyle(el).position === 'fixed') el.style.setProperty('display', 'none', 'important')
+    })
+  })
+
+  const totalHeight = await page.evaluate(() => document.body.scrollHeight)
+
+  const strips: Buffer[] = []
+  let y = 0
+  while (y < totalHeight) {
+    // The browser clamps scrollTo to (scrollHeight - innerHeight), so near the bottom the
+    // viewport still starts higher than `y` — crop back the overlap from the real scroll.
+    await page.evaluate(target => window.scrollTo(0, target), y)
+    await new Promise(resolve => setTimeout(resolve, 120))
+    const scrollY = await page.evaluate(() => Math.round(window.scrollY))
+
+    const shot = Buffer.from(await page.screenshot({ type: 'png', captureBeyondViewport: false }))
+    const meta = await sharp(shot).metadata()
+    const scale = (meta.width ?? cssWidth) / cssWidth // device pixel ratio actually used
+
+    const overlapCss = y - scrollY // >= 0
+    const stripCss = Math.min(cssHeight - overlapCss, totalHeight - y)
+    strips.push(
+      overlapCss > 0 || stripCss < cssHeight
+        ? await sharp(shot)
+            .extract({
+              left: 0,
+              top: Math.round(overlapCss * scale),
+              width: meta.width ?? Math.round(cssWidth * scale),
+              height: Math.max(1, Math.round(stripCss * scale)),
+            })
+            .png()
+            .toBuffer()
+        : shot
+    )
+    y += stripCss
+  }
+
+  const dims = await Promise.all(strips.map(s => sharp(s).metadata()))
+  const outWidth = dims[0].width ?? cssWidth
+  let cursor = 0
+  const layers = strips.map((input, i) => {
+    const top = cursor
+    cursor += dims[i].height ?? 0
+    return { input, top, left: 0 }
+  })
+  return sharp({
+    create: { width: outWidth, height: cursor, channels: 4, background: { r: 255, g: 255, b: 255, alpha: 1 } },
+  })
+    .composite(layers)
+    .png()
+    .toBuffer()
 }
