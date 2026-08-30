@@ -5,10 +5,10 @@
  * animations and avoids the fixed-nav duplication/cropping issues that
  * browser devtools screenshots run into.
  *
- * The output is two shots stitched vertically: the closed envelope screen on
- * top, then the full invitation below it (with the envelope/curtain skipped).
- * That mirrors what a guest actually sees — the envelope first, then everything
- * inside once it's opened.
+ * The output is two shots stitched vertically (as a JPEG): the closed envelope
+ * screen on top, then the full invitation below it (with the envelope/curtain
+ * skipped). That mirrors what a guest actually sees — the envelope first, then
+ * everything inside once it's opened.
  *
  * Production (Vercel) uses @sparticuz/chromium, a serverless-compatible
  * Chromium binary. Local development uses a locally installed Chrome.
@@ -193,9 +193,10 @@ function installCapturePrelude(page: Page, mode: CaptureMode) {
   }, CAPTURE_MODE_CSS, mode)
 }
 
-// Vertically concatenate two PNGs (envelope on top, invitation below), normalizing the
-// top image to the bottom one's width so a scale-factor mismatch between the two shots
-// doesn't misalign them.
+// Vertically concatenate the two shots (envelope on top, invitation below), normalizing
+// the top image to the bottom one's width so a scale-factor mismatch doesn't misalign
+// them. Final output is JPEG — a full invitation is 20+ megapixels and an all-photo
+// image, where PNG would be 15–20 MB (slow to encode and upload) for no visible gain.
 async function stitchVertical(top: Buffer, bottom: Buffer): Promise<Buffer> {
   const bottomMeta = await sharp(bottom).metadata()
   const width = bottomMeta.width ?? 0
@@ -216,7 +217,7 @@ async function stitchVertical(top: Buffer, bottom: Buffer): Promise<Buffer> {
       { input: topResized, top: 0, left: 0 },
       { input: bottom, top: topHeight, left: 0 },
     ])
-    .png()
+    .jpeg({ quality: 86, chromaSubsampling: '4:4:4' })
     .toBuffer()
 }
 

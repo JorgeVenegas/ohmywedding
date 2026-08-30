@@ -3,13 +3,18 @@ import { createServerSupabaseClient, createAdminSupabaseClient } from '@/lib/sup
 import { isSuperUser } from '@/lib/superadmin'
 import { getWeddingUrl, type WeddingPlan } from '@/lib/wedding-url'
 import { captureWeddingScreenshot } from '@/lib/screenshot'
+import { putObject, presignDownload } from '@/lib/s3'
 
 export const runtime = 'nodejs'
-// Two headless passes now (envelope shot + full-page shot) plus the stitch.
-export const maxDuration = 120
+// Two headless passes (envelope shot + full-page shot), the stitch, and the upload.
+// ~90s+ on a cold serverless container. Needs a Vercel plan that allows this (Hobby
+// caps functions at 60s regardless of this value).
+export const maxDuration = 300
 
-// GET /api/weddings/[weddingId]/screenshot?device=desktop|mobile — admin only
-// Renders the live invitation in a headless browser and returns a full-page PNG.
+// GET /api/weddings/[weddingId]/screenshot?device=desktop|mobile[&groupId=…] — admin only.
+// Renders the live invitation in a headless browser, uploads the JPEG to storage, and
+// returns { url } — a short-lived presigned download link. (The image is multi-MB, over
+// the ~4.5 MB serverless response-body cap, so it can't be returned inline.)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ weddingId: string }> }
@@ -67,16 +72,15 @@ export async function GET(
     // already read it from the URL.
     if (groupId) targetUrl.searchParams.set('groupId', groupId)
 
-    const png = await captureWeddingScreenshot(targetUrl.toString(), device)
+    const image = await captureWeddingScreenshot(targetUrl.toString(), device)
 
-    const filename = `${wedding.wedding_name_id}-invitation${groupId ? '-personalized' : ''}-${device}.png`
-    return new NextResponse(new Uint8Array(png), {
-      headers: {
-        'Content-Type': 'image/png',
-        'Content-Disposition': `attachment; filename="${filename}"`,
-        'Cache-Control': 'no-store',
-      },
-    })
+    const slug = `${device}${groupId ? '-personalized' : ''}`
+    const filename = `${wedding.wedding_name_id}-invitation${groupId ? '-personalized' : ''}-${device}.jpg`
+    const key = `screenshots/${wedding.wedding_name_id}/${Date.now()}-${slug}.jpg`
+    await putObject(key, image, 'image/jpeg')
+    const url = await presignDownload(key, filename, 600)
+
+    return NextResponse.json({ url, filename }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     console.error('[screenshot]', error)
     return NextResponse.json({ error: 'Failed to capture screenshot' }, { status: 500 })

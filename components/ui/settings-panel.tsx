@@ -275,16 +275,16 @@ export function SettingsPanel({
       if (screenshotGroupId) params.set('groupId', screenshotGroupId)
       const res = await fetch(`/api/weddings/${encodeURIComponent(weddingNameId)}/screenshot?${params}`)
       if (!res.ok) throw new Error(`Screenshot request failed (${res.status})`)
-      const blob = await res.blob()
-      const suffix = screenshotGroupId ? '-personalized' : ''
-      const url = URL.createObjectURL(blob)
+      // The route uploads the PNG to storage and returns a presigned download link — the
+      // image is far too large to come back inline through a serverless function.
+      const { url } = await res.json()
+      if (!url) throw new Error('No download URL returned')
       const link = document.createElement('a')
       link.href = url
-      link.download = `${weddingNameId}-invitation${suffix}-${device}.png`
+      link.rel = 'noopener'
       document.body.appendChild(link)
       link.click()
       link.remove()
-      URL.revokeObjectURL(url)
     } catch (err) {
       console.error('[screenshot] download failed', err)
       window.alert('Failed to capture the screenshot. Please try again.')
