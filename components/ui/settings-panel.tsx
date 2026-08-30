@@ -246,17 +246,41 @@ export function SettingsPanel({
   const hasSubPages = (pageConfigCtx?.config?.pages?.length ?? 0) > 0
 
   const [capturingDevice, setCapturingDevice] = useState<'desktop' | 'mobile' | null>(null)
+  // Guest group to personalize the capture with (envelope "Para: …" + RSVP section).
+  // Empty string = generic invitation.
+  const [screenshotGroups, setScreenshotGroups] = useState<{ id: string; name: string }[]>([])
+  const [screenshotGroupId, setScreenshotGroupId] = useState('')
+  useEffect(() => {
+    if (!weddingNameId) return
+    let cancelled = false
+    fetch(`/api/guest-groups?weddingId=${encodeURIComponent(weddingNameId)}`)
+      .then(res => (res.ok ? res.json() : { data: [] }))
+      .then(({ data }) => {
+        if (cancelled || !Array.isArray(data)) return
+        setScreenshotGroups(
+          data
+            .filter((g: { id?: string; name?: string }) => g?.id && g?.name)
+            .map((g: { id: string; name: string }) => ({ id: g.id, name: g.name }))
+        )
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [weddingNameId])
+
   const handleDownloadScreenshot = async (device: 'desktop' | 'mobile') => {
     if (!weddingNameId || capturingDevice) return
     setCapturingDevice(device)
     try {
-      const res = await fetch(`/api/weddings/${encodeURIComponent(weddingNameId)}/screenshot?device=${device}`)
+      const params = new URLSearchParams({ device })
+      if (screenshotGroupId) params.set('groupId', screenshotGroupId)
+      const res = await fetch(`/api/weddings/${encodeURIComponent(weddingNameId)}/screenshot?${params}`)
       if (!res.ok) throw new Error(`Screenshot request failed (${res.status})`)
       const blob = await res.blob()
+      const suffix = screenshotGroupId ? '-personalized' : ''
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `${weddingNameId}-invitation-${device}.png`
+      link.download = `${weddingNameId}-invitation${suffix}-${device}.png`
       document.body.appendChild(link)
       link.click()
       link.remove()
@@ -1664,8 +1688,25 @@ export function SettingsPanel({
                   <label className="text-sm font-medium text-gray-700">Screenshot</label>
                 </div>
                 <p className="text-xs text-gray-500 mb-3">
-                  Download a full-page PNG of the live invitation. Animations are always disabled for the capture.
+                  Download a full-page PNG of the live invitation (closed envelope on top, then the page). Animations are always disabled for the capture.
                 </p>
+                {screenshotGroups.length > 0 && (
+                  <label className="block mb-3">
+                    <span className="text-xs font-medium text-gray-600 mb-1.5 block">Personalize for guest group</span>
+                    <select
+                      value={screenshotGroupId}
+                      onChange={e => setScreenshotGroupId(e.target.value)}
+                      disabled={!!capturingDevice}
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white disabled:opacity-60"
+                    >
+                      <option value="">Generic (no guest)</option>
+                      {screenshotGroups.map(g => (
+                        <option key={g.id} value={g.id}>{g.name}</option>
+                      ))}
+                    </select>
+                    <span className="text-xs text-gray-400 mt-1 block">Shows that group&apos;s name on the envelope and their info in the RSVP section.</span>
+                  </label>
+                )}
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => handleDownloadScreenshot('desktop')}

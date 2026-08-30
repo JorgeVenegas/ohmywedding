@@ -336,9 +336,14 @@ function WeddingPageContent({ weddingNameId }: WeddingPageContentProps) {
   // the legacy ?capture=1) renders the full invitation with the envelope + intro curtain
   // skipped. The window global is the redirect-proof signal — middleware.ts strips query
   // strings on the subdomain redirect — with the query param kept as a manual fallback.
+  // The window global wins over the query param: the screenshot route no longer appends
+  // ?capture=1 (it drives each of its two passes purely via window.__omwCapture), and if
+  // a stale param were still read first, the envelope pass would fall through to 'page'
+  // and the envelope shot would just be a second copy of the hero.
   const captureFlag =
+    (typeof window !== 'undefined' ? (window as unknown as { __omwCapture?: string }).__omwCapture : undefined) ||
     urlSearchParams.get('capture') ||
-    (typeof window !== 'undefined' ? (window as unknown as { __omwCapture?: string }).__omwCapture : undefined)
+    undefined
   const isCaptureMode = captureFlag === '1' || captureFlag === 'page'
   const isEnvelopeCaptureMode = captureFlag === 'envelope'
 

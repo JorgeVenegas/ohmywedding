@@ -44,19 +44,24 @@ function isServerlessEnv(): boolean {
 }
 
 // Headless Chrome has no real GPU to hand WebGL, and without an explicit software
-// renderer it can silently fail to create a WebGL context — the venue map renders as a
-// permanent blank gray box in that case (modern Google Maps embeds use WebGL vector
-// rendering, not plain tile images). SwiftShader via ANGLE is Chrome's own cross-platform
-// software implementation, so forcing it on guarantees a context exists either way.
-const WEBGL_ARGS = [
-  '--use-gl=angle',
-  '--use-angle=swiftshader-webgl',
+// renderer it silently fails to create a WebGL context — the venue map (a Google Maps
+// WebGL vector map, not raster tiles) then renders as a permanent blank grey box.
+//
+// @sparticuz/chromium ALREADY sets `--use-gl=angle --use-angle=swiftshader` and extracts
+// its SwiftShader driver, so on serverless we only layer on the two non-conflicting
+// extras. Passing a second, different `--use-angle` value (an earlier version used the
+// bogus `swiftshader-webgl`) silently breaks ANGLE init and was why the map went blank
+// in production. Local Chrome gets the full set since it configures none of this itself.
+const WEBGL_EXTRA_ARGS = [
   '--enable-webgl',
-  '--ignore-gpu-blocklist',
-  // Chrome warns that automatic fallback to software WebGL is being deprecated in favor
-  // of opting in explicitly — without this it still works today but would silently go
-  // back to a blank map on some future Chrome version.
+  // Chrome is deprecating the automatic fallback to software WebGL; opt in explicitly.
   '--enable-unsafe-swiftshader',
+]
+const LOCAL_WEBGL_ARGS = [
+  '--use-gl=angle',
+  '--use-angle=swiftshader',
+  '--ignore-gpu-blocklist',
+  ...WEBGL_EXTRA_ARGS,
 ]
 
 async function launchBrowser() {
@@ -78,9 +83,9 @@ async function launchBrowser() {
 
     const chromium = (await import('@sparticuz/chromium')).default
     return puppeteer.launch({
-      args: [...chromium.args, ...WEBGL_ARGS],
+      args: [...chromium.args, ...WEBGL_EXTRA_ARGS],
       executablePath: await chromium.executablePath(),
-      headless: true,
+      headless: chromium.headless,
     })
   }
 
@@ -94,7 +99,7 @@ async function launchBrowser() {
         ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
         : '/usr/bin/google-chrome')
 
-  return puppeteer.launch({ executablePath, headless: true, args: WEBGL_ARGS })
+  return puppeteer.launch({ executablePath, headless: true, args: LOCAL_WEBGL_ARGS })
 }
 
 // Makes CSS transitions/animations resolve instantly instead of playing out over their
@@ -154,6 +159,13 @@ const CAPTURE_MODE_CSS = `
 // useScrollAnimation's isVisible can't be flipped back mid-capture.
 function installCapturePrelude(page: Page, mode: CaptureMode) {
   return page.evaluateOnNewDocument((css: string, captureMode: string) => {
+    // evaluateOnNewDocument runs in EVERY frame, including the Google Maps iframe — and
+    // Maps uses IntersectionObserver internally to decide when to initialize, so a NoOp
+    // there leaves the map a blank box. The zero-duration animation CSS would break its
+    // rendering too. Everything here is only meaningful in the top document, so bail out
+    // of subframes entirely.
+    if (window !== window.top) return
+
     ;(window as unknown as { __omwCapture?: string }).__omwCapture = captureMode
     ;(window as unknown as { __omwForceNoAnimations?: boolean }).__omwForceNoAnimations = true
 
@@ -230,13 +242,15 @@ async function captureEnvelopeShot(browser: Browser, url: string, device: Screen
     if (device === 'mobile') await page.setUserAgent(MOBILE_USER_AGENT)
     await installCapturePrelude(page, 'envelope')
 
-    await page.goto(url, { waitUntil: 'networkidle0', timeout: 45000 })
+    // domcontentloaded, not networkidle0 — this shot only needs the envelope overlay, not
+    // the whole invitation (and its map tiles) that render underneath it.
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
 
     // Wait for the envelope screen to be in the DOM, then for the page-config fetch it
-    // depends on for colors/fonts/decoration (kicked off after mount, so possibly after
-    // the initial network-idle) to settle, then let the webfont + decoration image load.
+    // depends on for colors/fonts/decoration (kicked off after mount) to settle, then let
+    // the webfont + decoration image load.
     await page.waitForSelector('[data-envelope-screen]', { timeout: 15000 }).catch(() => {})
-    await page.waitForNetworkIdle({ idleTime: 500, timeout: 10000 }).catch(() => {})
+    await page.waitForNetworkIdle({ idleTime: 500, timeout: 8000 }).catch(() => {})
     await page.evaluate(() => (document as unknown as { fonts?: { ready: Promise<unknown> } }).fonts?.ready).catch(() => {})
     await page.evaluate(async () => {
       // Bounded — a single stuck image's decode() promise never settles, and would
@@ -263,6 +277,10 @@ async function capturePageShot(browser: Browser, url: string, device: Screenshot
     // Diagnostics — logs to the server console (the `npm run dev` terminal locally, or the
     // function logs on Vercel) so a missing image shows up as a concrete reason (404, DNS
     // failure, decode error, ...) instead of just "it's not there."
+    // Tallies Google Maps traffic so a blank map in the output has a concrete explanation
+    // in the function logs (blocked by a consent/"sorry" interstitial vs. tiles that just
+    // errored vs. never requested at all).
+    const mapStats = { total: 0, failed: 0, blocked: 0 }
     page.on('requestfailed', request => {
       if (request.resourceType() === 'image') {
         console.error('[screenshot] image request failed:', request.url(), request.failure()?.errorText)
@@ -272,6 +290,12 @@ async function capturePageShot(browser: Browser, url: string, device: Screenshot
       // 3xx (incl. 304 Not Modified) is fine — only real error statuses matter here.
       if (response.request().resourceType() === 'image' && response.status() >= 400) {
         console.error('[screenshot] image response not ok:', response.status(), response.url())
+      }
+      const u = response.url()
+      if (/google\.com\/(maps|sorry)|consent\.google|maps\.(google|gstatic)|khms\d|kh\.google|\/vt\b/.test(u)) {
+        mapStats.total++
+        if (response.status() >= 400) mapStats.failed++
+        if (/consent\.google|google\.com\/sorry/.test(u)) mapStats.blocked++
       }
     })
     page.on('pageerror', err => console.error('[screenshot] page error:', err))
@@ -285,6 +309,16 @@ async function capturePageShot(browser: Browser, url: string, device: Screenshot
     // resolution, not CSS layout, so this doesn't change what gets measured below.
     await page.setViewport({ width, height, deviceScaleFactor: 1, isMobile, hasTouch })
     if (device === 'mobile') await page.setUserAgent(MOBILE_USER_AGENT)
+
+    // The venue map is a keyless `google.com/maps?...&output=embed` iframe. From a fresh
+    // headless browser on a datacenter IP, Google otherwise serves a cookie-consent
+    // interstitial instead of the map (blank grey box in the capture). Pre-seed a
+    // consent cookie and an English locale so the map renders straight away.
+    await page.setExtraHTTPHeaders({ 'Accept-Language': 'en-US,en;q=0.9' })
+    await page.setCookie(
+      { name: 'CONSENT', value: 'YES+', domain: '.google.com', path: '/' },
+      { name: 'SOCS', value: 'CAISNQgDEitib3FfaWRlbnRpdHlmcm9udGVuZF8yMDI0MDEwOS4wOF9wMBgBIAEaAmVuIAEQ', domain: '.google.com', path: '/' },
+    )
 
     await installCapturePrelude(page, 'page')
 
@@ -387,11 +421,32 @@ async function capturePageShot(browser: Browser, url: string, device: Screenshot
     // Second pass — catches images that only appeared/started loading during the walk.
     await waitForImages()
 
-    // The map is a lazy-loaded iframe, so it only starts loading once the walk above
-    // scrolls it into view — wait for it here, then give its internal tile-streaming a
-    // moment to actually paint (its own load event fires before tiles finish arriving).
-    await waitForIframes()
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    // The map is a lazy `loading="lazy"` iframe that only starts loading once scrolled
+    // near. Bring it to the centre of the viewport, force English/US params on its src,
+    // wait for it to load + for its tile requests to go quiet, then give the tile stream
+    // a generous buffer (its load event fires well before the tiles finish painting —
+    // especially on a cold serverless container).
+    const hasMap = await page.evaluate(() => {
+      const frame = Array.from(document.querySelectorAll('iframe')).find(f => /google\.[^/]+\/maps/.test(f.src))
+      if (!frame) return false
+      if (!/[?&]hl=/.test(frame.src)) frame.src = frame.src + (frame.src.includes('?') ? '&' : '?') + 'hl=en&gl=US'
+      frame.scrollIntoView({ block: 'center' })
+      return true
+    })
+    if (hasMap) {
+      await waitForIframes()
+      await page.waitForNetworkIdle({ idleTime: 1000, timeout: 12000 }).catch(() => {})
+      await new Promise(resolve => setTimeout(resolve, 2500))
+      const mapBox = await page.evaluate(() => {
+        const frame = Array.from(document.querySelectorAll('iframe')).find(f => /google\.[^/]+\/maps/.test(f.src))
+        const r = frame?.getBoundingClientRect()
+        return frame ? { src: frame.src, w: Math.round(r?.width ?? 0), h: Math.round(r?.height ?? 0) } : null
+      })
+      console.error('[screenshot] map:', JSON.stringify({ ...mapStats, box: mapBox }))
+    } else {
+      await waitForIframes()
+      await new Promise(resolve => setTimeout(resolve, 1500))
+    }
 
     // Final diagnostic — list any <img> still broken (never loaded / zero-size) right
     // before capture, with its src, so a missing image in the output has a direct answer.

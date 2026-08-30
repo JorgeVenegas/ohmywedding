@@ -24,6 +24,7 @@ export async function GET(
 
     const { searchParams } = new URL(request.url)
     const device = searchParams.get('device') === 'mobile' ? 'mobile' : 'desktop'
+    const groupId = searchParams.get('groupId')?.trim() || null
 
     const admin = createAdminSupabaseClient()
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedWeddingId)
@@ -60,14 +61,19 @@ export async function GET(
     // request's own origin so the relative-path case still yields a fetchable URL.
     const weddingUrl = getWeddingUrl(wedding.wedding_name_id, '', plan)
     const targetUrl = new URL(weddingUrl, request.nextUrl.origin)
-    targetUrl.searchParams.set('capture', '1')
+    // No ?capture flag — lib/screenshot.ts drives each of its two passes via a
+    // window global (redirect-proof; the subdomain redirect strips query strings).
+    // groupId personalizes the envelope ("Para: …") and the RSVP section, which both
+    // already read it from the URL.
+    if (groupId) targetUrl.searchParams.set('groupId', groupId)
 
     const png = await captureWeddingScreenshot(targetUrl.toString(), device)
 
+    const filename = `${wedding.wedding_name_id}-invitation${groupId ? '-personalized' : ''}-${device}.png`
     return new NextResponse(new Uint8Array(png), {
       headers: {
         'Content-Type': 'image/png',
-        'Content-Disposition': `attachment; filename="${wedding.wedding_name_id}-invitation-${device}.png"`,
+        'Content-Disposition': `attachment; filename="${filename}"`,
         'Cache-Control': 'no-store',
       },
     })
